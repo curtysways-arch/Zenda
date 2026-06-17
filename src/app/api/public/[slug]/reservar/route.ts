@@ -1,0 +1,292 @@
+import prisma from '@/lib/prisma';
+import { NextResponse } from 'next/server';
+import { notificationService } from '@/lib/notifications';
+import { whatsappService } from "@/lib/whatsapp";
+import crypto from 'crypto';
+import { SignJWT } from 'jose';
+import { planLimitValidator } from '@/lib/services/planLimitValidator';
+import { checkDemoRestriction } from '@/lib/demo-protection';
+import { sendWhatsAppMessage } from '@/lib/whatsapp-client';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+
+export async function POST(
+    req: Request,
+    { params }: { params: Promise<{ slug: string }> }
+) {
+    try {
+        const { slug } = await params;
+        const body = await req.json();
+        
+        // Mapear campos del frontend (BookingClient / BookingModal) a los nombres internos
+        const clienteNombre = body.clienteNombre || body.nombreCliente || 'Cliente';
+        const clienteTelefono = body.clienteTelefono || body.telefonoCliente;
+        const horaInicio = body.horaInicio;
+        const fecha = body.fecha;
+        const serviceId = body.serviceId || body.canchaId;
+        const staffId = body.staffId;
+        const comentarios = body.comentarios || '';
+        const duracionBody = body.duracion; // puede ser en horas (1, 1.5) o indefinido
+
+        if (!clienteTelefono || !horaInicio || !fecha || !serviceId) {
+            return NextResponse.json({ error: 'Faltan datos obligatorios' }, { status: 400 });
+        }
+
+        // 1. Buscar el negocio y el servicio
+        const negocio = await (prisma as any).negocio.findUnique({
+            where: { slug },
+            include: {
+                Service: {
+                    where: { id: serviceId }
+                }
+            }
+        });
+
+        if (!negocio || negocio.Service.length === 0) {
+            return NextResponse.json({ error: 'Negocio o servicio no encontrado' }, { status: 404 });
+        }
+
+        const service = negocio.Service[0];
+        
+        // Calcular duración base del servicio (en minutos)
+        let totalDuracionMinutos = service.duracion || 60; // fallback 1h
+
+        // Sumar duración de servicios extra si los hay
+        if (Array.isArray(body.extraServices)) {
+            body.extraServices.forEach((s: any) => {
+                const extraDur = Number(s.duracion) || 0;
+                // Si la duración extra viene en horas (ej: 0.5), convertir a minutos
+                totalDuracionMinutos += extraDur < 10 ? extraDur * 60 : extraDur;
+            });
+        }
+        
+        const durEnHoras = totalDuracionMinutos / 60;
+        
+        const [h, m] = horaInicio.split(':').map(Number);
+        const totalMinFin = h * 60 + m + totalDuracionMinutos;
+        const horaFin = `${Math.floor(totalMinFin / 60).toString().padStart(2, '0')}:${(totalMinFin % 60).toString().padStart(2, '0')}`;
+
+        // PROTECCIÓN MODO DEMO
+        const demoCheck = await checkDemoRestriction(negocio.id);
+        if (demoCheck.restricted) {
+            return demoCheck.response;
+        }
+
+        // VALIDAR LÍMITES DEL PLAN
+        const planValidation = await planLimitValidator.canCreateReservation(negocio.id);
+        if (!planValidation.allowed) {
+            return NextResponse.json({ error: planValidation.message }, { status: 403 });
+        }
+
+        const reservationReceived = new Date(fecha);
+        if (isNaN(reservationReceived.getTime())) {
+            return NextResponse.json({ error: 'Fecha de reserva inválida' }, { status: 400 });
+        }
+
+        const reservationDate = new Date(Date.UTC(
+            reservationReceived.getUTCFullYear(),
+            reservationReceived.getUTCMonth(),
+            reservationReceived.getUTCDate(),
+            0, 0, 0, 0
+        ));
+
+        // 2. Transacción para crear reserva
+        const result = await prisma.$transaction(async (tx: any) => {
+            // Validar que NO exista ninguna reserva que se cruce
+            const reservaExistente = await tx.Appointment.findFirst({
+                where: {
+                    serviceId: serviceId,
+                    fecha: reservationDate,
+                    estado: { notIn: ['rejected', 'RECHAZADA', 'cancelled', 'CANCELADA', 'expired', 'EXPIRADA'] },
+                    AND: [
+                        { horaInicio: { lt: horaFin } },
+                        { horaFin: { gt: horaInicio } }
+                    ]
+                }
+            });
+
+            if (reservaExistente) {
+                return { error: 'Este horario ya está reservado o pendiente de confirmación.' };
+            }
+
+            // Crear cliente
+            const cliente = await tx.Cliente.upsert({
+                where: {
+                    telefono_negocioId: {
+                        telefono: clienteTelefono,
+                        negocioId: negocio.id
+                    }
+                },
+                update: { 
+                    nombre: clienteNombre,
+                    updatedAt: new Date()
+                },
+                create: {
+                    id: crypto.randomUUID(),
+                    nombre: clienteNombre,
+                    telefono: clienteTelefono,
+                    negocioId: negocio.id,
+                    updatedAt: new Date()
+                }
+            });
+
+            // Configuración de Expiración
+            const timeoutConfig = await tx.Configuracion.findUnique({
+                where: {
+                    clave_negocioId: {
+                        clave: 'BOOKING_TIMEOUT',
+                        negocioId: negocio.id
+                    }
+                }
+            });
+            const timeoutMinutes = timeoutConfig ? parseInt(timeoutConfig.valor) : 10;
+            const expiresAt = timeoutMinutes > 0 
+                ? new Date(Date.now() + timeoutMinutes * 60 * 1000) 
+                : null;
+
+            // Verificar existencia del staff y obtener su nombre para el respaldo
+            let finalStaffId = null;
+            let professionalDetail = "";
+            if (staffId && staffId !== "") {
+                const staffExists = await tx.Staff.findFirst({
+                    where: { id: staffId, businessId: negocio.id }
+                });
+                if (staffExists) {
+                    finalStaffId = staffId;
+                    professionalDetail = `\nProfesional seleccionado: ${staffExists.name}`;
+                }
+            }
+
+            // Preparamos un comentario que incluya los servicios extra y el profesional
+            let comentariosFinales = (comentarios || "") + professionalDetail;
+            if (Array.isArray(body.extraServices) && body.extraServices.length > 0) {
+                const nombresExtra = body.extraServices.map((s: any) => s.nombre).join(", ");
+                comentariosFinales += `\nServicios extra: ${nombresExtra}`;
+            }
+
+            const dataToCreate: any = {
+                fecha: reservationDate,
+                horaInicio: String(horaInicio),
+                horaFin: String(horaFin),
+                duracion: Math.ceil(totalDuracionMinutos),
+                total: parseFloat(String(body.precioTotal || 0)),
+                comentarios: comentariosFinales,
+                estado: 'pending',
+                expiresAt: expiresAt,
+                cliente: { connect: { id: cliente.id } },
+                negocio: { connect: { id: negocio.id } },
+                service: { connect: { id: service.id } }
+            };
+
+            if (finalStaffId) {
+                dataToCreate.staff = { connect: { id: finalStaffId } };
+            }
+
+            const reserva = await tx.Appointment.create({
+                data: {
+                    ...dataToCreate,
+                    id: crypto.randomUUID(),
+                    updatedAt: new Date()
+                }
+            });
+
+            return { success: true, reserva };
+        });
+
+        if (result.error) {
+            return NextResponse.json({ 
+                error: result.error,
+                details: result.message 
+            }, { status: 400 });
+        }
+
+        const reservaCreated = result.reserva;
+
+        // 3. Notificaciones (Segundo plano relativo)
+        
+        // WhatsApp al negocio
+        try {
+            const fullReserva = await prisma.Appointment.findUnique({
+                where: { id: reservaCreated.id },
+                include: { service: true, cliente: true }
+            });
+            if (fullReserva) await whatsappService.notifyNewReserva(fullReserva);
+        } catch (e) { console.error('WA Business notify error:', e); }
+
+        // WhatsApp al cliente (mensaje de pendiente) - SIEMPRE debe enviarse
+        // Para evitar el desfase de zona horaria (UTC -> Local), extraemos el día exacto de la cadena
+        const [year, month, day] = String(fecha).split('T')[0].split('-');
+        const localDate = new Date(Number(year), Number(month) - 1, Number(day), 12, 0, 0); // Mediodía para evitar cualquier desfase
+        const fechaLegible = format(localDate, "eeee d 'de' MMMM", { locale: es });
+        let magicLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/${negocio.slug}/mis-reservas`;
+        
+        // Generar OTP (no bloqueante - si falla igual enviamos el WhatsApp)
+        try {
+            const code = Math.floor(100000 + Math.random() * 900000).toString();
+            await (prisma as any).otpCode.create({
+                data: { 
+                    id: crypto.randomUUID(),
+                    telefono: clienteTelefono, 
+                    businessId: negocio.id, 
+                    code, 
+                    expires_at: new Date(Date.now() + 15 * 60 * 1000)
+                }
+            });
+            const encodedTel = encodeURIComponent(clienteTelefono);
+            magicLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/${negocio.slug}/mis-reservas?otp=${code}&tel=${encodedTel}`;
+        } catch (otpErr) { 
+            console.error('OTP creation error (no bloqueante):', otpErr); 
+        }
+
+        // Enviar WhatsApp al cliente SIEMPRE, independientemente del OTP
+        try {
+            const mensajeCliente = `👋 ¡Hola ${clienteNombre}!\n\nHemos recibido tu solicitud de reserva en *${negocio.nombre}*.\n\n✨ *Servicio:* ${service.nombre}\n📅 *Fecha:* ${fechaLegible}\n⏰ *Hora:* ${horaInicio}\n\n⏳ *Estado:* Pendiente de confirmación. El negocio revisará tu solicitud y recibirás una respuesta pronto.\n\n🔗 Ver tus reservas: ${magicLink}`;
+            
+            console.log(`[WA CLIENTE] Enviando mensaje de pendiente a ${clienteTelefono}...`);
+            await whatsappService.sendWhatsApp(clienteTelefono, mensajeCliente, true, 'solicitud_cliente');
+            console.log(`[WA CLIENTE] ✅ Mensaje enviado correctamente a ${clienteTelefono}`);
+        } catch (waErr) { 
+            console.error('❌ Error WA mensaje cliente:', waErr); 
+        }
+
+        // Push a administradores
+        try {
+            await notificationService.sendPushToBusiness(
+                negocio.id,
+                '🔔 Nueva Reserva',
+                `${clienteNombre} - ${service.nombre} a las ${horaInicio}`,
+                { link: '/admin/citas', reservaId: reservaCreated.id }
+            );
+        } catch (e) { console.error('Push notify error:', e); }
+
+        // Generar customer_token para que el cliente pueda ver sus reservas
+        const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'default_otp_secret_key_change_me');
+        const customerToken = await new SignJWT({
+            telefono: clienteTelefono,
+            negocioId: negocio.id,
+            slug: slug
+        })
+            .setProtectedHeader({ alg: 'HS256' })
+            .setExpirationTime('30d')
+            .sign(secret);
+
+        const response = NextResponse.json({ success: true, id: reservaCreated.id });
+        response.cookies.set('customer_token', customerToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 30 * 24 * 60 * 60, // 30 días
+            path: '/'
+        });
+        return response;
+
+
+    } catch (error: any) {
+        console.error('Error detallado en API Reserva Pública:', error);
+        return NextResponse.json({ 
+            error: 'Error en el servidor', 
+            details: error.message,
+            stack: error.stack 
+        }, { status: 500 });
+    }
+}

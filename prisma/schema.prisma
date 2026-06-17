@@ -1,0 +1,773 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Attendance {
+  id               String           @id
+  scheduleId       String
+  enrollmentId     String
+  date             DateTime
+  status           String
+  CourseEnrollment CourseEnrollment @relation(fields: [enrollmentId], references: [id])
+  CourseSchedule   CourseSchedule   @relation(fields: [scheduleId], references: [id])
+}
+
+model AutomaticDiscount {
+  id                 String   @id
+  businessId         String
+  serviceId          String?
+  enabled            Boolean  @default(false)
+  discountPercentage Float
+  daysOfWeek         String
+  startTime          String
+  endTime            String
+  hoursBefore        Int
+  createdAt          DateTime @default(now())
+  imageMediaId       String?
+  imageMedia         Media?   @relation("AutomaticDiscountImage", fields: [imageMediaId], references: [id])
+  updatedAt          DateTime
+  Negocio            Negocio  @relation(fields: [businessId], references: [id])
+
+  @@unique([businessId, serviceId])
+}
+
+model Bloqueo {
+  id         String   @id
+  fecha      DateTime
+  horaInicio String
+  horaFin    String
+  motivo     String?
+  serviceId  String?
+  staffId    String?
+  negocioId  String
+  createdAt  DateTime @default(now())
+  Service    Service? @relation(fields: [serviceId], references: [id])
+  Staff      Staff?   @relation(fields: [staffId], references: [id])
+  Negocio    Negocio  @relation(fields: [negocioId], references: [id])
+}
+
+model BotLog {
+  id               String   @id
+  phone            String
+  message_received String?
+  message_sent     String?
+  action_taken     String?
+  timestamp        DateTime @default(now())
+}
+
+model Service {
+  id                 String               @id
+  nombre             String
+  duracion           Int                  @default(60)
+  precio             Float?
+  estaActivo         Boolean              @default(true)
+  negocioId          String
+  imageMediaId       String?
+  imageMedia         Media?               @relation("ServiceImage", fields: [imageMediaId], references: [id])
+  ubicacionId        String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  extraInfo          Json?
+  Bloqueo            Bloqueo[]
+  Negocio            Negocio              @relation(fields: [negocioId], references: [id])
+  Ubicacion          Ubicacion?           @relation(fields: [ubicacionId], references: [id])
+  CourseSchedule     CourseSchedule[]
+  Imagen             Imagen[]
+  Appointment        Appointment[]
+  Resultado          Resultado[]
+  PromotionToService PromotionToService[]
+  Staff              Staff[]              @relation("StaffServices")
+
+  @@map("Cancha")
+}
+
+model Cliente {
+  id             String        @id
+  nombre         String
+  telefono       String
+  email          String?
+  negocioId      String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime
+  imagenUrl      String?
+  Negocio        Negocio       @relation(fields: [negocioId], references: [id])
+  ratingPromedio Float         @default(0)
+  totalReviews   Int           @default(0)
+  Appointment    Appointment[]
+
+  @@unique([telefono, negocioId])
+}
+
+model CommentResultado {
+  id          String    @id
+  resultadoId String
+  userName    String
+  userAvatar  String?
+  content     String
+  approved    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  userId      String?
+  Resultado   Resultado @relation(fields: [resultadoId], references: [id], onDelete: Cascade)
+
+  @@index([resultadoId])
+}
+
+model Configuracion {
+  id        String  @id
+  clave     String
+  valor     String
+  negocioId String
+  Negocio   Negocio @relation(fields: [negocioId], references: [id])
+
+  @@unique([clave, negocioId])
+}
+
+model Course {
+  id               String             @id
+  name             String
+  description      String?
+  imageUrl         String? // legacy
+  imageMediaId     String?
+  imageMedia       Media?             @relation("CourseImage", fields: [imageMediaId], references: [id])
+  min_age          Int?
+  max_age          Int?
+  coach            String?
+  price            Float
+  payment_type     String
+  capacity         Int
+  status           String             @default("active")
+  start_date       DateTime?
+  end_date         DateTime?
+  content          String?
+  businessId       String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime
+  instructor_id    String?
+  Negocio          Negocio            @relation(fields: [businessId], references: [id])
+  Usuario          Usuario?           @relation(fields: [instructor_id], references: [id])
+  CourseEnrollment CourseEnrollment[]
+  CourseSchedule   CourseSchedule[]
+  course_classes   course_classes[]
+}
+
+model CourseEnrollment {
+  id                String              @id
+  studentId         String?
+  userId            String?
+  courseId          String
+  businessId        String?
+  student_name      String?
+  student_age       Int?
+  guardian_name     String?
+  guardian_phone    String?
+  guardian_email    String?
+  enrollment_date   DateTime            @default(now())
+  status            String              @default("pending")
+  comments          String?
+  Attendance        Attendance[]
+  Course            Course              @relation(fields: [courseId], references: [id])
+  Usuario           Usuario?            @relation(fields: [userId], references: [id])
+  Student           Student?            @relation(fields: [studentId], references: [id])
+  CoursePayment     CoursePayment[]
+  course_attendance course_attendance[]
+}
+
+model CoursePayment {
+  id               String           @id
+  enrollmentId     String
+  amount           Float
+  payment_date     DateTime         @default(now())
+  payment_type     String
+  status           String           @default("completed")
+  CourseEnrollment CourseEnrollment @relation(fields: [enrollmentId], references: [id])
+}
+
+model CourseSchedule {
+  id          String       @id
+  day_of_week Int
+  start_time  String
+  end_time    String
+  serviceId   String
+  courseId    String
+  title       String?
+  Attendance  Attendance[]
+  Course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  Service     Service      @relation(fields: [serviceId], references: [id])
+}
+
+model GlobalConfig {
+  id    String @id
+  clave String @unique
+  valor String
+}
+
+model Imagen {
+  id        String   @id
+  url       String
+  publicId  String?
+  tipo      String   @default("GALERIA")
+  negocioId String
+  serviceId String?
+  esBanner  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  Negocio   Negocio  @relation(fields: [negocioId], references: [id])
+  Service   Service? @relation(fields: [serviceId], references: [id])
+}
+
+model Media {
+  id         String  @id @default(uuid())
+  businessId String
+  url        String // public URL (served via API)
+  fileKey    String // path or key in storage provider
+  provider   String // e.g., 'local', 's3', 'r2'
+  mimeType   String
+  size       Int
+  width      Int?
+  height     Int?
+  category   String? // logo, banner, service, staff,  // Relaciones opcionales (se añaden según sea necesario)
+  Negocio    Negocio @relation("NegocioMedia", fields: [businessId], references: [id])
+
+  // Más relaciones pueden añadirse en el futuro
+  promotions         Promotion[]         @relation("PromotionImage")
+  services           Service[]           @relation("ServiceImage")
+  staff              Staff[]             @relation("StaffImage")
+  courses            Course[]            @relation("CourseImage")
+  pages              Page[]              @relation("PageImage")
+  automaticDiscounts AutomaticDiscount[] @relation("AutomaticDiscountImage")
+}
+
+model LikeResultado {
+  id          String    @id
+  resultadoId String
+  userId      String?
+  sessionId   String?
+  createdAt   DateTime  @default(now())
+  Resultado   Resultado @relation(fields: [resultadoId], references: [id], onDelete: Cascade)
+
+  @@index([resultadoId])
+}
+
+model Negocio {
+  id                     String                @id
+  nombre                 String
+  propietario            String?
+  slug                   String                @unique
+  whatsapp               String?
+  direccion              String?
+  ciudad                 String?
+  logoUrl                String?
+  precioHora             Float
+  horarioApertura        String
+  horarioCierre          String
+  statusOverride         String                @default("AUTO")
+  configuracion          Json?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime
+  pagosActivos           Boolean               @default(false)
+  pagoPorcentaje         Int                   @default(50)
+  mercadoPagoPublicKey   String?
+  mercadoPagoAccessToken String?
+  colorPrimario          String?               @default("#1dc95c")
+  colorSecundario        String?               @default("#112117")
+  colorTerciario         String?               @default("#7B68EE")
+  colorNeutral           String?               @default("#FFF5F5")
+  colorTexto             String?               @default("#ffffff")
+  heroTitulo             String?
+  heroSubtitulo          String?
+  mensajeBienvenida      String?
+  saludoTitulo           String?               @default("Hola")
+  nombreFallback         String?               @default("Radiante")
+  tieneCafeteria         Boolean               @default(false)
+  tieneParking           Boolean               @default(false)
+  tieneWifi              Boolean               @default(false)
+  tieneVestidores        Boolean               @default(false)
+  tieneTienda            Boolean               @default(false)
+  moduloTorneos          Boolean               @default(false)
+  instagramUrl           String?
+  facebookUrl            String?
+  tiktokUrl              String?
+  emailContacto          String?
+  websiteUrl             String?
+  youtubeUrl             String?
+  faqUrl                 String?
+  terminosUrl            String?
+  privacidadUrl          String?
+  estado                 String                @default("ACTIVO")
+  isDemo                 Boolean               @default(false)
+  mostrarPrecios         Boolean               @default(true)
+  appointmentsUsed       Int                   @default(0)
+  billingStatus          String                @default("active")
+  planExpiresAt          DateTime?
+  statusNote             String?
+  AutomaticDiscount      AutomaticDiscount[]
+  Bloqueo                Bloqueo[]
+  Service                Service[]
+  Cliente                Cliente[]
+  Configuracion          Configuracion[]
+  Course                 Course[]
+  Imagen                 Imagen[]
+  Page                   Page[]
+  Payment                Payment[]
+  Promotion              Promotion[]
+  PushToken              PushToken[]
+  Appointment            Appointment[]
+  Resultado              Resultado[]
+  Staff                  Staff[]
+  Student                Student[]
+  Subscriber             Subscriber[]
+  SubscriptionHistory    SubscriptionHistory[]
+  Suscripcion            Suscripcion?
+  Ubicacion              Ubicacion[]
+  Usuario                Usuario[]
+  media                  Media[]               @relation("NegocioMedia")
+}
+
+model OtpCode {
+  id         String   @id
+  telefono   String
+  businessId String
+  code       String
+  verified   Boolean  @default(false)
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  @@index([businessId])
+  @@index([telefono])
+}
+
+model Page {
+  id            String   @id
+  businessId    String
+  title         String
+  slug          String
+  contentHtml   String
+  featuredImage String? // legacy
+  imageMediaId  String?
+  imageMedia    Media?   @relation("PageImage", fields: [imageMediaId], references: [id])
+  buttonText    String?
+  buttonUrl     String?
+  status        String   @default("draft")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime
+  Negocio       Negocio  @relation(fields: [businessId], references: [id])
+
+  @@unique([businessId, slug])
+}
+
+model PagoReserva {
+  id            String      @id
+  appointmentId String
+  monto         Float
+  metodo        String?
+  referencia    String?
+  notas         String?
+  fecha         DateTime    @default(now())
+  Appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id          String   @id
+  negocio_id  String
+  plan_id     String
+  monto       Float
+  metodo_pago String?
+  fecha_pago  DateTime @default(now())
+  estado_pago String
+  referencia  String?
+  comprobante String?
+  Negocio     Negocio  @relation(fields: [negocio_id], references: [id])
+}
+
+model PendingReservation {
+  id             String   @id
+  admin_phone    String
+  reservation_id String
+  status         String   @default("pending")
+  created_at     DateTime @default(now())
+
+  @@index([admin_phone, status])
+}
+
+model Plan {
+  id                                                             String                @id
+  name                                                           String
+  description                                                    String?
+  price                                                          Float
+  trial_days                                                     Int                   @default(0)
+  max_fields                                                     Int                   @default(100)
+  maxStaff                                                       Int                   @default(1)
+  max_reservations_per_month                                     Int                   @default(40)
+  maxAppointmentsMonthly                                         Int                   @default(40)
+  features                                                       Json?
+  tournaments_enabled                                            Boolean               @default(false)
+  automatic_discounts_enabled                                    Boolean               @default(false)
+  courses_module                                                 Boolean               @default(false)
+  max_locations                                                  Int                   @default(1)
+  is_recommended                                                 Boolean               @default(false)
+  isFree                                                         Boolean               @default(false)
+  active                                                         Boolean               @default(true)
+  activo                                                         Boolean               @default(true)
+  created_at                                                     DateTime              @default(now())
+  updated_at                                                     DateTime
+  SubscriptionHistory_SubscriptionHistory_plan_nuevo_idToPlan    SubscriptionHistory[] @relation("SubscriptionHistory_plan_nuevo_idToPlan")
+  SubscriptionHistory_SubscriptionHistory_plan_anterior_idToPlan SubscriptionHistory[] @relation("SubscriptionHistory_plan_anterior_idToPlan")
+  Suscripcion                                                    Suscripcion[]
+}
+
+model ProcessedMessage {
+  message_id String   @id
+  phone      String
+  created_at DateTime @default(now())
+}
+
+model Promotion {
+  id                 String               @id
+  businessId         String
+  titulo             String
+  descripcion        String
+  precioPromo        Float
+  precioAnterior     Float?
+  imagenUrl          String // legacy
+  imageMediaId       String?
+  imageMedia         Media?               @relation("PromotionImage", fields: [imageMediaId], references: [id])
+  fechaInicio        DateTime
+  fechaFin           DateTime
+  estado             String               @default("borrador")
+  shareCount         Int                  @default(0)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  diasValidos        String?
+  horaFinValida      String?
+  horaInicioValida   String?
+  Negocio            Negocio              @relation(fields: [businessId], references: [id])
+  PromotionToService PromotionToService[]
+
+  @@index([fechaFin])
+  @@index([estado])
+  @@index([businessId])
+}
+
+model PushToken {
+  id         String   @id
+  userId     String?
+  businessId String?
+  token      String   @unique
+  device     String?
+  createdAt  DateTime @default(now())
+  Negocio    Negocio? @relation(fields: [businessId], references: [id])
+  Usuario    Usuario? @relation(fields: [userId], references: [id])
+}
+
+model Appointment {
+  id                  String        @id
+  fecha               DateTime
+  horaInicio          String
+  horaFin             String
+  duracion            Int           @default(1)
+  estado              String        @default("pending")
+  metodoPago          String?
+  pagoEstado          String        @default("PENDIENTE")
+  pagoId              String?
+  total               Float
+  pagoAnticipo        Float         @default(0)
+  precioOriginal      Float?
+  descuentoAplicado   Float?
+  comentarios         String?
+  clienteId           String
+  serviceId           String
+  staffId             String?
+  negocioId           String
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime
+  expiresAt           DateTime?
+  reminderDaySent     Boolean       @default(false)
+  reminder2HSent      Boolean       @default(false)
+  created_by_business Boolean       @default(false)
+  shareToken          String?       @unique
+  usuarioId           String?
+  extraServices       Json?
+  checkedInAt         DateTime?
+  completedAt         DateTime?
+  startedAt           DateTime?
+  ratingReminder1Sent Boolean       @default(false)
+  ratingReminder2Sent Boolean       @default(false)
+  pagoReserva         PagoReserva[]
+  cliente             Cliente       @relation(fields: [clienteId], references: [id])
+  service             Service       @relation(fields: [serviceId], references: [id])
+  staff               Staff?        @relation(fields: [staffId], references: [id])
+  negocio             Negocio       @relation(fields: [negocioId], references: [id])
+  usuario             Usuario?      @relation(fields: [usuarioId], references: [id])
+  ratings             Rating[]
+
+  @@map("Reserva")
+}
+
+model Resultado {
+  id               String             @id
+  businessId       String
+  serviceId        String?
+  staffId          String?
+  title            String
+  description      String?
+  type             String             @default("BEFORE_AFTER")
+  beforeImage      String?
+  afterImage       String?
+  gallery          Json?
+  featured         Boolean            @default(false)
+  published        Boolean            @default(true)
+  showInLanding    Boolean            @default(false)
+  clientName       String?
+  date             DateTime           @default(now())
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime
+  CommentResultado CommentResultado[]
+  LikeResultado    LikeResultado[]
+  Negocio          Negocio            @relation(fields: [businessId], references: [id])
+  Service          Service?           @relation(fields: [serviceId], references: [id])
+  Staff            Staff?             @relation(fields: [staffId], references: [id])
+}
+
+model RetryMessage {
+  id            String   @id
+  phone         String
+  message       String
+  attempts      Int      @default(0)
+  next_retry_at DateTime
+  created_at    DateTime @default(now())
+}
+
+model Role {
+  id       String     @id
+  name     String     @unique
+  UserRole UserRole[]
+}
+
+model Staff {
+  id             String           @id
+  businessId     String
+  imageMediaId   String?
+  imageMedia     Media?           @relation("StaffImage", fields: [imageMediaId], references: [id])
+  name           String
+  role           String?
+  avatar         String?
+  active         Boolean          @default(true)
+  workingHours   Json?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  usuarioId      String?          @unique
+  Bloqueo        Bloqueo[]
+  Appointment    Appointment[]
+  Resultado      Resultado[]
+  Negocio        Negocio          @relation(fields: [businessId], references: [id])
+  Usuario        Usuario?         @relation(fields: [usuarioId], references: [id])
+  StaffException StaffException[]
+  StaffSchedule  StaffSchedule[]
+  ratingPromedio Float            @default(0)
+  totalReviews   Int              @default(0)
+  Service        Service[]        @relation("StaffServices")
+}
+
+model StaffException {
+  id          String   @id
+  staffId     String
+  date        DateTime
+  type        String
+  customStart String?
+  customEnd   String?
+  reason      String?
+  Staff       Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, date])
+}
+
+model StaffSchedule {
+  id        String  @id
+  staffId   String
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  active    Boolean @default(true)
+  breaks    String? @default("[]")
+  Staff     Staff   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, dayOfWeek])
+}
+
+model Student {
+  id                  String             @id
+  name                String
+  age                 Int?
+  representative_name String?
+  phone               String?
+  email               String?
+  businessId          String
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime
+  CourseEnrollment    CourseEnrollment[]
+  Negocio             Negocio            @relation(fields: [businessId], references: [id])
+}
+
+model Subscriber {
+  id        String   @id
+  email     String
+  negocioId String
+  createdAt DateTime @default(now())
+  Negocio   Negocio  @relation(fields: [negocioId], references: [id])
+
+  @@unique([email, negocioId])
+}
+
+model SubscriptionHistory {
+  id                                              String   @id
+  negocio_id                                      String
+  plan_anterior_id                                String?
+  plan_nuevo_id                                   String
+  tipo_cambio                                     String
+  fecha_cambio                                    DateTime @default(now())
+  admin_id                                        String?
+  Plan_SubscriptionHistory_plan_nuevo_idToPlan    Plan     @relation("SubscriptionHistory_plan_nuevo_idToPlan", fields: [plan_nuevo_id], references: [id])
+  Plan_SubscriptionHistory_plan_anterior_idToPlan Plan?    @relation("SubscriptionHistory_plan_anterior_idToPlan", fields: [plan_anterior_id], references: [id])
+  Negocio                                         Negocio  @relation(fields: [negocio_id], references: [id])
+}
+
+model Suscripcion {
+  id                    String    @id
+  negocioId             String    @unique
+  planId                String
+  estado                String    @default("trial")
+  pagoPendiente         Boolean   @default(false)
+  solicitudPlanId       String?
+  metodoPago            String?
+  fechaInicio           DateTime  @default(now())
+  fechaFin              DateTime
+  trial_inicio          DateTime? @default(now())
+  trial_fin             DateTime?
+  renovacion_automatica Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime
+  lastReminderSent      DateTime?
+  paymentProvider       String?
+  subscriptionId        String?
+  customFeatures        Json?
+  isFounder             Boolean   @default(false)
+  founderPosition       Int?
+  lockedPrice           Float?
+  Negocio               Negocio   @relation(fields: [negocioId], references: [id])
+  Plan                  Plan      @relation(fields: [planId], references: [id])
+}
+
+model Ubicacion {
+  id        String    @id
+  nombre    String
+  direccion String?
+  mapUrl    String?
+  negocioId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime
+  Service   Service[]
+  Negocio   Negocio   @relation(fields: [negocioId], references: [id])
+
+  @@unique([nombre, negocioId])
+}
+
+model UserRole {
+  user_id String
+  role_id String
+  Role    Role    @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  Usuario Usuario @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, role_id])
+}
+
+model Usuario {
+  id                     String             @id
+  nombre                 String?
+  email                  String?            @unique
+  password               String?
+  phone                  String?            @unique
+  role                   String             @default("ADMIN")
+  status                 String             @default("verified")
+  auth_method            String             @default("credentials")
+  created_by             String             @default("manual")
+  negocioId              String?
+  whatsapp_notifications Boolean            @default(false)
+  otp_code               String?
+  otp_expiry             DateTime?
+  magic_token            String?            @unique
+  last_interaction       DateTime?
+  last_message_at        DateTime?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime
+  Course                 Course[]
+  CourseEnrollment       CourseEnrollment[]
+  PushToken              PushToken[]
+  Appointment            Appointment[]
+  Staff                  Staff?
+  UserRole               UserRole[]
+  Negocio                Negocio?           @relation(fields: [negocioId], references: [id])
+}
+
+model PromotionToService {
+  A         String
+  B         String
+  Promotion Promotion @relation(fields: [A], references: [id], onDelete: Cascade)
+  Service   Service   @relation(fields: [B], references: [id], onDelete: Cascade)
+
+  @@unique([A, B], map: "_PromotionToService_AB_unique")
+  @@index([B], map: "_PromotionToService_B_index")
+  @@map("_PromotionToService")
+}
+
+model course_attendance {
+  id               String           @id
+  class_id         String
+  user_id          String
+  status           String           @default("present")
+  created_at       DateTime         @default(now())
+  CourseEnrollment CourseEnrollment @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  course_classes   course_classes   @relation(fields: [class_id], references: [id], onDelete: Cascade)
+
+  @@unique([class_id, user_id])
+}
+
+model course_classes {
+  id                String              @id
+  course_id         String
+  title             String
+  description       String?
+  class_date        DateTime
+  created_at        DateTime            @default(now())
+  course_attendance course_attendance[]
+  Course            Course              @relation(fields: [course_id], references: [id], onDelete: Cascade)
+}
+
+model Rating {
+  id            String   @id @default(cuid())
+  appointmentId String
+  raterId       String
+  ratedId       String
+  raterRole     String // "client" | "professional"
+  ratedRole     String // "client" | "professional"
+  stars         Int
+  comment       String?
+  createdAt     DateTime @default(now())
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@unique([appointmentId, raterRole])
+}
+
+model PaymentAccount {
+  id           String   @id
+  banco        String
+  numeroCuenta String
+  nombreCuenta String // Titular + Tipo
+  logo         String? // URL o Base64 del logo del banco
+  activo       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

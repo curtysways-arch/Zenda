@@ -1,0 +1,68 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noEmit": true,
+    "incremental": true,
+    "module": "esnext",
+    "esModuleInterop": true,
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@/bot/*": [
+        "./bot/*"
+      ]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts",
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "brain",
+    "scratch",
+    "scripts",
+    "prisma",
+    "check_*.ts",
+    "create-demo.ts",
+    "create_*.ts",
+    "migrate.ts",
+    "migrate2.ts",
+    "migrate_*.ts",
+    "seed_*.ts",
+    "test_*.ts",
+    "rename_*.ts",
+    "tmp_*.ts",
+    "update_*.ts",
+    "clear_cache.ts",
+    "dump_schema.ts",
+    "simple_check.ts",
+    "prisma.config.ts",
+    "reset_pass.ts",
+    "fix_*.ts",
+    "tmp"
+  ]
+}
