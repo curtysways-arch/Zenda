@@ -25,6 +25,10 @@ interface ImageUploaderProps {
   aspect?: 'square' | 'landscape' | 'auto';
   /** Desactivar el uploader */
   disabled?: boolean;
+  /** URL del endpoint de subida (default: /api/admin/upload) */
+  uploadUrl?: string;
+  /** Campos extra que se añaden al FormData (ej: { targetBusinessId: 'xxx' }) */
+  extraFields?: Record<string, string>;
 }
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
@@ -38,6 +42,8 @@ export default function ImageUploader({
   label = 'Subir imagen',
   aspect = 'square',
   disabled = false,
+  uploadUrl = '/api/admin/upload',
+  extraFields = {},
 }: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentUrl || null);
@@ -78,8 +84,12 @@ export default function ImageUploader({
         const formData = new FormData();
         formData.append('file', file);
         formData.append('category', category);
+        // Añadir campos extra (ej: targetBusinessId para superadmin)
+        Object.entries(extraFields).forEach(([key, value]) => {
+          formData.append(key, value);
+        });
 
-        const res = await fetch('/api/admin/upload', {
+        const res = await fetch(uploadUrl, {
           method: 'POST',
           body: formData,
         });
@@ -102,7 +112,7 @@ export default function ImageUploader({
         URL.revokeObjectURL(objectUrl);
       }
     },
-    [category, currentUrl, onUploadSuccess]
+    [category, currentUrl, onUploadSuccess, uploadUrl, extraFields]
   );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

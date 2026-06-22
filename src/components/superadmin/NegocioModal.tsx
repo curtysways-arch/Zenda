@@ -1120,6 +1120,8 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                             onRemove={() => setFormData(prev => ({ ...prev, logoUrl: "" }))}
                                             aspect="square"
                                             label="Subir Logo"
+                                            uploadUrl="/api/superadmin/upload"
+                                            extraFields={{ targetBusinessId: negocio?.id || 'superadmin-temp' }}
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -1131,6 +1133,8 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                             onRemove={() => setFormData(prev => ({ ...prev, bannerUrl: "" }))}
                                             aspect="landscape"
                                             label="Subir Portada"
+                                            uploadUrl="/api/superadmin/upload"
+                                            extraFields={{ targetBusinessId: negocio?.id || 'superadmin-temp' }}
                                         />
                                     </div>
                                 </div>
@@ -1334,6 +1338,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                                         currentUrl={serv.imageUrl}
                                                         onUploadSuccess={(media) => setWizardServicios(prev => prev.map(ws => ws.id === serv.id ? { ...ws, imageUrl: media.url, imageMediaId: media.id } : ws))}
                                                         onRemove={() => setWizardServicios(prev => prev.map(ws => ws.id === serv.id ? { ...ws, imageUrl: undefined, imageMediaId: null } : ws))}
+                                                        targetBusinessId={negocio?.id || 'superadmin-temp'}
                                                     />
                                                     <div className="flex-1 grid grid-cols-3 gap-2 items-center">
                                                         <input 
@@ -1752,11 +1757,13 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
 function ServiceImageUploader({
     currentUrl,
     onUploadSuccess,
-    onRemove
+    onRemove,
+    targetBusinessId = 'superadmin-temp'
 }: {
     currentUrl?: string;
     onUploadSuccess: (media: { id: string; url: string }) => void;
     onRemove: () => void;
+    targetBusinessId?: string;
 }) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
@@ -1770,7 +1777,9 @@ function ServiceImageUploader({
             const fd = new FormData();
             fd.append('file', file);
             fd.append('category', 'service');
-            const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+            fd.append('targetBusinessId', targetBusinessId);
+            // Usar endpoint de superadmin (no requiere negocioId en sesión)
+            const res = await fetch('/api/superadmin/upload', { method: 'POST', body: fd });
             if (!res.ok) throw new Error('Error al subir');
             const media = await res.json();
             setPreview(media.url);
