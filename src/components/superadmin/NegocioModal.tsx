@@ -19,6 +19,14 @@ interface NegocioModalProps {
     negocio?: any; // Si existe, es edición
 }
 
+// Generador de UUIDs temporal del lado del cliente seguro para contextos HTTP no seguros
+const generateLocalId = () => {
+    if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return window.crypto.randomUUID();
+    }
+    return 'id_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now().toString(36);
+};
+
 // Plantillas de servicios según tipo de negocio
 const PLANTILLAS_SERVICIOS: Record<string, Array<{ nombre: string; duracion: number; precio: number }>> = {
     "Spa / Centro Estético": [
@@ -306,7 +314,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
         // Cargar los servicios por defecto de la plantilla
         const defaults = PLANTILLAS_SERVICIOS[cat] || [];
         setWizardServicios(defaults.map(d => ({
-            id: crypto.randomUUID(),
+            id: generateLocalId(),
             nombre: d.nombre,
             duracion: d.duracion,
             precio: d.precio
@@ -321,7 +329,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
         setWizardServicios(prev => [
             ...prev, 
             { 
-                id: crypto.randomUUID(), 
+                id: generateLocalId(), 
                 nombre: newServicio.nombre, 
                 duracion: newServicio.duracion, 
                 precio: newServicio.precio 
@@ -346,7 +354,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
         setWizardStaff(prev => [
             ...prev,
             {
-                id: crypto.randomUUID(),
+                id: generateLocalId(),
                 name: newStaff.name,
                 role: newStaff.role || "Especialista",
                 servicesIds: newStaff.servicesIds
@@ -1030,7 +1038,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                     <select
                                         value={formData.tipoNegocio}
                                         onChange={(e) => handleCategoriaChange(e.target.value)}
-                                        className="w-full px-6 py-4 bg-slate-55 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-2xl outline-none focus:border-emerald-500/30 text-sm font-bold text-slate-900 dark:text-white italic"
+                                        className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-2xl outline-none focus:border-emerald-500/30 text-sm font-bold !text-slate-900 dark:!text-white italic"
                                     >
                                         {CATEGORIAS_NEGOCIO.map(cat => (
                                             <option key={cat} value={cat} style={{ color: '#1e293b', backgroundColor: '#ffffff' }}>{cat}</option>
@@ -1087,13 +1095,13 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                                 placeholder="Crea o autogenera la contraseña"
                                                 value={formData.adminPassword}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, adminPassword: e.target.value }))}
-                                                className="w-full !pl-16 pr-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-white/5 rounded-2xl outline-none font-bold text-sm text-slate-900 dark:text-white"
+                                                className="w-full !pl-16 pr-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-white/5 rounded-2xl outline-none font-bold text-sm !text-slate-900 dark:!text-white"
                                             />
                                         </div>
                                         <button 
                                             type="button" 
                                             onClick={handleGenerarPassword} 
-                                            className="px-5 py-4 bg-emerald-500 text-black hover:bg-emerald-400 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-1.5"
+                                            className="px-5 py-4 bg-emerald-500 text-black hover:bg-emerald-450 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-1.5"
                                         >
                                             <Sparkles size={12} fill="black" /> Generar
                                         </button>
@@ -1394,12 +1402,12 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                             placeholder="Nombre del servicio" 
                                             value={newServicio.nombre} 
                                             onChange={(e) => setNewServicio(prev => ({ ...prev, nombre: e.target.value }))}
-                                            className="px-4 py-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl text-xs font-bold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none"
+                                            className="px-4 py-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl text-xs font-bold !text-slate-900 dark:!text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none"
                                         />
                                         <select 
                                             value={newServicio.duracion} 
                                             onChange={(e) => setNewServicio(prev => ({ ...prev, duracion: parseInt(e.target.value) }))}
-                                            className="px-4 py-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl text-xs font-bold text-slate-900 dark:text-white outline-none"
+                                            className="px-4 py-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl text-xs font-bold !text-slate-900 dark:!text-white outline-none"
                                         >
                                             <option value={15} style={{ color: '#1e293b', backgroundColor: '#ffffff' }}>15 minutos</option>
                                             <option value={30} style={{ color: '#1e293b', backgroundColor: '#ffffff' }}>30 minutos</option>
@@ -1414,7 +1422,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                                 placeholder="Precio ($)" 
                                                 value={newServicio.precio || ""} 
                                                 onChange={(e) => setNewServicio(prev => ({ ...prev, precio: parseFloat(e.target.value) || 0 }))}
-                                                className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl text-xs font-bold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none"
+                                                className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl text-xs font-bold !text-slate-900 dark:!text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none"
                                             />
                                             <button
                                                 type="button"
@@ -1496,14 +1504,14 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                             placeholder="Nombre del profesional" 
                                             value={newStaff.name} 
                                             onChange={(e) => setNewStaff(prev => ({ ...prev, name: e.target.value }))}
-                                            className="px-4 py-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl text-xs font-bold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-650 outline-none"
+                                            className="px-4 py-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl text-xs font-bold !text-slate-900 dark:!text-white placeholder:text-slate-400 dark:placeholder:text-slate-650 outline-none"
                                         />
                                         <input 
                                             type="text" 
                                             placeholder="Especialidad / Rol (ej: Estilista)" 
                                             value={newStaff.role} 
                                             onChange={(e) => setNewStaff(prev => ({ ...prev, role: e.target.value }))}
-                                            className="px-4 py-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl text-xs font-bold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-650 outline-none"
+                                            className="px-4 py-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl text-xs font-bold !text-slate-900 dark:!text-white placeholder:text-slate-400 dark:placeholder:text-slate-650 outline-none"
                                         />
                                     </div>
 
@@ -1857,7 +1865,7 @@ function SectionTitle({ icon: Icon, title, color = "emerald" }: { icon: any; tit
 function InputField({ label, icon: Icon, ...props }: any) {
     return (
         <div className="space-y-1.5 text-left">
-            {label && <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 ml-1">{label}</label>}
+            {label && <label className="text-[9px] font-black text-slate-400 dark:text-slate-505 uppercase tracking-widest px-1 ml-1">{label}</label>}
             <div className="relative group">
                 <div className="absolute inset-0 bg-emerald-500/5 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-all duration-500" />
                 {Icon && (
@@ -1867,7 +1875,7 @@ function InputField({ label, icon: Icon, ...props }: any) {
                 )}
                 <input
                     {...props}
-                    className="relative w-full !pl-16 pr-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-white/5 rounded-2xl focus:bg-white dark:focus:bg-slate-800 focus:border-emerald-500/30 outline-none transition-all text-sm font-bold text-slate-900 dark:text-white shadow-inner dark:shadow-none placeholder:text-slate-300 dark:placeholder:text-slate-700 italic"
+                    className="relative w-full !pl-16 pr-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200/50 dark:border-white/5 rounded-2xl focus:bg-white dark:focus:bg-slate-800 focus:border-emerald-500/30 outline-none transition-all text-sm font-bold !text-slate-900 dark:!text-white shadow-inner dark:shadow-none placeholder:text-slate-300 dark:placeholder:text-slate-700 italic"
                 />
             </div>
         </div>
