@@ -12,7 +12,7 @@ module.exports = {
       name: 'zenda-app',
       script: 'npm',
       args: 'run start:next',
-      cwd: '/var/www/zenda',
+      cwd: './',
       instances: 1,             // Aumentar a 'max' si hay múltiples CPUs y sin bot WA
       exec_mode: 'fork',        // 'cluster' si instances > 1 y sin estado de sesión WA
       watch: false,
@@ -42,7 +42,7 @@ module.exports = {
     {
       name: 'zenda-bot',
       script: 'bot/whatsapp-bot/bot.js',
-      cwd: '/var/www/zenda',
+      cwd: './',
       interpreter: 'node',
       instances: 1,
       exec_mode: 'fork',        // SIEMPRE fork para el bot WA (mantiene estado de sesión)
