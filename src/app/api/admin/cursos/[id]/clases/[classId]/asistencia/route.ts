@@ -17,7 +17,7 @@ export async function GET(
         // Get enrollments directly from course
         const enrollments = await prisma.courseEnrollment.findMany({
             where: { courseId: id, status: 'approved' },
-            include: { student: true }
+            include: { Student: true }
         });
 
         // Get existing attendances

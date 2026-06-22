@@ -40,7 +40,7 @@ export async function getPromotions() {
     const { negocioId } = await checkAuth();
 
     // 1. Buscar promociones activas que ya expiraron por fecha
-    const expiredPromos = await prisma.Promotion.findMany({
+    const expiredPromos = await prisma.promotion.findMany({
         where: {
             businessId: negocioId,
             estado: 'activa',
@@ -59,7 +59,7 @@ export async function getPromotions() {
         });
 
         for (const promo of expiredPromos) {
-            await prisma.Promotion.update({
+            await prisma.promotion.update({
                 where: { id: promo.id },
                 data: { estado: 'caducada' }
             });
@@ -88,7 +88,7 @@ export async function getPromotions() {
         }
     }
 
-    const rawPromotions = await prisma.Promotion.findMany({
+    const rawPromotions = await prisma.promotion.findMany({
         where: { businessId: negocioId },
         include: { 
             PromotionToService: { include: { Service: true } },
@@ -111,7 +111,7 @@ export async function createPromotion(data: CreatePromotionInput) {
     try {
         const { serviceIds, ...restData } = data;
         const now = new Date();
-        const promotion = await prisma.Promotion.create({
+        const promotion = await prisma.promotion.create({
             data: {
                 id: crypto.randomUUID(),
                 ...restData,
@@ -148,7 +148,7 @@ export async function updatePromotion(id: string, data: Partial<CreatePromotionI
 
     try {
         // Verificar propiedad
-        const existing = await prisma.Promotion.findUnique({ where: { id } });
+        const existing = await prisma.promotion.findUnique({ where: { id } });
         if (!existing || existing.businessId !== negocioId) {
             throw new Error("Promoción no encontrada o no pertenece a este negocio");
         }
@@ -156,12 +156,12 @@ export async function updatePromotion(id: string, data: Partial<CreatePromotionI
         const { serviceIds, ...restData } = data;
         
         if (serviceIds) {
-            await prisma.PromotionToService.deleteMany({
+            await prisma.promotionToService.deleteMany({
                 where: { A: id }
             });
         }
 
-        const promotion = await prisma.Promotion.update({
+        const promotion = await prisma.promotion.update({
             where: { id },
             data: {
                 updatedAt: new Date(),
@@ -197,12 +197,12 @@ export async function deletePromotion(id: string) {
     const { negocioId } = await checkAuth();
 
     try {
-        const existing = await prisma.Promotion.findUnique({ where: { id } });
+        const existing = await prisma.promotion.findUnique({ where: { id } });
         if (!existing || existing.businessId !== negocioId) {
             throw new Error("Promoción no encontrada o no pertenece a este negocio");
         }
 
-        await prisma.Promotion.delete({ where: { id } });
+        await prisma.promotion.delete({ where: { id } });
 
         revalidatePath('/admin/promociones');
         return { success: true };
