@@ -11,26 +11,26 @@ export default async function AttendancePage({ params }: { params: Promise<{ cla
     const session = await getProfessorSession();
     const userId = session?.userId as string;
 
-    const cls = await prisma.courseClass.findUnique({
+    const cls = await prisma.course_classes.findUnique({
         where: { id: classId },
         include: {
-            course: {
+            Course: {
                 include: {
-                    enrollments: {
+                    CourseEnrollment: {
                         where: { status: 'approved' }
                     }
                 }
             },
-            attendances: true
+            course_attendance: true
         }
     });
 
-    if (!cls || cls.course.instructor_id !== userId) {
+    if (!cls || cls.Course.instructor_id !== userId) {
         redirect('/profesor');
     }
 
-    const students = cls.course.enrollments.map(enr => {
-        const attendance = cls.attendances.find(a => a.user_id === enr.id);
+    const students = cls.Course.CourseEnrollment.map(enr => {
+        const attendance = cls.course_attendance.find(a => a.user_id === enr.id);
         return {
             enrollmentId: enr.id,
             name: enr.student_name || "Alumno",
@@ -50,7 +50,7 @@ export default async function AttendancePage({ params }: { params: Promise<{ cla
                 <div>
                     <h1 className="text-4xl font-black uppercase tracking-tighter text-slate-900 leading-tight">Pasar Lista</h1>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
-                        <p className="text-slate-500 font-medium italic">Curso: <span className="text-emerald-600 font-black uppercase tracking-tight">{cls.course.name}</span></p>
+                        <p className="text-slate-500 font-medium italic">Curso: <span className="text-emerald-600 font-black uppercase tracking-tight">{cls.Course.name}</span></p>
                         <div className="size-1 rounded-full bg-slate-200 hidden sm:block" />
                         <p className="text-slate-500 font-medium italic">Módulo: <span className="text-slate-900 font-black uppercase tracking-tight">{cls.title}</span></p>
                     </div>

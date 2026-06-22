@@ -132,12 +132,12 @@ export async function sendSubscriptionReminders() {
                 { lastReminderSent: { lt: startOfToday } }
             ]
         },
-        include: { negocio: true }
+        include: { Negocio: true }
     });
 
     let count = 0;
     for (const sub of suscripciones) {
-        if (!sub.negocio?.whatsapp) continue;
+        if (!sub.Negocio?.whatsapp) continue;
 
         const diffTime = sub.fechaFin.getTime() - Date.now();
         const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -150,8 +150,8 @@ export async function sendSubscriptionReminders() {
             try {
                 await notificationService.sendSubscriptionExpiryReminder(
                     sub.negocioId,
-                    sub.negocio.whatsapp,
-                    sub.negocio.nombre,
+                    sub.Negocio.whatsapp,
+                    sub.Negocio.nombre,
                     diasRestantes,
                     sub.fechaFin
                 );
@@ -162,7 +162,7 @@ export async function sendSubscriptionReminders() {
                 });
                 count++;
             } catch (e) {
-                console.error(`Error enviando aviso sub a ${sub.negocio.nombre}:`, e);
+                console.error(`Error enviando aviso sub a ${sub.Negocio.nombre}:`, e);
             }
         }
     }
@@ -182,7 +182,7 @@ export async function expirePromotions() {
             fechaFin: { lt: now }
         },
         include: {
-            negocio: true
+            Negocio: true
         }
     });
 
@@ -204,11 +204,11 @@ export async function expirePromotions() {
             );
 
             // Notificación WhatsApp al negocio
-            if (promo.negocio?.whatsapp) {
-                const waMessage = `⚠️ *Promoción Finalizada* ⚽\n\nHola, te informamos que la promoción *"${promo.titulo}"* de *${promo.negocio.nombre}* ha llegado a su fecha de fin y ya no está visible para el público.\n\n📅 *Finalizó:* ${new Date(promo.fechaFin).toLocaleString('es-ES')}\n\n📲 *Gestiona tus promociones aquí:* \n${process.env.NEXT_PUBLIC_APP_URL}/admin/promociones`;
+            if (promo.Negocio?.whatsapp) {
+                const waMessage = `⚠️ *Promoción Finalizada* ⚽\n\nHola, te informamos que la promoción *"${promo.titulo}"* de *${promo.Negocio.nombre}* ha llegado a su fecha de fin y ya no está visible para el público.\n\n📅 *Finalizó:* ${new Date(promo.fechaFin).toLocaleString('es-ES')}\n\n📲 *Gestiona tus promociones aquí:* \n${process.env.NEXT_PUBLIC_APP_URL}/admin/promociones`;
                 
                 await notificationService.provider.sendMessage({
-                    to: promo.negocio.whatsapp.replace(/\D/g, ''),
+                    to: promo.Negocio.whatsapp.replace(/\D/g, ''),
                     message: waMessage,
                     template: 'promo_caducada'
                 });

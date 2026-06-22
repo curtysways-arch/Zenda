@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 export async function GET(
     req: Request,
@@ -52,6 +53,7 @@ export async function POST(
                         active: schedule.active ?? true
                     },
                     create: {
+                        id: crypto.randomUUID(),
                         staffId: id,
                         dayOfWeek: schedule.dayOfWeek,
                         startTime: schedule.startTime,
@@ -81,13 +83,14 @@ export async function POST(
                          reason: ex.reason
                      },
                      create: {
-                         staffId: id,
-                         date: new Date(ex.date),
-                         type: ex.type,
-                         customStart: ex.customStart,
-                         customEnd: ex.customEnd,
-                         reason: ex.reason
-                     }
+                        id: crypto.randomUUID(),
+                        staffId: id,
+                        date: new Date(ex.date),
+                        type: ex.type,
+                        customStart: ex.customStart,
+                        customEnd: ex.customEnd,
+                        reason: ex.reason
+                    }
                  });
              }
         }

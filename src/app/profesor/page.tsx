@@ -11,7 +11,7 @@ export default async function ProfessorDashboard() {
 
     // Obtener estadísticas compactas
     const coursesCount = await prisma.course.count({ where: { instructor_id: userId } });
-    const enrollmentsCount = await prisma.courseEnrollment.count({ where: { course: { instructor_id: userId } } });
+    const enrollmentsCount = await prisma.courseEnrollment.count({ where: { Course: { instructor_id: userId } } });
 
     // Detección dinámica de slug desde la sesión o DB
     let businessSlug = (session as any)?.slug || "";
@@ -20,9 +20,9 @@ export default async function ProfessorDashboard() {
         try {
             const user = await prisma.usuario.findFirst({
                 where: { id: userId },
-                select: { negocio: { select: { slug: true } } }
+                select: { Negocio: { select: { slug: true } } }
             });
-            businessSlug = user?.negocio?.slug || "";
+            businessSlug = user?.Negocio?.slug || "";
         } catch (e) {}
     }
 

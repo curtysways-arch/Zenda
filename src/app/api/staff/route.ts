@@ -20,7 +20,7 @@ export async function GET(req: Request) {
     }
 
     try {
-        const rawStaff = await prisma.Staff.findMany({
+        const rawStaff = await prisma.staff.findMany({
             where: { businessId: negocioId },
             include: {
                 Service: true,
@@ -71,13 +71,13 @@ export async function POST(req: Request) {
         // Manejar creación de usuario si se proporciona email
         let usuarioId = undefined;
         if (email) {
-            const existingUser = await prisma.Usuario.findUnique({ where: { email } });
+            const existingUser = await prisma.usuario.findUnique({ where: { email } });
             if (existingUser) {
                 return NextResponse.json({ error: 'El email ya está registrado' }, { status: 400 });
             }
 
             const hashedPassword = await bcrypt.hash(password || '123456', 10);
-            const newUser = await prisma.Usuario.create({
+            const newUser = await prisma.usuario.create({
                 data: {
                     id: crypto.randomUUID(),
                     email,
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
             usuarioId = newUser.id;
         }
 
-        const rawStaff = await prisma.Staff.create({
+        const rawStaff = await prisma.staff.create({
             data: {
                 id: crypto.randomUUID(),
                 name,

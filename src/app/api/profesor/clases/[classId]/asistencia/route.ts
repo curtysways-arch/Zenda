@@ -2,6 +2,7 @@
 import { getProfessorSession } from "@/lib/professorAuth";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import crypto from 'crypto';
 
 export async function POST(
     req: Request,
@@ -18,12 +19,12 @@ export async function POST(
         const { attendance } = await req.json();
 
         // Validar que la clase pertenezca al profesor
-        const cls = await prisma.courseClass.findUnique({
+        const cls = await prisma.course_classes.findUnique({
             where: { id: classId },
-            include: { course: true }
+            include: { Course: true }
         });
 
-        if (!cls || cls.course.instructor_id !== session.userId) {
+        if (!cls || cls.Course.instructor_id !== session.userId) {
             return NextResponse.json({ error: "Prohibido" }, { status: 403 });
         }
 
@@ -31,7 +32,7 @@ export async function POST(
         for (const item of attendance) {
             if (item.status === 'pending') {
                 // Si está pendiente, eliminamos registro si existe
-                await prisma.courseAttendance.deleteMany({
+                await prisma.course_attendance.deleteMany({
                     where: {
                         class_id: classId,
                         user_id: item.enrollmentId
@@ -40,7 +41,7 @@ export async function POST(
                 continue;
             }
 
-            await prisma.courseAttendance.upsert({
+            await prisma.course_attendance.upsert({
                 where: {
                     class_id_user_id: {
                         class_id: classId,
@@ -51,6 +52,7 @@ export async function POST(
                     status: item.status
                 },
                 create: {
+                    id: crypto.randomUUID(),
                     class_id: classId,
                     user_id: item.enrollmentId,
                     status: item.status

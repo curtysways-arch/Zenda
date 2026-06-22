@@ -43,10 +43,10 @@ export async function GET() {
                 const courses = await prisma.course.findMany({ where: { businessId: id }, select: { id: true } });
                 const courseIds = courses.map(c => c.id);
                 if (courseIds.length > 0) {
-                    await (prisma as any).courseAttendance.deleteMany({ where: { enrollment: { courseId: { in: courseIds } } } });
+                    await (prisma as any).course_attendance.deleteMany({ where: { enrollment: { courseId: { in: courseIds } } } });
                     await (prisma as any).attendance.deleteMany({ where: { schedule: { courseId: { in: courseIds } } } }); // Por si acaso
                     await (prisma as any).courseSchedule.deleteMany({ where: { courseId: { in: courseIds } } });
-                    await (prisma as any).courseClass.deleteMany({ where: { course_id: { in: courseIds } } });
+                    await (prisma as any).course_classes.deleteMany({ where: { course_id: { in: courseIds } } });
                     await (prisma as any).coursePayment.deleteMany({ where: { enrollment: { courseId: { in: courseIds } } } });
                     await (prisma as any).courseEnrollment.deleteMany({ where: { courseId: { in: courseIds } } });
                     await (prisma as any).course.deleteMany({ where: { id: { in: courseIds } } });
@@ -65,14 +65,14 @@ export async function GET() {
                 await (prisma as any).payment.deleteMany({ where: { negocio_id: id } });
 
                 // 4. Borrar modelos que dependen directamente de Negocio con negocioId
-                const canchas = await prisma.cancha.findMany({ where: { negocioId: id }, select: { id: true } });
-                const canchaIds = canchas.map(c => c.id);
-                if (canchaIds.length > 0) {
-                    await (prisma as any).pagoReserva.deleteMany({ where: { reserva: { canchaId: { in: canchaIds } } } });
-                    await prisma.reserva.deleteMany({ where: { canchaId: { in: canchaIds } } });
-                    await prisma.bloqueo.deleteMany({ where: { canchaId: { in: canchaIds } } });
-                    await prisma.imagen.deleteMany({ where: { canchaId: { in: canchaIds } } });
-                    await prisma.cancha.deleteMany({ where: { id: { in: canchaIds } } });
+                const services = await prisma.service.findMany({ where: { negocioId: id }, select: { id: true } });
+                const serviceIds = services.map(c => c.id);
+                if (serviceIds.length > 0) {
+                    await (prisma as any).pagoReserva.deleteMany({ where: { Appointment: { serviceId: { in: serviceIds } } } });
+                    await prisma.appointment.deleteMany({ where: { serviceId: { in: serviceIds } } });
+                    await prisma.bloqueo.deleteMany({ where: { serviceId: { in: serviceIds } } });
+                    await prisma.imagen.deleteMany({ where: { serviceId: { in: serviceIds } } });
+                    await prisma.service.deleteMany({ where: { id: { in: serviceIds } } });
                 }
 
                 await prisma.subscriber.deleteMany({ where: { negocioId: id } });

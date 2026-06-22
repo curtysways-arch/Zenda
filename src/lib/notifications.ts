@@ -427,10 +427,7 @@ export class NotificationService {
         try {
             const superAdmins = await prisma.usuario.findMany({
                 where: {
-                    OR: [
-                        { role: 'SUPER_ADMIN' },
-                        { roles: { some: { role: { name: 'SUPERADMIN' } } } }
-                    ]
+                    role: 'SUPER_ADMIN'
                 },
                 select: { id: true }
             });

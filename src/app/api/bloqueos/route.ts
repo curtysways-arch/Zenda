@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { checkDemoRestriction } from '@/lib/demo-protection';
+import crypto from 'crypto';
 
 export async function GET(req: Request) {
     try {
@@ -14,8 +15,8 @@ export async function GET(req: Request) {
         const bloqueos = await prisma.bloqueo.findMany({
             where: { negocioId },
             include: { 
-                service: true,
-                staff: true
+                Service: true,
+                Staff: true
             },
             orderBy: { fecha: 'asc' }
         });
@@ -47,6 +48,7 @@ export async function POST(req: Request) {
 
         const bloqueo = await prisma.bloqueo.create({
             data: {
+                id: crypto.randomUUID(),
                 fecha: fechaUTC,
                 horaInicio,
                 horaFin,

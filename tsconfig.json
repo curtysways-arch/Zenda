@@ -63,6 +63,7 @@
     "prisma.config.ts",
     "reset_pass.ts",
     "fix_*.ts",
-    "tmp"
+    "tmp",
+    "Zenda"
   ]
 }

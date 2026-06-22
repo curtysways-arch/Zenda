@@ -173,11 +173,13 @@ export async function PATCH(
         if (!cliente) {
             cliente = await prisma.cliente.create({
                 data: {
+                    id: crypto.randomUUID(),
                     nombre: nombre || "Usuario",
                     telefono: telefono,
                     email: email || null,
                     imagenUrl: imagenUrl || null,
-                    negocioId: negocioId
+                    updatedAt: new Date(),
+                    Negocio: { connect: { id: negocioId } }
                 }
             });
         } else {

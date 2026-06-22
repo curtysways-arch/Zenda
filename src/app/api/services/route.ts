@@ -19,7 +19,7 @@ export async function GET(req: Request) {
     }
 
     try {
-        const rawServices = await prisma.Service.findMany({
+        const rawServices = await prisma.service.findMany({
             where: { negocioId },
             include: { Imagen: true, imageMedia: true },
             orderBy: { createdAt: 'desc' },
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: validation.message }, { status: 403 });
         }
 
-        const service = await prisma.Service.create({
+        const service = await prisma.service.create({
             data: {
                 id: crypto.randomUUID(),
                 nombre,

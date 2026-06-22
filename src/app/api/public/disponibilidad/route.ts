@@ -20,7 +20,7 @@ export async function GET(req: Request) {
         const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
         const endOfDay = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
 
-        const cancha = await prisma.Service.findUnique({
+        const cancha = await prisma.service.findUnique({
             where: { id: canchaId },
             select: { negocioId: true }
         });
@@ -32,7 +32,7 @@ export async function GET(req: Request) {
         const dayOfWeek = startOfDay.getUTCDay();
 
         const [reservas, bloqueos, courseSchedules, discounts] = await Promise.all([
-            prisma.Appointment.findMany({
+            prisma.appointment.findMany({
                 where: {
                     serviceId: canchaId,
                     fecha: {
@@ -61,7 +61,7 @@ export async function GET(req: Request) {
                     expiresAt: true
                 }
             }),
-            prisma.Bloqueo.findMany({
+            prisma.bloqueo.findMany({
                 where: {
                     serviceId: canchaId,
                     fecha: {
@@ -75,7 +75,7 @@ export async function GET(req: Request) {
                     motivo: true
                 }
             }),
-            prisma.CourseSchedule.findMany({
+            prisma.courseSchedule.findMany({
                 where: {
                     serviceId: canchaId,
                     day_of_week: dayOfWeek,
@@ -105,7 +105,7 @@ export async function GET(req: Request) {
                     }
                 }
             }),
-            prisma.AutomaticDiscount.findMany({
+            prisma.automaticDiscount.findMany({
                 where: {
                     businessId: cancha.negocioId,
                     OR: [

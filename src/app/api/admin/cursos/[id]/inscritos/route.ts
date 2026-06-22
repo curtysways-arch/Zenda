@@ -18,7 +18,7 @@ export async function GET(
         const enrollments = await p.courseEnrollment.findMany({
             where: { courseId: id },
             include: {
-                student: true
+                Student: true
             },
             orderBy: { enrollment_date: 'desc' }
         });

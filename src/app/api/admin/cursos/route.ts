@@ -72,34 +72,29 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
         }
 
-        const course = await prisma.course.create({
-            data: {
-                name,
-                description,
-                imageUrl: imageUrl || null,
-                imageMediaId: imageMediaId || null,
-                min_age: (min_age !== null && min_age !== undefined && min_age !== "") ? parseInt(min_age.toString()) : null,
-                max_age: (max_age !== null && max_age !== undefined && max_age !== "") ? parseInt(max_age.toString()) : null,
-                coach,
-                price: parseFloat(price.toString()),
-                payment_type,
-                capacity: parseInt(capacity.toString()),
-                status: status || 'active',
-                start_date: (start_date && start_date !== "") ? new Date(start_date) : null,
-                end_date: (end_date && end_date !== "") ? new Date(end_date) : null,
-                content: content || null,
-                businessId: negocioId,
-                instructor_id: (instructor_id && instructor_id !== "") ? instructor_id : null,
-            }
-        });
-
+       const course = await (prisma as any).course.create({
+    data: {
+        name,
+        description,
+        imageUrl: imageUrl || null,
+        imageMediaId: imageMediaId || null,
+        min_age: (min_age !== null && min_age !== undefined && min_age !== "") ? parseInt(min_age.toString()) : null,
+        max_age: (max_age !== null && max_age !== undefined && max_age !== "") ? parseInt(max_age.toString()) : null,
+        coach,
+        price: parseFloat(price.toString()),
+        payment_type,
+        capacity: parseInt(capacity.toString()),
+        status: status || 'active',
+        start_date: (start_date && start_date !== "") ? new Date(start_date) : null,
+        end_date: (end_date && end_date !== "") ? new Date(end_date) : null,
+        content: content || null,
+        businessId: negocioId,
+        instructor_id: instructor_id || null,
+    }
+});
         return NextResponse.json(course);
     } catch (error: any) {
         console.error("Error creating course:", error);
-        return NextResponse.json({ 
-            error: "Error al crear curso",
-            detail: error?.message,
-            code: error?.code
-        }, { status: 500 });
+        return NextResponse.json({ error: "Error al crear curso" }, { status: 500 });
     }
 }

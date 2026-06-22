@@ -196,7 +196,7 @@ export async function POST(
         if (result.error) {
             return NextResponse.json({ 
                 error: result.error,
-                details: result.message 
+                details: (result as any).message || null
             }, { status: 400 });
         }
 
@@ -206,7 +206,7 @@ export async function POST(
         
         // WhatsApp al negocio
         try {
-            const fullReserva = await prisma.Appointment.findUnique({
+            const fullReserva = await prisma.appointment.findUnique({
                 where: { id: reservaCreated.id },
                 include: { service: true, cliente: true }
             });

@@ -27,11 +27,11 @@ export default async function PublicReservationPage({
 }) {
     const { shareToken } = await params;
 
-    const reserva = await prisma.reserva.findUnique({
+    const reserva = await prisma.appointment.findUnique({
         where: { shareToken },
         include: {
             negocio: true,
-            cancha: true,
+            service: true,
             cliente: true
         }
     });
@@ -40,7 +40,7 @@ export default async function PublicReservationPage({
         notFound();
     }
 
-    const { negocio, cancha, cliente } = reserva;
+    const { negocio, service: cancha, cliente } = reserva;
     const fechaLegible = format(new Date(reserva.fecha), "EEEE d 'de' MMMM", { locale: es });
     
     // Color principal del negocio o default emerald
@@ -124,7 +124,7 @@ export default async function PublicReservationPage({
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black text-white/30 uppercase tracking-widest block italic">Lugar</label>
                                     <h3 className="text-2xl font-black text-white uppercase tracking-tighter italic leading-none">{cancha.nombre}</h3>
-                                    <p className="text-sm font-medium text-white/60">{cancha.tipo || 'Cancha de Fútbol'}</p>
+                                    <p className="text-sm font-medium text-white/60">{((cancha.extraInfo as any)?.tipo) || 'Servicio'}</p>
                                 </div>
                             </div>
 
@@ -159,7 +159,7 @@ export default async function PublicReservationPage({
                     {/* Footer de la Card / CTA */}
                     <div className="p-4 bg-white/5 border-t border-white/5">
                         <Link 
-                            href={`https://wa.me/${negocio.telefono?.replace(/\D/g, '')}`}
+                            href={`https://wa.me/${negocio.whatsapp?.replace(/\D/g, '')}`}
                             target="_blank"
                             className="w-full py-6 flex items-center justify-center gap-3 text-[11px] font-black uppercase tracking-[0.3em] text-white/40 hover:text-white transition-all group"
                         >

@@ -14,9 +14,9 @@ export async function GET() {
         // Obtener todos los usuarios que tienen el rol PROFESOR
         const profesores = await prisma.usuario.findMany({
             where: {
-                roles: {
+                UserRole: {
                     some: {
-                        role: {
+                        Role: {
                             name: 'PROFESOR'
                         }
                     }

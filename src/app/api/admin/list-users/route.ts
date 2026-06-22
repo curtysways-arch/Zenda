@@ -7,14 +7,14 @@ export async function GET() {
             where: {
                 OR: [
                     { role: 'SUPER_ADMIN' },
-                    { negocio: { slug: 'complejo-test' } }
+                    { Negocio: { slug: 'complejo-test' } }
                 ]
             },
             select: {
                 nombre: true,
                 email: true,
                 role: true,
-                negocio: { select: { nombre: true, slug: true } }
+                Negocio: { select: { nombre: true, slug: true } }
             }
         });
 

@@ -48,7 +48,8 @@ export async function POST(req: NextRequest) {
             max_locations: Math.floor(Number(body.max_locations ?? 1)),
             is_recommended: Boolean(body.is_recommended ?? false),
             activo: true,
-            features: body.features ? body.features : undefined
+            features: body.features ? body.features : undefined,
+            updated_at: new Date()
         };
 
         console.log("DEBUG: Full Data ->", JSON.stringify(fullPlanData));

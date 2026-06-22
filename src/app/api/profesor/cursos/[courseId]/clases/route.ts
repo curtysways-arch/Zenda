@@ -2,6 +2,7 @@
 import { getProfessorSession } from "@/lib/professorAuth";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 
 export async function POST(
     req: Request,
@@ -27,8 +28,9 @@ export async function POST(
         }
 
         // Crear la clase
-        const newClass = await prisma.courseClass.create({
+        const newClass = await prisma.course_classes.create({
             data: {
+                id: crypto.randomUUID(),
                 course_id: courseId,
                 title,
                 description,
@@ -55,10 +57,10 @@ export async function GET(
             return NextResponse.json({ error: "No autorizado" }, { status: 401 });
         }
 
-        const classes = await prisma.courseClass.findMany({
+        const classes = await prisma.course_classes.findMany({
             where: {
                 course_id: courseId,
-                course: {
+                Course: {
                     instructor_id: session.userId as string
                 }
             },

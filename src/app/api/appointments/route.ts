@@ -23,13 +23,13 @@ export async function POST(req: Request) {
         const negocio = await prisma.negocio.findUnique({
             where: { slug },
             include: {
-                services: {
+                Service: {
                     where: { id: serviceId }
                 }
             }
         });
 
-        if (!negocio || negocio.services.length === 0) {
+        if (!negocio || negocio.Service.length === 0) {
             return NextResponse.json({ error: 'Negocio o cancha no encontrada' }, { status: 404 });
         }
 
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: planValidation.message }, { status: 403 });
         }
 
-        const service = negocio.services[0];
+        const service = negocio.Service[0];
 
         const reservationReceived = new Date(fecha);
         if (isNaN(reservationReceived.getTime())) {
@@ -312,8 +312,7 @@ export async function POST(req: Request) {
                     telefono: clienteTelefono, 
                     businessId: negocio.id, 
                     code, 
-                    expiresAt: otpExpiry,
-                    updatedAt: new Date()
+                    expires_at: otpExpiry
                 }
             });
 

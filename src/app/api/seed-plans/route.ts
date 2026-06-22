@@ -11,7 +11,8 @@ export async function GET() {
                 maxStaff: 1,
                 max_locations: 1,
                 maxAppointmentsMonthly: 50,
-                features: JSON.stringify(['basic_booking', 'zenda_branding'])
+                features: JSON.stringify(['basic_booking', 'zenda_branding']),
+                updated_at: new Date()
             },
             create: {
                 id: 'plan_begin',
@@ -20,7 +21,8 @@ export async function GET() {
                 maxStaff: 1,
                 max_locations: 1,
                 maxAppointmentsMonthly: 50,
-                features: JSON.stringify(['basic_booking', 'zenda_branding'])
+                features: JSON.stringify(['basic_booking', 'zenda_branding']),
+                updated_at: new Date()
             }
         });
 
@@ -32,7 +34,8 @@ export async function GET() {
                 maxStaff: 5,
                 max_locations: 1,
                 maxAppointmentsMonthly: 500,
-                features: JSON.stringify(['whatsapp_notifications', 'custom_branding', 'courses_module', 'whatsapp_otp'])
+                features: JSON.stringify(['whatsapp_notifications', 'custom_branding', 'courses_module', 'whatsapp_otp']),
+                updated_at: new Date()
             },
             create: {
                 id: 'plan_pro',
@@ -41,7 +44,8 @@ export async function GET() {
                 maxStaff: 5,
                 max_locations: 1,
                 maxAppointmentsMonthly: 500,
-                features: JSON.stringify(['whatsapp_notifications', 'custom_branding', 'courses_module', 'whatsapp_otp'])
+                features: JSON.stringify(['whatsapp_notifications', 'custom_branding', 'courses_module', 'whatsapp_otp']),
+                updated_at: new Date()
             }
         });
 
@@ -53,7 +57,8 @@ export async function GET() {
                 maxStaff: 999999,
                 max_locations: 5,
                 maxAppointmentsMonthly: 999999,
-                features: JSON.stringify(['whatsapp_notifications', 'custom_branding', 'courses_module', 'advanced_analytics', 'white_label', 'whatsapp_otp', 'multi_staff'])
+                features: JSON.stringify(['whatsapp_notifications', 'custom_branding', 'courses_module', 'advanced_analytics', 'white_label', 'whatsapp_otp', 'multi_staff']),
+                updated_at: new Date()
             },
             create: {
                 id: 'plan_business',
@@ -62,7 +67,8 @@ export async function GET() {
                 maxStaff: 999999,
                 max_locations: 5,
                 maxAppointmentsMonthly: 999999,
-                features: JSON.stringify(['whatsapp_notifications', 'custom_branding', 'courses_module', 'advanced_analytics', 'white_label', 'whatsapp_otp', 'multi_staff'])
+                features: JSON.stringify(['whatsapp_notifications', 'custom_branding', 'courses_module', 'advanced_analytics', 'white_label', 'whatsapp_otp', 'multi_staff']),
+                updated_at: new Date()
             }
         });
 

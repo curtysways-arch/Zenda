@@ -18,6 +18,7 @@ async function runTest() {
         precioHora: 10,
         horarioApertura: '08:00',
         horarioCierre: '22:00',
+        updatedAt: new Date(),
       },
     });
   }

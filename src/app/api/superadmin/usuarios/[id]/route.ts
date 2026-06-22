@@ -36,11 +36,11 @@ export async function PATCH(
                     phone: phone,
                     NOT: { id }
                 },
-                include: { negocio: { select: { nombre: true } } }
+                include: { Negocio: { select: { nombre: true } } }
             });
 
             if (phoneConflict) {
-                const negocioNombre = (phoneConflict as any).negocio?.nombre;
+                const negocioNombre = (phoneConflict as any).Negocio?.nombre;
                 const msg = negocioNombre
                     ? `Ese número ya está registrado en el negocio "${negocioNombre}"`
                     : `Ese número ya está registrado con otro usuario`;

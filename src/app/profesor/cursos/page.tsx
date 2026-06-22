@@ -12,7 +12,7 @@ export default async function ProfessorCourses() {
         where: { instructor_id: userId },
         include: {
             _count: {
-                select: { enrollments: true }
+                select: { CourseEnrollment: true }
             }
         }
     });
@@ -48,7 +48,7 @@ export default async function ProfessorCourses() {
                                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
                                     <Users size={12} className="text-blue-500" /> Alumnos
                                 </p>
-                                <p className="text-xl font-black text-slate-900">{course._count.enrollments}</p>
+                                <p className="text-xl font-black text-slate-900">{course._count.CourseEnrollment}</p>
                             </div>
                             <div className="space-y-1">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">

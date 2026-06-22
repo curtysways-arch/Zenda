@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import crypto from 'crypto';
 
 export async function GET() {
     try {
@@ -38,6 +39,7 @@ export async function POST(req: Request) {
             },
             update: { valor },
             create: {
+                id: crypto.randomUUID(),
                 clave,
                 valor,
                 negocioId

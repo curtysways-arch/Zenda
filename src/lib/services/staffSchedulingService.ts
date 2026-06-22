@@ -20,7 +20,7 @@ export const staffSchedulingService = {
         const startOfDay = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0));
         const endOfDay = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59, 999));
 
-        const exception = await prisma.StaffException.findFirst({
+        const exception = await prisma.staffException.findFirst({
             where: {
                 staffId,
                 date: {
@@ -40,7 +40,7 @@ export const staffSchedulingService = {
         let breaks: { start: string, end: string }[] = [];
 
         // Obtener datos del negocio para fallback
-        const staff = await prisma.Staff.findUnique({
+        const staff = await prisma.staff.findUnique({
             where: { id: staffId },
             include: { Negocio: true }
         });
@@ -52,7 +52,7 @@ export const staffSchedulingService = {
             startTimeStr = exception.customStart;
             endTimeStr = exception.customEnd;
         } else {
-            const schedule = await prisma.StaffSchedule.findFirst({
+            const schedule = await prisma.staffSchedule.findFirst({
                 where: {
                     staffId,
                     dayOfWeek,
@@ -78,7 +78,7 @@ export const staffSchedulingService = {
         }
 
         // 3. Buscar Citas Existentes para ese día
-        const appointments = await prisma.Appointment.findMany({
+        const appointments = await prisma.appointment.findMany({
             where: {
                 staffId,
                 fecha: {
@@ -102,7 +102,7 @@ export const staffSchedulingService = {
         });
 
         // 4. Buscar Bloqueos
-        const bloqueos = await prisma.Bloqueo.findMany({
+        const bloqueos = await prisma.bloqueo.findMany({
             where: {
                 staffId,
                 fecha: {

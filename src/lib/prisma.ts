@@ -25,9 +25,10 @@ function resolveLibSqlUrl(dbUrl: string): string {
 
     // Quitar prefijo "file:" o "file:./"
     const rawPath = dbUrl.replace(/^file:(\.\/)?/, '');
-    const absPath = path.resolve(process.cwd(), rawPath);
+    const isAbsolute = rawPath.startsWith('/') || rawPath.startsWith('\\') || /^[a-zA-Z]:/.test(rawPath);
+    const absPath = isAbsolute ? rawPath : `${process.cwd()}/${rawPath}`;
     // Normalizar separadores (Windows → forward slash)
-    const normalized = absPath.split(path.sep).join('/');
+    const normalized = absPath.split(/[/\\]/).join('/');
     // En Windows: C:/... → /C:/...
     const prefix = normalized.match(/^[a-zA-Z]:/) ? '/' : '';
     return `file://${prefix}${normalized}`;
@@ -68,11 +69,34 @@ function createPrismaClientSync(): PrismaClient {
     }
 }
 
-// Patrón singleton compatible con hot-reload de Next.js dev server
-const prisma = globalThis.prisma ?? createPrismaClientSync();
+// Inicialización perezosa (lazy) mediante un Proxy.
+// Evita evaluar la base de datos durante la compilación estática de Next.js.
+let prismaInstance: PrismaClient | null = null;
+
+function getPrisma(): PrismaClient {
+    if (!prismaInstance) {
+        prismaInstance = globalThis.prisma ?? createPrismaClientSync();
+        if (process.env.NODE_ENV !== 'production') {
+            globalThis.prisma = prismaInstance;
+        }
+    }
+    return prismaInstance;
+}
+
+const prisma = new Proxy({} as PrismaClient, {
+    get(target, prop, receiver) {
+        // Evitar interceptar propiedades internas usadas por frameworks u optimizadores
+        if (prop === '$$typeof' || prop === 'then' || prop === 'constructor' || prop === 'toJSON') {
+            return undefined;
+        }
+        const instance = getPrisma();
+        const value = Reflect.get(instance, prop);
+        if (typeof value === 'function') {
+            return value.bind(instance);
+        }
+        return value;
+    }
+});
 
 export default prisma;
 
-if (process.env.NODE_ENV !== 'production') {
-    globalThis.prisma = prisma;
-}

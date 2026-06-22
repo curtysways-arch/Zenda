@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import crypto from 'crypto';
 
 async function isSuperAdmin() {
     const session = await getServerSession(authOptions);
@@ -39,7 +40,11 @@ export async function POST(req: Request) {
         const config = await prisma.globalConfig.upsert({
             where: { clave },
             update: { valor },
-            create: { clave, valor }
+            create: {
+                id: crypto.randomUUID(),
+                clave,
+                valor
+            }
         });
 
         return NextResponse.json(config);

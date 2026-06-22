@@ -6,11 +6,11 @@ export async function POST(req: Request) {
     try {
         const { reservaId } = await req.json();
 
-        const reserva = await prisma.reserva.findUnique({
+        const reserva = await prisma.appointment.findUnique({
             where: { id: reservaId },
             include: {
                 negocio: true,
-                cancha: true,
+                service: true,
                 cliente: true
             }
         });
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
         const items = [
             {
-                title: `Seña Reserva - ${reserva.cancha.nombre} (${reserva.negocio.nombre})`,
+                title: `Seña Reserva - ${reserva.service.nombre} (${reserva.negocio.nombre})`,
                 unit_price: montoSena,
                 quantity: 1,
                 currency_id: 'ARS' // O el de tu país
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
         );
 
         // Guardar el ID de preferencia en la reserva
-        await prisma.reserva.update({
+        await prisma.appointment.update({
             where: { id: reservaId },
             data: { pagoId: preference.id }
         });

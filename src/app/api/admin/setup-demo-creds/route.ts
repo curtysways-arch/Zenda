@@ -12,11 +12,13 @@ export async function GET() {
             where: { email: 'demo@cancha.com' },
             update: { password: hashedPassword, role: 'ADMIN' },
             create: {
+                id: crypto.randomUUID(),
                 nombre: 'Demo User',
                 email: 'demo@cancha.com',
                 password: hashedPassword,
                 role: 'ADMIN',
-                status: 'verified'
+                status: 'verified',
+                updatedAt: new Date()
             }
         });
         
@@ -36,11 +38,13 @@ export async function GET() {
             where: { email: 'superadmin@cancha.com' },
             update: { password: saPassword, role: 'SUPER_ADMIN', negocioId: negocio?.id },
             create: {
+                id: crypto.randomUUID(),
                 nombre: 'Super Admin',
                 email: 'superadmin@cancha.com',
                 password: saPassword,
                 role: 'SUPER_ADMIN',
-                negocioId: negocio?.id
+                negocioId: negocio?.id,
+                updatedAt: new Date()
             }
         });
         log.push('✅ Super Admin (superadmin@cancha.com) listo con contraseña: superadmin123');

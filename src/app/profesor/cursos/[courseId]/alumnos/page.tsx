@@ -13,7 +13,7 @@ export default async function CourseStudents({ params }: { params: Promise<{ cou
     const course = await prisma.course.findUnique({
         where: { id: courseId },
         include: {
-            enrollments: {
+            CourseEnrollment: {
                 where: { status: 'approved' }
             }
         }
@@ -39,7 +39,7 @@ export default async function CourseStudents({ params }: { params: Promise<{ cou
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {course.enrollments.map((enr) => (
+                {course.CourseEnrollment.map((enr) => (
                     <div key={enr.id} className="group bg-white p-8 rounded-[3.5rem] border border-slate-100 flex flex-col gap-8 shadow-sm hover:shadow-2xl hover:shadow-slate-200 transition-all duration-500 relative overflow-hidden">
                         <div className="flex items-center gap-6">
                             <div className="size-20 rounded-[2rem] bg-slate-900 text-white flex items-center justify-center font-black text-3xl shadow-xl shadow-slate-900/10 group-hover:scale-110 transition-transform duration-500">
@@ -79,7 +79,7 @@ export default async function CourseStudents({ params }: { params: Promise<{ cou
                     </div>
                 ))}
 
-                {course.enrollments.length === 0 && (
+                {course.CourseEnrollment.length === 0 && (
                     <div className="col-span-full py-24 text-center bg-white rounded-[4rem] border-4 border-dashed border-slate-50 flex flex-col items-center gap-6">
                         <div className="p-8 bg-slate-50 rounded-full text-slate-200">
                             <Users size={64} />

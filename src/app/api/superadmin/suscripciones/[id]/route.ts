@@ -27,7 +27,7 @@ export async function PATCH(
 
         const sub = await prisma.suscripcion.findUnique({
             where: { id },
-            include: { negocio: true }
+            include: { Negocio: true }
         });
 
         if (!sub) return NextResponse.json({ error: "Suscripción no encontrada" }, { status: 404 });

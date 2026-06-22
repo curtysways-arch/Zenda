@@ -18,7 +18,7 @@ export async function PATCH(
             return demoCheck.response;
         }
 
-        const rawStaff = await prisma.Staff.update({
+        const rawStaff = await prisma.staff.update({
             where: { id },
             data: {
                 name,
@@ -59,7 +59,7 @@ export async function DELETE(
             return demoCheck.response;
         }
 
-        await prisma.Staff.delete({
+        await prisma.staff.delete({
             where: { id },
         });
 
