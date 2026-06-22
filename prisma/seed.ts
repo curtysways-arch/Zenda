@@ -73,9 +73,9 @@ async function main() {
 
         // Crear Planes
         const planes = [
-            { name: 'Plan Básico', price: 29.99, max_reservations_per_month: 100, max_fields: 2 },
-            { name: 'Plan Pro', price: 59.99, max_reservations_per_month: 500, max_fields: 5 },
-            { name: 'Plan Ilimitado', price: 99.99, max_reservations_per_month: 0, max_fields: 0 },
+            { id: crypto.randomUUID(), name: 'Plan Básico', price: 29.99, max_reservations_per_month: 100, max_fields: 2, updated_at: new Date() },
+            { id: crypto.randomUUID(), name: 'Plan Pro', price: 59.99, max_reservations_per_month: 500, max_fields: 5, updated_at: new Date() },
+            { id: crypto.randomUUID(), name: 'Plan Ilimitado', price: 99.99, max_reservations_per_month: 999999, max_fields: 999999, updated_at: new Date() },
         ];
 
         for (const p of planes) {
