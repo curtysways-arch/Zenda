@@ -59,13 +59,42 @@ export default function LoginPage() {
                 redirect: false,
             });
 
+            console.log('[LOGIN] signIn result:', res);
+
             if (res?.error) {
                 setError('Email o contraseña incorrectos');
+            } else if (res?.ok) {
+                // Obtener la sesión para determinar el rol del usuario
+                try {
+                    const sessionRes = await fetch('/api/auth/session');
+                    const session = await sessionRes.json();
+                    console.log('[LOGIN] session data:', session);
+
+                    const role = session?.user?.role;
+                    const negocioId = session?.user?.negocioId;
+
+                    if (role === 'SUPER_ADMIN') {
+                        console.log('[LOGIN] Redirigiendo a /superadmin');
+                        router.push('/superadmin');
+                    } else if (role === 'PROFESOR') {
+                        console.log('[LOGIN] Redirigiendo a /profesor');
+                        router.push('/profesor');
+                    } else {
+                        console.log('[LOGIN] Redirigiendo a /admin');
+                        router.push('/admin');
+                    }
+                    router.refresh();
+                } catch (sessionErr) {
+                    // Si no se puede obtener la sesión, redirigir a /admin por defecto
+                    console.error('[LOGIN] Error al obtener sesión:', sessionErr);
+                    router.push('/admin');
+                    router.refresh();
+                }
             } else {
-                router.push('/admin');
-                router.refresh();
+                setError('Respuesta inesperada del servidor. Verifica la configuración.');
             }
         } catch (err) {
+            console.error('[LOGIN] Error general:', err);
             setError('Ocurrió un error inesperado');
         } finally {
             setLoading(false);
