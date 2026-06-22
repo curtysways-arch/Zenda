@@ -24,13 +24,22 @@ if (dbUrl.startsWith('file:')) {
 
 console.log(`🔗 Conectando a: ${finalUrl}`);
 
-// 2. Configurar Prisma siguiendo el patrón de src/lib/prisma.ts
-// Pasamos la URL directamente al adaptador como hace el archivo del proyecto
-const adapter = new PrismaLibSql({
-    url: finalUrl,
-});
+// 2. Configurar Prisma adaptativo según la base de datos
+let prisma: PrismaClient;
 
-const prisma = new PrismaClient({ adapter });
+if (finalUrl.startsWith('postgresql://') || finalUrl.startsWith('postgres://')) {
+    const { Pool } = require('pg');
+    const { PrismaPg } = require('@prisma/adapter-pg');
+    const pool = new Pool({ connectionString: finalUrl });
+    const adapter = new PrismaPg(pool);
+    prisma = new PrismaClient({ adapter });
+} else {
+    const { createClient } = require('@libsql/client');
+    const { PrismaLibSql } = require('@prisma/adapter-libsql');
+    const client = createClient({ url: finalUrl });
+    const adapter = new PrismaLibSql(client);
+    prisma = new PrismaClient({ adapter });
+}
 
 async function main() {
     console.log('🌱 Iniciando siembra de datos...');
