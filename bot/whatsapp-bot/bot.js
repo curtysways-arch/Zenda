@@ -3,6 +3,7 @@ import qrcode from "qrcode-terminal";
 import QRCode from "qrcode";
 import path from "path";
 import http from "http";
+import fs from "fs";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -61,11 +62,9 @@ const httpServer = http.createServer(async (req, res) => {
       }
       
       const authPath = path.join(__dirname, "auth_v2");
-      import("fs").then(fs => {
-        if (fs.existsSync(authPath)) {
-          fs.rmSync(authPath, { recursive: true, force: true });
-        }
-      });
+      if (fs.existsSync(authPath)) {
+        fs.rmSync(authPath, { recursive: true, force: true });
+      }
       
       connectionState = "closed";
       connectedNumber = null;
@@ -83,7 +82,7 @@ const httpServer = http.createServer(async (req, res) => {
   // Endpoint para forzar reconexión / arranque
   if (req.method === "POST" && req.url === "/connect") {
     try {
-      startBot(true);
+      startBot(false); // No borrar credenciales al conectar, usar sesión previa
       res.writeHead(200);
       res.end(JSON.stringify({ success: true, message: "Intentando conectar..." }));
     } catch (e) {
@@ -212,7 +211,6 @@ async function startBot(force = false) {
       // Si forzamos, intentamos una limpieza profunda del folder de auth
       if (force) {
           try {
-              const fs = await import("fs");
               if (fs.existsSync(authPath)) {
                   console.log("[WA BOT] Limpiando sesión previa para reintento fresco...");
                   fs.rmSync(authPath, { recursive: true, force: true });
@@ -233,8 +231,15 @@ async function startBot(force = false) {
         throw authErr;
       }
       
-      // Hardcodeamos versión para evitar problemas de red en fetchLatestBaileysVersion
-      const version = [6, 33, 0]; 
+      // Intentar obtener la versión más reciente de WhatsApp de forma dinámica, con fallback moderno
+      let version = [6, 45, 0];
+      try {
+        const { version: latestVersion } = await fetchLatestBaileysVersion();
+        version = latestVersion;
+        console.log(`[WA BOT] Versión dinámica de WhatsApp cargada: ${version.join(".")}`);
+      } catch (err) {
+        console.warn(`[WA BOT] No se pudo obtener la última versión de Baileys, usando fallback: ${version.join(".")}`);
+      } 
       
       const socketFunc = typeof makeWASocket === "function" ? makeWASocket : makeWASocket.default;
 

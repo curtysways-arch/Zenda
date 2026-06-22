@@ -52,6 +52,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         BOT_PORT: 3001,
+        BOT_HTTP_PORT: 3001,
       },
 
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
