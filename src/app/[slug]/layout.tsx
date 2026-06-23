@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const cacheBuster = negocio.updatedAt ? new Date(negocio.updatedAt).getTime() : Date.now();
 
     return {
-        metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://zenda.app'),
+        metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://citiox.com'),
         title,
         description,
         icons: {
@@ -116,6 +116,10 @@ export default async function NegocioLayout({
         ? primaryColor
         : isSecLight ? '#0f172a' : '#ffffff';
 
+    const isNeutralLight = isLightColor(neutralColor);
+    const cardBgColor = isNeutralLight ? '#ffffff' : 'rgba(255, 255, 255, 0.04)';
+    const cardBorderColor = isNeutralLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.08)';
+
 
     return (
         <>
@@ -134,6 +138,8 @@ export default async function NegocioLayout({
                     --text-header-rgb: ${hexToRgb(textColor)};
                     --text-secondary: ${subTextColor};
                     --text-secondary-rgb: ${hexToRgb(subTextColor)};
+                    --card-bg: ${cardBgColor};
+                    --card-border: ${cardBorderColor};
                     
                     /* Navegación móvil dinámica */
                     --nav-inactive: ${navInactiveColor};
@@ -144,6 +150,12 @@ export default async function NegocioLayout({
                 /* Forzar el color de texto dinámico en los encabezados y textos principales */
                 .text-header-dynamic {
                     color: var(--text-header) !important;
+                }
+
+                /* Clase dinámica para tarjetas adaptativas al color de fondo */
+                .bg-card-dynamic {
+                    background-color: var(--card-bg) !important;
+                    border: 1px solid var(--card-border) !important;
                 }
                 
                 /* Dynamic utility classes for Tertiary */

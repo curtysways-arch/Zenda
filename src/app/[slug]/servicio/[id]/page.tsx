@@ -258,11 +258,11 @@ export default async function CanchaDetailPage({
                     <div className="grid grid-cols-2 gap-3">
                         {/* Price Píldora */}
                         {negocio.mostrarPrecios !== false && (
-                            <div className="col-span-1 bg-white border border-gray-100 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
+                            <div className="col-span-1 bg-card-dynamic rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
                                 <div className="absolute -top-4 -right-4 size-16 bg-emerald-50 rounded-full blur-2xl group-hover:bg-emerald-100 transition-colors" />
-                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Precio</span>
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Precio</span>
                                 <div className="flex items-baseline gap-1.5 z-10">
-                                    <span className="text-4xl font-black text-gray-900 tracking-tighter">
+                                    <span className="text-4xl font-black tracking-tighter text-header-dynamic">
                                         ${cancha.promocion ? Number(cancha.promocion.precioPromo) : Number(cancha.precio || 0)}
                                     </span>
                                     {cancha.promocion && <span className="text-xl font-black line-through text-gray-400 ml-1">${Number(cancha.precioBase)}</span>}
@@ -281,12 +281,12 @@ export default async function CanchaDetailPage({
                         )}
 
                         {/* Duración Píldora */}
-                        <div className="col-span-1 bg-white border border-gray-100 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
+                        <div className="col-span-1 bg-card-dynamic rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
                            <div className="absolute -top-4 -right-4 size-16 bg-purple-50 rounded-full blur-2xl group-hover:bg-purple-100 transition-colors" />
-                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Duración</span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Duración</span>
                             <div className="flex items-center gap-2 z-10">
                                 <Timer size={18} className="text-purple-500" />
-                                <span className="text-2xl font-black text-gray-900 tracking-tighter uppercase">{cancha.duracion || 60} MIN</span>
+                                <span className="text-2xl font-black uppercase tracking-tighter text-header-dynamic">{cancha.duracion || 60} MIN</span>
                             </div>
                         </div>
                     </div>
@@ -297,12 +297,12 @@ export default async function CanchaDetailPage({
                             <div className="bg-tertiary/10 p-1.5 rounded-lg flex items-center justify-center">
                                 <Sparkles size={12} className="text-tertiary" />
                             </div>
-                            <h3 className="text-[11px] font-black tracking-widest text-gray-900 uppercase italic">
-                                Descripción
-                            </h3>
+                             <h3 className="text-[11px] font-black tracking-widest uppercase italic text-header-dynamic">
+                                 Descripción
+                             </h3>
                         </div>
-                        <div className="bg-white border border-gray-100 shadow-sm p-6 rounded-3xl">
-                            <p className="text-sm font-semibold leading-relaxed text-gray-600">
+                        <div className="bg-card-dynamic shadow-sm p-6 rounded-3xl">
+                            <p className="text-sm font-semibold leading-relaxed text-slate-500">
                                 {cancha.descripcion || 'Vive una experiencia única de bienestar y cuidado personal con nuestro equipo de expertos.'}
                             </p>
                         </div>

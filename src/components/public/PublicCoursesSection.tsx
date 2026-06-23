@@ -91,7 +91,7 @@ export default function PublicCoursesSection({
                         <div 
                             key={curso.id} 
                             onClick={(e) => handleCourseClick(e, curso)}
-                            className="group bg-white rounded-[3rem] border border-slate-100 shadow-[0_10px_40px_rgba(0,0,0,0.03)] overflow-hidden flex flex-col cursor-pointer relative transition-all hover:shadow-[0_20px_60px_rgba(0,0,0,0.06)] hover:-translate-y-1 active:scale-[0.98]"
+                            className="group bg-card-dynamic rounded-[3rem] shadow-[0_10px_40px_rgba(0,0,0,0.03)] overflow-hidden flex flex-col cursor-pointer relative transition-all hover:shadow-[0_20px_60px_rgba(0,0,0,0.06)] hover:-translate-y-1 active:scale-[0.98]"
                         >
                             {/* Hero Image Area */}
                             <div className="relative h-64 w-full overflow-hidden bg-slate-50">
@@ -175,7 +175,7 @@ export default function PublicCoursesSection({
 
                                 {/* Footer Action */}
                                 <div className="mt-auto pt-6 border-t border-slate-50 flex items-center justify-between gap-4">
-                                    <div className="text-slate-900">
+                                    <div style={{ color: textColor }}>
                                         {showPrices && (
                                             <>
                                                 <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.3em] leading-none mb-1.5">Inversión</p>

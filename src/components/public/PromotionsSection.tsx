@@ -37,7 +37,7 @@ export default function PromotionsSection({
                     <div
                         key={promo.id}
                         onClick={() => router.push(`/${slug}/promo/${promo.id}`)}
-                        className="group bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-row cursor-pointer relative transition-all active:scale-[0.98] h-32"
+                        className="group bg-card-dynamic rounded-[2rem] shadow-sm overflow-hidden flex flex-row cursor-pointer relative transition-all active:scale-[0.98] h-32"
                     >
                         {/* Imagen Container - Lado Izquierdo */}
                         <div className="relative w-32 shrink-0 overflow-hidden">

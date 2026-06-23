@@ -573,7 +573,7 @@ export default async function PublicNegocioPage({
 
                 <div className="space-y-4">
                     {(resolvedSearchParams?.todos ? filteredCanchas : filteredCanchas.slice(0, 4)).map((service: any) => (
-                        <Link href={"/" + slug + "/servicio/" + service.id} key={service.id} className="bg-white p-5 rounded-[2.2rem] shadow-sm border border-gray-50 flex items-center justify-between group transition-all">
+                        <Link href={"/" + slug + "/servicio/" + service.id} key={service.id} className="bg-card-dynamic p-5 rounded-[2.2rem] shadow-sm flex items-center justify-between group transition-all">
                             <div className="flex items-center gap-5">
                                 <div className="relative">
                                     <img src={getServicePrimaryImage(service, 'medium')} className="w-[72px] h-[72px] rounded-full object-cover border" style={{ borderColor: `${neutralColor}` }} />
@@ -642,7 +642,7 @@ export default async function PublicNegocioPage({
                             <Link 
                                 key={item.id} 
                                 href={`/${slug}/portafolio#trabajo-${item.id}`}
-                                className="group bg-white rounded-[3.5rem] border border-slate-100/60 shadow-2xl shadow-slate-200/40 overflow-hidden flex flex-col transition-all duration-500 hover:shadow-pink-100/20 relative active:scale-[0.98]"
+                                className="group bg-card-dynamic rounded-[3.5rem] shadow-2xl shadow-slate-200/40 overflow-hidden flex flex-col transition-all duration-500 hover:shadow-pink-100/20 relative active:scale-[0.98]"
                             >
                                 <div className="absolute top-5 left-5 z-20">
                                     <div className="px-4 py-1.5 bg-white/90 backdrop-blur-md rounded-full text-[9px] font-black text-slate-900 uppercase tracking-widest border border-white shadow-xl flex items-center gap-2">
@@ -690,7 +690,7 @@ export default async function PublicNegocioPage({
                                         )}
                                     </div>
                                     
-                                    <h4 className="text-2xl font-black text-slate-900 leading-tight">
+                                    <h4 className="text-2xl font-black leading-tight" style={{ color: textColor }}>
                                         {item.title}
                                     </h4>
                                     <p className="text-sm font-medium text-slate-400 leading-relaxed line-clamp-2 italic">
@@ -727,7 +727,7 @@ export default async function PublicNegocioPage({
                             <Link 
                                 href={`/${slug}/pagina/${page.slug}`} 
                                 key={page.id}
-                                className="group relative w-full bg-white rounded-[3.5rem] overflow-hidden border border-slate-100/60 shadow-2xl shadow-slate-200/50 transition-all duration-700"
+                                className="group relative w-full bg-card-dynamic rounded-[3.5rem] overflow-hidden shadow-2xl shadow-slate-200/50 transition-all duration-700"
                             >
                                 <div className="flex flex-col md:flex-row">
                                     <div className="md:w-2/5 aspect-[16/10] md:aspect-square relative overflow-hidden">
@@ -755,7 +755,7 @@ export default async function PublicNegocioPage({
                                         
                                         <div className="flex items-center gap-4">
                                             <div className="h-px w-8 opacity-30" style={{ backgroundColor: primaryColor }} />
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">
+                                            <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: textColor }}>
                                                 Leer artículo
                                             </span>
                                         </div>

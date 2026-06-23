@@ -218,7 +218,7 @@ export class NotificationService {
         });
         
         const telefonoNegocio = negocio?.whatsapp?.replace(/\D/g, '') || '';
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tu-dominio.com';
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://citiox.com';
         const linkReserva = reservaId ? `${appUrl}/${negocio?.slug}/reservas/${reservaId}` : `${appUrl}/${negocio?.slug}`;
 
         const iconUrl = negocio?.logoUrl || '/icons/icon-192x192.png';
@@ -361,7 +361,7 @@ export class NotificationService {
         slug: string,
         studentCount: number = 1
     ) {
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tu-dominio.com';
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://citiox.com';
         const linkInscripcion = `${appUrl}/${slug}/cursos/inscripcion/${enrollmentId}`;
         const linkAdmin = `${appUrl}/admin/cursos/inscripciones`;
 
@@ -451,7 +451,7 @@ export class NotificationService {
         diasRestantes: number,
         fechaFin: Date
     ) {
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tu-dominio.com';
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://citiox.com';
         const linkRenovacion = `${appUrl}/admin/plan`;
         const fechaFormat = fechaFin.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
         
@@ -477,7 +477,7 @@ export class NotificationService {
         fechaFin: Date,
         isAnnual: boolean = false
     ) {
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tu-dominio.com';
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://citiox.com';
         const linkDashboard = `${appUrl}/admin`;
         const fechaFormat = fechaFin.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
         
@@ -512,7 +512,7 @@ export class NotificationService {
     }
 
     async sendRatingReminder(negocioId: string, clienteName: string, telefono: string, negocioName: string, slug: string) {
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tu-dominio.com';
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://citiox.com';
         const link = `${appUrl}/${slug}/mis-reservas`;
         
         const defaultMsg = `🌟 ¡Hola {{nombre}}! Esperamos que hayas disfrutado tu servicio en *{{negocio}}*. \n\nTu opinión es muy importante para nosotros. ¿Podrías regalarnos 1 minuto para calificar tu experiencia?\n\n⭐ *Califica aquí:* \n{{link}}\n\n¡Gracias!`;
