@@ -56,9 +56,12 @@ export default async function LandingPage() {
             {/* Navigation */}
             <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-                    <div className="flex items-center gap-2 group cursor-pointer">
-                        <CitioxLogo className="h-10 sm:h-12 w-auto group-hover:scale-105 transition-transform duration-300" />
-                    </div>
+                    <Link href="/" className="flex items-center gap-3 group cursor-pointer">
+                        <CitioxLogo className="h-14 sm:h-16 w-auto group-hover:scale-105 transition-transform duration-300" />
+                        <span className="text-2xl sm:text-3xl font-black tracking-tight bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 bg-clip-text text-transparent italic">
+                            CitiOx
+                        </span>
+                    </Link>
                     
                     <div className="hidden lg:flex items-center gap-10 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
                         <a href="#como-funciona" className="hover:text-cyan-500 transition-colors">Cómo funciona</a>
@@ -401,7 +404,12 @@ export default async function LandingPage() {
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-12 text-center md:text-left">
                         <div className="space-y-6 flex flex-col items-center md:items-start">
-                            <CitioxLogo className="h-10 w-auto" />
+                            <Link href="/" className="flex items-center gap-2.5 group">
+                                <CitioxLogo className="h-12 w-auto group-hover:scale-105 transition-transform duration-300" />
+                                <span className="text-xl font-black tracking-tight bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 bg-clip-text text-transparent italic">
+                                    CitiOx
+                                </span>
+                            </Link>
                             <p className="text-slate-400 font-medium text-sm max-w-sm">
                                 Tecnología en gestión de reservas diseñada para negocios modernos. Automatiza y escala.
                             </p>
