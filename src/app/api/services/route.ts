@@ -25,13 +25,6 @@ export async function GET(req: Request) {
             orderBy: { createdAt: 'desc' },
         });
 
-        // Traer ubicacionId via SQL (bypass caché de Prisma)
-        const extServices: any[] = await prisma.$queryRawUnsafe(
-            `SELECT id, ubicacionId FROM Cancha WHERE negocioId = ?`,
-            negocioId
-        );
-        const extMap = new Map(extServices.map(s => [s.id, s.ubicacionId]));
-
         const result = rawServices.map(s => {
             const extra = (s.extraInfo as any) || {};
             return {
@@ -40,7 +33,7 @@ export async function GET(req: Request) {
                 tipo: extra.tipo || null,
                 imagenes: s.Imagen || [],
                 imageMedia: s.imageMedia || null,
-                ubicacionId: extMap.get(s.id) || null
+                ubicacionId: s.ubicacionId || null
             };
         });
 
