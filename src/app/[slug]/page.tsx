@@ -353,7 +353,15 @@ export default async function PublicNegocioPage({
         if (override === 'OPEN') return true;
         if (override === 'CLOSED') return false;
 
-        const now = new Date();
+        // Adaptar la fecha actual a la zona horaria del negocio (por defecto de Latinoamérica: America/Bogota / GMT-5)
+        // Esto evita que servidores alojados en otras regiones (como Europa/GMT+2) calculen el estado de abierto/cerrado de forma incorrecta.
+        const timeZone = config?.timeZone || 'America/Bogota';
+        let now = new Date();
+        try {
+            now = new Date(new Date().toLocaleString("en-US", { timeZone }));
+        } catch (e) {
+            console.error('[slug/page] Error converting timeZone:', e);
+        }
 
         // Verificar si hoy es un día de atención configurado
         // getDay() => 0=Dom, 1=Lun, ..., 6=Sab
