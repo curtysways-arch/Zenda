@@ -23,24 +23,20 @@ export default function OlvidePasswordPage() {
         e.preventDefault();
         setLoading(true);
         setError('');
-
         try {
             const res = await fetch('/api/recuperar', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email }),
             });
-
             const data = await res.json();
-
             if (!res.ok) {
                 setError(data.error || 'No se encontró una cuenta con ese correo');
                 return;
             }
-
             setPhoneMasked(data.maskedPhone || '******');
             setStep('OTP');
-        } catch (err) {
+        } catch {
             setError('Error de conexión. Intenta de nuevo.');
         } finally {
             setLoading(false);
@@ -49,211 +45,157 @@ export default function OlvidePasswordPage() {
 
     const verifyOtpAndReset = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        if (newPassword !== confirmPassword) {
-            setError('Las contraseñas no coinciden');
-            return;
-        }
-
-        if (newPassword.length < 6) {
-            setError('La contraseña debe tener al menos 6 caracteres');
-            return;
-        }
-
+        if (newPassword !== confirmPassword) { setError('Las contraseñas no coinciden'); return; }
+        if (newPassword.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return; }
         setLoading(true);
         setError('');
-
         try {
             const res = await fetch('/api/reset-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, otp, newPassword }),
             });
-
             const data = await res.json();
-
-            if (!res.ok) {
-                setError(data.error || 'Código inválido o expirado');
-                return;
-            }
-
+            if (!res.ok) { setError(data.error || 'Código inválido o expirado'); return; }
             setStep('SUCCESS');
-        } catch (err) {
+        } catch {
             setError('Error al restablecer la contraseña');
         } finally {
             setLoading(false);
         }
     };
 
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Elementos decorativos de fondo */}
-            <div className="absolute -top-24 -left-24 w-96 h-96 bg-pink-200/20 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl animate-pulse" />
+    const stepMeta = {
+        EMAIL:        { icon: <ShieldCheck size={32} className="animate-pulse" />, title: 'Recuperar', accent: 'Acceso' },
+        OTP:          { icon: <Phone size={32} />,        title: 'Verifica', accent: 'tu identidad' },
+        NEW_PASSWORD: { icon: <Lock size={32} />,         title: 'Nueva', accent: 'Contraseña' },
+        SUCCESS:      { icon: <CheckCircle2 size={32} />, title: '¡Contraseña', accent: 'Actualizada!' },
+    };
 
-            <div className="max-w-md w-full space-y-8 bg-white/70 backdrop-blur-xl p-10 rounded-[3rem] shadow-2xl shadow-pink-200/40 border border-white/50 relative z-10">
-                <div className="flex flex-col items-center text-center">
-                    <div className="w-20 h-20 bg-gradient-to-tr from-pink-500 to-rose-400 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-pink-200 mb-6 group hover:rotate-6 transition-transform duration-500">
-                        {step === 'EMAIL' && <ShieldCheck size={40} className="animate-pulse" />}
-                        {step === 'OTP' && <Phone size={36} />}
-                        {(step === 'NEW_PASSWORD' || step === 'SUCCESS') && <Lock size={36} />}
+    const current = stepMeta[step];
+
+    return (
+        <div className="min-h-screen bg-white flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Barra gradient top */}
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-cyan-500 via-sky-400 to-purple-600" />
+
+            {/* Destellos fondo */}
+            <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-50 rounded-full blur-3xl -mr-40 -mt-40 opacity-70" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-50 rounded-full blur-3xl -ml-32 -mb-32 opacity-70" />
+
+            <div className="relative z-10 w-full max-w-sm space-y-6">
+
+                {/* Logo + Nombre */}
+                <div className="flex flex-col items-center gap-3 pt-4">
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-[1.8rem] blur-xl opacity-30 scale-110" />
+                        <div className="relative w-20 h-20 bg-white rounded-[1.8rem] shadow-xl shadow-cyan-100 border border-slate-100 flex items-center justify-center p-2.5 overflow-hidden">
+                            <img src="/logo-citiox.png" alt="CitiOx Logo" className="w-full h-full object-contain" />
+                        </div>
                     </div>
-                    
-                    <h2 className="text-3xl font-black text-gray-900 tracking-tight uppercase italic">
-                        {step === 'EMAIL' && <>Recuperar <span className="text-pink-600">Acceso</span></>}
-                        {step === 'OTP' && <>Verifica <span className="text-pink-600">tu identidad</span></>}
-                        {step === 'NEW_PASSWORD' && <>Nueva <span className="text-pink-600">Contraseña</span></>}
-                        {step === 'SUCCESS' && <>¡Contraseña <span className="text-pink-600">Actualizada!</span></>}
-                    </h2>
-                    
-                    <p className="mt-4 text-xs font-bold text-gray-400 uppercase tracking-widest leading-relaxed">
-                        {step === 'EMAIL' && 'Ingresa tu correo electrónico y te enviaremos un código por WhatsApp'}
-                        {step === 'OTP' && (
-                            <span>
-                                Hemos enviado un código PIN por WhatsApp a tu celular registrado terminado en <strong className="text-pink-600">{phoneMasked}</strong>
-                            </span>
-                        )}
-                        {step === 'NEW_PASSWORD' && 'Crea una contraseña segura que puedas recordar fácilmente.'}
-                        {step === 'SUCCESS' && 'Ya puedes iniciar sesión con tu nueva credencial.'}
-                    </p>
+                    <div className="text-center">
+                        <h1 className="text-3xl font-black tracking-tighter bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 bg-clip-text text-transparent italic leading-none">CitiOx</h1>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-0.5">Recuperación de Acceso</p>
+                    </div>
                 </div>
 
-                {error && (
-                    <div className="bg-rose-50 border-l-4 border-rose-500 p-4 text-rose-700 text-xs font-bold uppercase tracking-tight animate-shake rounded-r-xl">
-                        {error}
-                    </div>
-                )}
+                {/* Card del formulario */}
+                <div className="bg-slate-50 rounded-3xl p-6 shadow-sm border border-slate-100 space-y-5">
 
-                {step === 'EMAIL' && (
-                    <form className="mt-8 space-y-6" onSubmit={requestOtp}>
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Email registrado</label>
-                            <div className="flex items-center w-full border border-gray-100 overflow-hidden rounded-2xl focus-within:ring-2 focus-within:ring-pink-500 focus-within:border-transparent transition-all bg-white/50 group">
-                                <div className="pl-5 pr-3 flex items-center justify-center text-gray-400 group-focus-within:text-pink-600 transition-colors">
-                                    <Mail size={20} />
-                                </div>
-                                <input
-                                    type="email"
-                                    required
-                                    className="w-full py-4 pr-5 bg-transparent !text-gray-900 font-bold text-sm placeholder-gray-300 focus:outline-none"
-                                    placeholder="TU@EMAIL.COM"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                />
-                            </div>
+                    {/* Icono del paso */}
+                    <div className="flex flex-col items-center gap-2 text-center">
+                        <div className="size-14 bg-gradient-to-br from-cyan-500 to-purple-600 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-cyan-500/25">
+                            {current.icon}
                         </div>
+                        <div>
+                            <h2 className="text-xl font-black text-slate-900 tracking-tight uppercase italic">
+                                {current.title} <span className="bg-gradient-to-r from-cyan-500 to-purple-600 bg-clip-text text-transparent">{current.accent}</span>
+                            </h2>
+                            <p className="text-xs text-slate-400 font-medium mt-1 max-w-xs mx-auto leading-relaxed">
+                                {step === 'EMAIL' && 'Ingresa tu correo y te enviamos un código por WhatsApp'}
+                                {step === 'OTP' && <>Código enviado al número terminado en <strong className="text-cyan-500">{phoneMasked}</strong></>}
+                                {step === 'NEW_PASSWORD' && 'Crea una contraseña segura que puedas recordar.'}
+                                {step === 'SUCCESS' && 'Ya puedes iniciar sesión con tu nueva contraseña.'}
+                            </p>
+                        </div>
+                    </div>
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="group relative w-full flex justify-center py-5 px-4 border border-transparent text-xs font-black uppercase tracking-[0.2em] rounded-2xl text-white bg-gradient-to-r from-pink-600 to-rose-500 hover:from-pink-700 hover:to-rose-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-all shadow-xl shadow-pink-200 active:scale-[0.98]"
-                        >
-                            {loading ? (
-                                <Loader2 className="animate-spin" size={20} />
-                            ) : (
-                                <span className="flex items-center gap-3">
-                                    Enviar código PIN
-                                    <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
-                                </span>
-                            )}
-                        </button>
+                    {/* Error */}
+                    {error && (
+                        <div className="flex items-start gap-3 bg-rose-50 border border-rose-200 p-3.5 rounded-2xl">
+                            <div className="size-5 shrink-0 mt-0.5 bg-rose-500 rounded-full flex items-center justify-center">
+                                <span className="text-white text-[10px] font-black">!</span>
+                            </div>
+                            <p className="text-rose-700 text-xs font-semibold leading-tight">{error}</p>
+                        </div>
+                    )}
 
-                        <div className="text-center mt-6">
-                            <Link href="/login" className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-pink-600 transition-colors">
-                                Cancelar y volver al Login
+                    {/* PASO EMAIL */}
+                    {step === 'EMAIL' && (
+                        <form className="space-y-4" onSubmit={requestOtp}>
+                            <div className="space-y-1.5">
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Email registrado</label>
+                                <div className="flex items-center w-full bg-white border-2 border-slate-200 overflow-hidden rounded-2xl focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10 transition-all group shadow-sm">
+                                    <div className="pl-4 pr-2 text-slate-300 group-focus-within:text-cyan-500 transition-colors"><Mail size={17} /></div>
+                                    <input type="email" required className="w-full py-3.5 pr-4 bg-transparent text-slate-800 font-semibold text-sm placeholder-slate-300 focus:outline-none" placeholder="tu@correo.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                                </div>
+                            </div>
+                            <button type="submit" disabled={loading} className="group w-full flex items-center justify-center gap-3 bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:brightness-110 transition-all shadow-xl shadow-cyan-500/25 active:scale-[0.98] disabled:opacity-70">
+                                {loading ? <Loader2 className="animate-spin" size={20} /> : <><span>Enviar código PIN</span><ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></>}
+                            </button>
+                            <div className="text-center">
+                                <Link href="/login" className="text-[10px] font-black uppercase tracking-wider text-slate-400 hover:text-cyan-500 transition-colors">Cancelar y volver al Login</Link>
+                            </div>
+                        </form>
+                    )}
+
+                    {/* PASO OTP + NUEVA CONTRASEÑA */}
+                    {(step === 'OTP' || step === 'NEW_PASSWORD') && (
+                        <form className="space-y-4" onSubmit={verifyOtpAndReset}>
+                            <div className="space-y-1.5">
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Código PIN (6 dígitos)</label>
+                                <div className="flex items-center w-full bg-white border-2 border-slate-200 overflow-hidden rounded-2xl focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10 transition-all group shadow-sm">
+                                    <div className="pl-4 pr-2 text-slate-300 group-focus-within:text-cyan-500 transition-colors"><ShieldCheck size={17} /></div>
+                                    <input type="text" required maxLength={6} className="w-full py-3.5 pr-4 bg-transparent text-slate-800 font-black tracking-[0.5em] text-lg placeholder-slate-300 focus:outline-none" placeholder="000000" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} />
+                                </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Nueva Contraseña</label>
+                                <div className="flex items-center w-full bg-white border-2 border-slate-200 overflow-hidden rounded-2xl focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10 transition-all group shadow-sm">
+                                    <div className="pl-4 pr-2 text-slate-300 group-focus-within:text-cyan-500 transition-colors"><Lock size={17} /></div>
+                                    <input type="password" required className="w-full py-3.5 pr-4 bg-transparent text-slate-800 font-semibold text-sm placeholder-slate-300 focus:outline-none" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                                </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Confirmar Contraseña</label>
+                                <div className="flex items-center w-full bg-white border-2 border-slate-200 overflow-hidden rounded-2xl focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10 transition-all group shadow-sm">
+                                    <div className="pl-4 pr-2 text-slate-300 group-focus-within:text-cyan-500 transition-colors"><Lock size={17} /></div>
+                                    <input type="password" required className="w-full py-3.5 pr-4 bg-transparent text-slate-800 font-semibold text-sm placeholder-slate-300 focus:outline-none" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                                </div>
+                            </div>
+                            <button type="submit" disabled={loading || otp.length !== 6 || !newPassword || !confirmPassword} className="group w-full flex items-center justify-center gap-3 bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:brightness-110 transition-all shadow-xl shadow-cyan-500/25 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
+                                {loading ? <Loader2 className="animate-spin" size={20} /> : <><span>Guardar y Entrar</span><Lock size={18} /></>}
+                            </button>
+                        </form>
+                    )}
+
+                    {/* PASO SUCCESS */}
+                    {step === 'SUCCESS' && (
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="size-20 bg-gradient-to-br from-cyan-500/10 to-purple-500/10 border border-cyan-200 rounded-full flex items-center justify-center text-cyan-500 animate-in zoom-in duration-500">
+                                <CheckCircle2 size={40} />
+                            </div>
+                            <Link href="/login" className="group w-full flex items-center justify-center gap-3 bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:brightness-110 transition-all shadow-xl shadow-cyan-500/25 active:scale-[0.98]">
+                                Iniciar Sesión Ahora
+                                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                             </Link>
                         </div>
-                    </form>
-                )}
+                    )}
+                </div>
 
-                {(step === 'OTP' || step === 'NEW_PASSWORD') && (
-                    <form className="mt-8 space-y-6" onSubmit={verifyOtpAndReset}>
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Código PIN (6 dígitos)</label>
-                            <div className="flex items-center w-full border border-gray-100 overflow-hidden rounded-2xl focus-within:ring-2 focus-within:ring-pink-500 focus-within:border-transparent transition-all bg-white/50 group">
-                                <div className="pl-5 pr-3 flex items-center justify-center text-gray-400 group-focus-within:text-pink-600 transition-colors">
-                                    <ShieldCheck size={20} />
-                                </div>
-                                <input
-                                    type="text"
-                                    required
-                                    maxLength={6}
-                                    className="w-full py-4 pr-5 bg-transparent !text-gray-900 font-black tracking-[0.5em] text-lg placeholder-gray-300 focus:outline-none"
-                                    placeholder="000000"
-                                    value={otp}
-                                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Nueva Contraseña</label>
-                            <div className="flex items-center w-full border border-gray-100 overflow-hidden rounded-2xl focus-within:ring-2 focus-within:ring-pink-500 focus-within:border-transparent transition-all bg-white/50 group">
-                                <div className="pl-5 pr-3 flex items-center justify-center text-gray-400 group-focus-within:text-pink-600 transition-colors">
-                                    <Lock size={20} />
-                                </div>
-                                <input
-                                    type="password"
-                                    required
-                                    className="w-full py-4 pr-5 bg-transparent !text-gray-900 font-bold text-sm placeholder-gray-300 focus:outline-none"
-                                    placeholder="••••••••"
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Confirmar Contraseña</label>
-                            <div className="flex items-center w-full border border-gray-100 overflow-hidden rounded-2xl focus-within:ring-2 focus-within:ring-pink-500 focus-within:border-transparent transition-all bg-white/50 group">
-                                <div className="pl-5 pr-3 flex items-center justify-center text-gray-400 group-focus-within:text-pink-600 transition-colors">
-                                    <Lock size={20} />
-                                </div>
-                                <input
-                                    type="password"
-                                    required
-                                    className="w-full py-4 pr-5 bg-transparent !text-gray-900 font-bold text-sm placeholder-gray-300 focus:outline-none"
-                                    placeholder="••••••••"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={loading || otp.length !== 6 || !newPassword || !confirmPassword}
-                            className="group relative w-full flex justify-center py-5 px-4 border border-transparent text-xs font-black uppercase tracking-[0.2em] rounded-2xl text-white bg-gradient-to-r from-pink-600 to-rose-500 hover:from-pink-700 hover:to-rose-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-all shadow-xl shadow-pink-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {loading ? (
-                                <Loader2 className="animate-spin" size={20} />
-                            ) : (
-                                <span className="flex items-center gap-3">
-                                    Guardar y Entrar
-                                    <Lock size={18} className="group-hover:scale-110 transition-transform" />
-                                </span>
-                            )}
-                        </button>
-                    </form>
-                )}
-
-                {step === 'SUCCESS' && (
-                    <div className="mt-8 space-y-6 flex flex-col items-center">
-                        <div className="size-24 bg-pink-50 rounded-full flex items-center justify-center text-pink-600 mb-4 animate-in zoom-in duration-500 shadow-inner">
-                            <CheckCircle2 size={48} />
-                        </div>
-                        
-                        <Link
-                            href="/login"
-                            className="group relative w-full flex justify-center py-5 px-4 border border-transparent text-xs font-black uppercase tracking-[0.2em] rounded-2xl text-white bg-gradient-to-r from-pink-600 to-rose-500 hover:from-pink-700 hover:to-rose-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-all shadow-xl shadow-pink-200 active:scale-[0.98]"
-                        >
-                            <span className="flex items-center gap-3">
-                                Iniciar Sesión Ahora
-                                <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
-                            </span>
-                        </Link>
-                    </div>
-                )}
+                <p className="text-center text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+                    © 2026 CitiOx • Booking & App Solutions
+                </p>
             </div>
         </div>
     );

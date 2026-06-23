@@ -51,12 +51,12 @@ export default function SuperAdminPagosPage() {
     if (status === "loading" || loading) {
         return (
             <div className="flex items-center justify-center p-24">
-                <Loader2 size={36} className="animate-spin text-emerald-500" />
+                <Loader2 size={36} className="animate-spin text-cyan-500" />
             </div>
         );
     }
 
-    if (!session || ((session.user as any).role !== 'SUPERADMIN' && (session.user as any).role !== 'ADMIN')) {
+    if (!session || !['SUPERADMIN', 'SUPER_ADMIN', 'ADMIN'].includes((session.user as any).role)) {
         redirect('/');
         return null;
     }
@@ -67,7 +67,7 @@ export default function SuperAdminPagosPage() {
                 <div>
                     <div className="flex items-center gap-3 mb-1">
                         <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight uppercase italic flex items-center gap-2">
-                            <Banknote className="text-emerald-500" size={32} />
+                            <Banknote className="text-cyan-500" size={32} />
                             Módulo de Pagos
                         </h2>
                         {pendingPayments.length > 0 && (
@@ -87,7 +87,7 @@ export default function SuperAdminPagosPage() {
                         onClick={() => setActiveTab('VERIFICAR')}
                         className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
                             activeTab === 'VERIFICAR' 
-                                ? 'bg-white dark:bg-slate-800 text-emerald-500 shadow-md' 
+                                ? 'bg-white dark:bg-slate-800 text-cyan-500 shadow-md' 
                                 : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
                         }`}
                     >
@@ -97,7 +97,7 @@ export default function SuperAdminPagosPage() {
                         onClick={() => setActiveTab('CUENTAS')}
                         className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
                             activeTab === 'CUENTAS' 
-                                ? 'bg-white dark:bg-slate-800 text-emerald-500 shadow-md' 
+                                ? 'bg-white dark:bg-slate-800 text-cyan-500 shadow-md' 
                                 : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
                         }`}
                     >
