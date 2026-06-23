@@ -353,21 +353,52 @@ export default async function PublicNegocioPage({
         if (override === 'OPEN') return true;
         if (override === 'CLOSED') return false;
 
-        // Adaptar la fecha actual a la zona horaria del negocio (por defecto de Latinoamérica: America/Bogota / GMT-5)
+        // Obtener los componentes de tiempo en la zona horaria del negocio (por defecto de Latinoamérica: America/Bogota / GMT-5)
         // Esto evita que servidores alojados en otras regiones (como Europa/GMT+2) calculen el estado de abierto/cerrado de forma incorrecta.
         const timeZone = config?.timeZone || 'America/Bogota';
-        let now = new Date();
+        let hour = 0;
+        let minute = 0;
+        let todayDay = 0;
+
         try {
-            now = new Date(new Date().toLocaleString("en-US", { timeZone }));
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone,
+                hour: 'numeric',
+                minute: 'numeric',
+                hourCycle: 'h23',
+                weekday: 'short'
+            });
+            const parts = formatter.formatToParts(new Date());
+            const partValues: Record<string, string> = {};
+            parts.forEach(p => {
+                partValues[p.type] = p.value;
+            });
+
+            hour = parseInt(partValues.hour, 10);
+            minute = parseInt(partValues.minute, 10);
+            const weekdayStr = partValues.weekday;
+
+            const weekdayMap: Record<string, number> = {
+                'Sun': 0,
+                'Mon': 1,
+                'Tue': 2,
+                'Wed': 3,
+                'Thu': 4,
+                'Fri': 5,
+                'Sat': 6
+            };
+            todayDay = weekdayMap[weekdayStr] ?? 0;
         } catch (e) {
             console.error('[slug/page] Error converting timeZone:', e);
+            const fallbackNow = new Date();
+            hour = fallbackNow.getHours();
+            minute = fallbackNow.getMinutes();
+            todayDay = fallbackNow.getDay();
         }
 
         // Verificar si hoy es un día de atención configurado
         // getDay() => 0=Dom, 1=Lun, ..., 6=Sab
         // El admin también usa 0=Dom, 1=Lun, ..., 6=Sab (mismo sistema JS)
-        const todayDay = now.getDay();
-
         const diasAtencionRaw = config?.diasAtencion;
         if (diasAtencionRaw && Array.isArray(diasAtencionRaw) && diasAtencionRaw.length > 0) {
             const diasNumericos = diasAtencionRaw.map((d: any) => Number(d));
@@ -377,7 +408,7 @@ export default async function PublicNegocioPage({
         }
 
         // Verificar horario
-        const currentTime = now.getHours() * 60 + now.getMinutes();
+        const currentTime = hour * 60 + minute;
         const [openHour, openMin] = (negocio.horarioApertura || "08:00").split(':').map(Number);
         const [closeHour, closeMin] = (negocio.horarioCierre || "20:00").split(':').map(Number);
         const openTotal = openHour * 60 + openMin;
