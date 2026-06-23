@@ -276,6 +276,7 @@ model Negocio {
   colorTerciario         String?               @default("#7B68EE")
   colorNeutral           String?               @default("#FFF5F5")
   colorTexto             String?               @default("#ffffff")
+  colorSubTexto          String?               @default("#475569")
   heroTitulo             String?
   heroSubtitulo          String?
   mensajeBienvenida      String?

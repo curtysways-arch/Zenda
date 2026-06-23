@@ -8,6 +8,7 @@ export interface NegocioColors {
     colorSecundario?: string;
     colorTerciario?: string;
     colorNeutral?: string;
+    colorSubTexto?: string;
 }
 
 interface ColorFieldProps {
@@ -171,6 +172,16 @@ export default function ColorPaletteEditor({
                     presets={['#FFF5F5', '#f8fafc', '#fdf4ff', '#fffbeb', '#f0fdf4', '#0f172a']}
                     onChange={update('colorNeutral')}
                 />
+
+                <ColorField
+                    label="6. Color de Subtítulos"
+                    sublabel="Texto secundario"
+                    description="Afecta: Descripciones de servicios, subtítulos del hero, mensajes secundarios y detalles informativos."
+                    value={colors.colorSubTexto || ''}
+                    defaultValue="#475569"
+                    presets={['#475569', '#64748b', '#94a3b8', '#ffffff', '#f1f5f9', '#1e293b']}
+                    onChange={update('colorSubTexto')}
+                />
             </div>
 
             <button
@@ -181,6 +192,7 @@ export default function ColorPaletteEditor({
                     colorTexto: colors.colorTexto,
                     colorTerciario: colors.colorTerciario,
                     colorNeutral: colors.colorNeutral,
+                    colorSubTexto: colors.colorSubTexto,
                 })}
                 disabled={isSaving}
                 className="w-full py-4 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 transition-opacity"

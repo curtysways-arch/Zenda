@@ -196,6 +196,7 @@ export default function NegocioConfigPage() {
                                         colorTexto: negocio.colorTexto,
                                         colorTerciario: negocio.colorTerciario,
                                         colorNeutral: negocio.colorNeutral,
+                                        colorSubTexto: negocio.colorSubTexto,
                                     }}
                                     onChange={(updatedColors) => setNegocio({ ...negocio, ...updatedColors })}
                                     onSave={async (colorData) => {

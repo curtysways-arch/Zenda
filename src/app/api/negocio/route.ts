@@ -28,7 +28,7 @@ export async function GET() {
 
         if (negocio) {
             try {
-                const extraData: any[] = await prisma.$queryRawUnsafe(`SELECT saludoTitulo, nombreFallback, mensajeBienvenida, colorSecundario, colorTerciario, colorNeutral, colorTexto, logoUrl, heroTitulo, heroSubtitulo, tieneCafeteria, tieneParking, tieneWifi, tieneVestidores, tieneTienda, instagramUrl, facebookUrl, tiktokUrl, emailContacto, websiteUrl, youtubeUrl, faqUrl, terminosUrl, privacidadUrl, whatsapp_notifications FROM Negocio WHERE id = '${negocio.id}'`);
+                const extraData: any[] = await prisma.$queryRawUnsafe(`SELECT saludoTitulo, nombreFallback, mensajeBienvenida, colorSecundario, colorTerciario, colorNeutral, colorTexto, colorSubTexto, logoUrl, heroTitulo, heroSubtitulo, tieneCafeteria, tieneParking, tieneWifi, tieneVestidores, tieneTienda, instagramUrl, facebookUrl, tiktokUrl, emailContacto, websiteUrl, youtubeUrl, faqUrl, terminosUrl, privacidadUrl, whatsapp_notifications FROM Negocio WHERE id = '${negocio.id}'`);
                 if (extraData && extraData.length > 0) {
                     if (!('saludoTitulo' in negocio) || negocio.saludoTitulo === undefined) {
                       negocio.saludoTitulo = extraData[0].saludoTitulo;
@@ -50,6 +50,9 @@ export async function GET() {
                     }
                     if (!('colorTexto' in negocio) || negocio.colorTexto === undefined || negocio.colorTexto === null) {
                         negocio.colorTexto = extraData[0].colorTexto;
+                    }
+                    if (!('colorSubTexto' in negocio) || negocio.colorSubTexto === undefined || negocio.colorSubTexto === null) {
+                        negocio.colorSubTexto = extraData[0].colorSubTexto;
                     }
                     if (!('logoUrl' in negocio) || negocio.logoUrl === undefined) {
                         negocio.logoUrl = extraData[0].logoUrl;
@@ -111,7 +114,7 @@ export async function PATCH(req: Request) {
         const {
             nombre, whatsapp, direccion, logoUrl,
             horarioApertura, horarioCierre, precioHora,
-            colorPrimario, colorSecundario, colorTerciario, colorNeutral, colorTexto, pagosActivos, pagoPorcentaje,
+            colorPrimario, colorSecundario, colorTerciario, colorNeutral, colorTexto, colorSubTexto, pagosActivos, pagoPorcentaje,
             mercadoPagoPublicKey, mercadoPagoAccessToken,
             heroTitulo, heroSubtitulo, mensajeBienvenida, saludoTitulo, nombreFallback,
             tieneCafeteria, tieneParking, tieneWifi, tieneVestidores, tieneTienda,
@@ -134,6 +137,7 @@ export async function PATCH(req: Request) {
             colorTerciario,
             colorNeutral,
             colorTexto,
+            colorSubTexto,
             heroTitulo,
             heroSubtitulo,
             mensajeBienvenida,

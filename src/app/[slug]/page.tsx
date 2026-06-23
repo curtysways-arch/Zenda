@@ -475,7 +475,7 @@ export default async function PublicNegocioPage({
                             {negocio.nombre.substring(0, 1)}
                         </div>
                     )}
-                    <span className="font-black text-2xl uppercase tracking-[0.1em] leading-none drop-shadow-md" style={{ color: primaryColor }}>
+                    <span className="font-black text-2xl uppercase tracking-[0.1em] leading-none drop-shadow-md" style={{ color: textColor }}>
                         {negocio.nombre}
                     </span>
                 </Link>
@@ -583,7 +583,7 @@ export default async function PublicNegocioPage({
                                 </div>
                                 <div>
                                     <h4 className="font-black text-lg leading-tight" style={{ color: textColor }}>{service.nombre}</h4>
-                                    <p className="text-[11px] font-bold mt-1.5 opacity-80" style={{ color: primaryColor }}>{service.extraInfo?.descripcion || service.descripcion || 'Libera tensión y recupera tu energía vital.'}</p>
+                                    <p className="text-[11px] font-bold mt-1.5 text-slate-500">{service.extraInfo?.descripcion || service.descripcion || 'Libera tensión y recupera tu energía vital.'}</p>
                                 </div>
                             </div>
                             <ChevronRight style={{ color: primaryColor }} className="w-6 h-6 opacity-30 group-hover:opacity-100 transition-opacity" />

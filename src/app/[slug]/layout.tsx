@@ -81,13 +81,29 @@ export default async function NegocioLayout({
     let tertiaryColor = '#1dc95c';
     let neutralColor = '#ffffff';
     let textColor = '#000000';
+    let subTextColor = '#475569';
 
     if (canUseCustomColors) {
         primaryColor = (negocio as any).colorPrimario && (negocio as any).colorPrimario !== '#1dc95c' ? (negocio as any).colorPrimario : '#db2777'; // pink-600
         secondaryColor = (negocio as any).colorSecundario && (negocio as any).colorSecundario !== '#112117' ? (negocio as any).colorSecundario : '#020617'; // slate-950
         tertiaryColor = (negocio as any).colorTerciario || primaryColor; 
         neutralColor = (negocio as any).colorNeutral || '#FFF5F5';
-        textColor = (negocio as any).colorTexto || '#ffffff';
+        
+        // Calcular textColor dinámicamente si no está configurado para evitar texto blanco sobre fondo blanco
+        const rawTextColor = (negocio as any).colorTexto;
+        textColor = rawTextColor
+            ? rawTextColor
+            : (() => {
+                const hex = neutralColor.replace('#', '');
+                if (hex.length !== 6) return '#1e293b';
+                const r = parseInt(hex.substring(0, 2), 16);
+                const g = parseInt(hex.substring(2, 4), 16);
+                const b = parseInt(hex.substring(4, 6), 16);
+                const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                return luma < 140 ? '#f8fafc' : '#1e293b';
+            })();
+            
+        subTextColor = (negocio as any).colorSubTexto || '#475569';
     }
 
     const isSecLight = isLightColor(secondaryColor);
@@ -116,6 +132,8 @@ export default async function NegocioLayout({
                     --neutral-rgb: ${hexToRgb(neutralColor)};
                     --text-header: ${textColor};
                     --text-header-rgb: ${hexToRgb(textColor)};
+                    --text-secondary: ${subTextColor};
+                    --text-secondary-rgb: ${hexToRgb(subTextColor)};
                     
                     /* Navegación móvil dinámica */
                     --nav-inactive: ${navInactiveColor};
@@ -139,9 +157,14 @@ export default async function NegocioLayout({
                 .border-neutral-custom { border-color: var(--neutral) !important; }
 
                 /* Interceptar colores de Tailwind y redirigirlos al branding */
-                .text-emerald-300, .text-emerald-400, .text-indigo-400, .text-blue-400, .text-slate-400 { color: rgba(var(--primary-rgb), 0.85) !important; }
-                .text-emerald-500, .text-indigo-500, .text-blue-500, .text-indigo-600, .text-slate-500, .text-slate-600 { color: var(--primary) !important; }
-                .text-emerald-600, .text-indigo-700, .text-slate-700 { color: var(--primary) !important; filter: brightness(0.9); }
+                .text-emerald-300, .text-emerald-400, .text-indigo-400, .text-blue-400 { color: rgba(var(--primary-rgb), 0.85) !important; }
+                .text-emerald-500, .text-indigo-500, .text-blue-500, .text-indigo-600 { color: var(--primary) !important; }
+                .text-emerald-600, .text-indigo-700 { color: var(--primary) !important; filter: brightness(0.9); }
+
+                /* Interceptar colores de Tailwind neutros para descripciones y subtítulos */
+                .text-slate-400 { color: rgba(var(--text-secondary-rgb), 0.8) !important; }
+                .text-slate-500, .text-slate-600 { color: var(--text-secondary) !important; }
+                .text-slate-700 { color: var(--text-secondary) !important; filter: brightness(0.85); }
 
                 .bg-emerald-50, .bg-indigo-50, .bg-blue-50, .bg-slate-50  { background-color: rgba(var(--primary-rgb), 0.05) !important; }
                 .bg-emerald-100, .bg-indigo-100, .bg-slate-100 { background-color: rgba(var(--primary-rgb), 0.1)  !important; }

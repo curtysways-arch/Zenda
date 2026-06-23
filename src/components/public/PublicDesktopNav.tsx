@@ -105,7 +105,7 @@ export default function PublicDesktopNav({
                     {nombre && (
                         <span 
                             className="font-black text-xl uppercase tracking-[0.1em] leading-none drop-shadow-sm group-hover:opacity-80 transition-opacity"
-                            style={{ color: 'var(--primary)' }}
+                            style={{ color: 'var(--text-header)' }}
                         >
                             {nombre}
                         </span>

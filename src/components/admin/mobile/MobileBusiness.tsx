@@ -151,6 +151,7 @@ export default function MobileBusiness({
                                     colorTexto: localNegocio.colorTexto,
                                     colorTerciario: localNegocio.colorTerciario,
                                     colorNeutral: localNegocio.colorNeutral,
+                                    colorSubTexto: localNegocio.colorSubTexto,
                                 }}
                                 onChange={(updatedColors) =>
                                     setLocalNegocio((prev: any) => ({ ...prev, ...updatedColors }))
