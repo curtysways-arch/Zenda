@@ -22,13 +22,14 @@ export default function PWAInstallPrompt() {
     const [businessName, setBusinessName] = useState("Zenda App");
     const [businessLogo, setBusinessLogo] = useState("");
  
-    // Solo mostrar en la página del negocio final (/[slug])
+    // Solo mostrar en la página del negocio final (/[slug]) o en la administración (/admin)
     const segments = pathname.split('/').filter(Boolean);
-    const isPublicBusinessPage = segments.length >= 1 && !['admin', 'superadmin', 'login', 'register', 'api'].includes(segments[0]);
+    const isPublicBusinessPage = segments.length >= 1 && !['admin', 'superadmin', 'login', 'register', 'olvide-password', 'api'].includes(segments[0]);
+    const isAdminPage = segments.length >= 1 && ['admin', 'superadmin', 'login', 'register', 'olvide-password'].includes(segments[0]);
     const slug = isPublicBusinessPage ? segments[0] : null;
  
     useEffect(() => {
-        if (!isPublicBusinessPage) return;
+        if (!isPublicBusinessPage && !isAdminPage) return;
  
         // Check standalone mode
         setIsInstalled(isPWAInstalled());
@@ -50,8 +51,11 @@ export default function PWAInstallPrompt() {
  
         addInstallationListener(handleAvailabilityChange);
  
-        // Cargar información real del negocio
-        if (slug) {
+        if (isAdminPage) {
+            setBusinessName("CitiOx Admin");
+            setBusinessLogo("/logo-citiox.png");
+        } else if (slug) {
+            // Cargar información real del negocio
             fetch(`/api/public/negocio/${slug}`)
                 .then(res => res.json())
                 .then(data => {
@@ -74,7 +78,7 @@ export default function PWAInstallPrompt() {
         return () => {
             removeInstallationListener(handleAvailabilityChange);
         };
-    }, [isPublicBusinessPage, isInstalled, slug]);
+    }, [isPublicBusinessPage, isAdminPage, isInstalled, slug]);
  
     const handleInstallClick = async () => {
         if (!canInstall) {
@@ -90,7 +94,7 @@ export default function PWAInstallPrompt() {
         }
     };
  
-    if (isInstalled || !isVisible || !isPublicBusinessPage) return null;
+    if (isInstalled || !isVisible || (!isPublicBusinessPage && !isAdminPage)) return null;
  
     return (
         <div className="fixed bottom-24 left-4 right-4 z-[9999] animate-in slide-in-from-bottom-10 fade-in duration-700 max-w-sm mx-auto">
