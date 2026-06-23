@@ -338,14 +338,25 @@ export default async function PublicNegocioPage({
     
     // DEFINICIÃ“N DE COLORES DESDE ADMIN
     const primaryColor = (negocio as any).colorPrimario || 'var(--primary)';
-    // Si colorTexto es blanco o no está definido, usar negro oscuro para garantizar visibilidad
-    const rawTextColor = (negocio as any).colorTexto;
-    const textColor = (!rawTextColor || rawTextColor === '#ffffff' || rawTextColor === '#fff' || rawTextColor.toLowerCase() === '#ffffff') 
-        ? '#1e293b' 
-        : rawTextColor;
     const secondaryColor = (negocio as any).colorSecundario || '#0f172a';
     const tertiaryColor = (negocio as any).colorTerciario || '#7B68EE';
     const neutralColor = (negocio as any).colorNeutral || '#fff8f6';
+
+    // Respetar el color de texto configurado por el admin. Si no está definido,
+    // elegir automáticamente: fondo oscuro → texto blanco, fondo claro → texto oscuro.
+    const rawTextColor = (negocio as any).colorTexto;
+    const textColor = rawTextColor
+        ? rawTextColor
+        : (() => {
+            const hex = neutralColor.replace('#', '');
+            if (hex.length !== 6) return '#1e293b';
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            return luma < 140 ? '#f8fafc' : '#1e293b';
+        })();
+
 
     // CÁLCULO DE ESTADO ABIERTO/CERRADO
     const isOpenNow = () => {

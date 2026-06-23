@@ -7,6 +7,7 @@ import BannerGalleryAdmin from '@/components/admin/BannerGalleryAdmin';
 import FeatureGate from '@/components/ui/FeatureGate';
 import Link from 'next/link';
 import ImageUploader from '@/components/ui/ImageUploader';
+import ColorPaletteEditor from '@/components/admin/ColorPaletteEditor';
 
 export default function NegocioConfigPage() {
     const [negocio, setNegocio] = useState<any>(null);
@@ -180,164 +181,50 @@ export default function NegocioConfigPage() {
                             <div className="space-y-4 pt-6 border-t border-gray-100">
                                 <div>
                                     <h3 className="text-lg font-black text-gray-900 tracking-tight flex items-center gap-2">
-                                        <Sparkles size={18} className="text-emerald-500" />
+                                        <Sparkles size={18} className="text-pink-500" />
                                         Diseño y Personalización Cromática
                                     </h3>
-                                    <p className="text-xs font-medium text-gray-400 mt-1 uppercase tracking-widest">Controla cada barra y elemento visual</p>
+                                    <p className="text-xs font-medium text-gray-400 mt-1 uppercase tracking-widest">Controla cada elemento visual de tu página pública</p>
                                 </div>
                             </div>
 
                             <FeatureGate feature="custom_colors" fallbackMessage="Tu plan actual no permite personalizar la paleta de colores.">
-                                <div className="space-y-4 pt-4">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">1. Color de Marca (Botones y Selección)</label>
-                                <p className="text-[9px] text-gray-400 px-2 -mt-2 font-semibold italic">Controla: Botón de reserva, servicios seleccionados e indicadores activos.</p>
-                                <div className="flex items-center gap-6">
-                                    <div className="relative group">
-                                        <input
-                                            type="color"
-                                            className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-white shadow-lg appearance-none bg-transparent overflow-hidden"
-                                            value={negocio.colorPrimario || '#1dc95c'}
-                                            onChange={e => setNegocio({ ...negocio, colorPrimario: e.target.value })}
-                                        />
-                                        <div className="absolute inset-0 rounded-2xl pointer-events-none ring-1 ring-black/5" />
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {['#1dc95c', '#1d4ed8', '#7c3aed', '#db2777', '#ea580c', '#111827'].map(color => (
-                                            <button
-                                                key={color}
-                                                type="button"
-                                                onClick={() => setNegocio({ ...negocio, colorPrimario: color })}
-                                                className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${negocio.colorPrimario === color ? 'border-gray-900 scale-110' : 'border-transparent opacity-60 hover:opacity-100'}`}
-                                                style={{ backgroundColor: color }}
-                                            />
-                                        ))}
-                                    </div>
-                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                                        {negocio.colorPrimario || '#1dc95c'}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4 pt-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">2. Color de Títulos / Encabezados (Textos)</label>
-                                <p className="text-[9px] text-gray-400 px-2 -mt-2 font-semibold italic">Controla: Títulos principales y subtítulos de toda la página.</p>
-                                <div className="flex items-center gap-6">
-                                    <div className="relative group">
-                                        <input
-                                            type="color"
-                                            className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-white shadow-lg appearance-none bg-transparent overflow-hidden"
-                                            value={negocio.colorTexto || '#1e293b'}
-                                            onChange={e => setNegocio({ ...negocio, colorTexto: e.target.value })}
-                                        />
-                                        <div className="absolute inset-0 rounded-2xl pointer-events-none ring-1 ring-black/5" />
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {['#1e293b', '#0f172a', '#374151', '#64748b', '#ffffff', '#f8fafc'].map(color => (
-                                            <button
-                                                key={color}
-                                                type="button"
-                                                onClick={() => setNegocio({ ...negocio, colorTexto: color })}
-                                                className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${negocio.colorTexto === color ? 'border-gray-900 scale-110' : 'border-transparent opacity-60 hover:opacity-100'}`}
-                                                style={{ backgroundColor: color }}
-                                            />
-                                        ))}
-                                    </div>
-                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                                        {negocio.colorTexto || '#1e293b'}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4 pt-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">3. Color de BARRA INFERIOR (Fondo de Navegación)</label>
-                                <p className="text-[9px] text-gray-400 px-2 -mt-2 font-semibold italic">Controla: El fondo de la barra de menú inferior (Inicio, Reservas, etc).</p>
-                                <div className="flex items-center gap-6">
-                                    <div className="relative group">
-                                        <input
-                                            type="color"
-                                            className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-white shadow-lg appearance-none bg-transparent overflow-hidden"
-                                            value={negocio.colorSecundario || '#112117'}
-                                            onChange={e => setNegocio({ ...negocio, colorSecundario: e.target.value })}
-                                        />
-                                        <div className="absolute inset-0 rounded-2xl pointer-events-none ring-1 ring-black/5" />
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {['#112117', '#0f172a', '#1e1b4b', '#450a0a', '#000000', '#2d3748', '#40E0D0'].map(color => (
-                                            <button
-                                                key={color}
-                                                type="button"
-                                                onClick={() => setNegocio({ ...negocio, colorSecundario: color })}
-                                                className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${negocio.colorSecundario === color ? 'border-gray-900 scale-110' : 'border-transparent opacity-60 hover:opacity-100'}`}
-                                                style={{ backgroundColor: color }}
-                                            />
-                                        ))}
-                                    </div>
-                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                                        {negocio.colorSecundario || '#112117'}
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="space-y-4 pt-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">4. Color de ACENTOS (Notificaciones e Íconos)</label>
-                                <p className="text-[9px] text-gray-400 px-2 -mt-2 font-semibold italic">Controla: Puntos de alerta, estrellas de calificación y pequeños detalles decorativos.</p>
-                                <div className="flex items-center gap-6">
-                                    <div className="relative group">
-                                        <input
-                                            type="color"
-                                            className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-white shadow-lg appearance-none bg-transparent overflow-hidden"
-                                            value={negocio.colorTerciario || '#7B68EE'}
-                                            onChange={e => setNegocio({ ...negocio, colorTerciario: e.target.value })}
-                                        />
-                                        <div className="absolute inset-0 rounded-2xl pointer-events-none ring-1 ring-black/5" />
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {['#7B68EE', '#9f1239', '#eab308', '#ec4899', '#8b5cf6', '#14b8a6'].map(color => (
-                                            <button
-                                                key={color}
-                                                type="button"
-                                                onClick={() => setNegocio({ ...negocio, colorTerciario: color })}
-                                                className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${negocio.colorTerciario === color ? 'border-gray-900 scale-110' : 'border-transparent opacity-60 hover:opacity-100'}`}
-                                                style={{ backgroundColor: color }}
-                                            />
-                                        ))}
-                                    </div>
-                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                                        {negocio.colorTerciario || '#7B68EE'}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4 pt-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">5. Color de FONDO PRINCIPAL y BARRA SUPERIOR</label>
-                                <p className="text-[9px] text-gray-400 px-2 -mt-2 font-semibold italic">Controla: El color general de toda la página y la cabecera donde está tu logo.</p>
-                                <div className="flex items-center gap-6">
-                                    <div className="relative group">
-                                        <input
-                                            type="color"
-                                            className="w-16 h-16 rounded-2xl cursor-pointer border-4 border-white shadow-lg appearance-none bg-transparent overflow-hidden"
-                                            value={negocio.colorNeutral || '#FFF5F5'}
-                                            onChange={e => setNegocio({ ...negocio, colorNeutral: e.target.value })}
-                                        />
-                                        <div className="absolute inset-0 rounded-2xl pointer-events-none ring-1 ring-black/5" />
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {['#FFF5F5', '#f8fafc', '#fdf4ff', '#fffbeb', '#f0fdf4', '#f3f4f6'].map(color => (
-                                            <button
-                                                key={color}
-                                                type="button"
-                                                onClick={() => setNegocio({ ...negocio, colorNeutral: color })}
-                                                className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${negocio.colorNeutral === color ? 'border-gray-900 scale-110' : 'border-transparent opacity-60 hover:opacity-100'}`}
-                                                style={{ backgroundColor: color }}
-                                            />
-                                        ))}
-                                    </div>
-                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                                        {negocio.colorNeutral || '#FFF5F5'}
-                                    </div>
-                                </div>
-                            </div>
-                        </FeatureGate>
+                                <ColorPaletteEditor
+                                    colors={{
+                                        colorPrimario: negocio.colorPrimario,
+                                        colorSecundario: negocio.colorSecundario,
+                                        colorTexto: negocio.colorTexto,
+                                        colorTerciario: negocio.colorTerciario,
+                                        colorNeutral: negocio.colorNeutral,
+                                    }}
+                                    onChange={(updatedColors) => setNegocio({ ...negocio, ...updatedColors })}
+                                    onSave={async (colorData) => {
+                                        setSaving(true);
+                                        setMessage(null);
+                                        try {
+                                            const res = await fetch('/api/negocio', {
+                                                method: 'PATCH',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify(colorData),
+                                            });
+                                            if (res.ok) {
+                                                const updated = await res.json();
+                                                setNegocio((prev: any) => ({ ...prev, ...updated }));
+                                                setMessage({ type: 'success', text: 'Paleta de colores guardada correctamente' });
+                                            } else {
+                                                setMessage({ type: 'error', text: 'Error al guardar los colores' });
+                                            }
+                                        } catch {
+                                            setMessage({ type: 'error', text: 'Error de conexión' });
+                                        } finally {
+                                            setSaving(false);
+                                            setTimeout(() => setMessage(null), 3000);
+                                        }
+                                    }}
+                                    isSaving={saving}
+                                    showHeader={false}
+                                />
+                            </FeatureGate>
                     </div>
                 </div>
             </div>

@@ -94,6 +94,13 @@ export default async function NegocioLayout({
     const navInactiveColor = isSecLight ? 'rgba(15, 23, 42, 0.5)' : 'rgba(255, 255, 255, 0.6)';
     const navBorderColor = isSecLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.08)';
 
+    // Calcular el color del ítem activo con contraste garantizado sobre el fondo secundario
+    const primaryContrast = contrastRatioHex(primaryColor, secondaryColor);
+    const navActiveColor = primaryContrast >= 3.5
+        ? primaryColor
+        : isSecLight ? '#0f172a' : '#ffffff';
+
+
     return (
         <>
             <style dangerouslySetInnerHTML={{
@@ -113,6 +120,7 @@ export default async function NegocioLayout({
                     /* Navegación móvil dinámica */
                     --nav-inactive: ${navInactiveColor};
                     --nav-border: ${navBorderColor};
+                    --nav-active: ${navActiveColor};
                 }
 
                 /* Forzar el color de texto dinámico en los encabezados y textos principales */
@@ -182,5 +190,19 @@ function isLightColor(hex: string) {
     if (rgb.length !== 3) return true;
     const luma = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
     return luma > 140;
+}
+
+function contrastRatioHex(hex1: string, hex2: string): number {
+    const luma1 = (() => {
+        const rgb = hexToRgb(hex1).split(',').map(Number);
+        return rgb.length === 3 ? (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255 : 0.5;
+    })();
+    const luma2 = (() => {
+        const rgb = hexToRgb(hex2).split(',').map(Number);
+        return rgb.length === 3 ? (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255 : 0.5;
+    })();
+    const lighter = Math.max(luma1, luma2);
+    const darker = Math.min(luma1, luma2);
+    return (lighter + 0.05) / (darker + 0.05);
 }
 

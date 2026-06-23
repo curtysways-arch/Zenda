@@ -26,6 +26,7 @@ import {
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { DEFAULT_CONFIGS } from '@/app/admin/config/page';
+import ColorPaletteEditor from '@/components/admin/ColorPaletteEditor';
 
 interface MobileBusinessProps {
     configs: any;
@@ -141,167 +142,25 @@ export default function MobileBusiness({
                 )}
                 {activeTab === 'BRANDING' && localNegocio && (
                     <div className="space-y-6">
-                        {/* Colores */}
-                        <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
-                            <div className="space-y-1">
-                                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                                    <Palette size={14} style={{ color: primaryColor }} /> Colores de Marca
-                                </h4>
-                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight italic">Personaliza la atmósfera visual de tu Spa</p>
-                            </div>
-                            
-                            <div className="space-y-8 pt-2">
-                                {/* COLOR PRIMARIO */}
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-end">
-                                        <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest">1. Color Primario</label>
-                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter italic">Botones y selección</span>
-                                    </div>
-                                    <div className="flex gap-3 items-center">
-                                        <div className="relative size-14 shrink-0 rounded-2xl overflow-hidden shadow-lg border-2 border-white ring-1 ring-slate-100 group">
-                                            <input 
-                                                type="color" 
-                                                value={localNegocio.colorPrimario || primaryColor}
-                                                onChange={(e) => handleLocalNegocioChange('colorPrimario', e.target.value)}
-                                                className="absolute inset-0 size-full scale-150 cursor-pointer bg-transparent border-none"
-                                            />
-                                        </div>
-                                        <div className="flex-1 space-y-2">
-                                            <input 
-                                                type="text" 
-                                                value={localNegocio.colorPrimario || primaryColor}
-                                                onChange={(e) => handleLocalNegocioChange('colorPrimario', e.target.value)}
-                                                className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-black tracking-widest uppercase focus:ring-1 focus:ring-slate-200"
-                                            />
-                                            <p className="text-[9px] text-slate-400 font-medium leading-tight pl-1 italic">Afecta: Botón de reserva, servicios seleccionados e indicadores de estado activo.</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* COLOR SECUNDARIO */}
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-end">
-                                        <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest">2. Color Secundario</label>
-                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter italic">Barra Navegación</span>
-                                    </div>
-                                    <div className="flex gap-3 items-center">
-                                        <div className="relative size-14 shrink-0 rounded-2xl overflow-hidden shadow-lg border-2 border-white ring-1 ring-slate-100">
-                                            <input 
-                                                type="color" 
-                                                value={localNegocio.colorSecundario || '#ffffff'}
-                                                onChange={(e) => handleLocalNegocioChange('colorSecundario', e.target.value)}
-                                                className="absolute inset-0 size-full scale-150 cursor-pointer bg-transparent border-none"
-                                            />
-                                        </div>
-                                        <div className="flex-1 space-y-2">
-                                            <input 
-                                                type="text" 
-                                                value={localNegocio.colorSecundario || '#ffffff'}
-                                                onChange={(e) => handleLocalNegocioChange('colorSecundario', e.target.value)}
-                                                className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-black tracking-widest uppercase"
-                                            />
-                                            <p className="text-[9px] text-slate-400 font-medium leading-tight pl-1 italic">Afecta: Fondo de la barra de menú inferior y elementos de contraste secundario.</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* COLOR TERCIARIO */}
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-end">
-                                        <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest">3. Color de Acentos</label>
-                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter italic">Detalles y Calificación</span>
-                                    </div>
-                                    <div className="flex gap-3 items-center">
-                                        <div className="relative size-14 shrink-0 rounded-2xl overflow-hidden shadow-lg border-2 border-white ring-1 ring-slate-100">
-                                            <input 
-                                                type="color" 
-                                                value={localNegocio.colorTerciario || '#f8fafc'}
-                                                onChange={(e) => handleLocalNegocioChange('colorTerciario', e.target.value)}
-                                                className="absolute inset-0 size-full scale-150 cursor-pointer bg-transparent border-none"
-                                            />
-                                        </div>
-                                        <div className="flex-1 space-y-2">
-                                            <input 
-                                                type="text" 
-                                                value={localNegocio.colorTerciario || '#f8fafc'}
-                                                onChange={(e) => handleLocalNegocioChange('colorTerciario', e.target.value)}
-                                                className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-black tracking-widest uppercase"
-                                            />
-                                            <p className="text-[9px] text-slate-400 font-medium leading-tight pl-1 italic">Afecta: Íconos destacados, estrellas de calificación y pequeños detalles decorativos.</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* COLOR NEUTRAL */}
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-end">
-                                        <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest">4. Color de Fondo</label>
-                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter italic">Lienzo Principal</span>
-                                    </div>
-                                    <div className="flex gap-3 items-center">
-                                        <div className="relative size-14 shrink-0 rounded-2xl overflow-hidden shadow-lg border-2 border-white ring-1 ring-slate-100">
-                                            <input 
-                                                type="color" 
-                                                value={localNegocio.colorNeutral || '#f1f5f9'}
-                                                onChange={(e) => handleLocalNegocioChange('colorNeutral', e.target.value)}
-                                                className="absolute inset-0 size-full scale-150 cursor-pointer bg-transparent border-none"
-                                            />
-                                        </div>
-                                        <div className="flex-1 space-y-2">
-                                            <input 
-                                                type="text" 
-                                                value={localNegocio.colorNeutral || '#f1f5f9'}
-                                                onChange={(e) => handleLocalNegocioChange('colorNeutral', e.target.value)}
-                                                className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-black tracking-widest uppercase"
-                                            />
-                                            <p className="text-[9px] text-slate-400 font-medium leading-tight pl-1 italic">Afecta: El color de fondo general de toda la aplicación y cabecera superior.</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* COLOR TEXTO */}
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-end">
-                                        <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest">5. Color de Títulos</label>
-                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter italic">Jerarquía Visual</span>
-                                    </div>
-                                    <div className="flex gap-3 items-center">
-                                        <div className="relative size-14 shrink-0 rounded-2xl overflow-hidden shadow-lg border-2 border-white ring-1 ring-slate-100">
-                                            <input 
-                                                type="color" 
-                                                value={localNegocio.colorTexto || '#0f172a'}
-                                                onChange={(e) => handleLocalNegocioChange('colorTexto', e.target.value)}
-                                                className="absolute inset-0 size-full scale-150 cursor-pointer bg-transparent border-none"
-                                            />
-                                        </div>
-                                        <div className="flex-1 space-y-2">
-                                            <input 
-                                                type="text" 
-                                                value={localNegocio.colorTexto || '#0f172a'}
-                                                onChange={(e) => handleLocalNegocioChange('colorTexto', e.target.value)}
-                                                className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-black tracking-widest uppercase"
-                                            />
-                                            <p className="text-[9px] text-slate-400 font-medium leading-tight pl-1 italic">Afecta: Todos los títulos principales, nombres de servicios y encabezados.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button 
-                                onClick={() => onSaveNegocio({ 
-                                    colorPrimario: localNegocio.colorPrimario, 
+                        {/* Colores unificados con ColorPaletteEditor */}
+                        <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                            <ColorPaletteEditor
+                                colors={{
+                                    colorPrimario: localNegocio.colorPrimario,
                                     colorSecundario: localNegocio.colorSecundario,
+                                    colorTexto: localNegocio.colorTexto,
                                     colorTerciario: localNegocio.colorTerciario,
                                     colorNeutral: localNegocio.colorNeutral,
-                                    colorTexto: localNegocio.colorTexto
-                                })}
-                                disabled={saving === 'NEGOCIO'}
-                                className="w-full py-4 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg"
-                                style={{ backgroundColor: primaryColor }}
-                            >
-                                {saving === 'NEGOCIO' ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                                Guardar Paleta de Colores
-                            </button>
+                                }}
+                                onChange={(updatedColors) =>
+                                    setLocalNegocio((prev: any) => ({ ...prev, ...updatedColors }))
+                                }
+                                onSave={(colorData) =>
+                                    onSaveNegocio(colorData)
+                                }
+                                isSaving={saving === 'NEGOCIO'}
+                                showHeader={true}
+                            />
                         </div>
 
                         {/* Textos y Títulos */}
