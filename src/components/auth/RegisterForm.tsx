@@ -19,29 +19,6 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import PhoneInput from "../ui/PhoneInput";
 
-const ZendaLogo = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
-    <svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className={className}
-    >
-        <rect x="3" y="5" width="18" height="15" rx="3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M3 9.5H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M8 3V6.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M16 3V6.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M9.5 13.5L11.5 15.5L15 11.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M6 17.5H12" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-        <path d="M7 16.5V18.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-        <path d="M9 16.5V18.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-        <path d="M11 16.5V18.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-        <circle cx="16.5" cy="17" r="1.5" stroke="currentColor" strokeWidth="1" />
-        <path d="M16.5 16.2V17H17.2" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-    </svg>
-);
-
 export default function RegisterForm() {
     const [formData, setFormData] = useState({
         nombre: "",
@@ -106,14 +83,14 @@ export default function RegisterForm() {
     if (success) {
         return (
             <div className="flex flex-col items-center justify-center space-y-6 text-center animate-in fade-in zoom-in duration-500">
-                <div className="w-20 h-20 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center mb-2">
+                <div className="w-20 h-20 bg-cyan-50 text-cyan-500 rounded-full flex items-center justify-center mb-2">
                     <CheckCircle2 size={48} />
                 </div>
                 <h2 className="text-3xl font-black text-gray-900 tracking-tight">¡Registro Exitoso!</h2>
                 <p className="text-gray-500 max-w-xs mx-auto">
                     Tu cuenta ha sido creada. Estamos preparándolo todo para que empieces a gestionar tu negocio.
                 </p>
-                <div className="flex items-center gap-3 text-violet-600 font-bold">
+                <div className="flex items-center gap-3 text-cyan-500 font-bold">
                     <Loader2 className="animate-spin" size={20} />
                     Redirigiendo al panel...
                 </div>
@@ -123,10 +100,10 @@ export default function RegisterForm() {
 
     return (
         <div className="w-full max-w-xl mx-auto">
-            <div className="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-2xl shadow-violet-900/5 border border-gray-100">
+            <div className="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-2xl shadow-cyan-900/5 border border-gray-100">
                 <div className="flex flex-col items-center mb-10">
-                    <div className="w-16 h-16 bg-violet-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-violet-200 mb-6">
-                        <ZendaLogo size={36} />
+                    <div className="w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-md p-1 flex items-center justify-center shadow-cyan-100 mb-6">
+                        <img src="/logo-citiox.png" alt="CitiOx" className="w-full h-full object-contain" />
                     </div>
                     <h2 className="text-3xl font-black text-gray-900 tracking-tight text-center">
                         Crea tu cuenta gratis
@@ -147,10 +124,10 @@ export default function RegisterForm() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Información Personal */}
                         <div className="space-y-4 md:col-span-2">
-                            <h3 className="text-[10px] font-black text-violet-600 uppercase tracking-[0.2em] mb-2 px-1">Información Personal</h3>
+                            <h3 className="text-[10px] font-black text-cyan-500 uppercase tracking-[0.2em] mb-2 px-1">Información Personal</h3>
                             <div className="group space-y-4">
-                                <label className="group flex items-center gap-4 bg-gray-50 border border-gray-100 rounded-2xl px-5 focus-within:bg-white focus-within:border-violet-500 focus-within:ring-4 focus-within:ring-violet-500/10 transition-all cursor-text">
-                                    <User className="text-gray-400 group-focus-within:text-violet-600 transition-colors shrink-0" size={20} />
+                                <label className="group flex items-center gap-4 bg-gray-50 border border-gray-100 rounded-2xl px-5 focus-within:bg-white focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10 transition-all cursor-text">
+                                    <User className="text-gray-400 group-focus-within:text-cyan-500 transition-colors shrink-0" size={20} />
                                     <input
                                         type="text"
                                         name="nombre"
@@ -161,8 +138,8 @@ export default function RegisterForm() {
                                         onChange={handleChange}
                                     />
                                 </label>
-                                <label className="group flex items-center gap-4 bg-gray-50 border border-gray-100 rounded-2xl px-5 focus-within:bg-white focus-within:border-violet-500 focus-within:ring-4 focus-within:ring-violet-500/10 transition-all cursor-text">
-                                    <Mail className="text-gray-400 group-focus-within:text-violet-600 transition-colors shrink-0" size={20} />
+                                <label className="group flex items-center gap-4 bg-gray-50 border border-gray-100 rounded-2xl px-5 focus-within:bg-white focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10 transition-all cursor-text">
+                                    <Mail className="text-gray-400 group-focus-within:text-cyan-500 transition-colors shrink-0" size={20} />
                                     <input
                                         type="email"
                                         name="email"
@@ -173,8 +150,8 @@ export default function RegisterForm() {
                                         onChange={handleChange}
                                     />
                                 </label>
-                                <label className="group flex items-center gap-4 bg-gray-50 border border-gray-100 rounded-2xl px-5 focus-within:bg-white focus-within:border-violet-500 focus-within:ring-4 focus-within:ring-violet-500/10 transition-all cursor-text">
-                                    <Lock className="text-gray-400 group-focus-within:text-violet-600 transition-colors shrink-0" size={20} />
+                                <label className="group flex items-center gap-4 bg-gray-50 border border-gray-100 rounded-2xl px-5 focus-within:bg-white focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10 transition-all cursor-text">
+                                    <Lock className="text-gray-400 group-focus-within:text-cyan-500 transition-colors shrink-0" size={20} />
                                     <input
                                         type="password"
                                         name="password"
@@ -190,11 +167,11 @@ export default function RegisterForm() {
 
                         {/* Información del Negocio */}
                         <div className="space-y-4 md:col-span-2 pt-4">
-                            <h3 className="text-[10px] font-black text-violet-600 uppercase tracking-[0.2em] mb-2 px-1">Detalles de tu Negocio</h3>
+                            <h3 className="text-[10px] font-black text-cyan-500 uppercase tracking-[0.2em] mb-2 px-1">Detalles de tu Negocio</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="relative md:col-span-2">
-                                    <label className="group flex items-center gap-4 bg-gray-50 border border-gray-100 rounded-2xl px-5 focus-within:bg-white focus-within:border-violet-500 focus-within:ring-4 focus-within:ring-violet-500/10 transition-all cursor-text">
-                                        <Building2 className="text-gray-400 group-focus-within:text-violet-600 transition-colors shrink-0" size={20} />
+                                    <label className="group flex items-center gap-4 bg-gray-50 border border-gray-100 rounded-2xl px-5 focus-within:bg-white focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10 transition-all cursor-text">
+                                        <Building2 className="text-gray-400 group-focus-within:text-cyan-500 transition-colors shrink-0" size={20} />
                                         <input
                                             type="text"
                                             name="negocioNombre"
@@ -207,8 +184,8 @@ export default function RegisterForm() {
                                     </label>
                                 </div>
                                 <div className="relative md:col-span-2">
-                                    <label className="group flex items-center gap-4 bg-gray-50 border border-gray-100 rounded-2xl px-5 focus-within:bg-white focus-within:border-violet-500 focus-within:ring-4 focus-within:ring-violet-500/10 transition-all cursor-text">
-                                        <MapPin className="text-gray-400 group-focus-within:text-violet-600 transition-colors shrink-0" size={20} />
+                                    <label className="group flex items-center gap-4 bg-gray-50 border border-gray-100 rounded-2xl px-5 focus-within:bg-white focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10 transition-all cursor-text">
+                                        <MapPin className="text-gray-400 group-focus-within:text-cyan-500 transition-colors shrink-0" size={20} />
                                         <input
                                             type="text"
                                             name="ciudad"
@@ -232,13 +209,13 @@ export default function RegisterForm() {
                     </div>
 
                     <p className="text-[10px] text-gray-400 text-center font-medium px-4 leading-relaxed">
-                        Al registrarte, aceptas nuestros <Link href="/terminos" className="text-violet-600 underline hover:text-violet-500">Términos de Servicio</Link> y <Link href="/privacidad" className="text-violet-600 underline hover:text-violet-500">Política de Privacidad</Link>.
+                        Al registrarte, aceptas nuestros <Link href="/terminos" className="text-cyan-500 underline hover:text-cyan-400">Términos de Servicio</Link> y <Link href="/privacidad" className="text-cyan-500 underline hover:text-cyan-400">Política de Privacidad</Link>.
                     </p>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="group relative w-full flex justify-center py-5 px-4 border border-transparent text-sm font-black rounded-2xl text-white bg-violet-600 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all shadow-xl shadow-violet-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="group relative w-full flex justify-center py-5 px-4 border border-transparent text-sm font-black rounded-2xl text-white bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-all shadow-xl shadow-cyan-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {loading ? (
                             <Loader2 className="animate-spin" size={24} />
@@ -253,7 +230,7 @@ export default function RegisterForm() {
                     <div className="text-center pt-4">
                         <p className="text-sm text-gray-500 font-bold">
                             ¿Ya tienes cuenta?{' '}
-                            <Link href="/login" className="text-violet-600 hover:text-violet-500 hover:underline">
+                            <Link href="/login" className="text-cyan-500 hover:text-cyan-400 hover:underline">
                                 Iniciar Sesión
                             </Link>
                         </p>
