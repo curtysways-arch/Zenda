@@ -58,12 +58,12 @@ export async function PATCH(
             },
         });
 
-        // Actualizar ubicacionId via SQL (bypass caché de Prisma)
+        // Actualizar ubicacionId via Prisma (compatible con PostgreSQL y SQLite)
         if (ubicacionId !== undefined) {
-            const val = ubicacionId ? `'${ubicacionId}'` : 'NULL';
-            await prisma.$executeRawUnsafe(
-                `UPDATE Cancha SET ubicacionId = ${val} WHERE id = '${id}'`
-            );
+            await prisma.service.update({
+                where: { id },
+                data: { ubicacionId: ubicacionId || null } as any
+            });
         }
 
         return NextResponse.json({ ...service, ubicacionId: ubicacionId ?? null });
