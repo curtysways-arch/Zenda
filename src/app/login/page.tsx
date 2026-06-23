@@ -97,10 +97,10 @@ export default function LoginPage() {
                 <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-50 rounded-full blur-3xl -mr-40 -mt-40 opacity-70" />
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-50 rounded-full blur-3xl -ml-32 -mb-32 opacity-70" />
 
-                <div className="relative z-10 w-full max-w-sm px-6 py-10 space-y-8">
+                <div className="relative z-10 w-full max-w-sm px-6 pt-4 pb-8 space-y-5">
 
                     {/* ── LOGO GRANDE Y NOMBRE ── */}
-                    <div className="flex flex-col items-center gap-4">
+                    <div className="flex flex-col items-center gap-3">
                         {/* Logo en círculo con glow */}
                         <div className="relative">
                             <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-[2rem] blur-xl opacity-30 scale-110" />
