@@ -17,23 +17,28 @@ export default function PWAInstallPrompt() {
     const [isIOS, setIsIOS] = useState(false);
     const [isAndroid, setIsAndroid] = useState(false);
     const [isInstalled, setIsInstalled] = useState(false);
-
+    
+    // Estados dinámicos para nombre y logo del negocio
+    const [businessName, setBusinessName] = useState("Zenda App");
+    const [businessLogo, setBusinessLogo] = useState("");
+ 
     // Solo mostrar en la página del negocio final (/[slug])
     const segments = pathname.split('/').filter(Boolean);
     const isPublicBusinessPage = segments.length >= 1 && !['admin', 'superadmin', 'login', 'register', 'api'].includes(segments[0]);
-
+    const slug = isPublicBusinessPage ? segments[0] : null;
+ 
     useEffect(() => {
         if (!isPublicBusinessPage) return;
-
+ 
         // Check standalone mode
         setIsInstalled(isPWAInstalled());
-
+ 
         const userAgent = window.navigator.userAgent.toLowerCase();
         const ios = /iphone|ipad|ipod/.test(userAgent);
         const android = /android/.test(userAgent);
         setIsIOS(ios);
         setIsAndroid(android);
-
+ 
         const handleAvailabilityChange = (available: boolean) => {
             setCanInstall(available);
             if (available && !isInstalled) {
@@ -42,20 +47,35 @@ export default function PWAInstallPrompt() {
                 return () => clearTimeout(timer);
             }
         };
-
+ 
         addInstallationListener(handleAvailabilityChange);
-
+ 
+        // Cargar información real del negocio
+        if (slug) {
+            fetch(`/api/public/negocio/${slug}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.nombre) {
+                        setBusinessName(data.nombre);
+                    }
+                    if (data && data.logoUrl) {
+                        setBusinessLogo(data.logoUrl);
+                    }
+                })
+                .catch(err => console.error("Error cargando info de negocio para PWA:", err));
+        }
+ 
         // For iOS, which doesn't support beforeinstallprompt, show instructions
         if (ios && !isPWAInstalled()) {
             const timer = setTimeout(() => setIsVisible(true), 7000); // 7 seconds
             return () => clearTimeout(timer);
         }
-
+ 
         return () => {
             removeInstallationListener(handleAvailabilityChange);
         };
-    }, [isPublicBusinessPage, isInstalled]);
-
+    }, [isPublicBusinessPage, isInstalled, slug]);
+ 
     const handleInstallClick = async () => {
         if (!canInstall) {
             // Should not happen on Android if button is visible, 
@@ -69,9 +89,9 @@ export default function PWAInstallPrompt() {
             setIsInstalled(true);
         }
     };
-
+ 
     if (isInstalled || !isVisible || !isPublicBusinessPage) return null;
-
+ 
     return (
         <div className="fixed bottom-24 left-4 right-4 z-[9999] animate-in slide-in-from-bottom-10 fade-in duration-700 max-w-sm mx-auto">
             <div className="bg-slate-900/95 dark:bg-[#0a0f0d]/95 border border-white/10 rounded-3xl p-5 shadow-2xl backdrop-blur-xl relative overflow-hidden group">
@@ -80,8 +100,12 @@ export default function PWAInstallPrompt() {
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -ml-12 -mb-12" />
                 
                 <div className="flex items-center gap-4 relative z-10">
-                    <div className="size-14 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shrink-0 transform group-hover:rotate-6 transition-transform">
-                        <Smartphone className="text-white size-7" strokeWidth={2.5} />
+                    <div className="size-14 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shrink-0 transform group-hover:rotate-6 transition-transform overflow-hidden">
+                        {businessLogo ? (
+                            <img src={businessLogo} alt={businessName} className="w-full h-full object-cover" />
+                        ) : (
+                            <Smartphone className="text-white size-7" strokeWidth={2.5} />
+                        )}
                     </div>
                     
                     <div className="flex-1 min-w-0">
@@ -89,14 +113,14 @@ export default function PWAInstallPrompt() {
                             <Sparkles size={12} className="text-emerald-400 animate-pulse" fill="currentColor" />
                             <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest italic">App Premium</span>
                         </div>
-                        <h4 className="text-base font-black text-white tracking-tight uppercase italic truncate leading-none">Spa App</h4>
+                        <h4 className="text-base font-black text-white tracking-tight uppercase italic truncate leading-none">{businessName}</h4>
                         <p className="text-xs text-slate-400 font-medium mt-1 leading-tight">
                             {isIOS 
                               ? "Instala para recibir notificaciones" 
                               : "Reserva un 50% más rápido que en web"}
                         </p>
                     </div>
-
+ 
                     <button
                         onClick={() => setIsVisible(false)}
                         className="text-white/30 hover:text-white/60 transition-colors p-1 self-start"

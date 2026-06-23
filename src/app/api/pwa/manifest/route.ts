@@ -53,10 +53,11 @@ export async function GET(request: Request) {
     // Customize manifest
     const dynamicManifest = {
       ...defaultManifest,
+      id: `/${business.slug}`,
       name: business.nombre,
       short_name: business.nombre.length > 12 ? business.nombre.substring(0, 10) + "..." : business.nombre,
       start_url: `/${business.slug}?source=pwa`,
-      scope: `/`,
+      scope: `/${business.slug}`,
       display: "standalone",
       theme_color: business.colorPrimario || defaultManifest.theme_color,
       background_color: "#ffffff",
