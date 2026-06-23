@@ -3,49 +3,15 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Sparkles, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Loader2, ArrowRight, Sparkles, Zap, BarChart3, Smartphone } from 'lucide-react';
 import Link from 'next/link';
 
-const ZendaLogo = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
-    <svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className={className}
-    >
-        {/* Cuerpo del Calendario */}
-        <rect x="3" y="5" width="18" height="15" rx="3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        
-        {/* Cabezal */}
-        <path d="M3 9.5H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        
-        {/* Anillos de sujeción */}
-        <path d="M8 3V6.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M16 3V6.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        
-        {/* El Check en el centro */}
-        <path d="M9.5 13.5L11.5 15.5L15 11.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        
-        {/* Líneas inferiores de agenda */}
-        <path d="M6 17.5H12" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-        <path d="M7 16.5V18.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-        <path d="M9 16.5V18.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-        <path d="M11 16.5V18.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-        
-        {/* Mini reloj abajo a la derecha */}
-        <circle cx="16.5" cy="17" r="1.5" stroke="currentColor" strokeWidth="1" />
-        <path d="M16.5 16.2V17H17.2" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-    </svg>
-);
-
 export default function LoginPage() {
+    const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const router = useRouter();
+    const [error, setError] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -59,142 +25,240 @@ export default function LoginPage() {
                 redirect: false,
             });
 
-            console.log('[LOGIN] signIn result:', res);
-
             if (res?.error) {
-                setError('Email o contraseña incorrectos');
-            } else if (res?.ok) {
-                // Obtener la sesión para determinar el rol del usuario
-                try {
-                    const sessionRes = await fetch('/api/auth/session');
-                    const session = await sessionRes.json();
-                    console.log('[LOGIN] session data:', session);
-
-                    const role = session?.user?.role;
-                    const negocioId = session?.user?.negocioId;
-
-                    if (role === 'SUPER_ADMIN') {
-                        console.log('[LOGIN] Redirigiendo a /superadmin');
-                        router.push('/superadmin');
-                    } else if (role === 'PROFESOR') {
-                        console.log('[LOGIN] Redirigiendo a /profesor');
-                        router.push('/profesor');
-                    } else {
-                        console.log('[LOGIN] Redirigiendo a /admin');
-                        router.push('/admin');
-                    }
-                    router.refresh();
-                } catch (sessionErr) {
-                    // Si no se puede obtener la sesión, redirigir a /admin por defecto
-                    console.error('[LOGIN] Error al obtener sesión:', sessionErr);
-                    router.push('/admin');
-                    router.refresh();
-                }
+                setError('Credenciales inválidas. Verifica tu email y contraseña.');
             } else {
-                setError('Respuesta inesperada del servidor. Verifica la configuración.');
+                router.push('/admin');
             }
-        } catch (err) {
-            console.error('[LOGIN] Error general:', err);
-            setError('Ocurrió un error inesperado');
+        } catch {
+            setError('Ocurrió un error inesperado. Intenta de nuevo.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-indigo-50 flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Elementos decorativos de fondo */}
-            <div className="absolute -top-24 -left-24 w-96 h-96 bg-violet-200/20 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-indigo-200/20 rounded-full blur-3xl animate-pulse" />
+        <div className="min-h-screen flex overflow-hidden bg-slate-950">
 
-            <div className="max-w-md w-full bg-white/70 backdrop-blur-xl p-10 pt-14 rounded-[3rem] shadow-2xl shadow-violet-200/40 border border-white/50 relative z-10 mt-16">
-                <div className="flex flex-col items-center">
-                    <div className="w-20 h-20 -mt-20 bg-gradient-to-tr from-violet-600 to-indigo-500 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-violet-200 mb-6 group hover:rotate-6 transition-transform duration-500">
-                        <ZendaLogo size={44} className="animate-pulse" />
-                    </div>
-                    <h2 className="text-4xl font-black text-gray-900 tracking-tight text-center uppercase italic">
-                        Bienvenido a Zen<span className="text-violet-600">da</span>
-                    </h2>
-                    <p className="mt-3 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        Zenda • Panel Administrativo
-                    </p>
+            {/* ── PANEL IZQUIERDO: Branding ── */}
+            <div className="hidden lg:flex flex-col justify-between w-[55%] relative p-14 overflow-hidden">
+                {/* Fondo con gradiente animado */}
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-cyan-950/60 to-purple-950/80" />
+                <div className="absolute top-0 left-0 w-full h-full">
+                    <div className="absolute top-1/4 -left-32 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[120px] animate-pulse" />
+                    <div className="absolute bottom-1/4 -right-32 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
                 </div>
 
-                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                    {error && (
-                        <div className="bg-rose-50 border-l-4 border-rose-500 p-4 text-rose-700 text-xs font-bold uppercase tracking-tight animate-shake rounded-r-xl">
-                            {error}
-                        </div>
-                    )}
+                {/* Grid de puntos decorativo */}
+                <div
+                    className="absolute inset-0 opacity-[0.03]"
+                    style={{
+                        backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
+                        backgroundSize: '32px 32px'
+                    }}
+                />
 
-                    <div className="space-y-4">
-                        <div className="flex items-center w-full border border-gray-100 overflow-hidden rounded-2xl focus-within:ring-2 focus-within:ring-violet-500 focus-within:border-transparent transition-all bg-white/50 group">
-                            <div className="pl-5 pr-3 flex items-center justify-center text-gray-400 group-focus-within:text-violet-600 transition-colors">
-                                <Mail size={20} />
-                            </div>
-                            <input
-                                type="email"
-                                required
-                                className="w-full py-4 pr-5 bg-transparent !text-gray-900 font-bold text-sm placeholder-gray-300 focus:outline-none"
-                                placeholder="TU@EMAIL.COM"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </div>
+                {/* Logo */}
+                <div className="relative z-10 flex items-center gap-4">
+                    <img src="/logo-citiox.png" alt="CitiOx" className="h-12 w-auto object-contain" />
+                    <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-cyan-400 via-sky-400 to-purple-500 bg-clip-text text-transparent italic">
+                        CitiOx
+                    </span>
+                </div>
 
-                        <div className="flex items-center w-full border border-gray-100 overflow-hidden rounded-2xl focus-within:ring-2 focus-within:ring-violet-500 focus-within:border-transparent transition-all bg-white/50 group">
-                            <div className="pl-5 pr-3 flex items-center justify-center text-gray-400 group-focus-within:text-violet-600 transition-colors">
-                                <Lock size={20} />
+                {/* Copy central */}
+                <div className="relative z-10 space-y-8">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full">
+                        <Sparkles size={14} className="text-cyan-400" fill="currentColor" />
+                        <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.3em]">Panel Administrativo</span>
+                    </div>
+
+                    <h1 className="text-5xl xl:text-6xl font-black text-white tracking-tighter leading-[0.9] italic">
+                        Gestiona tu<br />
+                        negocio <span className="bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent not-italic">sin límites.</span>
+                    </h1>
+
+                    <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md">
+                        Controla citas, staff, ingresos y clientes desde un solo lugar. Automatizado y siempre disponible.
+                    </p>
+
+                    {/* Feature pills */}
+                    <div className="flex flex-col gap-4 pt-4">
+                        {[
+                            { icon: <Zap size={16} className="text-cyan-400" />, text: 'Reservas automáticas por WhatsApp' },
+                            { icon: <BarChart3 size={16} className="text-purple-400" />, text: 'Reportes y métricas en tiempo real' },
+                            { icon: <Smartphone size={16} className="text-sky-400" />, text: 'App instalable en tu móvil (PWA)' },
+                        ].map((f, i) => (
+                            <div key={i} className="flex items-center gap-3">
+                                <div className="size-8 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center shrink-0">
+                                    {f.icon}
+                                </div>
+                                <span className="text-sm font-bold text-slate-300">{f.text}</span>
                             </div>
-                            <input
-                                type="password"
-                                required
-                                className="w-full py-4 pr-5 bg-transparent !text-gray-900 font-bold text-sm placeholder-gray-300 focus:outline-none"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
+                        ))}
+                    </div>
+                </div>
+
+                {/* Footer del panel */}
+                <div className="relative z-10">
+                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                        © 2026 CitiOx • Booking & App Solutions
+                    </p>
+                </div>
+            </div>
+
+            {/* ── PANEL DERECHO: Formulario ── */}
+            <div className="flex-1 flex items-center justify-center p-6 bg-white relative">
+                {/* Borde decorativo superior en mobile */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 lg:hidden" />
+
+                <div className="w-full max-w-md space-y-8">
+
+                    {/* Header mobile */}
+                    <div className="lg:hidden flex flex-col items-center gap-3 pt-6">
+                        <div className="flex items-center gap-3">
+                            <img src="/logo-citiox.png" alt="CitiOx" className="h-12 w-auto object-contain" />
+                            <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 bg-clip-text text-transparent italic">
+                                CitiOx
+                            </span>
                         </div>
                     </div>
 
-                    <div className="flex flex-row items-center justify-between gap-4 px-1">
-                        <label className="flex items-center group cursor-pointer">
-                            <div className="relative flex items-center justify-center">
-                                <input
-                                    id="remember_me"
-                                    type="checkbox"
-                                    className="peer h-5 w-5 appearance-none rounded-lg border-2 border-violet-100 bg-white checked:bg-violet-600 checked:border-violet-600 transition-all cursor-pointer"
-                                />
-                                <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
+                    {/* Título del formulario */}
+                    <div className="space-y-2">
+                        <h2 className="text-3xl font-black text-slate-900 tracking-tighter">
+                            Bienvenido de vuelta
+                        </h2>
+                        <p className="text-sm font-medium text-slate-400">
+                            Ingresa tus credenciales para acceder a tu panel
+                        </p>
+                    </div>
+
+                    {/* Formulario */}
+                    <form className="space-y-5" onSubmit={handleSubmit}>
+                        {/* Error */}
+                        {error && (
+                            <div className="flex items-start gap-3 bg-rose-50 border border-rose-200 p-4 rounded-2xl">
+                                <div className="size-5 shrink-0 mt-0.5 bg-rose-500 rounded-full flex items-center justify-center">
+                                    <span className="text-white text-[10px] font-black">!</span>
+                                </div>
+                                <p className="text-rose-700 text-sm font-semibold leading-tight">{error}</p>
                             </div>
-                            <span className="ml-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-violet-600 transition-colors">
-                                Recordarme
-                            </span>
-                        </label>
-                        
-                        <Link href="/olvide-password" 
-                            className="text-[11px] font-black uppercase tracking-wider text-violet-600 hover:text-violet-700 transition-colors border-b border-violet-100 hover:border-violet-600 pb-0.5">
-                            ¿Olvidaste la contraseña?
+                        )}
+
+                        {/* Email */}
+                        <div className="space-y-2">
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest">
+                                Correo electrónico
+                            </label>
+                            <div className="flex items-center w-full border-2 border-slate-100 overflow-hidden rounded-2xl focus-within:border-cyan-500 focus-within:ring-4 focus-within:ring-cyan-500/10 transition-all bg-slate-50/50 group">
+                                <div className="pl-4 pr-3 flex items-center justify-center text-slate-300 group-focus-within:text-cyan-500 transition-colors">
+                                    <Mail size={18} />
+                                </div>
+                                <input
+                                    type="email"
+                                    required
+                                    autoComplete="email"
+                                    className="w-full py-4 pr-5 bg-transparent text-slate-900 font-semibold text-sm placeholder-slate-300 focus:outline-none"
+                                    placeholder="tu@correo.com"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Contraseña */}
+                        <div className="space-y-2">
+                            <label className="block text-[11px] font-black text-slate-500 uppercase tracking-widest">
+                                Contraseña
+                            </label>
+                            <div className="flex items-center w-full border-2 border-slate-100 overflow-hidden rounded-2xl focus-within:border-cyan-500 focus-within:ring-4 focus-within:ring-cyan-500/10 transition-all bg-slate-50/50 group">
+                                <div className="pl-4 pr-3 flex items-center justify-center text-slate-300 group-focus-within:text-cyan-500 transition-colors">
+                                    <Lock size={18} />
+                                </div>
+                                <input
+                                    type="password"
+                                    required
+                                    autoComplete="current-password"
+                                    className="w-full py-4 pr-5 bg-transparent text-slate-900 font-semibold text-sm placeholder-slate-300 focus:outline-none"
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Recordarme y olvidé contraseña */}
+                        <div className="flex items-center justify-between">
+                            <label className="flex items-center gap-2.5 group cursor-pointer">
+                                <div className="relative flex items-center justify-center shrink-0">
+                                    <input
+                                        id="remember_me"
+                                        type="checkbox"
+                                        className="peer h-5 w-5 appearance-none rounded-lg border-2 border-slate-200 bg-white checked:bg-cyan-500 checked:border-cyan-500 transition-all cursor-pointer"
+                                    />
+                                    <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                </div>
+                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider group-hover:text-slate-600 transition-colors">
+                                    Recordarme
+                                </span>
+                            </label>
+
+                            <Link
+                                href="/olvide-password"
+                                className="text-[11px] font-black uppercase tracking-wider text-cyan-500 hover:text-purple-600 transition-colors"
+                            >
+                                ¿Olvidaste la contraseña?
+                            </Link>
+                        </div>
+
+                        {/* Botón submit */}
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="group w-full flex items-center justify-center gap-3 bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 text-white py-4 px-6 rounded-2xl font-black text-sm uppercase tracking-widest hover:brightness-110 transition-all shadow-xl shadow-cyan-500/25 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+                        >
+                            {loading ? (
+                                <Loader2 className="animate-spin" size={20} />
+                            ) : (
+                                <>
+                                    Iniciar Sesión
+                                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                </>
+                            )}
+                        </button>
+                    </form>
+
+                    {/* Divisor */}
+                    <div className="flex items-center gap-4">
+                        <div className="flex-1 h-px bg-slate-100" />
+                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">o</span>
+                        <div className="flex-1 h-px bg-slate-100" />
+                    </div>
+
+                    {/* Link a registro */}
+                    <p className="text-center text-sm text-slate-500 font-medium">
+                        ¿No tienes cuenta?{' '}
+                        <Link
+                            href="/register"
+                            className="font-black text-slate-900 hover:text-cyan-500 transition-colors underline underline-offset-2 decoration-slate-200 hover:decoration-cyan-300"
+                        >
+                            Registra tu negocio gratis
+                        </Link>
+                    </p>
+
+                    {/* Link volver a landing */}
+                    <div className="text-center pt-2">
+                        <Link
+                            href="/"
+                            className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-slate-500 transition-colors"
+                        >
+                            ← Volver a citiox.com
                         </Link>
                     </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="group relative w-full flex justify-center py-5 px-4 border border-transparent text-xs font-black uppercase tracking-[0.2em] rounded-2xl text-white bg-gradient-to-r from-violet-600 to-indigo-500 hover:from-violet-700 hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all shadow-xl shadow-violet-200 active:scale-[0.98]"
-                    >
-                        {loading ? (
-                            <Loader2 className="animate-spin" size={20} />
-                        ) : (
-                            <span className="flex items-center gap-3">
-                                Iniciar Sesión
-                                <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
-                            </span>
-                        )}
-                    </button>
-                </form>
+                </div>
             </div>
         </div>
     );
