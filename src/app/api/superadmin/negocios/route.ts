@@ -43,6 +43,7 @@ export async function POST(req: Request) {
             heroTitulo,
             heroSubtitulo,
             bannerUrl,
+            bannerUrls, // Múltiples fotos de portada
             diasAtencion, // Array de números [1, 2, 3, 4, 5, 6] (1=Lunes, 7=Domingo)
             servicios, // Array: { id, nombre, duracion, precio, imageMediaId }
             profesionales, // Array: { name, role, imageMediaId, servicesIds }
@@ -70,12 +71,18 @@ export async function POST(req: Request) {
         const hashedPassword = await bcrypt.hash(adminPassword, 10);
         const businessId = crypto.randomUUID();
 
+        // Determinar banners principales para la configuración
+        const primaryBanner = (Array.isArray(bannerUrls) && bannerUrls.length > 0)
+            ? bannerUrls[0]
+            : (bannerUrl || (crearDemo ? "https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=1200&h=400&fit=crop" : null));
+
         // 1. Configuración del JSON
         const configuracionJson = {
             wizardCompleted: true,
             setupCompleted: true,
             createdBySuperAdmin: true,
-            tipoNegocio: tipoNegocio || "Otro"
+            tipoNegocio: tipoNegocio || "Otro",
+            bannerUrl: primaryBanner
         };
 
         // Procesar transaccionalmente
@@ -118,13 +125,21 @@ export async function POST(req: Request) {
                 }
             });
 
-            // C. Guardar Banner en Tabla Imagen
-            const finalBannerUrl = bannerUrl || (crearDemo ? "https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=1200&h=400&fit=crop" : null);
-            if (finalBannerUrl) {
+            // C. Guardar Banners en Tabla Imagen
+            let finalBanners: string[] = [];
+            if (Array.isArray(bannerUrls) && bannerUrls.length > 0) {
+                finalBanners = bannerUrls.filter(u => u && u.trim() !== '');
+            } else if (bannerUrl) {
+                finalBanners = [bannerUrl];
+            } else if (crearDemo) {
+                finalBanners = ["https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=1200&h=400&fit=crop"];
+            }
+
+            for (const url of finalBanners) {
                 await (tx.imagen as any).create({
                     data: {
                         id: crypto.randomUUID(),
-                        url: finalBannerUrl,
+                        url: url,
                         tipo: "BANNER",
                         esBanner: true,
                         negocioId: businessId,

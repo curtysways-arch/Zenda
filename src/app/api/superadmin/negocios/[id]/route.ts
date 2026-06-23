@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import crypto from "crypto";
 
 async function isSuperAdmin() {
     const session = await getServerSession(authOptions);
@@ -20,30 +21,112 @@ export async function PATCH(
     try {
         const { id } = await params;
         const body = await req.json();
-        const { nombre, slug, propietario, emailContacto, whatsapp, direccion, ciudad, horarioApertura, horarioCierre, precioHora, estado, logoUrl, colorPrimario, moduloTorneos } = body;
+        const { 
+            nombre, 
+            slug, 
+            propietario, 
+            emailContacto, 
+            whatsapp, 
+            direccion, 
+            ciudad, 
+            horarioApertura, 
+            horarioCierre, 
+            precioHora, 
+            estado, 
+            logoUrl, 
+            colorPrimario, 
+            moduloTorneos,
+            bannerUrl,
+            bannerUrls // Array de strings de portadas
+        } = body;
 
-        // Update campos principales
-        const negocio = await prisma.negocio.update({
-            where: { id },
-            data: {
-                nombre,
-                slug,
-                propietario,
-                emailContacto,
-                whatsapp,
-                direccion,
-                ciudad,
-                horarioApertura,
-                horarioCierre,
-                precioHora: precioHora ? Number(precioHora) : undefined,
-                estado,
-                logoUrl,
-                colorPrimario,
-                moduloTorneos: moduloTorneos !== undefined ? Boolean(moduloTorneos) : undefined
+        const updatedNegocio = await prisma.$transaction(async (tx) => {
+            // 1. Obtener negocio actual para recuperar su configuración JSON
+            const currentNegocio = await tx.negocio.findUnique({
+                where: { id },
+                select: { configuracion: true }
+            });
+
+            let currentConfig: any = {};
+            if (currentNegocio?.configuracion) {
+                if (typeof currentNegocio.configuracion === 'string') {
+                    try { currentConfig = JSON.parse(currentNegocio.configuracion); } catch { currentConfig = {}; }
+                } else {
+                    currentConfig = currentNegocio.configuracion as any;
+                }
             }
+
+            // Determinar banners del negocio
+            let finalBannerUrls: string[] = [];
+            if (Array.isArray(bannerUrls)) {
+                finalBannerUrls = bannerUrls.filter(u => u && u.trim() !== '');
+            } else if (bannerUrl) {
+                finalBannerUrls = [bannerUrl];
+            }
+
+            const primaryBanner = finalBannerUrls[0] || null;
+
+            // Actualizar la configuración JSON
+            const updatedConfig = {
+                ...currentConfig,
+                bannerUrl: primaryBanner
+            };
+
+            // 2. Actualizar campos principales
+            const negocio = await (tx.negocio as any).update({
+                where: { id },
+                data: {
+                    nombre,
+                    slug,
+                    propietario,
+                    emailContacto,
+                    whatsapp,
+                    direccion,
+                    ciudad,
+                    horarioApertura,
+                    horarioCierre,
+                    precioHora: precioHora !== undefined ? Number(precioHora) : undefined,
+                    estado,
+                    logoUrl,
+                    colorPrimario,
+                    moduloTorneos: moduloTorneos !== undefined ? Boolean(moduloTorneos) : undefined,
+                    configuracion: updatedConfig,
+                    updatedAt: new Date()
+                }
+            });
+
+            // 3. Sincronizar Banners en la tabla Imagen
+            if (body.hasOwnProperty('bannerUrls') || body.hasOwnProperty('bannerUrl')) {
+                // Borrar banners antiguos
+                await tx.imagen.deleteMany({
+                    where: {
+                        negocioId: id,
+                        OR: [
+                            { tipo: "BANNER" },
+                            { esBanner: true }
+                        ]
+                    }
+                });
+
+                // Crear nuevos banners
+                for (const url of finalBannerUrls) {
+                    await (tx.imagen as any).create({
+                        data: {
+                            id: crypto.randomUUID(),
+                            url: url,
+                            tipo: "BANNER",
+                            esBanner: true,
+                            negocioId: id,
+                            createdAt: new Date()
+                        }
+                    });
+                }
+            }
+
+            return negocio;
         });
 
-        return NextResponse.json(negocio);
+        return NextResponse.json(updatedNegocio);
     } catch (error) {
         console.error("Error updating business:", error);
         return NextResponse.json({ error: "Error al actualizar negocio" }, { status: 500 });

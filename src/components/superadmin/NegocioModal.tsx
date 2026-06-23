@@ -163,6 +163,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
         tipoNegocio: "Spa / Centro Estético",
         logoUrl: "",
         bannerUrl: "",
+        bannerUrls: [] as string[],
         colorPrimario: "#1dc95c",
         colorSecundario: "#112117",
         heroTitulo: "",
@@ -236,6 +237,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                 heroTitulo: negocio.heroTitulo || "",
                 heroSubtitulo: negocio.heroSubtitulo || "",
                 bannerUrl: negocio.Imagen?.find((i: any) => i.esBanner)?.url || "",
+                bannerUrls: negocio.Imagen?.filter((i: any) => i.tipo === 'BANNER' || i.esBanner).map((i: any) => i.url) || [],
                 crearDemo: false
             });
             setCreationMode("none");
@@ -266,6 +268,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                 heroTitulo: "",
                 heroSubtitulo: "",
                 bannerUrl: "",
+                bannerUrls: [] as string[],
                 crearDemo: false
             });
             setWizardServicios([]);
@@ -1133,14 +1136,49 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Banner de Portada (Apaisado)</span>
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Fotos de Portada (Múltiple)</span>
+                                        
+                                        {/* Grid de banners existentes */}
+                                        {formData.bannerUrls && formData.bannerUrls.length > 0 && (
+                                            <div className="grid grid-cols-2 gap-3 mb-3">
+                                                {formData.bannerUrls.map((url, index) => (
+                                                    <div key={index} className="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-white/5 aspect-[3/1] bg-slate-100 dark:bg-slate-900/50">
+                                                        <img src={url} alt={`Portada ${index + 1}`} className="w-full h-full object-cover" />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const newUrls = formData.bannerUrls.filter((_, idx) => idx !== index);
+                                                                setFormData(prev => ({
+                                                                    ...prev,
+                                                                    bannerUrls: newUrls,
+                                                                    bannerUrl: newUrls[0] || ""
+                                                                }));
+                                                            }}
+                                                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-rose-500 text-white opacity-0 group-hover:opacity-100 transition-opacity active:scale-95 shadow-lg flex items-center justify-center"
+                                                        >
+                                                            <X size={12} strokeWidth={2.5} />
+                                                        </button>
+                                                        <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 text-white text-[8px] font-black uppercase tracking-widest">
+                                                            {index === 0 ? "Principal" : `Foto ${index + 1}`}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Uploader para añadir una nueva */}
                                         <ImageUploader 
                                             category="banner" 
-                                            currentUrl={formData.bannerUrl} 
-                                            onUploadSuccess={(m) => setFormData(prev => ({ ...prev, bannerUrl: m.url }))} 
-                                            onRemove={() => setFormData(prev => ({ ...prev, bannerUrl: "" }))}
+                                            onUploadSuccess={(m) => setFormData(prev => {
+                                                const newUrls = [...(prev.bannerUrls || []), m.url];
+                                                return {
+                                                    ...prev,
+                                                    bannerUrls: newUrls,
+                                                    bannerUrl: prev.bannerUrl || m.url
+                                                };
+                                            })} 
                                             aspect="landscape"
-                                            label="Subir Portada"
+                                            label="Añadir Foto de Portada"
                                             uploadUrl="/api/superadmin/upload"
                                             extraFields={{ targetBusinessId: negocio?.id || 'superadmin-temp' }}
                                         />

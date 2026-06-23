@@ -7,6 +7,7 @@ export default async function NegociosPage() {
             Suscripcion: {
                 include: { Plan: true }
             },
+            Imagen: true,
             _count: {
                 select: { Service: true, Appointment: true }
             }
