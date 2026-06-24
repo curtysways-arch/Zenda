@@ -33,7 +33,7 @@ export default function CitasAdminPage() {
     const router = useRouter();
     const [citas, setCitas] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filterStatus, setFilterStatus] = useState('all');
+    const [filterStatus, setFilterStatus] = useState('active');
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
     const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
@@ -88,9 +88,16 @@ export default function CitasAdminPage() {
                              res.cliente?.telefono?.includes(searchQuery) ||
                              res.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                              res.shareToken?.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesFilter = filterStatus === 'all' ? true : 
-                            filterStatus === 'pending' ? res.estado === 'pending' :
-                            filterStatus === 'confirmed' ? (res.estado === 'confirmed' || res.estado === 'approved') : true;
+        
+        const matchesFilter = 
+            filterStatus === 'all' ? true : 
+            filterStatus === 'active' ? (res.estado === 'pending' || res.estado === 'confirmed' || res.estado === 'approved' || res.estado === 'client_checked_in' || res.estado === 'in_progress') :
+            filterStatus === 'pending' ? res.estado === 'pending' :
+            filterStatus === 'confirmed' ? (res.estado === 'confirmed' || res.estado === 'approved') :
+            filterStatus === 'completed' ? res.estado === 'completed' :
+            filterStatus === 'cancelled' ? (res.estado === 'cancelled' || res.estado === 'no_show') :
+            filterStatus === 'expired' ? res.estado === 'expired' : true;
+
         return matchesSearch && matchesFilter;
     });
 
@@ -169,12 +176,19 @@ export default function CitasAdminPage() {
                                     style={{ borderColor: 'var(--primary-color)' }}
                                 />
                             </div>
-                            <div className="flex bg-white p-2 rounded-3xl border border-slate-200 shadow-xl gap-1">
-                                {['all', 'pending', 'confirmed'].map((id) => (
-                                    <button key={id} onClick={() => setFilterStatus(id)}
-                                        className={clsx("px-6 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all",
-                                            filterStatus === id ? "bg-slate-900 text-white shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-900 hover:bg-slate-50")}>
-                                        {id === 'all' ? 'Ver Todo' : id === 'pending' ? 'Pendientes' : 'Aprobadas'}
+                            <div className="flex flex-wrap bg-white p-1.5 rounded-3xl border border-slate-200 shadow-xl gap-1">
+                                {[
+                                    { id: 'active', label: 'Pendientes y Confirmadas' },
+                                    { id: 'pending', label: 'Solo Pendientes' },
+                                    { id: 'confirmed', label: 'Solo Confirmadas' },
+                                    { id: 'completed', label: 'Finalizadas' },
+                                    { id: 'cancelled', label: 'Canceladas' },
+                                    { id: 'all', label: 'Ver Todo' }
+                                ].map((opt) => (
+                                    <button key={opt.id} onClick={() => setFilterStatus(opt.id)}
+                                        className={clsx("px-4 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all",
+                                            filterStatus === opt.id ? "bg-slate-900 text-white shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-900 hover:bg-slate-50")}>
+                                        {opt.label}
                                     </button>
                                 ))}
                             </div>

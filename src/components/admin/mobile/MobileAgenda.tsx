@@ -208,9 +208,31 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
         return eachHourOfInterval({ start, end });
     }, []);
 
+    const [filterStatus, setFilterStatus] = useState<'active' | 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'all'>('active');
+
+    const citasPorEstado = useMemo(() => {
+        return citas.filter(res => {
+            switch (filterStatus) {
+                case 'active':
+                    return res.estado === 'pending' || res.estado === 'confirmed' || res.estado === 'approved' || res.estado === 'client_checked_in' || res.estado === 'in_progress';
+                case 'pending':
+                    return res.estado === 'pending';
+                case 'confirmed':
+                    return res.estado === 'confirmed' || res.estado === 'approved';
+                case 'completed':
+                    return res.estado === 'completed';
+                case 'cancelled':
+                    return res.estado === 'cancelled' || res.estado === 'no_show';
+                case 'all':
+                default:
+                    return true;
+            }
+        });
+    }, [citas, filterStatus]);
+
     const citasFiltradas = useMemo(() => {
         const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
-        return citas.filter(c => {
+        return citasPorEstado.filter(c => {
             const d = new Date(c.fecha);
             // Extraer componentes UTC ya que el server guarda a medianoche UTC
             const y = d.getUTCFullYear();
@@ -219,7 +241,7 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
             const fechaStr = `${y}-${m}-${day}`;
             return fechaStr === selectedDateStr;
         });
-    }, [citas, selectedDate]);
+    }, [citasPorEstado, selectedDate]);
 
     return (
         <div className="flex flex-col h-full bg-slate-50 animate-in fade-in duration-500 pb-20">
@@ -296,6 +318,35 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
                         );
                     })}
                 </div>
+
+                {/* Selector de Estado Horizontal (Filtros) */}
+                <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar -mx-4 px-4 pb-1 pt-1 border-t border-slate-100/60">
+                    {[
+                        { id: 'active', label: 'Activas' },
+                        { id: 'pending', label: 'Pendientes' },
+                        { id: 'confirmed', label: 'Confirmadas' },
+                        { id: 'completed', label: 'Finalizadas' },
+                        { id: 'cancelled', label: 'Canceladas' },
+                        { id: 'all', label: 'Ver Todo' }
+                    ].map((opt) => {
+                        const isSel = filterStatus === opt.id;
+                        return (
+                            <button
+                                key={opt.id}
+                                onClick={() => setFilterStatus(opt.id as any)}
+                                className={cn(
+                                    "px-4 py-2 rounded-2xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border active:scale-95",
+                                    isSel 
+                                        ? "text-white border-transparent shadow-sm" 
+                                        : "bg-slate-50 text-slate-400 border-slate-100/80 hover:text-slate-600"
+                                )}
+                                style={isSel ? { backgroundColor: primaryColor } : {}}
+                            >
+                                {opt.label}
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
 
             {/* Content Area */}
@@ -356,7 +407,7 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
                     <div className="space-y-10">
                         {weekDays.map(date => {
                             const dateStr = format(date, 'yyyy-MM-dd');
-                            const citasDia = citas.filter(c => {
+                            const citasDia = citasPorEstado.filter(c => {
                                 const d = new Date(c.fecha);
                                 return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}` === dateStr;
                             });
