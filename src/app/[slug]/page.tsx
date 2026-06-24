@@ -475,7 +475,13 @@ export default async function PublicNegocioPage({
             } : null,
             likesCount: Number(r.likes_count || 0),
             commentsCount: Number(r.comments_count || 0)
-        }));
+        })).filter(r => {
+            // Solo mostrar resultados que tienen imágenes válidas
+            if (r.type === 'GALLERY') {
+                return r.gallery && r.gallery.length > 0;
+            }
+            return r.beforeImage || r.afterImage;
+        });
     } catch (e) {
         console.error("Error cargando resultados destacados:", e);
     }
