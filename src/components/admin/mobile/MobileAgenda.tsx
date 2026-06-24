@@ -23,6 +23,7 @@ interface MobileAgendaProps {
     primaryColor: string;
     onConfirm?: (id: string) => void;
     onCancel?: (id: string) => void;
+    onUpdateStatus?: (id: string, nuevoEstado: string) => void;
     slug: string;
 }
 
@@ -92,94 +93,238 @@ function getStatusConfig(status: string, primaryColor: string) {
     }
 }
 
-// Sub-componente para la tarjeta de cita
-function AppointmentCard({ cita, primaryColor, onConfirm, onCancel }: { cita: any, primaryColor: string, onConfirm?: any, onCancel?: any }) {
+// Sub-componente para la tarjeta de cita con soporte para Swipe Gestures (deslizar)
+function AppointmentCard({ 
+    cita, 
+    primaryColor, 
+    onUpdateStatus, 
+    onConfirm, 
+    onCancel 
+}: { 
+    cita: any; 
+    primaryColor: string; 
+    onUpdateStatus?: (id: string, nuevoEstado: string) => void; 
+    onConfirm?: any; 
+    onCancel?: any; 
+}) {
     const status = getStatusConfig(cita.estado, primaryColor);
     
+    // Estados para controlar el deslizamiento horizontal
+    const [startX, setStartX] = useState(0);
+    const [translateX, setTranslateX] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+
+    // Determinar las acciones a la izquierda/derecha
+    const getSwipeActions = () => {
+        const est = cita.estado?.toLowerCase();
+        let rightAction = null; // Confirmar/Llegó/Finalizar
+        let leftAction = null;  // Cancelar/Rechazar
+
+        if (est === 'completed' || est === 'cancelled' || est === 'expired') {
+            return { rightAction, leftAction };
+        }
+
+        // Deslizar izquierda -> Cancelar
+        leftAction = {
+            estado: 'cancelled',
+            label: est === 'pending' ? 'Rechazar' : 'Cancelar',
+            bg: 'bg-rose-600',
+            icon: <X size={20} strokeWidth={3} className="text-white shrink-0" />
+        };
+
+        // Deslizar derecha -> Avance lógico
+        if (est === 'pending') {
+            rightAction = {
+                estado: 'confirmed',
+                label: 'Confirmar',
+                bg: 'bg-emerald-600',
+                icon: <Check size={20} strokeWidth={3} className="text-white shrink-0" />
+            };
+        } else if (est === 'confirmed' || est === 'approved') {
+            rightAction = {
+                estado: 'client_checked_in',
+                label: 'Asistencia (Llegó)',
+                bg: 'bg-amber-500',
+                icon: <Check size={20} strokeWidth={3} className="text-white shrink-0" />
+            };
+        } else if (est === 'client_checked_in') {
+            rightAction = {
+                estado: 'in_progress',
+                label: 'Iniciar Servicio',
+                bg: 'bg-purple-600',
+                icon: <Check size={20} strokeWidth={3} className="text-white shrink-0" />
+            };
+        } else if (est === 'in_progress') {
+            rightAction = {
+                estado: 'completed',
+                label: 'Finalizar',
+                bg: 'bg-slate-700',
+                icon: <Check size={20} strokeWidth={3} className="text-white shrink-0" />
+            };
+        }
+
+        return { rightAction, leftAction };
+    };
+
+    const { rightAction, leftAction } = getSwipeActions();
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (!rightAction && !leftAction) return;
+        setStartX(e.touches[0].clientX);
+        setIsDragging(true);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!isDragging) return;
+        const diffX = e.touches[0].clientX - startX;
+        
+        // Bloquear si no hay acción disponible en la dirección del arrastre
+        if (diffX > 0 && !rightAction) {
+            setTranslateX(0);
+            return;
+        }
+        if (diffX < 0 && !leftAction) {
+            setTranslateX(0);
+            return;
+        }
+
+        // Añadir efecto de resistencia física
+        const maxDrag = 140;
+        let finalTranslate = diffX;
+        if (Math.abs(diffX) > maxDrag) {
+            const excess = Math.abs(diffX) - maxDrag;
+            finalTranslate = (diffX > 0 ? maxDrag : -maxDrag) + (diffX > 0 ? 1 : -1) * (excess * 0.25);
+        }
+
+        setTranslateX(finalTranslate);
+    };
+
+    const handleTouchEnd = () => {
+        if (!isDragging) return;
+        setIsDragging(false);
+
+        const threshold = 100;
+        if (translateX > threshold && rightAction) {
+            if (onUpdateStatus) {
+                onUpdateStatus(cita.id, rightAction.estado);
+            } else if (rightAction.estado === 'confirmed' && onConfirm) {
+                onConfirm(cita.id);
+            }
+        } else if (translateX < -threshold && leftAction) {
+            if (onUpdateStatus) {
+                onUpdateStatus(cita.id, leftAction.estado);
+            } else if (onCancel) {
+                onCancel(cita.id);
+            }
+        }
+
+        setTranslateX(0);
+    };
+
     return (
-        <Link 
-            href={`/admin/citas/${cita.id}`}
-            className={cn(
-                "relative block p-5 rounded-[2.5rem] border shadow-sm overflow-hidden group active:scale-[0.98] transition-all",
-                status.bg,
-                status.border
+        <div className="relative overflow-hidden rounded-[2.5rem] w-full bg-slate-100 shadow-sm border border-slate-200/50">
+            {/* Fondo de acción a la derecha (Confirmar / Avanzar) */}
+            {rightAction && translateX > 0 && (
+                <div 
+                    className={cn("absolute inset-y-0 left-0 flex items-center pl-6 gap-3 transition-opacity", rightAction.bg)}
+                    style={{ right: '50%', opacity: Math.min(1, translateX / 80) }}
+                >
+                    {rightAction.icon}
+                    <span className="text-[10px] font-black text-white uppercase tracking-widest leading-none">{rightAction.label}</span>
+                </div>
             )}
-        >
-            <div 
-                className={cn("absolute left-0 top-0 bottom-0 w-2", status.animate)}
-                style={{ backgroundColor: status.accent }}
-            />
-            
-            <div className="flex justify-between items-start gap-4">
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className={cn("px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest border", status.text, status.border, "bg-white/50")}>
-                            {status.label}
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <Clock size={10} className={status.text} />
-                            <span className={cn("text-[9px] font-bold uppercase tabular-nums", status.text)}>
-                                {cita.horaInicio} - {cita.horaFin}
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <h4 className={cn("text-base font-black uppercase italic leading-none truncate", status.text === 'text-white' ? 'text-white' : 'text-slate-900')}>
-                        {cita.cliente?.nombre || 'Cliente'}
-                    </h4>
-                    
-                    <div className="flex items-center gap-2 mt-2">
-                        <div className="p-1.5 rounded-lg bg-white/40 border border-white/20 backdrop-blur-sm">
-                            <Scissors size={10} className={status.text === 'text-white' ? 'text-white' : 'text-slate-400'} />
-                        </div>
-                        <p className={cn("text-[10px] font-black uppercase tracking-tight truncate", status.text === 'text-white' ? 'text-white/90' : 'text-slate-500')}>
-                            {cita.service?.nombre || 'Servicio'}
-                        </p>
-                    </div>
+
+            {/* Fondo de acción a la izquierda (Rechazar / Cancelar) */}
+            {leftAction && translateX < 0 && (
+                <div 
+                    className={cn("absolute inset-y-0 right-0 flex items-center justify-end pr-6 gap-3 transition-opacity", leftAction.bg)}
+                    style={{ left: '50%', opacity: Math.min(1, Math.abs(translateX) / 80) }}
+                >
+                    <span className="text-[10px] font-black text-white uppercase tracking-widest leading-none">{leftAction.label}</span>
+                    {leftAction.icon}
                 </div>
-                
-                <div className="flex flex-col items-end gap-3">
-                    <div className="flex items-center gap-2">
-                        {cita.estado === 'pending' && (
-                            <div className="flex gap-1.5">
-                                <button 
-                                    onClick={(e) => { e.preventDefault(); onConfirm?.(cita.id); }}
-                                    className="size-9 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20 active:scale-90 transition-transform"
-                                >
-                                    <Check size={16} strokeWidth={3} />
-                                </button>
-                                <button 
-                                    onClick={(e) => { e.preventDefault(); onCancel?.(cita.id); }}
-                                    className="size-9 rounded-2xl bg-white text-rose-500 border border-rose-100 flex items-center justify-center shadow-sm active:scale-90 transition-transform"
-                                >
-                                    <X size={16} strokeWidth={3} />
-                                </button>
+            )}
+
+            {/* Tarjeta deslizable */}
+            <div
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                style={{ 
+                    transform: `translateX(${translateX}px)`,
+                    transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                }}
+                className="relative z-10 w-full"
+            >
+                <Link 
+                    href={`/admin/citas/${cita.id}`}
+                    className={cn(
+                        "block p-5 rounded-[2.5rem] border shadow-inner overflow-hidden group active:scale-[0.98] transition-all bg-white",
+                        status.bg,
+                        status.border
+                    )}
+                >
+                    <div 
+                        className={cn("absolute left-0 top-0 bottom-0 w-2", status.animate)}
+                        style={{ backgroundColor: status.accent }}
+                    />
+                    
+                    <div className="flex justify-between items-start gap-4">
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className={cn("px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest border", status.text, status.border, "bg-white/50")}>
+                                    {status.label}
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <Clock size={10} className={status.text} />
+                                    <span className={cn("text-[9px] font-bold uppercase tabular-nums", status.text)}>
+                                        {cita.horaInicio} - {cita.horaFin}
+                                    </span>
+                                </div>
                             </div>
-                        )}
-                        <div className="size-9 rounded-2xl bg-white/50 backdrop-blur-sm border border-white/20 flex items-center justify-center text-slate-400">
-                            <MoreVertical size={16} />
+                            
+                            <h4 className={cn("text-base font-black uppercase italic leading-none truncate", status.text === 'text-white' ? 'text-white' : 'text-slate-900')}>
+                                {cita.cliente?.nombre || 'Cliente'}
+                            </h4>
+                            
+                            <div className="flex items-center gap-2 mt-2">
+                                <div className="p-1.5 rounded-lg bg-white/40 border border-white/20 backdrop-blur-sm">
+                                    <Scissors size={10} className={status.text === 'text-white' ? 'text-white' : 'text-slate-400'} />
+                                </div>
+                                <p className={cn("text-[10px] font-black uppercase tracking-tight truncate", status.text === 'text-white' ? 'text-white/90' : 'text-slate-500')}>
+                                    {cita.service?.nombre || 'Servicio'}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div className="flex flex-col items-end gap-3">
+                            <div className="flex items-center gap-2">
+                                <div className="size-9 rounded-2xl bg-white/50 backdrop-blur-sm border border-white/20 flex items-center justify-center text-slate-400">
+                                    <MoreVertical size={16} />
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 bg-white/40 p-1.5 rounded-2xl border border-white/20 backdrop-blur-sm">
+                                <div className="size-5 rounded-lg bg-white flex items-center justify-center overflow-hidden border border-slate-100">
+                                    {(cita.staff?.imageMedia || cita.staff?.avatar) ? (
+                                        <img src={getImageUrl(cita.staff.imageMedia || cita.staff.avatar, 'thumb')} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User size={10} className="text-slate-400" />
+                                    )}
+                                </div>
+                                <span className={cn("text-[8px] font-black uppercase tracking-widest italic", status.text === 'text-white' ? 'text-white' : 'text-slate-400')}>
+                                    {cita.staff?.name?.split(' ')[0] || 'Staff'}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div className="flex items-center gap-2 bg-white/40 p-1.5 rounded-2xl border border-white/20 backdrop-blur-sm">
-                        <div className="size-5 rounded-lg bg-white flex items-center justify-center overflow-hidden border border-slate-100">
-                            {(cita.staff?.imageMedia || cita.staff?.avatar) ? (
-                                <img src={getImageUrl(cita.staff.imageMedia || cita.staff.avatar, 'thumb')} className="w-full h-full object-cover" />
-                            ) : (
-                                <User size={10} className="text-slate-400" />
-                            )}
-                        </div>
-                        <span className={cn("text-[8px] font-black uppercase tracking-widest italic", status.text === 'text-white' ? 'text-white' : 'text-slate-400')}>
-                            {cita.staff?.name?.split(' ')[0] || 'Staff'}
-                        </span>
-                    </div>
-                </div>
+                </Link>
             </div>
-        </Link>
+        </div>
     );
 }
 
-export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel, slug }: MobileAgendaProps) {
+export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel, onUpdateStatus, slug }: MobileAgendaProps) {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [view, setView] = useState<'day' | 'week' | 'staff'>('week');
 
@@ -392,6 +537,7 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
                                             primaryColor={primaryColor} 
                                             onConfirm={onConfirm} 
                                             onCancel={onCancel} 
+                                            onUpdateStatus={onUpdateStatus}
                                         />
                                     )) : (
                                         <div className="h-full flex items-center">
@@ -430,6 +576,7 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
                                                 primaryColor={primaryColor} 
                                                 onConfirm={onConfirm} 
                                                 onCancel={onCancel} 
+                                                onUpdateStatus={onUpdateStatus}
                                             />
                                         ))}
                                     </div>
@@ -463,6 +610,7 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
                                                 primaryColor={primaryColor} 
                                                 onConfirm={onConfirm} 
                                                 onCancel={onCancel} 
+                                                onUpdateStatus={onUpdateStatus}
                                             />
                                         ))}
                                     </div>

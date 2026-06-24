@@ -131,6 +131,30 @@ export default function CitasAdminPage() {
         }
     };
 
+    const handleUpdateStatus = async (id: string, nuevoEstado: string) => {
+        let confirmMsg = '¿Actualizar el estado de esta cita?';
+        if (nuevoEstado === 'confirmed') confirmMsg = '¿Confirmar esta cita?';
+        else if (nuevoEstado === 'cancelled') confirmMsg = '¿Rechazar/Cancelar esta cita?';
+        else if (nuevoEstado === 'client_checked_in') confirmMsg = '¿Confirmar la asistencia del cliente (Llegó)?';
+        else if (nuevoEstado === 'in_progress') confirmMsg = '¿Iniciar el servicio para esta cita?';
+        else if (nuevoEstado === 'completed') confirmMsg = '¿Finalizar esta cita?';
+
+        if (!confirm(confirmMsg)) return;
+
+        setIsUpdatingStatus(true);
+        try {
+            const res = await fetch(`/api/appointments/${id}/status`, {
+                method: 'PATCH',
+                body: JSON.stringify({ estado: nuevoEstado })
+            });
+            if (res.ok) await fetchCitas();
+        } catch (e) {
+            console.error('Error updating status:', e);
+        } finally {
+            setIsUpdatingStatus(false);
+        }
+    };
+
     if (loading) return (
         <div className="flex flex-col items-center justify-center py-40">
             <Loader2 className="w-16 h-16 animate-spin" style={{ color: 'var(--primary-color)' }} />
@@ -147,6 +171,7 @@ export default function CitasAdminPage() {
                     primaryColor={primaryColor} 
                     onConfirm={handleConfirm}
                     onCancel={handleCancel}
+                    onUpdateStatus={handleUpdateStatus}
                     slug={slug}
                 />
             </div>
