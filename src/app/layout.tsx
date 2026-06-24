@@ -6,6 +6,7 @@ import { Providers } from "@/components/Providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://citiox.com'),
     title: "CitiOx - Booking & App Solutions",
     description: "Gestión inteligente para tu centro de estética, spa y peluquería.",
     manifest: "/manifest.json",
@@ -16,6 +17,18 @@ export const metadata: Metadata = {
     },
     formatDetection: {
         telephone: false,
+    },
+    openGraph: {
+        title: "CitiOx - Booking & App Solutions",
+        description: "Gestión inteligente para tu centro de estética, spa y peluquería.",
+        images: ["/logo-citiox.png"],
+        type: "website",
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "CitiOx - Booking & App Solutions",
+        description: "Gestión inteligente para tu centro de estética, spa y peluquería.",
+        images: ["/logo-citiox.png"],
     },
 };
 
