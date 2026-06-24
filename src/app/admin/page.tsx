@@ -122,7 +122,7 @@ export default async function AdminDashboard() {
         estado: r.estado
     }));
 
-    const proximasCitas = await prisma.appointment.findMany({
+    const rawProximasCitas = await prisma.appointment.findMany({
         where: {
             ...commonFilter,
             fecha: { gte: startToday },
@@ -132,12 +132,24 @@ export default async function AdminDashboard() {
             cliente: true,
             service: true
         },
-        take: 5,
+        take: 30,
         orderBy: [
             { fecha: 'asc' },
             { horaInicio: 'asc' }
         ]
     });
+
+    const nowTime = new Date();
+    const validProximas = rawProximasCitas.filter((app: any) => {
+        const dateStr = app.fecha instanceof Date ? app.fecha.toISOString().split('T')[0] : String(app.fecha).split('T')[0];
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const [h, m] = app.horaFin ? app.horaFin.split(':').map(Number) : (app.horaInicio || '23:59').split(':').map(Number);
+        const endTime = new Date(year, month - 1, day, h, m, 0);
+        // Tolerancia de 30 minutos después de la hora de fin
+        return endTime.getTime() > nowTime.getTime() - (30 * 60 * 1000);
+    });
+
+    const proximasCitas = validProximas.slice(0, 5);
 
     const headersList = await headers();
     const host = headersList.get('host') || 'localhost:3000';
