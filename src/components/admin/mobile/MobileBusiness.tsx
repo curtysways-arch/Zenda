@@ -71,6 +71,8 @@ export default function MobileBusiness({
 
     const [branchForm, setBranchForm] = useState<{ id?: string, nombre: string, direccion: string, mapUrl: string } | null>(null);
     const [isSavingBranch, setIsSavingBranch] = useState(false);
+    const [expandedDay, setExpandedDay] = useState(false);
+    const [expanded2H, setExpanded2H] = useState(false);
 
     const handleSaveBranch = async () => {
         if (!branchForm || !branchForm.nombre.trim()) return;
@@ -282,84 +284,128 @@ export default function MobileBusiness({
                         />
 
                         {/* --- RECORDATORIOS --- */}
-                        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden p-6 space-y-6">
-                            <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
+                        <div className="space-y-4">
+                            <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest pl-4">
                                 Recordatorios Automáticos
                             </h4>
 
                             {/* Recordatorio del Día */}
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <label className="text-[10px] font-black uppercase tracking-widest" style={{ color: primaryColor }}>
-                                        Recordatorio del Día
-                                    </label>
-                                    <button 
-                                        onClick={() => onConfigChange('REMINDER_DAY_ENABLED', configs.REMINDER_DAY_ENABLED === '0' ? '1' : '0')}
-                                        className={`px-3 py-1 rounded-full text-[9px] font-bold transition-all ${configs.REMINDER_DAY_ENABLED === '0' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}
-                                    >
-                                        {configs.REMINDER_DAY_ENABLED === '0' ? 'Desactivado' : 'Activado'}
-                                    </button>
-                                </div>
-                                <div className={`space-y-4 transition-opacity duration-300 ${configs.REMINDER_DAY_ENABLED === '0' ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-                                    <div>
-                                        <label className="text-[9px] font-black text-slate-400 uppercase mb-2 block">Hora de envío</label>
-                                        <input
-                                            type="time"
-                                            value={configs.REMINDER_DAY_TIME || DEFAULT_CONFIGS.REMINDER_DAY_TIME}
-                                            onChange={(e) => onConfigChange('REMINDER_DAY_TIME', e.target.value)}
-                                            className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-bold focus:ring-2"
-                                            style={ { '--tw-ring-color': primaryColor } as any }
-                                        />
+                            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+                                <div 
+                                    onClick={() => setExpandedDay(!expandedDay)}
+                                    className="p-6 flex items-center justify-between"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="size-10 bg-slate-50 rounded-2xl flex items-center justify-center" style={{ color: primaryColor }}>
+                                            <MessageSquare size={18} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-black text-slate-900 uppercase italic leading-none">Recordatorio del Día</h4>
+                                            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Toque para {expandedDay ? 'cerrar' : 'editar'}</p>
+                                        </div>
                                     </div>
-                                    <textarea
-                                        value={configs.REMINDER_DAY_MSG || DEFAULT_CONFIGS.REMINDER_DAY_MSG}
-                                        onChange={(e) => onConfigChange('REMINDER_DAY_MSG', e.target.value)}
-                                        className="w-full bg-slate-50 border-none rounded-2xl p-4 text-xs font-medium text-slate-700 leading-relaxed min-h-[100px] focus:ring-2"
-                                        style={ { '--tw-ring-color': primaryColor } as any }
-                                    />
-                                    <button 
-                                        onClick={() => { onSaveConfig('REMINDER_DAY_ENABLED'); onSaveConfig('REMINDER_DAY_TIME'); onSaveConfig('REMINDER_DAY_MSG'); }}
-                                        disabled={saving !== null}
-                                        className="w-full py-3 rounded-xl text-white text-[9px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-md"
-                                        style={{ backgroundColor: primaryColor }}
-                                    >
-                                        Guardar Día
-                                    </button>
+                                    <div className="flex items-center gap-3">
+                                        <span className={`px-2.5 py-1 rounded-full text-[8px] font-bold ${configs.REMINDER_DAY_ENABLED === '0' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
+                                            {configs.REMINDER_DAY_ENABLED === '0' ? 'OFF' : 'ON'}
+                                        </span>
+                                        <ChevronRight size={18} className={cn("text-slate-300 transition-transform", expandedDay && "rotate-90")} />
+                                    </div>
                                 </div>
+
+                                {expandedDay && (
+                                    <div className="px-6 pb-6 space-y-4 animate-in slide-in-from-top-2">
+                                        <div className="flex justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                                            <span className="text-[9px] font-black uppercase text-slate-500">¿Habilitar Recordatorio?</span>
+                                            <button 
+                                                onClick={() => onConfigChange('REMINDER_DAY_ENABLED', configs.REMINDER_DAY_ENABLED === '0' ? '1' : '0')}
+                                                className={`px-3 py-1 rounded-full text-[9px] font-bold transition-all ${configs.REMINDER_DAY_ENABLED === '0' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}
+                                            >
+                                                {configs.REMINDER_DAY_ENABLED === '0' ? 'Desactivado' : 'Activado'}
+                                            </button>
+                                        </div>
+                                        <div className={`space-y-4 transition-opacity duration-300 ${configs.REMINDER_DAY_ENABLED === '0' ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+                                            <div>
+                                                <label className="text-[9px] font-black text-slate-400 uppercase mb-2 block">Hora de envío</label>
+                                                <input
+                                                    type="time"
+                                                    value={configs.REMINDER_DAY_TIME || DEFAULT_CONFIGS.REMINDER_DAY_TIME}
+                                                    onChange={(e) => onConfigChange('REMINDER_DAY_TIME', e.target.value)}
+                                                    className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-bold focus:ring-2"
+                                                    style={ { '--tw-ring-color': primaryColor } as any }
+                                                />
+                                            </div>
+                                            <textarea
+                                                value={configs.REMINDER_DAY_MSG || DEFAULT_CONFIGS.REMINDER_DAY_MSG}
+                                                onChange={(e) => onConfigChange('REMINDER_DAY_MSG', e.target.value)}
+                                                className="w-full bg-slate-50 border-none rounded-2xl p-4 text-xs font-medium text-slate-700 leading-relaxed min-h-[100px] focus:ring-2"
+                                                style={ { '--tw-ring-color': primaryColor } as any }
+                                            />
+                                            <button 
+                                                onClick={() => { onSaveConfig('REMINDER_DAY_ENABLED'); onSaveConfig('REMINDER_DAY_TIME'); onSaveConfig('REMINDER_DAY_MSG'); }}
+                                                disabled={saving !== null}
+                                                className="w-full py-3 rounded-xl text-white text-[9px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-md"
+                                                style={{ backgroundColor: primaryColor }}
+                                            >
+                                                Guardar Día
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
-                            <hr className="border-slate-100" />
-
                             {/* Recordatorio 2 Horas */}
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <label className="text-[10px] font-black uppercase tracking-widest" style={{ color: primaryColor }}>
-                                        Recordatorio 2 Horas
-                                    </label>
-                                    <button 
-                                        onClick={() => onConfigChange('REMINDER_2H_ENABLED', configs.REMINDER_2H_ENABLED === '0' ? '1' : '0')}
-                                        className={`px-3 py-1 rounded-full text-[9px] font-bold transition-all ${configs.REMINDER_2H_ENABLED === '0' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}
-                                    >
-                                        {configs.REMINDER_2H_ENABLED === '0' ? 'Desactivado' : 'Activado'}
-                                    </button>
+                            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+                                <div 
+                                    onClick={() => setExpanded2H(!expanded2H)}
+                                    className="p-6 flex items-center justify-between"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="size-10 bg-slate-50 rounded-2xl flex items-center justify-center" style={{ color: primaryColor }}>
+                                            <MessageSquare size={18} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-black text-slate-900 uppercase italic leading-none">Recordatorio 2 Horas</h4>
+                                            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Toque para {expanded2H ? 'cerrar' : 'editar'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className={`px-2.5 py-1 rounded-full text-[8px] font-bold ${configs.REMINDER_2H_ENABLED === '0' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
+                                            {configs.REMINDER_2H_ENABLED === '0' ? 'OFF' : 'ON'}
+                                        </span>
+                                        <ChevronRight size={18} className={cn("text-slate-300 transition-transform", expanded2H && "rotate-90")} />
+                                    </div>
                                 </div>
-                                <div className={`space-y-4 transition-opacity duration-300 ${configs.REMINDER_2H_ENABLED === '0' ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-                                    <p className="text-[10px] font-bold text-slate-400 italic">Se envía 2 horas antes de la cita</p>
-                                    <textarea
-                                        value={configs.REMINDER_2H_MSG || DEFAULT_CONFIGS.REMINDER_2H_MSG}
-                                        onChange={(e) => onConfigChange('REMINDER_2H_MSG', e.target.value)}
-                                        className="w-full bg-slate-50 border-none rounded-2xl p-4 text-xs font-medium text-slate-700 leading-relaxed min-h-[100px] focus:ring-2"
-                                        style={ { '--tw-ring-color': primaryColor } as any }
-                                    />
-                                    <button 
-                                        onClick={() => { onSaveConfig('REMINDER_2H_ENABLED'); onSaveConfig('REMINDER_2H_MSG'); }}
-                                        disabled={saving !== null}
-                                        className="w-full py-3 rounded-xl text-white text-[9px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-md"
-                                        style={{ backgroundColor: primaryColor }}
-                                    >
-                                        Guardar 2 Horas
-                                    </button>
-                                </div>
+
+                                {expanded2H && (
+                                    <div className="px-6 pb-6 space-y-4 animate-in slide-in-from-top-2">
+                                        <div className="flex justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                                            <span className="text-[9px] font-black uppercase text-slate-500">¿Habilitar Recordatorio?</span>
+                                            <button 
+                                                onClick={() => onConfigChange('REMINDER_2H_ENABLED', configs.REMINDER_2H_ENABLED === '0' ? '1' : '0')}
+                                                className={`px-3 py-1 rounded-full text-[9px] font-bold transition-all ${configs.REMINDER_2H_ENABLED === '0' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}
+                                            >
+                                                {configs.REMINDER_2H_ENABLED === '0' ? 'Desactivado' : 'Activado'}
+                                            </button>
+                                        </div>
+                                        <div className={`space-y-4 transition-opacity duration-300 ${configs.REMINDER_2H_ENABLED === '0' ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+                                            <p className="text-[10px] font-bold text-slate-400 italic">Se envía 2 horas antes de la cita</p>
+                                            <textarea
+                                                value={configs.REMINDER_2H_MSG || DEFAULT_CONFIGS.REMINDER_2H_MSG}
+                                                onChange={(e) => onConfigChange('REMINDER_2H_MSG', e.target.value)}
+                                                className="w-full bg-slate-50 border-none rounded-2xl p-4 text-xs font-medium text-slate-700 leading-relaxed min-h-[100px] focus:ring-2"
+                                                style={ { '--tw-ring-color': primaryColor } as any }
+                                            />
+                                            <button 
+                                                onClick={() => { onSaveConfig('REMINDER_2H_ENABLED'); onSaveConfig('REMINDER_2H_MSG'); }}
+                                                disabled={saving !== null}
+                                                className="w-full py-3 rounded-xl text-white text-[9px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 shadow-md"
+                                                style={{ backgroundColor: primaryColor }}
+                                            >
+                                                Guardar 2 Horas
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <div className="bg-blue-50 p-6 rounded-[2rem] border border-blue-100">
