@@ -55,7 +55,7 @@ export default function PushNotificationManager() {
 
     if (permissionStatus === 'default' && session && !hideBanner) {
         return (
-            <div className="fixed bottom-4 left-4 z-50 p-4 bg-slate-900/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 max-w-sm flex items-center space-x-4 animate-in slide-in-from-bottom-5">
+            <div className="fixed bottom-24 md:bottom-4 left-4 right-4 md:right-auto z-[110] p-4 bg-slate-900/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 max-w-sm flex items-center space-x-4 animate-in slide-in-from-bottom-5">
                 <div className="flex-1">
                     <h4 className="font-black text-white text-sm">Notificaciones</h4>
                     <p className="text-[10px] text-white/50 mt-0.5 leading-tight">Activa alertas para tus reservas</p>
@@ -81,7 +81,7 @@ export default function PushNotificationManager() {
     if (!notification) return null;
 
     return (
-        <div className="fixed bottom-4 right-4 z-50 p-4 bg-white rounded-lg shadow-xl border-t-4 border-emerald-500 max-w-sm transform transition-all duration-300 animate-bounce flex items-start space-x-3">
+        <div className="fixed bottom-24 md:bottom-4 right-4 left-4 md:left-auto z-[110] p-4 bg-white rounded-lg shadow-xl border-t-4 border-emerald-500 max-w-sm transform transition-all duration-300 animate-bounce flex items-start space-x-3">
             <div className="flex-shrink-0 pt-1">
                 <img 
                     src={notification?.data?.icon || notification?.notification?.image || "/icons/icon-192x192.png"} 
