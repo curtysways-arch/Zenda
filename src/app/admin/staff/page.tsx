@@ -43,7 +43,7 @@ function StaffContent() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedStaff, setSelectedStaff] = useState<StaffMember | undefined>();
     const [scheduleOpenFor, setScheduleOpenFor] = useState<StaffMember | undefined>();
-    const [primaryColor, setPrimaryColor] = useState('#059669');
+    const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
 
     const fetchStaff = async () => {
         if (!session?.user) return;

@@ -13,7 +13,7 @@ export default function ServicesAdminPage() {
     const [services, setServices] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedService, setSelectedService] = useState<any>(null);
-    const [primaryColor, setPrimaryColor] = useState('#059669');
+    const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
 
     const fetchServices = async () => {
         if (!session?.user) {

@@ -22,7 +22,7 @@ export default function ConfigMensajesPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState<string | null>(null);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-    const [primaryColor, setPrimaryColor] = useState('#059669');
+    const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
     const [ubicaciones, setUbicaciones] = useState<any[]>([]);
     const [negocio, setNegocio] = useState<any>(null);
 

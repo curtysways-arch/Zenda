@@ -61,7 +61,7 @@ export default function MobileResults({ resultados, primaryColor, onEdit, onDele
                         </Link>
                         <button 
                             onClick={onNew}
-                            className="size-10 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 active:scale-90 transition-all"
+                            className="size-10 rounded-xl flex items-center justify-center text-white shadow-lg shadow-cyan-500/20 active:scale-90 transition-all"
                             style={{ backgroundColor: primaryColor }}
                         >
                             <Plus size={24} strokeWidth={3} />

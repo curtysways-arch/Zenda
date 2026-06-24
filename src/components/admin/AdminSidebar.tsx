@@ -70,7 +70,7 @@ const ZendaLogo = ({ size = 24, className = "" }: { size?: number; className?: s
     </svg>
 );
 
-export default function AdminSidebar({ primaryColor = '#059669' }: { primaryColor?: string }) {
+export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColor?: string }) {
     const pathname = usePathname();
     const { data: session } = useSession();
     const role = (session?.user as any)?.role || 'STAFF';

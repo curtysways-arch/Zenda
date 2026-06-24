@@ -42,7 +42,7 @@ export default async function AdminLayout({
         return <>{children}</>;
     }
 
-    let primaryColor = '#059669';
+    let primaryColor = '#0ea5e9';
     let status = { active: true, reason: null };
 
     if (negocioId) {
@@ -51,7 +51,7 @@ export default async function AdminLayout({
             where: { id: negocioId },
             select: { colorPrimario: true, configuracion: true }
         });
-        primaryColor = negocio?.colorPrimario || '#059669';
+        primaryColor = negocio?.colorPrimario || '#0ea5e9';
         
         const config = (negocio?.configuracion as any) || {};
         if (config.wizardCompleted !== true) {

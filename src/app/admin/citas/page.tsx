@@ -36,7 +36,7 @@ export default function CitasAdminPage() {
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
-    const [primaryColor, setPrimaryColor] = useState('#059669');
+    const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
     const [slug, setSlug] = useState('');
 
     const fetchCitas = async () => {

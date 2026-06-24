@@ -11,7 +11,7 @@ export default function ClientesPage() {
     const [clientes, setClientes] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [primaryColor, setPrimaryColor] = useState('#059669');
+    const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
 
     useEffect(() => {
         async function fetchClientes() {

@@ -22,10 +22,10 @@ html {
 
 :root {
     /* Premium Design System Tokens - DEFAULT DARK FOR PUBLIC */
-    --brand-primary: #10b981;
-    --brand-primary-dark: #059669;
-    --brand-secondary: #064e3b;
-    --accent: #f59e0b; 
+    --brand-primary: #0ea5e9;
+    --brand-primary-dark: #0284c7;
+    --brand-secondary: #0c4a6e;
+    --accent: #9333ea; 
     
     --glass-bg: rgba(15, 23, 42, 0.65);
     --glass-border: rgba(255, 255, 255, 0.08);
@@ -214,14 +214,14 @@ input:focus {
 }
 
 .text-gradient-emerald {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 .bg-premium-dark {
-    background: radial-gradient(circle at top right, #1a2e23 0%, #0c140f 100%);
+    background: radial-gradient(circle at top right, #0c1e2d 0%, #081119 100%);
 }
 
 /* Overrides para Admin (Light) */

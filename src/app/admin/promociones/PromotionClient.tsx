@@ -20,7 +20,7 @@ export default function PromotionClient({
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedPromotion, setSelectedPromotion] = useState<any>(null);
     const [loadingAction, setLoadingAction] = useState<string | null>(null);
-    const [primaryColor, setPrimaryColor] = useState('#059669');
+    const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
 
     useEffect(() => {
         const color = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();

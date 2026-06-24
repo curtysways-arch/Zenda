@@ -30,7 +30,7 @@ export default function ResultadosAdminPage() {
     const [saving, setSaving] = useState(false);
     const { data: session } = useSession();
     const [mounted, setMounted] = useState(false);
-    const [primaryColor, setPrimaryColor] = useState('#059669');
+    const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
 
     const [formData, setFormData] = useState({
         title: '',
@@ -51,8 +51,17 @@ export default function ResultadosAdminPage() {
     useEffect(() => {
         setMounted(true);
         fetchData();
-        const color = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
-        if (color) setPrimaryColor(color);
+        const mainContainer = document.querySelector('.light-theme');
+        let color = '';
+        if (mainContainer) {
+            color = getComputedStyle(mainContainer).getPropertyValue('--primary-color').trim();
+        }
+        if (!color) {
+            color = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+        }
+        if (color) {
+            setPrimaryColor(color);
+        }
     }, []);
 
     const fetchData = async () => {
@@ -278,24 +287,24 @@ export default function ResultadosAdminPage() {
                                             onClick={() => setFormData({...formData, type: 'BEFORE_AFTER'})}
                                             className={clsx(
                                                 "p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 group",
-                                                formData.type === 'BEFORE_AFTER' ? "shadow-md bg-emerald-50/50" : "border-slate-100 bg-slate-50"
+                                                formData.type === 'BEFORE_AFTER' ? "shadow-md" : "border-slate-100 bg-slate-50"
                                             )}
-                                            style={formData.type === 'BEFORE_AFTER' ? { borderColor: primaryColor || '#10b981' } : {}}
+                                            style={formData.type === 'BEFORE_AFTER' ? { borderColor: 'var(--primary-color, #0ea5e9)', backgroundColor: 'color-mix(in srgb, var(--primary-color, #0ea5e9), transparent 95%)' } : {}}
                                         >
-                                            <ArrowLeftRight className={formData.type === 'BEFORE_AFTER' ? "" : "text-slate-400"} style={formData.type === 'BEFORE_AFTER' ? { color: primaryColor || '#10b981' } : {}} size={20} />
-                                            <span className={clsx("text-[8px] font-black uppercase tracking-tighter text-center", formData.type === 'BEFORE_AFTER' ? "" : "text-slate-500")} style={formData.type === 'BEFORE_AFTER' ? { color: primaryColor || '#10b981' } : {}}>Antes y Después</span>
+                                            <ArrowLeftRight className={formData.type === 'BEFORE_AFTER' ? "" : "text-slate-400"} style={formData.type === 'BEFORE_AFTER' ? { color: 'var(--primary-color, #0ea5e9)' } : {}} size={20} />
+                                            <span className={clsx("text-[8px] font-black uppercase tracking-tighter text-center", formData.type === 'BEFORE_AFTER' ? "" : "text-slate-500")} style={formData.type === 'BEFORE_AFTER' ? { color: 'var(--primary-color, #0ea5e9)' } : {}}>Antes y Después</span>
                                         </button>
                                         <button 
                                             type="button"
                                             onClick={() => setFormData({...formData, type: 'GALLERY'})}
                                             className={clsx(
                                                 "p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 group",
-                                                formData.type === 'GALLERY' ? "shadow-md bg-emerald-50/50" : "border-slate-100 bg-slate-50"
+                                                formData.type === 'GALLERY' ? "shadow-md" : "border-slate-100 bg-slate-50"
                                             )}
-                                            style={formData.type === 'GALLERY' ? { borderColor: primaryColor || '#10b981' } : {}}
+                                            style={formData.type === 'GALLERY' ? { borderColor: 'var(--primary-color, #0ea5e9)', backgroundColor: 'color-mix(in srgb, var(--primary-color, #0ea5e9), transparent 95%)' } : {}}
                                         >
-                                            <ImageIcon className={formData.type === 'GALLERY' ? "" : "text-slate-400"} style={formData.type === 'GALLERY' ? { color: primaryColor || '#10b981' } : {}} size={20} />
-                                            <span className={clsx("text-[8px] font-black uppercase tracking-tighter text-center", formData.type === 'GALLERY' ? "" : "text-slate-500")} style={formData.type === 'GALLERY' ? { color: primaryColor || '#10b981' } : {}}>Galería</span>
+                                            <ImageIcon className={formData.type === 'GALLERY' ? "" : "text-slate-400"} style={formData.type === 'GALLERY' ? { color: 'var(--primary-color, #0ea5e9)' } : {}} size={20} />
+                                            <span className={clsx("text-[8px] font-black uppercase tracking-tighter text-center", formData.type === 'GALLERY' ? "" : "text-slate-500")} style={formData.type === 'GALLERY' ? { color: 'var(--primary-color, #0ea5e9)' } : {}}>Galería</span>
                                         </button>
                                     </div>
                                 </div>
@@ -307,7 +316,7 @@ export default function ResultadosAdminPage() {
                                         type="text" 
                                         required
                                         placeholder="Ej: Balayage Rubio..."
-                                        className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-emerald-500 transition-all font-black text-black placeholder:text-slate-500 text-xs"
+                                        className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-cyan-500 transition-all font-black text-black placeholder:text-slate-500 text-xs"
                                         value={formData.title}
                                         onChange={e => setFormData({...formData, title: e.target.value})}
                                     />
@@ -318,7 +327,7 @@ export default function ResultadosAdminPage() {
                                     <textarea 
                                         rows={2}
                                         placeholder="Describe el proceso..."
-                                        className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-emerald-500 transition-all font-black text-black placeholder:text-slate-500 resize-none text-xs"
+                                        className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-cyan-500 transition-all font-black text-black placeholder:text-slate-500 resize-none text-xs"
                                         value={formData.description}
                                         onChange={e => setFormData({...formData, description: e.target.value})}
                                     />
@@ -329,7 +338,7 @@ export default function ResultadosAdminPage() {
                                     <div className="space-y-2">
                                         <label className="text-[9px] font-black uppercase tracking-widest text-slate-900 ml-1 italic">4. Servicio</label>
                                         <select 
-                                            className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-emerald-500 transition-all font-black text-black appearance-none text-xs"
+                                            className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-cyan-500 transition-all font-black text-black appearance-none text-xs"
                                             value={formData.serviceId}
                                             onChange={e => setFormData({...formData, serviceId: e.target.value})}
                                         >
@@ -340,7 +349,7 @@ export default function ResultadosAdminPage() {
                                     <div className="space-y-2">
                                         <label className="text-[9px] font-black uppercase tracking-widest text-slate-900 ml-1 italic">5. Especialista</label>
                                         <select 
-                                            className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-emerald-500 transition-all font-black text-black appearance-none text-xs"
+                                            className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-cyan-500 transition-all font-black text-black appearance-none text-xs"
                                             value={formData.staffId}
                                             onChange={e => setFormData({...formData, staffId: e.target.value})}
                                         >
@@ -367,7 +376,7 @@ export default function ResultadosAdminPage() {
                                                 <input 
                                                     type="text" 
                                                     placeholder="O introduce URL manual..."
-                                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-500 transition-all text-[10px] text-slate-600 font-semibold"
+                                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:border-cyan-500 transition-all text-[10px] text-slate-600 font-semibold"
                                                     value={formData.beforeImage}
                                                     onChange={e => setFormData({...formData, beforeImage: e.target.value})}
                                                 />
@@ -385,7 +394,7 @@ export default function ResultadosAdminPage() {
                                                 <input 
                                                     type="text" 
                                                     placeholder="O introduce URL manual..."
-                                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-500 transition-all text-[10px] text-slate-600 font-semibold"
+                                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:border-cyan-500 transition-all text-[10px] text-slate-600 font-semibold"
                                                     value={formData.afterImage}
                                                     onChange={e => setFormData({...formData, afterImage: e.target.value})}
                                                 />
@@ -438,7 +447,7 @@ export default function ResultadosAdminPage() {
                                             <textarea 
                                                 rows={1}
                                                 placeholder="URL1, URL2..."
-                                                className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-emerald-500 transition-all font-black text-black placeholder:text-slate-500 text-[10px]"
+                                                className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-cyan-500 transition-all font-black text-black placeholder:text-slate-500 text-[10px]"
                                                 value={formData.galleryUrls}
                                                 onChange={e => setFormData({...formData, galleryUrls: e.target.value})}
                                             />
@@ -455,7 +464,7 @@ export default function ResultadosAdminPage() {
                                     </label>
                                     <label className="flex flex-col items-center gap-1.5 cursor-pointer">
                                         <input type="checkbox" className="sr-only peer" checked={formData.published} onChange={e => setFormData({...formData, published: e.target.checked})} />
-                                        <div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:bg-emerald-500 transition-all relative after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-4" style={formData.published ? { backgroundColor: primaryColor } : {}}></div>
+                                        <div className="w-8 h-4 bg-slate-200 rounded-full peer peer-checked:bg-cyan-500 transition-all relative after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-4" style={formData.published ? { backgroundColor: primaryColor } : {}}></div>
                                         <span className="text-[9px] mt-1 font-black uppercase text-slate-500 text-center">Público</span>
                                     </label>
                                     <label className="flex flex-col items-center gap-1.5 cursor-pointer">
@@ -468,7 +477,7 @@ export default function ResultadosAdminPage() {
 
                             <div className="p-4 border-t border-slate-100 bg-slate-50 flex gap-2">
                                 <button onClick={() => setIsModalOpen(false)} className="flex-1 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest text-slate-600 bg-white border border-slate-200">Cerrar</button>
-                                <button onClick={(e) => handleSubmit(e as any)} disabled={saving} className="flex-[2] py-3 rounded-xl font-black text-[9px] uppercase tracking-widest text-white shadow-lg shadow-emerald-500/20 disabled:opacity-50" style={{ backgroundColor: primaryColor || '#10b981' }}>{saving ? 'Guardando...' : 'Publicar'}</button>
+                                <button onClick={(e) => handleSubmit(e as any)} disabled={saving} className="flex-[2] py-3 rounded-xl font-black text-[9px] uppercase tracking-widest text-white shadow-lg shadow-cyan-500/20 disabled:opacity-50" style={{ backgroundColor: primaryColor || '#0ea5e9' }}>{saving ? 'Guardando...' : 'Publicar'}</button>
                             </div>
                         </div>
                     </div>,

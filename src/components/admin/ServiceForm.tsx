@@ -24,7 +24,7 @@ interface FeatureBlock {
 
 export default function ServiceForm({ onClose, onSuccess, initialData }: ServiceFormProps) {
     const [mounted, setMounted] = useState(false);
-    const [primaryColor, setPrimaryColor] = useState('#059669');
+    const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
 
     useEffect(() => {
         setMounted(true);

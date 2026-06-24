@@ -149,7 +149,7 @@ export default async function AdminDashboard() {
     const planName = sub?.Plan?.name || 'BEGIN';
     const planEstado = sub?.estado || 'unknown';
     const daysLeft = sub?.fechaFin ? Math.ceil((new Date(sub.fechaFin).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
-    const primaryColor = negocioData?.colorPrimario || '#059669';
+    const primaryColor = negocioData?.colorPrimario || '#0ea5e9';
     const featuresData = planFeatures || {};
 
     const onboarding = calculateOnboardingProgress(negocioData || {}, servicesResult.length);

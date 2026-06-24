@@ -180,7 +180,7 @@ export default function ReservaDetailPage({ params }: { params: Promise<{ id: st
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
     };
 
-    const primaryColor = '#059669'; // Podrías obtenerlo dinámicamente
+    const primaryColor = '#0ea5e9'; // Podrías obtenerlo dinámicamente
 
     return (
         <div className="min-h-screen bg-slate-50 md:pb-20 md:pt-10 md:px-4">
