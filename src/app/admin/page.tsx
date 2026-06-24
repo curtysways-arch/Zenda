@@ -16,6 +16,7 @@ import { featureService } from '@/lib/services/featureService';
 import { calculateOnboardingProgress } from '@/lib/onboarding';
 import OnboardingChecklist from '@/components/admin/OnboardingChecklist';
 import { formatUTCDate } from '@/lib/utils';
+import RealtimeDashboardReloader from '@/components/admin/RealtimeDashboardReloader';
 
 export default async function AdminDashboard() {
     const session = await getServerSession(authOptions);
@@ -403,6 +404,7 @@ export default async function AdminDashboard() {
                     </aside>
                 </div>
             </div>
+            <RealtimeDashboardReloader />
         </>
     );
 }

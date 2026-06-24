@@ -18,6 +18,12 @@ export default function PushNotificationManager() {
         
         onMessageListener((payload) => {
             setNotification(payload);
+            
+            // Emitir evento global en tiempo real para actualizar la UI al instante sin recargar la página
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('fcm-notification-received', { detail: payload }));
+            }
+            
             setTimeout(() => setNotification(null), 8000);
         }).catch(err => console.error('[PUSH] Error:', err));
     }, []);

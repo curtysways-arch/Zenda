@@ -81,6 +81,26 @@ export default function CitasAdminPage() {
         fetchCitas(); 
         const color = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
         if (color) setPrimaryColor(color);
+
+        // 1. Escuchar actualizaciones en tiempo real (FCM push en foreground)
+        const handleFcmNotify = () => {
+            console.log('[REALTIME] Notificación push recibida en vivo, actualizando citas...');
+            fetchCitas();
+        };
+        window.addEventListener('fcm-notification-received', handleFcmNotify);
+
+        // 2. Polling inteligente de respaldo (cada 30 segundos, solo si la pestaña está activa)
+        const interval = setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                console.log('[REALTIME] Polling de respaldo: actualizando citas...');
+                fetchCitas();
+            }
+        }, 30000);
+
+        return () => {
+            window.removeEventListener('fcm-notification-received', handleFcmNotify);
+            clearInterval(interval);
+        };
     }, []);
 
     const filteredCitas = citas.filter(res => {
