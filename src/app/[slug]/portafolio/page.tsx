@@ -42,7 +42,7 @@ export default async function FullPortfolioPage({
             LEFT JOIN Staff st ON r.staffId = st.id
             LEFT JOIN Media m ON st.imageMediaId = m.id
             WHERE r.businessId = '${negocio.id}' 
-            AND r.published = 1 
+            AND r.published = true 
             ORDER BY r.featured DESC, r.createdAt DESC
         `);
 

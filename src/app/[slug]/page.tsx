@@ -460,7 +460,7 @@ export default async function PublicNegocioPage({
             LEFT JOIN Cancha s ON r.serviceId = s.id
             LEFT JOIN Staff st ON r.staffId = st.id
             LEFT JOIN Media m ON st.imageMediaId = m.id
-            WHERE r.businessId = '${negocio.id}' AND r.published = 1
+            WHERE r.businessId = '${negocio.id}' AND r.published = true AND r.showInLanding = true
             ORDER BY r.createdAt DESC
             LIMIT 6
         `);

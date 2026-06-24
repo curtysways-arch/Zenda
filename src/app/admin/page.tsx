@@ -140,7 +140,22 @@ export default async function AdminDashboard() {
         ]
     });
 
-    const nowTime = new Date();
+    const timeZone = (() => {
+        let tz = 'America/Bogota';
+        if (negocioData?.configuracion) {
+            try {
+                const config = typeof negocioData.configuracion === 'string'
+                    ? JSON.parse(negocioData.configuracion)
+                    : negocioData.configuracion;
+                if (config.timeZone) {
+                    tz = config.timeZone;
+                }
+            } catch (_) {}
+        }
+        return tz;
+    })();
+
+    const nowTime = new Date(new Date().toLocaleString("en-US", { timeZone }));
     const validProximas = rawProximasCitas.filter((app: any) => {
         const dateStr = app.fecha instanceof Date ? app.fecha.toISOString().split('T')[0] : String(app.fecha).split('T')[0];
         const [year, month, day] = dateStr.split('-').map(Number);

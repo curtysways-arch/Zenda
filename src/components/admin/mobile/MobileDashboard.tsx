@@ -280,12 +280,15 @@ export default function MobileDashboard({
             </section>
 
             {/* Tip of the Day Card */}
-            <div className="p-8 rounded-[3rem] bg-indigo-600 text-white shadow-xl relative overflow-hidden group">
+            <Link 
+                href="/admin/resultados"
+                className="block p-8 rounded-[3rem] bg-indigo-600 text-white shadow-xl relative overflow-hidden group active:scale-[0.98] transition-all"
+            >
                 <div className="absolute -right-6 -bottom-6 size-32 rounded-full bg-white/10 blur-2xl group-hover:scale-150 transition-transform" />
                 <Sparkles size={24} className="mb-4 text-indigo-200" />
                 <h3 className="text-xl font-black uppercase italic leading-tight tracking-tighter mb-2">Haz crecer tu negocio</h3>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-100 leading-relaxed">Publica tus resultados en el portafolio para atraer más clientes hoy mismo.</p>
-            </div>
+            </Link>
         </div>
     );
 }
