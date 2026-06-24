@@ -4,6 +4,51 @@ import { featureService } from '@/lib/services/featureService';
 import crypto from 'crypto';
 
 /**
+ * Obtiene la zona horaria del negocio desde su JSON de configuración
+ */
+export function getBusinessTimeZone(negocioConfiguracion: any): string {
+    let timeZone = 'America/Bogota'; // fallback por defecto de la PWA (GMT-5)
+    if (negocioConfiguracion) {
+        try {
+            const config = typeof negocioConfiguracion === 'string'
+                ? JSON.parse(negocioConfiguracion)
+                : negocioConfiguracion;
+            if (config.timeZone) {
+                timeZone = config.timeZone;
+            }
+        } catch (_) {}
+    }
+    return timeZone;
+}
+
+/**
+ * Calcula la fecha y hora UTC real de inicio de una cita
+ */
+export function getAppDateTimeUtc(fecha: Date, horaInicio: string, timeZone: string): Date {
+    const [hours, minutes] = horaInicio.split(':').map(Number);
+    
+    // Crear la fecha base en UTC para el año/mes/día local de la cita a la hora local
+    const appDateTimeUtc = new Date(Date.UTC(
+        fecha.getUTCFullYear(),
+        fecha.getUTCMonth(),
+        fecha.getUTCDate(),
+        hours,
+        minutes,
+        0,
+        0
+    ));
+    
+    // Obtener el offset en ms de la zona horaria del negocio con respecto a UTC
+    const tempDate = new Date();
+    const utcTime = new Date(tempDate.toLocaleString("en-US", { timeZone: "UTC" }));
+    const tzTime = new Date(tempDate.toLocaleString("en-US", { timeZone }));
+    const offsetMs = tzTime.getTime() - utcTime.getTime();
+    
+    // Ajustar la fecha base restando el offset para obtener la hora UTC real
+    return new Date(appDateTimeUtc.getTime() - offsetMs);
+}
+
+/**
  * Función que sería ejecutada por un CRON job cada hora/30 min
  * Busca reservas confirmadas que ocurran en las próximas 2 horas
  */
@@ -13,25 +58,40 @@ export async function sendUpcomingReminders() {
     const currentMinutes = now.getMinutes().toString().padStart(2, '0');
     const currentTimeHHMM = `${currentHours}:${currentMinutes}`;
     
-    // Normalizamos startOfToday (00:00:00)
-    const startOfToday = new Date(now);
-    startOfToday.setHours(0, 0, 0, 0);
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const oneDayHence = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
     let sentCount = 0;
     console.log(`[JOB] Verificando recordatorios (DÍA y 2H). Hora actual: ${currentTimeHHMM}`);
 
     // --- 1. RECORDATORIO DEL DÍA ---
-    const reservasDia = await (prisma as any).appointment.findMany({
+    // Consultamos un rango amplio en UTC y filtramos por día local en memoria
+    const reservasDiaRaw = await (prisma as any).appointment.findMany({
         where: {
             estado: 'confirmed',
             reminderDaySent: false,
-            fecha: startOfToday
+            fecha: {
+                gte: new Date(oneDayAgo.setHours(0, 0, 0, 0)),
+                lte: new Date(oneDayHence.setHours(23, 59, 59, 999))
+            }
         },
         include: { cliente: true, negocio: true }
     });
 
-    for (const reserva of reservasDia) {
+    for (const reserva of reservasDiaRaw) {
         try {
+            const timeZone = getBusinessTimeZone(reserva.negocio?.configuracion);
+            
+            // Obtener el "hoy" en la zona horaria del negocio
+            const tzDateString = now.toLocaleString("en-US", { timeZone });
+            const nowInTz = new Date(tzDateString);
+            const todayInTz = new Date(Date.UTC(nowInTz.getFullYear(), nowInTz.getMonth(), nowInTz.getDate(), 0, 0, 0, 0));
+            
+            // Si la fecha de la reserva no es hoy en la zona horaria del negocio, ignorar
+            if (reserva.fecha.getTime() !== todayInTz.getTime()) {
+                continue;
+            }
+
             const canUseReminders = await featureService.canUseFeature(reserva.negocioId, 'whatsapp_reminders');
             if (!canUseReminders) continue;
 
@@ -47,10 +107,15 @@ export async function sendUpcomingReminders() {
             const enabled = configMap['REMINDER_DAY_ENABLED'] ?? '1';
             const sendTime = configMap['REMINDER_DAY_TIME'] ?? '08:00';
 
-            if (enabled === '1' && currentTimeHHMM >= sendTime) {
+            // Obtener la hora actual en HH:MM del negocio
+            const currentTzHours = nowInTz.getHours().toString().padStart(2, '0');
+            const currentTzMinutes = nowInTz.getMinutes().toString().padStart(2, '0');
+            const currentTzTimeHHMM = `${currentTzHours}:${currentTzMinutes}`;
+
+            if (enabled === '1' && currentTzTimeHHMM >= sendTime) {
                 await notificationService.sendReminder(
                     reserva.negocioId, reserva.cliente.nombre, reserva.cliente.telefono, 
-                    reserva.fecha.toLocaleDateString(), reserva.horaInicio, reserva.negocio.nombre, 
+                    reserva.fecha.toLocaleDateString('es-ES'), reserva.horaInicio, reserva.negocio.nombre, 
                     reserva.duracion, 'DAY'
                 );
                 console.log(`✅ [JOB] Recordatorio DIA enviado a ${reserva.cliente.telefono} (${reserva.horaInicio})`);
@@ -67,17 +132,32 @@ export async function sendUpcomingReminders() {
     }
 
     // --- 2. RECORDATORIO 2 HORAS ANTES ---
-    const reservas2H = await (prisma as any).appointment.findMany({
+    const reservas2HRaw = await (prisma as any).appointment.findMany({
         where: {
             estado: 'confirmed',
             reminder2HSent: false,
-            fecha: startOfToday
+            fecha: {
+                gte: new Date(oneDayAgo.setHours(0, 0, 0, 0)),
+                lte: new Date(oneDayHence.setHours(23, 59, 59, 999))
+            }
         },
         include: { cliente: true, negocio: true }
     });
 
-    for (const reserva of reservas2H) {
+    for (const reserva of reservas2HRaw) {
         try {
+            const timeZone = getBusinessTimeZone(reserva.negocio?.configuracion);
+            
+            // Obtener el "hoy" en la zona horaria del negocio
+            const tzDateString = now.toLocaleString("en-US", { timeZone });
+            const nowInTz = new Date(tzDateString);
+            const todayInTz = new Date(Date.UTC(nowInTz.getFullYear(), nowInTz.getMonth(), nowInTz.getDate(), 0, 0, 0, 0));
+            
+            // Si la fecha de la reserva no es hoy en la zona horaria del negocio, ignorar
+            if (reserva.fecha.getTime() !== todayInTz.getTime()) {
+                continue;
+            }
+
             const canUseReminders = await featureService.canUseFeature(reserva.negocioId, 'whatsapp_reminders');
             if (!canUseReminders) continue;
 
@@ -87,9 +167,7 @@ export async function sendUpcomingReminders() {
             const enabled = config?.valor ?? '1';
 
             if (enabled === '1') {
-                const [h, m] = reserva.horaInicio.split(':').map(Number);
-                const appTime = new Date(startOfToday);
-                appTime.setHours(h, m, 0, 0);
+                const appTime = getAppDateTimeUtc(reserva.fecha, reserva.horaInicio, timeZone);
 
                 const diffMs = appTime.getTime() - now.getTime();
                 const diffHours = diffMs / (1000 * 60 * 60);
@@ -97,7 +175,7 @@ export async function sendUpcomingReminders() {
                 if (diffHours >= 0 && diffHours <= 2) {
                     await notificationService.sendReminder(
                         reserva.negocioId, reserva.cliente.nombre, reserva.cliente.telefono, 
-                        reserva.fecha.toLocaleDateString(), reserva.horaInicio, reserva.negocio.nombre, 
+                        reserva.fecha.toLocaleDateString('es-ES'), reserva.horaInicio, reserva.negocio.nombre, 
                         reserva.duracion, '2H'
                     );
                     console.log(`✅ [JOB] Recordatorio 2H enviado a ${reserva.cliente.telefono} (${reserva.horaInicio})`);
@@ -302,13 +380,25 @@ export async function sendRatingReminders() {
  * Busca citas pendientes cuya fecha y hora de inicio ya pasaron
  * y las marca como 'expired' (Expirada).
  */
+/**
+ * Busca citas pendientes cuya fecha y hora de inicio ya pasaron,
+ * o cuyo tiempo de expiración para pagar (expiresAt) ya se cumplió,
+ * y las marca como 'expired' (Expirada).
+ */
 export async function autoExpirePendingAppointments() {
     const now = new Date();
     
-    // Obtener todas las citas pendientes
+    // Obtener todas las citas pendientes con la configuración de su negocio
     const pendingAppointments = await (prisma as any).appointment.findMany({
         where: {
             estado: 'pending'
+        },
+        include: {
+            negocio: {
+                select: {
+                    configuracion: true
+                }
+            }
         }
     });
     
@@ -317,19 +407,21 @@ export async function autoExpirePendingAppointments() {
     let count = 0;
     for (const app of pendingAppointments) {
         try {
-            // Combinar la fecha de la cita con su horaInicio (ej: "14:30")
-            const [hours, minutes] = app.horaInicio.split(':').map(Number);
-            const appDateTime = new Date(app.fecha);
-            appDateTime.setHours(hours, minutes, 0, 0);
+            const timeZone = getBusinessTimeZone(app.negocio?.configuracion);
+            const appDateTime = getAppDateTimeUtc(app.fecha, app.horaInicio, timeZone);
             
-            // Si la fecha y hora de la cita es anterior a "ahora"
-            if (appDateTime < now) {
+            // Expirar si la cita ya comenzó, o si la ventana de pago (expiresAt) ya pasó
+            const isTimePassed = appDateTime < now;
+            const isPaymentWindowExpired = app.expiresAt !== null && app.expiresAt < now;
+            
+            if (isTimePassed || isPaymentWindowExpired) {
                 await (prisma as any).appointment.update({
                     where: { id: app.id },
                     data: { estado: 'expired' }
                 });
                 
-                console.log(`✅ [JOB] Cita #${app.id.slice(-8)} de ${app.fecha.toLocaleDateString()} ${app.horaInicio} ha expirado y se marcó como EXPIRED.`);
+                const reason = isPaymentWindowExpired ? 'plazo de pago vencido' : 'hora de inicio superada';
+                console.log(`✅ [JOB] Cita #${app.id.slice(-8)} de ${app.fecha.toLocaleDateString()} ${app.horaInicio} ha expirado (${reason}) y se marcó como EXPIRED.`);
                 count++;
             }
         } catch (error) {
