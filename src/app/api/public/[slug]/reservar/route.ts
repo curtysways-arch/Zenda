@@ -143,6 +143,7 @@ export async function POST(
             const expiresAt = timeoutMinutes > 0 
                 ? new Date(Date.now() + timeoutMinutes * 60 * 1000) 
                 : null;
+            const estadoInicial = timeoutMinutes === 0 ? 'confirmed' : 'pending';
 
             // Verificar existencia del staff y obtener su nombre para el respaldo
             let finalStaffId = null;
@@ -171,7 +172,7 @@ export async function POST(
                 duracion: Math.ceil(totalDuracionMinutos),
                 total: parseFloat(String(body.precioTotal || 0)),
                 comentarios: comentariosFinales,
-                estado: 'pending',
+                estado: estadoInicial,
                 expiresAt: expiresAt,
                 cliente: { connect: { id: cliente.id } },
                 negocio: { connect: { id: negocio.id } },
@@ -240,10 +241,13 @@ export async function POST(
 
         // Enviar WhatsApp al cliente SIEMPRE, independientemente del OTP
         try {
-            const mensajeCliente = `👋 ¡Hola ${clienteNombre}!\n\nHemos recibido tu solicitud de reserva en *${negocio.nombre}*.\n\n✨ *Servicio:* ${service.nombre}\n📅 *Fecha:* ${fechaLegible}\n⏰ *Hora:* ${horaInicio}\n\n⏳ *Estado:* Pendiente de confirmación. El negocio revisará tu solicitud y recibirás una respuesta pronto.\n\n🔗 Ver tus reservas: ${magicLink}`;
+            const isConfirmed = reservaCreated.estado === 'confirmed';
+            const mensajeCliente = isConfirmed
+                ? `👋 ¡Hola ${clienteNombre}!\n\nTu reserva en *${negocio.nombre}* ha sido confirmada con éxito. ✅\n\n✨ *Servicio:* ${service.nombre}\n📅 *Fecha:* ${fechaLegible}\n⏰ *Hora:* ${horaInicio}\n\n🔗 Ver tus reservas: ${magicLink}`
+                : `👋 ¡Hola ${clienteNombre}!\n\nHemos recibido tu solicitud de reserva en *${negocio.nombre}*.\n\n✨ *Servicio:* ${service.nombre}\n📅 *Fecha:* ${fechaLegible}\n⏰ *Hora:* ${horaInicio}\n\n⏳ *Estado:* Pendiente de confirmación. El negocio revisará tu solicitud y recibirás una respuesta pronto.\n\n🔗 Ver tus reservas: ${magicLink}`;
             
-            console.log(`[WA CLIENTE] Enviando mensaje de pendiente a ${clienteTelefono}...`);
-            await whatsappService.sendWhatsApp(clienteTelefono, mensajeCliente, true, 'solicitud_cliente');
+            console.log(`[WA CLIENTE] Enviando mensaje a ${clienteTelefono} (Estado: ${reservaCreated.estado})...`);
+            await whatsappService.sendWhatsApp(clienteTelefono, mensajeCliente, true, isConfirmed ? 'confirmacion_cliente' : 'solicitud_cliente');
             console.log(`[WA CLIENTE] ✅ Mensaje enviado correctamente a ${clienteTelefono}`);
         } catch (waErr) { 
             console.error('❌ Error WA mensaje cliente:', waErr); 

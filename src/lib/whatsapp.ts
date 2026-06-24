@@ -544,7 +544,11 @@ export class WhatsAppService {
             }
         }
 
-        const message = `🚨 *NUEVA CITA RECIBIDA* 💆\n\nID: *#${shortId}*\n\n✨ *Servicio:* ${serviceName}${extrasMsg}\n📅 *Fecha:* ${fechaLegible}\n⏰ *Hora:* ${reserva.horaInicio} - ${reserva.horaFin}\n👤 *Cliente:* ${reserva.cliente?.nombre || 'Cliente'}\n📞 *Tel:* ${reserva.cliente?.telefono || 'N/A'}\n\n⚠️ Responde con:\n*1-${shortId}* para Confirmar ✅\n*2-${shortId}* para Rechazar ❌\n\n_Gestiona tus citas desde el panel admin._`;
+        const isConfirmedDirectly = reserva.estado === 'confirmed';
+
+        const message = isConfirmedDirectly
+            ? `🚨 *NUEVA CITA CONFIRMADA* 💆\n\nID: *#${shortId}*\n\n✨ *Servicio:* ${serviceName}${extrasMsg}\n📅 *Fecha:* ${fechaLegible}\n⏰ *Hora:* ${reserva.horaInicio} - ${reserva.horaFin}\n👤 *Cliente:* ${reserva.cliente?.nombre || 'Cliente'}\n📞 *Tel:* ${reserva.cliente?.telefono || 'N/A'}\n\n✅ *Estado:* Confirmada directamente (sin tiempo de espera).\n\n_Gestiona tus citas desde el panel admin._`
+            : `🚨 *NUEVA CITA RECIBIDA* 💆\n\nID: *#${shortId}*\n\n✨ *Servicio:* ${serviceName}${extrasMsg}\n📅 *Fecha:* ${fechaLegible}\n⏰ *Hora:* ${reserva.horaInicio} - ${reserva.horaFin}\n👤 *Cliente:* ${reserva.cliente?.nombre || 'Cliente'}\n📞 *Tel:* ${reserva.cliente?.telefono || 'N/A'}\n\n⚠️ Responde con:\n*1-${shortId}* para Confirmar ✅\n*2-${shortId}* para Rechazar ❌\n\n_Gestiona tus citas desde el panel admin._`;
 
         const uniquePhones = new Set<string>();
         
@@ -556,16 +560,18 @@ export class WhatsAppService {
                 const target = cleanPhone(admin.phone);
                 uniquePhones.add(target);
                 
-                await (prisma as any).pendingReservation.create({
-                    data: {
-                        id: uuidv4(),
-                        admin_phone: admin.phone,
-                        reservation_id: reserva.id,
-                        status: 'pending'
-                    }
-                }).catch(() => {});
+                if (!isConfirmedDirectly) {
+                    await (prisma as any).pendingReservation.create({
+                        data: {
+                            id: uuidv4(),
+                            admin_phone: admin.phone,
+                            reservation_id: reserva.id,
+                            status: 'pending'
+                        }
+                    }).catch(() => {});
+                }
                 
-                await this.sendWhatsApp(admin.phone, message, true, 'solicitud_reserva');
+                await this.sendWhatsApp(admin.phone, message, true, isConfirmedDirectly ? 'confirmacion_cliente' : 'solicitud_reserva');
             }
         }
 
@@ -573,15 +579,17 @@ export class WhatsAppService {
         if (negocio?.whatsapp) {
             const bizPhoneClean = cleanPhone(negocio.whatsapp);
             if (!uniquePhones.has(bizPhoneClean)) {
-                await (prisma as any).pendingReservation.create({
-                    data: {
-                        id: uuidv4(),
-                        admin_phone: negocio.whatsapp,
-                        reservation_id: reserva.id,
-                        status: 'pending'
-                    }
-                }).catch(() => {});
-                await this.sendWhatsApp(negocio.whatsapp, message, true, 'solicitud_reserva');
+                if (!isConfirmedDirectly) {
+                    await (prisma as any).pendingReservation.create({
+                        data: {
+                            id: uuidv4(),
+                            admin_phone: negocio.whatsapp,
+                            reservation_id: reserva.id,
+                            status: 'pending'
+                        }
+                    }).catch(() => {});
+                }
+                await this.sendWhatsApp(negocio.whatsapp, message, true, isConfirmedDirectly ? 'confirmacion_cliente' : 'solicitud_reserva');
             }
         }
     }

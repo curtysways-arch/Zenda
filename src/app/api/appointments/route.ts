@@ -231,7 +231,11 @@ export async function POST(req: Request) {
             });
             const timeoutMinutesRaw = timeoutConfig ? parseInt(timeoutConfig.valor) : 10;
             const timeoutMinutes = isNaN(timeoutMinutesRaw) ? 10 : timeoutMinutesRaw;
-            const expiresAt = new Date(Date.now() + timeoutMinutes * 60 * 1000);
+            const expiresAt = timeoutMinutes > 0
+                ? new Date(Date.now() + timeoutMinutes * 60 * 1000)
+                : null;
+
+            const estadoInicial = isBusiness ? 'confirmed' : (timeoutMinutes === 0 ? 'confirmed' : 'pending');
 
             const dataToCreate: any = {
                 fecha: reservationDate,
@@ -245,11 +249,11 @@ export async function POST(req: Request) {
                 negocioId: negocio.id,
                 serviceId: service.id,
                 comentarios: comentarios || '',
-                estado: isBusiness ? 'confirmed' : 'pending',
+                estado: estadoInicial,
                 created_by_business: isBusiness,
                 shareToken: isBusiness ? randomBytes(16).toString('hex') : null,
                 usuarioId: usuarioId,
-                expiresAt: isBusiness ? null : expiresAt
+                expiresAt: estadoInicial === 'confirmed' ? null : expiresAt
             };
 
             const reserva = await tx.appointment.create({
