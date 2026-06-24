@@ -51,7 +51,7 @@ export async function GET(
         try {
             // Obtener todos los clientes que coincidan
             const clientes: any[] = await prisma.$queryRawUnsafe(
-                `SELECT id FROM Cliente WHERE negocioId = '${negocioId}' AND (
+                `SELECT id FROM "Cliente" WHERE "negocioId" = '${negocioId}' AND (
                     telefono = '${telefono.replace(/'/g, "''")}' OR 
                     telefono = '${localTelefono.replace(/'/g, "''")}' OR 
                     telefono = '${digitsOnly}' OR
@@ -64,7 +64,7 @@ export async function GET(
             } else {
                 // Fallback sin negocioId por si acaso
                 const fallbackClientes: any[] = await prisma.$queryRawUnsafe(
-                    `SELECT id FROM Cliente WHERE (
+                    `SELECT id FROM "Cliente" WHERE (
                         telefono = '${telefono.replace(/'/g, "''")}' OR 
                         telefono = '${localTelefono.replace(/'/g, "''")}' OR 
                         telefono = '${digitsOnly}' OR
@@ -89,13 +89,13 @@ export async function GET(
         try {
             reservas = await prisma.$queryRawUnsafe(`
                 SELECT 
-                    r.id, r.fecha, r.horaInicio, r.horaFin, r.estado, 
-                    r.total, r.pagoEstado, r.metodoPago, r.comentarios,
-                    r.serviceId, r.staffId, r.negocioId, r.clienteId,
-                    r.createdAt, r.shareToken, r.checkedInAt, r.expiresAt
-                FROM Reserva r
-                WHERE r.negocioId = '${negocioId}' 
-                AND r.clienteId IN (${clienteIdsList})
+                    r.id, r.fecha, r."horaInicio", r."horaFin", r.estado, 
+                    r.total, r."pagoEstado", r."metodoPago", r.comentarios,
+                    r."serviceId", r."staffId", r."negocioId", r."clienteId",
+                    r."createdAt", r."shareToken", r."checkedInAt", r."expiresAt"
+                FROM "Reserva" r
+                WHERE r."negocioId" = '${negocioId}' 
+                AND r."clienteId" IN (${clienteIdsList})
                 AND r.estado NOT IN ('expired', 'cancelled', 'RECHAZADA', 'CANCELADA', 'cancelada', 'rejected', 'expirada', 'EXPIRADA')
                 ORDER BY r.fecha ASC
             `);
@@ -117,13 +117,13 @@ export async function GET(
                 try {
                     if (r.serviceId) {
                         const serviceRows: any[] = await prisma.$queryRawUnsafe(
-                            `SELECT id, nombre, precio FROM Cancha WHERE id = '${r.serviceId}' LIMIT 1`
+                            `SELECT id, nombre, precio FROM "Cancha" WHERE id = '${r.serviceId}' LIMIT 1`
                         );
                         if (serviceRows.length > 0) {
                             service = serviceRows[0];
                             // Imágenes del servicio (tabla Imagen, FK serviceId)
                             const imgRows: any[] = await prisma.$queryRawUnsafe(
-                                `SELECT id, url FROM Imagen WHERE serviceId = '${r.serviceId}' LIMIT 3`
+                                `SELECT id, url FROM "Imagen" WHERE "serviceId" = '${r.serviceId}' LIMIT 3`
                             );
                             service.Imagen = imgRows;
                             service.imagenes = imgRows;
@@ -136,7 +136,7 @@ export async function GET(
                 try {
                     if (r.staffId) {
                         const staffRows: any[] = await prisma.$queryRawUnsafe(
-                            `SELECT id, name, avatarUrl FROM Staff WHERE id = '${r.staffId}' LIMIT 1`
+                            `SELECT id, name, "avatarUrl" FROM "Staff" WHERE id = '${r.staffId}' LIMIT 1`
                         );
                         if (staffRows.length > 0) staff = staffRows[0];
                     }
@@ -146,7 +146,7 @@ export async function GET(
                 let ratings: any[] = [];
                 try {
                     ratings = await prisma.$queryRawUnsafe(
-                        `SELECT id, raterRole, stars FROM Rating WHERE appointmentId = '${r.id}'`
+                        `SELECT id, "raterRole", stars FROM "Rating" WHERE "appointmentId" = '${r.id}'`
                     );
                 } catch (_) {}
 
