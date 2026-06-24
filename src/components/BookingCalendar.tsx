@@ -51,8 +51,17 @@ export default function BookingCalendar({
     automaticDiscount,
     diasAtencion
 }: CalendarProps) {
+    const [clientToday, setClientToday] = useState<Date | null>(null);
     const [currentWeek, setCurrentWeek] = useState(new Date());
-    const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+    useEffect(() => {
+        const hoy = new Date();
+        setClientToday(hoy);
+        setCurrentWeek(hoy);
+        setSelectedDate(hoy);
+    }, []);
+
     const [selectedHour, setSelectedHour] = useState<string | null>(null);
     const [selectedCanchaId, setSelectedCanchaId] = useState<string>(canchas[0]?.id || '');
     const [selectedDuracionInterna, setSelectedDuracionInterna] = useState<number>(1);
@@ -140,7 +149,19 @@ export default function BookingCalendar({
         // En flujo dinámico (Staff), la disponibilidad ya viene del servidor por slot
         if (staffId) {
             const slot = dynamicSlots.find(s => s.time === hour);
-            return slot ? slot.available : false;
+            let available = slot ? slot.available : false;
+
+            // Si es la fecha de hoy, invalidar slots que ya pasaron en la hora local del cliente
+            if (available && selectedDate && isSameDay(selectedDate, new Date())) {
+                const now = new Date();
+                const [sh, sm] = hour.split(':').map(Number);
+                const startMinutes = sh * 60 + sm;
+                const currentTotalMins = now.getHours() * 60 + now.getMinutes();
+                if (startMinutes <= currentTotalMins) {
+                    available = false;
+                }
+            }
+            return available;
         }
 
         // LEGACY logic
@@ -320,7 +341,7 @@ const resolveSlotPromotion = (
             : Number(selectedCancha.precioHora || 0) * selectedDuracion) // Precio por hora para canchas
         : 0;
 
-    const isPastWeek = startOfWeek(currentWeek, { weekStartsOn: 1 }) <= startOfWeek(new Date(), { weekStartsOn: 1 });
+    const isPastWeek = startOfWeek(currentWeek, { weekStartsOn: 1 }) <= startOfWeek(clientToday || new Date(), { weekStartsOn: 1 });
 
     return (
         <div className="animate-in fade-in duration-700 bg-white rounded-3xl p-4 sm:p-6 w-full max-w-xl mx-auto shadow-sm relative border border-gray-100 space-y-6">
@@ -373,7 +394,7 @@ const resolveSlotPromotion = (
                 <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
                     {weekDays.map((day) => {
                         const isSelected = selectedDate && isSameDay(day, selectedDate);
-                        const isPast = day < startOfDay(new Date());
+                        const isPast = clientToday ? day < startOfDay(clientToday) : false;
                         const dayOfWeek = day.getDay();
                         const isClosed = diasAtencion ? !diasAtencion.includes(dayOfWeek) : false;
                         const isDisabled = isPast || isClosed;
