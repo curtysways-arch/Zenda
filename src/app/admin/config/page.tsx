@@ -312,13 +312,13 @@ export default function ConfigMensajesPage() {
                                 <div>
                                     <div className="flex justify-between items-center mb-4">
                                         <label className="text-[10px] font-black uppercase tracking-widest block" style={{ color: 'var(--primary-color)' }}>
-                                            Tiempo de espera (Minutos)
+                                            Autoconfirmar Reservas
                                         </label>
                                         <button 
                                             onClick={() => setConfigs(prev => ({ ...prev, BOOKING_TIMEOUT: (prev.BOOKING_TIMEOUT === '0' ? '15' : '0') }))}
-                                            className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all shadow-sm ${configs.BOOKING_TIMEOUT === '0' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}
+                                            className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all shadow-sm ${configs.BOOKING_TIMEOUT === '0' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}
                                         >
-                                            {configs.BOOKING_TIMEOUT === '0' ? 'Desactivado' : 'Activado'}
+                                            {configs.BOOKING_TIMEOUT === '0' ? 'Activado' : 'Desactivado'}
                                         </button>
                                     </div>
                                     <div className={`flex items-center gap-4 transition-opacity duration-300 ${configs.BOOKING_TIMEOUT === '0' ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
@@ -338,7 +338,7 @@ export default function ConfigMensajesPage() {
                                     </div>
                                     {configs.BOOKING_TIMEOUT === '0' && (
                                         <p className="text-[10px] text-gray-400 font-bold mt-3">
-                                            Las reservas no expirarán automáticamente.
+                                            Las reservas pasarán directamente a confirmadas sin tiempo de espera.
                                         </p>
                                     )}
                                 </div>
@@ -351,7 +351,7 @@ export default function ConfigMensajesPage() {
                                     style={{ backgroundColor: 'var(--primary-color)', boxShadow: '0 10px 15px -3px color-mix(in srgb, var(--primary-color), transparent 80%)' }}
                                 >
                                     {saving === 'BOOKING_TIMEOUT' ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
-                                    Guardar Tiempo
+                                    Guardar Configuración
                                 </button>
                             </div>
                         </div>

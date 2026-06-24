@@ -539,34 +539,60 @@ export default function MobileBusiness({
                 )}
 
                 {activeTab === 'FLOW' && (
-                    <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-end">
+                    <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+                        <div className="space-y-6">
+                            {/* Autoconfirmación Switch */}
+                            <div className="flex justify-between items-center bg-slate-50 p-4 rounded-3xl border border-slate-100">
                                 <div>
-                                    <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Tiempo de Espera</h4>
-                                    <p className="text-[9px] text-slate-400 font-bold mt-1">Confirmación máxima (minutos)</p>
+                                    <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Autoconfirmar Reservas</h4>
+                                    <p className="text-[9px] text-slate-400 font-bold mt-1">Confirmar citas directamente</p>
                                 </div>
-                                <span className="text-2xl font-black italic" style={{ color: primaryColor }}>{configs.BOOKING_TIMEOUT || 10}</span>
+                                <button 
+                                    onClick={() => onConfigChange('BOOKING_TIMEOUT', configs.BOOKING_TIMEOUT === '0' ? '15' : '0')}
+                                    className={`px-3.5 py-1.5 rounded-full text-[9px] font-bold transition-all shadow-sm ${configs.BOOKING_TIMEOUT === '0' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}
+                                >
+                                    {configs.BOOKING_TIMEOUT === '0' ? 'Activado' : 'Desactivado'}
+                                </button>
                             </div>
-                            <input 
-                                type="range" 
-                                min="5" 
-                                max="60" 
-                                step="5" 
-                                value={configs.BOOKING_TIMEOUT || 10}
-                                onChange={(e) => onConfigChange('BOOKING_TIMEOUT', e.target.value)}
-                                className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                                style={ { '--primary-color': primaryColor, accentColor: primaryColor } as any }
-                            />
-                            <div className="flex justify-end">
+
+                            {/* Tiempo de Espera Slider */}
+                            <div className={`space-y-4 transition-all duration-300 ${configs.BOOKING_TIMEOUT === '0' ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
+                                <div className="flex justify-between items-end">
+                                    <div>
+                                        <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Tiempo de Espera</h4>
+                                        <p className="text-[9px] text-slate-400 font-bold mt-1">Confirmación máxima (minutos)</p>
+                                    </div>
+                                    <span className="text-2xl font-black italic" style={{ color: primaryColor }}>
+                                        {configs.BOOKING_TIMEOUT === '0' ? '--' : (configs.BOOKING_TIMEOUT || 10)}
+                                    </span>
+                                </div>
+                                <input 
+                                    type="range" 
+                                    min="5" 
+                                    max="60" 
+                                    step="5" 
+                                    value={configs.BOOKING_TIMEOUT === '0' ? '15' : (configs.BOOKING_TIMEOUT || 10)}
+                                    onChange={(e) => onConfigChange('BOOKING_TIMEOUT', e.target.value)}
+                                    className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+                                    style={ { '--primary-color': primaryColor, accentColor: primaryColor } as any }
+                                />
+                            </div>
+
+                            {configs.BOOKING_TIMEOUT === '0' && (
+                                <p className="text-[9px] text-slate-400 font-bold text-center italic">
+                                    * Las reservas pasarán directamente a confirmadas sin tiempo de espera.
+                                </p>
+                            )}
+
+                            <div className="flex justify-end pt-2">
                                 <button 
                                     onClick={() => onSaveConfig('BOOKING_TIMEOUT')}
                                     disabled={saving === 'BOOKING_TIMEOUT'}
-                                    className="px-6 py-3 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg disabled:opacity-50"
+                                    className="w-full py-4 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
                                     style={{ backgroundColor: primaryColor }}
                                 >
                                     {saving === 'BOOKING_TIMEOUT' ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                                    Guardar
+                                    Guardar Configuración
                                 </button>
                             </div>
                         </div>
