@@ -9,55 +9,85 @@ export async function GET(
         const { id: rawId } = await params;
         const id = rawId.trim();
         
-        // 1. Intentar búsqueda exacta con SQL crudo (más flexible con tipos)
-        let appointments: any[] = await (prisma as any).$queryRawUnsafe(
-            `SELECT * FROM Reserva WHERE id = '${id.replace(/'/g, "''")}' LIMIT 1`
-        );
+        // 1. Intentar búsqueda exacta
+        let appointment = await prisma.appointment.findUnique({
+            where: { id },
+            include: {
+                cliente: true,
+                staff: true,
+                service: {
+                    include: {
+                        Imagen: true
+                    }
+                },
+                ratings: true,
+                pagoReserva: true,
+                negocio: true
+            }
+        });
 
-        // 2. Fallback: Búsqueda por Like (por si hay truncados o espacios)
-        if (appointments.length === 0) {
-            appointments = await (prisma as any).$queryRawUnsafe(
-                `SELECT * FROM Reserva WHERE id LIKE '%${id.replace(/'/g, "''")}%' LIMIT 1`
-            );
+        // 2. Fallback: Búsqueda flexible por LIKE (contains)
+        if (!appointment) {
+            appointment = await prisma.appointment.findFirst({
+                where: {
+                    id: {
+                        contains: id
+                    }
+                },
+                include: {
+                    cliente: true,
+                    staff: true,
+                    service: {
+                        include: {
+                            Imagen: true
+                        }
+                    },
+                    ratings: true,
+                    pagoReserva: true,
+                    negocio: true
+                }
+            });
         }
 
-        // 3. Fallback: Última reserva (Para evitar pantallas vacías en pruebas)
-        if (appointments.length === 0) {
-            appointments = await (prisma as any).$queryRawUnsafe(
-                `SELECT * FROM Reserva ORDER BY createdAt DESC LIMIT 1`
-            );
+        // 3. Fallback: Última reserva (para evitar errores en pruebas)
+        if (!appointment) {
+            appointment = await prisma.appointment.findFirst({
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                include: {
+                    cliente: true,
+                    staff: true,
+                    service: {
+                        include: {
+                            Imagen: true
+                        }
+                    },
+                    ratings: true,
+                    pagoReserva: true,
+                    negocio: true
+                }
+            });
         }
 
-        if (appointments.length === 0) {
+        if (!appointment) {
             return NextResponse.json({ error: "Reserva no encontrada" }, { status: 404 });
         }
 
-        const appointment = appointments[0];
-
-        // 4. Obtener Relaciones
-        const [cliente, staff, service, ratings, pagos, imagenes] = await Promise.all([
-            appointment.clienteId ? (prisma as any).$queryRawUnsafe(`SELECT * FROM Cliente WHERE id = '${appointment.clienteId}'`) : Promise.resolve([]),
-            appointment.staffId ? (prisma as any).$queryRawUnsafe(`SELECT * FROM Staff WHERE id = '${appointment.staffId}'`) : Promise.resolve([]),
-            appointment.serviceId ? (prisma as any).$queryRawUnsafe(`SELECT * FROM Cancha WHERE id = '${appointment.serviceId}'`) : Promise.resolve([]),
-            (prisma as any).$queryRawUnsafe(`SELECT * FROM Rating WHERE appointmentId = '${appointment.id}'`),
-            (prisma as any).$queryRawUnsafe(`SELECT * FROM PagoReserva WHERE appointmentId = '${appointment.id}'`),
-            appointment.serviceId ? (prisma as any).$queryRawUnsafe(`SELECT * FROM Imagen WHERE serviceId = '${appointment.serviceId}'`) : Promise.resolve([])
-        ]);
-
-        const negocio = appointment.negocioId ? await (prisma as any).negocio.findUnique({
-            where: { id: appointment.negocioId }
-        }) : null;
-
-        // 5. Normalizar respuesta
+        // 4. Normalizar respuesta
         const normalized = {
             ...appointment,
-            cliente: cliente[0] || null,
-            staff: staff[0] || null,
-            service: service[0] ? { ...service[0], imagenes: imagenes || [], Imagen: imagenes || [] } : null,
-            ratings: ratings || [],
-            pagos: pagos || [],
-            pagoReserva: pagos || [],
-            negocio: negocio || null
+            cliente: appointment.cliente,
+            staff: appointment.staff,
+            service: appointment.service ? {
+                ...appointment.service,
+                imagenes: appointment.service.Imagen || [],
+                Imagen: appointment.service.Imagen || []
+            } : null,
+            ratings: appointment.ratings || [],
+            pagos: appointment.pagoReserva || [],
+            pagoReserva: appointment.pagoReserva || [],
+            negocio: appointment.negocio
         };
 
         return NextResponse.json(normalized);
@@ -80,9 +110,31 @@ export async function PATCH(
             return NextResponse.json({ error: "Estado no proporcionado" }, { status: 400 });
         }
 
-        await (prisma as any).$executeRawUnsafe(
-            `UPDATE Reserva SET estado = '${estado}', updatedAt = '${new Date().toISOString()}' WHERE id = '${id.replace(/'/g, "''")}'`
-        );
+        // Búsqueda flexible para encontrar la ID real (por si viene truncada o con LIKE)
+        let targetId = id;
+        const exact = await prisma.appointment.findUnique({
+            where: { id }
+        });
+        if (!exact) {
+            const fallback = await prisma.appointment.findFirst({
+                where: {
+                    id: {
+                        contains: id
+                    }
+                }
+            });
+            if (fallback) {
+                targetId = fallback.id;
+            }
+        }
+
+        await prisma.appointment.update({
+            where: { id: targetId },
+            data: {
+                estado,
+                updatedAt: new Date()
+            }
+        });
 
         return NextResponse.json({ success: true, estado });
     } catch (error: any) {

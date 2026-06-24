@@ -24,3 +24,12 @@ export function getImageUrl(
   }
   return url;
 }
+
+export function formatUTCDate(fecha: string | Date | null | undefined): string {
+  if (!fecha) return '';
+  const d = typeof fecha === 'string' ? new Date(fecha) : fecha;
+  if (isNaN(d.getTime())) return '';
+  const day = d.getUTCDate();
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  return `${day} ${months[d.getUTCMonth()]}`;
+}

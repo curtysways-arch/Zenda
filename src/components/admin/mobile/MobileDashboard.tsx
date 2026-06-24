@@ -17,7 +17,7 @@ import {
     Zap
 } from 'lucide-react';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
+import { cn, formatUTCDate } from '@/lib/utils';
 import WaitingRoomWidget from '@/components/admin/WaitingRoomWidget';
 
 interface MobileDashboardProps {
@@ -256,7 +256,7 @@ export default function MobileDashboard({
                                             <p className="text-[10px] font-bold uppercase" style={{ color: primaryColor }}>{cita.service.nombre}</p>
                                             <div className="size-1 rounded-full bg-slate-200" />
                                             <span className="text-[10px] font-black text-slate-400 uppercase italic">
-                                                {new Date(cita.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).replace('.', '')}
+                                                {formatUTCDate(cita.fecha)}
                                             </span>
                                             <div className="size-1 rounded-full bg-slate-200" />
                                             <span className="text-[10px] font-black text-slate-300 uppercase italic">{cita.horaInicio} hs</span>

@@ -28,16 +28,24 @@ export async function PATCH(
         const { id: rawId } = await params;
         const id = rawId.trim();
 
-        // 1. Buscar la cita de forma flexible
-        const appointments: any[] = await (prisma as any).$queryRawUnsafe(
-            `SELECT * FROM Reserva WHERE id = '${id.replace(/'/g, "''")}' OR id LIKE '%${id.replace(/'/g, "''")}%' LIMIT 1`
-        );
+        // 1. Buscar la cita de forma flexible con Prisma ORM
+        let appointment = await prisma.appointment.findUnique({
+            where: { id }
+        });
 
-        if (appointments.length === 0) {
-            return NextResponse.json({ error: 'Cita no encontrada' }, { status: 404 });
+        if (!appointment) {
+            appointment = await prisma.appointment.findFirst({
+                where: {
+                    id: {
+                        contains: id
+                    }
+                }
+            });
         }
 
-        const appointment = appointments[0];
+        if (!appointment) {
+            return NextResponse.json({ error: 'Cita no encontrada' }, { status: 404 });
+        }
 
         // Bloquear no_show si el cliente ya hizo check-in
         if (estado === 'no_show' && appointment.checkedInAt) {
@@ -47,19 +55,19 @@ export async function PATCH(
             );
         }
 
-        // Validar transición (Opcional en este punto, pero mantenemos por seguridad)
-        // const allowed = VALID_ADMIN_TRANSITIONS[appointment.estado] || [];
-        // if (!allowed.includes(estado)) { ... }
+        // 2. Construir datos de actualización
+        const updateData: any = {
+            estado,
+            updatedAt: new Date()
+        };
+        if (estado === 'in_progress') updateData.startedAt = new Date();
+        if (estado === 'completed') updateData.completedAt = new Date();
+        if (estado === 'confirmed' || estado === 'cancelled') updateData.expiresAt = null;
 
-        // 2. Construir SQL de actualización
-        let updateFields = `estado = '${estado}', updatedAt = '${new Date().toISOString()}'`;
-        if (estado === 'in_progress') updateFields += `, startedAt = '${new Date().toISOString()}'`;
-        if (estado === 'completed') updateFields += `, completedAt = '${new Date().toISOString()}'`;
-        if (estado === 'confirmed' || estado === 'cancelled') updateFields += `, expiresAt = NULL`;
-
-        await (prisma as any).$executeRawUnsafe(
-            `UPDATE Reserva SET ${updateFields} WHERE id = '${appointment.id}'`
-        );
+        await prisma.appointment.update({
+            where: { id: appointment.id },
+            data: updateData
+        });
 
         // 3. Obtener cita actualizada para notificaciones
         const updated = await prisma.appointment.findUnique({

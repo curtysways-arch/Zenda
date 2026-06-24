@@ -15,6 +15,7 @@ import PlanStatusCard from '@/components/ui/PlanStatusCard';
 import { featureService } from '@/lib/services/featureService';
 import { calculateOnboardingProgress } from '@/lib/onboarding';
 import OnboardingChecklist from '@/components/admin/OnboardingChecklist';
+import { formatUTCDate } from '@/lib/utils';
 
 export default async function AdminDashboard() {
     const session = await getServerSession(authOptions);
@@ -290,7 +291,7 @@ export default async function AdminDashboard() {
                                             <div className="flex items-center gap-4">
                                                 <p className="text-[11px] font-black uppercase tracking-widest italic" style={{ color: 'var(--primary-color)' }}>{r.service.nombre}</p>
                                                 <span className="text-[11px] font-black text-slate-400 uppercase tracking-tighter flex items-center gap-2">
-                                                    {new Date(r.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).replace('.', '')}
+                                                    {formatUTCDate(r.fecha)}
                                                 </span>
                                                 <span className="text-[11px] font-black text-slate-300 uppercase tracking-tighter flex items-center gap-2">
                                                     <Clock size={14} className="text-slate-200" />
