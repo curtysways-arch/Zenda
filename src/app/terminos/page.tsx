@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import prisma from '@/lib/prisma';
-import { ArrowLeft, Shield, FileText, ChevronRight } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 
 export default async function TerminosPage() {
     const config = await prisma.globalConfig.findUnique({
@@ -10,13 +10,13 @@ export default async function TerminosPage() {
     const content = config?.valor || `
 # Términos y Condiciones de Uso
 
-Bienvenido a SpaSaaS. Al utilizar nuestra plataforma, usted acepta los siguientes términos y condiciones. Por favor, léalos detenidamente.
+Bienvenido a CitiOx. Al utilizar nuestra plataforma, usted acepta los siguientes términos y condiciones. Por favor, léalos detenidamente.
 
 ## 1. Aceptación de los Términos
-Al registrarse y utilizar SpaSaaS, usted acepta estar legalmente vinculado por estos términos, que rigen su relación con nuestra plataforma.
+Al registrarse y utilizar CitiOx, usted acepta estar legalmente vinculado por estos términos, que rigen su relación con nuestra plataforma.
 
 ## 2. Descripción del Servicio
-SpaSaaS proporciona herramientas de gestión para centros de estética, spas y salones de belleza, incluyendo pero no limitado a: gestión de reservas, automatización por WhatsApp, pasarelas de pago y administración de especialistas.
+CitiOx proporciona herramientas de gestión y reservas para spas, estéticas, salones de belleza, barberías y negocios de servicios, incluyendo pero no limitado a: gestión de reservas de citas, automatización por WhatsApp, pasarelas de pago y administración de especialistas.
 
 ## 3. Registro de Cuenta
 Para utilizar el servicio, debe crear una cuenta proporcionando información veraz y completa. Usted es responsable de mantener la confidencialidad de sus credenciales.
@@ -25,13 +25,13 @@ Para utilizar el servicio, debe crear una cuenta proporcionando información ver
 Usted se compromete a no utilizar el servicio para fines ilegales o no autorizados. No debe interferir o interrumpir la integridad o el rendimiento del servicio.
 
 ## 5. Pagos y Suscripciones
-CanchaSaaS ofrece diversos planes de suscripción. Los pagos se realizan de forma mensual o anual según el plan elegido. El impago puede resultar en la suspensión o cancelación del servicio.
+CitiOx ofrece diversos planes de suscripción. Los pagos se realizan de forma mensual o anual según el plan elegido. El impago puede resultar en la suspensión o cancelación del servicio.
 
 ## 6. Propiedad Intelectual
-Todo el contenido y la tecnología de CanchaSaaS son propiedad exclusiva de la plataforma o de sus licenciantes y están protegidos por las leyes de propiedad intelectual.
+Todo el contenido y la tecnología de CitiOx son propiedad exclusiva de la plataforma o de sus licenciantes y están protegidos por las leyes de propiedad intelectual.
 
 ## 7. Limitación de Responsabilidad
-CanchaSaaS no será responsable de ningún daño indirecto, incidental, especial o consecuente resultante del uso o la imposibilidad de usar el servicio.
+CitiOx no será responsable de ningún daño indirecto, incidental, especial o consecuente resultante del uso o la imposibilidad de usar el servicio.
 
 ## 8. Modificaciones
 Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios entrarán en vigor tan pronto como se publiquen en la plataforma.
@@ -45,14 +45,14 @@ Si tiene alguna pregunta sobre estos Términos, por favor contáctenos a través
             {/* Header / Nav */}
             <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
                 <div className="max-w-4xl mx-auto px-6 h-20 flex justify-between items-center">
-                    <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-emerald-600 transition-colors group">
+                    <Link href="/" className="flex items-center gap-2 text-slate-400 hover:text-cyan-500 transition-colors group">
                         <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
                         <span className="text-[10px] font-black uppercase tracking-widest">Volver</span>
                     </Link>
                     <div className="flex items-center gap-2">
-                        <FileText className="text-emerald-600" size={20} />
+                        <img src="/logo-citiox.png" alt="CitiOx Logo" className="w-6 h-6 object-contain" />
                         <span className="text-sm font-black italic tracking-tighter uppercase text-slate-900">
-                            Spa<span className="text-emerald-600">SaaS</span>
+                            CitiOx
                         </span>
                     </div>
                 </div>
@@ -60,7 +60,7 @@ Si tiene alguna pregunta sobre estos Términos, por favor contáctenos a través
 
             <main className="max-w-4xl mx-auto px-6 py-20">
                 <header className="mb-16 space-y-4">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-cyan-50 text-cyan-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-cyan-100">
                         Legal
                     </div>
                     <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter italic uppercase">
@@ -69,7 +69,7 @@ Si tiene alguna pregunta sobre estos Términos, por favor contáctenos a través
                     <p className="text-slate-500 font-medium italic">Última actualización: 29 de Marzo, 2026</p>
                 </header>
 
-                <div className="bg-white rounded-[3rem] p-8 md:p-16 shadow-xl shadow-slate-200 border border-slate-100 prose prose-slate max-w-none prose-headings:italic prose-headings:font-black prose-headings:tracking-tighter prose-headings:uppercase prose-h2:text-emerald-600 prose-p:text-slate-600 prose-p:leading-relaxed prose-li:text-slate-600">
+                <div className="bg-white rounded-[3rem] p-8 md:p-16 shadow-xl shadow-slate-200 border border-slate-100 prose prose-slate max-w-none prose-headings:italic prose-headings:font-black prose-headings:tracking-tighter prose-headings:uppercase prose-h2:text-cyan-500 prose-p:text-slate-600 prose-p:leading-relaxed prose-li:text-slate-600">
                     <div className="whitespace-pre-wrap font-medium text-slate-700">
                         {content}
                     </div>
@@ -82,7 +82,7 @@ Si tiene alguna pregunta sobre estos Términos, por favor contáctenos a través
                     </div>
                     <Link 
                         href="/register"
-                        className="bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-emerald-200 hover:bg-slate-900 transition-all active:scale-95"
+                        className="bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 text-white px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-cyan-200/50 hover:brightness-110 transition-all active:scale-95"
                     >
                         Empezar ahora
                     </Link>
