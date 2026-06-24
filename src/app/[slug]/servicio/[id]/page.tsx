@@ -57,7 +57,7 @@ export default async function CanchaDetailPage({
                 const digitsOnly = telefono.replace(/\D/g, ''); 
                 const localNoZero = localTelefono.replace(/^0+/, '');
 
-                userReservasActivas = await prisma.appointment.count({
+                const activeAppointments = await prisma.appointment.findMany({
                     where: {
                         negocioId: payload.negocioId as string,
                         cliente: {
@@ -70,8 +70,25 @@ export default async function CanchaDetailPage({
                         },
                         fecha: { gte: todayUTC },
                         estado: { in: ['confirmed', 'pending'] }
+                    },
+                    select: {
+                        fecha: true,
+                        horaInicio: true,
+                        horaFin: true
                     }
                 });
+
+                const nowTime = new Date();
+                const validAppointments = activeAppointments.filter((app: any) => {
+                    const dateStr = app.fecha instanceof Date ? app.fecha.toISOString().split('T')[0] : String(app.fecha).split('T')[0];
+                    const [year, month, day] = dateStr.split('-').map(Number);
+                    const [h, m] = app.horaFin ? app.horaFin.split(':').map(Number) : (app.horaInicio || '23:59').split(':').map(Number);
+                    const endTime = new Date(year, month - 1, day, h, m, 0);
+                    // Tolerancia de 30 minutos después de la hora de fin
+                    return endTime.getTime() > nowTime.getTime() - (30 * 60 * 1000);
+                });
+
+                userReservasActivas = validAppointments.length;
             }
         }
     } catch (e) {
@@ -193,18 +210,21 @@ export default async function CanchaDetailPage({
             
             {/* Banner de citas activas */}
             {userReservasActivas > 0 && (
-                <div className="bg-tertiary/95 backdrop-blur-md text-white px-6 py-4 flex flex-wrap items-center justify-center gap-4 w-full shadow-lg z-[120] relative border-b border-black/5">
+                <div className="bg-slate-900/95 backdrop-blur-md text-white px-6 py-3.5 flex items-center justify-between gap-4 w-full shadow-lg z-[120] relative border-b border-white/10 max-w-xl mx-auto border-x border-gray-200/10">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-white/20 border border-white/20 text-xs font-black animate-pulse-subtle">
+                        <div 
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white text-xs font-black shadow-md border border-white/20"
+                            style={{ background: `linear-gradient(135deg, ${primaryColor}, ${tertiaryColor || primaryColor})` }}
+                        >
                             {userReservasActivas}
                         </div>
-                        <p className="text-xs sm:text-sm font-black uppercase tracking-widest text-white text-center">
+                        <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-100">
                             {userReservasActivas === 1 ? 'Tienes 1 cita próxima' : `Tienes ${userReservasActivas} citas próximas`}
                         </p>
                     </div>
                     <Link
                         href={`/${slug}/mis-reservas`}
-                        className="rounded-xl bg-white px-5 py-2 text-xs font-black uppercase tracking-[0.1em] text-tertiary hover:bg-gray-50 transition-all hover:scale-105 active:scale-95 shadow-md"
+                        className="rounded-xl bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.05em] text-slate-900 hover:bg-slate-100 active:scale-95 transition-all shadow-md shrink-0"
                     >
                         Gestionar mis citas
                     </Link>

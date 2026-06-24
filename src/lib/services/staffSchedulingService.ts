@@ -137,9 +137,12 @@ export const staffSchedulingService = {
             let isAvailable = true;
 
             // Validar si es tiempo pasado (solo para hoy)
-            if (isToday && isBefore(currentSlot, now)) {
-                isAvailable = false;
-            }
+            // NOTA: Se comenta esta validación en el servidor porque el cliente (BookingCalendar) ya invalida
+            // las horas pasadas usando la zona horaria local del dispositivo. Dejarlo aquí causa que se 
+            // inhabiliten horas de la tarde para el cliente debido al huso horario del servidor (UTC/Alemania).
+            // if (isToday && isBefore(currentSlot, now)) {
+            //     isAvailable = false;
+            // }
 
             // Validar Descansos
             for (const b of breaks) {

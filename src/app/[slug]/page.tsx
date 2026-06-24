@@ -109,7 +109,7 @@ export default async function PublicNegocioPage({
                     }
                 }
 
-                userReservasActivas = await prisma.appointment.count({
+                const activeAppointments = await prisma.appointment.findMany({
                     where: {
                         negocioId: payload.negocioId as string,
                         cliente: {
@@ -122,8 +122,25 @@ export default async function PublicNegocioPage({
                         },
                         fecha: { gte: todayUTC },
                         estado: { in: ['confirmed', 'pending'] }
+                    },
+                    select: {
+                        fecha: true,
+                        horaInicio: true,
+                        horaFin: true
                     }
                 });
+
+                const nowTime = new Date();
+                const validAppointments = activeAppointments.filter((app: any) => {
+                    const dateStr = app.fecha instanceof Date ? app.fecha.toISOString().split('T')[0] : String(app.fecha).split('T')[0];
+                    const [year, month, day] = dateStr.split('-').map(Number);
+                    const [h, m] = app.horaFin ? app.horaFin.split(':').map(Number) : (app.horaInicio || '23:59').split(':').map(Number);
+                    const endTime = new Date(year, month - 1, day, h, m, 0);
+                    // Tolerancia de 30 minutos después de la hora de fin
+                    return endTime.getTime() > nowTime.getTime() - (30 * 60 * 1000);
+                });
+
+                userReservasActivas = validAppointments.length;
             }
         }
     } catch (e) {}
