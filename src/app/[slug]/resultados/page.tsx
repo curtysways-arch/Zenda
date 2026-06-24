@@ -8,6 +8,9 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import ResultInteraction from '@/components/public/ResultInteraction';
 
+export const dynamic = 'force-dynamic';
+
+
 interface ResultadosPublicPageProps {
     params: Promise<{
         slug: string;
