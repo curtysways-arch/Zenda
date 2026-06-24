@@ -44,6 +44,10 @@ export async function GET(
             appointment.serviceId ? (prisma as any).$queryRawUnsafe(`SELECT * FROM Imagen WHERE serviceId = '${appointment.serviceId}'`) : Promise.resolve([])
         ]);
 
+        const negocio = appointment.negocioId ? await (prisma as any).negocio.findUnique({
+            where: { id: appointment.negocioId }
+        }) : null;
+
         // 5. Normalizar respuesta
         const normalized = {
             ...appointment,
@@ -52,7 +56,8 @@ export async function GET(
             service: service[0] ? { ...service[0], imagenes: imagenes || [], Imagen: imagenes || [] } : null,
             ratings: ratings || [],
             pagos: pagos || [],
-            pagoReserva: pagos || []
+            pagoReserva: pagos || [],
+            negocio: negocio || null
         };
 
         return NextResponse.json(normalized);

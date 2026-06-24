@@ -76,10 +76,10 @@ export default async function NegocioLayout({
 
     const canUseCustomColors = await featureService.canUseFeature(negocio.id, 'custom_colors');
 
-    let primaryColor = '#1dc95c';
-    let secondaryColor = '#112117';
-    let tertiaryColor = '#1dc95c';
-    let neutralColor = '#ffffff';
+    let primaryColor = (negocio as any).colorPrimario && (negocio as any).colorPrimario !== '#1dc95c' ? (negocio as any).colorPrimario : '#1dc95c';
+    let secondaryColor = (negocio as any).colorSecundario && (negocio as any).colorSecundario !== '#112117' ? (negocio as any).colorSecundario : '#112117';
+    let tertiaryColor = (negocio as any).colorTerciario || primaryColor;
+    let neutralColor = (negocio as any).colorNeutral || '#ffffff';
     let textColor = '#000000';
     let subTextColor = '#475569';
 
