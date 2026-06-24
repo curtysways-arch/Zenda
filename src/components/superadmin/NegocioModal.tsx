@@ -103,7 +103,7 @@ const CATEGORIAS_NEGOCIO = [
 ];
 
 const PRESETS_COLOR_PRINCIPAL = [
-    { name: "Emerald (Zenda)", hex: "#1dc95c" },
+    { name: "Cian (CitiOx)", hex: "#06b6d4" },
     { name: "Violeta Premium", hex: "#7C3AED" },
     { name: "Azul Real", hex: "#2563EB" },
     { name: "Rosa Cita", hex: "#EC4899" },
@@ -307,7 +307,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
     // Generar contraseña segura
     const handleGenerarPassword = () => {
         const num = Math.floor(1000 + Math.random() * 9000).toString();
-        const pwd = `Zenda${num}`;
+        const pwd = `CitiOx${num}`;
         setFormData(prev => ({ ...prev, adminPassword: pwd }));
     };
 
@@ -449,24 +449,24 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
         const vencimientoTrial = new Date();
         vencimientoTrial.setDate(vencimientoTrial.getDate() + 14);
 
-        const waMessageText = `👋 ¡Hola! Te compartimos los datos de tu nuevo sistema en Zenda para *${negocioCreadoInfo.nombre}*:\n\n🌐 *Página pública para tus clientes:* \n${publicLink}\n\n💻 *Acceso a tu panel administrativo:* \n${adminLink}\n\n🔐 *Credenciales de acceso:*\n- *Usuario:* ${formData.adminEmail || formData.emailContacto}\n- *Contraseña:* ${formData.adminPassword}\n\n⚡ *Plan asignado:* Plan PRO Trial (14 días gratis hasta el ${vencimientoTrial.toLocaleDateString()}).`;
+        const waMessageText = `👋 ¡Hola! Te compartimos los datos de tu nuevo sistema en CitiOx para *${negocioCreadoInfo.nombre}*:\n\n🌐 *Página pública para tus clientes:* \n${publicLink}\n\n💻 *Acceso a tu panel administrativo:* \n${adminLink}\n\n🔐 *Credenciales de acceso:*\n- *Usuario:* ${formData.adminEmail || formData.emailContacto}\n- *Contraseña:* ${formData.adminPassword}\n\n⚡ *Plan asignado:* Plan PRO Trial (14 días gratis hasta el ${vencimientoTrial.toLocaleDateString()}).`;
 
         return createPortal(
             <div className="fixed inset-0 z-[999999] bg-slate-50 dark:bg-[#080d0b] text-slate-900 dark:text-white overflow-y-auto">
                 <div className="min-h-full flex items-center justify-center p-4 py-8">
                 <div className="max-w-2xl w-full bg-white dark:bg-slate-900/60 backdrop-blur-2xl border border-slate-200 dark:border-white/5 rounded-[3.5rem] p-8 md:p-12 space-y-8 relative overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.05)] dark:shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)]">
-                    <div className="absolute -top-32 -right-32 w-80 h-80 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
+                    <div className="absolute -top-32 -right-32 w-80 h-80 bg-cyan-500/5 dark:bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none" />
                     
                     <div className="text-center space-y-4">
-                        <div className="w-20 h-20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded-[2rem] flex items-center justify-center mx-auto shadow-[0_20px_40px_rgba(16,185,129,0.1)] animate-bounce">
+                        <div className="w-20 h-20 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 rounded-[2rem] flex items-center justify-center mx-auto shadow-[0_20px_40px_rgba(6,182,212,0.1)] animate-bounce">
                             <Award size={40} />
                         </div>
                         <div className="space-y-1">
-                            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.4em] italic">¡Listo para despegar!</span>
+                            <span className="text-[10px] font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-[0.4em] italic">¡Listo para despegar!</span>
                             <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight italic text-slate-900 dark:text-white leading-none">Negocio Creado</h2>
                         </div>
                         <p className="text-slate-550 dark:text-slate-400 text-sm max-w-md mx-auto">
-                            Zenda ha configurado el branding, los servicios, los horarios y las credenciales. La plataforma está operativa para recibir citas en vivo.
+                            CitiOx ha configurado el branding, los servicios, los horarios y las credenciales. La plataforma está operativa para recibir citas en vivo.
                         </p>
                     </div>
 
@@ -795,8 +795,8 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
 
                     <div className="text-center space-y-4">
                         <div className="flex items-center justify-center gap-2 mb-2">
-                            <div className="h-1.5 w-8 bg-emerald-500 rounded-full" />
-                            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.5em] italic">Zenda Superadmin</span>
+                            <div className="h-1.5 w-8 bg-cyan-500 rounded-full" />
+                            <span className="text-[10px] font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-[0.5em] italic">CitiOx Superadmin</span>
                         </div>
                         <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight italic leading-none text-slate-900 dark:text-white">Nuevo Negocio</h2>
                         <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base max-w-lg mx-auto">

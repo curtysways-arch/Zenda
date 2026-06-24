@@ -19,7 +19,7 @@ export default function PWAInstallPrompt() {
     const [isInstalled, setIsInstalled] = useState(false);
     
     // Estados dinámicos para nombre y logo del negocio
-    const [businessName, setBusinessName] = useState("Zenda App");
+    const [businessName, setBusinessName] = useState("CitiOx App");
     const [businessLogo, setBusinessLogo] = useState("");
  
     // Solo mostrar en la página del negocio final (/[slug]) o en la administración (/admin)

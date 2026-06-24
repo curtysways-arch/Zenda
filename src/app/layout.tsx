@@ -6,13 +6,13 @@ import { Providers } from "@/components/Providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "Zenda - Software de Gestión",
+    title: "CitiOx - Booking & App Solutions",
     description: "Gestión inteligente para tu centro de estética, spa y peluquería.",
     manifest: "/manifest.json",
     appleWebApp: {
         capable: true,
         statusBarStyle: "black-translucent",
-        title: "Zenda",
+        title: "CitiOx",
     },
     formatDetection: {
         telephone: false,

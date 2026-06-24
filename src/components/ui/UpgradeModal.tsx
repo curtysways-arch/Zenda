@@ -236,7 +236,7 @@ export default function UpgradeModal({ isOpen, onClose, planId, planName, planPr
                                                     <p><span className="font-bold">Banco:</span> Banco Pichincha</p>
                                                     <p><span className="font-bold">Tipo:</span> Ahorros</p>
                                                     <p><span className="font-bold">Cuenta:</span> 2200000000</p>
-                                                    <p><span className="font-bold">Titular:</span> Zenda App S.A.</p>
+                                                    <p><span className="font-bold">Titular:</span> CitiOx</p>
                                                 </>
                                             )
                                         ) : (

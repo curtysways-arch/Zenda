@@ -200,9 +200,9 @@ export default function AdminSidebar({ primaryColor = '#059669' }: { primaryColo
                         </div>
                         <div>
                             <h2 className="font-black text-slate-900 uppercase tracking-tighter leading-none italic text-xl">
-                                Zen<span style={{ color: primaryColor }}>da</span>
+                                Citi<span style={{ color: primaryColor }}>Ox</span>
                             </h2>
-                            <span className="text-[10px] font-black tracking-[0.2em] uppercase leading-none" style={{ color: primaryColor }}>SaaS Admin</span>
+                            <span className="text-[10px] font-black tracking-[0.2em] uppercase leading-none" style={{ color: primaryColor }}>Admin Panel</span>
                         </div>
                     </div>
                 </div>

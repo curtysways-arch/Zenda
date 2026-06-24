@@ -24,8 +24,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         };
     }
 
-    const title = `${negocio.nombre} | Zenda`;
-    const description = negocio.heroSubtitulo || "Gestiona citas, clientes y servicios con Zenda.";
+    const title = `${negocio.nombre} | CitiOx`;
+    const description = negocio.heroSubtitulo || "Gestiona citas, clientes y servicios con CitiOx.";
     const ogImage = negocio.bannerUrl || negocio.logoUrl || '/icon.png';
     const cacheBuster = negocio.updatedAt ? new Date(negocio.updatedAt).getTime() : Date.now();
 

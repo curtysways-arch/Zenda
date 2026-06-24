@@ -359,11 +359,11 @@ export default function SuperAdminCuentasClient() {
                                 <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre/Titular de Cuenta *</label>
                                 <input 
                                     type="text"
-                                    placeholder="Ej: Ahorros - Zenda App S.A."
+                                    placeholder="Ej: Ahorros - CitiOx S.A."
                                     value={nombreCuenta}
                                     onChange={e => setNombreCuenta(e.target.value)}
                                     required
-                                    className="w-full px-4 py-3.5 bg-white/5 border border-white/5 rounded-xl outline-none focus:border-emerald-500 transition-colors text-white font-bold uppercase text-xs"
+                                    className="w-full px-4 py-3.5 bg-white/5 border border-white/5 rounded-xl outline-none focus:border-cyan-500 transition-colors text-white font-bold uppercase text-xs"
                                 />
                             </div>
 
