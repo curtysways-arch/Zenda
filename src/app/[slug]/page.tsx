@@ -454,14 +454,14 @@ export default async function PublicNegocioPage({
                    st.name as staff_name, 
                    st.avatar as staff_avatar,
                    m.url as staff_media_url,
-                   (SELECT COUNT(*) FROM LikeResultado l WHERE l.resultadoId = r.id) as likes_count,
-                   (SELECT COUNT(*) FROM CommentResultado c WHERE c.resultadoId = r.id) as comments_count
-            FROM Resultado r
-            LEFT JOIN Cancha s ON r.serviceId = s.id
-            LEFT JOIN Staff st ON r.staffId = st.id
-            LEFT JOIN Media m ON st.imageMediaId = m.id
-            WHERE r.businessId = '${negocio.id}' AND r.published = true AND r.showInLanding = true
-            ORDER BY r.createdAt DESC
+                   (SELECT COUNT(*) FROM "LikeResultado" l WHERE l."resultadoId" = r.id) as likes_count,
+                   (SELECT COUNT(*) FROM "CommentResultado" c WHERE c."resultadoId" = r.id) as comments_count
+            FROM "Resultado" r
+            LEFT JOIN "Cancha" s ON r."serviceId" = s.id
+            LEFT JOIN "Staff" st ON r."staffId" = st.id
+            LEFT JOIN "Media" m ON st."imageMediaId" = m.id
+            WHERE r."businessId" = '${negocio.id}' AND r.published = true AND r."showInLanding" = true
+            ORDER BY r."createdAt" DESC
             LIMIT 6
         `);
         resultadosDestacados = rawResultados.map(r => ({
