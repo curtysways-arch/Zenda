@@ -135,6 +135,7 @@ export default async function CanchaDetailPage({
 
     const primaryColor = (negocio as any).colorPrimario || '#1dc95c';
     const secondaryColor = (negocio as any).colorSecundario || '#07090f';
+    const tertiaryColor = (negocio as any).colorTerciario || primaryColor;
 
     const canchaImages = getServiceGalleryImages(cancha, 'medium');
     const negocioImages = negocio.imagenes?.map((img: any) => img.url) || [];
