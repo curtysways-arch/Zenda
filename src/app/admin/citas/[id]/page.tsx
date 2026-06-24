@@ -29,6 +29,7 @@ import { clsx } from 'clsx';
 
 import MobileAppointmentDetail from '@/components/admin/mobile/MobileAppointmentDetail';
 import RatingModal from '@/components/RatingModal';
+import { toLocalDateFromUTC } from '@/lib/utils';
 
 export default function ReservaDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -173,7 +174,7 @@ export default function ReservaDetailPage({ params }: { params: Promise<{ id: st
         let message = '';
         const serviceName = reserva.service?.nombre || reserva.nombreServicio || 'Servicio';
         if (type === 'reminder') {
-            message = `¡Hola ${reserva.cliente.nombre}! Te recordamos tu cita de ${serviceName} para el día ${format(new Date(reserva.fecha), 'd MMMM', { locale: es })} a las ${reserva.horaInicio}. ¡Te esperamos!`;
+            message = `¡Hola ${reserva.cliente.nombre}! Te recordamos tu cita de ${serviceName} para el día ${format(toLocalDateFromUTC(reserva.fecha), 'd MMMM', { locale: es })} a las ${reserva.horaInicio}. ¡Te esperamos!`;
         } else {
             message = `Hola ${reserva.cliente.nombre}, te escribimos para tu reserva de ${serviceName}. Vemos que tienes un saldo pendiente de $${deudaPendiente}. ¿Cómo deseas cancelarlo?`;
         }
@@ -309,7 +310,7 @@ export default function ReservaDetailPage({ params }: { params: Promise<{ id: st
                                 </div>
                                 <div className="text-right">
                                     <p className="text-xl font-black text-slate-900 uppercase italic tracking-tighter leading-none">
-                                        {format(new Date(reserva.fecha), "EEEE d 'de' MMMM", { locale: es })}
+                                        {format(toLocalDateFromUTC(reserva.fecha), "EEEE d 'de' MMMM", { locale: es })}
                                     </p>
                                     <p className="text-[11px] font-black text-emerald-600 uppercase tracking-[0.3em] mt-2 text-right">INICIO: {reserva.horaInicio} HS</p>
                                 </div>

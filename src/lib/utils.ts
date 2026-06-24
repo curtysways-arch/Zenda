@@ -33,3 +33,10 @@ export function formatUTCDate(fecha: string | Date | null | undefined): string {
   const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   return `${day} ${months[d.getUTCMonth()]}`;
 }
+
+export function toLocalDateFromUTC(fecha: string | Date | null | undefined): Date {
+  if (!fecha) return new Date();
+  const d = typeof fecha === 'string' ? new Date(fecha) : fecha;
+  if (isNaN(d.getTime())) return new Date();
+  return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+}

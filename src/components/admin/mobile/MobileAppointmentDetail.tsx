@@ -26,7 +26,7 @@ import {
     MoreVertical,
     ArrowLeft
 } from 'lucide-react';
-import { cn, getImageUrl } from '@/lib/utils';
+import { cn, getImageUrl, toLocalDateFromUTC } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -109,7 +109,7 @@ export default function MobileAppointmentDetail({
                             <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest italic">Detalle de la Cita</h3>
                         </div>
                         <div className="text-right">
-                            <p className="text-[12px] font-black text-slate-900 uppercase tracking-tight leading-none">{format(new Date(reserva.fecha), 'EEEE d MMMM', { locale: es })}</p>
+                            <p className="text-[12px] font-black text-slate-900 uppercase tracking-tight leading-none">{format(toLocalDateFromUTC(reserva.fecha), 'EEEE d MMMM', { locale: es })}</p>
                             <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mt-1">{reserva.horaInicio} HS</p>
                         </div>
                     </div>
