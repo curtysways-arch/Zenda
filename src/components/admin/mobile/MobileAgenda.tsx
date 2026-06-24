@@ -385,7 +385,7 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
             const day = String(d.getUTCDate()).padStart(2, '0');
             const fechaStr = `${y}-${m}-${day}`;
             return fechaStr === selectedDateStr;
-        });
+        }).sort((a, b) => (a.horaInicio || '').localeCompare(b.horaInicio || ''));
     }, [citasPorEstado, selectedDate]);
 
     return (
@@ -556,7 +556,7 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
                             const citasDia = citasPorEstado.filter(c => {
                                 const d = new Date(c.fecha);
                                 return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}` === dateStr;
-                            });
+                            }).sort((a, b) => (a.horaInicio || '').localeCompare(b.horaInicio || ''));
 
                             if (citasDia.length === 0) return null;
 
