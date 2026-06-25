@@ -196,13 +196,14 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN' }: TopBarPr
                                 >
                                     {copied ? <Check size={15} /> : <Copy size={15} />}
                                 </button>
-                                <Link
+                                <a
                                     href={shareUrl}
                                     target="_blank"
+                                    rel="noopener noreferrer"
                                     className="size-9 shrink-0 rounded-xl flex items-center justify-center bg-slate-200 text-slate-600"
                                 >
                                     <ExternalLink size={15} />
-                                </Link>
+                                </a>
                             </div>
                         )}
 
