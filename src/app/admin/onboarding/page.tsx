@@ -538,6 +538,15 @@ function StepHours({ data, setData, onPrev, onSubmit, saving }: any) {
 }
 
 function StepSuccess({ data }: any) {
+    const [publicUrl, setPublicUrl] = useState('');
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const slug = data.slug || data.nombre.toLowerCase().replace(/\s+/g, '-');
+            setPublicUrl(`https://href.li/?${window.location.origin}/${slug}`);
+        }
+    }, [data]);
+
     // Calculo rápido de completitud
     let completed = 2; // info basica y tipo negocio y horarios son obligatorios en el form
     let total = 6;
@@ -569,9 +578,14 @@ function StepSuccess({ data }: any) {
                 </div>
 
                 <div className="pt-6 grid gap-4">
-                    <Link href={`/${data.slug || data.nombre.toLowerCase().replace(/\s+/g, '-')}`} target="_blank" className="w-full py-4 bg-cyan-50 text-cyan-600 rounded-2xl font-black uppercase tracking-widest hover:bg-cyan-100 transition-all flex items-center justify-center gap-2 border border-cyan-200">
+                    <a 
+                        href={publicUrl || '#'} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="w-full py-4 bg-cyan-50 text-cyan-600 rounded-2xl font-black uppercase tracking-widest hover:bg-cyan-100 transition-all flex items-center justify-center gap-2 border border-cyan-200"
+                    >
                         Ver mi página pública
-                    </Link>
+                    </a>
                     <Link href="/admin" className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2 shadow-lg">
                         Ir al Panel de Control <ChevronRight size={18} />
                     </Link>
