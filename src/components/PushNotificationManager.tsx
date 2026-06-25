@@ -57,33 +57,39 @@ export default function PushNotificationManager() {
             }
 
             if (permission === 'granted') {
-                const token = await getFcmToken();
-                if (!token) {
-                    alert("No se pudo generar el token de notificaciones de Firebase. Por favor, recarga e inténtalo de nuevo.");
-                    setHideBanner(true);
-                    return;
-                }
+                try {
+                    const token = await getFcmToken();
+                    if (!token) {
+                        alert("No se pudo generar el token de notificaciones de Firebase (devolvió vacío).");
+                        setHideBanner(true);
+                        return;
+                    }
 
-                const res = await fetch('/api/notifications/register-token', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token, device: navigator.userAgent }),
-                });
+                    const res = await fetch('/api/notifications/register-token', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ token, device: navigator.userAgent }),
+                    });
 
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    alert(`Error en el servidor al registrar: ${errData.error || 'Código ' + res.status}`);
-                    setHideBanner(true);
-                    return;
-                }
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => ({}));
+                        alert(`Error en el servidor al registrar: ${errData.error || 'Código ' + res.status}`);
+                        setHideBanner(true);
+                        return;
+                    }
 
-                const data = await res.json();
-                if (data.success) {
-                    alert("¡Notificaciones activadas exitosamente en este dispositivo!");
-                    setIsSubscribed(true);
-                    setHideBanner(true);
-                } else {
-                    alert("No se pudo guardar la configuración de notificaciones.");
+                    const data = await res.json();
+                    if (data.success) {
+                        alert("¡Notificaciones activadas exitosamente en este dispositivo!");
+                        setIsSubscribed(true);
+                        setHideBanner(true);
+                    } else {
+                        alert("No se pudo guardar la configuración de notificaciones.");
+                        setHideBanner(true);
+                    }
+                } catch (tokenError: any) {
+                    console.error("Error al obtener token FCM:", tokenError);
+                    alert(`Error de generación del token de Firebase: ${tokenError.name || 'Error'} - ${tokenError.message || tokenError}`);
                     setHideBanner(true);
                 }
             }

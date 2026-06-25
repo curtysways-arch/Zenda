@@ -98,58 +98,53 @@ if (typeof window !== 'undefined') {
 }
 
 export const getFcmToken = async () => {
-    try {
-        const messaging = await getMessagingInstance();
-        if (!messaging) return null;
+    const messaging = await getMessagingInstance();
+    if (!messaging) throw new Error("Firebase Messaging no está soportado o no se pudo inicializar.");
 
-        const dynamicConfig = await getDynamicConfig();
+    const dynamicConfig = await getDynamicConfig();
 
-        const isExample = (val: string | null | undefined) => {
-            if (!val) return true;
-            const v = val.toLowerCase();
-            return v.includes('tu-proyecto') || v.includes('example') || v === 'dummy' || v.includes('placeholder') || v.includes('123456789');
-        };
+    const isExample = (val: string | null | undefined) => {
+        if (!val) return true;
+        const v = val.toLowerCase();
+        return v.includes('tu-proyecto') || v.includes('example') || v === 'dummy' || v.includes('placeholder') || v.includes('123456789');
+    };
 
-        const getVal = (key: string, envVal: string | undefined) => {
-            const dbVal = dynamicConfig?.[key];
-            if (dbVal && !isExample(dbVal)) return dbVal;
-            if (envVal && !isExample(envVal)) return envVal;
-            return dbVal || envVal;
-        };
+    const getVal = (key: string, envVal: string | undefined) => {
+        const dbVal = dynamicConfig?.[key];
+        if (dbVal && !isExample(dbVal)) return dbVal;
+        if (envVal && !isExample(envVal)) return envVal;
+        return dbVal || envVal;
+    };
 
-        const apiKey = getVal('NEXT_PUBLIC_FIREBASE_API_KEY', FALLBACK_CONFIG.apiKey);
-        const authDomain = getVal('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN', FALLBACK_CONFIG.authDomain);
-        let projectId = getVal('NEXT_PUBLIC_FIREBASE_PROJECT_ID', FALLBACK_CONFIG.projectId);
-        const storageBucket = getVal('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET', FALLBACK_CONFIG.storageBucket);
-        const messagingSenderId = getVal('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID', FALLBACK_CONFIG.messagingSenderId);
-        const appId = getVal('NEXT_PUBLIC_FIREBASE_APP_ID', FALLBACK_CONFIG.appId);
+    const apiKey = getVal('NEXT_PUBLIC_FIREBASE_API_KEY', FALLBACK_CONFIG.apiKey);
+    const authDomain = getVal('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN', FALLBACK_CONFIG.authDomain);
+    let projectId = getVal('NEXT_PUBLIC_FIREBASE_PROJECT_ID', FALLBACK_CONFIG.projectId);
+    const storageBucket = getVal('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET', FALLBACK_CONFIG.storageBucket);
+    const messagingSenderId = getVal('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID', FALLBACK_CONFIG.messagingSenderId);
+    const appId = getVal('NEXT_PUBLIC_FIREBASE_APP_ID', FALLBACK_CONFIG.appId);
 
-        if (!projectId && authDomain && authDomain.includes('.firebaseapp.com')) {
-            projectId = authDomain.replace('.firebaseapp.com', '');
-        }
-
-        const rawVapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || dynamicConfig?.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
-        const vapidKey = (rawVapidKey && !rawVapidKey.includes('placeholder') && rawVapidKey !== 'BK') ? rawVapidKey : undefined;
-
-        // Registrar el Service Worker manualmente pasando las credenciales en el query string
-        let serviceWorkerRegistration;
-        if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-            const swUrl = `/firebase-messaging-sw.js?apiKey=${encodeURIComponent(apiKey || '')}&messagingSenderId=${encodeURIComponent(messagingSenderId || '')}&projectId=${encodeURIComponent(projectId || '')}&appId=${encodeURIComponent(appId || '')}&authDomain=${encodeURIComponent(authDomain || '')}&storageBucket=${encodeURIComponent(storageBucket || '')}`;
-            serviceWorkerRegistration = await navigator.serviceWorker.register(swUrl, {
-                scope: '/'
-            });
-            console.log("[FCM Client] Service Worker registrado dinámicamente:", swUrl);
-        }
-
-        const currentToken = await getToken(messaging, { 
-            vapidKey,
-            serviceWorkerRegistration
-        });
-        return currentToken;
-    } catch (error) {
-        console.error("Error al obtener el token FCM:", error);
-        return null;
+    if (!projectId && authDomain && authDomain.includes('.firebaseapp.com')) {
+        projectId = authDomain.replace('.firebaseapp.com', '');
     }
+
+    const rawVapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || dynamicConfig?.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+    const vapidKey = (rawVapidKey && !rawVapidKey.includes('placeholder') && rawVapidKey !== 'BK') ? rawVapidKey : undefined;
+
+    // Registrar el Service Worker manualmente pasando las credenciales en el query string
+    let serviceWorkerRegistration;
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+        const swUrl = `/firebase-messaging-sw.js?apiKey=${encodeURIComponent(apiKey || '')}&messagingSenderId=${encodeURIComponent(messagingSenderId || '')}&projectId=${encodeURIComponent(projectId || '')}&appId=${encodeURIComponent(appId || '')}&authDomain=${encodeURIComponent(authDomain || '')}&storageBucket=${encodeURIComponent(storageBucket || '')}`;
+        serviceWorkerRegistration = await navigator.serviceWorker.register(swUrl, {
+            scope: '/'
+        });
+        console.log("[FCM Client] Service Worker registrado dinámicamente:", swUrl);
+    }
+
+    const currentToken = await getToken(messaging, { 
+        vapidKey,
+        serviceWorkerRegistration
+    });
+    return currentToken;
 };
 
 export const onMessageListener = async (onReceive: (payload: any) => void) => {
