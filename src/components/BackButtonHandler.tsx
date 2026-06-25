@@ -17,12 +17,38 @@ export default function BackButtonHandler() {
 
         if (!isRootPath) return;
 
-        // Evitamos empujar estados virtuales duplicados en la pila del historial
-        const state = window.history.state;
-        if (!state || !state.isVirtual) {
-            window.history.pushState({ isVirtual: true }, '', window.location.href);
-        }
+        const ensureVirtualState = () => {
+            try {
+                const currentState = window.history.state || {};
+                if (!currentState.isVirtual) {
+                    // Preservar el estado de Next.js original y añadir nuestra bandera
+                    window.history.pushState({ ...currentState, isVirtual: true }, '', window.location.href);
+                }
+            } catch (e) {
+                console.error("[Back Button] Error ensuring virtual state:", e);
+            }
+        };
 
+        // 1. Ejecución diferida inicial (800ms) para dar tiempo a que Next.js hidrate e inicialice su router
+        const initTimer = setTimeout(() => {
+            ensureVirtualState();
+        }, 800);
+
+        // 2. Asegurar estado virtual con el primer toque o click en la pantalla
+        const handleFirstInteraction = () => {
+            ensureVirtualState();
+            cleanupInteractionListeners();
+        };
+
+        const cleanupInteractionListeners = () => {
+            window.removeEventListener('touchstart', handleFirstInteraction);
+            window.removeEventListener('click', handleFirstInteraction);
+        };
+
+        window.addEventListener('touchstart', handleFirstInteraction, { passive: true });
+        window.addEventListener('click', handleFirstInteraction, { passive: true });
+
+        // 3. Manejador de retroceso
         const handlePopState = (event: PopStateEvent) => {
             // Si el estado al que se retrocedió no es virtual, significa que el usuario presionó atrás
             if (!event.state || !event.state.isVirtual) {
@@ -30,24 +56,23 @@ export default function BackButtonHandler() {
                 const diff = now - lastPressRef.current;
 
                 if (diff < 2000) {
-                    // Si presionó por segunda vez dentro de los 2 segundos, sale de la app
+                    // Si presionó por segunda vez en menos de 2s, sale de la app
                     if (timeoutRef.current) clearTimeout(timeoutRef.current);
                     setShowToast(false);
                     window.removeEventListener('popstate', handlePopState);
                     window.history.back();
                 } else {
-                    // Si es la primera pulsación, actualizamos el tiempo, mostramos el Toast y cancelamos la salida
+                    // Primera pulsación: muestra el Toast y actualiza el timestamp
                     lastPressRef.current = now;
                     setShowToast(true);
 
-                    // Ocultar el toast automáticamente después de 2 segundos
                     if (timeoutRef.current) clearTimeout(timeoutRef.current);
                     timeoutRef.current = setTimeout(() => {
                         setShowToast(false);
                     }, 2000);
 
-                    // Volvemos a asegurar la protección empujando el estado virtual nuevamente
-                    window.history.pushState({ isVirtual: true }, '', window.location.href);
+                    // Re-empujamos el estado virtual para seguir protegiendo la app
+                    ensureVirtualState();
                 }
             }
         };
@@ -55,6 +80,8 @@ export default function BackButtonHandler() {
         window.addEventListener('popstate', handlePopState);
 
         return () => {
+            clearTimeout(initTimer);
+            cleanupInteractionListeners();
             window.removeEventListener('popstate', handlePopState);
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
         };
