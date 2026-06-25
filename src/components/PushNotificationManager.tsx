@@ -32,16 +32,18 @@ export default function PushNotificationManager() {
     useEffect(() => {
         if (!session || typeof window === 'undefined') return;
         if (Notification.permission === 'granted') {
-            setupFCM();
+            setupFCM(false);
         }
     }, [session]);
 
-    const setupFCM = async () => {
+    const setupFCM = async (isExplicit = false) => {
         if (typeof window === 'undefined') return;
 
         // 1. Validar soporte de notificaciones
         if (!('Notification' in window)) {
-            alert("Tu navegador o dispositivo no soporta notificaciones push nativas. Si usas iOS (iPhone), asegúrate de agregar la app a tu pantalla de inicio.");
+            if (isExplicit) {
+                alert("Tu navegador o dispositivo no soporta notificaciones push nativas. Si usas iOS (iPhone), asegúrate de agregar la app a tu pantalla de inicio.");
+            }
             setHideBanner(true);
             return;
         }
@@ -51,7 +53,9 @@ export default function PushNotificationManager() {
             setPermissionStatus(permission);
             
             if (permission === 'denied') {
-                alert("Has bloqueado los permisos de notificación. Por favor, permítelos desde la configuración de tu navegador para recibir alertas.");
+                if (isExplicit) {
+                    alert("Has bloqueado los permisos de notificación. Por favor, permítelos desde la configuración de tu navegador para recibir alertas.");
+                }
                 setHideBanner(true);
                 return;
             }
@@ -60,7 +64,9 @@ export default function PushNotificationManager() {
                 try {
                     const token = await getFcmToken();
                     if (!token) {
-                        alert("No se pudo generar el token de notificaciones de Firebase (devolvió vacío).");
+                        if (isExplicit) {
+                            alert("No se pudo generar el token de notificaciones de Firebase (devolvió vacío).");
+                        }
                         setHideBanner(true);
                         return;
                     }
@@ -73,29 +79,39 @@ export default function PushNotificationManager() {
 
                     if (!res.ok) {
                         const errData = await res.json().catch(() => ({}));
-                        alert(`Error en el servidor al registrar: ${errData.error || 'Código ' + res.status}`);
+                        if (isExplicit) {
+                            alert(`Error en el servidor al registrar: ${errData.error || 'Código ' + res.status}`);
+                        }
                         setHideBanner(true);
                         return;
                     }
 
                     const data = await res.json();
                     if (data.success) {
-                        alert("¡Notificaciones activadas exitosamente en este dispositivo!");
+                        if (isExplicit) {
+                            alert("¡Notificaciones activadas exitosamente en este dispositivo!");
+                        }
                         setIsSubscribed(true);
                         setHideBanner(true);
                     } else {
-                        alert("No se pudo guardar la configuración de notificaciones.");
+                        if (isExplicit) {
+                            alert("No se pudo guardar la configuración de notificaciones.");
+                        }
                         setHideBanner(true);
                     }
                 } catch (tokenError: any) {
                     console.error("Error al obtener token FCM:", tokenError);
-                    alert(`Error de generación del token de Firebase: ${tokenError.name || 'Error'} - ${tokenError.message || tokenError}`);
+                    if (isExplicit) {
+                        alert(`Error de generación del token de Firebase: ${tokenError.name || 'Error'} - ${tokenError.message || tokenError}`);
+                    }
                     setHideBanner(true);
                 }
             }
         } catch (error: any) {
             console.error('Error al configurar FCM:', error);
-            alert(`Error de configuración de notificaciones: ${error.message || error}`);
+            if (isExplicit) {
+                alert(`Error de configuración de notificaciones: ${error.message || error}`);
+            }
             setHideBanner(true);
         }
     };
@@ -109,7 +125,7 @@ export default function PushNotificationManager() {
                 </div>
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={setupFCM}
+                        onClick={() => setupFCM(true)}
                         className="bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
                     >
                         Activar
