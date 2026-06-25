@@ -36,6 +36,7 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
         price: "0" as any,
         trial_days: "0" as any,
         max_fields: "5" as any,
+        maxStaff: "1" as any,
         max_reservations_per_month: "100" as any,
         tournaments_enabled: false,
         automatic_discounts_enabled: false,
@@ -74,6 +75,7 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                 price: plan?.price || plan?.precioMensual || 0,
                 trial_days: plan?.trial_days || 0,
                 max_fields: plan?.max_fields || plan?.limiteCanchas || 5,
+                maxStaff: plan?.maxStaff || 1,
                 max_reservations_per_month: plan?.max_reservations_per_month || plan?.limiteReservas || 100,
                 tournaments_enabled: plan?.tournaments_enabled ?? false,
                 automatic_discounts_enabled: plan?.automatic_discounts_enabled ?? false,
@@ -117,6 +119,7 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                 price: parseFloat(formData.price.toString()),
                 trial_days: parseInt(formData.trial_days.toString()),
                 max_fields: parseInt(formData.max_fields.toString()),
+                maxStaff: parseInt(formData.maxStaff.toString()),
                 max_reservations_per_month: parseInt(formData.max_reservations_per_month.toString()),
                 tournaments_enabled: formData.tournaments_enabled,
                 automatic_discounts_enabled: formData.automatic_discounts_enabled,
@@ -369,8 +372,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                         type="number"
                                         style={{ color: '#000', backgroundColor: '#fff' }}
                                         className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-black"
-                                        value={formData.max_fields}
-                                        onChange={(e) => setFormData({ ...formData, max_fields: e.target.value })}
+                                        value={formData.maxStaff}
+                                        onChange={(e) => setFormData({ ...formData, maxStaff: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">

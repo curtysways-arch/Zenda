@@ -38,6 +38,8 @@ export async function PATCH(
             updateData.trial_days = Math.floor(Number(body.trial_days));
         if (body.max_fields !== undefined || body.limiteCanchas !== undefined)
             updateData.max_fields = Math.floor(Number(body.max_fields ?? body.limiteCanchas));
+        if (body.maxStaff !== undefined)
+            updateData.maxStaff = Math.floor(Number(body.maxStaff));
         if (body.max_reservations_per_month !== undefined || body.limiteReservas !== undefined)
             updateData.max_reservations_per_month = Math.floor(Number(body.max_reservations_per_month ?? body.limiteReservas));
         if (body.tournaments_enabled !== undefined)
