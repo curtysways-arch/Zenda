@@ -1,5 +1,12 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp, getApps, getApp, deleteApp } from "firebase/app";
 import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
+
+// Función de validación de ejemplos o placeholders global
+const isExample = (val: string | null | undefined) => {
+    if (!val) return true;
+    const v = val.toLowerCase().replace(/['"]/g, '').trim();
+    return v.includes('tu-proyecto') || v.includes('example') || v === 'dummy' || v.includes('placeholder') || v.includes('123456789') || v.includes('..') || v.length < 5;
+};
 
 // Configuración hardcodeada como fallback inmediato (sin fetch async)
 // Los valores reales vienen del NEXT_PUBLIC_* o se sobreescriben con config dinámica
@@ -13,10 +20,16 @@ const FALLBACK_CONFIG = {
     vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
 };
 
-// Función para obtener config dinámica (solo si faltan vars de entorno)
+// Función para obtener config dinámica (con evasión de caché estricta)
 async function getDynamicConfig() {
     try {
-        const res = await fetch('/api/config/firebase');
+        const res = await fetch(`/api/config/firebase?t=${Date.now()}`, {
+            cache: 'no-store',
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
         if (!res.ok) return null;
         return await res.json();
     } catch {
@@ -27,9 +40,19 @@ async function getDynamicConfig() {
 // Inicializar Firebase de forma síncrona con fallback inmediato
 function initFirebaseSync() {
     if (getApps().length > 0) return getApp();
-    // Si tenemos todas las vars de entorno, inicializar sincronamente
-    if (FALLBACK_CONFIG.apiKey && FALLBACK_CONFIG.projectId) {
-        return initializeApp(FALLBACK_CONFIG as any);
+    // Si tenemos todas las vars de entorno y no son placeholders/ejemplos, inicializar sincronamente
+    const hasValidConfig = FALLBACK_CONFIG.apiKey && 
+                           FALLBACK_CONFIG.projectId && 
+                           !isExample(FALLBACK_CONFIG.apiKey) && 
+                           !isExample(FALLBACK_CONFIG.projectId);
+
+    if (hasValidConfig) {
+        try {
+            return initializeApp(FALLBACK_CONFIG as any);
+        } catch (e) {
+            console.error("[FCM Client] Error inicialización síncrona:", e);
+            return null;
+        }
     }
     return null;
 }
@@ -41,44 +64,52 @@ let appSync = initFirebaseSync();
 let initPromise: Promise<any> | null = null;
 
 const getFirebaseApp = async () => {
-    if (getApps().length > 0) return getApp();
-    if (initPromise) return initPromise;
+    const dynamicConfig = await getDynamicConfig();
 
-    initPromise = (async () => {
-        const dynamicConfig = await getDynamicConfig();
-        if (getApps().length > 0) return getApp();
+    const getVal = (key: string, envVal: string | undefined) => {
+        const dbVal = dynamicConfig?.[key];
+        if (dbVal && !isExample(dbVal)) return dbVal.replace(/['"]/g, '').trim();
+        if (envVal && !isExample(envVal)) return envVal.replace(/['"]/g, '').trim();
+        const fallback = dbVal || envVal;
+        return fallback ? fallback.replace(/['"]/g, '').trim() : fallback;
+    };
 
-        const isExample = (val: string | null | undefined) => {
-            if (!val) return true;
-            const v = val.toLowerCase().replace(/['"]/g, '').trim();
-            return v.includes('tu-proyecto') || v.includes('example') || v === 'dummy' || v.includes('placeholder') || v.includes('123456789') || v.includes('..') || v.length < 5;
-        };
+    const config = {
+        apiKey: getVal('NEXT_PUBLIC_FIREBASE_API_KEY', FALLBACK_CONFIG.apiKey),
+        authDomain: getVal('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN', FALLBACK_CONFIG.authDomain),
+        projectId: getVal('NEXT_PUBLIC_FIREBASE_PROJECT_ID', FALLBACK_CONFIG.projectId),
+        storageBucket: getVal('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET', FALLBACK_CONFIG.storageBucket),
+        messagingSenderId: getVal('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID', FALLBACK_CONFIG.messagingSenderId),
+        appId: getVal('NEXT_PUBLIC_FIREBASE_APP_ID', FALLBACK_CONFIG.appId),
+    };
 
-        const getVal = (key: string, envVal: string | undefined) => {
-            const dbVal = dynamicConfig?.[key];
-            if (dbVal && !isExample(dbVal)) return dbVal.replace(/['"]/g, '').trim();
-            if (envVal && !isExample(envVal)) return envVal.replace(/['"]/g, '').trim();
-            const fallback = dbVal || envVal;
-            return fallback ? fallback.replace(/['"]/g, '').trim() : fallback;
-        };
+    // Si falta projectId, extraerlo de authDomain
+    if (!config.projectId && config.authDomain && config.authDomain.includes('.firebaseapp.com')) {
+        config.projectId = config.authDomain.replace('.firebaseapp.com', '');
+    }
 
-        const config = {
-            apiKey: getVal('NEXT_PUBLIC_FIREBASE_API_KEY', FALLBACK_CONFIG.apiKey),
-            authDomain: getVal('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN', FALLBACK_CONFIG.authDomain),
-            projectId: getVal('NEXT_PUBLIC_FIREBASE_PROJECT_ID', FALLBACK_CONFIG.projectId),
-            storageBucket: getVal('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET', FALLBACK_CONFIG.storageBucket),
-            messagingSenderId: getVal('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID', FALLBACK_CONFIG.messagingSenderId),
-            appId: getVal('NEXT_PUBLIC_FIREBASE_APP_ID', FALLBACK_CONFIG.appId),
-        };
+    if (getApps().length > 0) {
+        const existingApp = getApp();
+        const existingOptions = existingApp.options;
+        const currentApiKey = config.apiKey;
+        const currentProjectId = config.projectId;
 
-        // Si falta projectId, extraerlo de authDomain
-        if (!config.projectId && config.authDomain && config.authDomain.includes('.firebaseapp.com')) {
-            config.projectId = config.authDomain.replace('.firebaseapp.com', '');
+        // Si la app existente tiene credenciales obsoletas o es una app "de ejemplo/fallback"
+        // que no coincide con las credenciales dinámicas reales, la reinicializamos.
+        if (existingOptions.apiKey !== currentApiKey || existingOptions.projectId !== currentProjectId) {
+            console.log("[FCM Client] Credenciales de Firebase cambiaron o eran inválidas. Reinicializando app...");
+            try {
+                await deleteApp(existingApp);
+                messagingInstance = null; // invalidar instancia de messaging
+            } catch (e) {
+                console.error("[FCM Client] Error eliminando app anterior:", e);
+            }
+        } else {
+            return existingApp;
         }
+    }
 
-        return initializeApp(config);
-    })();
-    return initPromise;
+    return initializeApp(config);
 };
 
 // Instancia de messaging cacheada para reuso
@@ -104,12 +135,6 @@ export const getFcmToken = async () => {
     if (!messaging) throw new Error("Firebase Messaging no está soportado o no se pudo inicializar.");
 
     const dynamicConfig = await getDynamicConfig();
-
-    const isExample = (val: string | null | undefined) => {
-        if (!val) return true;
-        const v = val.toLowerCase().replace(/['"]/g, '').trim();
-        return v.includes('tu-proyecto') || v.includes('example') || v === 'dummy' || v.includes('placeholder') || v.includes('123456789') || v.includes('..') || v.length < 5;
-    };
 
     const getVal = (key: string, envVal: string | undefined) => {
         const dbVal = dynamicConfig?.[key];
