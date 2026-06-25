@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, Loader2, ArrowRight, Sparkles, Zap, BarChart3, Smartphone, Eye, EyeOff } from 'lucide-react';
@@ -11,6 +11,7 @@ export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const passwordInputRef = useRef<HTMLInputElement>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -176,6 +177,7 @@ export default function LoginPage() {
                                         <Lock size={17} />
                                     </div>
                                     <input
+                                        ref={passwordInputRef}
                                         type={showPassword ? "text" : "password"}
                                         required
                                         autoComplete="current-password"
@@ -187,7 +189,14 @@ export default function LoginPage() {
                                     />
                                     <button
                                         type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setShowPassword(!showPassword);
+                                            setTimeout(() => {
+                                                passwordInputRef.current?.focus();
+                                            }, 0);
+                                        }}
                                         className="pr-4 pl-2 flex items-center text-slate-400 hover:text-slate-600 transition-colors shrink-0 outline-none"
                                     >
                                         {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
