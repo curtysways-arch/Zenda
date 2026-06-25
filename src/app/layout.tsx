@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
+import BackButtonHandler from "@/components/BackButtonHandler";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -50,7 +51,10 @@ export default function RootLayout({
     return (
         <html lang="es" suppressHydrationWarning>
             <body className={inter.className}>
-                <Providers>{children}</Providers>
+                <Providers>
+                    <BackButtonHandler />
+                    {children}
+                </Providers>
             </body>
         </html>
     );
