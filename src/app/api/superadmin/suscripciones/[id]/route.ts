@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getBusinessTimeZone, getSubscriptionDates } from "@/lib/dateUtils";
 
 const FOUNDER_LOCKED_PRICE = 15.0;
 const FOUNDER_MAX = 25;
@@ -32,13 +33,20 @@ export async function PATCH(
 
         if (!sub) return NextResponse.json({ error: "Suscripción no encontrada" }, { status: 404 });
 
+        const timeZone = getBusinessTimeZone(sub.Negocio?.configuracion);
         let nuevaFechaFin = new Date(sub.fechaFin);
         const hoy = new Date();
 
         if (action === 'RENEW') {
-            const baseDate = nuevaFechaFin < hoy ? hoy : nuevaFechaFin;
-            nuevaFechaFin = new Date(baseDate);
-            nuevaFechaFin.setMonth(nuevaFechaFin.getMonth() + 1);
+            if (nuevaFechaFin < hoy) {
+                // Si ya venció, se renueva a partir de hoy alineado a días completos
+                const dates = getSubscriptionDates(timeZone, { durationMonths: 1, baseDate: hoy });
+                nuevaFechaFin = dates.endDate;
+            } else {
+                // Si aún está vigente, se suma N meses manteniendo la alineación
+                nuevaFechaFin = new Date(nuevaFechaFin);
+                nuevaFechaFin.setMonth(nuevaFechaFin.getMonth() + 1);
+            }
         } else if (action === 'EXTEND' && dias) {
             nuevaFechaFin.setDate(nuevaFechaFin.getDate() + dias);
         }

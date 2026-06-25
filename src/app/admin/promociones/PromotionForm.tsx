@@ -23,8 +23,12 @@ export default function PromotionForm({
     const formatDate = (d?: string) => {
         if (!d) return '';
         const date = new Date(d);
-        // Evitaremos zona horaria offset, esto es simplificado:
-        return date.toISOString().slice(0, 16);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
     };
 
     const [form, setForm] = useState({

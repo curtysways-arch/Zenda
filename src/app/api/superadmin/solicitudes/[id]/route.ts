@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { notificationService } from "@/lib/notifications";
+import { getBusinessTimeZone, getSubscriptionDates } from "@/lib/dateUtils";
 
 async function isSuperAdmin() {
     const session = await getServerSession(authOptions);
@@ -58,15 +59,12 @@ export async function PATCH(
             const isAnnual = sub.metodoPago?.toUpperCase().includes('ANNUAL') || 
                              sub.metodoPago?.toUpperCase().includes('ANUAL');
 
-            // Calcular nueva fecha de vencimiento
-            const hoy = new Date();
-            const nuevaFechaFin = new Date(hoy);
-            
-            if (isAnnual) {
-                nuevaFechaFin.setFullYear(nuevaFechaFin.getFullYear() + 1);
-            } else {
-                nuevaFechaFin.setMonth(nuevaFechaFin.getMonth() + 1);
-            }
+            // Calcular nueva fecha de inicio y vencimiento
+            const timeZone = getBusinessTimeZone(sub.negocio?.configuracion);
+            const { startDate, endDate } = getSubscriptionDates(
+                timeZone,
+                isAnnual ? { durationMonths: 12 } : { durationMonths: 1 }
+            );
 
             // Actualizar la suscripción: activar el nuevo plan
             await (prisma.suscripcion as any).update({
@@ -77,8 +75,8 @@ export async function PATCH(
                     planId: sub.solicitudPlanId || sub.planId,
                     solicitudPlanId: null,
                     metodoPago: null,
-                    fechaInicio: hoy,
-                    fechaFin: nuevaFechaFin,
+                    fechaInicio: startDate,
+                    fechaFin: endDate,
                 }
             });
 
@@ -94,7 +92,7 @@ export async function PATCH(
                             metodo_pago: sub.metodoPago || 'TRANSFERENCIA',
                             referencia: pagoReferencia || 'APROBACIÓN_SISTEMA',
                             estado_pago: 'COMPLETADO',
-                            fecha_pago: hoy
+                            fecha_pago: startDate
                         }
                     });
                 }
@@ -110,7 +108,7 @@ export async function PATCH(
                         plan_anterior_id: sub.planId,
                         plan_nuevo_id: sub.solicitudPlanId || sub.planId,
                         tipo_cambio: isAnnual ? 'RENOVACION_ANUAL' : 'UPGRADE',
-                        fecha_cambio: hoy,
+                        fecha_cambio: startDate,
                         admin_id: 'SISTEMA'
                     }
                 });
@@ -147,7 +145,7 @@ export async function PATCH(
                         sub.negocio.whatsapp.replace(/\D/g, ''),
                         sub.negocio.nombre,
                         nuevoPlan?.name || 'Nuevo Plan',
-                        nuevaFechaFin,
+                        endDate,
                         isAnnual
                     );
                 }

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import prisma from '@/lib/prisma';
 import crypto from 'crypto';
+import { getBusinessTimeZone, getSubscriptionDates } from '@/lib/dateUtils';
 
 export async function POST(req: Request) {
     try {
@@ -54,16 +55,28 @@ export async function POST(req: Request) {
         });
 
         const sub = await prisma.suscripcion.findUnique({ where: { negocioId: payment.negocio_id } });
+        const business = await prisma.negocio.findUnique({
+            where: { id: payment.negocio_id },
+            select: { configuracion: true }
+        });
+        const timeZone = getBusinessTimeZone(business?.configuracion);
         
         // Calcular próxima fecha fin:
         // - Si aún está vigente: extender desde su fecha de corte actual (no desde hoy)
         // - Si ya expiró: contar 1 mes desde hoy
         const now = new Date();
-        const baseDate = (sub?.fechaFin && new Date(sub.fechaFin) > now)
-            ? new Date(sub.fechaFin)  // Vigente: extiende desde su corte actual
-            : now;                    // Expirado: empieza desde hoy
-        const nuevaFechaFin = new Date(baseDate);
-        nuevaFechaFin.setMonth(nuevaFechaFin.getMonth() + 1);
+        let nuevaFechaFin: Date;
+        
+        if (sub?.fechaFin && new Date(sub.fechaFin) > now) {
+            // Vigente: extiende desde su corte actual. 
+            // Como ya está alineada, sumarle 1 mes mantiene la alineación local.
+            nuevaFechaFin = new Date(sub.fechaFin);
+            nuevaFechaFin.setMonth(nuevaFechaFin.getMonth() + 1);
+        } else {
+            // Expirado: empieza desde hoy alineado a la hora del negocio
+            const dates = getSubscriptionDates(timeZone, { durationMonths: 1, baseDate: now });
+            nuevaFechaFin = dates.endDate;
+        }
 
         // Detectar si es renovación (mismo plan) o upgrade (plan diferente)
         const tipoCambio = sub?.planId === payment.plan_id ? 'renewal' : 'upgrade_manual';

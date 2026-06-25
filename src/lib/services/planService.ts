@@ -1,5 +1,6 @@
 import prisma from '../prisma';
 import crypto from 'crypto';
+import { getBusinessTimeZone, getSubscriptionDates } from '@/lib/dateUtils';
 
 /** Precio congelado de por vida para los primeros 25 fundadores */
 const FOUNDER_LOCKED_PRICE = 15.0;
@@ -64,17 +65,19 @@ export const planService = {
         const plan = await prisma.plan.findUnique({ where: { id: planId } });
         if (!plan) throw new Error('Plan no encontrado');
 
-        const startDate = new Date();
-        const endDate = new Date();
+        const business = await (prisma.negocio as any).findUnique({
+            where: { id: businessId },
+            select: { configuracion: true }
+        });
+        const timeZone = getBusinessTimeZone(business?.configuracion);
 
         const hasTrial = (plan as any).trial_days > 0;
         const estado = hasTrial ? 'trial' : 'activa';
 
-        if (hasTrial) {
-            endDate.setDate(startDate.getDate() + (plan as any).trial_days);
-        } else {
-            endDate.setMonth(startDate.getMonth() + 1);
-        }
+        const { startDate, endDate } = getSubscriptionDates(
+            timeZone, 
+            hasTrial ? { durationDays: (plan as any).trial_days } : { durationMonths: 1 }
+        );
 
         // Leer suscripción actual para preservar beneficio de fundador
         const currentSub = await (prisma.suscripcion as any).findUnique({
@@ -167,13 +170,16 @@ export const planService = {
             return;
         }
 
-        const startDate = new Date();
-        const endDate = new Date();
+        const business = await (prisma.negocio as any).findUnique({
+            where: { id: businessId },
+            select: { configuracion: true }
+        });
+        const timeZone = getBusinessTimeZone(business?.configuracion);
 
         if (activeFoundersCount < FOUNDER_MAX) {
             // ── ASIGNAR COMO FUNDADOR ──
             // Precio activo → 1 mes sin trial
-            endDate.setMonth(startDate.getMonth() + 1);
+            const { startDate, endDate } = getSubscriptionDates(timeZone, { durationMonths: 1 });
 
             return await (prisma.suscripcion as any).create({
                 data: {
@@ -194,7 +200,7 @@ export const planService = {
 
         // ── ASIGNAR PLAN PRO TRIAL ──
         const trialDays = (basePlan as any).trial_days || 14;
-        endDate.setDate(startDate.getDate() + trialDays);
+        const { startDate, endDate } = getSubscriptionDates(timeZone, { durationDays: trialDays });
 
         return await (prisma.suscripcion as any).create({
             data: {

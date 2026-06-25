@@ -1,4 +1,5 @@
 import prisma from '../prisma';
+import { getBusinessTimeZone, getMonthRangeInTimeZone } from '@/lib/dateUtils';
 
 export const subscriptionService = {
     /**
@@ -54,10 +55,9 @@ export const subscriptionService = {
         const sub = business.Suscripcion;
         const plan = sub.Plan;
 
-        // Contar citas del mes actual
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        // Contar citas del mes actual en la zona horaria del negocio
+        const timeZone = getBusinessTimeZone(business.configuracion);
+        const { startOfMonth, endOfMonth } = getMonthRangeInTimeZone(timeZone);
 
         const appointmentsThisMonth = await prisma.appointment.count({
             where: {
