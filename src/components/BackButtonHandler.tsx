@@ -12,8 +12,8 @@ export default function BackButtonHandler() {
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
-        // Solo interceptamos en las páginas raíz principales donde un atrás físico cerraría la app
-        const isRootPath = /^\/[^\/]+$/.test(pathname) || pathname === '/' || pathname === '/admin' || pathname === '/superadmin';
+        // Coincide con /, /admin, /superadmin y /cualquier-slug o /cualquier-slug/
+        const isRootPath = /^\/[^\/]+\/?$/.test(pathname) || pathname === '/' || pathname === '/admin' || pathname === '/superadmin';
 
         if (!isRootPath) return;
 
@@ -25,30 +25,25 @@ export default function BackButtonHandler() {
                     window.history.pushState({ ...currentState, isVirtual: true }, '', window.location.href);
                 }
             } catch (e) {
-                console.error("[Back Button] Error ensuring virtual state:", e);
+                // Silenciar error en producción
             }
         };
 
-        // 1. Ejecución diferida inicial (800ms) para dar tiempo a que Next.js hidrate e inicialice su router
-        const initTimer = setTimeout(() => {
-            ensureVirtualState();
-        }, 800);
+        // Ejecutar inmediatamente al montar
+        ensureVirtualState();
 
-        // 2. Asegurar estado virtual con el primer toque o click en la pantalla
-        const handleFirstInteraction = () => {
+        // Ejecutar periódicamente cada 500ms para asegurar la protección contra la hidratación tardía de Next.js
+        const intervalId = setInterval(ensureVirtualState, 500);
+
+        // Asegurar estado virtual en cualquier interacción física del usuario
+        const handleInteraction = () => {
             ensureVirtualState();
-            cleanupInteractionListeners();
         };
 
-        const cleanupInteractionListeners = () => {
-            window.removeEventListener('touchstart', handleFirstInteraction);
-            window.removeEventListener('click', handleFirstInteraction);
-        };
+        window.addEventListener('touchstart', handleInteraction, { passive: true });
+        window.addEventListener('click', handleInteraction, { passive: true });
 
-        window.addEventListener('touchstart', handleFirstInteraction, { passive: true });
-        window.addEventListener('click', handleFirstInteraction, { passive: true });
-
-        // 3. Manejador de retroceso
+        // Manejador del botón físico atrás (popstate)
         const handlePopState = (event: PopStateEvent) => {
             // Si el estado al que se retrocedió no es virtual, significa que el usuario presionó atrás
             if (!event.state || !event.state.isVirtual) {
@@ -56,13 +51,13 @@ export default function BackButtonHandler() {
                 const diff = now - lastPressRef.current;
 
                 if (diff < 2000) {
-                    // Si presionó por segunda vez en menos de 2s, sale de la app
+                    // Doble pulsación rápida: sale de la aplicación
                     if (timeoutRef.current) clearTimeout(timeoutRef.current);
                     setShowToast(false);
                     window.removeEventListener('popstate', handlePopState);
                     window.history.back();
                 } else {
-                    // Primera pulsación: muestra el Toast y actualiza el timestamp
+                    // Primera pulsación: muestra el Toast y reinicia el protector
                     lastPressRef.current = now;
                     setShowToast(true);
 
@@ -71,7 +66,7 @@ export default function BackButtonHandler() {
                         setShowToast(false);
                     }, 2000);
 
-                    // Re-empujamos el estado virtual para seguir protegiendo la app
+                    // Re-empujar de inmediato el estado virtual
                     ensureVirtualState();
                 }
             }
@@ -80,8 +75,9 @@ export default function BackButtonHandler() {
         window.addEventListener('popstate', handlePopState);
 
         return () => {
-            clearTimeout(initTimer);
-            cleanupInteractionListeners();
+            clearInterval(intervalId);
+            window.removeEventListener('touchstart', handleInteraction);
+            window.removeEventListener('click', handleInteraction);
             window.removeEventListener('popstate', handlePopState);
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
         };
