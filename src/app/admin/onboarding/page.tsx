@@ -35,6 +35,8 @@ export default function OnboardingWizard() {
         servicioImageMediaId: '',
         horarioApertura: '09:00',
         horarioCierre: '18:00',
+        slug: '',
+        diasAtencion: [1, 2, 3, 4, 5, 6, 0] as number[]
     });
 
     // Load initial data
@@ -61,6 +63,8 @@ export default function OnboardingWizard() {
                         bannerUrl: negocioData.configuracion?.bannerUrl || '',
                         horarioApertura: negocioData.horarioApertura || '09:00',
                         horarioCierre: negocioData.horarioCierre || '18:00',
+                        slug: negocioData.slug || '',
+                        diasAtencion: negocioData.configuracion?.diasAtencion || [1, 2, 3, 4, 5, 6, 0]
                     }));
                 }
             } catch (e) {
@@ -98,7 +102,7 @@ export default function OnboardingWizard() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
             </div>
         );
     }
@@ -117,12 +121,15 @@ export default function OnboardingWizard() {
             {step < 6 && (
                 <div className="bg-white border-b border-slate-200 sticky top-0 z-10 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-emerald-500 text-white rounded-xl flex items-center justify-center font-black">
-                            Z
+                        <div className="relative w-9 h-9 bg-white rounded-xl border border-slate-100 shadow-md flex items-center justify-center p-1 overflow-hidden shrink-0">
+                            <img src="/logo-citiox.png" alt="CitiOx" className="w-full h-full object-contain" />
                         </div>
-                        <h1 className="font-black text-slate-800 uppercase tracking-tight italic">
-                            Configuración
-                        </h1>
+                        <div>
+                            <h1 className="font-black tracking-tight bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 bg-clip-text text-transparent text-lg italic leading-none">
+                                CitiOx
+                            </h1>
+                            <span className="text-[7px] font-black uppercase tracking-[0.2em] leading-none text-slate-400">Configuración</span>
+                        </div>
                     </div>
                     
                     <div className="flex-1 max-w-xl w-full">
@@ -130,13 +137,13 @@ export default function OnboardingWizard() {
                             <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
                                 Paso {step} de 5
                             </span>
-                            <span className="text-[10px] font-black uppercase text-emerald-500 tracking-widest">
+                            <span className="text-[10px] font-black uppercase text-cyan-500 tracking-widest">
                                 {Math.round((step / 5) * 100)}% Completado
                             </span>
                         </div>
                         <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                             <div 
-                                className="h-full bg-emerald-500 transition-all duration-500 rounded-full"
+                                className="h-full bg-gradient-to-r from-cyan-500 via-sky-400 to-purple-500 transition-all duration-500 rounded-full"
                                 style={{ width: `${(step / 5) * 100}%` }}
                             />
                         </div>
@@ -184,7 +191,7 @@ function StepInfo({ data, setData, onNext }: any) {
                     <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">Nombre del Negocio</label>
                     <input 
                         type="text" 
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold !text-slate-900 placeholder:!text-slate-400"
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-bold !text-slate-900 placeholder:!text-slate-400"
                         placeholder="Ej. Spa Bella"
                         value={data.nombre}
                         onChange={e => setData({...data, nombre: e.target.value})}
@@ -193,7 +200,7 @@ function StepInfo({ data, setData, onNext }: any) {
                 <div>
                     <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">Descripción Corta</label>
                     <textarea 
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold !text-slate-900 placeholder:!text-slate-400 resize-none h-24"
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-bold !text-slate-900 placeholder:!text-slate-400 resize-none h-24"
                         placeholder="El mejor lugar para relajarse..."
                         value={data.descripcion}
                         onChange={e => setData({...data, descripcion: e.target.value})}
@@ -204,7 +211,7 @@ function StepInfo({ data, setData, onNext }: any) {
                         <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">Teléfono (WhatsApp)</label>
                         <input 
                             type="text" 
-                            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold !text-slate-900 placeholder:!text-slate-400"
+                            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-bold !text-slate-900 placeholder:!text-slate-400"
                             placeholder="+123456789"
                             value={data.telefono}
                             onChange={e => setData({...data, telefono: e.target.value})}
@@ -214,7 +221,7 @@ function StepInfo({ data, setData, onNext }: any) {
                         <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">Ciudad</label>
                         <input 
                             type="text" 
-                            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold !text-slate-900 placeholder:!text-slate-400"
+                            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-bold !text-slate-900 placeholder:!text-slate-400"
                             placeholder="Ej. Madrid"
                             value={data.ciudad}
                             onChange={e => setData({...data, ciudad: e.target.value})}
@@ -225,7 +232,7 @@ function StepInfo({ data, setData, onNext }: any) {
                     <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">Dirección (Opcional)</label>
                     <input 
                         type="text" 
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold !text-slate-900 placeholder:!text-slate-400"
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-bold !text-slate-900 placeholder:!text-slate-400"
                         placeholder="Calle Principal 123"
                         value={data.direccion}
                         onChange={e => setData({...data, direccion: e.target.value})}
@@ -237,7 +244,7 @@ function StepInfo({ data, setData, onNext }: any) {
                 <button 
                     onClick={onNext}
                     disabled={!data.nombre}
-                    className="px-8 py-4 bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-600 disabled:opacity-50 transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/30"
+                    className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-2xl font-black uppercase tracking-widest hover:brightness-110 disabled:opacity-50 disabled:brightness-100 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20"
                 >
                     Continuar <ArrowRight size={18} />
                 </button>
@@ -284,7 +291,7 @@ function StepVisual({ data, setData, onNext, onPrev }: any) {
                 <button onClick={onPrev} className="px-8 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all">Volver</button>
                 <button 
                     onClick={onNext}
-                    className="px-8 py-4 bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-600 transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/30"
+                    className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-2xl font-black uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20"
                 >
                     Continuar <ArrowRight size={18} />
                 </button>
@@ -296,7 +303,7 @@ function StepVisual({ data, setData, onNext, onPrev }: any) {
 function StepType({ data, setData, onNext, onPrev }: any) {
     const tipos = [
         'Spa', 'Barbería', 'Centro estético', 'Clínica', 
-        'Gimnasio', 'Academia', 'Canchas deportivas', 'Otro'
+        'Gimnasio', 'Academia', 'Salón de belleza', 'Masajes', 'Otro'
     ];
 
     return (
@@ -313,7 +320,7 @@ function StepType({ data, setData, onNext, onPrev }: any) {
                         onClick={() => setData({...data, tipoNegocio: t})}
                         className={`p-6 rounded-[2rem] border-2 text-center font-black uppercase tracking-tighter italic transition-all duration-300 ${
                             data.tipoNegocio === t 
-                            ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-md scale-105'
+                            ? 'border-cyan-500 bg-cyan-50/50 text-cyan-700 shadow-md scale-105'
                             : 'border-slate-100 bg-white text-slate-400 hover:border-slate-300'
                         }`}
                     >
@@ -327,7 +334,7 @@ function StepType({ data, setData, onNext, onPrev }: any) {
                 <button 
                     onClick={onNext}
                     disabled={!data.tipoNegocio}
-                    className="px-8 py-4 bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-600 disabled:opacity-50 transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/30"
+                    className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-2xl font-black uppercase tracking-widest hover:brightness-110 disabled:opacity-50 disabled:brightness-100 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20"
                 >
                     Continuar <ArrowRight size={18} />
                 </button>
@@ -349,7 +356,7 @@ function StepService({ data, setData, onNext, onPrev }: any) {
                     <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">Nombre del Servicio</label>
                     <input 
                         type="text" 
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold !text-slate-900 placeholder:!text-slate-400"
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-bold !text-slate-900 placeholder:!text-slate-400"
                         placeholder="Ej. Masaje Relajante"
                         value={data.servicioNombre}
                         onChange={e => setData({...data, servicioNombre: e.target.value})}
@@ -360,7 +367,7 @@ function StepService({ data, setData, onNext, onPrev }: any) {
                     <div>
                         <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">Duración (minutos)</label>
                         <select 
-                            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold !text-slate-900"
+                            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-bold !text-slate-900"
                             value={data.servicioDuracion}
                             onChange={e => setData({...data, servicioDuracion: e.target.value})}
                         >
@@ -376,7 +383,7 @@ function StepService({ data, setData, onNext, onPrev }: any) {
                         <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">Precio ($)</label>
                         <input 
                             type="number" 
-                            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold !text-slate-900 placeholder:!text-slate-400"
+                            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-bold !text-slate-900 placeholder:!text-slate-400"
                             placeholder="0.00"
                             value={data.servicioPrecio}
                             onChange={e => setData({...data, servicioPrecio: e.target.value})}
@@ -387,7 +394,7 @@ function StepService({ data, setData, onNext, onPrev }: any) {
                 <div>
                     <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">Descripción Corta</label>
                     <textarea 
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold !text-slate-900 placeholder:!text-slate-400 resize-none h-20"
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-bold !text-slate-900 placeholder:!text-slate-400 resize-none h-20"
                         placeholder="Detalles del servicio..."
                         value={data.servicioDescripcion}
                         onChange={e => setData({...data, servicioDescripcion: e.target.value})}
@@ -422,7 +429,7 @@ function StepService({ data, setData, onNext, onPrev }: any) {
                 <button onClick={onPrev} className="px-8 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all">Volver</button>
                 <button 
                     onClick={onNext}
-                    className="px-8 py-4 bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-600 transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/30"
+                    className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-2xl font-black uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20"
                 >
                     {data.servicioNombre ? 'Crear y Continuar' : 'Omitir y Continuar'} <ArrowRight size={18} />
                 </button>
@@ -432,19 +439,29 @@ function StepService({ data, setData, onNext, onPrev }: any) {
 }
 
 function StepHours({ data, setData, onPrev, onSubmit, saving }: any) {
+    const DIAS_SEMANA = [
+        { label: 'Lun', value: 1 },
+        { label: 'Mar', value: 2 },
+        { label: 'Mié', value: 3 },
+        { label: 'Jue', value: 4 },
+        { label: 'Vie', value: 5 },
+        { label: 'Sáb', value: 6 },
+        { label: 'Dom', value: 0 }
+    ];
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
                 <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter italic">Horarios de Atención</h2>
-                <p className="text-slate-500 font-medium">Define tu horario general. Luego podrás hacer ajustes por día.</p>
+                <p className="text-slate-500 font-medium">Define tu horario general y los días de apertura.</p>
             </div>
 
             <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm space-y-8">
                 <div className="flex items-center gap-4 bg-slate-50 p-6 rounded-2xl">
-                    <Clock size={32} className="text-emerald-500" />
+                    <Clock size={32} className="text-cyan-500" />
                     <div>
-                        <p className="font-black text-slate-800 uppercase italic tracking-tighter">Lunes a Domingo</p>
-                        <p className="text-xs text-slate-500 font-medium">Aplicaremos este horario a todos los días de la semana de forma predeterminada.</p>
+                        <p className="font-black text-slate-800 uppercase italic tracking-tighter">Configuración Horaria</p>
+                        <p className="text-xs text-slate-500 font-medium">Estos horarios y días se aplicarán por defecto para las reservas de tus clientes.</p>
                     </div>
                 </div>
 
@@ -453,7 +470,7 @@ function StepHours({ data, setData, onPrev, onSubmit, saving }: any) {
                         <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-4">Hora de Apertura</label>
                         <input 
                             type="time" 
-                            className="w-full px-6 py-5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 font-black text-2xl !text-slate-900 text-center"
+                            className="w-full px-6 py-5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-black text-2xl !text-slate-900 text-center"
                             value={data.horarioApertura}
                             onChange={e => setData({...data, horarioApertura: e.target.value})}
                         />
@@ -462,10 +479,46 @@ function StepHours({ data, setData, onPrev, onSubmit, saving }: any) {
                         <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-4">Hora de Cierre</label>
                         <input 
                             type="time" 
-                            className="w-full px-6 py-5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 font-black text-2xl !text-slate-900 text-center"
+                            className="w-full px-6 py-5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-black text-2xl !text-slate-900 text-center"
                             value={data.horarioCierre}
                             onChange={e => setData({...data, horarioCierre: e.target.value})}
                         />
+                    </div>
+                </div>
+
+                <div className="space-y-4 border-t border-slate-100 pt-6">
+                    <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block">Días de Atención</label>
+                    <p className="text-xs text-slate-500 font-medium">Selecciona los días en que tu negocio estará abierto para recibir reservas.</p>
+                    <div className="grid grid-cols-7 gap-2">
+                        {DIAS_SEMANA.map((dia) => {
+                            const isActive = data.diasAtencion.includes(dia.value);
+                            return (
+                                <button
+                                    key={dia.value}
+                                    type="button"
+                                    onClick={() => {
+                                        let nuevosDias;
+                                        if (isActive) {
+                                            if (data.diasAtencion.length > 1) {
+                                                nuevosDias = data.diasAtencion.filter((d: number) => d !== dia.value);
+                                            } else {
+                                                nuevosDias = data.diasAtencion;
+                                            }
+                                        } else {
+                                            nuevosDias = [...data.diasAtencion, dia.value];
+                                        }
+                                        setData({ ...data, diasAtencion: nuevosDias });
+                                    }}
+                                    className={`py-3.5 px-1 rounded-2xl border-2 text-xs font-black tracking-tight text-center transition-all ${
+                                        isActive
+                                            ? 'border-cyan-500 bg-cyan-50/50 text-cyan-600 font-black shadow-sm'
+                                            : 'border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-200'
+                                    }`}
+                                >
+                                    {dia.label}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
@@ -475,7 +528,7 @@ function StepHours({ data, setData, onPrev, onSubmit, saving }: any) {
                 <button 
                     onClick={onSubmit}
                     disabled={saving}
-                    className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-black disabled:opacity-50 transition-all flex items-center gap-2 shadow-xl shadow-slate-200"
+                    className="px-8 py-4 bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 text-white rounded-2xl font-black uppercase tracking-widest hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-2 shadow-xl shadow-cyan-500/20"
                 >
                     {saving ? 'Guardando...' : 'Finalizar Configuración'} <Check size={18} />
                 </button>
@@ -498,15 +551,15 @@ function StepSuccess({ data }: any) {
 
     return (
         <div className="space-y-8 animate-in zoom-in-95 duration-700 max-w-xl mx-auto text-center pt-10">
-            <div className="size-32 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-8 border-[8px] border-emerald-100">
-                <Sparkles size={48} className="text-emerald-500" />
+            <div className="size-32 bg-cyan-50 rounded-full flex items-center justify-center mx-auto mb-8 border-[8px] border-cyan-100">
+                <Sparkles size={48} className="text-cyan-500" />
             </div>
 
             <h2 className="text-5xl font-black text-slate-900 uppercase tracking-tighter italic">🎉 Tu negocio ya está listo para comenzar.</h2>
             
             <div className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-xl space-y-6 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-2 bg-slate-100">
-                    <div className="h-full bg-emerald-500" style={{ width: `${percentage}%` }}></div>
+                    <div className="h-full bg-gradient-to-r from-cyan-500 to-purple-500" style={{ width: `${percentage}%` }}></div>
                 </div>
 
                 <div className="text-center space-y-2">
@@ -516,7 +569,7 @@ function StepSuccess({ data }: any) {
                 </div>
 
                 <div className="pt-6 grid gap-4">
-                    <Link href={`/${data.nombre.toLowerCase().replace(/\s+/g, '-')}`} target="_blank" className="w-full py-4 bg-emerald-50 text-emerald-600 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-100 transition-all flex items-center justify-center gap-2 border border-emerald-200">
+                    <Link href={`/${data.slug || data.nombre.toLowerCase().replace(/\s+/g, '-')}`} target="_blank" className="w-full py-4 bg-cyan-50 text-cyan-600 rounded-2xl font-black uppercase tracking-widest hover:bg-cyan-100 transition-all flex items-center justify-center gap-2 border border-cyan-200">
                         Ver mi página pública
                     </Link>
                     <Link href="/admin" className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2 shadow-lg">

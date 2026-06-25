@@ -17,7 +17,8 @@ export async function POST(req: Request) {
             logoUrl, bannerUrl, // Step 2
             tipoNegocio, // Step 3
             servicioNombre, servicioDuracion, servicioPrecio, servicioDescripcion, servicioImageUrl, servicioImageMediaId, // Step 4
-            horarioApertura, horarioCierre // Step 5
+            horarioApertura, horarioCierre, // Step 5
+            diasAtencion // Step 5 - Días de atención
         } = body;
 
         // Fetch current negocio to get current configuracion
@@ -37,7 +38,8 @@ export async function POST(req: Request) {
             ...currentConfig,
             wizardCompleted: true,
             tipoNegocio: tipoNegocio || currentConfig.tipoNegocio,
-            descripcionCorta: descripcion || currentConfig.descripcionCorta
+            descripcionCorta: descripcion || currentConfig.descripcionCorta,
+            diasAtencion: diasAtencion !== undefined ? diasAtencion : currentConfig.diasAtencion
         };
 
         // We use a transaction to do everything at once
