@@ -197,7 +197,7 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN' }: TopBarPr
                                     {copied ? <Check size={15} /> : <Copy size={15} />}
                                 </button>
                                 <a
-                                    href={shareUrl}
+                                    href={shareUrl.startsWith('http') ? `https://href.li/?${shareUrl}` : shareUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="size-9 shrink-0 rounded-xl flex items-center justify-center bg-slate-200 text-slate-600"
