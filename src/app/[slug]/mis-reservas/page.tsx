@@ -52,6 +52,7 @@ export default function MisReservasPage() {
     const searchParams = useSearchParams();
 
     const [step, setStep] = useState<'phone' | 'otp' | 'history'>('phone');
+    const [verifyingSession, setVerifyingSession] = useState(true);
     const [activeTab, setActiveTab] = useState<TabType>('reservas');
     const [filter, setFilter] = useState<FilterType>('proximas');
     
@@ -158,7 +159,10 @@ export default function MisReservasPage() {
                   }
                   setStep('history');
               }
-            } catch (err) {}
+            } catch (err) {
+            } finally {
+              setVerifyingSession(false);
+            }
         };
 
         const fetchBusiness = async () => {
@@ -356,6 +360,15 @@ export default function MisReservasPage() {
     }, [reservas]);
 
     const showPrices = negocio?.mostrarPrecios !== false;
+
+    if (verifyingSession) {
+        return (
+            <div className="min-h-screen bg-gray-50/50 flex flex-col items-center justify-center space-y-4">
+                <Loader2 className="animate-spin text-emerald-500 size-10" style={{ color: primaryColor }} />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 animate-pulse">Verificando sesión...</span>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50/50 text-slate-900 font-sans selection:bg-pink-500/30 overflow-x-hidden">
