@@ -2,14 +2,23 @@
 importScripts("https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.0.0/firebase-messaging-compat.js");
 
-// Inicializar Firebase en el Service Worker
+// Obtener parámetros de la URL del Service Worker (query string)
+const urlParams = new URLSearchParams(self.location.search);
+const apiKey = urlParams.get('apiKey') || "AIzaSyDlErcTHuplaip1cuzXrBMNxUaFJzG52OA";
+const authDomain = urlParams.get('authDomain') || "canchas-saas.firebaseapp.com";
+const projectId = urlParams.get('projectId') || "canchas-saas";
+const storageBucket = urlParams.get('storageBucket') || "canchas-saas.firebasestorage.app";
+const messagingSenderId = urlParams.get('messagingSenderId') || "1082356572409";
+const appId = urlParams.get('appId') || "1:1082356572409:web:7460b04ede9724e610c228";
+
+// Inicializar Firebase en el Service Worker con la configuración dinámica recibida
 firebase.initializeApp({
-    apiKey: "AIzaSyDlErcTHuplaip1cuzXrBMNxUaFJzG52OA",
-    authDomain: "canchas-saas.firebaseapp.com",
-    projectId: "canchas-saas",
-    storageBucket: "canchas-saas.firebasestorage.app",
-    messagingSenderId: "1082356572409",
-    appId: "1:1082356572409:web:7460b04ede9724e610c228",
+    apiKey,
+    authDomain,
+    projectId,
+    storageBucket,
+    messagingSenderId,
+    appId
 });
 
 const messaging = firebase.messaging();
