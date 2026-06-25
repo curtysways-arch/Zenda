@@ -10,6 +10,7 @@ const FALLBACK_CONFIG = {
     storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
 };
 
 // Función para obtener config dinámica (solo si faltan vars de entorno)
@@ -49,15 +50,16 @@ const getFirebaseApp = async () => {
 
         const isExample = (val: string | null | undefined) => {
             if (!val) return true;
-            const v = val.toLowerCase();
-            return v.includes('tu-proyecto') || v.includes('example') || v === 'dummy' || v.includes('placeholder') || v.includes('123456789');
+            const v = val.toLowerCase().replace(/['"]/g, '').trim();
+            return v.includes('tu-proyecto') || v.includes('example') || v === 'dummy' || v.includes('placeholder') || v.includes('123456789') || v.includes('..') || v.length < 5;
         };
 
         const getVal = (key: string, envVal: string | undefined) => {
             const dbVal = dynamicConfig?.[key];
-            if (dbVal && !isExample(dbVal)) return dbVal;
-            if (envVal && !isExample(envVal)) return envVal;
-            return dbVal || envVal;
+            if (dbVal && !isExample(dbVal)) return dbVal.replace(/['"]/g, '').trim();
+            if (envVal && !isExample(envVal)) return envVal.replace(/['"]/g, '').trim();
+            const fallback = dbVal || envVal;
+            return fallback ? fallback.replace(/['"]/g, '').trim() : fallback;
         };
 
         const config = {
@@ -105,15 +107,16 @@ export const getFcmToken = async () => {
 
     const isExample = (val: string | null | undefined) => {
         if (!val) return true;
-        const v = val.toLowerCase();
-        return v.includes('tu-proyecto') || v.includes('example') || v === 'dummy' || v.includes('placeholder') || v.includes('123456789');
+        const v = val.toLowerCase().replace(/['"]/g, '').trim();
+        return v.includes('tu-proyecto') || v.includes('example') || v === 'dummy' || v.includes('placeholder') || v.includes('123456789') || v.includes('..') || v.length < 5;
     };
 
     const getVal = (key: string, envVal: string | undefined) => {
         const dbVal = dynamicConfig?.[key];
-        if (dbVal && !isExample(dbVal)) return dbVal;
-        if (envVal && !isExample(envVal)) return envVal;
-        return dbVal || envVal;
+        if (dbVal && !isExample(dbVal)) return dbVal.replace(/['"]/g, '').trim();
+        if (envVal && !isExample(envVal)) return envVal.replace(/['"]/g, '').trim();
+        const fallback = dbVal || envVal;
+        return fallback ? fallback.replace(/['"]/g, '').trim() : fallback;
     };
 
     const apiKey = getVal('NEXT_PUBLIC_FIREBASE_API_KEY', FALLBACK_CONFIG.apiKey);
@@ -127,8 +130,16 @@ export const getFcmToken = async () => {
         projectId = authDomain.replace('.firebaseapp.com', '');
     }
 
-    const rawVapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || dynamicConfig?.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
-    const vapidKey = (rawVapidKey && !rawVapidKey.includes('placeholder') && rawVapidKey !== 'BK') ? rawVapidKey : undefined;
+    const isVapidExample = (val: string | null | undefined) => {
+        if (!val) return true;
+        const clean = val.replace(/['"]/g, '').trim();
+        return clean.length < 50 || clean.includes('..') || clean.includes('placeholder') || clean.includes('tu-proyecto');
+    };
+
+    const rawVapidKey = getVal('NEXT_PUBLIC_FIREBASE_VAPID_KEY', FALLBACK_CONFIG.vapidKey);
+    const vapidKey = (rawVapidKey && !isVapidExample(rawVapidKey)) 
+        ? rawVapidKey.replace(/['"]/g, '').trim() 
+        : undefined;
 
     // Registrar el Service Worker manualmente pasando las credenciales en el query string
     let serviceWorkerRegistration;
