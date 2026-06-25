@@ -25,9 +25,53 @@ async function initFirebaseAdmin() {
 
     firebaseInitPromise = (async () => {
         try {
-            const projectId = (process.env.FIREBASE_PROJECT_ID || await getGlobalConfig('NEXT_PUBLIC_FIREBASE_PROJECT_ID'))?.trim();
-            const clientEmail = (process.env.FIREBASE_CLIENT_EMAIL || await getGlobalConfig('FIREBASE_CLIENT_EMAIL'))?.trim();
-            let privateKey = (process.env.FIREBASE_PRIVATE_KEY || await getGlobalConfig('FIREBASE_PRIVATE_KEY'))?.replace(/\\n/g, '\n')?.trim();
+            const isExample = (val: string | null | undefined) => {
+                if (!val) return true;
+                const v = val.toLowerCase();
+                return v.includes('tu-proyecto') || v.includes('example') || v === 'dummy' || v.includes('placeholder');
+            };
+
+            const dbProjectId = await getGlobalConfig('NEXT_PUBLIC_FIREBASE_PROJECT_ID') || await getGlobalConfig('FIREBASE_PROJECT_ID');
+            let projectId = dbProjectId;
+            if (isExample(projectId)) {
+                projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || null;
+            }
+            if (isExample(projectId)) {
+                projectId = null;
+            }
+            projectId = projectId?.trim() || null;
+
+            const dbEmail = await getGlobalConfig('FIREBASE_CLIENT_EMAIL');
+            let clientEmail = dbEmail;
+            if (isExample(clientEmail)) {
+                clientEmail = process.env.FIREBASE_CLIENT_EMAIL || null;
+            }
+            if (isExample(clientEmail)) {
+                clientEmail = null;
+            }
+            clientEmail = clientEmail?.trim() || null;
+
+            const dbKey = await getGlobalConfig('FIREBASE_PRIVATE_KEY');
+            let privateKey = dbKey;
+            if (privateKey && privateKey.length < 500) {
+                privateKey = null;
+            }
+            if (!privateKey) {
+                privateKey = process.env.FIREBASE_PRIVATE_KEY || null;
+            }
+            if (privateKey && privateKey.length < 500) {
+                privateKey = null;
+            }
+            privateKey = privateKey?.replace(/\\n/g, '\n')?.trim() || null;
+
+            // Extraer ProjectID si falta pero tenemos el email
+            if (!projectId && clientEmail && clientEmail.includes('@')) {
+                const domain = clientEmail.split('@')[1];
+                if (domain && domain.includes('.iam.gserviceaccount.com')) {
+                    projectId = domain.replace('.iam.gserviceaccount.com', '');
+                    console.log('[PUSH] Falta ProjectID. Extraído del email de servicio:', projectId);
+                }
+            }
 
             if (projectId && clientEmail && privateKey) {
                 if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {

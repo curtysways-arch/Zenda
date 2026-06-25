@@ -46,14 +46,35 @@ const getFirebaseApp = async () => {
     initPromise = (async () => {
         const dynamicConfig = await getDynamicConfig();
         if (getApps().length > 0) return getApp();
-        return initializeApp({
-            apiKey: FALLBACK_CONFIG.apiKey || dynamicConfig?.NEXT_PUBLIC_FIREBASE_API_KEY,
-            authDomain: FALLBACK_CONFIG.authDomain || dynamicConfig?.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-            projectId: FALLBACK_CONFIG.projectId || dynamicConfig?.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-            storageBucket: FALLBACK_CONFIG.storageBucket || dynamicConfig?.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-            messagingSenderId: FALLBACK_CONFIG.messagingSenderId || dynamicConfig?.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-            appId: FALLBACK_CONFIG.appId || dynamicConfig?.NEXT_PUBLIC_FIREBASE_APP_ID,
-        });
+
+        const isExample = (val: string | null | undefined) => {
+            if (!val) return true;
+            const v = val.toLowerCase();
+            return v.includes('tu-proyecto') || v.includes('example') || v === 'dummy' || v.includes('placeholder') || v.includes('123456789');
+        };
+
+        const getVal = (key: string, envVal: string | undefined) => {
+            const dbVal = dynamicConfig?.[key];
+            if (dbVal && !isExample(dbVal)) return dbVal;
+            if (envVal && !isExample(envVal)) return envVal;
+            return dbVal || envVal;
+        };
+
+        const config = {
+            apiKey: getVal('NEXT_PUBLIC_FIREBASE_API_KEY', FALLBACK_CONFIG.apiKey),
+            authDomain: getVal('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN', FALLBACK_CONFIG.authDomain),
+            projectId: getVal('NEXT_PUBLIC_FIREBASE_PROJECT_ID', FALLBACK_CONFIG.projectId),
+            storageBucket: getVal('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET', FALLBACK_CONFIG.storageBucket),
+            messagingSenderId: getVal('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID', FALLBACK_CONFIG.messagingSenderId),
+            appId: getVal('NEXT_PUBLIC_FIREBASE_APP_ID', FALLBACK_CONFIG.appId),
+        };
+
+        // Si falta projectId, extraerlo de authDomain
+        if (!config.projectId && config.authDomain && config.authDomain.includes('.firebaseapp.com')) {
+            config.projectId = config.authDomain.replace('.firebaseapp.com', '');
+        }
+
+        return initializeApp(config);
     })();
     return initPromise;
 };
@@ -82,7 +103,8 @@ export const getFcmToken = async () => {
         if (!messaging) return null;
 
         const dynamicConfig = await getDynamicConfig();
-        const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || dynamicConfig?.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+        const rawVapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || dynamicConfig?.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+        const vapidKey = (rawVapidKey && !rawVapidKey.includes('placeholder') && rawVapidKey !== 'BK') ? rawVapidKey : undefined;
 
         const currentToken = await getToken(messaging, { vapidKey });
         return currentToken;
