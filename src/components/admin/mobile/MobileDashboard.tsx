@@ -201,19 +201,6 @@ export default function MobileDashboard({
                 </Link>
 
                 <Link 
-                    href="/admin/promociones"
-                    className="flex flex-col gap-4 p-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm active:scale-95 transition-all group"
-                >
-                    <div className="size-10 rounded-2xl flex items-center justify-center bg-slate-50 text-slate-400 group-hover:bg-orange-50 group-hover:text-orange-500 transition-colors">
-                        <Zap size={20} />
-                    </div>
-                    <div className="text-left">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Marketing</p>
-                        <p className="text-sm font-black uppercase italic leading-none text-slate-900">Promos Auto</p>
-                    </div>
-                </Link>
-
-                <Link 
                     href="/admin/plan"
                     className="flex flex-col gap-4 p-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm active:scale-95 transition-all group"
                 >

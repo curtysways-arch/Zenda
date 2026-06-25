@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, Loader2, ArrowRight, Sparkles, Zap, BarChart3, Smartphone } from 'lucide-react';
+import { Mail, Lock, Loader2, ArrowRight, Sparkles, Zap, BarChart3, Smartphone, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LoginPage() {
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -156,7 +157,8 @@ export default function LoginPage() {
                                         type="email"
                                         required
                                         autoComplete="email"
-                                        className="w-full py-3.5 pr-4 bg-transparent text-slate-800 font-semibold text-sm placeholder-slate-300 focus:outline-none"
+                                        className="w-full py-3.5 pr-4 bg-transparent font-semibold text-sm placeholder-slate-300 focus:outline-none"
+                                        style={{ color: '#0f172a' }}
                                         placeholder="tu@correo.com"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
@@ -174,14 +176,22 @@ export default function LoginPage() {
                                         <Lock size={17} />
                                     </div>
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         required
                                         autoComplete="current-password"
-                                        className="w-full py-3.5 pr-4 bg-transparent text-slate-800 font-semibold text-sm placeholder-slate-300 focus:outline-none"
+                                        className="w-full py-3.5 pr-2 bg-transparent font-semibold text-sm placeholder-slate-300 focus:outline-none"
+                                        style={{ color: '#0f172a' }}
                                         placeholder="••••••••"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="pr-4 pl-2 flex items-center text-slate-400 hover:text-slate-600 transition-colors shrink-0 outline-none"
+                                    >
+                                        {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                                    </button>
                                 </div>
                             </div>
 
