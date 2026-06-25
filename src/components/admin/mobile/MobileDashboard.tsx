@@ -14,7 +14,8 @@ import {
     ArrowUpRight,
     Shield,
     LayoutTemplate,
-    Zap
+    Zap,
+    CreditCard
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn, formatUTCDate } from '@/lib/utils';
@@ -209,6 +210,19 @@ export default function MobileDashboard({
                     <div className="text-left">
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Marketing</p>
                         <p className="text-sm font-black uppercase italic leading-none text-slate-900">Promos Auto</p>
+                    </div>
+                </Link>
+
+                <Link 
+                    href="/admin/plan"
+                    className="flex flex-col gap-4 p-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm active:scale-95 transition-all group"
+                >
+                    <div className="size-10 rounded-2xl flex items-center justify-center bg-slate-50 text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors">
+                        <CreditCard size={20} />
+                    </div>
+                    <div className="text-left">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Suscripción</p>
+                        <p className="text-sm font-black uppercase italic leading-none text-slate-900">Mi Plan</p>
                     </div>
                 </Link>
             </div>
