@@ -2,7 +2,6 @@ import prisma from "@/lib/prisma";
 import {
     Package,
     Users,
-    Calendar,
     MapPin,
     Clock,
     FileText,
@@ -79,9 +78,9 @@ export default async function PlanesPage() {
                                 </div>
                                 <div className="flex items-center gap-4 text-slate-600 font-medium text-sm">
                                     <div className="p-1.5 bg-indigo-50 rounded-lg">
-                                        <Calendar size={16} className="text-indigo-500" />
+                                        <Users size={16} className="text-indigo-500" />
                                     </div>
-                                    <span>Hasta {plan.max_fields} servicios</span>
+                                    <span>Hasta {plan.maxStaff >= 999999 ? 'Ilimitados' : plan.maxStaff} {plan.maxStaff === 1 ? 'especialista' : 'especialistas'}</span>
                                 </div>
                                 <div className="flex items-center gap-4 text-slate-600 font-medium text-sm">
                                     <div className="p-1.5 bg-emerald-50 rounded-lg">
