@@ -37,24 +37,59 @@ export default function PushNotificationManager() {
     }, [session]);
 
     const setupFCM = async () => {
+        if (typeof window === 'undefined') return;
+
+        // 1. Validar soporte de notificaciones
+        if (!('Notification' in window)) {
+            alert("Tu navegador o dispositivo no soporta notificaciones push nativas. Si usas iOS (iPhone), asegúrate de agregar la app a tu pantalla de inicio.");
+            setHideBanner(true);
+            return;
+        }
+
         try {
             const permission = await Notification.requestPermission();
             setPermissionStatus(permission);
-            setHideBanner(true); // Ocultar banner inmediatamente tras interactuar
             
+            if (permission === 'denied') {
+                alert("Has bloqueado los permisos de notificación. Por favor, permítelos desde la configuración de tu navegador para recibir alertas.");
+                setHideBanner(true);
+                return;
+            }
+
             if (permission === 'granted') {
                 const token = await getFcmToken();
-                if (token) {
-                    await fetch('/api/notifications/register-token', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ token, device: navigator.userAgent }),
-                    });
+                if (!token) {
+                    alert("No se pudo generar el token de notificaciones de Firebase. Por favor, recarga e inténtalo de nuevo.");
+                    setHideBanner(true);
+                    return;
+                }
+
+                const res = await fetch('/api/notifications/register-token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, device: navigator.userAgent }),
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    alert(`Error en el servidor al registrar: ${errData.error || 'Código ' + res.status}`);
+                    setHideBanner(true);
+                    return;
+                }
+
+                const data = await res.json();
+                if (data.success) {
+                    alert("¡Notificaciones activadas exitosamente en este dispositivo!");
                     setIsSubscribed(true);
+                    setHideBanner(true);
+                } else {
+                    alert("No se pudo guardar la configuración de notificaciones.");
+                    setHideBanner(true);
                 }
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error al configurar FCM:', error);
+            alert(`Error de configuración de notificaciones: ${error.message || error}`);
             setHideBanner(true);
         }
     };
