@@ -2,10 +2,28 @@ import prisma from '../prisma';
 import crypto from 'crypto';
 import { getBusinessTimeZone, getSubscriptionDates } from '@/lib/dateUtils';
 
-/** Precio congelado de por vida para los primeros 25 fundadores */
-const FOUNDER_LOCKED_PRICE = 15.0;
-/** Cupo máximo de fundadores */
-const FOUNDER_MAX = 25;
+export async function getFounderConfig() {
+    try {
+        const configs = await prisma.globalConfig.findMany({
+            where: {
+                clave: { in: ['FOUNDER_LOCKED_PRICE', 'FOUNDER_MAX'] }
+            }
+        });
+
+        const lockedPriceConfig = configs.find(c => c.clave === 'FOUNDER_LOCKED_PRICE');
+        const founderMaxConfig = configs.find(c => c.clave === 'FOUNDER_MAX');
+
+        return {
+            founderLockedPrice: lockedPriceConfig ? parseFloat(lockedPriceConfig.valor) : 15.0,
+            founderMax: founderMaxConfig ? parseInt(founderMaxConfig.valor, 10) : 25
+        };
+    } catch (_) {
+        return {
+            founderLockedPrice: 15.0,
+            founderMax: 25
+        };
+    }
+}
 
 export const planService = {
     /**
@@ -88,7 +106,8 @@ export const planService = {
         const keepFounder = currentSub?.isFounder === true;
         const isFounder = keepFounder;
         const founderPosition = keepFounder ? currentSub.founderPosition : null;
-        const lockedPrice = keepFounder ? (currentSub.lockedPrice ?? FOUNDER_LOCKED_PRICE) : null;
+        const { founderLockedPrice } = await getFounderConfig();
+        const lockedPrice = keepFounder ? (currentSub.lockedPrice ?? founderLockedPrice) : null;
 
         return await (prisma.suscripcion as any).upsert({
             where: { negocioId: businessId },
@@ -176,7 +195,9 @@ export const planService = {
         });
         const timeZone = getBusinessTimeZone(business?.configuracion);
 
-        if (activeFoundersCount < FOUNDER_MAX) {
+        const { founderLockedPrice, founderMax } = await getFounderConfig();
+
+        if (activeFoundersCount < founderMax) {
             // ── ASIGNAR COMO FUNDADOR ──
             // Precio activo → 1 mes sin trial
             const { startDate, endDate } = getSubscriptionDates(timeZone, { durationMonths: 1 });
@@ -189,7 +210,7 @@ export const planService = {
                     estado: 'activa',
                     isFounder: true,
                     founderPosition: activeFoundersCount + 1,
-                    lockedPrice: FOUNDER_LOCKED_PRICE,
+                    lockedPrice: founderLockedPrice,
                     fechaInicio: startDate,
                     fechaFin: endDate,
                     renovacion_automatica: true,

@@ -202,13 +202,31 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
                 </div>
 
                 <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <ConfigField
                             label="Porcentaje de Descuento Anual (%)"
                             clave="DESCUENTO_ANUAL_PORCENTAJE"
                             value={getConfigValue("DESCUENTO_ANUAL_PORCENTAJE") || "20"}
                             onSave={handleSave}
                             onChange={(v: string) => updateLocalConfig("DESCUENTO_ANUAL_PORCENTAJE", v)}
+                            loading={loading}
+                            icon={<TrendingUp size={18} />}
+                        />
+                        <ConfigField
+                            label="Precio Suscripción Fundadores (USD)"
+                            clave="FOUNDER_LOCKED_PRICE"
+                            value={getConfigValue("FOUNDER_LOCKED_PRICE") || "15.0"}
+                            onSave={handleSave}
+                            onChange={(v: string) => updateLocalConfig("FOUNDER_LOCKED_PRICE", v)}
+                            loading={loading}
+                            icon={<TrendingUp size={18} />}
+                        />
+                        <ConfigField
+                            label="Límite Máximo de Fundadores"
+                            clave="FOUNDER_MAX"
+                            value={getConfigValue("FOUNDER_MAX") || "25"}
+                            onSave={handleSave}
+                            onChange={(v: string) => updateLocalConfig("FOUNDER_MAX", v)}
                             loading={loading}
                             icon={<TrendingUp size={18} />}
                         />

@@ -3,9 +3,7 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getBusinessTimeZone, getSubscriptionDates } from "@/lib/dateUtils";
-
-const FOUNDER_LOCKED_PRICE = 15.0;
-const FOUNDER_MAX = 25;
+import { getFounderConfig } from "@/lib/services/planService";
 
 async function isSuperAdmin() {
     const session = await getServerSession(authOptions);
@@ -60,15 +58,16 @@ export async function PATCH(
         // Preservar estado de fundador por defecto
         // Solo modificar con acciones explícitas SET_FOUNDER / REMOVE_FOUNDER
         if (action === 'SET_FOUNDER') {
+            const { founderLockedPrice, founderMax } = await getFounderConfig();
             const activeFoundersCount = await (prisma.suscripcion as any).count({
                 where: { isFounder: true, estado: { in: ['active', 'activa', 'ACTIVA'] } }
             });
-            if (activeFoundersCount >= FOUNDER_MAX && !sub.isFounder) {
-                return NextResponse.json({ error: `Ya se alcanzó el límite de ${FOUNDER_MAX} fundadores` }, { status: 400 });
+            if (activeFoundersCount >= founderMax && !sub.isFounder) {
+                return NextResponse.json({ error: `Ya se alcanzó el límite de ${founderMax} fundadores` }, { status: 400 });
             }
             data.isFounder = true;
             const customPrice = body.lockedPrice !== undefined ? parseFloat(String(body.lockedPrice)) : null;
-            data.lockedPrice = (customPrice !== null && !isNaN(customPrice)) ? customPrice : FOUNDER_LOCKED_PRICE;
+            data.lockedPrice = (customPrice !== null && !isNaN(customPrice)) ? customPrice : founderLockedPrice;
             if (!sub.founderPosition) {
                 data.founderPosition = activeFoundersCount + 1;
             }

@@ -3,9 +3,7 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import crypto from "crypto";
-
-const FOUNDER_LOCKED_PRICE = 15.0;
-const FOUNDER_MAX = 25;
+import { getFounderConfig } from "@/lib/services/planService";
 
 async function isSuperAdmin() {
     const session = await getServerSession(authOptions);
@@ -86,15 +84,16 @@ export async function POST(req: NextRequest) {
         let lockedPrice: number | null = currentSub?.lockedPrice ?? null;
 
         if (action === 'SET_FOUNDER') {
+            const { founderLockedPrice, founderMax } = await getFounderConfig();
             const activeFoundersCount = await (prisma.suscripcion as any).count({
                 where: { isFounder: true, estado: { in: ['active', 'activa', 'ACTIVA'] } }
             });
-            if (activeFoundersCount >= FOUNDER_MAX && !isFounder) {
-                return NextResponse.json({ error: `Ya se alcanzó el límite de ${FOUNDER_MAX} fundadores` }, { status: 400 });
+            if (activeFoundersCount >= founderMax && !isFounder) {
+                return NextResponse.json({ error: `Ya se alcanzó el límite de ${founderMax} fundadores` }, { status: 400 });
             }
             isFounder = true;
             const customPrice = body.lockedPrice !== undefined ? parseFloat(String(body.lockedPrice)) : null;
-            lockedPrice = (customPrice !== null && !isNaN(customPrice)) ? customPrice : FOUNDER_LOCKED_PRICE;
+            lockedPrice = (customPrice !== null && !isNaN(customPrice)) ? customPrice : founderLockedPrice;
             if (!founderPosition) {
                 founderPosition = activeFoundersCount + 1;
             }
