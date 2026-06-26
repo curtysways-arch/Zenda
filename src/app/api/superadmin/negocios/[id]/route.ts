@@ -37,7 +37,8 @@ export async function PATCH(
             colorPrimario, 
             moduloTorneos,
             bannerUrl,
-            bannerUrls // Array de strings de portadas
+            bannerUrls, // Array de strings de portadas
+            isDemo
         } = body;
 
         const updatedNegocio = await prisma.$transaction(async (tx) => {
@@ -90,6 +91,7 @@ export async function PATCH(
                     logoUrl,
                     colorPrimario,
                     moduloTorneos: moduloTorneos !== undefined ? Boolean(moduloTorneos) : undefined,
+                    isDemo: isDemo !== undefined ? Boolean(isDemo) : undefined,
                     configuracion: updatedConfig,
                     updatedAt: new Date()
                 }

@@ -16,19 +16,25 @@ import Link from 'next/link';
 import { getFounderConfig } from "@/lib/services/planService";
 
 export default async function SuperAdminDashboard() {
-    // Obtener métricas reales de la DB
-    const totalNegocios = await prisma.negocio.count();
-    const negociosActivos = await prisma.negocio.count({ where: { estado: 'ACTIVO' } });
-    const negociosSuspendidos = await prisma.negocio.count({ where: { estado: 'SUSPENDIDO' } });
+    // Obtener métricas reales de la DB (excluyendo demos)
+    const totalNegocios = await prisma.negocio.count({ where: { isDemo: false } });
+    const negociosActivos = await prisma.negocio.count({ where: { estado: 'ACTIVO', isDemo: false } });
+    const negociosSuspendidos = await prisma.negocio.count({ where: { estado: 'SUSPENDIDO', isDemo: false } });
 
     // Negocios en prueba: se detectan por suscripcion.estado = 'trial'
     const negociosPrueba = await (prisma.suscripcion as any).count({
-        where: { estado: 'trial' }
+        where: { 
+            estado: 'trial',
+            Negocio: { isDemo: false }
+        }
     });
 
     // Suscripciones activas (puede ser 'activa', 'active', o 'ACTIVA' según cómo se guarden)
     const suscripcionesActivas = await (prisma.suscripcion as any).findMany({
-        where: { estado: { in: ['activa', 'active', 'ACTIVA'] } },
+        where: { 
+            estado: { in: ['activa', 'active', 'ACTIVA'] },
+            Negocio: { isDemo: false }
+        },
         include: { Plan: true }
     });
 
@@ -43,7 +49,8 @@ export default async function SuperAdminDashboard() {
     const fundadoresActivos = await (prisma.suscripcion as any).count({
         where: {
             isFounder: true,
-            estado: { in: ['activa', 'active', 'ACTIVA'] }
+            estado: { in: ['activa', 'active', 'ACTIVA'] },
+            Negocio: { isDemo: false }
         }
     });
 
@@ -51,7 +58,7 @@ export default async function SuperAdminDashboard() {
 
     // Lista de fundadores
     const listaFundadores = await (prisma.suscripcion as any).findMany({
-        where: { isFounder: true },
+        where: { isFounder: true, Negocio: { isDemo: false } },
         include: { Negocio: true, Plan: true },
         orderBy: { founderPosition: 'asc' }
     });
@@ -67,7 +74,8 @@ export default async function SuperAdminDashboard() {
                 lte: enSieteDias,
                 gte: hoy
             },
-            estado: { in: ['activa', 'active', 'ACTIVA', 'trial'] }
+            estado: { in: ['activa', 'active', 'ACTIVA', 'trial'] },
+            Negocio: { isDemo: false }
         },
         include: { Negocio: true }
     });

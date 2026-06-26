@@ -108,6 +108,7 @@ export async function POST(req: Request) {
                     heroTitulo: heroTitulo || `Bienvenido a ${nombre}`,
                     heroSubtitulo: heroSubtitulo || "Reserva tu cita de forma online en sencillos pasos.",
                     configuracion: configuracionJson,
+                    isDemo: crearDemo !== undefined ? Boolean(crearDemo) : false,
                     updatedAt: new Date()
                 }
             });

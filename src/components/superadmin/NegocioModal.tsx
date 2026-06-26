@@ -238,7 +238,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                 heroSubtitulo: negocio.heroSubtitulo || "",
                 bannerUrl: negocio.Imagen?.find((i: any) => i.esBanner)?.url || "",
                 bannerUrls: negocio.Imagen?.filter((i: any) => i.tipo === 'BANNER' || i.esBanner).map((i: any) => i.url) || [],
-                crearDemo: false
+                crearDemo: negocio.isDemo || false
             });
             setCreationMode("none");
             setCreadoExitosamente(false);
@@ -399,12 +399,15 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                 .map(Number)
                 .filter(day => diasAtencion[day]);
 
-            const payload = isEdit ? formData : {
-                ...formData,
-                diasAtencion: diasAtencionArray,
-                servicios: wizardServicios,
-                profesionales: wizardStaff
-            };
+            const payload = isEdit 
+                ? { ...formData, isDemo: formData.crearDemo } 
+                : {
+                    ...formData,
+                    isDemo: formData.crearDemo,
+                    diasAtencion: diasAtencionArray,
+                    servicios: wizardServicios,
+                    profesionales: wizardStaff
+                };
 
             const res = await fetch(url, {
                 method: isEdit ? "PATCH" : "POST",
@@ -749,6 +752,33 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                     ))}
                                 </select>
                             </div>
+                        </div>
+
+                        {/* Toggle Negocio Demo en Edición */}
+                        <div 
+                            onClick={() => setFormData(prev => ({ ...prev, crearDemo: !prev.crearDemo }))}
+                            className={clsx(
+                                "flex items-center justify-between p-6 rounded-[2rem] border cursor-pointer transition-colors group text-left",
+                                formData.crearDemo 
+                                    ? "bg-emerald-500/5 border-emerald-500/20 hover:bg-emerald-500/10" 
+                                    : "bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/20 border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-slate-900/40"
+                            )}
+                        >
+                            <div className="flex gap-4 items-center">
+                                <div className={clsx("size-11 rounded-2xl flex items-center justify-center transition-all", formData.crearDemo ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/20" : "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400")}>
+                                    <Award size={20} fill={formData.crearDemo ? "black" : "none"} />
+                                </div>
+                                <div className="text-left">
+                                    <span className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest block italic leading-none">Negocio Demo</span>
+                                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-tight mt-1 block">Si está activado, este negocio se marcará como demostración y se excluirá de la facturación y métricas del SaaS en el panel de control.</span>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                className={`w-12 h-6 rounded-full transition-all duration-500 relative shrink-0 ${formData.crearDemo ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-800'}`}
+                            >
+                                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all duration-500 shadow-sm ${formData.crearDemo ? 'left-6.5' : 'left-0.5'}`} />
+                            </button>
                         </div>
                     </div>
                 </form>
