@@ -249,7 +249,7 @@ async function main() {
             // Borrado en cascada manual debido a restricciones de BD
             await prisma.appointment.deleteMany({ where: { negocioId: nId } });
             await prisma.cliente.deleteMany({ where: { negocioId: nId } });
-            await prisma.staffSchedule.deleteMany({ where: { staff: { businessId: nId } } });
+            await prisma.staffSchedule.deleteMany({ where: { Staff: { businessId: nId } } });
             await prisma.resultado.deleteMany({ where: { businessId: nId } });
             
             // Desconectar servicios de staff antes de borrar
