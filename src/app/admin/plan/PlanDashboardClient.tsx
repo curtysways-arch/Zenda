@@ -363,7 +363,7 @@ export default function PlanDashboardClient({
                              <div className="flex-1 space-y-3 mb-8 text-sm font-medium text-slate-600">
                                 <div className="flex items-center gap-2">
                                     <CheckCircle2 size={16} style={{ color: 'var(--primary-color)' }} />
-                                    <span>{(plan as any).maxAppointmentsMonthly >= 999999 ? 'Citas ilimitadas' : `${(plan as any).maxAppointmentsMonthly} citas mensuales`}</span>
+                                    <span>{((plan as any).maxAppointmentsMonthly ?? (plan as any).max_reservations_per_month ?? 40) >= 999999 ? 'Citas ilimitadas' : `${(plan as any).maxAppointmentsMonthly ?? (plan as any).max_reservations_per_month ?? 40} citas mensuales`}</span>
                                 </div>
                                 {(() => {
                                     const getFeatureLabel = (key: string): string => {

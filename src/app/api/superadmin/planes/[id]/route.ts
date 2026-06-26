@@ -40,8 +40,11 @@ export async function PATCH(
             updateData.max_fields = Math.floor(Number(body.max_fields ?? body.limiteCanchas));
         if (body.maxStaff !== undefined)
             updateData.maxStaff = Math.floor(Number(body.maxStaff));
-        if (body.max_reservations_per_month !== undefined || body.limiteReservas !== undefined)
-            updateData.max_reservations_per_month = Math.floor(Number(body.max_reservations_per_month ?? body.limiteReservas));
+        if (body.max_reservations_per_month !== undefined || body.limiteReservas !== undefined) {
+            const val = Math.floor(Number(body.max_reservations_per_month ?? body.limiteReservas));
+            updateData.max_reservations_per_month = val;
+            updateData.maxAppointmentsMonthly = val;
+        }
         if (body.tournaments_enabled !== undefined)
             updateData.tournaments_enabled = Boolean(body.tournaments_enabled);
         if (body.automatic_discounts_enabled !== undefined)

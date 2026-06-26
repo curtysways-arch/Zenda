@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
             trial_days: Math.floor(Number(body.trial_days ?? 0)),
             max_fields: Math.floor(Number(body.max_fields ?? 0)),
             max_reservations_per_month: Math.floor(Number(body.max_reservations_per_month ?? 0)),
+            maxAppointmentsMonthly: Math.floor(Number(body.max_reservations_per_month ?? 0)),
             tournaments_enabled: Boolean(body.tournaments_enabled ?? false),
             automatic_discounts_enabled: Boolean(body.automatic_discounts_enabled ?? false),
             courses_module: Boolean(body.courses_module ?? false),

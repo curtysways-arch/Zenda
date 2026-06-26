@@ -70,7 +70,7 @@ export const subscriptionService = {
         });
 
         const maxStaff = (plan as any).maxStaff || 1;
-        const maxAppointments = (plan as any).maxAppointmentsMonthly || 40;
+        const maxAppointments = (plan as any).maxAppointmentsMonthly || (plan as any).max_reservations_per_month || 40;
 
         return {
             planName: (plan as any).name,
