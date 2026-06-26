@@ -77,6 +77,7 @@ export const subscriptionService = {
             planStatus: sub.estado,
             startDate: sub.fechaInicio,
             endDate: sub.fechaFin,
+            lockedPrice: sub.lockedPrice,
             limits: {
                 staff: {
                     used: business.Staff?.length || 0,

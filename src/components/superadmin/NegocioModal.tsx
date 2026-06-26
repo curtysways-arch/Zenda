@@ -1697,7 +1697,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                             <img src={formData.logoUrl} alt="logo" className="w-6 h-6 rounded-full object-cover" />
                                         ) : (
                                             <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-[10px] text-black font-black uppercase italic">
-                                                {formData.nombre ? formData.nombre.charAt(0) : "Z"}
+                                                {formData.nombre ? formData.nombre.charAt(0) : "C"}
                                             </div>
                                         )}
                                         <span className="text-xs font-black uppercase tracking-tight text-white max-w-[130px] truncate">{formData.nombre || "Mi Spa"}</span>
@@ -1712,7 +1712,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                         <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 to-transparent" />
                                     )}
                                     <div className="relative p-4 z-10">
-                                        <h4 className="text-sm font-black uppercase italic text-white leading-tight break-words">{formData.heroTitulo || `Bienvenido a ${formData.nombre || 'Zenda'}`}</h4>
+                                        <h4 className="text-sm font-black uppercase italic text-white leading-tight break-words">{formData.heroTitulo || `Bienvenido a ${formData.nombre || 'CitiOx'}`}</h4>
                                     </div>
                                 </div>
 

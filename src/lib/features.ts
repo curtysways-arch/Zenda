@@ -6,7 +6,7 @@ export type FeatureFlag =
     | 'custom_colors'          // Posibilidad de alterar los colores del portal
     | 'custom_logo'            // Posibilidad de usar logo propio
     | 'custom_phrases'         // Posibilidad de cambiar frases como "Hola" o "Radiante"
-    | 'remove_zenda_branding'  // Quitar la marca de agua "Powered by Zenda"
+    | 'remove_zenda_branding'  // Quitar la marca de agua "Powered by CitiOx"
     | 'multi_staff'            // Más de 1 profesional
     | 'multi_branch'           // Más de 1 sucursal
     | 'analytics'              // Reportes avanzados

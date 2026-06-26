@@ -487,8 +487,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                             <Star size={18} />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black" style={{ color: '#000' }}>Quitar Marca Zenda</p>
-                                            <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Remover marca "Powered by Zenda"</p>
+                                            <p className="text-sm font-black" style={{ color: '#000' }}>Quitar Marca CitiOx</p>
+                                            <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>Remover marca "Powered by CitiOx"</p>
                                         </div>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">

@@ -43,7 +43,7 @@ export default function PlanDashboardClient({
 
     const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
     const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
-    const { planName, planStatus, startDate, endDate, limits } = data;
+    const { planName, planStatus, startDate, endDate, lockedPrice, limits } = data;
 
     // Calcular días restantes reales basados en la fecha de corte (endDate)
     let daysUntilExpiry: number | null = null;
@@ -310,8 +310,10 @@ export default function PlanDashboardClient({
                 {allPlans.map((plan) => {
                     const isCurrent = plan.id === currentPlanId;
                     
-                    // Cálculo de precio dinámico
-                    const monthlyPrice = plan.price;
+                    // Cálculo de precio dinámico (usar lockedPrice si es el plan actual y el negocio tiene precio especial congelado)
+                    const monthlyPrice = (isCurrent && lockedPrice !== null && lockedPrice !== undefined)
+                        ? lockedPrice
+                        : plan.price;
                     const annualPrice = (monthlyPrice * 12 * (1 - annualDiscount)) / 12; // Efectivo mensual pagando anual
                     const displayPrice = billingPeriod === 'monthly' ? monthlyPrice : annualPrice;
                     const totalAnnual = monthlyPrice * 12 * (1 - annualDiscount);
@@ -373,7 +375,7 @@ export default function PlanDashboardClient({
                                             custom_colors: "Colores personalizados",
                                             custom_logo: "Logo propio",
                                             custom_phrases: "Frases personalizadas",
-                                            remove_zenda_branding: "Sin marca de agua de Zenda",
+                                            remove_zenda_branding: "Sin marca de agua de CitiOx",
                                             analytics: "Reportes Avanzados",
                                             automation: "Automatizaciones",
                                             tournaments_module: "Módulo de Torneos",
