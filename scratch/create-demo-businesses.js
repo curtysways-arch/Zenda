@@ -442,7 +442,7 @@ async function main() {
                     businessId: negocioId,
                     title: pg.title,
                     slug: pg.title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-"),
-                    content: pg.content,
+                    contentHtml: pg.content,
                     status: "PUBLISHED",
                     createdAt: new Date(),
                     updatedAt: new Date()
