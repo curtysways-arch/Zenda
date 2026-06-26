@@ -1,5 +1,35 @@
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
+function createPrismaClient() {
+    const dbUrl = process.env.DATABASE_URL || 'file:./dev.db';
+
+    if (dbUrl.startsWith('postgresql://') || dbUrl.startsWith('postgres://')) {
+        const { Pool } = require('pg');
+        const { PrismaPg } = require('@prisma/adapter-pg');
+        const pool = new Pool({ connectionString: dbUrl });
+        const adapter = new PrismaPg(pool);
+        return new PrismaClient({ adapter });
+    } else {
+        const { createClient } = require('@libsql/client');
+        const { PrismaLibSql } = require('@prisma/adapter-libsql');
+        
+        let resolvedUrl = dbUrl;
+        if (!dbUrl.startsWith('file://')) {
+            const rawPath = dbUrl.replace(/^file:(\.\/)?/, '');
+            const isAbsolute = rawPath.startsWith('/') || rawPath.startsWith('\\') || /^[a-zA-Z]:/.test(rawPath);
+            const absPath = isAbsolute ? rawPath : `${process.cwd()}/${rawPath}`;
+            const normalized = absPath.split(/[/\\]/).join('/');
+            const prefix = normalized.match(/^[a-zA-Z]:/) ? '/' : '';
+            resolvedUrl = `file://${prefix}${normalized}`;
+        }
+        
+        const client = createClient({ url: resolvedUrl });
+        const adapter = new PrismaLibSql(client);
+        return new PrismaClient({ adapter });
+    }
+}
+
+const prisma = createPrismaClient();
 
 async function main() {
     try {
