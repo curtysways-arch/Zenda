@@ -310,11 +310,22 @@ export default function PlanDashboardClient({
                 {allPlans.map((plan) => {
                     const isCurrent = plan.id === currentPlanId;
                     
-                    // Cálculo de precio dinámico (usar lockedPrice si es el plan actual y el negocio tiene precio especial congelado)
-                    const monthlyPrice = (isCurrent && lockedPrice !== null && lockedPrice !== undefined)
-                        ? lockedPrice
-                        : plan.price;
-                    const annualPrice = (monthlyPrice * 12 * (1 - annualDiscount)) / 12; // Efectivo mensual pagando anual
+                    // Cálculo de precios de lista
+                    const listMonthlyPrice = plan.price;
+                    const listAnnualPrice = (listMonthlyPrice * 12 * (1 - annualDiscount)) / 12;
+                    const displayListPrice = billingPeriod === 'monthly' ? listMonthlyPrice : listAnnualPrice;
+                    const totalListAnnual = listMonthlyPrice * 12 * (1 - annualDiscount);
+
+                    // Verificar si tiene precio especial congelado
+                    const hasLockedPrice = isCurrent && lockedPrice !== null && lockedPrice !== undefined && lockedPrice < plan.price;
+                    const displayLockedPrice = hasLockedPrice 
+                        ? (billingPeriod === 'monthly' ? lockedPrice : (lockedPrice * 12 * (1 - annualDiscount)) / 12)
+                        : null;
+                    const totalLockedAnnual = hasLockedPrice ? lockedPrice * 12 * (1 - annualDiscount) : null;
+
+                    // Precio base para lógica de botones
+                    const monthlyPrice = hasLockedPrice ? lockedPrice : plan.price;
+                    const annualPrice = (monthlyPrice * 12 * (1 - annualDiscount)) / 12;
                     const displayPrice = billingPeriod === 'monthly' ? monthlyPrice : annualPrice;
                     const totalAnnual = monthlyPrice * 12 * (1 - annualDiscount);
 
@@ -348,14 +359,29 @@ export default function PlanDashboardClient({
                             </div>
 
                             <div className="mb-8 border-b border-slate-50 pb-6">
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-4xl font-black text-slate-900">${displayPrice.toFixed(2)}</span>
-                                    <span className="text-slate-400 font-bold">/mes</span>
+                                <div className="flex flex-col gap-1">
+                                    {hasLockedPrice && displayLockedPrice !== null ? (
+                                        <div className="flex flex-col">
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-slate-400 font-black line-through text-lg">${displayListPrice.toFixed(2)}</span>
+                                                <span className="text-4xl font-black text-slate-900">${displayLockedPrice.toFixed(2)}</span>
+                                                <span className="text-slate-400 font-bold text-sm">/mes</span>
+                                            </div>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mt-1">Tarifa Especial Congelada</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-4xl font-black text-slate-900">${displayListPrice.toFixed(2)}</span>
+                                            <span className="text-slate-400 font-bold">/mes</span>
+                                        </div>
+                                    )}
                                 </div>
                                  {billingPeriod === 'annual' && (
                                     <div className="mt-2 flex flex-col items-start">
                                         <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--primary-color)' }}>Facturado anualmente</span>
-                                        <span className="text-xs font-bold text-slate-400 italic">${totalAnnual.toFixed(2)} al año</span>
+                                        <span className="text-xs font-bold text-slate-400 italic">
+                                            ${(hasLockedPrice && totalLockedAnnual !== null ? totalLockedAnnual : totalListAnnual).toFixed(2)} al año
+                                        </span>
                                     </div>
                                 )}
                             </div>
@@ -364,6 +390,18 @@ export default function PlanDashboardClient({
                                 <div className="flex items-center gap-2">
                                     <CheckCircle2 size={16} style={{ color: 'var(--primary-color)' }} />
                                     <span>{((plan as any).maxAppointmentsMonthly ?? (plan as any).max_reservations_per_month ?? 40) >= 999999 ? 'Citas ilimitadas' : `${(plan as any).maxAppointmentsMonthly ?? (plan as any).max_reservations_per_month ?? 40} citas mensuales`}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle2 size={16} style={{ color: 'var(--primary-color)' }} />
+                                    <span>{(plan as any).maxStaff >= 999 ? 'Especialistas ilimitados' : `Hasta ${(plan as any).maxStaff} especialista${(plan as any).maxStaff > 1 ? 's' : ''}`}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle2 size={16} style={{ color: 'var(--primary-color)' }} />
+                                    <span>{(plan as any).max_locations >= 100 ? 'Sedes ilimitadas' : `Hasta ${(plan as any).max_locations} sede${(plan as any).max_locations > 1 ? 's' : ''}`}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle2 size={16} style={{ color: 'var(--primary-color)' }} />
+                                    <span>{(plan as any).max_fields >= 999 ? 'Servicios ilimitados' : `Hasta ${(plan as any).max_fields} servicio${(plan as any).max_fields > 1 ? 's' : ''}`}</span>
                                 </div>
                                 {(() => {
                                     const getFeatureLabel = (key: string): string => {
