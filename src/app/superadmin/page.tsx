@@ -13,6 +13,7 @@ import {
     Zap
 } from "lucide-react";
 import Link from 'next/link';
+import { getFounderConfig } from "@/lib/services/planService";
 
 export default async function SuperAdminDashboard() {
     // Obtener métricas reales de la DB
@@ -36,6 +37,8 @@ export default async function SuperAdminDashboard() {
         return acc + precio;
     }, 0);
 
+    const { founderLockedPrice, founderMax } = await getFounderConfig();
+
     // Fundadores activos
     const fundadoresActivos = await (prisma.suscripcion as any).count({
         where: {
@@ -44,7 +47,7 @@ export default async function SuperAdminDashboard() {
         }
     });
 
-    const cuposRestantes = Math.max(0, 25 - fundadoresActivos);
+    const cuposRestantes = Math.max(0, founderMax - fundadoresActivos);
 
     // Lista de fundadores
     const listaFundadores = await (prisma.suscripcion as any).findMany({
@@ -203,7 +206,7 @@ export default async function SuperAdminDashboard() {
                             <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.4em] italic leading-none">Club Exclusivo</span>
                         </div>
                         <h3 className="text-3xl font-black text-slate-900 dark:text-white uppercase italic tracking-tight leading-none">Socios Fundadores</h3>
-                        <p className="text-slate-400 font-medium text-sm">Primeros 25 negocios con tarifa especial de por vida ($15/mes).</p>
+                        <p className="text-slate-400 font-medium text-sm">Primeros {founderMax} negocios con tarifa especial de por vida (${founderLockedPrice}/mes).</p>
                     </div>
                     
                     {/* Visual de Cupos */}
@@ -214,12 +217,12 @@ export default async function SuperAdminDashboard() {
                         <div className="flex-1 space-y-2">
                             <div className="flex justify-between items-end">
                                 <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest leading-none">Cupos Llenos</span>
-                                <span className="text-lg font-black text-slate-900 dark:text-white italic leading-none">{fundadoresActivos} / 25</span>
+                                <span className="text-lg font-black text-slate-900 dark:text-white italic leading-none">{fundadoresActivos} / {founderMax}</span>
                             </div>
                             <div className="w-full h-3 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                                 <div 
                                     className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full transition-all duration-1000"
-                                    style={{ width: `${(fundadoresActivos / 25) * 100}%` }}
+                                    style={{ width: `${(fundadoresActivos / founderMax) * 100}%` }}
                                 />
                             </div>
                             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">
