@@ -72,13 +72,13 @@ const DEMO_BUSINESSES = [
         logoUrl: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=150&h=150&fit=crop",
         bannerUrl: "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1200&h=400&fit=crop",
         servicios: [
-            { id: "srv-barb-1", nombre: "Corte Clásico de Cabello", duracion: 30, precio: 20 },
-            { id: "srv-barb-2", nombre: "Corte + Afeitado de Barba", duracion: 50, precio: 35 },
-            { id: "srv-barb-3", nombre: "Perfilado y Diseño de Barba", duracion: 20, precio: 15 }
+            { id: "srv-barb-1", nombre: "Corte Clásico de Cabello", duracion: 30, precio: 20, imageUrl: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600&h=600&fit=crop" },
+            { id: "srv-barb-2", nombre: "Corte + Afeitado de Barba", duracion: 50, precio: 35, imageUrl: "https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=600&h=600&fit=crop" },
+            { id: "srv-barb-3", nombre: "Perfilado y Diseño de Barba", duracion: 20, precio: 15, imageUrl: "https://images.unsplash.com/photo-1593702295094-aec22597af65?w=600&h=600&fit=crop" }
         ],
         profesionales: [
-            { id: "stf-barb-1", name: "Sebastián Castro", role: "Barbero Máster", services: ["srv-barb-1", "srv-barb-2", "srv-barb-3"] },
-            { id: "stf-barb-2", name: "Mateo Ruiz", role: "Especialista en Barba", services: ["srv-barb-2", "srv-barb-3"] }
+            { id: "stf-barb-1", name: "Sebastián Castro", role: "Barbero Máster", services: ["srv-barb-1", "srv-barb-2", "srv-barb-3"], imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=300&fit=crop" },
+            { id: "stf-barb-2", name: "Mateo Ruiz", role: "Especialista en Barba", services: ["srv-barb-2", "srv-barb-3"], imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop" }
         ],
         promociones: [
             { id: "prm-barb-1", titulo: "Jueves de Barba", descripcion: "15% de descuento en afeitado completo y perfilado.", precioPromo: 30, precioAnterior: 35, imagenUrl: "https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=600&h=400&fit=crop" }
@@ -104,13 +104,13 @@ const DEMO_BUSINESSES = [
         logoUrl: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=150&h=150&fit=crop",
         bannerUrl: "https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=1200&h=400&fit=crop",
         servicios: [
-            { id: "srv-spa-1", nombre: "Limpieza Facial Profunda", duracion: 60, precio: 45 },
-            { id: "srv-spa-2", nombre: "Masaje Relajante Corporal", duracion: 60, precio: 60 },
-            { id: "srv-spa-3", nombre: "Hidratación Facial con Colágeno", duracion: 45, precio: 40 }
+            { id: "srv-spa-1", nombre: "Limpieza Facial Profunda", duracion: 60, precio: 45, imageUrl: "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=600&h=600&fit=crop" },
+            { id: "srv-spa-2", nombre: "Masaje Relajante Corporal", duracion: 60, precio: 60, imageUrl: "https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=600&h=600&fit=crop" },
+            { id: "srv-spa-3", nombre: "Hidratación Facial con Colágeno", duracion: 45, precio: 40, imageUrl: "https://images.unsplash.com/photo-1608755728617-aefab37d5705?w=600&h=600&fit=crop" }
         ],
         profesionales: [
-            { id: "stf-spa-1", name: "Ana Valenzuela", role: "Cosmiatra", services: ["srv-spa-1", "srv-spa-3"] },
-            { id: "stf-spa-2", name: "Lucía Méndez", role: "Terapeuta Corporal", services: ["srv-spa-2"] }
+            { id: "stf-spa-1", name: "Ana Valenzuela", role: "Cosmiatra", services: ["srv-spa-1", "srv-spa-3"], imageUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&h=300&fit=crop" },
+            { id: "stf-spa-2", name: "Lucía Méndez", role: "Terapeuta Corporal", services: ["srv-spa-2"], imageUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&h=300&fit=crop" }
         ],
         promociones: [
             { id: "prm-spa-1", titulo: "Relax Absoluto", descripcion: "Masaje Relajante de 60m + Limpieza Facial Profunda.", precioPromo: 80, precioAnterior: 105, imagenUrl: "https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=600&h=400&fit=crop" }
@@ -136,13 +136,13 @@ const DEMO_BUSINESSES = [
         logoUrl: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=150&h=150&fit=crop",
         bannerUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1200&h=400&fit=crop",
         servicios: [
-            { id: "srv-nails-1", nombre: "Manicura Express con Gel", duracion: 40, precio: 22 },
-            { id: "srv-nails-2", nombre: "Pedicura Spa Exfoliante", duracion: 60, precio: 35 },
-            { id: "srv-nails-3", nombre: "Uñas Acrílicas Esculpidas", duracion: 90, precio: 55 }
+            { id: "srv-nails-1", nombre: "Manicura Express con Gel", duracion: 40, precio: 22, imageUrl: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600&h=600&fit=crop" },
+            { id: "srv-nails-2", nombre: "Pedicura Spa Exfoliante", duracion: 60, precio: 35, imageUrl: "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=600&h=600&fit=crop" },
+            { id: "srv-nails-3", nombre: "Uñas Acrílicas Esculpidas", duracion: 90, precio: 55, imageUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=600&fit=crop" }
         ],
         profesionales: [
-            { id: "stf-nails-1", name: "Valeria Ramos", role: "Manicurista Senior", services: ["srv-nails-1", "srv-nails-2", "srv-nails-3"] },
-            { id: "stf-nails-2", name: "Camila Soto", role: "Lash Artist", services: ["srv-nails-1"] }
+            { id: "stf-nails-1", name: "Valeria Ramos", role: "Manicurista Senior", services: ["srv-nails-1", "srv-nails-2", "srv-nails-3"], imageUrl: "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=300&h=300&fit=crop" },
+            { id: "stf-nails-2", name: "Camila Soto", role: "Lash Artist", services: ["srv-nails-1"], imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=300&fit=crop" }
         ],
         promociones: [
             { id: "prm-nails-1", titulo: "Combo Bella", descripcion: "Manicura Express con Gel + Pedicura Spa Exfoliante.", precioPromo: 45, precioAnterior: 57, imagenUrl: "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=600&h=400&fit=crop" }
@@ -167,13 +167,13 @@ const DEMO_BUSINESSES = [
         logoUrl: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=150&h=150&fit=crop",
         bannerUrl: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=1200&h=400&fit=crop",
         servicios: [
-            { id: "srv-fit-1", nombre: "Sesión de Personal Trainer", duracion: 60, precio: 30 },
-            { id: "srv-fit-2", nombre: "Evaluación Corporal y Dieta", duracion: 45, precio: 45 },
-            { id: "srv-fit-3", nombre: "Pase Diario de Entrenamiento", duracion: 120, precio: 10 }
+            { id: "srv-fit-1", nombre: "Sesión de Personal Trainer", duracion: 60, precio: 30, imageUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=600&fit=crop" },
+            { id: "srv-fit-2", nombre: "Evaluación Corporal y Dieta", duracion: 45, precio: 45, imageUrl: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&h=600&fit=crop" },
+            { id: "srv-fit-3", nombre: "Pase Diario de Entrenamiento", duracion: 120, precio: 10, imageUrl: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&h=600&fit=crop" }
         ],
         profesionales: [
-            { id: "stf-fit-1", name: "Martín Silva", role: "Entrenador Certificado", services: ["srv-fit-1", "srv-fit-3"] },
-            { id: "stf-fit-2", name: "Clara Benítez", role: "Nutricionista Deportiva", services: ["srv-fit-2"] }
+            { id: "stf-fit-1", name: "Martín Silva", role: "Entrenador Certificado", services: ["srv-fit-1", "srv-fit-3"], imageUrl: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=300&h=300&fit=crop" },
+            { id: "stf-fit-2", name: "Clara Benítez", role: "Nutricionista Deportiva", services: ["srv-fit-2"], imageUrl: "https://images.unsplash.com/photo-1548142813-c348350df52b?w=300&h=300&fit=crop" }
         ],
         promociones: [
             { id: "prm-fit-1", titulo: "Plan Fit Inicial", descripcion: "1 Sesión de Personal Trainer + Evaluación Corporal Completa.", precioPromo: 60, precioAnterior: 75, imagenUrl: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&h=400&fit=crop" }
@@ -198,13 +198,13 @@ const DEMO_BUSINESSES = [
         logoUrl: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=150&h=150&fit=crop",
         bannerUrl: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=1200&h=400&fit=crop",
         servicios: [
-            { id: "srv-dent-1", nombre: "Limpieza Dental Profiláctica", duracion: 45, precio: 35 },
-            { id: "srv-dent-2", nombre: "Consulta Odontológica General", duracion: 30, precio: 20 },
-            { id: "srv-dent-3", nombre: "Blanqueamiento Dental Laser", duracion: 60, precio: 120 }
+            { id: "srv-dent-1", nombre: "Limpieza Dental Profiláctica", duracion: 45, precio: 35, imageUrl: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=600&h=600&fit=crop" },
+            { id: "srv-dent-2", nombre: "Consulta Odontológica General", duracion: 30, precio: 20, imageUrl: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=600&h=600&fit=crop" },
+            { id: "srv-dent-3", nombre: "Blanqueamiento Dental Laser", duracion: 60, precio: 120, imageUrl: "https://images.unsplash.com/photo-1606811971618-4486d14f3f99?w=600&h=600&fit=crop" }
         ],
         profesionales: [
-            { id: "stf-dent-1", name: "Dr. Alejandro Ríos", role: "Cirujano Dentista", services: ["srv-dent-1", "srv-dent-2", "srv-dent-3"] },
-            { id: "stf-dent-2", name: "Dra. Sofía Vargas", role: "Ortodoncista", services: ["srv-dent-1", "srv-dent-2"] }
+            { id: "stf-dent-1", name: "Dr. Alejandro Ríos", role: "Cirujano Dentista", services: ["srv-dent-1", "srv-dent-2", "srv-dent-3"], imageUrl: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=300&h=300&fit=crop" },
+            { id: "stf-dent-2", name: "Dra. Sofía Vargas", role: "Ortodoncista", services: ["srv-dent-1", "srv-dent-2"], imageUrl: "https://images.unsplash.com/photo-1594824813573-246434de83fb?w=300&h=300&fit=crop" }
         ],
         promociones: [
             { id: "prm-dent-1", titulo: "Sonrisa Radiante", descripcion: "Blanqueamiento Dental Laser + Limpieza Dental Completa.", precioPromo: 130, precioAnterior: 155, imagenUrl: "https://images.unsplash.com/photo-1475503572774-15a45e5d60b9?w=600&h=400&fit=crop" }
@@ -262,6 +262,8 @@ async function main() {
             await prisma.promotion.deleteMany({ where: { businessId: nId } });
             await prisma.page.deleteMany({ where: { businessId: nId } });
             await prisma.imagen.deleteMany({ where: { negocioId: nId } });
+            await prisma.ubicacion.deleteMany({ where: { negocioId: nId } });
+            await prisma.media.deleteMany({ where: { businessId: nId } });
             await prisma.suscripcion.deleteMany({ where: { negocioId: nId } });
             await prisma.usuario.deleteMany({ where: { negocioId: nId } });
             await prisma.negocio.delete({ where: { id: nId } });
@@ -303,7 +305,20 @@ async function main() {
             }
         });
 
-        // 3. Crear Usuario Admin
+        // 3. Crear Ubicación "Sede Principal"
+        console.log(`📍 Creando ubicación...`);
+        const ubicacion = await prisma.ubicacion.create({
+            data: {
+                id: `loc-id-${data.slug}`,
+                nombre: "Sede Principal",
+                direccion: "Av. Principal 123",
+                mapUrl: "https://maps.google.com",
+                negocioId: negocioId,
+                updatedAt: new Date()
+            }
+        });
+
+        // 4. Crear Usuario Admin
         await prisma.usuario.create({
             data: {
                 id: `usr-id-${data.slug}`,
@@ -316,7 +331,7 @@ async function main() {
             }
         });
 
-        // 4. Crear Suscripción Demo (Excluida)
+        // 5. Crear Suscripción Demo (Excluida)
         await prisma.suscripcion.create({
             data: {
                 id: `sub-id-${data.slug}`,
@@ -330,7 +345,7 @@ async function main() {
             }
         });
 
-        // 5. Crear Banner Imagen
+        // 6. Crear Banner Imagen
         await prisma.imagen.create({
             data: {
                 id: `img-banner-${data.slug}`,
@@ -342,9 +357,24 @@ async function main() {
             }
         });
 
-        // 6. Crear Servicios
+        // 7. Crear Servicios y Enlazar Media
+        console.log(`💅 Creando servicios y cargando fotos en Media...`);
         const srvIdMap = new Map();
         for (const s of data.servicios) {
+            const mediaId = `med-srv-${data.slug}-${s.id}`;
+            await prisma.media.create({
+                data: {
+                    id: mediaId,
+                    businessId: negocioId,
+                    url: s.imageUrl,
+                    fileKey: `services/${s.id}.jpg`,
+                    provider: "local",
+                    mimeType: "image/jpeg",
+                    size: 1024,
+                    category: "service"
+                }
+            });
+
             const serv = await prisma.service.create({
                 data: {
                     id: `srv-id-${data.slug}-${s.id}`,
@@ -352,6 +382,8 @@ async function main() {
                     duracion: s.duracion,
                     precio: s.precio,
                     negocioId: negocioId,
+                    imageMediaId: mediaId,
+                    ubicacionId: ubicacion.id,
                     extraInfo: { categoryId: null, tipo: null },
                     updatedAt: new Date()
                 }
@@ -359,10 +391,25 @@ async function main() {
             srvIdMap.set(s.id, serv.id);
         }
 
-        // 7. Crear Especialistas (Staff)
+        // 8. Crear Especialistas (Staff) y Enlazar Media
+        console.log(`👨‍🎨 Creando especialistas y avatares en Media...`);
         const stfIdMap = new Map();
         for (const p of data.profesionales) {
             const mappedServices = p.services.map(sid => srvIdMap.get(sid)).filter(Boolean);
+            const mediaId = `med-stf-${data.slug}-${p.id}`;
+            await prisma.media.create({
+                data: {
+                    id: mediaId,
+                    businessId: negocioId,
+                    url: p.imageUrl,
+                    fileKey: `staff/${p.id}.jpg`,
+                    provider: "local",
+                    mimeType: "image/jpeg",
+                    size: 1024,
+                    category: "staff"
+                }
+            });
+
             const staff = await prisma.staff.create({
                 data: {
                     id: `stf-id-${data.slug}-${p.id}`,
@@ -370,6 +417,7 @@ async function main() {
                     name: p.name,
                     role: p.role,
                     active: true,
+                    imageMediaId: mediaId,
                     workingHours: {},
                     updatedAt: new Date(),
                     Service: {
@@ -395,8 +443,23 @@ async function main() {
             }
         }
 
-        // 8. Crear Promociones
+        // 9. Crear Promociones y Enlazar Media
+        console.log(`🔥 Creando promociones y cargando fotos en Media...`);
         for (const pr of data.promociones) {
+            const mediaId = `med-prm-${data.slug}-${pr.id}`;
+            await prisma.media.create({
+                data: {
+                    id: mediaId,
+                    businessId: negocioId,
+                    url: pr.imagenUrl,
+                    fileKey: `promotions/${pr.id}.jpg`,
+                    provider: "local",
+                    mimeType: "image/jpeg",
+                    size: 1024,
+                    category: "promotion"
+                }
+            });
+
             await prisma.promotion.create({
                 data: {
                     id: `prm-id-${data.slug}-${pr.id}`,
@@ -406,6 +469,7 @@ async function main() {
                     precioPromo: pr.precioPromo,
                     precioAnterior: pr.precioAnterior,
                     imagenUrl: pr.imagenUrl,
+                    imageMediaId: mediaId,
                     fechaInicio: new Date(),
                     fechaFin: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días
                     estado: "publicado",
@@ -414,7 +478,8 @@ async function main() {
             });
         }
 
-        // 9. Crear Galería / Resultados Antes/Después
+        // 10. Crear Galería / Resultados Antes/Después
+        console.log(`📷 Creando resultados y galería...`);
         for (const r of data.resultados) {
             await prisma.resultado.create({
                 data: {
@@ -434,7 +499,8 @@ async function main() {
             });
         }
 
-        // 10. Crear Páginas
+        // 11. Crear Páginas
+        console.log(`📃 Creando páginas informativas...`);
         for (const pg of data.paginas) {
             await prisma.page.create({
                 data: {
@@ -450,7 +516,7 @@ async function main() {
             });
         }
 
-        // 11. Crear Citas y Clientes Ficticios para Actividad
+        // 12. Crear Citas y Clientes Ficticios para Actividad
         const clientDemoId = `cli-id-${data.slug}-demo`;
         await prisma.cliente.create({
             data: {
