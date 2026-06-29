@@ -42,7 +42,7 @@ function getStatusConfig(status: string, primaryColor: string) {
             };
         case 'client_checked_in':
             return { 
-                label: 'Llegó', 
+                label: 'Llegó (Por Confirmar)', 
                 bg: 'bg-amber-500', 
                 text: 'text-white', 
                 border: 'border-amber-400',
@@ -51,7 +51,7 @@ function getStatusConfig(status: string, primaryColor: string) {
             };
         case 'in_progress':
             return { 
-                label: 'En Proceso', 
+                label: 'Llegó', 
                 bg: 'bg-purple-600', 
                 text: 'text-white', 
                 border: 'border-purple-500',
@@ -142,15 +142,15 @@ function AppointmentCard({
             };
         } else if (est === 'confirmed' || est === 'approved') {
             rightAction = {
-                estado: 'client_checked_in',
-                label: 'Asistencia (Llegó)',
-                bg: 'bg-amber-500',
+                estado: 'in_progress',
+                label: 'Llegó',
+                bg: 'bg-emerald-600',
                 icon: <Check size={20} strokeWidth={3} className="text-white shrink-0" />
             };
         } else if (est === 'client_checked_in') {
             rightAction = {
                 estado: 'in_progress',
-                label: 'Iniciar Servicio',
+                label: 'Confirmar Llegó',
                 bg: 'bg-purple-600',
                 icon: <Check size={20} strokeWidth={3} className="text-white shrink-0" />
             };

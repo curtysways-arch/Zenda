@@ -70,7 +70,7 @@ export default async function AdminLayout({
     }
 
     return (
-        <ConfirmProvider>
+        <ConfirmProvider primaryColor={primaryColor}>
             <div className="flex h-screen bg-slate-50 overflow-hidden light-theme" style={{ '--primary-color': primaryColor } as any}>
                 
                 {/* Sidebar Unificado */}

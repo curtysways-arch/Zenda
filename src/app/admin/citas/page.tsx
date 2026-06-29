@@ -171,7 +171,7 @@ export default function CitasAdminPage() {
         if (nuevoEstado === 'confirmed') confirmMsg = '¿Confirmar esta cita?';
         else if (nuevoEstado === 'cancelled') confirmMsg = '¿Rechazar/Cancelar esta cita?';
         else if (nuevoEstado === 'client_checked_in') confirmMsg = '¿Confirmar la asistencia del cliente (Llegó)?';
-        else if (nuevoEstado === 'in_progress') confirmMsg = '¿Iniciar el servicio para esta cita?';
+        else if (nuevoEstado === 'in_progress') confirmMsg = '¿Confirmar la llegada del cliente (Llegó)?';
         else if (nuevoEstado === 'completed') {
             confirmMsg = '¿Finalizar esta cita?';
             showMontoInput = true;
@@ -364,15 +364,42 @@ export default function CitasAdminPage() {
                                                             const isPending = status === 'pending';
                                                             const isConfirmed = status === 'confirmed' || status === 'approved' || status === 'confirmada';
                                                             const isExpired = status === 'expired';
+                                                            const isCheckedIn = status === 'client_checked_in';
+                                                            const isInProgress = status === 'in_progress';
+                                                            const isCompleted = status === 'completed';
+                                                            const isCancelled = status === 'cancelled';
+                                                            
+                                                            let label = status;
+                                                            let classes = "bg-slate-50 text-slate-500 border-slate-100";
+                                                            let styles = {};
+
+                                                            if (isPending) {
+                                                                label = 'Pendiente';
+                                                                classes = "bg-amber-50 text-amber-700 border-amber-100";
+                                                            } else if (isConfirmed) {
+                                                                label = 'Confirmada';
+                                                                classes = "bg-white border-slate-200";
+                                                                styles = { color: 'var(--primary-color)', borderColor: 'var(--primary-color)', backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 95%)' };
+                                                            } else if (isCheckedIn) {
+                                                                label = 'Llegó (Por Confirmar)';
+                                                                classes = "bg-indigo-50 text-indigo-700 border-indigo-100 animate-pulse";
+                                                            } else if (isInProgress) {
+                                                                label = 'Llegó';
+                                                                classes = "bg-purple-50 text-purple-700 border-purple-100";
+                                                            } else if (isCompleted) {
+                                                                label = 'Finalizada';
+                                                                classes = "bg-slate-900 text-white border-slate-900";
+                                                            } else if (isCancelled) {
+                                                                label = 'Cancelada';
+                                                                classes = "bg-rose-50 text-rose-700 border-rose-100";
+                                                            } else if (isExpired) {
+                                                                label = 'Expirada';
+                                                                classes = "bg-slate-100 text-slate-400 border-slate-200";
+                                                            }
                                                             
                                                             return (
-                                                                <span className={clsx("px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.1em] border transition-all",
-                                                                    isConfirmed ? "bg-white border-slate-200" : 
-                                                                    isPending ? "bg-amber-50 text-amber-700 border-amber-100" : 
-                                                                    isExpired ? "bg-slate-100 text-slate-400 border-slate-200" :
-                                                                    "bg-slate-50 text-slate-500 border-slate-100")}
-                                                                    style={isConfirmed ? { color: 'var(--primary-color)', borderColor: 'var(--primary-color)', backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 95%)' } : {}}>
-                                                                    {isPending ? 'Pendiente' : isConfirmed ? 'Aprobada' : isExpired ? 'Expirada' : status}
+                                                                <span className={clsx("px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.1em] border transition-all", classes)} style={styles}>
+                                                                    {label}
                                                                 </span>
                                                             );
                                                         })()}
@@ -436,15 +463,42 @@ export default function CitasAdminPage() {
                                                 const isPending = status === 'pending';
                                                 const isConfirmed = status === 'confirmed' || status === 'approved' || status === 'confirmada';
                                                 const isExpired = status === 'expired';
+                                                const isCheckedIn = status === 'client_checked_in';
+                                                const isInProgress = status === 'in_progress';
+                                                const isCompleted = status === 'completed';
+                                                const isCancelled = status === 'cancelled';
+                                                
+                                                let label = status;
+                                                let classes = "bg-slate-50 text-slate-500 border-slate-100";
+                                                let styles = {};
+
+                                                if (isPending) {
+                                                    label = 'Pendiente';
+                                                    classes = "bg-amber-50 text-amber-700 border-amber-100";
+                                                } else if (isConfirmed) {
+                                                    label = 'Confirmada';
+                                                    classes = "bg-white border-slate-200";
+                                                    styles = { color: 'var(--primary-color)', borderColor: 'var(--primary-color)', backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 95%)' };
+                                                } else if (isCheckedIn) {
+                                                    label = 'Llegó (Por Confirmar)';
+                                                    classes = "bg-indigo-50 text-indigo-700 border-indigo-100 animate-pulse";
+                                                } else if (isInProgress) {
+                                                    label = 'Llegó';
+                                                    classes = "bg-purple-50 text-purple-700 border-purple-100";
+                                                } else if (isCompleted) {
+                                                    label = 'Finalizada';
+                                                    classes = "bg-slate-900 text-white border-slate-900";
+                                                } else if (isCancelled) {
+                                                    label = 'Cancelada';
+                                                    classes = "bg-rose-50 text-rose-700 border-rose-100";
+                                                } else if (isExpired) {
+                                                    label = 'Expirada';
+                                                    classes = "bg-slate-100 text-slate-400 border-slate-200";
+                                                }
                                                 
                                                 return (
-                                                    <div className={clsx("px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] border",
-                                                        isConfirmed ? "bg-white" : 
-                                                        isPending ? "bg-amber-50 text-amber-700 border-amber-100" : 
-                                                        isExpired ? "bg-slate-100 text-slate-400 border-slate-200" :
-                                                        "bg-slate-50 text-slate-500 border-slate-100")}
-                                                        style={isConfirmed ? { color: 'var(--primary-color)', borderColor: 'var(--primary-color)', backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 95%)' } : {}}>
-                                                        {isPending ? 'Pendiente' : isConfirmed ? 'Aprobada' : isExpired ? 'Expirada' : status}
+                                                    <div className={clsx("px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] border", classes)} style={styles}>
+                                                        {label}
                                                     </div>
                                                 );
                                             })()}

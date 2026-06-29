@@ -28,10 +28,12 @@ import {
 import { clsx } from 'clsx';
 
 import MobileAppointmentDetail from '@/components/admin/mobile/MobileAppointmentDetail';
+import { useConfirm } from '@/components/admin/ConfirmContext';
 import RatingModal from '@/components/RatingModal';
 import { toLocalDateFromUTC } from '@/lib/utils';
 
 export default function ReservaDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { confirm } = useConfirm();
     const { id } = use(params);
     const router = useRouter();
 
@@ -87,28 +89,54 @@ export default function ReservaDetailPage({ params }: { params: Promise<{ id: st
     const handleStatusUpdate = async (newStatus: string) => {
         const statusMap: Record<string, string> = {
             'confirmed': 'CONFIRMAR',
-            'client_checked_in': 'MARCAR LLEGADA',
-            'in_progress': 'INICIAR SERVICIO',
+            'client_checked_in': 'CONFIRMAR LLEGADA',
+            'in_progress': 'MARCAR LLEGADA',
             'completed': 'FINALIZAR CITA',
             'cancelled': 'CANCELAR',
             'pending': 'RESTAURAR'
         };
 
         const actionText = statusMap[newStatus] || newStatus;
-        if (!confirm(`¿Estás seguro que deseas ${actionText} esta reserva?`)) return;
+        let showMontoInput = false;
+        let precioSugerido = 0;
+
+        if (newStatus === 'completed') {
+            showMontoInput = true;
+            precioSugerido = reserva?.total || reserva?.service?.precio || 0;
+        }
+
+        const res = await confirm(`¿Estás seguro que deseas ${actionText} esta reserva?`, {
+            title: newStatus === 'completed' ? 'Finalizar y Cobrar' : 'Actualizar Estado',
+            showInput: showMontoInput,
+            inputValue: precioSugerido,
+            inputLabel: 'Monto Cobrado ($)',
+            confirmText: newStatus === 'completed' ? 'Finalizar y Cobrar' : 'Aceptar',
+            type: newStatus === 'cancelled' ? 'danger' : 'warning'
+        });
+
+        if (!res) return;
+
+        const montoCobrado = typeof res === 'object' ? res.value : undefined;
         
         setIsUpdatingStatus(true);
         try {
-            const res = await fetch(`/api/appointments/${id}/status`, {
+            const resFetch = await fetch(`/api/appointments/${id}/status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ estado: newStatus })
+                body: JSON.stringify({ 
+                    estado: newStatus,
+                    montoCobrado: montoCobrado
+                })
             });
-            if (res.ok) {
+            if (resFetch.ok) {
                 await fetchReserva();
             } else {
-                const err = await res.json();
-                alert(`Error: ${err.error || 'No se pudo actualizar el estado'}`);
+                const err = await resFetch.json();
+                const hasAlerted = await confirm(`Error: ${err.error || 'No se pudo actualizar el estado'}`, {
+                    title: 'Error',
+                    confirmText: 'Entendido',
+                    type: 'danger'
+                });
             }
         } catch (e) {
             console.error(e);
@@ -235,16 +263,16 @@ export default function ReservaDetailPage({ params }: { params: Promise<{ id: st
                                 "px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] border shadow-sm",
                                 (reserva.estado === 'confirmed' || reserva.estado === 'approved') ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
                                 reserva.estado === 'cancelled' ? "bg-rose-50 text-rose-700 border-rose-100" :
-                                reserva.estado === 'client_checked_in' ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
+                                reserva.estado === 'client_checked_in' ? "bg-indigo-50 text-indigo-700 border-indigo-100 animate-pulse" :
                                 reserva.estado === 'in_progress' ? "bg-purple-50 text-purple-700 border-purple-100" :
                                 reserva.estado === 'completed' ? "bg-slate-900 text-white border-slate-900" :
                                 reserva.estado === 'expired' ? "bg-slate-100 text-slate-500 border-slate-200" :
                                 "bg-amber-50 text-amber-700 border-amber-100"
                             )}>
-                                {reserva.estado === 'pending' ? 'Por confirmar' :
+                                {reserva.estado === 'pending' ? 'Pendiente' :
                                  reserva.estado === 'confirmed' || reserva.estado === 'approved' ? 'Confirmada' : 
-                                 reserva.estado === 'client_checked_in' ? 'En Espera' :
-                                 reserva.estado === 'in_progress' ? 'En Servicio' :
+                                 reserva.estado === 'client_checked_in' ? 'Llegó (Por Confirmar)' :
+                                 reserva.estado === 'in_progress' ? 'Llegó' :
                                  reserva.estado === 'completed' ? 'Finalizada' :
                                  reserva.estado === 'cancelled' ? 'Cancelada' :
                                  reserva.estado === 'expired' ? 'Expirada' : 'Pendiente'}
@@ -398,7 +426,7 @@ export default function ReservaDetailPage({ params }: { params: Promise<{ id: st
                                 )}
 
                                 {(reserva.estado === 'confirmed' || reserva.estado === 'approved' || reserva.estado === 'pending') && (
-                                    <button onClick={() => handleStatusUpdate('client_checked_in')} className="flex items-center justify-between p-6 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-3xl font-black uppercase italic tracking-widest text-xs hover:bg-indigo-100 transition-all group shadow-sm">
+                                    <button onClick={() => handleStatusUpdate('in_progress')} className="flex items-center justify-between p-6 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-3xl font-black uppercase italic tracking-widest text-xs hover:bg-indigo-100 transition-all group shadow-sm">
                                         Marcar Llegada
                                         <Zap className="group-hover:scale-125 transition-transform" />
                                     </button>
@@ -406,7 +434,7 @@ export default function ReservaDetailPage({ params }: { params: Promise<{ id: st
 
                                 {reserva.estado === 'client_checked_in' && (
                                     <button onClick={() => handleStatusUpdate('in_progress')} className="flex items-center justify-between p-6 bg-purple-50 border border-purple-100 text-purple-700 rounded-3xl font-black uppercase italic tracking-widest text-xs hover:bg-purple-100 transition-all group shadow-sm">
-                                        Iniciar Servicio
+                                        Confirmar Llegada
                                         <Sparkles className="group-hover:scale-125 transition-transform" />
                                     </button>
                                 )}

@@ -30,7 +30,7 @@ export function useConfirm() {
     return context;
 }
 
-export function ConfirmProvider({ children }: { children: React.ReactNode }) {
+export function ConfirmProvider({ children, primaryColor = '#0ea5e9' }: { children: React.ReactNode; primaryColor?: string }) {
     const [state, setState] = useState<{
         isOpen: boolean;
         message: string;
@@ -99,7 +99,10 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
             {children}
 
             {state?.isOpen && (
-                <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-in fade-in duration-300">
+                <div 
+                    className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-in fade-in duration-300"
+                    style={{ '--primary-color': primaryColor } as any}
+                >
                     <div 
                         className={clsx(
                             "w-full max-w-md bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden text-center",
@@ -139,7 +142,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
                                 {state.type === "danger" ? (
                                     <Trash2 size={28} />
                                 ) : state.showInput ? (
-                                    <DollarSign size={28} style={{ color: "var(--primary-color)" }} />
+                                    <DollarSign size={28} style={{ color: "var(--primary-color, #0ea5e9)" }} />
                                 ) : (
                                     <AlertTriangle size={28} />
                                 )}
@@ -156,20 +159,21 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
                             </h3>
                         </div>
 
-                        {/* Input opcional de monto */}
+                        {/* Input opcional de monto con Flexbox robusto para evitar superposición */}
                         {state.showInput && (
                             <div className="mb-8 space-y-2 text-left">
                                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1 ml-1">
                                     {state.inputLabel}
                                 </label>
-                                <div className="relative flex items-center">
-                                    <div className="absolute left-5 text-slate-400 font-black text-sm">$</div>
+                                <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-white/5 rounded-3xl px-6 py-5 focus-within:bg-white focus-within:border-slate-200 dark:focus-within:bg-slate-700 shadow-inner">
+                                    <span className="text-3xl font-black text-slate-400 select-none italic">$</span>
                                     <input 
                                         ref={inputRef}
                                         type="number"
                                         step="0.01"
                                         placeholder="0.00"
-                                        className="w-full pl-10 pr-6 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-white/5 rounded-2xl outline-none focus:bg-white focus:border-slate-200 dark:focus:bg-slate-700 text-sm font-black text-slate-900 dark:text-white shadow-inner appearance-none italic"
+                                        className="flex-1 bg-transparent border-none outline-none text-3xl font-black text-slate-900 dark:text-white focus:ring-0 p-0 italic"
+                                        style={{ color: '#0f172a' }}
                                         value={state.inputValue}
                                         onChange={(e) => setState(prev => prev ? { ...prev, inputValue: e.target.value } : null)}
                                         onKeyDown={(e) => {
@@ -197,9 +201,9 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
                                     "flex-[1.5] px-6 py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all italic active:scale-95 shadow-lg",
                                     state.type === 'danger' 
                                         ? "bg-rose-600 hover:bg-rose-700 shadow-rose-600/20" 
-                                        : "bg-[var(--primary-color)] hover:brightness-95 shadow-[var(--primary-color)]/20"
+                                        : "bg-[var(--primary-color, #0ea5e9)] hover:brightness-95 hover:text-white shadow-[var(--primary-color, #0ea5e9)]/20"
                                 )}
-                                style={state.type !== 'danger' ? { backgroundColor: 'var(--primary-color)' } : undefined}
+                                style={state.type !== 'danger' ? { backgroundColor: 'var(--primary-color, #0ea5e9)' } : undefined}
                             >
                                 {state.confirmText}
                             </button>
