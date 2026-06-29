@@ -1,13 +1,13 @@
 {
-    "name": "CitiOx Admin",
-    "short_name": "CitiOx Admin",
-    "description": "Panel de control y administración para negocios CitiOx",
-    "start_url": "/admin?source=pwa",
-    "id": "/admin-pwa",
-    "scope": "/admin",
+    "name": "CitiOx SuperAdmin",
+    "short_name": "CitiOx Super",
+    "description": "Panel de control global y gestión del sistema CitiOx",
+    "start_url": "/superadmin?source=pwa",
+    "id": "/superadmin-pwa",
+    "scope": "/superadmin",
     "display": "standalone",
     "background_color": "#ffffff",
-    "theme_color": "#06b6d4",
+    "theme_color": "#4f46e5",
     "icons": [
         {
             "src": "/logo-citiox.png",

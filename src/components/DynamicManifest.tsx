@@ -15,7 +15,8 @@ export default function DynamicManifest() {
     const segments = pathname.split('/').filter(Boolean);
     const adminRoutes = ['admin', 'superadmin', 'login', 'register', 'olvide-password', 'api', 'checkin', 'reserva', 'profesor'];
     const isPublicBusinessPage = segments.length >= 1 && !adminRoutes.includes(segments[0]);
-    const isAdminPage = segments.length >= 1 && ['admin', 'superadmin'].includes(segments[0]);
+    const isSuperAdminPage = segments.length >= 1 && segments[0] === 'superadmin';
+    const isAdminPage = segments.length >= 1 && segments[0] === 'admin';
     
     const slug = isPublicBusinessPage ? segments[0] : null;
 
@@ -27,8 +28,11 @@ export default function DynamicManifest() {
       if (slug) {
         // Página pública de negocio: manifest dinámico con datos del negocio
         manifestUrl = `/api/pwa/manifest?slug=${slug}`;
+      } else if (isSuperAdminPage) {
+        // Panel de SuperAdmin: manifest exclusivo con scope /superadmin
+        manifestUrl = `/manifest-superadmin.json`;
       } else if (isAdminPage) {
-        // Panel de administración: manifest CitiOx Admin (id separado = app separada)
+        // Panel de administración: manifest CitiOx Admin con scope /admin
         manifestUrl = `/manifest.json`;
       } else {
         // Página de inicio u otras: manifest admin por defecto
