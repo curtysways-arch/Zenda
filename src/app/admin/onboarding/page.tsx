@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import ImageUploader from '@/components/ui/ImageUploader';
 import Link from 'next/link';
+import { signOut } from 'next-auth/react';
 
 export default function OnboardingWizard() {
     const router = useRouter();
@@ -120,33 +121,55 @@ export default function OnboardingWizard() {
             {/* Header / Progress */}
             {step < 6 && (
                 <div className="bg-white border-b border-slate-200 sticky top-0 z-10 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="relative w-9 h-9 bg-white rounded-xl border border-slate-100 shadow-md flex items-center justify-center p-1 overflow-hidden shrink-0">
-                            <img src="/logo-citiox.png" alt="CitiOx" className="w-full h-full object-contain" />
+                    <div className="flex items-center justify-between w-full sm:w-auto shrink-0">
+                        <div className="flex items-center gap-3">
+                            <div className="relative w-9 h-9 bg-white rounded-xl border border-slate-100 shadow-md flex items-center justify-center p-1 overflow-hidden shrink-0">
+                                <img src="/logo-citiox.png" alt="CitiOx" className="w-full h-full object-contain" />
+                            </div>
+                            <div>
+                                <h1 className="font-black tracking-tight bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 bg-clip-text text-transparent text-lg italic leading-none">
+                                    CitiOx
+                                </h1>
+                                <span className="text-[7px] font-black uppercase tracking-[0.2em] leading-none text-slate-400">Configuración</span>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="font-black tracking-tight bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 bg-clip-text text-transparent text-lg italic leading-none">
-                                CitiOx
-                            </h1>
-                            <span className="text-[7px] font-black uppercase tracking-[0.2em] leading-none text-slate-400">Configuración</span>
-                        </div>
+                        
+                        <button 
+                            onClick={async () => {
+                                await signOut({ callbackUrl: '/login' });
+                            }}
+                            className="sm:hidden px-3 py-1.5 border border-slate-200 rounded-xl text-[9px] font-black text-rose-500 hover:bg-rose-50 uppercase tracking-widest active:scale-95 transition-all outline-none"
+                        >
+                            Salir
+                        </button>
                     </div>
                     
-                    <div className="flex-1 max-w-xl w-full">
-                        <div className="flex justify-between mb-2">
-                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                                Paso {step} de 5
-                            </span>
-                            <span className="text-[10px] font-black uppercase text-cyan-500 tracking-widest">
-                                {Math.round((step / 5) * 100)}% Completado
-                            </span>
+                    <div className="flex-1 max-w-xl w-full flex items-center gap-4">
+                        <div className="flex-1">
+                            <div className="flex justify-between mb-2">
+                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                                    Paso {step} de 5
+                                </span>
+                                <span className="text-[10px] font-black uppercase text-cyan-500 tracking-widest">
+                                    {Math.round((step / 5) * 100)}% Completado
+                                </span>
+                            </div>
+                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full bg-gradient-to-r from-cyan-500 via-sky-400 to-purple-500 transition-all duration-500 rounded-full"
+                                    style={{ width: `${(step / 5) * 100}%` }}
+                                />
+                            </div>
                         </div>
-                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                            <div 
-                                className="h-full bg-gradient-to-r from-cyan-500 via-sky-400 to-purple-500 transition-all duration-500 rounded-full"
-                                style={{ width: `${(step / 5) * 100}%` }}
-                            />
-                        </div>
+
+                        <button 
+                            onClick={async () => {
+                                await signOut({ callbackUrl: '/login' });
+                            }}
+                            className="hidden sm:block px-4 py-2.5 border border-slate-200 hover:border-rose-100 rounded-xl text-[10px] font-black text-rose-500 hover:bg-rose-50 uppercase tracking-widest active:scale-95 transition-all outline-none"
+                        >
+                            Cerrar Sesión
+                        </button>
                     </div>
                 </div>
             )}
