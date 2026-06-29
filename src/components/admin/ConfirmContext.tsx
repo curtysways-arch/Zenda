@@ -181,18 +181,18 @@ export function ConfirmProvider({ children, primaryColor = '#0ea5e9' }: { childr
 
                         {/* Input opcional de monto con Flexbox robusto para evitar superposición */}
                         {state.showInput && (
-                            <div className="mb-8 space-y-2 text-left">
+                            <div className="mb-8 space-y-2 text-left w-full max-w-full overflow-hidden">
                                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1 ml-1">
                                     {state.inputLabel}
                                 </label>
-                                <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-white/5 rounded-3xl px-4 py-4 focus-within:bg-white focus-within:border-[var(--primary-color, #0ea5e9)] dark:focus-within:bg-slate-700 focus-within:ring-2 focus-within:ring-[var(--primary-color, #0ea5e9)]/10 shadow-inner transition-all">
+                                <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-white/5 rounded-3xl px-4 py-4 focus-within:bg-white focus-within:border-[var(--primary-color, #0ea5e9)] dark:focus-within:bg-slate-700 focus-within:ring-2 focus-within:ring-[var(--primary-color, #0ea5e9)]/10 shadow-inner transition-all w-full max-w-full overflow-hidden">
                                     <span className="text-3xl font-black text-slate-400 select-none italic">$</span>
                                     <input 
                                         ref={inputRef}
                                         type="number"
                                         step="0.01"
                                         placeholder="0.00"
-                                        className="flex-1 bg-transparent border-none outline-none text-3xl font-black text-slate-900 dark:text-white focus:ring-0 focus:outline-none p-0 italic"
+                                        className="w-full min-w-0 bg-transparent border-none outline-none text-3xl font-black text-slate-900 dark:text-white focus:ring-0 focus:outline-none p-0 italic"
                                         style={{ color: '#0f172a', border: 'none', outline: 'none', boxShadow: 'none' }}
                                         value={state.inputValue}
                                         onChange={(e) => setState(prev => prev ? { ...prev, inputValue: e.target.value } : null)}
@@ -206,11 +206,11 @@ export function ConfirmProvider({ children, primaryColor = '#0ea5e9' }: { childr
                         )}
 
                         {/* Botones de acción (Horizontales compactos para ahorrar espacio vertical) */}
-                        <div className="flex gap-2 sm:gap-3">
+                        <div className="flex gap-2 sm:gap-3 w-full max-w-full">
                             <button
                                 type="button"
                                 onClick={handleCancel}
-                                className="flex-1 py-3.5 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 rounded-2xl font-black text-[9px] sm:text-[10px] uppercase tracking-wider transition-all italic active:scale-95 text-center truncate px-2"
+                                className="flex-1 py-3.5 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 rounded-2xl font-black text-[9px] sm:text-[10px] uppercase tracking-wider transition-all italic active:scale-95 text-center truncate px-2 min-w-0"
                             >
                                 {state.cancelText}
                             </button>
@@ -218,7 +218,7 @@ export function ConfirmProvider({ children, primaryColor = '#0ea5e9' }: { childr
                                 type="button"
                                 onClick={handleConfirm}
                                 className={clsx(
-                                    "flex-[1.5] py-3.5 text-white rounded-2xl font-black text-[9px] sm:text-[10px] uppercase tracking-wider transition-all italic active:scale-95 shadow-lg text-center truncate px-2",
+                                    "flex-[1.5] py-3.5 text-white rounded-2xl font-black text-[9px] sm:text-[10px] uppercase tracking-wider transition-all italic active:scale-95 shadow-lg text-center truncate px-2 min-w-0",
                                     state.type === 'danger' 
                                         ? "bg-rose-600 hover:bg-rose-700 shadow-rose-600/20" 
                                         : "bg-[var(--primary-color, #0ea5e9)] hover:brightness-95 hover:text-white shadow-[var(--primary-color, #0ea5e9)]/20"
