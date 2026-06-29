@@ -26,14 +26,14 @@ export async function GET(req: Request) {
             orderBy: { nombre: 'asc' }
         });
 
-        // Calcular el total gastado manualmente sumando montos de pagos o el total de la cita completada
+        // Calcular el total gastado manualmente sumando únicamente los montos de pagos (pagoReserva) ingresados al finalizar la cita
         const clientesConStats = clientes.map(c => {
             const totalGastado = c.Appointment.reduce((acc: number, app: any) => {
                 if (app.pagoReserva && app.pagoReserva.length > 0) {
                     const sumaPagos = app.pagoReserva.reduce((sum: number, p: any) => sum + Number(p.monto), 0);
                     return acc + sumaPagos;
                 }
-                return acc + Number(app.total || 0);
+                return acc;
             }, 0);
 
             return {
