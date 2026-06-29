@@ -97,15 +97,21 @@ export function ConfirmProvider({ children, primaryColor = '#0ea5e9' }: { childr
     return (
         <ConfirmContext.Provider value={{ confirm }}>
             {children}            {state?.isOpen && (
-                <div 
-                    className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-in fade-in duration-300"
-                    style={{ '--primary-color': primaryColor } as any}
-                >
+                <>
+                    {/* Overlay de fondo independiente */}
+                    <div 
+                        className="fixed inset-0 z-[999998] bg-black/40 backdrop-blur-md animate-in fade-in duration-300"
+                        onClick={handleCancel}
+                    />
+
+                    {/* Tarjeta del modal centrada de forma absoluta en la pantalla */}
                     <div 
                         className={clsx(
-                            "w-full max-w-sm sm:max-w-md bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl relative overflow-hidden text-center",
+                            "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[999999]",
+                            "w-[90%] max-w-sm sm:max-w-md bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl overflow-hidden text-center",
                             "animate-in zoom-in-95 duration-200"
                         )}
+                        style={{ '--primary-color': primaryColor } as any}
                     >
                         {/* Glow decorativo de fondo */}
                         <div 
@@ -207,7 +213,7 @@ export function ConfirmProvider({ children, primaryColor = '#0ea5e9' }: { childr
                             </button>
                         </div>
                     </div>
-                </div>
+                </>
             )}
         </ConfirmContext.Provider>
     );
