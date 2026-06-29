@@ -222,7 +222,7 @@ export default function ResultadosAdminPage() {
                             <div key={item.id} className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden group hover:shadow-2xl transition-all duration-500">
                                 <div className="relative aspect-video">
                                     <img 
-                                        src={item.type === 'GALLERY' ? (item.galleryUrls?.split(',')[0] || '') : item.afterImage} 
+                                        src={item.type === 'GALLERY' ? ((Array.isArray(item.gallery) && item.gallery.length > 0) ? item.gallery[0] : (item.galleryUrls?.split(',')[0] || '')) : (item.afterImage || '')} 
                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                         alt={item.title}
                                     />

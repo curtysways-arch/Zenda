@@ -136,7 +136,7 @@ export default function MobileResults({ resultados, primaryColor, onEdit, onDele
                                 </div>
                             ) : (
                                 <img 
-                                    src={item.galleryUrls ? item.galleryUrls.split(',')[0] : item.afterImage} 
+                                    src={(Array.isArray(item.gallery) && item.gallery.length > 0) ? item.gallery[0] : (item.galleryUrls ? item.galleryUrls.split(',')[0] : (item.afterImage || ''))} 
                                     className="w-full h-full object-cover"
                                     alt={item.title}
                                 />
