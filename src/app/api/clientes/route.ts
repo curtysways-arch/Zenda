@@ -17,16 +17,25 @@ export async function GET(req: Request) {
                     select: { Appointment: true }
                 },
                 Appointment: {
-                    where: { estado: { in: ['confirmed', 'CONFIRMADA'] } },
-                    select: { total: true }
+                    where: { estado: { in: ['completed', 'finalizada', 'completed', 'finalizada'] } },
+                    include: {
+                        pagoReserva: true
+                    }
                 }
             },
             orderBy: { nombre: 'asc' }
         });
 
-        // Calcular el total gastado manualmente ya que Prisma _sum en relación anidada es complejo sin raw query
+        // Calcular el total gastado manualmente sumando montos de pagos o el total de la cita completada
         const clientesConStats = clientes.map(c => {
-            const totalGastado = (c as any).Appointment.reduce((acc: number, current: any) => acc + Number(current.total), 0);
+            const totalGastado = c.Appointment.reduce((acc: number, app: any) => {
+                if (app.pagoReserva && app.pagoReserva.length > 0) {
+                    const sumaPagos = app.pagoReserva.reduce((sum: number, p: any) => sum + Number(p.monto), 0);
+                    return acc + sumaPagos;
+                }
+                return acc + Number(app.total || 0);
+            }, 0);
+
             return {
                 id: c.id,
                 nombre: c.nombre,
