@@ -660,71 +660,65 @@ export default async function PublicNegocioPage({
                         </Link>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-12">
+                    <div className="grid grid-cols-1 gap-6 sm:gap-8">
                         {resultadosDestacados.slice(0, 3).map((item) => (
                             <Link 
                                 key={item.id} 
                                 href={`/${slug}/portafolio#trabajo-${item.id}`}
-                                className="group bg-card-dynamic rounded-[3.5rem] shadow-2xl shadow-slate-200/40 overflow-hidden flex flex-col transition-all duration-500 hover:shadow-pink-100/20 relative active:scale-[0.98]"
+                                className="group bg-card-dynamic rounded-3xl sm:rounded-[2.5rem] shadow-xl shadow-slate-200/30 overflow-hidden flex flex-col transition-all duration-500 hover:shadow-pink-100/10 relative active:scale-[0.98]"
                             >
-                                <div className="absolute top-5 left-5 z-20">
-                                    <div className="px-4 py-1.5 bg-white/90 backdrop-blur-md rounded-full text-[9px] font-black text-slate-900 uppercase tracking-widest border border-white shadow-xl flex items-center gap-2">
-                                        <Sparkles size={12} className="text-pink-500" />
+                                <div className="absolute top-4 left-4 z-20">
+                                    <div className="px-3.5 py-1.5 bg-white/95 backdrop-blur-md rounded-full text-[8px] font-black text-slate-900 uppercase tracking-widest border border-white shadow-md flex items-center gap-1.5">
+                                        <Sparkles size={10} className="text-pink-500" />
                                         {item.type === 'GALLERY' ? 'Galería' : 'Transformación'}
                                     </div>
                                 </div>
 
                                 {/* Media Area */}
                                 {item.type !== 'GALLERY' ? (
-                                    <div className="relative aspect-[16/10] flex overflow-hidden">
+                                    <div className="relative aspect-[16/9] flex overflow-hidden">
                                         <div className="w-1/2 relative">
                                             <img src={item.beforeImage} className="w-full h-full object-cover grayscale-[0.2]" alt="Antes" />
-                                            <div className="absolute top-6 left-6 px-3 py-1 bg-black/30 backdrop-blur-md rounded-lg text-[8px] font-black text-white uppercase tracking-widest border border-white/10">Antes</div>
+                                            <div className="absolute top-4 left-4 px-2.5 py-1 bg-black/30 backdrop-blur-md rounded-lg text-[7px] font-black text-white uppercase tracking-widest border border-white/10">Antes</div>
                                         </div>
                                         <div className="w-1/2 relative">
                                             <img src={item.afterImage} className="w-full h-full object-cover" alt="Después" />
-                                            <div className="absolute top-6 right-6 px-3 py-1 bg-white/80 backdrop-blur-md rounded-lg text-[8px] font-black text-slate-900 uppercase tracking-widest border border-white shadow-sm">Después</div>
+                                            <div className="absolute top-4 right-4 px-2.5 py-1 bg-white/80 backdrop-blur-md rounded-lg text-[7px] font-black text-slate-900 uppercase tracking-widest border border-white shadow-sm">Después</div>
                                         </div>
-                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-12 rounded-full bg-white shadow-2xl flex items-center justify-center text-slate-900 z-10 group-hover:scale-110 transition-transform duration-500">
-                                            <ArrowLeftRight size={20} />
+                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-10 rounded-full bg-white shadow-xl flex items-center justify-center text-slate-900 z-10 group-hover:scale-110 transition-transform duration-500">
+                                            <ArrowLeftRight size={16} />
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="relative aspect-[16/10] overflow-hidden bg-slate-50">
+                                    <div className="relative aspect-[16/9] overflow-hidden bg-slate-50">
                                         <img src={item.gallery?.[0] || businessImage} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[3s]" alt={item.title} />
-                                        <div className="absolute bottom-6 right-8 px-4 py-1.5 bg-white/90 backdrop-blur-md rounded-full text-[9px] font-black text-slate-900 uppercase tracking-widest border border-white shadow-xl flex items-center gap-2">
-                                            <ImageIcon size={14} /> {item.gallery?.length || 0} Fotos
+                                        <div className="absolute bottom-4 right-4 px-3.5 py-1 bg-white/95 backdrop-blur-md rounded-full text-[8px] font-black text-slate-900 uppercase tracking-widest border border-white shadow-md flex items-center gap-1.5">
+                                            <ImageIcon size={12} /> {item.gallery?.length || 0} Fotos
                                         </div>
                                     </div>
                                 )}
 
                                 {/* Info Area */}
-                                <div className="p-10 space-y-4">
+                                <div className="p-6 sm:p-8 space-y-2.5">
                                     <div className="flex items-center gap-3">
                                         {item.service && (
-                                            <span className="text-[10px] font-black text-pink-500 uppercase tracking-[0.2em]">
+                                            <span className="text-[9px] font-black text-pink-500 uppercase tracking-[0.2em]">
                                                 {item.service.nombre}
                                             </span>
                                         )}
                                         {item.clientName && (
-                                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">
+                                            <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest italic">
                                                 • {item.clientName}
                                             </span>
                                         )}
                                     </div>
                                     
-                                    <h4 className="text-2xl font-black leading-tight" style={{ color: textColor }}>
+                                    <h4 className="text-xl font-black leading-tight" style={{ color: textColor }}>
                                         {item.title}
                                     </h4>
-                                    <p className="text-sm font-medium text-slate-400 leading-relaxed line-clamp-2 italic">
+                                    <p className="text-xs font-medium text-slate-400 leading-relaxed line-clamp-2 italic">
                                         "{item.description}"
                                     </p>
-
-                                    <div className="pt-4 flex items-center gap-2 text-slate-300 group-hover:text-pink-500 transition-colors">
-                                        <div className="h-px flex-1 bg-slate-100 group-hover:bg-pink-100 transition-colors" />
-                                        <span className="text-[9px] font-black uppercase tracking-widest">Ver resultado completo</span>
-                                        <ChevronRight size={14} />
-                                    </div>
                                 </div>
                             </Link>
                         ))}
