@@ -87,21 +87,39 @@ export async function POST(
                 }
             });
 
-            // Actualizar estadísticas (Profesional o Cliente)
+            // Actualizar estadísticas (Profesional o Cliente) de forma segura con Prisma Client
             if (ratedRole === 'professional') {
-                await tx.$executeRaw`
-                    UPDATE Staff 
-                    SET ratingPromedio = ((ratingPromedio * totalReviews) + ${starInt}) / (totalReviews + 1),
-                        totalReviews = totalReviews + 1
-                    WHERE id = ${ratedId}
-                `;
+                const current = await tx.staff.findUnique({
+                    where: { id: ratedId },
+                    select: { ratingPromedio: true, totalReviews: true }
+                });
+                if (current) {
+                    const nextReviews = current.totalReviews + 1;
+                    const nextRating = ((current.ratingPromedio * current.totalReviews) + starInt) / nextReviews;
+                    await tx.staff.update({
+                        where: { id: ratedId },
+                        data: {
+                            ratingPromedio: nextRating,
+                            totalReviews: nextReviews
+                        }
+                    });
+                }
             } else {
-                await tx.$executeRaw`
-                    UPDATE Cliente 
-                    SET ratingPromedio = ((ratingPromedio * totalReviews) + ${starInt}) / (totalReviews + 1),
-                        totalReviews = totalReviews + 1
-                    WHERE id = ${ratedId}
-                `;
+                const current = await tx.cliente.findUnique({
+                    where: { id: ratedId },
+                    select: { ratingPromedio: true, totalReviews: true }
+                });
+                if (current) {
+                    const nextReviews = current.totalReviews + 1;
+                    const nextRating = ((current.ratingPromedio * current.totalReviews) + starInt) / nextReviews;
+                    await tx.cliente.update({
+                        where: { id: ratedId },
+                        data: {
+                            ratingPromedio: nextRating,
+                            totalReviews: nextReviews
+                        }
+                    });
+                }
             }
 
             return newRating;
