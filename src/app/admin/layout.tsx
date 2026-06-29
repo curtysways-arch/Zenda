@@ -103,7 +103,7 @@ export default async function AdminLayout({
 
                         {/* Contenido scrollable */}
                         <main className="flex-1 overflow-y-auto custom-scrollbar relative bg-slate-50/30">
-                            <div className="p-5 md:p-8 pb-40 md:pb-10 max-w-5xl">
+                            <div className="p-5 md:p-8 pb-40 md:pb-10 w-full max-w-none">
                                 {children}
                             </div>
                         </main>

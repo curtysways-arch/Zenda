@@ -35,7 +35,7 @@ export default function SuperAdminLayout({
                     </div>
                 </header>
 
-                <div className="p-4 lg:p-10 max-w-7xl mx-auto w-full">
+                <div className="p-4 lg:p-10 w-full max-w-none">
                     {children}
                 </div>
             </main>
