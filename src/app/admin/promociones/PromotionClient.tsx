@@ -34,7 +34,8 @@ export default function PromotionClient({
 
     const handleShare = (promo: any) => {
         const shareUrl = `${window.location.origin}/${negocio.slug}/promo/${promo.id}`;
-        const mensaje = `🔥 *PROMOCIÓN ESPECIAL* 🔥 ${negocio.nombre}\n\n*${promo.titulo}*\n${promo.precioAnterior ? `Antes: ~${promo.precioAnterior}~ \n` : ''}Ahora: *$${promo.precioPromo}*\n\nReserva aquí: ${shareUrl}`;
+        const ahoraTexto = promo.tipoPromo === '2x1' ? '*¡Oferta 2x1!*' : (promo.tipoPromo === '3x1' ? '*¡Oferta 3x1!*' : `*$${promo.precioPromo}*`);
+        const mensaje = `🔥 *PROMOCIÓN ESPECIAL* 🔥 ${negocio.nombre}\n\n*${promo.titulo}*\n${promo.precioAnterior ? `Antes: ~${promo.precioAnterior}~ \n` : ''}Ahora: ${ahoraTexto}\n\nReserva aquí: ${shareUrl}`;
         const waUrl = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
         window.open(waUrl, '_blank');
     };
@@ -211,7 +212,7 @@ export default function PromotionClient({
                                     <div className="mt-auto pt-4 border-t border-gray-50">
                                         <div className="flex items-end gap-2 px-2 pb-4">
                                             <span className="text-2xl font-black" style={{ color: 'var(--primary-color)' }}>
-                                                ${promo.precioPromo}
+                                                {promo.tipoPromo === '2x1' ? '2x1' : (promo.tipoPromo === '3x1' ? '3x1' : `$${promo.precioPromo}`)}
                                             </span>
                                             {promo.precioAnterior && (
                                                 <span className="text-sm text-gray-400 line-through font-medium mb-1">

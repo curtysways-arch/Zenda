@@ -444,6 +444,7 @@ model Promotion {
   diasValidos        String?
   horaFinValida      String?
   horaInicioValida   String?
+  tipoPromo          String?              @default("precio_especial")
   Negocio            Negocio              @relation(fields: [businessId], references: [id])
   PromotionToService PromotionToService[]
 

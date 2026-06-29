@@ -21,6 +21,7 @@ export type CreatePromotionInput = {
     diasValidos?: string | null;
     horaInicioValida?: string | null;
     horaFinValida?: string | null;
+    tipoPromo?: string | null;
 };
 
 // Obtener la sesión para admin
@@ -175,6 +176,7 @@ export async function updatePromotion(id: string, data: Partial<CreatePromotionI
                 diasValidos: restData.diasValidos,
                 horaInicioValida: restData.horaInicioValida,
                 horaFinValida: restData.horaFinValida,
+                tipoPromo: restData.tipoPromo,
                 fechaInicio: restData.fechaInicio ? new Date(restData.fechaInicio) : undefined,
                 fechaFin: restData.fechaFin ? new Date(restData.fechaFin) : undefined,
                 PromotionToService: serviceIds ? {

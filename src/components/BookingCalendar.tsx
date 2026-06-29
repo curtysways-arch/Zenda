@@ -257,8 +257,18 @@ const resolveSlotPromotion = (
                 if (hourNum < sVal || hourNum > eVal) return null;
             }
 
-            const priorityScore = discount + (isTarget ? 20000 : 0);
-            return { hasPromotion: discount > 0, discountPercent: discount, labelText: `-${discount}%`, source: 'manual' as const, priorityScore };
+            let label = `-${discount}%`;
+            let hasPromo = discount > 0;
+            if (p.tipoPromo === '2x1') {
+                label = '2x1';
+                hasPromo = true;
+            } else if (p.tipoPromo === '3x1') {
+                label = '3x1';
+                hasPromo = true;
+            }
+
+            const priorityScore = (p.tipoPromo === '2x1' || p.tipoPromo === '3x1' ? 95 : discount) + (isTarget ? 20000 : 0);
+            return { hasPromotion: hasPromo, discountPercent: discount, labelText: label, source: 'manual' as const, priorityScore };
         })
         .filter(Boolean)
         .sort((a, b) => b!.priorityScore - a!.priorityScore);
