@@ -339,6 +339,38 @@ export class NotificationService {
         return this.provider.sendMessage({ to: telefono, message, template: `reminder_${type.toLowerCase()}` });
     }
 
+    async sendAppointmentCompletedNotification(
+        negocioId: string,
+        clienteName: string,
+        telefono: string,
+        negocioName: string,
+        servicioName: string,
+        professionalName: string,
+        reservaId: string,
+        slug: string
+    ) {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://citiox.com';
+        const linkCalificacion = `${appUrl}/${slug}/confirmacion/${reservaId}?calificar=true`;
+
+        const defaultMsg = `💆 ¡Hola {{nombre}}! Esperamos que hayas disfrutado de tu servicio *{{servicio}}* con *{{profesional}}* en *{{negocio}}*. 🌟\n\nTu opinión es muy importante para nosotros. ¿Nos ayudas calificando tu experiencia en el siguiente enlace? 👇\n\n⭐ *Calificar Servicio:* \n{{link}}\n\n¡Muchas gracias!`;
+
+        const template = await this.getTemplate(negocioId, 'COMPLETED_APPOINTMENT_MSG', defaultMsg);
+        
+        const message = this.replaceVariables(template, {
+            nombre: clienteName,
+            servicio: servicioName,
+            profesional: professionalName,
+            negocio: negocioName,
+            link: linkCalificacion
+        });
+
+        return this.provider.sendMessage({ 
+            to: telefono, 
+            message, 
+            template: 'cita_finalizada'
+        });
+    }
+
     async sendOTP(negocioId: string, telefono: string, code: string, negocioName: string) {
         const defaultMsg = `Tu código de verificación es: *{{code}}*. Válido por 5 minutos.`;
         const template = await this.getTemplate(negocioId, 'OTP_MSG', defaultMsg);

@@ -97,36 +97,54 @@ export async function PATCH(
             }
         }
 
-        // 3. Obtener cita actualizada para notificaciones
+        // 3. Obtener cita actualizada para notificaciones (incluyendo staff)
         const updated = await prisma.appointment.findUnique({
             where: { id: appointment.id },
             include: {
                 cliente: true,
                 service: true,
-                negocio: true
+                negocio: true,
+                staff: true
             }
         });
 
-        if (updated && (estado === 'confirmed' || estado === 'cancelled')) {
-            try {
-                const isConfirmed = estado === 'confirmed';
-                await notificationService.sendBookingConfirmation(
-                    updated.negocioId,
-                    updated.cliente.nombre,
-                    updated.cliente.telefono,
-                    updated.fecha,
-                    updated.horaInicio,
-                    updated.negocio.nombre,
-                    updated.service.nombre,
-                    updated.duracion,
-                    isConfirmed,
-                    updated.negocio.direccion || '',
-                    '', // mapUrl
-                    updated.id,
-                    updated.comentarios || ''
-                );
-            } catch (notifyError) {
-                console.error('Error enviando notificación de estado:', notifyError);
+        if (updated) {
+            if (estado === 'confirmed' || estado === 'cancelled') {
+                try {
+                    const isConfirmed = estado === 'confirmed';
+                    await notificationService.sendBookingConfirmation(
+                        updated.negocioId,
+                        updated.cliente.nombre,
+                        updated.cliente.telefono,
+                        updated.fecha,
+                        updated.horaInicio,
+                        updated.negocio.nombre,
+                        updated.service.nombre,
+                        updated.duracion,
+                        isConfirmed,
+                        updated.negocio.direccion || '',
+                        '', // mapUrl
+                        updated.id,
+                        updated.comentarios || ''
+                    );
+                } catch (notifyError) {
+                    console.error('Error enviando notificación de estado:', notifyError);
+                }
+            } else if (estado === 'completed') {
+                try {
+                    await notificationService.sendAppointmentCompletedNotification(
+                        updated.negocioId,
+                        updated.cliente.nombre,
+                        updated.cliente.telefono,
+                        updated.negocio.nombre,
+                        updated.service.nombre,
+                        updated.staff?.name || 'nuestro profesional',
+                        updated.id,
+                        updated.negocio.slug
+                    );
+                } catch (notifyError) {
+                    console.error('Error enviando notificación de cita finalizada:', notifyError);
+                }
             }
         }
 

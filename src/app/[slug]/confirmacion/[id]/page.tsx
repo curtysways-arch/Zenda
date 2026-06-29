@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import InstallAppButton from '@/components/InstallAppButton';
+import RatingModal from '@/components/RatingModal';
+import { useSearchParams } from 'next/navigation';
 
 export default function ConfirmacionReservaPage({ 
     params 
@@ -16,6 +18,16 @@ export default function ConfirmacionReservaPage({
     const [appointment, setAppointment] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isRatingOpen, setIsRatingOpen] = useState(false);
+
+    const searchParams = useSearchParams();
+    const queryCalificar = searchParams ? searchParams.get('calificar') : null;
+
+    useEffect(() => {
+        if (queryCalificar === 'true') {
+            setIsRatingOpen(true);
+        }
+    }, [queryCalificar]);
 
     useEffect(() => {
         const fetchDetails = async () => {
@@ -27,19 +39,31 @@ export default function ConfirmacionReservaPage({
                 if (res.ok && data && !data.error) {
                     setAppointment(data);
                     setError(null);
+                    
+                    // Auto-abrir modal si la cita ya finalizó y no ha calificado
+                    const lowerEstado = data.estado?.toLowerCase();
+                    const alreadyRated = data.ratings?.some((r: any) => r.raterRole === 'client');
+                    if ((lowerEstado === 'completed' || lowerEstado === 'finalizada') && !alreadyRated) {
+                        setIsRatingOpen(true);
+                    }
                 } else {
                     // FALLBACK: Intentar cargar desde localStorage si la API falla
                     let backup = localStorage.getItem(`last_appointment_${id}`);
-                    
-                    // Si no lo encuentra por ID, intentar el respaldo más reciente de todos
                     if (!backup) {
                         backup = localStorage.getItem('last_appointment_latest');
                     }
 
                     if (backup) {
                         console.log("Cargando desde respaldo local...");
-                        setAppointment(JSON.parse(backup));
+                        const backupData = JSON.parse(backup);
+                        setAppointment(backupData);
                         setError(null);
+
+                        const lowerEstado = backupData.estado?.toLowerCase();
+                        const alreadyRated = backupData.ratings?.some((r: any) => r.raterRole === 'client');
+                        if ((lowerEstado === 'completed' || lowerEstado === 'finalizada') && !alreadyRated) {
+                            setIsRatingOpen(true);
+                        }
                     } else {
                         setError(data.error || "No se encontró la reserva");
                     }
@@ -51,7 +75,38 @@ export default function ConfirmacionReservaPage({
                 setLoading(false);
             }
         };
-        if (id) fetchDetails();
+
+        if (id) {
+            fetchDetails(); // Carga inicial
+            
+            // Polling solo si la cita está en estado no finalizado y no ha calificado
+            const interval = setInterval(async () => {
+                try {
+                    const res = await fetch(`/api/appointments/${id}`);
+                    const data = await res.json();
+                    
+                    if (res.ok && data && !data.error) {
+                        setAppointment(data);
+                        
+                        const lowerEstado = data.estado?.toLowerCase();
+                        const alreadyRated = data.ratings?.some((r: any) => r.raterRole === 'client');
+                        
+                        // Si se completó, abrimos modal y detenemos polling
+                        if ((lowerEstado === 'completed' || lowerEstado === 'finalizada') && !alreadyRated) {
+                            setIsRatingOpen(true);
+                            clearInterval(interval);
+                        } else if (lowerEstado === 'completed' || lowerEstado === 'finalizada' || lowerEstado === 'cancelled' || lowerEstado === 'no_show') {
+                            // Si se completó calificada o se canceló, detenemos polling
+                            clearInterval(interval);
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error polling appointment:", err);
+                }
+            }, 6000); // Polling cada 6 segundos
+
+            return () => clearInterval(interval);
+        }
     }, [id]);
 
     // El layout ya inyecta --primary con el color correcto del negocio.
@@ -286,6 +341,17 @@ export default function ConfirmacionReservaPage({
                     </Link>
                 </div>
             </div>
+
+            {/* Modal de Calificación al Profesional */}
+            {appointment && (
+                <RatingModal 
+                    isOpen={isRatingOpen}
+                    onClose={() => setIsRatingOpen(false)}
+                    appointmentId={id}
+                    raterRole="client"
+                    targetName={appointment.staff?.name || appointment.staff?.nombre || 'nuestro profesional'}
+                />
+            )}
         </div>
     );
 }
