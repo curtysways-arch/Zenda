@@ -96,7 +96,8 @@ export function ConfirmProvider({ children, primaryColor = '#0ea5e9' }: { childr
 
     return (
         <ConfirmContext.Provider value={{ confirm }}>
-            {children}            {state?.isOpen && (
+            {children}
+            {state?.isOpen && (
                 <>
                     {/* Overlay de fondo independiente */}
                     <div 
@@ -104,11 +105,11 @@ export function ConfirmProvider({ children, primaryColor = '#0ea5e9' }: { childr
                         onClick={handleCancel}
                     />
 
-                    {/* Tarjeta del modal centrada de forma absoluta en la pantalla */}
+                    {/* Tarjeta del modal colocada arriba en móviles (top-8) para que el teclado no la empuje */}
                     <div 
                         className={clsx(
-                            "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[999999]",
-                            "w-[90%] max-w-sm sm:max-w-md bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl overflow-hidden text-center",
+                            "fixed top-8 sm:top-1/2 left-1/2 -translate-x-1/2 sm:-translate-y-1/2 z-[999999]",
+                            "w-[92%] max-w-sm sm:max-w-md bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-[2.5rem] p-5 sm:p-8 shadow-2xl overflow-hidden text-center",
                             "animate-in zoom-in-95 duration-200"
                         )}
                         style={{ '--primary-color': primaryColor } as any}
@@ -189,12 +190,12 @@ export function ConfirmProvider({ children, primaryColor = '#0ea5e9' }: { childr
                             </div>
                         )}
 
-                        {/* Botones de acción (Apilados verticalmente en móviles para prevenir desbordes) */}
-                        <div className="flex flex-col-reverse sm:flex-row gap-3">
+                        {/* Botones de acción (Horizontales compactos para ahorrar espacio vertical) */}
+                        <div className="flex gap-2 sm:gap-3">
                             <button
                                 type="button"
                                 onClick={handleCancel}
-                                className="w-full sm:flex-1 py-4 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all italic active:scale-95"
+                                className="flex-1 py-3.5 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 rounded-2xl font-black text-[9px] sm:text-[10px] uppercase tracking-wider transition-all italic active:scale-95 text-center truncate px-2"
                             >
                                 {state.cancelText}
                             </button>
@@ -202,7 +203,7 @@ export function ConfirmProvider({ children, primaryColor = '#0ea5e9' }: { childr
                                 type="button"
                                 onClick={handleConfirm}
                                 className={clsx(
-                                    "w-full sm:flex-[1.5] py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all italic active:scale-95 shadow-lg",
+                                    "flex-[1.5] py-3.5 text-white rounded-2xl font-black text-[9px] sm:text-[10px] uppercase tracking-wider transition-all italic active:scale-95 shadow-lg text-center truncate px-2",
                                     state.type === 'danger' 
                                         ? "bg-rose-600 hover:bg-rose-700 shadow-rose-600/20" 
                                         : "bg-[var(--primary-color, #0ea5e9)] hover:brightness-95 hover:text-white shadow-[var(--primary-color, #0ea5e9)]/20"
