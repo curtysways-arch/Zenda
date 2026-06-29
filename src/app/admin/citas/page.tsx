@@ -28,8 +28,10 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import MobileAgenda from '@/components/admin/mobile/MobileAgenda';
+import { useConfirm } from '@/components/admin/ConfirmContext';
 
 export default function CitasAdminPage() {
+    const { confirm } = useConfirm();
     const router = useRouter();
     const [citas, setCitas] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -124,7 +126,12 @@ export default function CitasAdminPage() {
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
     const handleConfirm = async (id: string) => {
-        if (!confirm('¿Confirmar esta cita?')) return;
+        const isOk = await confirm('¿Confirmar esta cita?', {
+            title: 'Confirmar Cita',
+            confirmText: 'Confirmar',
+            type: 'info'
+        });
+        if (!isOk) return;
         setIsUpdatingStatus(true);
         try {
             const res = await fetch(`/api/appointments/${id}/status`, {
@@ -138,7 +145,12 @@ export default function CitasAdminPage() {
     };
 
     const handleCancel = async (id: string) => {
-        if (!confirm('¿Cancelar esta cita?')) return;
+        const isOk = await confirm('¿Cancelar esta cita?', {
+            title: 'Cancelar Cita',
+            confirmText: 'Sí, Cancelar',
+            type: 'danger'
+        });
+        if (!isOk) return;
         setIsUpdatingStatus(true);
         try {
             const res = await fetch(`/api/appointments/${id}/status`, {
@@ -153,21 +165,45 @@ export default function CitasAdminPage() {
 
     const handleUpdateStatus = async (id: string, nuevoEstado: string) => {
         let confirmMsg = '¿Actualizar el estado de esta cita?';
+        let showMontoInput = false;
+        let precioSugerido = 0;
+
         if (nuevoEstado === 'confirmed') confirmMsg = '¿Confirmar esta cita?';
         else if (nuevoEstado === 'cancelled') confirmMsg = '¿Rechazar/Cancelar esta cita?';
         else if (nuevoEstado === 'client_checked_in') confirmMsg = '¿Confirmar la asistencia del cliente (Llegó)?';
         else if (nuevoEstado === 'in_progress') confirmMsg = '¿Iniciar el servicio para esta cita?';
-        else if (nuevoEstado === 'completed') confirmMsg = '¿Finalizar esta cita?';
+        else if (nuevoEstado === 'completed') {
+            confirmMsg = '¿Finalizar esta cita?';
+            showMontoInput = true;
+            // Buscar la cita para pre-llenar con su total presupuestado
+            const cita = citas.find((c: any) => c.id === id);
+            precioSugerido = cita?.total || cita?.service?.precio || 0;
+        }
 
-        if (!confirm(confirmMsg)) return;
+        const res = await confirm(confirmMsg, {
+            title: nuevoEstado === 'completed' ? 'Finalizar y Cobrar' : 'Actualizar Estado',
+            showInput: showMontoInput,
+            inputValue: precioSugerido,
+            inputLabel: 'Monto Cobrado ($)',
+            confirmText: nuevoEstado === 'completed' ? 'Finalizar y Cobrar' : 'Aceptar',
+            type: nuevoEstado === 'cancelled' ? 'danger' : 'warning'
+        });
+
+        if (!res) return; // canceló o cerró el modal
+
+        // Extraer el monto cobrado si aplica
+        const montoCobrado = typeof res === 'object' ? res.value : undefined;
 
         setIsUpdatingStatus(true);
         try {
-            const res = await fetch(`/api/appointments/${id}/status`, {
+            const resFetch = await fetch(`/api/appointments/${id}/status`, {
                 method: 'PATCH',
-                body: JSON.stringify({ estado: nuevoEstado })
+                body: JSON.stringify({ 
+                    estado: nuevoEstado,
+                    montoCobrado: montoCobrado
+                })
             });
-            if (res.ok) await fetchCitas();
+            if (resFetch.ok) await fetchCitas();
         } catch (e) {
             console.error('Error updating status:', e);
         } finally {

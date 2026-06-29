@@ -24,7 +24,7 @@ export async function PATCH(
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        const { estado } = await req.json();
+        const { estado, montoCobrado } = await req.json();
         const { id: rawId } = await params;
         const id = rawId.trim();
 
@@ -68,6 +68,34 @@ export async function PATCH(
             where: { id: appointment.id },
             data: updateData
         });
+
+        // Registrar/actualizar pago de la reserva si se finaliza y se pasa el monto
+        if (estado === 'completed' && typeof montoCobrado === 'number' && montoCobrado > 0) {
+            const pagoExistente = await prisma.pagoReserva.findFirst({
+                where: { appointmentId: appointment.id }
+            });
+
+            if (pagoExistente) {
+                await prisma.pagoReserva.update({
+                    where: { id: pagoExistente.id },
+                    data: {
+                        monto: montoCobrado
+                    }
+                });
+            } else {
+                const crypto = require('crypto');
+                await prisma.pagoReserva.create({
+                    data: {
+                        id: crypto.randomUUID(),
+                        appointmentId: appointment.id,
+                        monto: montoCobrado,
+                        metodo: 'EFECTIVO',
+                        fecha: new Date(),
+                        notas: 'Registrado automáticamente al finalizar cita'
+                    }
+                });
+            }
+        }
 
         // 3. Obtener cita actualizada para notificaciones
         const updated = await prisma.appointment.findUnique({

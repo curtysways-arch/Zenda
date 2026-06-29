@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useConfirm } from '@/components/admin/ConfirmContext';
 import {
     LayoutDashboard,
     CalendarDays,
@@ -71,6 +72,7 @@ const ZendaLogo = ({ size = 24, className = "" }: { size?: number; className?: s
 );
 
 export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColor?: string }) {
+    const { confirm } = useConfirm();
     const pathname = usePathname();
     const { data: session } = useSession();
     const role = (session?.user as any)?.role || 'STAFF';
@@ -172,7 +174,12 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
 
     // Deslogueo
     const handleLogout = async () => {
-        if (!confirm('¿Seguro quieres cerrar sesión del panel de administrador?')) return;
+        const isOk = await confirm('¿Seguro quieres cerrar sesión del panel de administrador?', {
+            title: 'Cerrar Sesión',
+            confirmText: 'Cerrar Sesión',
+            type: 'danger'
+        });
+        if (!isOk) return;
         await signOut({ callbackUrl: '/login' });
     };
 

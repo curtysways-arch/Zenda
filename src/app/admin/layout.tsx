@@ -1,6 +1,7 @@
 import MobileBottomNav from '@/components/admin/mobile/MobileBottomNav';
 import MobileTopBar from '@/components/admin/mobile/MobileTopBar';
 import AdminSidebar from '@/components/admin/AdminSidebar';
+import { ConfirmProvider } from '@/components/admin/ConfirmContext';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
@@ -69,49 +70,51 @@ export default async function AdminLayout({
     }
 
     return (
-        <div className="flex h-screen bg-slate-50 overflow-hidden light-theme" style={{ '--primary-color': primaryColor } as any}>
-            
-            {/* Sidebar Unificado */}
-            <AdminSidebar primaryColor={primaryColor} />
+        <ConfirmProvider>
+            <div className="flex h-screen bg-slate-50 overflow-hidden light-theme" style={{ '--primary-color': primaryColor } as any}>
+                
+                {/* Sidebar Unificado */}
+                <AdminSidebar primaryColor={primaryColor} />
 
-            {/* ── ÁREA PRINCIPAL ── */}
-            <div className="flex-1 flex justify-center md:justify-start overflow-hidden relative">
-                <div className="w-full flex flex-col bg-white md:shadow-none relative h-full overflow-hidden md:border-x-0">
-                    
-                    {/* TopBar: solo en móvil */}
-                    <div className="md:hidden">
-                        <MobileTopBar primaryColor={primaryColor} />
-                    </div>
-
-                    {/* Banners de estado */}
-                    <div className="z-40">
-                        {isDemo && (
-                            <div className="bg-amber-500 text-white px-6 py-2 flex items-center justify-between shadow-lg">
-                                <p className="text-[9px] font-black uppercase tracking-widest italic">MODO DEMO</p>
-                                <Link href="/register" className="bg-white text-amber-600 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest">Crear mi Spa</Link>
-                            </div>
-                        )}
-                        {isExpired && !isDemo && (
-                            <div className="bg-rose-600 text-white px-6 py-2 flex items-center justify-between shadow-lg">
-                                <p className="text-[9px] font-black uppercase tracking-widest italic">Periodo Terminado</p>
-                                <Link href="/admin/plan" className="bg-white text-rose-600 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest">Activar Plan</Link>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Contenido scrollable */}
-                    <main className="flex-1 overflow-y-auto custom-scrollbar relative bg-slate-50/30">
-                        <div className="p-5 md:p-8 pb-40 md:pb-10 max-w-5xl">
-                            {children}
+                {/* ── ÁREA PRINCIPAL ── */}
+                <div className="flex-1 flex justify-center md:justify-start overflow-hidden relative">
+                    <div className="w-full flex flex-col bg-white md:shadow-none relative h-full overflow-hidden md:border-x-0">
+                        
+                        {/* TopBar: solo en móvil */}
+                        <div className="md:hidden">
+                            <MobileTopBar primaryColor={primaryColor} />
                         </div>
-                    </main>
 
-                    {/* BottomNav: solo en móvil */}
-                    <div className="md:hidden">
-                        <MobileBottomNav primaryColor={primaryColor} />
+                        {/* Banners de estado */}
+                        <div className="z-40">
+                            {isDemo && (
+                                <div className="bg-amber-500 text-white px-6 py-2 flex items-center justify-between shadow-lg">
+                                    <p className="text-[9px] font-black uppercase tracking-widest italic">MODO DEMO</p>
+                                    <Link href="/register" className="bg-white text-amber-600 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest">Crear mi Spa</Link>
+                                </div>
+                            )}
+                            {isExpired && !isDemo && (
+                                <div className="bg-rose-600 text-white px-6 py-2 flex items-center justify-between shadow-lg">
+                                    <p className="text-[9px] font-black uppercase tracking-widest italic">Periodo Terminado</p>
+                                    <Link href="/admin/plan" className="bg-white text-rose-600 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest">Activar Plan</Link>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Contenido scrollable */}
+                        <main className="flex-1 overflow-y-auto custom-scrollbar relative bg-slate-50/30">
+                            <div className="p-5 md:p-8 pb-40 md:pb-10 max-w-5xl">
+                                {children}
+                            </div>
+                        </main>
+
+                        {/* BottomNav: solo en móvil */}
+                        <div className="md:hidden">
+                            <MobileBottomNav primaryColor={primaryColor} />
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </ConfirmProvider>
     );
 }

@@ -3,6 +3,7 @@
 import { Sparkles, Bell, User, LogOut, QrCode, Share2, Copy, Check, ExternalLink, X } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
+import { useConfirm } from '@/components/admin/ConfirmContext';
 import Link from 'next/link';
 
 interface TopBarProps {
@@ -46,6 +47,7 @@ const ZendaLogo = ({ size = 24, className = "", style = {} }: { size?: number; c
 );
 
 export default function MobileTopBar({ primaryColor, title = 'ADMIN' }: TopBarProps) {
+    const { confirm } = useConfirm();
     const { data: session } = useSession();
     const [showMenu, setShowMenu] = useState(false);
     const [showShare, setShowShare] = useState(false);
@@ -68,7 +70,12 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN' }: TopBarPr
     };
 
     const handleLogout = async () => {
-        if (!confirm('¿Cerrar sesión?')) return;
+        const isOk = await confirm('¿Cerrar sesión?', {
+            title: 'Cerrar Sesión',
+            confirmText: 'Cerrar Sesión',
+            type: 'danger'
+        });
+        if (!isOk) return;
         await signOut({ callbackUrl: '/login' });
     };
 
