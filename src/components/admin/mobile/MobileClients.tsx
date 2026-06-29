@@ -5,6 +5,7 @@ import { Search, Phone, MessageCircle, Calendar, DollarSign, ChevronRight, User 
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import Link from 'next/link';
 
 interface MobileClientsProps {
     clientes: any[];
@@ -102,9 +103,13 @@ export default function MobileClients({ clientes, primaryColor }: MobileClientsP
                             <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">
                                 MIEMBRO DESDE {format(new Date(c.createdAt), 'MMM yyyy', { locale: es })}
                             </span>
-                            <div className="flex items-center gap-1 text-[9px] font-black uppercase italic" style={{ color: primaryColor }}>
+                            <Link 
+                                href={`/admin/citas?search=${c.telefono}`}
+                                className="flex items-center gap-1 text-[9px] font-black uppercase italic active:scale-95 transition-transform" 
+                                style={{ color: primaryColor }}
+                            >
                                 Ver Historial <ChevronRight size={12} />
-                            </div>
+                            </Link>
                         </div>
                     </div>
                 ))}

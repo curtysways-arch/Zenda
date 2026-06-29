@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { 
@@ -30,13 +30,23 @@ import { clsx } from 'clsx';
 import MobileAgenda from '@/components/admin/mobile/MobileAgenda';
 import { useConfirm } from '@/components/admin/ConfirmContext';
 
-export default function CitasAdminPage() {
+function CitasAdminPageContent() {
     const { confirm } = useConfirm();
     const router = useRouter();
     const [citas, setCitas] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState('active');
     const [searchQuery, setSearchQuery] = useState('');
+
+    const searchParams = useSearchParams();
+    const querySearch = searchParams ? searchParams.get('search') : '';
+
+    useEffect(() => {
+        if (querySearch) {
+            setSearchQuery(querySearch);
+            setFilterStatus('all'); // Mostrar historial completo al buscar un cliente específico
+        }
+    }, [querySearch]);
     const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
     const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
     const [slug, setSlug] = useState('');
@@ -585,5 +595,18 @@ function ServiceInfo({ reserva }: { reserva: any }) {
                 </span>
             </div>
         </div>
+    );
+}
+
+export default function CitasAdminPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex flex-col items-center justify-center py-20 bg-slate-50 min-h-screen">
+                <Loader2 className="animate-spin mb-4" size={32} style={{ color: 'var(--primary-color)' }} />
+                <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Cargando Agenda...</p>
+            </div>
+        }>
+            <CitasAdminPageContent />
+        </Suspense>
     );
 }

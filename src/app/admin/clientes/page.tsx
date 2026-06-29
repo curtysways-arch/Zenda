@@ -129,11 +129,13 @@ export default function ClientesPage() {
                                             </div>
                                         </div>
                                     </div>
-                                    <button className="p-2 text-gray-300 transition"
-                                             onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary-color)'}
-                                             onMouseLeave={(e) => e.currentTarget.style.color = 'rgb(209, 213, 219)'}>
+                                    <Link 
+                                        href={`/admin/citas?search=${cliente.telefono}`}
+                                        className="p-2 text-gray-300 transition hover:text-[var(--primary-color)] active:scale-95"
+                                        title="Ver historial de citas"
+                                    >
                                         <ExternalLink size={18} />
-                                    </button>
+                                    </Link>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
