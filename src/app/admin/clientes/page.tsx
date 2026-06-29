@@ -6,12 +6,15 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
 import MobileClients from '@/components/admin/mobile/MobileClients';
+import ClienteHistorialModal from '@/components/admin/ClienteHistorialModal';
 
 export default function ClientesPage() {
     const [clientes, setClientes] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
+    const [selectedCliente, setSelectedCliente] = useState<any>(null);
+    const [isHistorialOpen, setIsHistorialOpen] = useState(false);
 
     useEffect(() => {
         async function fetchClientes() {
@@ -55,6 +58,10 @@ export default function ClientesPage() {
                 <MobileClients 
                     clientes={clientes}
                     primaryColor={primaryColor}
+                    onVerHistorial={(cliente) => {
+                        setSelectedCliente(cliente);
+                        setIsHistorialOpen(true);
+                    }}
                 />
             </div>
 
@@ -129,13 +136,16 @@ export default function ClientesPage() {
                                             </div>
                                         </div>
                                     </div>
-                                    <Link 
-                                        href={`/admin/citas?search=${cliente.telefono}`}
-                                        className="p-2 text-gray-300 transition hover:text-[var(--primary-color)] active:scale-95"
+                                    <button 
+                                        onClick={() => {
+                                            setSelectedCliente(cliente);
+                                            setIsHistorialOpen(true);
+                                        }}
+                                        className="p-2 text-gray-300 transition hover:text-[var(--primary-color)] active:scale-95 outline-none"
                                         title="Ver historial de citas"
                                     >
                                         <ExternalLink size={18} />
-                                    </Link>
+                                    </button>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -189,6 +199,16 @@ export default function ClientesPage() {
                     </div>
                 )}
             </div>
+
+            {/* Modal de Historial de Citas del Cliente */}
+            <ClienteHistorialModal 
+                isOpen={isHistorialOpen}
+                onClose={() => {
+                    setIsHistorialOpen(false);
+                    setSelectedCliente(null);
+                }}
+                cliente={selectedCliente}
+            />
         </>
     );
 }

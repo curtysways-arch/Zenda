@@ -10,9 +10,10 @@ import Link from 'next/link';
 interface MobileClientsProps {
     clientes: any[];
     primaryColor: string;
+    onVerHistorial: (cliente: any) => void;
 }
 
-export default function MobileClients({ clientes, primaryColor }: MobileClientsProps) {
+export default function MobileClients({ clientes, primaryColor, onVerHistorial }: MobileClientsProps) {
     const [searchTerm, setSearchTerm] = useState('');
 
     const filtered = clientes.filter(c =>
@@ -103,13 +104,14 @@ export default function MobileClients({ clientes, primaryColor }: MobileClientsP
                             <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">
                                 MIEMBRO DESDE {format(new Date(c.createdAt), 'MMM yyyy', { locale: es })}
                             </span>
-                            <Link 
-                                href={`/admin/citas?search=${c.telefono}`}
-                                className="flex items-center gap-1 text-[9px] font-black uppercase italic active:scale-95 transition-transform" 
+                            <button 
+                                type="button"
+                                onClick={() => onVerHistorial(c)}
+                                className="flex items-center gap-1 text-[9px] font-black uppercase italic active:scale-95 transition-transform outline-none" 
                                 style={{ color: primaryColor }}
                             >
                                 Ver Historial <ChevronRight size={12} />
-                            </Link>
+                            </button>
                         </div>
                     </div>
                 ))}
