@@ -51,6 +51,21 @@ function ReservaNuevaForm() {
         comentarios: '',
     });
 
+    const [codigoPais, setCodigoPais] = useState('+593');
+
+    const actualizarTelefonoDesdeSugerencia = (telefono: string) => {
+        if (telefono.startsWith('+')) {
+            const codigosComunes = ['+593', '+54', '+57', '+51', '+56', '+52', '+58', '+1', '+34'];
+            const codigoEncontrado = codigosComunes.find(c => telefono.startsWith(c));
+            if (codigoEncontrado) {
+                setCodigoPais(codigoEncontrado);
+                setFormData(prev => ({ ...prev, clienteTelefono: telefono.replace(codigoEncontrado, '') }));
+                return;
+            }
+        }
+        setFormData(prev => ({ ...prev, clienteTelefono: telefono }));
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
@@ -101,11 +116,19 @@ function ReservaNuevaForm() {
         try {
             const slug = (session?.user as any)?.slug || 'demo';
 
+            // Formatear el teléfono completo con el código de país seleccionado
+            let telefonoCompleto = formData.clienteTelefono.trim();
+            if (!telefonoCompleto.startsWith('+')) {
+                const numeroLimpio = telefonoCompleto.replace(/^0+/, '');
+                telefonoCompleto = `${codigoPais}${numeroLimpio}`;
+            }
+
             const res = await fetch('/api/reservas', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     ...formData, 
+                    clienteTelefono: telefonoCompleto,
                     canchaId: formData.serviceId, // Mantener compatibilidad con backend si aún espera canchaId
                     serviceId: formData.serviceId,
                     slug,
@@ -119,7 +142,7 @@ function ReservaNuevaForm() {
                     reservaId: data.reserva?.id || data.appointment?.id,
                     shareToken: data.shareToken,
                     clienteNombre: formData.clienteNombre,
-                    clienteTelefono: formData.clienteTelefono
+                    clienteTelefono: telefonoCompleto
                 });
                 router.refresh();
             } else {
@@ -249,7 +272,7 @@ function ReservaNuevaForm() {
                                             setFormData({ ...formData, clienteNombre: e.target.value });
                                             // Autocompletado interactivo
                                             const match = clientes.find(c => c.nombre.toLowerCase() === e.target.value.toLowerCase());
-                                            if (match) setFormData(prev => ({ ...prev, clienteTelefono: match.telefono }));
+                                            if (match) actualizarTelefonoDesdeSugerencia(match.telefono);
                                         }}
                                         className="w-full bg-slate-50 border border-slate-200 h-16 px-6 rounded-2xl text-slate-900 font-black uppercase italic tracking-tight focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 transition-all outline-none"
                                         placeholder="EJ: JUAN PÉREZ"
@@ -259,9 +282,24 @@ function ReservaNuevaForm() {
                                 <div className="space-y-3">
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic leading-none block px-2">Teléfono de Contacto</label>
                                     <div className="flex bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden focus-within:border-slate-900 focus-within:ring-2 focus-within:ring-slate-900/10 transition-all">
-                                        <div className="flex items-center gap-2 px-5 border-r border-slate-200 bg-slate-100/50">
-                                            <Phone size={18} className="text-slate-400" />
-                                            <span className="text-[10px] font-black text-slate-500 tracking-tighter opacity-70">+54</span>
+                                        <div className="flex items-center gap-2 px-4 border-r border-slate-200 bg-slate-100/50">
+                                            <Phone size={16} className="text-slate-400 shrink-0" />
+                                            <select
+                                                value={codigoPais}
+                                                onChange={(e) => setCodigoPais(e.target.value)}
+                                                className="bg-transparent border-none outline-none text-[10px] font-black text-slate-600 tracking-tighter cursor-pointer focus:ring-0 p-0 pr-4 select-none min-w-[70px]"
+                                                style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
+                                            >
+                                                <option value="+593">EC (+593)</option>
+                                                <option value="+54">AR (+54)</option>
+                                                <option value="+57">CO (+57)</option>
+                                                <option value="+51">PE (+51)</option>
+                                                <option value="+56">CL (+56)</option>
+                                                <option value="+52">MX (+52)</option>
+                                                <option value="+58">VE (+58)</option>
+                                                <option value="+1">US (+1)</option>
+                                                <option value="+34">ES (+34)</option>
+                                            </select>
                                         </div>
                                         <input 
                                             type="tel"
@@ -269,7 +307,7 @@ function ReservaNuevaForm() {
                                             value={formData.clienteTelefono}
                                             onChange={(e) => setFormData({ ...formData, clienteTelefono: e.target.value })}
                                             className="flex-1 bg-transparent h-16 px-6 text-slate-900 font-black uppercase italic tracking-tight outline-none"
-                                            placeholder="9 11 1234 5678"
+                                            placeholder="099 887 7665"
                                         />
                                     </div>
                                 </div>
@@ -284,7 +322,10 @@ function ReservaNuevaForm() {
                                                 <button 
                                                     key={c.id}
                                                     type="button"
-                                                    onClick={() => setFormData({ ...formData, clienteNombre: c.nombre, clienteTelefono: c.telefono })}
+                                                    onClick={() => {
+                                                        setFormData(prev => ({ ...prev, clienteNombre: c.nombre }));
+                                                        actualizarTelefonoDesdeSugerencia(c.telefono);
+                                                    }}
                                                     className="px-4 py-2 bg-slate-100 hover:bg-slate-900 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border border-transparent hover:border-slate-900"
                                                 >
                                                     {c.nombre}
