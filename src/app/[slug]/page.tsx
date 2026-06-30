@@ -576,6 +576,117 @@ export default async function PublicNegocioPage({
                 </section>
             )}
 
+            {/* CUADRÍCULA DE NAVEGACIÓN RÁPIDA (DINÁMICA) */}
+            <section className="px-6 mb-12">
+                <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
+                    {/* Servicios */}
+                    <a 
+                        href="#servicios" 
+                        className="flex flex-col items-center justify-center p-4 rounded-[2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
+                    >
+                        <div 
+                            className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
+                            style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}
+                        >
+                            <Scissors size={20} />
+                        </div>
+                        <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest block truncate max-w-full leading-none">
+                            Servicios
+                        </span>
+                    </a>
+
+                    {/* Promociones */}
+                    {promocionesActivas.length > 0 && (
+                        <a 
+                            href="#promociones" 
+                            className="flex flex-col items-center justify-center p-4 rounded-[2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
+                        >
+                            <div 
+                                className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
+                                style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}
+                            >
+                                <Zap size={20} />
+                            </div>
+                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest block truncate max-w-full leading-none">
+                                Promos
+                            </span>
+                        </a>
+                    )}
+
+                    {/* Cursos */}
+                    {coursesModuleEnabled && cursosActivos.length > 0 && (
+                        <a 
+                            href="#cursos" 
+                            className="flex flex-col items-center justify-center p-4 rounded-[2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
+                        >
+                            <div 
+                                className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
+                                style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}
+                            >
+                                <Users size={20} />
+                            </div>
+                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest block truncate max-w-full leading-none">
+                                Cursos
+                            </span>
+                        </a>
+                    )}
+
+                    {/* Resultados */}
+                    {resultadosDestacados.length > 0 && (
+                        <a 
+                            href="#resultados" 
+                            className="flex flex-col items-center justify-center p-4 rounded-[2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
+                        >
+                            <div 
+                                className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
+                                style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}
+                            >
+                                <Sparkles size={20} />
+                            </div>
+                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest block truncate max-w-full leading-none">
+                                Trabajos
+                            </span>
+                        </a>
+                    )}
+
+                    {/* Páginas */}
+                    {paginasPersonalizadas.length > 0 && (
+                        <a 
+                            href="#paginas" 
+                            className="flex flex-col items-center justify-center p-4 rounded-[2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
+                        >
+                            <div 
+                                className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
+                                style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}
+                            >
+                                <FileText size={20} />
+                            </div>
+                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest block truncate max-w-full leading-none">
+                                Páginas
+                            </span>
+                        </a>
+                    )}
+
+                    {/* Ubicación */}
+                    {resolvedUbicaciones.length > 0 && (
+                        <a 
+                            href="#ubicacion" 
+                            className="flex flex-col items-center justify-center p-4 rounded-[2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
+                        >
+                            <div 
+                                className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
+                                style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}
+                            >
+                                <MapPin size={20} />
+                            </div>
+                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest block truncate max-w-full leading-none">
+                                Ubicación
+                            </span>
+                        </a>
+                    )}
+                </div>
+            </section>
+
             {/* SERVICES LIST */}
             <section id="servicios" className="px-6 mb-12">
                 <div className="flex justify-between items-end mb-8">
@@ -617,7 +728,7 @@ export default async function PublicNegocioPage({
 
             {/* PROMOCIONES */}
             {promocionesActivas.length > 0 && (
-                <section className="px-6 mb-12">
+                <section id="promociones" className="px-6 mb-12">
                     <PromotionsSection 
                         promociones={promocionesActivas} 
                         slug={slug} 
@@ -631,14 +742,16 @@ export default async function PublicNegocioPage({
 
             {/* CURSOS Y TALLERES */}
             {coursesModuleEnabled && cursosActivos.length > 0 && (
-                <PublicCoursesSection 
-                    cursosActivos={cursosActivos} 
-                    businessSlug={slug}
-                    primaryColor={primaryColor}
-                    tertiaryColor={tertiaryColor}
-                    textColor={textColor}
-                    showPrices={negocio.mostrarPrecios !== false}
-                />
+                <section id="cursos" className="mb-12">
+                    <PublicCoursesSection 
+                        cursosActivos={cursosActivos} 
+                        businessSlug={slug}
+                        primaryColor={primaryColor}
+                        tertiaryColor={tertiaryColor}
+                        textColor={textColor}
+                        showPrices={negocio.mostrarPrecios !== false}
+                    />
+                </section>
             )}
 
             {/* SECCIÃ“N DE MIS TRABAJOS (RESULTADOS) - Antes y Después Premium */}
