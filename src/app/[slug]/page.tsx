@@ -355,6 +355,8 @@ export default async function PublicNegocioPage({
     
     // DEFINICIÃ“N DE COLORES DESDE ADMIN
     const primaryColor = (negocio as any).colorPrimario || 'var(--primary)';
+    const primaryHex = primaryColor.startsWith('#') ? primaryColor.trim() : '#ec4899';
+    const bgOpacityColor = primaryHex.length === 7 ? `${primaryHex}1a` : 'rgba(236, 72, 153, 0.1)';
     const secondaryColor = (negocio as any).colorSecundario || '#0f172a';
     const tertiaryColor = (negocio as any).colorTerciario || '#7B68EE';
     const neutralColor = (negocio as any).colorNeutral || '#fff8f6';
@@ -576,21 +578,21 @@ export default async function PublicNegocioPage({
                 </section>
             )}
 
-            {/* CUADRÍCULA DE NAVEGACIÓN RÁPIDA (DINÁMICA) */}
-            <section className="px-6 mb-12">
-                <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
+            {/* CUADRÍCULA DE NAVEGACIÓN RÁPIDA (DINÁMICA Y COMPACTA) */}
+            <section className="px-4 mb-12 mt-4">
+                <div className="grid grid-cols-3 gap-2.5 sm:gap-4 max-w-md mx-auto">
                     {/* Servicios */}
                     <a 
-                        href="#servicios" 
-                        className="flex flex-col items-center justify-center p-4 rounded-[2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
+                        href="#servicios"
+                        className="flex flex-col items-center justify-center p-2.5 sm:p-4 rounded-[1.8rem] sm:rounded-[2.2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
                     >
                         <div 
-                            className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
-                            style={{ backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 90%)`, color: primaryColor }}
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-1.5 sm:mb-2 transition-transform group-hover:scale-110"
+                            style={{ backgroundColor: bgOpacityColor, color: primaryColor }}
                         >
-                            <Scissors size={20} />
+                            <Scissors className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
-                        <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest block truncate max-w-full leading-none">
+                        <span className="text-[9px] sm:text-[10px] font-black text-slate-800 uppercase tracking-wider block truncate w-full leading-none">
                             Servicios
                         </span>
                     </a>
@@ -598,16 +600,16 @@ export default async function PublicNegocioPage({
                     {/* Promociones */}
                     {promocionesActivas.length > 0 && (
                         <a 
-                            href="#promociones" 
-                            className="flex flex-col items-center justify-center p-4 rounded-[2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
+                            href="#promociones"
+                            className="flex flex-col items-center justify-center p-2.5 sm:p-4 rounded-[1.8rem] sm:rounded-[2.2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
                         >
                             <div 
-                                className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
-                                style={{ backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 90%)`, color: primaryColor }}
+                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-1.5 sm:mb-2 transition-transform group-hover:scale-110"
+                                style={{ backgroundColor: bgOpacityColor, color: primaryColor }}
                             >
-                                <Zap size={20} />
+                                <Zap className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
-                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest block truncate max-w-full leading-none">
+                            <span className="text-[9px] sm:text-[10px] font-black text-slate-800 uppercase tracking-wider block truncate w-full leading-none">
                                 Promos
                             </span>
                         </a>
@@ -616,16 +618,16 @@ export default async function PublicNegocioPage({
                     {/* Cursos */}
                     {coursesModuleEnabled && cursosActivos.length > 0 && (
                         <a 
-                            href="#cursos" 
-                            className="flex flex-col items-center justify-center p-4 rounded-[2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
+                            href="#cursos"
+                            className="flex flex-col items-center justify-center p-2.5 sm:p-4 rounded-[1.8rem] sm:rounded-[2.2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
                         >
                             <div 
-                                className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
-                                style={{ backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 90%)`, color: primaryColor }}
+                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-1.5 sm:mb-2 transition-transform group-hover:scale-110"
+                                style={{ backgroundColor: bgOpacityColor, color: primaryColor }}
                             >
-                                <Users size={20} />
+                                <Users className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
-                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest block truncate max-w-full leading-none">
+                            <span className="text-[9px] sm:text-[10px] font-black text-slate-800 uppercase tracking-wider block truncate w-full leading-none">
                                 Cursos
                             </span>
                         </a>
@@ -634,16 +636,16 @@ export default async function PublicNegocioPage({
                     {/* Resultados */}
                     {resultadosDestacados.length > 0 && (
                         <a 
-                            href="#resultados" 
-                            className="flex flex-col items-center justify-center p-4 rounded-[2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
+                            href="#resultados"
+                            className="flex flex-col items-center justify-center p-2.5 sm:p-4 rounded-[1.8rem] sm:rounded-[2.2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
                         >
                             <div 
-                                className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
-                                style={{ backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 90%)`, color: primaryColor }}
+                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-1.5 sm:mb-2 transition-transform group-hover:scale-110"
+                                style={{ backgroundColor: bgOpacityColor, color: primaryColor }}
                             >
-                                <Sparkles size={20} />
+                                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
-                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest block truncate max-w-full leading-none">
+                            <span className="text-[9px] sm:text-[10px] font-black text-slate-800 uppercase tracking-wider block truncate w-full leading-none">
                                 Trabajos
                             </span>
                         </a>
@@ -652,16 +654,16 @@ export default async function PublicNegocioPage({
                     {/* Páginas */}
                     {paginasPersonalizadas.length > 0 && (
                         <a 
-                            href="#paginas" 
-                            className="flex flex-col items-center justify-center p-4 rounded-[2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
+                            href="#paginas"
+                            className="flex flex-col items-center justify-center p-2.5 sm:p-4 rounded-[1.8rem] sm:rounded-[2.2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
                         >
                             <div 
-                                className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
-                                style={{ backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 90%)`, color: primaryColor }}
+                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-1.5 sm:mb-2 transition-transform group-hover:scale-110"
+                                style={{ backgroundColor: bgOpacityColor, color: primaryColor }}
                             >
-                                <FileText size={20} />
+                                <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
-                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest block truncate max-w-full leading-none">
+                            <span className="text-[9px] sm:text-[10px] font-black text-slate-800 uppercase tracking-wider block truncate w-full leading-none">
                                 Páginas
                             </span>
                         </a>
@@ -670,16 +672,16 @@ export default async function PublicNegocioPage({
                     {/* Ubicación */}
                     {resolvedUbicaciones.length > 0 && (
                         <a 
-                            href="#ubicacion" 
-                            className="flex flex-col items-center justify-center p-4 rounded-[2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
+                            href="#ubicacion"
+                            className="flex flex-col items-center justify-center p-2.5 sm:p-4 rounded-[1.8rem] sm:rounded-[2.2rem] bg-white border border-gray-100/50 shadow-sm transition-all active:scale-95 text-center group hover:shadow-md"
                         >
                             <div 
-                                className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
-                                style={{ backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 90%)`, color: primaryColor }}
+                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-1.5 sm:mb-2 transition-transform group-hover:scale-110"
+                                style={{ backgroundColor: bgOpacityColor, color: primaryColor }}
                             >
-                                <MapPin size={20} />
+                                <MapPin className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
-                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest block truncate max-w-full leading-none">
+                            <span className="text-[9px] sm:text-[10px] font-black text-slate-800 uppercase tracking-wider block truncate w-full leading-none">
                                 Ubicación
                             </span>
                         </a>
@@ -924,6 +926,38 @@ export default async function PublicNegocioPage({
                     </div>
                 </section>
             )}
+
+            {/* Script inline para scroll suave seguro sin cambiar el historial en la PWA */}
+            <script 
+                dangerouslySetInnerHTML={{ 
+                    __html: `
+                        document.addEventListener('DOMContentLoaded', function() {
+                            setupSmoothScroll();
+                        });
+                        // Por si el DOM ya cargó (Next.js client-side navigation)
+                        setupSmoothScroll();
+
+                        function setupSmoothScroll() {
+                            document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+                                // Evitar duplicar listeners
+                                if (anchor.getAttribute('data-scroller-attached')) return;
+                                anchor.setAttribute('data-scroller-attached', 'true');
+                                
+                                anchor.addEventListener('click', function(e) {
+                                    var href = this.getAttribute('href');
+                                    if (href === '#') return;
+                                    var targetId = href.substring(1);
+                                    var target = document.getElementById(targetId);
+                                    if (target) {
+                                        e.preventDefault();
+                                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    }
+                                });
+                            });
+                        }
+                    `
+                }} 
+            />
         </main>
     );
 }
