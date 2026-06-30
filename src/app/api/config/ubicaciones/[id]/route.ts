@@ -13,20 +13,39 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (!negocioId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     const { id } = await params;
-    const { nombre, direccion, mapUrl } = await req.json();
-
+    
     try {
-        const now = new Date().toISOString();
-        const dir = direccion?.trim() || null;
-        const map = mapUrl?.trim() || null;
-        await prisma.$executeRawUnsafe(
-            `UPDATE Ubicacion SET nombre = ?, direccion = ?, mapUrl = ?, updatedAt = ? WHERE id = ? AND negocioId = ?`,
-            nombre?.trim(), dir, map, now, id, negocioId
-        );
-        return NextResponse.json({ id, nombre: nombre?.trim(), direccion: dir, mapUrl: map });
-    } catch (error) {
-        console.error(error);
-        return NextResponse.json({ error: "Error al actualizar" }, { status: 500 });
+        const { nombre, direccion, mapUrl } = await req.json();
+        if (!nombre?.trim()) {
+            return NextResponse.json({ error: "El nombre es obligatorio" }, { status: 400 });
+        }
+
+        // Verificar unicidad con otra sede distinta
+        const existing = await prisma.ubicacion.findFirst({
+            where: {
+                nombre: nombre.trim(),
+                negocioId,
+                NOT: { id }
+            }
+        });
+        if (existing) {
+            return NextResponse.json({ error: "Ya existe otra sede con ese nombre" }, { status: 400 });
+        }
+
+        const updated = await prisma.ubicacion.update({
+            where: { id, negocioId },
+            data: {
+                nombre: nombre.trim(),
+                direccion: direccion?.trim() || null,
+                mapUrl: mapUrl?.trim() || null,
+                updatedAt: new Date()
+            }
+        });
+
+        return NextResponse.json(updated);
+    } catch (error: any) {
+        console.error('[PATCH /api/config/ubicaciones/[id]] Error:', error);
+        return NextResponse.json({ error: "Error al actualizar la ubicación: " + (error?.message || 'Error desconocido') }, { status: 500 });
     }
 }
 
@@ -37,18 +56,20 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     const { id } = await params;
 
     try {
-        // Desasociar canchas antes de eliminar
-        await prisma.$executeRawUnsafe(
-            `UPDATE Cancha SET ubicacionId = NULL WHERE ubicacionId = ? AND negocioId = ?`,
-            id, negocioId
-        );
-        await prisma.$executeRawUnsafe(
-            `DELETE FROM Ubicacion WHERE id = ? AND negocioId = ?`,
-            id, negocioId
-        );
+        // Desasociar servicios (canchas) antes de eliminar la sede
+        await prisma.service.updateMany({
+            where: { ubicacionId: id, negocioId },
+            data: { ubicacionId: null }
+        });
+
+        // Eliminar de la base de datos
+        await prisma.ubicacion.delete({
+            where: { id, negocioId }
+        });
+
         return NextResponse.json({ success: true });
-    } catch (error) {
-        console.error(error);
-        return NextResponse.json({ error: "Error al eliminar" }, { status: 500 });
+    } catch (error: any) {
+        console.error('[DELETE /api/config/ubicaciones/[id]] Error:', error);
+        return NextResponse.json({ error: "Error al eliminar la ubicación: " + (error?.message || 'Error desconocido') }, { status: 500 });
     }
 }

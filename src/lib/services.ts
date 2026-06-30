@@ -109,13 +109,15 @@ export async function getNegocioBySlug(slug: string) {
                 }
             }
 
-            // Cargar ubicaciones (incluye mapUrl)
+            // Cargar ubicaciones (incluye mapUrl) usando Prisma ORM
             try {
-                const ubicaciones: any[] = await prisma.$queryRawUnsafe(
-                    `SELECT id, nombre, direccion, mapUrl FROM Ubicacion WHERE negocioId = '${negocio.id}' ORDER BY createdAt ASC`
-                );
+                const ubicaciones = await prisma.ubicacion.findMany({
+                    where: { negocioId: negocio.id },
+                    orderBy: { createdAt: 'asc' }
+                });
                 negocio.ubicaciones = ubicaciones;
             } catch (e) {
+                console.error('Error loading business locations:', e);
                 negocio.ubicaciones = [];
             }
 
