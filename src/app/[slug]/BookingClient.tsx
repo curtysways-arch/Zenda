@@ -66,7 +66,7 @@ export default function BookingClient({
     }, [negocio?.configuracion]);
 
     const primaryService = useMemo(() => allServices.find((s: any) => s.id === initialServiceId), [allServices, initialServiceId]);
-    const otherServices = useMemo(() => allServices.filter((s: any) => s.id !== initialServiceId && s.estaActivo !== false), [allServices, initialServiceId]);
+    const otherServices = useMemo(() => allServices.filter((s: any) => s.estaActivo !== false), [allServices]);
 
     useEffect(() => {
         const savedData = localStorage.getItem('customerInfo');
