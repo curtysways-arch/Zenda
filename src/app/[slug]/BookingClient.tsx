@@ -135,6 +135,13 @@ const resolveSlotPromotion = (
             if (startStr && selectedDateStr < startStr) return null;
             if (endStr && selectedDateStr > endStr) return null;
 
+            // Verificar días válidos de la semana (0 = Domingo, 1 = Lunes, etc.)
+            const dayOfWeek = selectedDateObj.getDay();
+            if (p.diasValidos && String(p.diasValidos).trim() !== '') {
+                const validDays = String(p.diasValidos).split(',').map(Number);
+                if (!validDays.includes(dayOfWeek)) return null;
+            }
+
             // Mantener isTarget para el cálculo de prioridad
             const isTarget = discount === 20 || String(p.titulo || '').includes('20');
 
@@ -222,20 +229,41 @@ const resolveSlotPromotion = (
         if (!selectedStaffId) return;
         const staffMember = staff.find(s => s.id === selectedStaffId);
         
+        let appliedPromoType: string | null = null;
+        let appliedPromoPrice: number = 0;
+
         // Calcular precio final usando el motor unificado para cada servicio
         const precioRealParaFecha = selectedServiceIds.reduce((acc, id) => {
             const s = allServices.find((ser: any) => ser.id === id);
             if (!s) return acc;
             
-            // Resolvemos usando el motor unificado pasándole la configuración de descuentos automáticos
             const res = resolveSlotPromotion(hour, date, s, negocio.automaticDiscount);
+
+            // Detectar si hay promo manual aplicada
+            if (res.hasPromotion && res.source === 'manual') {
+                const manualPromos = [
+                    ...(s.promociones || []),
+                    ...(s.promocion ? [s.promocion] : []),
+                    ...(s.PromotionToService || []).map((rel: any) => rel.Promotion),
+                    ...(s.Promotion ? [s.Promotion] : [])
+                ].filter(Boolean);
+                
+                const winningPromo = manualPromos.find(p => Number(p.precioPromo || p.precioPromocion || 0) === res.price);
+                if (winningPromo) {
+                    appliedPromoType = winningPromo.tipoPromo;
+                    appliedPromoPrice = res.price;
+                }
+            }
+
             return acc + res.price;
         }, 0);
 
         setSelectedBooking({
             date, hour, canchaId: selectedServiceIds[0] || initialServiceId, staffId: selectedStaffId, staffName: staffMember?.name, duracion,
             canchaNombre: selectedServiceIds.length > 1 ? allServices.find((s: any) => s.id === selectedServiceIds[0])?.nombre + ` +${selectedServiceIds.length - 1}` : allServices.find((s: any) => s.id === selectedServiceIds[0])?.nombre || 'SPA',
-            precio: precioRealParaFecha, slug, discountPercentage
+            precio: precioRealParaFecha, slug, discountPercentage,
+            tipoPromo: appliedPromoType,
+            precioPromo: appliedPromoPrice
         });
     };
 
@@ -358,8 +386,19 @@ const resolveSlotPromotion = (
 
                         {/* Fila del Total Separada */}
                         <div className="flex justify-between items-center pt-4 border-t-2 border-gray-50">
-                            <span className="text-xs font-black uppercase text-gray-400 tracking-wider">Total a pagar</span>
-                            {showPrices && <span className="text-2xl font-black text-gray-900 tracking-tighter">${selectedBooking?.precio.toFixed(2)}</span>}
+                            <span className="text-xs font-black uppercase text-gray-400 tracking-wider">
+                                {selectedBooking?.tipoPromo === '2x1' ? 'Total a pagar (Promo 2x1)' : (selectedBooking?.tipoPromo === '3x1' ? 'Total a pagar (Promo 3x1)' : 'Total a pagar')}
+                            </span>
+                            {showPrices && (
+                                <div className="flex items-baseline gap-2">
+                                    {(selectedBooking?.tipoPromo === '2x1' || selectedBooking?.tipoPromo === '3x1') && (
+                                        <span className="text-sm text-gray-400 line-through font-bold">
+                                            ${((selectedBooking?.precio || 0) * (selectedBooking?.tipoPromo === '2x1' ? 2 : 3)).toFixed(2)}
+                                        </span>
+                                    )}
+                                    <span className="text-2xl font-black text-gray-900 tracking-tighter">${selectedBooking?.precio.toFixed(2)}</span>
+                                </div>
+                            )}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1 text-left">
@@ -639,10 +678,19 @@ const resolveSlotPromotion = (
                         </div>
                         {showPrices && selectedBooking && (
                             <div className="text-right flex flex-col items-end justify-end">
-                                <span className="text-[9px] font-black text-gray-400 uppercase mb-1">TOTAL</span>
-                                <span className="text-3xl font-black text-gray-900 leading-none">
-                                    ${selectedBooking.precio.toFixed(2)}
+                                <span className="text-[9px] font-black text-gray-400 uppercase mb-1">
+                                    {selectedBooking.tipoPromo === '2x1' ? 'PROMO 2x1' : (selectedBooking.tipoPromo === '3x1' ? 'PROMO 3x1' : 'TOTAL')}
                                 </span>
+                                <div className="flex items-baseline gap-2">
+                                    {(selectedBooking.tipoPromo === '2x1' || selectedBooking.tipoPromo === '3x1') && (
+                                        <span className="text-xs text-gray-400 line-through font-bold">
+                                            ${((selectedBooking.precio || 0) * (selectedBooking.tipoPromo === '2x1' ? 2 : 3)).toFixed(2)}
+                                        </span>
+                                    )}
+                                    <span className="text-3xl font-black text-gray-900 leading-none">
+                                        ${selectedBooking.precio.toFixed(2)}
+                                    </span>
+                                </div>
                             </div>
                         )}
                     </div>

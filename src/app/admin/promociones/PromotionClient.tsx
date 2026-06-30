@@ -210,14 +210,22 @@ export default function PromotionClient({
                                     </div>
 
                                     <div className="mt-auto pt-4 border-t border-gray-50">
-                                        <div className="flex items-end gap-2 px-2 pb-4">
-                                            <span className="text-2xl font-black" style={{ color: 'var(--primary-color)' }}>
-                                                {promo.tipoPromo === '2x1' ? '2x1' : (promo.tipoPromo === '3x1' ? '3x1' : `$${promo.precioPromo}`)}
-                                            </span>
-                                            {promo.precioAnterior && (
-                                                <span className="text-sm text-gray-400 line-through font-medium mb-1">
-                                                    ${promo.precioAnterior}
+                                        <div className="flex items-end justify-between w-full px-2 pb-4">
+                                            <div className="flex flex-col text-left">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
+                                                    {promo.tipoPromo === '2x1' ? 'Oferta 2x1' : (promo.tipoPromo === '3x1' ? 'Oferta 3x1' : 'Precio Promo')}
                                                 </span>
+                                                <span className="text-2xl font-black leading-none" style={{ color: 'var(--primary-color)' }}>
+                                                    ${promo.precioPromo}
+                                                </span>
+                                            </div>
+                                            {(promo.precioAnterior || promo.tipoPromo === '2x1' || promo.tipoPromo === '3x1') && (
+                                                <div className="text-right flex flex-col justify-end">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Real</span>
+                                                    <span className="text-sm text-gray-400 line-through font-medium leading-none">
+                                                        ${promo.precioAnterior || (promo.tipoPromo === '2x1' ? promo.precioPromo * 2 : promo.precioPromo * 3)}
+                                                    </span>
+                                                </div>
                                             )}
                                         </div>
                                         <div className="flex text-xs font-medium text-gray-400 justify-between items-center mb-4 px-2">

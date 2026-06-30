@@ -92,14 +92,10 @@ export default function PromotionForm({
 
         setLoading(true);
 
-        const precioPromoVal = (form.tipoPromo === '2x1' || form.tipoPromo === '3x1') 
-            ? 0 
-            : parseFloat(form.precioPromo || '0');
-
         const payload = {
             titulo: form.titulo,
             descripcion: form.descripcion,
-            precioPromo: precioPromoVal,
+            precioPromo: parseFloat(form.precioPromo || '0'),
             precioAnterior: form.precioAnterior ? parseFloat(form.precioAnterior) : undefined,
             imagenUrl: form.imagenUrl,
             imageMediaId: form.imageMediaId,
@@ -204,30 +200,27 @@ export default function PromotionForm({
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                {form.tipoPromo === 'precio_especial' ? (
-                                    <div>
-                                        <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Precio Promo ($)</label>
-                                        <input
-                                            required={form.tipoPromo === 'precio_especial'}
-                                            type="number"
-                                            step="any"
-                                            placeholder="Ej: 1500"
-                                            value={form.precioPromo}
-                                            onChange={e => setForm({ ...form, precioPromo: e.target.value })}
-                                            className="w-full font-black border-transparent rounded-2xl px-5 py-4 transition-all outline-none"
-                                            style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}
-                                            onFocus={(e) => { e.target.style.borderColor = 'var(--primary-color)'; e.target.style.backgroundColor = 'white'; e.target.style.boxShadow = '0 0 0 2px color-mix(in srgb, var(--primary-color), transparent 80%)'; }}
-                                            onBlur={(e) => { e.target.style.borderColor = 'transparent'; e.target.style.backgroundColor = 'color-mix(in srgb, var(--primary-color), transparent 90%)'; e.target.style.boxShadow = 'none'; }}
-                                        />
-                                    </div>
-                                ) : (
-                                    <div>
-                                        <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Precio Promo ($)</label>
-                                        <div className="w-full bg-gray-50 border-transparent rounded-2xl px-5 py-4 text-gray-400 font-medium">
-                                            Automático ({form.tipoPromo})
-                                        </div>
-                                    </div>
-                                )}
+                                <div>
+                                    <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Precio Promo ($)</label>
+                                    <input
+                                        required
+                                        type="number"
+                                        step="any"
+                                        placeholder="Ej: 30"
+                                        value={form.precioPromo}
+                                        onChange={e => setForm({ ...form, precioPromo: e.target.value })}
+                                        className="w-full font-black border-transparent rounded-2xl px-5 py-4 transition-all outline-none"
+                                        style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}
+                                        onFocus={(e) => { e.target.style.borderColor = 'var(--primary-color)'; e.target.style.backgroundColor = 'white'; e.target.style.boxShadow = '0 0 0 2px color-mix(in srgb, var(--primary-color), transparent 80%)'; }}
+                                        onBlur={(e) => { e.target.style.borderColor = 'transparent'; e.target.style.backgroundColor = 'color-mix(in srgb, var(--primary-color), transparent 90%)'; e.target.style.boxShadow = 'none'; }}
+                                    />
+                                    {form.tipoPromo === '2x1' && form.precioPromo && (
+                                        <p className="text-[10px] text-slate-400 mt-1 font-bold">Precio real autocalculado: ${parseFloat(form.precioPromo) * 2}</p>
+                                    )}
+                                    {form.tipoPromo === '3x1' && form.precioPromo && (
+                                        <p className="text-[10px] text-slate-400 mt-1 font-bold">Precio real autocalculado: ${parseFloat(form.precioPromo) * 3}</p>
+                                    )}
+                                </div>
                                 <div>
                                     <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Precio Normal</label>
                                     <input

@@ -248,6 +248,13 @@ const resolveSlotPromotion = (
             if (startStr && selectedDateStr < startStr) return null;
             if (endStr && selectedDateStr > endStr) return null;
 
+            // Verificar días válidos de la semana (0 = Domingo, 1 = Lunes, etc.)
+            const dayOfWeek = selectedDateObj.getDay();
+            if (p.diasValidos && String(p.diasValidos).trim() !== '') {
+                const validDays = String(p.diasValidos).split(',').map(Number);
+                if (!validDays.includes(dayOfWeek)) return null;
+            }
+
             // Mantener isTarget para el cálculo de prioridad
             const isTarget = discount === 20 || String(p.titulo || '').includes('20');
 
