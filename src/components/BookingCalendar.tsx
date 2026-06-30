@@ -261,7 +261,11 @@ const resolveSlotPromotion = (
             if (p.horaInicioValida && p.horaFinValida && String(p.horaInicioValida).trim() !== '') {
                 const sVal = parseInt(String(p.horaInicioValida).replace(':', ''), 10);
                 const eVal = parseInt(String(p.horaFinValida).replace(':', ''), 10);
-                if (hourNum < sVal || hourNum > eVal) return null;
+                if (eVal >= sVal) {
+                    if (hourNum < sVal || hourNum > eVal) return null;
+                } else {
+                    if (hourNum < sVal && hourNum > eVal) return null;
+                }
             }
 
             let label = `-${discount}%`;
