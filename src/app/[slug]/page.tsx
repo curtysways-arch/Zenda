@@ -586,7 +586,7 @@ export default async function PublicNegocioPage({
                     >
                         <div 
                             className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
-                            style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}
+                            style={{ backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 90%)`, color: primaryColor }}
                         >
                             <Scissors size={20} />
                         </div>
@@ -603,7 +603,7 @@ export default async function PublicNegocioPage({
                         >
                             <div 
                                 className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
-                                style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}
+                                style={{ backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 90%)`, color: primaryColor }}
                             >
                                 <Zap size={20} />
                             </div>
@@ -621,7 +621,7 @@ export default async function PublicNegocioPage({
                         >
                             <div 
                                 className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
-                                style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}
+                                style={{ backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 90%)`, color: primaryColor }}
                             >
                                 <Users size={20} />
                             </div>
@@ -639,7 +639,7 @@ export default async function PublicNegocioPage({
                         >
                             <div 
                                 className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
-                                style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}
+                                style={{ backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 90%)`, color: primaryColor }}
                             >
                                 <Sparkles size={20} />
                             </div>
@@ -657,7 +657,7 @@ export default async function PublicNegocioPage({
                         >
                             <div 
                                 className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
-                                style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}
+                                style={{ backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 90%)`, color: primaryColor }}
                             >
                                 <FileText size={20} />
                             </div>
@@ -675,7 +675,7 @@ export default async function PublicNegocioPage({
                         >
                             <div 
                                 className="w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-transform group-hover:scale-110"
-                                style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}
+                                style={{ backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 90%)`, color: primaryColor }}
                             >
                                 <MapPin size={20} />
                             </div>
