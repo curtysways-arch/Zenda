@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import PublicCoursesSection from '@/components/public/PublicCoursesSection';
 import PromotionsSection from '@/components/public/PromotionsSection';
 import Link from 'next/link';
+import Script from 'next/script';
 import prisma from '@/lib/prisma';
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
@@ -927,34 +928,38 @@ export default async function PublicNegocioPage({
                 </section>
             )}
 
-            {/* Script inline para scroll suave seguro sin cambiar el historial en la PWA */}
-            <script 
+            {/* Script optimizado de Next.js para scroll suave seguro sin cambiar el historial en la PWA */}
+            <Script 
+                id="smooth-scroll-pwa"
+                strategy="afterInteractive"
                 dangerouslySetInnerHTML={{ 
                     __html: `
-                        document.addEventListener('DOMContentLoaded', function() {
-                            setupSmoothScroll();
-                        });
-                        // Por si el DOM ya cargó (Next.js client-side navigation)
-                        setupSmoothScroll();
-
-                        function setupSmoothScroll() {
-                            document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
-                                // Evitar duplicar listeners
-                                if (anchor.getAttribute('data-scroller-attached')) return;
-                                anchor.setAttribute('data-scroller-attached', 'true');
-                                
-                                anchor.addEventListener('click', function(e) {
-                                    var href = this.getAttribute('href');
-                                    if (href === '#') return;
-                                    var targetId = href.substring(1);
-                                    var target = document.getElementById(targetId);
-                                    if (target) {
-                                        e.preventDefault();
-                                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                    }
+                        (function() {
+                            function setupSmoothScroll() {
+                                document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
+                                    if (anchor.getAttribute('data-scroller-attached')) return;
+                                    anchor.setAttribute('data-scroller-attached', 'true');
+                                    
+                                    anchor.addEventListener('click', function(e) {
+                                        var href = this.getAttribute('href');
+                                        if (href === '#') return;
+                                        var targetId = href.substring(1);
+                                        var target = document.getElementById(targetId);
+                                        if (target) {
+                                            e.preventDefault();
+                                            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        }
+                                    });
                                 });
-                            });
-                        }
+                            }
+                            
+                            // Ejecutar al inicio y tras navegaciones del cliente
+                            setupSmoothScroll();
+                            
+                            // Re-intentar periódicamente por si el DOM cambia dinámicamente
+                            var timer = setInterval(setupSmoothScroll, 1000);
+                            setTimeout(function() { clearInterval(timer); }, 10000);
+                        })();
                     `
                 }} 
             />
