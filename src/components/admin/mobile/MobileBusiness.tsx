@@ -85,15 +85,20 @@ export default function MobileBusiness({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     nombre: branchForm.nombre.trim(),
-                    direccion: branchForm.direccion.trim() || null,
-                    mapUrl: branchForm.mapUrl.trim() || null
+                    direccion: branchForm.direccion?.trim() || null,
+                    mapUrl: branchForm.mapUrl?.trim() || null
                 })
             });
             if (res.ok) {
                 window.location.reload();
+            } else {
+                const data = await res.json().catch(() => ({}));
+                alert(data.error || 'Error al guardar la sucursal. Intenta de nuevo.');
+                setIsSavingBranch(false);
             }
         } catch (e) {
             console.error(e);
+            alert('Error de conexión. Por favor intenta de nuevo.');
             setIsSavingBranch(false);
         }
     };
