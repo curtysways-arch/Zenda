@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { planLimitValidator } from "@/lib/services/planLimitValidator";
 
 async function getNegocioId() {
     const session = await getServerSession(authOptions);
@@ -13,28 +14,23 @@ export async function GET() {
     if (!negocioId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     try {
-        const ubicaciones: any[] = await prisma.$queryRawUnsafe(
-            `SELECT u.id, u.nombre, u.direccion, u.mapUrl, u.createdAt,
-                    COUNT(c.id) as canchasCount
-             FROM Ubicacion u
-             LEFT JOIN Cancha c ON c.ubicacionId = u.id
-             WHERE u.negocioId = ?
-             GROUP BY u.id
-             ORDER BY u.createdAt ASC`,
-            negocioId
-        );
+        const ubicaciones = await prisma.ubicacion.findMany({
+            where: { negocioId },
+            orderBy: { createdAt: 'asc' },
+            include: {
+                _count: { select: { Service: true } }
+            }
+        });
 
         return NextResponse.json(ubicaciones.map(u => ({
             ...u,
-            _count: { canchas: Number(u.canchasCount) }
+            _count: { canchas: u._count.Service }
         })));
     } catch (error) {
         console.error(error);
         return NextResponse.json({ error: "Error al obtener ubicaciones" }, { status: 500 });
     }
 }
-
-import { planLimitValidator } from "@/lib/services/planLimitValidator";
 
 export async function POST(req: Request) {
     const negocioId = await getNegocioId();
@@ -50,26 +46,27 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: validation.message }, { status: 403 });
         }
 
-        // Verificar unicidad
-        const existing: any[] = await prisma.$queryRawUnsafe(
-            `SELECT id FROM Ubicacion WHERE nombre = ? AND negocioId = ?`,
-            nombre.trim(), negocioId
-        );
-        if (existing.length > 0) return NextResponse.json({ error: "Ya existe una sede con ese nombre" }, { status: 400 });
+        // Verificar unicidad (Prisma lanzará error único pero lo manejamos manualmente)
+        const existing = await prisma.ubicacion.findFirst({
+            where: { nombre: nombre.trim(), negocioId }
+        });
+        if (existing) return NextResponse.json({ error: "Ya existe una sede con ese nombre" }, { status: 400 });
 
-        const id = `ub_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-        const now = new Date().toISOString();
-        const dir = direccion?.trim() || null;
-        const map = mapUrl?.trim() || null;
+        // Crear con Prisma ORM (evita problemas de casing en PostgreSQL raw SQL)
+        const ubicacion = await prisma.ubicacion.create({
+            data: {
+                id: `ub_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                nombre: nombre.trim(),
+                direccion: direccion?.trim() || null,
+                mapUrl: mapUrl?.trim() || null,
+                negocioId,
+                updatedAt: new Date(),
+            }
+        });
 
-        await prisma.$executeRawUnsafe(
-            `INSERT INTO Ubicacion (id, nombre, direccion, mapUrl, negocioId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            id, nombre.trim(), dir, map, negocioId, now, now
-        );
-
-        return NextResponse.json({ id, nombre: nombre.trim(), direccion: dir, mapUrl: map, negocioId, createdAt: now });
+        return NextResponse.json(ubicacion);
     } catch (error: any) {
-        console.error(error);
-        return NextResponse.json({ error: "Error al crear ubicación" }, { status: 500 });
+        console.error('[POST /api/config/ubicaciones] Error:', error?.message || error);
+        return NextResponse.json({ error: "Error al crear ubicación: " + (error?.message || 'Error desconocido') }, { status: 500 });
     }
 }
