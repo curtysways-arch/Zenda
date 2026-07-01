@@ -131,17 +131,17 @@ export default function NegocioQRModal({ isOpen, onClose, negocio }: NegocioQRMo
             font-size: 14px;
         }
         .footer-label {
-            font-size: 8px;
+            font-size: 9px;
             font-weight: 700;
-            color: rgba(255,255,255,0.7);
+            color: rgba(255,255,255,0.75);
             text-transform: uppercase;
             letter-spacing: 0.1em;
             line-height: 1;
-            margin-bottom: 3px;
+            margin-bottom: 5px;
         }
         .footer-url {
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 15px;
+            font-weight: 700;
             color: white;
             word-break: break-all;
             line-height: 1.3;
@@ -271,10 +271,10 @@ export default function NegocioQRModal({ isOpen, onClose, negocio }: NegocioQRMo
                             <Globe size={14} />
                         </div>
                         <div className="overflow-hidden">
-                            <div className="text-[8px] font-black text-white/70 uppercase tracking-widest leading-none">
+                            <div className="text-[9px] font-black text-white/75 uppercase tracking-widest leading-none mb-1">
                                 O visítanos en:
                             </div>
-                            <div className="text-[10px] font-bold text-white truncate leading-normal">
+                            <div className="text-sm font-bold text-white truncate leading-normal">
                                 {baseUrl.replace(/^https?:\/\//, "")}/{negocio.slug}
                             </div>
                         </div>
