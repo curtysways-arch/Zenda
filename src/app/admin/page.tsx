@@ -403,7 +403,7 @@ export default async function AdminDashboard() {
                             </div>
                         </div>
 
-                        {negocioData?.slug && <ShareWidget url={shareUrl} />}
+                        {negocioData?.slug && <ShareWidget url={shareUrl} negocio={negocioData} />}
 
                         <div className="p-10 bg-white border border-slate-200 rounded-[3.5rem] relative overflow-hidden group shadow-sm hover:shadow-xl transition-all">
                             <div className="absolute -right-8 -bottom-8 group-hover:scale-110 transition-transform duration-1000" style={{ color: 'color-mix(in srgb, var(--primary-color), transparent 95%)' }}>

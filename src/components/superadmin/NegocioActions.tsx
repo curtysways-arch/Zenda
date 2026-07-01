@@ -8,10 +8,12 @@ import {
     Loader2,
     Eye,
     ExternalLink,
-    Pencil
+    Pencil,
+    QrCode
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import NegocioQRModal from "./NegocioQRModal";
 
 interface NegocioActionsProps {
     negocio: any;
@@ -21,6 +23,7 @@ interface NegocioActionsProps {
 export default function NegocioActions({ negocio, onEdit }: NegocioActionsProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
     const updateStatus = async (nuevoEstado: string) => {
         setLoading(true);
@@ -65,6 +68,15 @@ export default function NegocioActions({ negocio, onEdit }: NegocioActionsProps)
     return (
         <div className="flex items-center justify-end gap-1 px-2">
             {loading && <Loader2 size={16} className="animate-spin text-slate-400 mr-2" />}
+
+            <button
+                onClick={() => setIsQRModalOpen(true)}
+                disabled={loading}
+                className="p-2 hover:bg-emerald-50 rounded-xl text-slate-400 hover:text-emerald-600 transition-all disabled:opacity-50"
+                title="Generar Código QR"
+            >
+                <QrCode size={18} />
+            </button>
 
             <Link
                 href={`/${negocio.slug}`}
@@ -112,6 +124,13 @@ export default function NegocioActions({ negocio, onEdit }: NegocioActionsProps)
             >
                 <Trash2 size={18} />
             </button>
+
+            {/* Modal de Código QR */}
+            <NegocioQRModal 
+                isOpen={isQRModalOpen} 
+                onClose={() => setIsQRModalOpen(false)} 
+                negocio={negocio} 
+            />
         </div>
     );
 }
