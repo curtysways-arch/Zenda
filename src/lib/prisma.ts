@@ -54,13 +54,10 @@ function createPrismaClientSync(): PrismaClient {
     } else {
         // ── SQLite / libSQL (desarrollo) ─────────────────────────────────────
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { createClient } = require('@libsql/client');
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const { PrismaLibSql } = require('@prisma/adapter-libsql');
 
         const resolvedUrl = resolveLibSqlUrl(dbUrl);
-        const client = createClient({ url: resolvedUrl });
-        const adapter = new PrismaLibSql(client);
+        const adapter = new PrismaLibSql({ url: resolvedUrl });
 
         return new PrismaClient({
             adapter,

@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Calendar, User } from 'lucide-react';
+import { Home, Calendar, User, Gift } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { clsx } from 'clsx';
@@ -43,6 +43,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
         pathname.includes('/cursos') ||
         pathname.includes('/mis-reservas') ||
         pathname.includes('/perfil') ||
+        pathname.includes('/referidos') ||
         pathname.includes('/cancha/') ||
         pathname.includes('/servicio/') ||
         pathname.includes('/promo/');
@@ -65,6 +66,12 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
             icon: Calendar,
             href: `/${slug}/mis-reservas`,
             active: pathname.includes('/mis-reservas') && activeTabParam !== 'academia',
+        },
+        {
+            label: 'Premios',
+            icon: Gift,
+            href: `/${slug}/referidos`,
+            active: pathname.includes('/referidos'),
         },
         {
             label: 'Perfil',

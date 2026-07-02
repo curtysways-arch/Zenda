@@ -130,6 +130,93 @@ export async function POST(
                 }
             });
 
+            // 👤 Crear o buscar el Usuario para referidos y sesiones
+            let usuario = await tx.usuario.findFirst({
+                where: {
+                    OR: [
+                        { phone: clienteTelefono },
+                        { phone: clienteTelefono.replace(/\D/g, '') }
+                    ]
+                }
+            });
+
+            if (!usuario) {
+                usuario = await tx.usuario.create({
+                    data: {
+                        id: crypto.randomUUID(),
+                        nombre: clienteNombre,
+                        phone: clienteTelefono.replace(/\D/g, '') || clienteTelefono,
+                        role: 'USER',
+                        negocioId: negocio.id,
+                        updatedAt: new Date()
+                    }
+                });
+            }
+
+            // 🔗 Procesar galleta de referido si existe
+            let referralCode = null;
+            try {
+                const { cookies } = require('next/headers');
+                const cookieStore = await cookies();
+                referralCode = cookieStore.get('referral_code')?.value;
+            } catch (cookieErr) {
+                console.error('[Referidos] Error al leer cookies:', cookieErr);
+            }
+
+            if (referralCode && usuario) {
+                const cleanCode = referralCode.trim().toUpperCase();
+                const codeRecord = await tx.referralCode.findUnique({
+                    where: { codigo: cleanCode }
+                });
+
+                if (codeRecord && codeRecord.negocioId === negocio.id && codeRecord.userId !== usuario.id) {
+                    // Verificar si ya existe un evento de referido pendiente para este cliente
+                    const existingEvent = await tx.referralEvent.findFirst({
+                        where: {
+                            referredId: usuario.id,
+                            negocioId: negocio.id,
+                            estado: 'PENDIENTE'
+                        }
+                    });
+
+                    if (!existingEvent) {
+                        const activeCampaign = await tx.referralCampaign.findFirst({
+                            where: {
+                                negocioId: negocio.id,
+                                activa: true,
+                                fechaInicio: { lte: new Date() },
+                                OR: [
+                                    { fechaFin: null },
+                                    { fechaFin: { gte: new Date() } }
+                                ]
+                            },
+                            orderBy: { createdAt: 'desc' }
+                        });
+
+                        if (activeCampaign) {
+                            const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '';
+                            const userAgent = req.headers.get('user-agent') || '';
+
+                            await tx.referralEvent.create({
+                                data: {
+                                    id: crypto.randomUUID(),
+                                    campaignId: activeCampaign.id,
+                                    codeId: codeRecord.id,
+                                    negocioId: negocio.id,
+                                    referrerId: codeRecord.userId,
+                                    referredId: usuario.id,
+                                    estado: 'PENDIENTE',
+                                    ipAddress,
+                                    userAgent,
+                                    updatedAt: new Date()
+                                }
+                            });
+                            console.log(`[Referidos] Evento PENDIENTE creado de ${codeRecord.userId} para ${usuario.id}`);
+                        }
+                    }
+                }
+            }
+
             // Configuración de Expiración
             const timeoutConfig = await tx.Configuracion.findUnique({
                 where: {
@@ -176,7 +263,8 @@ export async function POST(
                 expiresAt: expiresAt,
                 cliente: { connect: { id: cliente.id } },
                 negocio: { connect: { id: negocio.id } },
-                service: { connect: { id: service.id } }
+                service: { connect: { id: service.id } },
+                usuario: { connect: { id: usuario.id } }
             };
 
             if (finalStaffId) {

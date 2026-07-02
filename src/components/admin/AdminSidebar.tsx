@@ -28,6 +28,7 @@ import {
     Scissors,
     CreditCard,
     ShieldCheck,
+    Gift,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -156,6 +157,7 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
         // --- ACADEMIA Y MARKETING ---
         { name: 'Academia', href: '/admin/cursos', icon: GraduationCap, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'STAFF', 'SUPERADMIN'], enabled: coursesEnabled },
         { name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'], enabled: promotionsEnabled },
+        { name: 'Referidos', href: '/admin/referidos', icon: Gift, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Newsletter', href: '/admin/newsletter', icon: Mail, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         {name: 'Páginas', href: '/admin/paginas', icon: Layout, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Mis Trabajos', href: '/admin/resultados', icon: Sparkles, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },

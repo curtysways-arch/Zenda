@@ -145,6 +145,14 @@ export async function PATCH(
                 } catch (notifyError) {
                     console.error('Error enviando notificación de cita finalizada:', notifyError);
                 }
+
+                // Procesar recompensas del sistema de referidos de Citiox
+                try {
+                    const { processReferralCompletion } = require('@/lib/referrals');
+                    await processReferralCompletion(updated.id);
+                } catch (refError) {
+                    console.error('Error al procesar referidos en cita finalizada:', refError);
+                }
             }
         }
 

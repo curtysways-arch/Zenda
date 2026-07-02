@@ -325,6 +325,10 @@ model Negocio {
   Ubicacion              Ubicacion[]
   Usuario                Usuario[]
   media                  Media[]               @relation("NegocioMedia")
+  ReferralCampaign       ReferralCampaign[]
+  ReferralCode           ReferralCode[]
+  ReferralEvent          ReferralEvent[]
+  ReferralReward         ReferralReward[]
 }
 
 model OtpCode {
@@ -571,6 +575,7 @@ model Staff {
   ratingPromedio Float            @default(0)
   totalReviews   Int              @default(0)
   Service        Service[]        @relation("StaffServices")
+  ReferralReward ReferralReward[]
 }
 
 model StaffException {
@@ -711,6 +716,9 @@ model Usuario {
   Staff                  Staff?
   UserRole               UserRole[]
   Negocio                Negocio?           @relation(fields: [negocioId], references: [id])
+  ReferralCode           ReferralCode[]
+  ReferralReward         ReferralReward[]
+  ReferralEvent          ReferralEvent[]
 }
 
 model PromotionToService {
@@ -772,4 +780,82 @@ model PaymentAccount {
   activo       Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+// ─── SISTEMA DE REFERIDOS ───────────────────────────────────────────────────
+
+model ReferralCampaign {
+  id                  String           @id @default(cuid())
+  negocioId           String
+  nombre              String
+  descripcion         String?
+  imagenUrl           String?
+  activa              Boolean          @default(true)
+  tipoRecompensa      String           // DINERO | DESCUENTO | SERVICIO_GRATIS | PRODUCTO | REGALO | PUNTOS | OTRO
+  valorRecompensa     String
+  referidosRequeridos Int
+  fechaInicio         DateTime         @default(now())
+  fechaFin            DateTime?
+  limitePremios       Int?             // null = ilimitado
+  premiosEntregados   Int              @default(0)
+  rankingActivo       Boolean          @default(false)
+  tipoIncentivo       String?          // incentivo para el referido: DESCUENTO | SERVICIO | REGALO | null
+  valorIncentivo      String?          // ej: "10% descuento", "Bebida gratis"
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  Negocio             Negocio          @relation(fields: [negocioId], references: [id])
+  ReferralEvent       ReferralEvent[]
+  ReferralReward      ReferralReward[]
+}
+
+model ReferralCode {
+  id            String          @id @default(cuid())
+  userId        String
+  negocioId     String
+  codigo        String          @unique
+  createdAt     DateTime        @default(now())
+  Usuario       Usuario         @relation(fields: [userId], references: [id])
+  Negocio       Negocio         @relation(fields: [negocioId], references: [id])
+  ReferralEvent ReferralEvent[] @relation("ReferralCodeEvents")
+
+  @@unique([userId, negocioId])
+}
+
+model ReferralEvent {
+  id            String           @id @default(cuid())
+  campaignId    String
+  codeId        String
+  negocioId     String
+  referrerId    String           // userId del que invitó
+  referredId    String           // userId del invitado
+  appointmentId String?
+  estado        String           @default("PENDIENTE") // PENDIENTE | VALIDO | INVALIDO
+  ipAddress     String?
+  userAgent     String?
+  rewardId      String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  Campaign      ReferralCampaign @relation(fields: [campaignId], references: [id])
+  Code          ReferralCode     @relation("ReferralCodeEvents", fields: [codeId], references: [id])
+  Negocio       Negocio          @relation(fields: [negocioId], references: [id])
+  Usuario       Usuario          @relation(fields: [referrerId], references: [id])
+  Reward        ReferralReward?  @relation(fields: [rewardId], references: [id])
+}
+
+model ReferralReward {
+  id            String           @id @default(cuid())
+  campaignId    String
+  negocioId     String
+  userId        String
+  estado        String           @default("DISPONIBLE") // DISPONIBLE | CANJEADO | CADUCADO
+  fechaEntrega  DateTime?
+  staffId       String?
+  notas         String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  Campaign      ReferralCampaign @relation(fields: [campaignId], references: [id])
+  Negocio       Negocio          @relation(fields: [negocioId], references: [id])
+  Usuario       Usuario          @relation(fields: [userId], references: [id])
+  Staff         Staff?           @relation(fields: [staffId], references: [id])
+  ReferralEvent ReferralEvent[]
 }

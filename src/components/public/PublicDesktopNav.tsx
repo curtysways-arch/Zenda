@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Calendar, User, FileText, Scissors, Menu, X } from 'lucide-react';
+import { Home, Calendar, User, FileText, Scissors, Menu, X, Gift } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
@@ -65,6 +65,12 @@ export default function PublicDesktopNav({
             icon: FileText,
             active: pathname.includes('/pagina')
         }] : []),
+        {
+            label: 'Premios',
+            href: `/${slug}/referidos`,
+            icon: Gift,
+            active: pathname.includes('/referidos')
+        },
         {
             label: 'Perfil',
             href: `/${slug}/perfil`,
