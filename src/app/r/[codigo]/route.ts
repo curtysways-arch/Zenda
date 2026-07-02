@@ -25,7 +25,8 @@ export async function GET(
         }
 
         const slug = refCode.Negocio.slug;
-        const targetUrl = new URL(`/${slug}`, req.url);
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://citiox.com';
+        const targetUrl = new URL(`/${slug}`, appUrl);
 
         // Crear la respuesta de redirección
         const response = NextResponse.redirect(targetUrl);

@@ -133,16 +133,6 @@ export default function MisRecompensasPage() {
         }
     };
 
-    const handleLogout = async () => {
-        if (!confirm("¿Deseas cerrar sesión?")) return;
-        try {
-            await fetch(`/api/${slug}/auth/logout`, { method: "POST" });
-            setMeData(null);
-            setStep('phone');
-        } catch (err) {
-            console.error("Error logging out:", err);
-        }
-    };
 
     const getReferralUrl = () => {
         if (typeof window !== 'undefined' && meData?.codigo) {
@@ -207,16 +197,7 @@ export default function MisRecompensasPage() {
                     <span className="text-xs font-black uppercase tracking-widest text-slate-400">Club CitiOx</span>
                     <h1 className="text-sm font-black text-slate-900 uppercase tracking-tight leading-none mt-0.5">{negocio?.nombre}</h1>
                 </div>
-                {step === 'rewards' ? (
-                    <button
-                        onClick={handleLogout}
-                        className="text-[9px] font-black text-rose-500 hover:text-rose-600 uppercase tracking-widest cursor-pointer"
-                    >
-                        Salir
-                    </button>
-                ) : (
-                    <div className="w-10" />
-                )}
+                <div className="w-10" />
             </header>
 
             <main className="flex-1 max-w-md mx-auto w-full px-4 pt-6">
