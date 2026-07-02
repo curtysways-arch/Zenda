@@ -291,13 +291,15 @@ export default function MisRecompensasPage() {
                                 <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Código de Verificación</label>
                                 <input
                                     type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
                                     required
                                     ref={otpInputRef}
                                     value={code}
                                     onChange={(e) => setCode(e.target.value.replace(/\D/g, '').substring(0, 6))}
                                     placeholder="123456"
                                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center text-lg font-black tracking-[0.3em] text-slate-800 outline-none focus:border-[var(--primary-color)]"
-                                    style={{ borderColor: primaryColor } as any}
+                                    style={{ borderColor: primaryColor, color: '#0f172a' } as any}
                                 />
                             </div>
 
