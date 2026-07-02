@@ -35,7 +35,21 @@ export default async function LandingPage() {
         }
     });
 
-    const cuposDisponibles = Math.max(0, 25 - activeFoundersCount);
+    // Obtener parámetros globales de la estrategia comercial
+    const configs = await prisma.globalConfig.findMany({
+        where: {
+            clave: { in: ['FOUNDER_LOCKED_PRICE', 'FOUNDER_MAX'] }
+        }
+    });
+
+    const founderMaxVal = configs.find(c => c.clave === 'FOUNDER_MAX')?.valor || '25';
+    const founderPriceVal = configs.find(c => c.clave === 'FOUNDER_LOCKED_PRICE')?.valor || '15.0';
+
+    const founderMax = parseInt(founderMaxVal) || 25;
+    const rawPrice = parseFloat(founderPriceVal) || 15;
+    const founderPrice = rawPrice % 1 === 0 ? rawPrice.toString() : rawPrice.toFixed(2);
+
+    const cuposDisponibles = Math.max(0, founderMax - activeFoundersCount);
 
     return (
         <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-cyan-200 overflow-x-hidden">
@@ -45,7 +59,7 @@ export default async function LandingPage() {
                     <p className="text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2">
                         <Rocket size={14} className="animate-bounce" /> 
                         {cuposDisponibles > 0 ? (
-                            <span>¡ÚLTIMOS CUPOS! Quedan {cuposDisponibles} de 25 cupos fundadores (Tarifa especial de $15/mes de por vida)</span>
+                            <span>¡ÚLTIMOS CUPOS! Quedan {cuposDisponibles} de {founderMax} cupos fundadores (Tarifa especial de ${founderPrice}/mes de por vida)</span>
                         ) : (
                             <span>Impulsa tu negocio hoy: Prueba de 14 días en planes profesionales</span>
                         )}
@@ -293,7 +307,7 @@ export default async function LandingPage() {
                         </p>
                         {cuposDisponibles > 0 && (
                             <div className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 text-amber-700 border border-amber-200/50 rounded-2xl text-[10px] font-black uppercase tracking-wider shadow-sm animate-pulse">
-                                🚀 Quedan {cuposDisponibles} de 25 cupos fundadores con precio congelado ($15/mes)
+                                🚀 Quedan {cuposDisponibles} de {founderMax} cupos fundadores con precio congelado (${founderPrice}/mes)
                             </div>
                         )}
                     </div>
