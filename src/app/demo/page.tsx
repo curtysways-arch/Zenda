@@ -205,93 +205,135 @@ export default function DemoPage() {
                 </p>
             </section>
 
-            {/* Demos Grid */}
-            <section className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
-                {demos.map((demo) => {
+            {/* Demos Grid - Layout de filas full-width con preview a la derecha */}
+            <section className="max-w-7xl mx-auto px-6 flex flex-col gap-10 mt-4">
+                {demos.map((demo, idx) => {
                     const DemoIcon = demo.icon;
+                    const isEven = idx % 2 === 0;
                     return (
-                        <div key={demo.slug} className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-6 sm:p-8 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden group">
-                            
-                            {/* Accent decorative line */}
-                            <div className={`absolute top-0 left-0 right-0 h-2 bg-gradient-to-r ${demo.color}`} />
+                        <div
+                            key={demo.slug}
+                            className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden flex flex-col lg:flex-row group"
+                        >
+                            {/* Accent line top */}
+                            <div className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${demo.color} z-10`} />
 
-                            <div>
-                                <div className="flex items-center justify-between gap-4 mb-6">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-3 rounded-2xl ${demo.lightBg} ${demo.textColor}`}>
-                                            <DemoIcon size={22} />
+                            {/* Preview de celular (izquierda en pares, derecha en impares) */}
+                            <div className={`relative flex-shrink-0 w-full lg:w-80 xl:w-96 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center p-8 ${isEven ? 'lg:order-last' : 'lg:order-first'} min-h-[420px]`}>
+                                {/* Gradiente decorativo de fondo */}
+                                <div className={`absolute inset-0 bg-gradient-to-br ${demo.color} opacity-10`} />
+
+                                {/* Mockup de teléfono */}
+                                <div className="relative z-10 w-[200px] xl:w-[220px]">
+                                    {/* Cuerpo del teléfono */}
+                                    <div className="bg-slate-900 rounded-[2.8rem] p-2.5 shadow-2xl shadow-black/40 border border-white/10">
+                                        {/* Notch */}
+                                        <div className="bg-slate-950 rounded-t-[2.2rem] px-3 pt-3 pb-1">
+                                            <div className="flex items-center justify-center">
+                                                <div className="w-16 h-1.5 bg-slate-800 rounded-full" />
+                                            </div>
                                         </div>
+                                        {/* Pantalla del iframe */}
+                                        <div className="overflow-hidden rounded-b-[2rem] bg-white" style={{ height: '380px' }}>
+                                            <iframe
+                                                src={`/${demo.slug}`}
+                                                className="w-full h-full border-0"
+                                                style={{
+                                                    transform: 'scale(0.6)',
+                                                    transformOrigin: 'top left',
+                                                    width: '167%',
+                                                    height: '167%',
+                                                    pointerEvents: 'none'
+                                                }}
+                                                title={`Preview de ${demo.title}`}
+                                                loading="lazy"
+                                            />
+                                        </div>
+                                    </div>
+                                    {/* Botón home del teléfono */}
+                                    <div className="flex justify-center mt-2">
+                                        <div className="w-20 h-1 bg-slate-700 rounded-full" />
+                                    </div>
+                                    {/* Label flotante */}
+                                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                                        <span className={`text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full text-white bg-gradient-to-r ${demo.color} shadow-sm`}>
+                                            Vista del Cliente
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Info + Credenciales */}
+                            <div className="flex flex-col justify-between flex-1 p-6 sm:p-8">
+                                <div>
+                                    <div className="flex items-center justify-between gap-4 mb-6 mt-2">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-3 rounded-2xl ${demo.lightBg} ${demo.textColor}`}>
+                                                <DemoIcon size={22} />
+                                            </div>
+                                            <div>
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">{demo.industry}</span>
+                                                <h3 className="text-2xl font-black text-slate-900 uppercase italic tracking-tight mt-0.5">{demo.title}</h3>
+                                            </div>
+                                        </div>
+                                        <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100 shrink-0">
+                                            En Vivo
+                                        </span>
+                                    </div>
+
+                                    <h4 className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3">Capacidades del SaaS en esta industria:</h4>
+                                    <ul className="space-y-3 mb-8">
+                                        {demo.highlights.map((h, i) => (
+                                            <li key={i} className="flex items-start gap-2.5 text-xs font-semibold text-slate-700">
+                                                <span className={`mt-0.5 shrink-0 size-4 rounded-full flex items-center justify-center bg-gradient-to-br ${demo.color} text-white`}>
+                                                    <Check size={9} strokeWidth={3} />
+                                                </span>
+                                                <span>{h}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+
+                                {/* Credenciales y CTAs */}
+                                <div className="space-y-4 border-t border-slate-100 pt-6">
+                                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                         <div>
-                                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">{demo.industry}</span>
-                                            <h3 className="text-xl font-black text-slate-900 uppercase italic tracking-tight mt-0.5">{demo.title}</h3>
+                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Credenciales de Administrador</span>
+                                            <div className="flex flex-col gap-0.5">
+                                                <span className="text-xs font-bold text-slate-700">Usuario: <span className="font-mono text-slate-600 select-all">{demo.credentials.email}</span></span>
+                                                <span className="text-xs font-bold text-slate-700">Clave: <span className="font-mono text-slate-600 select-all">{demo.credentials.password}</span></span>
+                                            </div>
                                         </div>
+                                        <button
+                                            onClick={() => handleCopy(demo.credentials.email)}
+                                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-600 transition-colors shrink-0 active:scale-95"
+                                        >
+                                            {copiedEmail === demo.credentials.email ? (
+                                                <><Check size={12} className="text-emerald-500" />Copiado</>
+                                            ) : (
+                                                <><Copy size={12} />Copiar Email</>
+                                            )}
+                                        </button>
                                     </div>
-                                    <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">
-                                        Activo
-                                    </span>
-                                </div>
 
-                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 pl-1">Cualidades destacadas del SaaS:</h4>
-                                <ul className="space-y-2.5 mb-8">
-                                    {demo.highlights.map((h, i) => (
-                                        <li key={i} className="flex items-start gap-2.5 text-xs font-semibold text-slate-700">
-                                            <Check size={14} className="text-emerald-500 mt-0.5 shrink-0" />
-                                            <span>{h}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-
-                            {/* Credentials and CTAs */}
-                            <div className="space-y-5 border-t border-slate-100 pt-6">
-                                <div className="bg-slate-50 border border-slate-150 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                                    <div>
-                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Credenciales de Acceso Administrador</span>
-                                        <div className="flex flex-col gap-1">
-                                            <span className="font-bold text-slate-700">Usuario: <span className="font-semibold select-all">{demo.credentials.email}</span></span>
-                                            <span className="font-bold text-slate-700">Clave: <span className="font-semibold select-all">{demo.credentials.password}</span></span>
-                                        </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Link
+                                            href={`/${demo.slug}`}
+                                            target="_blank"
+                                            className="py-4 border border-slate-200 hover:border-slate-300 rounded-2xl font-black text-[9px] uppercase tracking-widest text-slate-700 flex items-center justify-center gap-1.5 transition-all bg-white hover:bg-slate-50 active:scale-95"
+                                        >
+                                            Ver en Vivo <ExternalLink size={12} />
+                                        </Link>
+                                        <Link
+                                            href="/login"
+                                            className="py-4 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-1.5 transition-transform active:scale-95 shadow-md"
+                                            style={{ background: 'linear-gradient(135deg, #4f46e5, #4338ca)' }}
+                                        >
+                                            Panel Admin <Lock size={12} />
+                                        </Link>
                                     </div>
-                                    <button
-                                        onClick={() => handleCopy(demo.credentials.email)}
-                                        className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-600 transition-colors shrink-0 active:scale-95"
-                                    >
-                                        {copiedEmail === demo.credentials.email ? (
-                                            <>
-                                                <Check size={12} className="text-emerald-500" />
-                                                Copiado
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Copy size={12} />
-                                                Copiar Correo
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3 w-full">
-                                    <Link
-                                        href={`/${demo.slug}`}
-                                        target="_blank"
-                                        className="py-4 border border-slate-200 hover:border-slate-300 rounded-2xl font-black text-[9px] uppercase tracking-widest text-slate-700 flex items-center justify-center gap-1.5 transition-all bg-white hover:bg-slate-50/50 active:scale-95"
-                                    >
-                                        Ver Landing Cliente
-                                        <ExternalLink size={12} />
-                                    </Link>
-                                    <Link
-                                        href="/login"
-                                        className="py-4 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-1.5 transition-transform active:scale-95 shadow-md shadow-indigo-600/10"
-                                        style={{
-                                            background: 'linear-gradient(135deg, #4f46e5, #4338ca)'
-                                        }}
-                                    >
-                                        Panel Admin
-                                        <Lock size={12} />
-                                    </Link>
                                 </div>
                             </div>
-
                         </div>
                     );
                 })}
