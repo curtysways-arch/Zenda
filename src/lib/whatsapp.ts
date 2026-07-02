@@ -121,9 +121,27 @@ export class WhatsAppService {
         } else {
             const isSimpleLegacy = /^(1|2|3)$/.test(body);
             if (isSimpleLegacy) {
-                responseText = "⚠️ Formato incorrecto. Para gestionar una reserva debes incluir su ID.\nEjemplo: *1-${ID}* para confirmar.";
+                // Verificar si es admin antes de responder con formato incorrecto
+                const senderUser = await (prisma as any).usuario.findFirst({
+                    where: { phone: from },
+                    select: { role: true }
+                });
+                const isAdmin = senderUser && ['ADMIN', 'SUPER_ADMIN', 'ADMIN_NEGOCIO'].includes(senderUser.role);
+                if (isAdmin) {
+                    responseText = "⚠️ Formato incorrecto. Para gestionar una reserva debes incluir su ID.\nEjemplo: *1-${ID}* para confirmar.";
+                }
+                // Clientes: silencio total
             } else {
-                responseText = "Comando no reconocido. Escribe *AYUDA* para ver los comandos disponibles.";
+                // Solo responder con 'Comando no reconocido' si es un admin/staff
+                const senderUser = await (prisma as any).usuario.findFirst({
+                    where: { phone: from },
+                    select: { role: true }
+                });
+                const isAdmin = senderUser && ['ADMIN', 'SUPER_ADMIN', 'ADMIN_NEGOCIO'].includes(senderUser.role);
+                if (isAdmin) {
+                    responseText = "Comando no reconocido. Escribe *AYUDA* para ver los comandos disponibles.";
+                }
+                // Clientes normales: no responder nada
             }
             actionTaken = "unknown_command";
         }
