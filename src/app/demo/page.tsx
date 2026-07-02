@@ -34,9 +34,9 @@ export default function DemoPage() {
 
     const demos = [
         {
-            title: "Aura Wellness & Spa",
-            slug: "aura-spa",
-            industry: "Estética y Bienestar",
+            title: "Aura Spa",
+            slug: "demo-spa",
+            industry: "Spa y Centro Estético",
             color: "from-pink-500 to-rose-600",
             lightBg: "bg-pink-500/10",
             textColor: "text-pink-600",
@@ -47,7 +47,7 @@ export default function DemoPage() {
                 "Módulo de Recompensas por Referidos activo para fidelización."
             ],
             credentials: {
-                email: "bienestar@auraspa.demo",
+                email: "demospa@gmail.com",
                 password: "admin123"
             }
         },
