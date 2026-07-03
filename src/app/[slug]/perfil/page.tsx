@@ -36,6 +36,9 @@ import Link from "next/link";
 import PhoneInput from "@/components/ui/PhoneInput";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import RatingModal from "@/components/RatingModal";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -57,6 +60,10 @@ export default function MiPerfilPage() {
     const [error, setError] = useState("");
     const [countdown, setCountdown] = useState(0);
     const otpInputRef = useRef<HTMLInputElement>(null);
+
+    const [reservas, setReservas] = useState<any[]>([]);
+    const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+    const [ratingTarget, setRatingTarget] = useState<any>(null);
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -106,6 +113,18 @@ export default function MiPerfilPage() {
         }
     }, [step]);
 
+    const fetchReservas = async () => {
+        try {
+            const res = await fetch(`/api/${slug}/reservas-cliente`);
+            if (res.ok) {
+                const data = await res.json();
+                setReservas(data || []);
+            }
+        } catch (e) {
+            console.error("Error fetching client appointments:", e);
+        }
+    };
+
     const fetchProfile = async () => {
         try {
             const res = await fetch(`/api/${slug}/perfil`);
@@ -113,6 +132,7 @@ export default function MiPerfilPage() {
                 const data = await res.json();
                 setCliente(data);
                 setStep('profile');
+                fetchReservas();
             } else {
                 setCliente(null);
                 setStep('phone');
@@ -195,6 +215,7 @@ export default function MiPerfilPage() {
         try {
             await fetch(`/api/${slug}/auth/logout`, { method: "POST" });
             setCliente(null);
+            setReservas([]);
             setStep('phone');
             router.push(`/${slug}`);
         } catch (error) {
@@ -517,6 +538,66 @@ export default function MiPerfilPage() {
                             ))}
                         </section>
 
+                        {/* ⭐ SECCIÓN DE CALIFICACIÓN DE CITAS COMPLETADAS */}
+                        {(() => {
+                            const citasPorCalificar = reservas.filter((r: any) => {
+                                const isCompleted = r.estado?.toLowerCase() === 'completed' || r.estado?.toLowerCase() === 'finalizada' || r.estado?.toLowerCase() === 'finalizado';
+                                const hasBeenRated = r.ratings?.some((rt: any) => rt.raterRole === 'client');
+                                return isCompleted && !hasBeenRated;
+                            });
+
+                            if (citasPorCalificar.length === 0) return null;
+
+                            return (
+                                <section className="space-y-4 pt-4">
+                                    <div className="flex items-center gap-2">
+                                        <Sparkles size={18} style={{ color: primaryColor }} />
+                                        <h3 className="text-xs font-black uppercase tracking-[0.2em] italic" style={{ color: textColor }}>
+                                            Califica tu experiencia
+                                        </h3>
+                                    </div>
+                                    <div className="space-y-3.5">
+                                        {citasPorCalificar.map((r: any) => {
+                                            const staffName = r.staff?.name || r.Staff?.name || 'Especialista';
+                                            const serviceName = r.service?.nombre || r.Service?.nombre || 'Servicio';
+                                            let fechaFormateada = r.fecha;
+                                            try {
+                                                fechaFormateada = format(new Date(r.fecha), "dd 'de' MMMM", { locale: es });
+                                            } catch (_) {}
+
+                                            return (
+                                                <div 
+                                                    key={r.id}
+                                                    className="border rounded-[2rem] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg hover:shadow-xl transition-all"
+                                                    style={{ backgroundColor: `${textColor}02`, borderColor: `${textColor}08` }}
+                                                >
+                                                    <div className="space-y-1">
+                                                        <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100 self-start inline-block">
+                                                            Pendiente de calificar
+                                                        </span>
+                                                        <h4 className="font-black text-base uppercase italic" style={{ color: textColor }}>{serviceName}</h4>
+                                                        <p className="text-xs font-bold text-slate-500">
+                                                            {fechaFormateada} a las {r.horaInicio} · con {staffName}
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => {
+                                                            setRatingTarget(r);
+                                                            setIsRatingModalOpen(true);
+                                                        }}
+                                                        className="px-5 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-1.5 transition-transform active:scale-95 text-white"
+                                                        style={{ backgroundColor: primaryColor }}
+                                                    >
+                                                        Calificar <Star size={12} fill="white" />
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </section>
+                            );
+                        })()}
+
                         {/* 🚀 MINIMAL TOOLS SECTION */}
                         <section className="space-y-4 pt-4 uppercase">
                             <div 
@@ -560,6 +641,18 @@ export default function MiPerfilPage() {
                     </>
                 )}
             </main>
+
+            {/* Modal de Calificación */}
+            <RatingModal 
+                isOpen={isRatingModalOpen}
+                onClose={() => setIsRatingModalOpen(false)}
+                appointmentId={ratingTarget?.id}
+                raterRole="client"
+                targetName={ratingTarget?.staff?.name || ratingTarget?.Staff?.name || 'el especialista'}
+                onSuccess={() => {
+                    fetchReservas();
+                }}
+            />
 
             <style jsx global>{`
                 .scroll-hide::-webkit-scrollbar { display: none; }
