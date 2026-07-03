@@ -34,14 +34,14 @@ export async function GET(
         // Guardar la cookie del código y del negocio por 7 días
         response.cookies.set('referral_code', refCode.codigo, {
             path: '/',
-            maxAge: 7 * 24 * 60 * 60, // 7 días
+            maxAge: 30 * 24 * 60 * 60, // 30 días
             sameSite: 'lax',
             secure: process.env.NODE_ENV === 'production'
         });
 
         response.cookies.set('referral_negocio', refCode.negocioId, {
             path: '/',
-            maxAge: 7 * 24 * 60 * 60, // 7 días
+            maxAge: 30 * 24 * 60 * 60, // 30 días
             sameSite: 'lax',
             secure: process.env.NODE_ENV === 'production'
         });

@@ -107,7 +107,9 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
                 staffId: bookingData.staffId,
                 precioTotal: precioTotal,
                 slug: bookingData.slug,
-                estado: 'pendiente'
+                estado: 'pendiente',
+                // Incluir el código de referido desde localStorage si existe (fallback sin cookie)
+                referralCode: (typeof window !== 'undefined' ? localStorage.getItem('referral_code_backup') : null) || undefined,
             };
 
             const response = await fetch(`/api/public/${bookingData.slug}/reservar`, {

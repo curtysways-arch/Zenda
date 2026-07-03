@@ -153,7 +153,7 @@ export async function POST(
                 });
             }
 
-            // 🔗 Procesar galleta de referido si existe
+            // 🔗 Procesar código de referido: prioridad cookie → body (localStorage fallback)
             let referralCode = null;
             try {
                 const { cookies } = require('next/headers');
@@ -161,6 +161,10 @@ export async function POST(
                 referralCode = cookieStore.get('referral_code')?.value;
             } catch (cookieErr) {
                 console.error('[Referidos] Error al leer cookies:', cookieErr);
+            }
+            // Fallback: si el frontend envió el código desde localStorage
+            if (!referralCode && body.referralCode) {
+                referralCode = body.referralCode;
             }
 
             if (referralCode && usuario) {

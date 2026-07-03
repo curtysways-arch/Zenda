@@ -13,6 +13,7 @@ import { MapPin, Search, Star, Zap, Clock, ChevronRight, ArrowUpRight, ArrowLeft
 import HeroCarousel from '@/components/HeroCarousel';
 import NewsletterForm from '@/components/NewsletterForm';
 import NextAppointmentBanner from '@/components/public/NextAppointmentBanner';
+import ReferralBanner from '@/components/public/ReferralBanner';
 
 export const dynamic = 'force-dynamic';
 
@@ -489,6 +490,28 @@ export default async function PublicNegocioPage({
         console.error("Error cargando resultados destacados:", e);
     }
 
+    // --- Datos del referido (si el usuario llegó por un enlace de referido) ---
+    let referrerName = '';
+    let referralCode = '';
+    try {
+        const cookieStore = await cookies();
+        const rawCode = cookieStore.get('referral_code')?.value;
+        if (rawCode) {
+            const cleanCode = rawCode.trim().toUpperCase();
+            const refCodeRecord = await (prisma as any).referralCode.findUnique({
+                where: { codigo: cleanCode },
+                include: { user: { select: { nombre: true } } }
+            });
+            // Solo mostrar el banner si el código pertenece a este negocio
+            if (refCodeRecord && refCodeRecord.negocioId === negocio.id) {
+                referralCode = cleanCode;
+                referrerName = refCodeRecord.user?.nombre || 'Un amigo';
+            }
+        }
+    } catch (e) {
+        // No bloquear el render si falla la consulta del referido
+    }
+
     return (
         <main className="min-h-screen font-sans pb-32 md:pb-0 relative overflow-x-hidden">
             {/* Cabecera Flotante (Solo Móvil) */}
@@ -963,6 +986,16 @@ export default async function PublicNegocioPage({
                     `
                 }} 
             />
+
+            {/* Banner de referido - solo visible si llegó por un enlace de invitación */}
+            {referralCode && (
+                <ReferralBanner
+                    referrerName={referrerName}
+                    referralCode={referralCode}
+                    negocioName={negocio.nombre}
+                    primaryColor={primaryHex}
+                />
+            )}
         </main>
     );
 }
