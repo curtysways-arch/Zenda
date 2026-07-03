@@ -67,7 +67,7 @@ export default function PromoShareClient({
                         </Link>
                         <div className="space-y-0.5">
                             <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.3em] leading-none">{negocio.nombre}</p>
-                            <h1 className="text-slate-900 font-black text-xl tracking-tighter uppercase leading-none truncate max-w-[180px] md:max-w-xs">{promotion.titulo}</h1>
+                            <h1 className="text-slate-900 text-header-dynamic font-black text-xl tracking-tighter uppercase leading-none truncate max-w-[180px] md:max-w-xs">{promotion.titulo}</h1>
                         </div>
                     </div>
                     
@@ -112,11 +112,11 @@ export default function PromoShareClient({
                     <div className="lg:col-span-5 flex flex-col">
                         <div className="sticky top-32 space-y-8">
                             <div className="space-y-4">
-                                <div className="flex items-center gap-2" style={{ color: primaryColor }}>
+                                <div className="flex items-center gap-2 text-slate-400">
                                     <Tag size={20} />
                                     <span className="text-xs font-black uppercase tracking-[0.3em]">Oportunidad Única</span>
                                 </div>
-                                <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter leading-[0.9] italic uppercase">
+                                <h1 className="text-4xl md:text-6xl font-black text-slate-900 text-header-dynamic tracking-tighter leading-[0.9] italic uppercase">
                                     {promotion.titulo}
                                 </h1>
                             </div>
