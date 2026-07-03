@@ -510,6 +510,31 @@ export default function MiPerfilPage() {
                                     <Phone size={14} style={{ color: primaryColor }} /> 
                                     <span>{cliente.telefono?.startsWith('+') ? cliente.telefono : `+${cliente.telefono || '—'}`}</span>
                                 </p>
+                                
+                                {/* Mostrar Calificación Promedio del Cliente */}
+                                {cliente.ratingPromedio !== undefined && (
+                                    cliente.totalReviews > 0 ? (
+                                        <div className="flex items-center gap-1.5 mt-3 justify-center">
+                                            <div className="flex gap-0.5">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <Star 
+                                                        key={star} 
+                                                        size={14} 
+                                                        className={star <= Math.round(cliente.ratingPromedio) ? "text-amber-400 fill-amber-400" : "text-slate-200"} 
+                                                    />
+                                                ))}
+                                            </div>
+                                            <span className="text-xs font-black uppercase tracking-wider opacity-60" style={{ color: textColor }}>
+                                                {cliente.ratingPromedio.toFixed(1)} ({cliente.totalReviews} {cliente.totalReviews === 1 ? 'valoración' : 'valoraciones'})
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-1.5 mt-3 justify-center opacity-40">
+                                            <Star size={14} className="text-slate-400" />
+                                            <span className="text-xs font-black uppercase tracking-wider">Sin valoraciones aún</span>
+                                        </div>
+                                    )
+                                )}
                             </div>
                         </section>
 

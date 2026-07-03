@@ -136,7 +136,7 @@ export async function GET(
                 try {
                     if (r.staffId) {
                         const staffRows: any[] = await prisma.$queryRawUnsafe(
-                            `SELECT id, name, "avatarUrl" FROM "Staff" WHERE id = '${r.staffId}' LIMIT 1`
+                            `SELECT id, name, avatar FROM "Staff" WHERE id = '${r.staffId}' LIMIT 1`
                         );
                         if (staffRows.length > 0) staff = staffRows[0];
                     }
