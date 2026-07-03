@@ -9,7 +9,7 @@ export async function POST(req: Request) {
         const body = await req.json();
         
         // { from: "593987654321" | "72332131446914@lid", text: "1", message_id: "...", raw_jid: "..." }
-        let { from, text, message_id, raw_jid, action, bot_number, is_from_me } = body;
+        let { from, text, message_id, raw_jid, action, bot_number, is_from_me, status, reason } = body;
 
         // Caso especial: Tarea periódica de mantenimiento (latido)
         if (action === 'check-expirations') {
@@ -20,6 +20,21 @@ export async function POST(req: Request) {
             } catch (err) {
                 console.error("[WEBHOOK WA] Error en checkExpirations:", err);
                 return NextResponse.json({ status: 500, error: "Mantenimiento falló" });
+            }
+        }
+
+        // Caso especial: Alerta de desconexión del Bot de WhatsApp
+        if (action === 'connection-status' && status === 'disconnected') {
+            try {
+                const { notificationService } = await import('@/lib/notifications');
+                await notificationService.adminAlert(
+                    "⚠️ WhatsApp Desconectado",
+                    `El servicio de WhatsApp se ha desconectado. Detalle: ${reason || 'Desconexión de WhatsApp detectada'}`
+                );
+                return NextResponse.json({ success: true, processed: "disconnection-alert" });
+            } catch (err) {
+                console.error("[WEBHOOK WA] Error enviando alerta de desconexión:", err);
+                return NextResponse.json({ status: 500, error: "Fallo al enviar alerta" });
             }
         }
 

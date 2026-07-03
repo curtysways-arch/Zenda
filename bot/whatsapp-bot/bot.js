@@ -371,6 +371,23 @@ async function startBot(force = false) {
           const errorMsg = lastDisconnect?.error?.message || "";
           console.log(`❌ Conexión cerrada (${statusCode}): ${errorMsg}`);
 
+          // Notificar desconexión crítica a los superadmins vía Next.js
+          const isCritical = statusCode === 401 || statusCode === 440 || statusCode === DisconnectReason.loggedOut;
+          if (isCritical) {
+            console.log("[WA BOT] Reportando desconexión crítica a Next.js...");
+            fetch(NEXTJS_WEBHOOK, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: 'connection-status',
+                status: 'disconnected',
+                reason: statusCode === 440 
+                  ? 'Sesión cerrada por conflicto: WhatsApp fue abierto en otro dispositivo.'
+                  : 'Sesión desvinculada (loggedOut). Se requiere escanear el código QR nuevamente.'
+              })
+            }).catch(e => console.error("[WA BOT] Error al notificar desconexión a Next.js:", e.message));
+          }
+
           // Limpiar estado
           sock = null;
           connectionState = "closed";
