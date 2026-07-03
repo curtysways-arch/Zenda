@@ -35,21 +35,38 @@ export default async function LandingPage() {
         }
     });
 
-    // Obtener parámetros globales de la estrategia comercial
+    // Obtener parámetros globales de la estrategia comercial y FAQs
     const configs = await prisma.globalConfig.findMany({
         where: {
-            clave: { in: ['FOUNDER_LOCKED_PRICE', 'FOUNDER_MAX'] }
+            clave: { in: ['FOUNDER_LOCKED_PRICE', 'FOUNDER_MAX', 'FAQS'] }
         }
     });
 
     const founderMaxVal = configs.find(c => c.clave === 'FOUNDER_MAX')?.valor || '25';
     const founderPriceVal = configs.find(c => c.clave === 'FOUNDER_LOCKED_PRICE')?.valor || '15.0';
+    const faqsConfig = configs.find(c => c.clave === 'FAQS')?.valor;
 
     const founderMax = parseInt(founderMaxVal) || 25;
     const rawPrice = parseFloat(founderPriceVal) || 15;
     const founderPrice = rawPrice % 1 === 0 ? rawPrice.toString() : rawPrice.toFixed(2);
 
     const cuposDisponibles = Math.max(0, founderMax - activeFoundersCount);
+
+    let faqs = [];
+    try {
+        if (faqsConfig) faqs = JSON.parse(faqsConfig);
+    } catch (e) {
+        console.error("Error parsing FAQs config:", e);
+    }
+
+    if (!faqs || faqs.length === 0) {
+        faqs = [
+          { question: "¿Cómo funciona la integración con WhatsApp?", answer: "El sistema genera un link inteligente que puedes poner en tu perfil. Cuando el cliente escribe, el bot le permite ver los horarios libres y reservar sin que tú tengas que responder manualmente." },
+          { question: "¿Necesito instalar algo en mi PC?", answer: "No. Citiox es 100% en la nube. Puedes acceder desde el navegador de tu computadora, tablet o celular en cualquier momento." },
+          { question: "¿Qué tipos de negocios puedo gestionar?", answer: "Cualquier negocio que use citas por tiempo: Spas, Estéticas, Barberías, Centros de Yoga, Fisioterapia y más." },
+          { question: "¿Cómo se pagan las suscripciones?", answer: "Aceptamos tarjetas de crédito o transferencia bancaria. Tú mismo gestionas tu suscripción desde el panel administrativo." }
+        ];
+    }
 
     return (
         <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-cyan-200 overflow-x-hidden">
@@ -368,22 +385,13 @@ export default async function LandingPage() {
                         </div>
                         
                         <div className="space-y-4">
-                            <FAQItem 
-                                question="¿Cómo funciona la integración con WhatsApp?" 
-                                answer="El sistema genera un link inteligente que puedes poner en tu perfil. Cuando el cliente escribe, el bot le permite ver los horarios libres y reservar sin que tú tengas que responder manualmente." 
-                            />
-                            <FAQItem 
-                                question="¿Necesito instalar algo en mi PC?" 
-                                answer="No. Citiox es 100% en la nube. Puedes acceder desde el navegador de tu computadora, tablet o celular en cualquier momento." 
-                            />
-                            <FAQItem 
-                                question="¿Qué tipos de negocios puedo gestionar?" 
-                                answer="Cualquier negocio que use citas por tiempo: Spas, Estéticas, Barberías, Centros de Yoga, Fisioterapia y más." 
-                            />
-                            <FAQItem 
-                                question="¿Cómo se pagan las suscripciones?" 
-                                answer="Aceptamos tarjetas de crédito o transferencia bancaria. Tú mismo gestionas tu suscripción desde el panel administrativo." 
-                            />
+                            {faqs.map((faq: any, idx: number) => (
+                                <FAQItem 
+                                    key={faq.id || idx}
+                                    question={faq.question} 
+                                    answer={faq.answer} 
+                                />
+                            ))}
                         </div>
                     </div>
 

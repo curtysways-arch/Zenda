@@ -12,7 +12,10 @@ import {
     Key,
     User,
     Shield,
-    TrendingUp
+    TrendingUp,
+    HelpCircle,
+    Plus,
+    Trash2
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import PhoneInput from "@/components/ui/PhoneInput";
@@ -100,6 +103,13 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
     const [success, setSuccess] = useState<string | null>(null);
     const router = useRouter();
 
+    const defaultFaqs = [
+        { id: "1", question: "¿Cómo funciona la integración con WhatsApp?", answer: "El sistema genera un link inteligente que puedes poner en tu perfil. Cuando el cliente escribe, el bot le permite ver los horarios libres y reservar sin que tú tengas que responder manualmente." },
+        { id: "2", question: "¿Necesito instalar algo en mi PC?", answer: "No. Citiox es 100% en la nube. Puedes acceder desde el navegador de tu computadora, tablet o celular en cualquier momento." },
+        { id: "3", question: "¿Qué tipos de negocios puedo gestionar?", answer: "Cualquier negocio que use citas por tiempo: Spas, Estéticas, Barberías, Centros de Yoga, Fisioterapia y más." },
+        { id: "4", question: "¿Cómo se pagan las suscripciones?", answer: "Aceptamos tarjetas de crédito o transferencia bancaria. Tú mismo gestionas tu suscripción desde el panel administrativo." }
+    ];
+
     const getConfigValue = (clave: string) => {
         const value = configs.find(c => c.clave === clave)?.valor;
         if (!value) {
@@ -108,6 +118,32 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
             return "";
         }
         return value;
+    };
+
+    const faqsString = getConfigValue("FAQS");
+    const faqs = (() => {
+        if (!faqsString) return defaultFaqs;
+        try {
+            return JSON.parse(faqsString);
+        } catch {
+            return defaultFaqs;
+        }
+    })();
+
+    const handleFaqChange = (index: number, field: 'question' | 'answer', value: string) => {
+        const newFaqs = [...faqs];
+        newFaqs[index] = { ...newFaqs[index], [field]: value };
+        updateLocalConfig("FAQS", JSON.stringify(newFaqs));
+    };
+
+    const handleAddFaq = () => {
+        const newFaqs = [...faqs, { id: Date.now().toString(), question: "", answer: "" }];
+        updateLocalConfig("FAQS", JSON.stringify(newFaqs));
+    };
+
+    const handleRemoveFaq = (index: number) => {
+        const newFaqs = faqs.filter((_, i) => i !== index);
+        updateLocalConfig("FAQS", JSON.stringify(newFaqs));
     };
 
     const updateLocalConfig = (clave: string, valor: string) => {
@@ -405,6 +441,88 @@ export default function ConfigClient({ initialConfigs }: ConfigClientProps) {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Sección Preguntas Frecuentes (FAQ) */}
+            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
+                <div className="flex items-center gap-3 mb-8 border-b border-slate-50 pb-6 justify-between flex-wrap">
+                    <div className="flex items-center gap-3">
+                        <div className="p-3 bg-cyan-50 text-cyan-600 rounded-2xl">
+                            <HelpCircle size={24} />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-black text-slate-900 leading-tight">Preguntas Frecuentes (FAQs)</h3>
+                            <p className="text-sm text-slate-500 font-medium">Administra las preguntas frecuentes que se muestran en la página de inicio.</p>
+                        </div>
+                    </div>
+                    
+                    <button
+                        onClick={handleAddFaq}
+                        className="h-12 px-6 bg-cyan-600 text-white font-black rounded-xl hover:bg-slate-900 transition-all shadow-md active:scale-95 flex items-center gap-2 uppercase tracking-widest text-[10px]"
+                    >
+                        <Plus size={16} /> Agregar FAQ
+                    </button>
+                </div>
+
+                <div className="space-y-6">
+                    {faqs.length === 0 ? (
+                        <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-100">
+                            <p className="text-sm text-slate-400 font-bold uppercase tracking-wider">No hay preguntas frecuentes registradas.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 scroll-hide">
+                            {faqs.map((faq: any, idx: number) => (
+                                <div key={faq.id || idx} className="p-6 bg-slate-50 rounded-3xl border border-slate-100 space-y-4 relative group/faq">
+                                    <div className="flex justify-between items-center gap-4">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                            Pregunta #{idx + 1}
+                                        </span>
+                                        <button
+                                            onClick={() => handleRemoveFaq(idx)}
+                                            className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                                            title="Eliminar Pregunta"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-1">Pregunta</label>
+                                            <input
+                                                type="text"
+                                                value={faq.question}
+                                                onChange={(e) => handleFaqChange(idx, 'question', e.target.value)}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-cyan-100 focus:border-cyan-600 transition-all placeholder:italic"
+                                                placeholder="Escribe la pregunta..."
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 px-1">Respuesta</label>
+                                            <textarea
+                                                rows={2}
+                                                value={faq.answer}
+                                                onChange={(e) => handleFaqChange(idx, 'answer', e.target.value)}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-sm text-slate-900 focus:outline-none focus:ring-4 focus:ring-cyan-100 focus:border-cyan-600 transition-all placeholder:italic leading-relaxed"
+                                                placeholder="Escribe la respuesta..."
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="flex justify-end pt-4 border-t border-slate-50">
+                        <button
+                            onClick={() => handleSave("FAQS")}
+                            disabled={loading}
+                            className="h-14 px-8 bg-slate-900 text-white font-black rounded-2xl hover:bg-cyan-600 transition-all shadow-xl active:scale-95 disabled:opacity-50 flex items-center gap-2.5 uppercase tracking-widest text-xs"
+                        >
+                            {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                            {loading ? "Guardando..." : "Guardar Preguntas Frecuentes"}
+                        </button>
                     </div>
                 </div>
             </div>
