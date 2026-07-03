@@ -237,37 +237,14 @@ async function main() {
         console.log(`\n--------------------------------------------`);
         console.log(`📦 Procesando: ${data.nombre} (${data.slug})`);
 
-        // 1. Borrar negocio existente en cascada para recrearlo limpio
+        // 1. Omitir recreación si el negocio ya existe para evitar pérdida de datos del usuario
         const negocioExistente = await prisma.negocio.findUnique({
             where: { slug: data.slug }
         });
 
         if (negocioExistente) {
-            console.log(`🧹 Negocio existente detectado. Borrando completo...`);
-            const nId = negocioExistente.id;
-
-            // Borrado en cascada manual debido a restricciones de BD
-            await prisma.appointment.deleteMany({ where: { negocioId: nId } });
-            await prisma.cliente.deleteMany({ where: { negocioId: nId } });
-            await prisma.staffSchedule.deleteMany({ where: { Staff: { businessId: nId } } });
-            await prisma.resultado.deleteMany({ where: { businessId: nId } });
-            
-            // Desconectar servicios de staff antes de borrar
-            await prisma.staff.updateMany({
-                where: { businessId: nId },
-                data: { imageMediaId: null }
-            });
-            await prisma.staff.deleteMany({ where: { businessId: nId } });
-            await prisma.service.deleteMany({ where: { negocioId: nId } });
-            await prisma.promotion.deleteMany({ where: { businessId: nId } });
-            await prisma.page.deleteMany({ where: { businessId: nId } });
-            await prisma.imagen.deleteMany({ where: { negocioId: nId } });
-            await prisma.ubicacion.deleteMany({ where: { negocioId: nId } });
-            await prisma.media.deleteMany({ where: { businessId: nId } });
-            await prisma.suscripcion.deleteMany({ where: { negocioId: nId } });
-            await prisma.usuario.deleteMany({ where: { negocioId: nId } });
-            await prisma.negocio.delete({ where: { id: nId } });
-            console.log(`✅ Borrado exitoso.`);
+            console.log(`⏭️ Negocio existente detectado (${data.slug}). Saltando creación para no borrar datos del usuario.`);
+            continue;
         }
 
         // 2. Crear Negocio
