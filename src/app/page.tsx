@@ -146,7 +146,7 @@ export default async function LandingPage() {
                             <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                         </Link>
                         <Link
-                            href="/demo-spa"
+                            href="/demo"
                             className="flex items-center justify-center gap-3 bg-white text-slate-900 border-2 border-slate-100 px-12 py-5 rounded-3xl font-black text-sm uppercase tracking-widest hover:border-cyan-300 hover:text-cyan-600 transition-all shadow-sm active:scale-95"
                         >
                             <PlayCircle size={18} />
