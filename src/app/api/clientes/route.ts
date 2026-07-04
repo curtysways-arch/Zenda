@@ -49,7 +49,10 @@ export async function GET(req: Request) {
             };
         });
 
-        return NextResponse.json(clientesConStats);
+        const { planLimitValidator } = await import('@/lib/services/planLimitValidator');
+        const processedClientes = await planLimitValidator.obfuscateOverLimitClients(negocioId, clientesConStats);
+
+        return NextResponse.json(processedClientes);
     } catch (error) {
         console.error('Error fetching clients:', error);
         return NextResponse.json({ error: 'Error al obtener clientes' }, { status: 500 });

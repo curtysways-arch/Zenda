@@ -89,7 +89,10 @@ export async function GET(req: Request) {
             }
         });
 
-        return NextResponse.json(appointments);
+        const { planLimitValidator } = await import('@/lib/services/planLimitValidator');
+        const processedAppointments = await planLimitValidator.obfuscateOverLimitAppointments(negocioId, appointments);
+
+        return NextResponse.json(processedAppointments);
     } catch (error) {
         console.error('Error obteniendo reservas:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

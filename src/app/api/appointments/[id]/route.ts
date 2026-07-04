@@ -90,7 +90,19 @@ export async function GET(
             negocio: appointment.negocio
         };
 
-        return NextResponse.json(normalized);
+        const { getServerSession } = await import("next-auth/next");
+        const { authOptions } = await import("@/lib/auth");
+        const session = await getServerSession(authOptions);
+        const negocioId = session?.user ? (session.user as any).negocioId : null;
+
+        let finalResponse = normalized;
+        if (negocioId) {
+            const { planLimitValidator } = await import('@/lib/services/planLimitValidator');
+            const processed = await planLimitValidator.obfuscateOverLimitAppointments(negocioId, [normalized]);
+            finalResponse = processed[0];
+        }
+
+        return NextResponse.json(finalResponse);
     } catch (error: any) {
         console.error("CRITICAL ERROR in GET appointment:", error);
         return NextResponse.json({ error: "Error de Sistema", details: error.message }, { status: 500 });

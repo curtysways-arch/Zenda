@@ -45,18 +45,16 @@ export const planLimitValidator = {
 
     /**
      * Valida si un negocio puede crear una nueva reserva (Cita).
-     * Basado en límite mensual dinámico.
+     * Siempre permite la creación, pero determina si se ha superado el límite.
      */
-    async canCreateReservation(businessId: string): Promise<{ allowed: boolean; message?: string }> {
+    async canCreateReservation(businessId: string): Promise<{ allowed: boolean; message?: string; exceeded?: boolean }> {
         const maxMonthly = await featureService.getLimit(businessId, 'max_appointments_monthly');
         if (maxMonthly === 0) {
-            return { allowed: false, message: "No se encontró el plan del negocio." };
+            return { allowed: true, exceeded: false };
         }
 
-        // Si es ilimitado (ej: 999999), permitimos siempre
-        if (maxMonthly >= 999999) return { allowed: true };
+        if (maxMonthly >= 999999) return { allowed: true, exceeded: false };
 
-        // Contar citas del mes actual
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
@@ -73,12 +71,159 @@ export const planLimitValidator = {
 
         if (reservationsCount >= maxMonthly) {
             return {
-                allowed: false,
+                allowed: true, // Permitimos siempre la creación física de la cita
+                exceeded: true,
                 message: "Has alcanzado el límite mensual de citas. Actualiza tu plan para seguir recibiendo reservas."
             };
         }
 
-        return { allowed: true };
+        return { allowed: true, exceeded: false };
+    },
+
+    /**
+     * Procesa una lista de citas para un negocio, marcando como "locked" y ofuscando
+     * los datos del cliente para aquellas citas que excedan el límite mensual en su mes de creación.
+     */
+    async obfuscateOverLimitAppointments(businessId: string, appointments: any[]): Promise<any[]> {
+        if (appointments.length === 0) return [];
+        
+        const maxMonthly = await featureService.getLimit(businessId, 'max_appointments_monthly');
+        if (maxMonthly >= 999999) {
+            return appointments.map(a => ({ ...a, isLocked: false }));
+        }
+
+        // Identificar qué meses/años están representados en las citas de la lista
+        const yearMonths = new Set<string>();
+        for (const app of appointments) {
+            const date = app.createdAt ? new Date(app.createdAt) : new Date(app.fecha);
+            const year = date.getFullYear();
+            const month = date.getMonth(); // 0-11
+            yearMonths.add(`${year}-${month}`);
+        }
+
+        // Para cada mes/año representado, traer las citas de ese mes para reconstruir el orden cronológico
+        const lockedIds = new Set<string>();
+
+        for (const ym of yearMonths) {
+            const [year, month] = ym.split('-').map(Number);
+            const startOfYM = new Date(year, month, 1);
+            const endOfYM = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
+            const allMonthApps = await prisma.appointment.findMany({
+                where: {
+                    negocioId: businessId,
+                    createdAt: {
+                        gte: startOfYM,
+                        lte: endOfYM
+                    }
+                },
+                select: {
+                    id: true,
+                    createdAt: true,
+                    fecha: true
+                },
+                orderBy: {
+                    createdAt: 'asc'
+                }
+            });
+
+            // Ordenar de forma estable en memoria
+            allMonthApps.sort((a, b) => {
+                const timeA = a.createdAt ? new Date(a.createdAt).getTime() : new Date(a.fecha).getTime();
+                const timeB = b.createdAt ? new Date(b.createdAt).getTime() : new Date(b.fecha).getTime();
+                if (timeA === timeB) return a.id.localeCompare(b.id);
+                return timeA - timeB;
+            });
+
+            // A partir del índice maxMonthly se marcan como bloqueadas
+            for (let i = maxMonthly; i < allMonthApps.length; i++) {
+                lockedIds.add(allMonthApps[i].id);
+            }
+        }
+
+        // Retornar las citas con información ofuscada
+        return appointments.map(app => {
+            const isLocked = lockedIds.has(app.id);
+            if (isLocked) {
+                return {
+                    ...app,
+                    isLocked: true,
+                    comentarios: 'Detalles ocultos. Actualiza tu plan para desbloquear.',
+                    cliente: app.cliente ? {
+                        ...app.cliente,
+                        nombre: 'Cita Bloqueada (Plan Excedido)',
+                        telefono: '*** *** ***',
+                        email: '***@***.***'
+                    } : null
+                };
+            }
+            return {
+                ...app,
+                isLocked: false
+            };
+        });
+    },
+
+    /**
+     * Procesa una lista de clientes para un negocio, ofuscando sus datos
+     * si todos sus appointments en el sistema están bloqueados (superaron el límite).
+     */
+    async obfuscateOverLimitClients(businessId: string, clients: any[]): Promise<any[]> {
+        if (clients.length === 0) return [];
+
+        const maxMonthly = await featureService.getLimit(businessId, 'max_appointments_monthly');
+        if (maxMonthly >= 999999) {
+            return clients;
+        }
+
+        // Obtener citas del negocio
+        const appointments = await prisma.appointment.findMany({
+            where: { negocioId: businessId },
+            select: { id: true, createdAt: true, fecha: true, clienteId: true }
+        });
+
+        const groups: Record<string, any[]> = {};
+        for (const app of appointments) {
+            const date = app.createdAt ? new Date(app.createdAt) : new Date(app.fecha);
+            const key = `${date.getFullYear()}-${date.getMonth()}`;
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(app);
+        }
+
+        const lockedIds = new Set<string>();
+        for (const key of Object.keys(groups)) {
+            groups[key].sort((a, b) => {
+                const timeA = a.createdAt ? new Date(a.createdAt).getTime() : new Date(a.fecha).getTime();
+                const timeB = b.createdAt ? new Date(b.createdAt).getTime() : new Date(b.fecha).getTime();
+                if (timeA === timeB) return a.id.localeCompare(b.id);
+                return timeA - timeB;
+            });
+            for (let i = maxMonthly; i < groups[key].length; i++) {
+                lockedIds.add(groups[key][i].id);
+            }
+        }
+
+        const clientUnlockedCount: Record<string, number> = {};
+        for (const app of appointments) {
+            if (!app.clienteId) continue;
+            if (!lockedIds.has(app.id)) {
+                clientUnlockedCount[app.clienteId] = (clientUnlockedCount[app.clienteId] || 0) + 1;
+            }
+        }
+
+        return clients.map(c => {
+            const hasUnlocked = (clientUnlockedCount[c.id] || 0) > 0;
+            if (!hasUnlocked && c.totalReservas > 0) {
+                return {
+                    ...c,
+                    nombre: 'Cliente Bloqueado (Plan Excedido)',
+                    telefono: '*** *** ***',
+                    email: '***@***.***',
+                    isLocked: true
+                };
+            }
+            return c;
+        });
     },
 
     /**
