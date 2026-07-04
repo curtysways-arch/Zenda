@@ -294,42 +294,15 @@ export default function DemoPage() {
                                     </ul>
                                 </div>
 
-                                {/* Credenciales y CTAs */}
+                                {/* CTAs */}
                                 <div className="space-y-4 border-t border-slate-100 pt-6">
-                                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                        <div>
-                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Credenciales de Administrador</span>
-                                            <div className="flex flex-col gap-0.5">
-                                                <span className="text-xs font-bold text-slate-700">Usuario: <span className="font-mono text-slate-600 select-all">{demo.credentials.email}</span></span>
-                                                <span className="text-xs font-bold text-slate-700">Clave: <span className="font-mono text-slate-600 select-all">{demo.credentials.password}</span></span>
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={() => handleCopy(demo.credentials.email)}
-                                            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-600 transition-colors shrink-0 active:scale-95"
-                                        >
-                                            {copiedEmail === demo.credentials.email ? (
-                                                <><Check size={12} className="text-emerald-500" />Copiado</>
-                                            ) : (
-                                                <><Copy size={12} />Copiar Email</>
-                                            )}
-                                        </button>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="w-full">
                                         <Link
                                             href={`/${demo.slug}`}
                                             target="_blank"
-                                            className="py-4 border border-slate-200 hover:border-slate-300 rounded-2xl font-black text-[9px] uppercase tracking-widest text-slate-700 flex items-center justify-center gap-1.5 transition-all bg-white hover:bg-slate-50 active:scale-95"
+                                            className="w-full py-4 border border-slate-200 hover:border-slate-300 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-700 flex items-center justify-center gap-1.5 transition-all bg-white hover:bg-slate-50 active:scale-95 shadow-sm"
                                         >
                                             Ver en Vivo <ExternalLink size={12} />
-                                        </Link>
-                                        <Link
-                                            href="/login"
-                                            className="py-4 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-1.5 transition-transform active:scale-95 shadow-md"
-                                            style={{ background: 'linear-gradient(135deg, #4f46e5, #4338ca)' }}
-                                        >
-                                            Panel Admin <Lock size={12} />
                                         </Link>
                                     </div>
                                 </div>
