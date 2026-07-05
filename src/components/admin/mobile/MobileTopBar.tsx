@@ -1,6 +1,6 @@
 'use client';
 
-import { Sparkles, Bell, User, LogOut, QrCode, Share2, Copy, Check, ExternalLink, X } from 'lucide-react';
+import { Sparkles, Bell, User, LogOut, QrCode, Share2, Copy, Check, ExternalLink, X, CalendarDays } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { useConfirm } from '@/components/admin/ConfirmContext';
@@ -85,43 +85,42 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN' }: TopBarPr
 
     return (
         <>
-            <div className="sticky top-0 left-0 right-0 z-[90] h-16 bg-white/90 backdrop-blur-2xl border-b border-slate-100 flex items-center justify-between px-4">
-                <div className="flex items-center gap-2">
+            <div className="sticky top-0 left-0 right-0 z-[90] h-20 bg-white/95 backdrop-blur-2xl border-b border-slate-100/50 flex items-center justify-between px-5">
+                <div className="flex items-center gap-3">
                     <button 
                         onClick={() => {
                             if (typeof window !== 'undefined') {
                                 window.dispatchEvent(new CustomEvent('toggle-admin-sidebar'));
                             }
                         }}
-                        className="size-10 flex items-center justify-center text-slate-500 hover:bg-slate-100 rounded-2xl transition-all active:scale-90"
+                        className="size-11 flex items-center justify-center bg-pink-50 hover:bg-pink-100 rounded-2xl transition-all active:scale-95 border border-pink-100/30"
                     >
-                        <ZendaLogo size={20} style={{ color: primaryColor }} />
+                        <CalendarDays size={20} className="text-pink-500" />
                     </button>
                     <div>
-                        <h2 className="font-black text-slate-900 uppercase tracking-tighter leading-none italic">{title}</h2>
-                        <span className="text-[8px] font-black uppercase tracking-[0.2em] leading-none text-slate-400">Spa Premium</span>
+                        <h2 className="font-bold text-slate-800 text-sm tracking-widest leading-none uppercase">{title}</h2>
+                        <span className="text-[9px] font-black uppercase tracking-wider leading-none text-slate-400 mt-1 block">Spa Premium</span>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                     {/* Botón QR / Compartir */}
                     <button 
                         onClick={() => setShowShare(true)}
-                        className="size-10 flex items-center justify-center text-slate-500 hover:bg-slate-100 rounded-2xl transition-all relative"
+                        className="size-10 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full text-slate-600 transition-all active:scale-90 relative"
                         title="QR y Compartir"
                     >
                         <QrCode size={18} />
                     </button>
 
-                    <button className="size-10 flex items-center justify-center text-slate-500 hover:bg-slate-100 rounded-2xl transition-all relative">
+                    <button className="size-10 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full text-slate-600 transition-all active:scale-90 relative">
                         <Bell size={18} />
-                        <span className="absolute top-2.5 right-2.5 size-2 bg-pink-500 rounded-full border-2 border-white" />
+                        <span className="absolute top-2 right-2 size-2 bg-pink-500 rounded-full border border-white" />
                     </button>
 
                     <button 
                         onClick={() => setShowMenu(!showMenu)}
-                        className="size-10 flex items-center justify-center bg-slate-100 text-slate-500 rounded-2xl transition-all overflow-hidden border-2"
-                        style={{ borderColor: showMenu ? primaryColor : 'transparent' }}
+                        className="size-10 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full text-slate-600 transition-all overflow-hidden"
                     >
                         {session?.user?.image ? (
                             <img src={session.user.image} className="w-full h-full object-cover" alt="Perfil" />

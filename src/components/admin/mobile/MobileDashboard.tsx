@@ -16,7 +16,8 @@ import {
     LayoutTemplate,
     Zap,
     CreditCard,
-    Gift
+    Gift,
+    ArrowRight
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn, formatUTCDate } from '@/lib/utils';
@@ -70,160 +71,220 @@ export default function MobileDashboard({
                 </div>
             )}
 
-            {/* Cabecera Mobile */}
-            <div className="flex flex-col gap-1">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] italic" style={{ color: primaryColor }}>Centro Pro Dashboard</p>
-                <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tighter uppercase italic leading-none transition-all">Buen día,</h1>
-                <p className="text-slate-400 text-xs sm:text-sm font-bold uppercase italic">Tu negocio en tiempo real.</p>
+            {/* Cabecera / Banner de Bienvenida Premium */}
+            <div className="bg-white border border-slate-100/80 rounded-[2.5rem] p-6 shadow-sm flex items-center justify-between relative overflow-hidden">
+                <div className="space-y-1 z-10">
+                    <span className="text-[9px] font-black uppercase tracking-[0.25em] text-pink-500 italic block">
+                        Centro Pro Dashboard
+                    </span>
+                    <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
+                        ¡BUEN DÍA, ADMIN!
+                    </h1>
+                    <p className="text-slate-400 text-[11px] font-semibold block">
+                        Tu negocio en tiempo real.
+                    </p>
+                </div>
+                <div className="w-24 sm:w-32 shrink-0 relative flex items-center justify-end z-0">
+                    <img 
+                        src="/images/spa/dashboard_spa_banner.png" 
+                        className="w-full h-auto max-h-20 object-contain translate-x-2"
+                        alt="Spa Decor"
+                    />
+                </div>
             </div>
 
-            {/* Quick Stats Horizontal Scroll */}
-            <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-5 px-5">
+            {/* Quick Stats Grid de 3 Columnas */}
+            <div className="grid grid-cols-3 gap-2.5">
                 <QuickStat 
                     label="Citas Hoy" 
                     value={stats.citasHoy} 
-                    icon={<Calendar size={18} />} 
-                    color={primaryColor} 
+                    subtext={stats.citasHoy === 0 ? "Sin citas programadas" : `${stats.citasHoy} citas programadas`}
+                    icon={<Calendar size={16} />} 
+                    color="#ec4899" 
+                    bg="#fdf2f8"
                 />
                 <Link href="/admin/recaudado">
                     <QuickStat 
                         label="Recaudado" 
                         value={`$${stats.ingresosMes}`} 
-                        icon={<DollarSign size={18} />} 
-                        color="#4f46e5" 
+                        subtext="Hoy"
+                        icon={<DollarSign size={16} />} 
+                        color="#6366f1" 
+                        bg="#f5f3ff"
                     />
                 </Link>
                 <QuickStat 
                     label="Clientes" 
                     value={stats.totalClientes} 
-                    icon={<Users size={18} />} 
-                    color="#9333ea" 
-                />
-                <QuickStat 
-                    label="Citas Mes" 
-                    value={stats.citasMes} 
-                    icon={<TrendingUp size={18} />} 
-                    color="#ea580c" 
+                    subtext="Total registrados"
+                    icon={<Users size={16} />} 
+                    color="#8b5cf6" 
+                    bg="#faf5ff"
                 />
             </div>
 
             {/* Quick Actions Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4">
+                {/* Operativo - Nueva Cita */}
                 <Link 
                     href="/admin/citas/nueva"
-                    className="flex flex-col gap-4 p-6 bg-slate-900 text-white rounded-[2.5rem] shadow-xl active:scale-95 transition-all relative overflow-hidden group"
+                    className="flex flex-col justify-between p-5 bg-[#131f37] text-white rounded-[2rem] shadow-md hover:shadow-lg active:scale-95 transition-all min-h-[145px] relative overflow-hidden group text-left"
                 >
-                    <div className="absolute -right-4 -top-4 size-20 rounded-full bg-white/10 blur-xl group-hover:scale-150 transition-transform" />
-                    <div className="size-10 rounded-2xl flex items-center justify-center bg-white/10 text-white">
-                        <Plus size={24} strokeWidth={3} />
+                    <div className="absolute -right-4 -top-4 size-20 rounded-full bg-white/5 blur-xl group-hover:scale-150 transition-transform" />
+                    
+                    <div className="size-10 rounded-full flex items-center justify-center bg-white/10 text-white border border-white/10">
+                        <Plus size={20} strokeWidth={2.5} />
                     </div>
-                    <div className="text-left">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Operativo</p>
-                        <p className="text-sm font-black uppercase italic leading-none">Nueva Cita</p>
+                    
+                    <div className="mt-4 flex items-end justify-between">
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Operativo</p>
+                            <p className="text-sm font-black tracking-tight leading-none text-white">Nueva cita</p>
+                            <p className="text-[9px] text-slate-400 font-medium mt-1 leading-tight">Agenda una cita rápidamente</p>
+                        </div>
+                        <div className="size-7 rounded-full bg-white/10 flex items-center justify-center text-white shrink-0 ml-2">
+                            <ArrowRight size={14} />
+                        </div>
                     </div>
                 </Link>
 
+                {/* Catálogo - Servicios */}
                 <Link 
                     href="/admin/servicios"
-                    className="flex flex-col gap-4 p-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm active:scale-95 transition-all group"
+                    className="flex flex-col justify-between p-5 bg-white border border-slate-100/80 rounded-[2rem] shadow-sm hover:shadow-md active:scale-95 transition-all min-h-[145px] group text-left"
                 >
-                    <div className="size-10 rounded-2xl flex items-center justify-center bg-slate-50 text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors">
-                        <Scissors size={20} />
+                    <div className="size-10 rounded-full flex items-center justify-center bg-purple-50 text-purple-500 border border-purple-100/30">
+                        <Scissors size={18} />
                     </div>
-                    <div className="text-left">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Catálogo</p>
-                        <p className="text-sm font-black uppercase italic leading-none text-slate-900">Servicios</p>
+                    <div className="mt-4 flex items-end justify-between">
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Catálogo</p>
+                            <p className="text-sm font-black tracking-tight leading-none text-slate-900">Servicios</p>
+                            <p className="text-[9px] text-slate-400 font-medium mt-1 leading-tight">Gestiona tus servicios</p>
+                        </div>
+                        <div className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-800 shrink-0 ml-2 transition-colors">
+                            <ArrowRight size={14} />
+                        </div>
                     </div>
                 </Link>
 
+                {/* Equipo - Staff */}
                 <Link 
                     href="/admin/staff"
-                    className="flex flex-col gap-4 p-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm active:scale-95 transition-all group"
+                    className="flex flex-col justify-between p-5 bg-white border border-slate-100/80 rounded-[2rem] shadow-sm hover:shadow-md active:scale-95 transition-all min-h-[145px] group text-left"
                 >
-                    <div className="size-10 rounded-2xl flex items-center justify-center bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
-                        <Users size={20} />
+                    <div className="size-10 rounded-full flex items-center justify-center bg-purple-50 text-purple-500 border border-purple-100/30">
+                        <Users size={18} />
                     </div>
-                    <div className="text-left">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Equipo</p>
-                        <p className="text-sm font-black uppercase italic leading-none text-slate-900">Staff</p>
+                    <div className="mt-4 flex items-end justify-between">
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Equipo</p>
+                            <p className="text-sm font-black tracking-tight leading-none text-slate-900">Staff</p>
+                            <p className="text-[9px] text-slate-400 font-medium mt-1 leading-tight">Administra tu equipo</p>
+                        </div>
+                        <div className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-800 shrink-0 ml-2 transition-colors">
+                            <ArrowRight size={14} />
+                        </div>
                     </div>
                 </Link>
 
+                {/* Ventas - Promos */}
                 <Link 
                     href="/admin/promociones"
-                    className="flex flex-col gap-4 p-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm active:scale-95 transition-all group"
+                    className="flex flex-col justify-between p-5 bg-white border border-slate-100/80 rounded-[2rem] shadow-sm hover:shadow-md active:scale-95 transition-all min-h-[145px] group text-left"
                 >
-                    <div className="size-10 rounded-2xl flex items-center justify-center bg-slate-50 text-slate-400 group-hover:bg-amber-50 group-hover:text-amber-500 transition-colors">
-                        <Sparkles size={20} />
+                    <div className="size-10 rounded-full flex items-center justify-center bg-purple-50 text-purple-500 border border-purple-100/30">
+                        <Sparkles size={18} />
                     </div>
-                    <div className="text-left">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Ventas</p>
-                        <p className="text-sm font-black uppercase italic leading-none text-slate-900">Promos</p>
+                    <div className="mt-4 flex items-end justify-between">
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Ventas</p>
+                            <p className="text-sm font-black tracking-tight leading-none text-slate-900">Promos</p>
+                            <p className="text-[9px] text-slate-400 font-medium mt-1 leading-tight">Crea y gestiona promociones</p>
+                        </div>
+                        <div className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-800 shrink-0 ml-2 transition-colors">
+                            <ArrowRight size={14} />
+                        </div>
                     </div>
                 </Link>
 
-                <Link 
-                    href="/admin/referidos"
-                    className="flex flex-col gap-4 p-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm active:scale-95 transition-all group"
-                >
-                    <div className="size-10 rounded-2xl flex items-center justify-center bg-slate-50 text-slate-400 group-hover:bg-pink-50 group-hover:text-pink-500 transition-colors">
-                        <Gift size={20} />
-                    </div>
-                    <div className="text-left">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Marketing</p>
-                        <p className="text-sm font-black uppercase italic leading-none text-slate-900">Referidos</p>
-                    </div>
-                </Link>
-
+                {/* Formación - Cursos */}
                 <Link 
                     href="/admin/cursos"
-                    className="flex flex-col gap-4 p-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm active:scale-95 transition-all group"
+                    className="flex flex-col justify-between p-5 bg-white border border-slate-100/80 rounded-[2rem] shadow-sm hover:shadow-md active:scale-95 transition-all min-h-[145px] group text-left"
                 >
-                    <div className="size-10 rounded-2xl flex items-center justify-center bg-slate-50 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-colors">
-                        <TrendingUp size={20} />
+                    <div className="size-10 rounded-full flex items-center justify-center bg-purple-50 text-purple-500 border border-purple-100/30">
+                        <TrendingUp size={18} />
                     </div>
-                    <div className="text-left">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Formación</p>
-                        <p className="text-sm font-black uppercase italic leading-none text-slate-900">Cursos</p>
+                    <div className="mt-4 flex items-end justify-between">
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Formación</p>
+                            <p className="text-sm font-black tracking-tight leading-none text-slate-900">Cursos</p>
+                            <p className="text-[9px] text-slate-400 font-medium mt-1 leading-tight">Gestiona tus cursos</p>
+                        </div>
+                        <div className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-800 shrink-0 ml-2 transition-colors">
+                            <ArrowRight size={14} />
+                        </div>
                     </div>
                 </Link>
 
+                {/* Horarios - Bloqueos */}
                 <Link 
                     href="/admin/bloqueos"
-                    className="flex flex-col gap-4 p-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm active:scale-95 transition-all group"
+                    className="flex flex-col justify-between p-5 bg-white border border-slate-100/80 rounded-[2rem] shadow-sm hover:shadow-md active:scale-95 transition-all min-h-[145px] group text-left"
                 >
-                    <div className="size-10 rounded-2xl flex items-center justify-center bg-slate-50 text-slate-400 group-hover:bg-rose-50 group-hover:text-rose-500 transition-colors">
-                        <Lock size={20} />
+                    <div className="size-10 rounded-full flex items-center justify-center bg-purple-50 text-purple-500 border border-purple-100/30">
+                        <Lock size={18} />
                     </div>
-                    <div className="text-left">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Horarios</p>
-                        <p className="text-sm font-black uppercase italic leading-none text-slate-900">Bloqueos</p>
+                    <div className="mt-4 flex items-end justify-between">
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Horarios</p>
+                            <p className="text-sm font-black tracking-tight leading-none text-slate-900">Bloqueos</p>
+                            <p className="text-[9px] text-slate-400 font-medium mt-1 leading-tight">Bloquea horarios</p>
+                        </div>
+                        <div className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-800 shrink-0 ml-2 transition-colors">
+                            <ArrowRight size={14} />
+                        </div>
                     </div>
                 </Link>
 
+                {/* Contenido - Páginas */}
                 <Link 
                     href="/admin/paginas"
-                    className="flex flex-col gap-4 p-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm active:scale-95 transition-all group"
+                    className="flex flex-col justify-between p-5 bg-white border border-slate-100/80 rounded-[2rem] shadow-sm hover:shadow-md active:scale-95 transition-all min-h-[145px] group text-left"
                 >
-                    <div className="size-10 rounded-2xl flex items-center justify-center bg-slate-50 text-slate-400 group-hover:bg-violet-50 group-hover:text-violet-500 transition-colors">
-                        <LayoutTemplate size={20} />
+                    <div className="size-10 rounded-full flex items-center justify-center bg-purple-50 text-purple-500 border border-purple-100/30">
+                        <LayoutTemplate size={18} />
                     </div>
-                    <div className="text-left">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Contenido</p>
-                        <p className="text-sm font-black uppercase italic leading-none text-slate-900">Páginas</p>
+                    <div className="mt-4 flex items-end justify-between">
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Contenido</p>
+                            <p className="text-sm font-black tracking-tight leading-none text-slate-900">Contenido</p>
+                            <p className="text-[9px] text-slate-400 font-medium mt-1 leading-tight">Gestiona el contenido</p>
+                        </div>
+                        <div className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-800 shrink-0 ml-2 transition-colors">
+                            <ArrowRight size={14} />
+                        </div>
                     </div>
                 </Link>
 
+                {/* Suscripción - Mi Plan */}
                 <Link 
                     href="/admin/plan"
-                    className="flex flex-col gap-4 p-6 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm active:scale-95 transition-all group"
+                    className="flex flex-col justify-between p-5 bg-white border border-slate-100/80 rounded-[2rem] shadow-sm hover:shadow-md active:scale-95 transition-all min-h-[145px] group text-left"
                 >
-                    <div className="size-10 rounded-2xl flex items-center justify-center bg-slate-50 text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors">
-                        <CreditCard size={20} />
+                    <div className="size-10 rounded-full flex items-center justify-center bg-purple-50 text-purple-500 border border-purple-100/30">
+                        <CreditCard size={18} />
                     </div>
-                    <div className="text-left">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Suscripción</p>
-                        <p className="text-sm font-black uppercase italic leading-none text-slate-900">Mi Plan</p>
+                    <div className="mt-4 flex items-end justify-between">
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Suscripción</p>
+                            <p className="text-sm font-black tracking-tight leading-none text-slate-900">Suscripción</p>
+                            <p className="text-[9px] text-slate-400 font-medium mt-1 leading-tight">Planes y suscripción</p>
+                        </div>
+                        <div className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-800 shrink-0 ml-2 transition-colors">
+                            <ArrowRight size={14} />
+                        </div>
                     </div>
                 </Link>
             </div>
@@ -308,18 +369,19 @@ export default function MobileDashboard({
     );
 }
 
-function QuickStat({ label, value, icon, color }: any) {
+function QuickStat({ label, value, subtext, icon, color, bg }: any) {
     return (
-        <div className="min-w-[130px] sm:min-w-[160px] p-5 sm:p-6 bg-white border border-slate-100 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm flex flex-col gap-4 group active:scale-95 transition-all">
+        <div className="flex-1 p-4 bg-white border border-slate-100/80 rounded-[2rem] shadow-sm flex flex-col gap-3 group active:scale-[0.97] transition-all text-left">
             <div 
-                className="size-8 sm:size-10 rounded-xl sm:rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110"
-                style={{ backgroundColor: `${color}15`, color: color }}
+                className="size-9 rounded-full flex items-center justify-center transition-transform group-hover:scale-105"
+                style={{ backgroundColor: bg, color: color }}
             >
                 {icon}
             </div>
             <div>
-                <p className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">{label}</p>
-                <p className="text-xl sm:text-2xl font-black text-slate-900 tracking-tighter italic leading-none">{value}</p>
+                <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 leading-none">{label}</p>
+                <p className="text-xl font-black text-slate-900 tracking-tighter italic leading-none mt-1">{value}</p>
+                <p className="text-[8px] text-gray-400 font-semibold leading-normal mt-1 leading-tight truncate">{subtext}</p>
             </div>
         </div>
     );
