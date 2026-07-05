@@ -6,7 +6,7 @@ import Link from 'next/link';
 import prisma from '@/lib/prisma';
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { MapPin, Search, Star, Clock, ChevronRight, ArrowLeft, Sparkles, ChevronLeft } from 'lucide-react';
+import { Search, Star, Clock, ChevronRight, ChevronLeft, Heart, SlidersHorizontal, Droplet, Sparkles } from 'lucide-react';
 import NextAppointmentBanner from '@/components/public/NextAppointmentBanner';
 
 export const dynamic = 'force-dynamic';
@@ -21,6 +21,7 @@ export default async function PublicServicesPage({
     const { slug } = await params;
     const resolvedSearchParams = await searchParams;
     const query = typeof resolvedSearchParams?.q === 'string' ? resolvedSearchParams.q.toLowerCase() : '';
+    const selectedCategory = typeof resolvedSearchParams?.category === 'string' ? resolvedSearchParams.category : 'Todos';
     const negocio = await getNegocioBySlug(slug);
 
     if (!negocio) {
@@ -29,9 +30,7 @@ export default async function PublicServicesPage({
 
     const services = negocio.services || [];
 
-    let userReservasActivas = 0;
     let nextAppointment: any = null;
-    let clientName = '';
 
     try {
         const cookieStore = await cookies();
@@ -45,24 +44,10 @@ export default async function PublicServicesPage({
                 const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
                 const telefono = payload.telefono as string;
 
-                const clienteData = await prisma.cliente.findFirst({
-                    where: {
-                        negocioId: payload.negocioId as string,
-                        OR: [
-                            { telefono: telefono },
-                            { telefono: telefono.replace(/^\+(\d{1,4})/, '') }
-                        ]
-                    }
-                });
-                if (clienteData) {
-                    clientName = clienteData.nombre;
-                }
-
                 const localTelefono = telefono.replace(/^\+(\d{1,4})/, ''); 
                 const digitsOnly = telefono.replace(/\D/g, ''); 
                 const localNoZero = localTelefono.replace(/^0+/, '');
 
-                // Buscar la cita más próxima (confirmada o pendiente)
                 const upcoming = await prisma.appointment.findMany({
                     where: {
                         negocioId: payload.negocioId as string,
@@ -106,13 +91,69 @@ export default async function PublicServicesPage({
         }
     } catch (e) {}
 
-    const filteredServices = query 
+    // Helper para categorizar servicios según su nombre
+    const getServiceCategory = (nombre: string) => {
+        const lower = nombre.toLowerCase();
+        if (lower.includes('facial') || lower.includes('limpieza') || lower.includes('cutis') || lower.includes('exfoliación facial')) {
+            return 'Faciales';
+        }
+        if (lower.includes('masaje') || lower.includes('relax') || lower.includes('piedras') || lower.includes('descontracturante')) {
+            return 'Masajes';
+        }
+        if (lower.includes('corporal') || lower.includes('exfoliación corporal') || lower.includes('reductor') || lower.includes('manicura') || lower.includes('gel') || lower.includes('pedicura') || lower.includes('barba')) {
+            return 'Corporales';
+        }
+        if (lower.includes('paquete') || lower.includes('combo') || lower.includes('pack') || lower.includes('duo') || lower.includes('promoción')) {
+            return 'Paquetes';
+        }
+        return 'Corporales'; // fallback
+    };
+
+    // Helper para obtener beneficio según el nombre del servicio
+    const getServiceBenefit = (nombre: string) => {
+        const lower = nombre.toLowerCase();
+        if (lower.includes('hidratación') || lower.includes('gel')) {
+            return 'Ideal para piel seca y deshidratada';
+        }
+        if (lower.includes('facial') || lower.includes('limpieza') || lower.includes('cutis')) {
+            return 'Piel más limpia, fresca y luminosa';
+        }
+        if (lower.includes('masaje') || lower.includes('relax') || lower.includes('piedras')) {
+            return 'Reduce el estrés y mejora la circulación';
+        }
+        if (lower.includes('exfoliación') || lower.includes('corporal')) {
+            return 'Estimula la renovación celular de la piel';
+        }
+        if (lower.includes('barba') || lower.includes('corte')) {
+            return 'Corte y perfilado con acabado premium';
+        }
+        if (lower.includes('manicura') || lower.includes('uñas') || lower.includes('pedicura')) {
+            return 'Cuidado e hidratación profunda para tus manos';
+        }
+        return 'Tratamiento diseñado para tu bienestar integral';
+    };
+
+    const getCategoryIcon = (name: string) => {
+        const lower = name.toLowerCase();
+        if (lower.includes('facial')) return '💆‍♀️';
+        if (lower.includes('masaje')) return '💆‍♂️';
+        if (lower.includes('corporal')) return '✨';
+        if (lower.includes('paquete')) return '🎁';
+        return '🌸';
+    };
+
+    // Filtrar por término de búsqueda (q)
+    let filteredServices = query 
         ? services.filter((s: any) => s.nombre.toLowerCase().includes(query) || (s.descripcion && s.descripcion.toLowerCase().includes(query)))
         : services;
 
-    const primaryColor = (negocio as any).colorPrimario || 'var(--primary)';
+    // Filtrar por categoría seleccionada
+    if (selectedCategory !== 'Todos') {
+        filteredServices = filteredServices.filter((s: any) => getServiceCategory(s.nombre) === selectedCategory);
+    }
+
+    const primaryColor = (negocio as any).colorPrimario || '#e21d6e';
     const secondaryColor = (negocio as any).colorSecundario || '#0f172a';
-    const tertiaryColor = (negocio as any).colorTerciario || '#7B68EE';
     const neutralColor = (negocio as any).colorNeutral || '#fff8f6';
 
     const rawTextColor = (negocio as any).colorTexto;
@@ -128,25 +169,30 @@ export default async function PublicServicesPage({
             return luma < 140 ? '#f8fafc' : '#1e293b';
         })();
 
+    const uniqueCategories = ['Todos', 'Faciales', 'Masajes', 'Corporales', 'Paquetes'];
+
     return (
         <main className="min-h-screen font-sans pb-32 md:pb-12 relative overflow-x-hidden" style={{ backgroundColor: neutralColor }}>
-            {/* Cabecera de Navegación */}
-            <header className="fixed top-0 left-0 right-0 z-50 px-6 py-6 flex items-center justify-between bg-white/80 backdrop-blur-md border-b border-slate-100">
-                <Link href={`/${slug}`} className="w-12 h-12 rounded-full border border-slate-100 flex items-center justify-center text-slate-800 hover:bg-slate-50 transition-colors bg-white shadow-sm">
-                    <ArrowLeft size={20} />
+            
+            {/* Cabecera de Navegación (Mockup de servicios con back y favorites redondo) */}
+            <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between bg-white border-b border-slate-100/80">
+                <Link href={`/${slug}`} className="flex items-center justify-center size-9 rounded-full bg-white border border-slate-100 shadow-sm text-slate-600 hover:text-slate-900 transition-all active:scale-90" style={{ color: primaryColor }}>
+                    <ChevronLeft size={18} strokeWidth={3} />
                 </Link>
-                <h1 className="text-lg font-black uppercase tracking-widest text-slate-800">
+                <h1 className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: textColor }}>
                     Servicios
                 </h1>
-                <div className="w-12 h-12"></div> {/* Espaciador */}
+                <button className="flex items-center justify-center size-9 rounded-full bg-white border border-slate-100 shadow-sm transition-all active:scale-90" style={{ color: primaryColor }}>
+                    <Heart size={16} fill="none" strokeWidth={2.5} />
+                </button>
             </header>
 
             {/* Espaciador Superior */}
-            <div className="pt-28"></div>
+            <div className="pt-20"></div>
 
             {/* PRÓXIMA CITA ALERT BANNER */}
             {nextAppointment && (
-                <div className="px-6 mb-6">
+                <div className="px-6 mb-5">
                     <NextAppointmentBanner 
                         appointment={nextAppointment}
                         slug={slug}
@@ -155,26 +201,61 @@ export default async function PublicServicesPage({
                 </div>
             )}
 
-            {/* BARRA DE BÚSQUEDA */}
-            <section className="px-6 mb-8">
-                <form method="GET" action={`/${slug}/servicios`} className="relative w-full">
+            {/* BARRA DE BÚSQUEDA Y FILTRO */}
+            <section className="px-6 mb-5 flex items-center gap-3">
+                <form method="GET" action={`/${slug}/servicios`} className="relative flex-1">
                     <input 
                         type="text"
                         name="q"
                         defaultValue={query}
                         placeholder="Buscar servicios..."
-                        className="w-full pl-12 pr-6 py-4 rounded-[1.8rem] border border-slate-100 focus:border-slate-200 outline-none font-semibold text-sm shadow-sm bg-white"
+                        className="w-full pl-11 pr-5 py-3 rounded-[1.8rem] border border-slate-150 focus:border-slate-200 outline-none font-semibold text-xs shadow-sm bg-white"
                     />
-                    <Search size={18} className="absolute left-4.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                 </form>
+                
+                {/* Botón de Filtro */}
+                <button className="flex items-center justify-center size-9 rounded-full bg-white border border-slate-100 shadow-sm transition-all active:scale-90 shrink-0" style={{ color: primaryColor }}>
+                    <SlidersHorizontal size={14} strokeWidth={2.5} />
+                </button>
+            </section>
+
+            {/* CATEGORÍAS EN HORIZONTAL SCROLL PILLS */}
+            <section className="px-6 mb-5 flex gap-2.5 overflow-x-auto scrollbar-none select-none">
+                {uniqueCategories.map((cat: string) => {
+                    const isActive = selectedCategory === cat;
+                    const icon = getCategoryIcon(cat);
+                    
+                    const queryParams = new URLSearchParams();
+                    if (query) queryParams.set('q', query);
+                    if (cat !== 'Todos') queryParams.set('category', cat);
+                    const href = `/${slug}/servicios?${queryParams.toString()}`;
+                    
+                    return (
+                        <Link 
+                            key={cat}
+                            href={href}
+                            className={cn(
+                                "flex items-center gap-1.5 px-4 py-2 rounded-full font-black text-[9px] uppercase tracking-widest border transition-all shrink-0 active:scale-95",
+                                isActive 
+                                    ? "text-white border-transparent" 
+                                    : "bg-white border-slate-100 text-slate-400 hover:text-slate-600"
+                            )}
+                            style={isActive ? { backgroundColor: primaryColor } : {}}
+                        >
+                            <span className="text-[11px] leading-none">{icon}</span>
+                            {cat}
+                        </Link>
+                    );
+                })}
             </section>
 
             {/* LISTA DE SERVICIOS */}
-            <section className="px-6">
-                <div className="flex flex-col gap-6">
+            <section className="px-6 pb-12">
+                <div className="flex flex-col gap-4">
                     {filteredServices.length === 0 ? (
                         <div className="text-center py-16 space-y-4">
-                            <p className="text-slate-400 font-semibold text-sm">No se encontraron servicios que coincidan con tu búsqueda.</p>
+                            <p className="text-slate-400 font-semibold text-sm">No se encontraron servicios.</p>
                             <Link href={`/${slug}/servicios`} className="inline-block text-xs font-black uppercase tracking-widest" style={{ color: primaryColor }}>
                                 Ver todos los servicios
                             </Link>
@@ -183,66 +264,81 @@ export default async function PublicServicesPage({
                         filteredServices.map((service: any, index: number) => {
                             const mockRating = (4.7 + (index * 0.1) % 0.3).toFixed(1);
                             const mockReviews = 180 + (index * 35);
+                            const tagLabel = index === 0 ? "MÁS RESERVADO" : (index === 1 ? "POPULAR" : (index === 2 ? "NUEVO" : ""));
+                            const benefitText = getServiceBenefit(service.nombre);
                             
                             return (
                                 <div 
                                     key={service.id} 
-                                    className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-4 flex flex-col sm:flex-row gap-5"
+                                    className="bg-white rounded-[24px] border border-slate-100 shadow-[0_4px_25px_rgba(0,0,0,0.02)] p-3 flex gap-3 h-[165px] transition-all hover:scale-[1.01] active:scale-[0.99] duration-300"
                                 >
-                                    {/* Imagen del servicio */}
-                                    <div className="relative w-full sm:w-2/5 aspect-[4/3] rounded-[2rem] overflow-hidden bg-slate-50 shrink-0">
+                                    {/* Lado Izquierdo: Imagen del servicio (38%) */}
+                                    <div className="relative w-[38%] h-full rounded-[20px] overflow-hidden bg-slate-50 shrink-0 select-none">
                                         <img 
                                             src={getServicePrimaryImage(service, 'medium')} 
                                             className="w-full h-full object-cover" 
                                             alt={service.nombre} 
                                         />
-                                        {index === 0 && (
-                                            <div className="absolute top-3 left-3 bg-pink-500 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
-                                                MÁS RESERVADO
+                                        
+                                        {/* Tag de popularidad/novedad */}
+                                        {tagLabel && (
+                                            <div className="absolute top-2 left-2 bg-pink-500 text-white text-[6px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-md select-none" style={{ backgroundColor: primaryColor }}>
+                                                {tagLabel}
                                             </div>
                                         )}
-                                        {/* Icono Corazón (Favoritos) */}
-                                        <button className="absolute top-3 right-3 size-8 rounded-full bg-white/90 backdrop-blur-sm border border-slate-100 flex items-center justify-center text-slate-400 hover:text-pink-500 active:scale-95 transition-all">
-                                            <svg className="size-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                                            </svg>
+                                        
+                                        {/* Corazón favoritos sobre la imagen */}
+                                        <button className="absolute top-2 right-2 size-6 rounded-full bg-white/95 border border-slate-100/50 flex items-center justify-center text-slate-400 hover:text-pink-500 active:scale-90 transition-all shadow-sm">
+                                            <Heart size={10} fill="none" strokeWidth={2.5} />
                                         </button>
+                                        
+                                        {/* Duración abajo */}
+                                        <div className="absolute bottom-2 left-2 bg-black/45 backdrop-blur-[1px] text-white px-2 py-0.5 rounded-md text-[7.5px] font-black uppercase tracking-wider flex items-center gap-1 select-none">
+                                            <Clock size={8} />
+                                            {service.duracion || 60} min
+                                        </div>
                                     </div>
 
-                                    {/* Contenido */}
-                                    <div className="flex-1 flex flex-col justify-between py-2">
-                                        <div>
-                                            <h2 className="font-black text-xl leading-snug" style={{ color: textColor }}>
+                                    {/* Lado Derecho: Textos, Beneficios, Precio y Botón */}
+                                    <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5 pr-1">
+                                        <div className="space-y-0.5">
+                                            <h2 className="font-black text-[13px] uppercase text-slate-850 tracking-tight leading-snug truncate" style={{ color: textColor }}>
                                                 {service.nombre}
                                             </h2>
-                                            <p className="text-xs font-semibold text-slate-400 mt-2 line-clamp-3">
-                                                {service.extraInfo?.descripcion || service.descripcion || 'Libera tensión y recupera tu energía vital en una sesión diseñada exclusivamente para tu bienestar.'}
+                                            <p className="text-[10px] text-slate-400 font-semibold line-clamp-1 leading-normal">
+                                                {service.extraInfo?.descripcion || service.descripcion || 'Tratamiento diseñado exclusivamente para tu bienestar.'}
                                             </p>
                                             
-                                            {/* Info line */}
-                                            <div className="flex items-center gap-4 mt-4 text-slate-400 text-xs font-bold">
-                                                <span className="flex items-center gap-1">
-                                                    <Clock size={14} className="text-slate-400" />
-                                                    {service.duracionMinutos || 60} min
-                                                </span>
-                                                <span className="flex items-center gap-1">
-                                                    <Star size={14} className="text-amber-400" fill="currentColor" />
-                                                    {mockRating} ({mockReviews} opiniones)
-                                                </span>
+                                            {/* Calificación y opiniones */}
+                                            <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400 leading-none pt-0.5">
+                                                <Star size={10} className="text-pink-500" fill="currentColor" style={{ color: primaryColor }} />
+                                                <span className="text-slate-700">{mockRating}</span>
+                                                <span className="text-slate-200">|</span>
+                                                <span>({mockReviews} opiniones)</span>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center justify-between gap-4 mt-6">
-                                            <div className="text-3xl font-black" style={{ color: primaryColor }}>
-                                                ${service.precio}
+                                        {/* Caja de Beneficio Destacado */}
+                                        <div className="rounded-xl p-2 flex items-center gap-1.5 select-none" style={{ backgroundColor: `${primaryColor}0a` }}>
+                                            <Droplet size={11} className="text-pink-500 shrink-0" style={{ color: primaryColor }} />
+                                            <span className="text-[8.5px] text-slate-600 font-semibold truncate leading-none">
+                                                {benefitText}
+                                            </span>
+                                        </div>
+
+                                        {/* Precio y Botón Reservar */}
+                                        <div className="flex items-center justify-between gap-2 pt-0.5">
+                                            <div className="text-sm font-black" style={{ color: primaryColor }}>
+                                                ${service.precio || 30}
                                             </div>
 
                                             <Link 
                                                 href={`/${slug}/servicio/${service.id}`}
-                                                className="px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest text-white shadow-md active:scale-95 transition-all"
+                                                className="px-4 py-2 rounded-[14px] font-black text-[9px] uppercase tracking-widest text-white shadow-sm hover:brightness-110 active:scale-95 transition-all flex items-center gap-0.5"
                                                 style={{ backgroundColor: primaryColor }}
                                             >
                                                 Reservar
+                                                <ChevronRight size={9} strokeWidth={3} />
                                             </Link>
                                         </div>
                                     </div>
