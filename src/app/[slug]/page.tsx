@@ -528,43 +528,7 @@ export default async function PublicNegocioPage({
         console.error("Error loading reviews:", e);
     }
 
-    if (reviews.length === 0) {
-        reviews = [
-            {
-                id: 'fb-1',
-                comment: 'Excelente atención, el lugar es hermoso y los resultados increíbles. Reservé desde el celular en menos de un minuto.',
-                stars: 5,
-                appointment: {
-                    cliente: {
-                        nombre: 'María P.',
-                        avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150'
-                    }
-                }
-            },
-            {
-                id: 'fb-2',
-                comment: 'Muy profesionales, la atención al detalle es fantástica. Recomiendo totalmente el masaje relajante corporal.',
-                stars: 5,
-                appointment: {
-                    cliente: {
-                        nombre: 'Carlos G.',
-                        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150'
-                    }
-                }
-            },
-            {
-                id: 'fb-3',
-                comment: 'El sistema de reservas por WhatsApp es una maravilla. Me atendieron a la hora exacta. ¡5 estrellas!',
-                stars: 5,
-                appointment: {
-                    cliente: {
-                        nombre: 'Laura M.',
-                        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150'
-                    }
-                }
-            }
-        ];
-    }
+
 
     // --- Datos del referido (si el usuario llegó por un enlace de referido) ---
     let referrerName = '';
@@ -754,7 +718,6 @@ export default async function PublicNegocioPage({
             <section id="servicios" className="px-6 mb-6">
                 <div className="flex justify-between items-end mb-4">
                     <div>
-                        <span className="text-[10px] font-black uppercase tracking-widest mb-1 block" style={{ color: primaryColor }}>OPCIONES PARA TI</span>
                         <h3 className="text-2xl font-black leading-none" style={{ color: textColor }}>Nuestros Servicios</h3>
                     </div>
                     {filteredCanchas.length > 0 && (
@@ -864,7 +827,6 @@ export default async function PublicNegocioPage({
                 <section id="resultados" className="px-6 mb-6">
                     <div className="flex justify-between items-end mb-4">
                         <div>
-                            <span className="text-[10px] font-black uppercase tracking-widest mb-1 block" style={{ color: primaryColor }}>RESULTADOS REALES</span>
                             <h3 className="text-2xl font-black leading-none" style={{ color: textColor }}>Resultados Reales</h3>
                         </div>
                         <Link 

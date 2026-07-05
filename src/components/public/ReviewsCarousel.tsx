@@ -31,71 +31,76 @@ export default function ReviewsCarousel({ reviews, primaryColor, textColor }: Re
     const clientAvatar = currentReview.appointment?.cliente?.avatar || '';
 
     return (
-        <div className="bg-[#FFF8F6] rounded-[2.5rem] p-8 relative overflow-hidden border border-pink-500/5 shadow-sm text-center">
-            {/* Quote Icon */}
-            <div className="text-left mb-2">
-                <span className="text-6xl font-serif font-black leading-none select-none opacity-20 block h-6" style={{ color: primaryColor }}>
-                    “
-                </span>
-            </div>
-
-            {/* Testimonial Text */}
-            <p className="text-sm font-medium text-slate-700 leading-relaxed italic px-4 min-h-[60px]">
-                "{currentReview.comment}"
-            </p>
-
-            {/* Carousel Dots */}
-            <div className="flex justify-center gap-2 mt-6 mb-5">
-                {reviews.map((_, idx) => (
-                    <button
-                        key={idx}
-                        onClick={() => setActiveIndex(idx)}
-                        className={`h-1.5 rounded-full transition-all duration-300 ${
-                            idx === activeIndex ? 'w-6' : 'w-1.5'
-                        }`}
-                        style={{
-                            backgroundColor: idx === activeIndex ? primaryColor : '#cbd5e1'
-                        }}
-                    />
-                ))}
-            </div>
-
-            {/* Author info */}
-            <div className="flex items-center justify-center gap-3.5 pt-2">
-                {clientAvatar ? (
-                    <img 
-                        src={clientAvatar} 
-                        className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
-                        alt={clientName}
-                    />
-                ) : (
-                    <div 
-                        className="w-12 h-12 rounded-full flex items-center justify-center text-white font-black text-sm border-2 border-white shadow-md"
-                        style={{ backgroundColor: primaryColor }}
-                    >
-                        {clientName.substring(0, 1)}
-                    </div>
-                )}
-                <div className="text-left">
-                    {/* Stars */}
-                    <div className="flex gap-0.5 mb-1">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                            <Star 
-                                key={i}
-                                size={12}
-                                className={i < currentReview.stars ? "text-amber-400" : "text-slate-200"}
-                                fill={i < currentReview.stars ? "currentColor" : "none"}
-                            />
-                        ))}
-                    </div>
-                    <p className="text-xs font-black text-slate-800 tracking-tight leading-none">
-                        {clientName}
-                    </p>
-                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest leading-none">
-                        Cliente feliz
+        <div className="select-none">
+            {/* Testimonial Card */}
+            <div className="bg-[#FFF2F6] border border-pink-100/30 rounded-[2rem] p-5 flex flex-row items-center justify-between shadow-sm relative gap-4">
+                <div className="flex items-start gap-2 flex-1 min-w-0">
+                    {/* Icono de Comillas Rosa */}
+                    <span className="text-3xl font-serif font-black leading-none select-none text-pink-500 block shrink-0 pt-0.5">
+                        “
+                    </span>
+                    {/* Comentario */}
+                    <p className="text-xs font-semibold text-slate-700 leading-relaxed italic pr-1">
+                        {currentReview.comment}
                     </p>
                 </div>
+
+                {/* Sección Derecha: Autor e Información */}
+                <div className="flex items-center gap-3 shrink-0 pl-3 border-l border-slate-200/50">
+                    <div className="text-right">
+                        {/* Estrellas doradas */}
+                        <div className="flex gap-0.5 mb-1 justify-end">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <Star 
+                                    key={i}
+                                    size={10}
+                                    className={i < currentReview.stars ? "text-amber-400" : "text-slate-200"}
+                                    fill={i < currentReview.stars ? "currentColor" : "none"}
+                                />
+                            ))}
+                        </div>
+                        <p className="text-xs font-black text-slate-800 leading-none">
+                            {clientName}
+                        </p>
+                        <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-wider leading-none">
+                            Cliente feliz
+                        </p>
+                    </div>
+                    
+                    {/* Avatar del cliente */}
+                    {clientAvatar ? (
+                        <img 
+                            src={clientAvatar} 
+                            className="w-11 h-11 rounded-full object-cover border-2 border-white shadow-sm shrink-0"
+                            alt={clientName}
+                        />
+                    ) : (
+                        <div 
+                            className="w-11 h-11 rounded-full flex items-center justify-center text-white font-black text-xs border-2 border-white shadow-sm shrink-0"
+                            style={{ backgroundColor: primaryColor }}
+                        >
+                            {clientName.substring(0, 1)}
+                        </div>
+                    )}
+                </div>
             </div>
+
+            {/* Puntos Indicadores */}
+            {reviews.length > 1 && (
+                <div className="flex justify-center gap-2 mt-3 select-none">
+                    {reviews.map((_, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => setActiveIndex(idx)}
+                            className="size-1.5 rounded-full transition-all duration-300"
+                            style={{
+                                width: idx === activeIndex ? '12px' : '6px',
+                                backgroundColor: idx === activeIndex ? primaryColor : '#cbd5e1'
+                            }}
+                        />
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
