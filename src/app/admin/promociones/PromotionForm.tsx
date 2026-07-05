@@ -40,7 +40,7 @@ export default function PromotionForm({
         imagenUrl: initialData?.imageMedia?.url || initialData?.imagenUrl || '',
         fechaInicio: formatDate(initialData?.fechaInicio) || '',
         fechaFin: formatDate(initialData?.fechaFin) || '',
-        estado: initialData?.estado || 'borrador',
+        estado: initialData?.estado || 'activa',
         serviceIds: initialData?.services?.map((c: any) => c.id) || [],
         diasValidos: initialData?.diasValidos ? initialData.diasValidos.split(',').map(Number) : [1,2,3,4,5,6,0],
         horaInicioValida: initialData?.horaInicioValida || '',
@@ -325,18 +325,36 @@ export default function PromotionForm({
                             </div>
 
                             <div>
-                                <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Estado</label>
-                                <select
-                                    value={form.estado}
-                                    onChange={e => setForm({ ...form, estado: e.target.value })}
-                                    className="w-full bg-gray-50 border-transparent rounded-2xl px-5 py-4 text-gray-900 font-bold transition-all appearance-none outline-none"
-                                    onFocus={(e) => { e.target.style.borderColor = 'var(--primary-color)'; e.target.style.backgroundColor = 'white'; e.target.style.boxShadow = '0 0 0 2px color-mix(in srgb, var(--primary-color), transparent 80%)'; }}
-                                    onBlur={(e) => { e.target.style.borderColor = 'transparent'; e.target.style.backgroundColor = 'rgb(249, 250, 251)'; e.target.style.boxShadow = 'none'; }}
-                                >
-                                    <option value="borrador">Borrador</option>
-                                    <option value="activa">Activa</option>
-                                    <option value="caducada">Caducada</option>
-                                </select>
+                                <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-3">Estado</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                        { value: 'activa', label: 'Activa', icon: '✅', desc: 'Visible para clientes', color: '#10b981', bg: '#ecfdf5', border: '#6ee7b7' },
+                                        { value: 'borrador', label: 'Borrador', icon: '📝', desc: 'Solo visible para ti', color: '#f59e0b', bg: '#fffbeb', border: '#fcd34d' },
+                                        { value: 'caducada', label: 'Caducada', icon: '⛔', desc: 'Fuera de vigencia', color: '#ef4444', bg: '#fef2f2', border: '#fca5a5' },
+                                    ].map(opt => (
+                                        <button
+                                            key={opt.value}
+                                            type="button"
+                                            onClick={() => setForm({ ...form, estado: opt.value })}
+                                            className="flex flex-col items-center justify-center gap-1 p-3 rounded-2xl border-2 transition-all duration-200 cursor-pointer select-none"
+                                            style={{
+                                                backgroundColor: form.estado === opt.value ? opt.bg : '#f9fafb',
+                                                borderColor: form.estado === opt.value ? opt.border : '#e5e7eb',
+                                                transform: form.estado === opt.value ? 'scale(1.03)' : 'scale(1)',
+                                                boxShadow: form.estado === opt.value ? `0 4px 12px ${opt.color}30` : 'none',
+                                            }}
+                                        >
+                                            <span className="text-xl">{opt.icon}</span>
+                                            <span
+                                                className="text-[11px] font-black uppercase tracking-wide leading-none"
+                                                style={{ color: form.estado === opt.value ? opt.color : '#6b7280' }}
+                                            >
+                                                {opt.label}
+                                            </span>
+                                            <span className="text-[9px] text-gray-400 text-center leading-tight">{opt.desc}</span>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Servicios Participantes</label>
