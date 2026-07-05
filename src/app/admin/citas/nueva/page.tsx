@@ -122,14 +122,13 @@ function ReservaNuevaForm() {
                 const numeroLimpio = telefonoCompleto.replace(/^0+/, '');
                 telefonoCompleto = `${codigoPais}${numeroLimpio}`;
             }
-
-            const res = await fetch('/api/reservas', {
+            const res = await fetch('/api/appointments', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     ...formData, 
                     clienteTelefono: telefonoCompleto,
-                    canchaId: formData.serviceId, // Mantener compatibilidad con backend si aún espera canchaId
+                    canchaId: formData.serviceId,
                     serviceId: formData.serviceId,
                     slug,
                     is_business_creation: true 
