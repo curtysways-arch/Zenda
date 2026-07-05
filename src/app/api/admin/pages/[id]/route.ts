@@ -10,21 +10,18 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         const session = await getServerSession(authOptions);
         if (!session?.user) return new NextResponse('Unauthorized', { status: 401 });
 
-        const { id } = await params;
+        const { id: rawId } = await params;
+        const id = rawId.trim();
 
-        // Bypass Prisma cache using raw query
-        const pages: any[] = await prisma.$queryRawUnsafe(
-            `SELECT * FROM Page WHERE id = '${id}' LIMIT 1`
-        );
+        // Buscar usando Prisma ORM estándar
+        const page = await prisma.page.findUnique({
+            where: { id },
+            include: {
+                imageMedia: true
+            }
+        });
 
-        if (pages.length === 0) return new NextResponse('Not Found', { status: 404 });
-
-        const page = pages[0];
-        if (page.imageMediaId) {
-            page.imageMedia = await prisma.media.findUnique({ where: { id: page.imageMediaId } });
-        } else {
-            page.imageMedia = null;
-        }
+        if (!page) return new NextResponse('Not Found', { status: 404 });
 
         return NextResponse.json(page);
     } catch (error) {
@@ -38,32 +35,34 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         const session = await getServerSession(authOptions);
         if (!session?.user) return new NextResponse('Unauthorized', { status: 401 });
 
-        const { id } = await params;
+        const { id: rawId } = await params;
+        const id = rawId.trim();
         const { title, contentHtml, status, featuredImage, buttonText, buttonUrl, imageMediaId } = await req.json();
 
         const cleanHtml = DOMPurify.sanitize(contentHtml);
         const slug = slugify(title, { lower: true, strict: true });
 
-        // Usar SQL directo para evitar problemas de sincronización con Prisma Client
-        await prisma.$executeRawUnsafe(
-            `UPDATE Page SET 
-                title = '${title.replace(/'/g, "''")}', 
-                slug = '${slug}', 
-                contentHtml = '${cleanHtml.replace(/'/g, "''")}', 
-                featuredImage = ${featuredImage ? `'${featuredImage}'` : 'NULL'}, 
-                imageMediaId = ${imageMediaId ? `'${imageMediaId}'` : 'NULL'}, 
-                buttonText = ${buttonText ? `'${buttonText.replace(/'/g, "''")}'` : 'NULL'}, 
-                buttonUrl = ${buttonUrl ? `'${buttonUrl.replace(/'/g, "''")}'` : 'NULL'}, 
-                status = '${status}',
-                updatedAt = CURRENT_TIMESTAMP
-             WHERE id = '${id}'`
-        );
+        // Actualizar usando Prisma ORM estándar
+        const updatedPage = await prisma.page.update({
+            where: { id },
+            data: {
+                title,
+                slug,
+                contentHtml: cleanHtml,
+                featuredImage: featuredImage || null,
+                imageMediaId: imageMediaId || null,
+                buttonText: buttonText || null,
+                buttonUrl: buttonUrl || null,
+                status: status || 'draft',
+                updatedAt: new Date()
+            }
+        });
 
-        return NextResponse.json({ success: true, id });
+        return NextResponse.json({ success: true, id: updatedPage.id });
     } catch (error: any) {
         console.error('[UPDATE_PAGE_ERROR]', error);
         return NextResponse.json({
-            error: 'Error al actualizar mediante SQL',
+            error: 'Error al actualizar la página',
             details: error.message,
             code: error.code
         }, { status: 500 });
@@ -75,9 +74,13 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         const session = await getServerSession(authOptions);
         if (!session?.user) return new NextResponse('Unauthorized', { status: 401 });
 
-        const { id } = await params;
+        const { id: rawId } = await params;
+        const id = rawId.trim();
 
-        await prisma.$executeRawUnsafe(`DELETE FROM Page WHERE id = '${id}'`);
+        // Eliminar usando Prisma ORM estándar
+        await prisma.page.delete({
+            where: { id }
+        });
 
         return NextResponse.json({ success: true });
     } catch (error) {
