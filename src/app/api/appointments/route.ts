@@ -266,22 +266,7 @@ export async function POST(req: Request) {
                 data: { appointmentsUsed: { increment: 1 } }
             });
 
-            const shareCode = randomBytes(4).toString('hex');
-
-            await tx.sharedMatch.create({
-                data: {
-                    reservaId: reserva.id,
-                    businessId: negocio.id,
-                    fecha: reservationDate,
-                    hora_inicio: horaInicio,
-                    hora_fin: horaFin,
-                    jugadores_necesarios: 10,
-                    precio_total: totalConDescuento,
-                    share_code: shareCode
-                }
-            });
-
-            return { success: true, reserva, shareCode };
+            return { success: true, reserva, shareCode: null };
         });
 
         if (result.error) {
