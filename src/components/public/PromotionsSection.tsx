@@ -79,53 +79,52 @@ export default function PromotionsSection({
                         <div
                             key={promo.id}
                             onClick={() => router.push(`/${slug}/promo/${promo.id}`)}
-                            className="group bg-white border border-slate-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] rounded-[24px] p-4 flex items-center cursor-pointer snap-center w-[84%] shrink-0 h-[155px] hover:scale-[1.01] hover:shadow-[0_8px_30px_rgba(0,0,0,0.05)] active:scale-[0.99] transition-all duration-300 gap-2"
+                            className="group bg-white border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] rounded-[24px] p-3 flex items-center cursor-pointer snap-center w-[84%] shrink-0 h-[120px] hover:scale-[1.01] hover:shadow-[0_6px_25px_rgba(0,0,0,0.04)] active:scale-[0.99] transition-all duration-300 gap-3"
                         >
-                            {/* Lado izquierdo: Imagen redonda (28% del ancho) con badge de descuento */}
-                            <div className="relative w-[28%] aspect-square shrink-0 rounded-2xl overflow-hidden bg-slate-50">
+                            {/* Lado izquierdo: Imagen fija tamaño 20 (size-20) */}
+                            <div className="relative size-20 shrink-0 rounded-2xl overflow-hidden bg-slate-50">
                                 <img
                                     src={promo.imagenUrl || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150'}
                                     alt={promo.titulo}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                 />
-                                <div className="absolute inset-0 bg-pink-500/5 animate-pulse" />
                                 
                                 {/* Badge circular rosa */}
-                                <div className="absolute top-1.5 left-1.5 bg-pink-500 text-white rounded-full size-9 flex flex-col items-center justify-center shadow-md border border-white/80 select-none">
+                                <div className="absolute top-1 left-1 bg-pink-500 text-white rounded-full size-8 flex flex-col items-center justify-center shadow-md border border-white/80 select-none">
                                     <span className="text-[9px] font-black leading-none">{discountText}</span>
-                                    <span className="text-[6px] font-black leading-none mt-0.5">OFF</span>
+                                    <span className="text-[5.5px] font-black leading-none mt-0.5">OFF</span>
                                 </div>
                             </div>
 
-                            {/* Lado derecho: Contenido en formato de columna (Título, Fecha, y Botón Reservar) */}
-                            <div className="flex-1 min-w-0 ml-4 flex flex-col justify-between h-full py-0.5">
-                                <div className="space-y-0.5">
-                                    <div className="flex items-center gap-1.5">
-                                        {currentTag && (
-                                            <span className="px-2 py-0.5 bg-pink-50 text-pink-600 rounded-md text-[8px] font-black uppercase tracking-widest border border-pink-100/30">
-                                                {currentTag}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <h4 className="text-sm font-black text-slate-800 leading-snug line-clamp-2 uppercase tracking-tight">
-                                        {promo.titulo}
-                                    </h4>
-                                    <p className="text-slate-400 text-[10px] font-semibold">
-                                        {dateStr}
-                                    </p>
+                            {/* Lado derecho: Contenido en formato de columna compacta vertical */}
+                            <div className="flex-1 min-w-0 flex flex-col justify-center space-y-1">
+                                <div className="flex items-center gap-1">
+                                    {currentTag && (
+                                        <span className="px-2 py-0.5 bg-pink-50 text-pink-600 rounded-md text-[7.5px] font-black uppercase tracking-widest border border-pink-100/20 leading-none">
+                                            {currentTag}
+                                        </span>
+                                    )}
                                 </div>
+                                
+                                <h4 className="text-[13px] font-black text-slate-800 leading-tight uppercase tracking-tight truncate">
+                                    {promo.titulo}
+                                </h4>
+                                
+                                <p className="text-slate-400 text-[9.5px] font-bold leading-none">
+                                    {dateStr}
+                                </p>
 
-                                <div className="pt-1">
+                                <div className="pt-0.5">
                                     <button 
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             router.push(`/${slug}/promo/${promo.id}`);
                                         }}
-                                        className="inline-flex items-center justify-center gap-1 px-4 py-2 rounded-full font-black text-[9px] uppercase tracking-widest text-white shadow-sm transition-all duration-300 hover:brightness-110 active:scale-95"
+                                        className="inline-flex items-center justify-center gap-1 px-4.5 py-1.5 rounded-full font-black text-[8px] uppercase tracking-widest text-white shadow-sm transition-all duration-300 hover:brightness-110 active:scale-95 leading-none"
                                         style={{ backgroundColor: primaryColor }}
                                     >
                                         Reservar ahora
-                                        <ChevronRight size={10} strokeWidth={3} />
+                                        <ChevronRight size={8} strokeWidth={3} />
                                     </button>
                                 </div>
                             </div>
