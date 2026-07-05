@@ -104,6 +104,8 @@ export default function ColorPaletteEditor({
     isSaving = false,
     showHeader = true,
 }: ColorPaletteEditorProps) {
+    const isModoMarca = colors.colorPrimario === 'logo' || colors.colorPrimario === 'AUTO';
+
     const update = (field: keyof NegocioColors) => (value: string) => {
         onChange({ ...colors, [field]: value });
     };
@@ -122,81 +124,113 @@ export default function ColorPaletteEditor({
                 </div>
             )}
 
-            <div className="space-y-6">
-                <ColorField
-                    label="1. Color Principal"
-                    sublabel="Botones y selección"
-                    description="Afecta: Botón de reserva, ícono activo del menú, servicios seleccionados e indicadores de estado."
-                    value={colors.colorPrimario || ''}
-                    defaultValue="#EC4899"
-                    presets={['#EC4899', '#1d4ed8', '#7c3aed', '#ea580c', '#10b981', '#111827']}
-                    onChange={update('colorPrimario')}
-                />
-
-                <ColorField
-                    label="2. Color de Barra Inferior"
-                    sublabel="Fondo de navegación"
-                    description="Afecta: El fondo de la barra de menú inferior (Inicio, Reservas, Perfil)."
-                    value={colors.colorSecundario || ''}
-                    defaultValue="#020617"
-                    presets={['#020617', '#0f172a', '#1e1b4b', '#1c1917', '#14532d', '#450a0a']}
-                    onChange={update('colorSecundario')}
-                />
-
-                <ColorField
-                    label="3. Color de Títulos"
-                    sublabel="Jerarquía visual"
-                    description="Afecta: Títulos principales de secciones como 'Nuestros Servicios', nombres y encabezados."
-                    value={colors.colorTexto || ''}
-                    defaultValue="#1e293b"
-                    presets={['#1e293b', '#0f172a', '#ffffff', '#f8fafc', '#374151', '#92400e']}
-                    onChange={update('colorTexto')}
-                />
-
-                <ColorField
-                    label="4. Color de Acentos"
-                    sublabel="Detalles y calificación"
-                    description="Afecta: Íconos destacados, etiquetas de categoría, estrellas de calificación y detalles decorativos."
-                    value={colors.colorTerciario || ''}
-                    defaultValue="#7B68EE"
-                    presets={['#7B68EE', '#9f1239', '#eab308', '#ec4899', '#8b5cf6', '#14b8a6']}
-                    onChange={update('colorTerciario')}
-                />
-
-                <ColorField
-                    label="5. Color de Fondo"
-                    sublabel="Lienzo principal"
-                    description="Afecta: El color de fondo general de toda la aplicación y la cabecera superior donde aparece el logo."
-                    value={colors.colorNeutral || ''}
-                    defaultValue="#FFF5F5"
-                    presets={['#FFF5F5', '#f8fafc', '#fdf4ff', '#fffbeb', '#f0fdf4', '#0f172a']}
-                    onChange={update('colorNeutral')}
-                />
-
-                <ColorField
-                    label="6. Color de Subtítulos"
-                    sublabel="Texto secundario"
-                    description="Afecta: Descripciones de servicios, subtítulos del hero, mensajes secundarios y detalles informativos."
-                    value={colors.colorSubTexto || ''}
-                    defaultValue="#475569"
-                    presets={['#475569', '#64748b', '#94a3b8', '#ffffff', '#f1f5f9', '#1e293b']}
-                    onChange={update('colorSubTexto')}
-                />
+            {/* Selector de Modo de Marca */}
+            <div className="flex justify-between items-center bg-slate-50 border border-slate-100 rounded-2xl p-4.5 mb-4 select-none">
+                <div className="pr-4">
+                    <label className="text-[10px] font-black text-slate-900 uppercase tracking-widest block">✨ Modo de Marca (Recomendado)</label>
+                    <span className="text-[9px] text-slate-400 font-bold leading-normal">
+                        Analiza y autodetecta la paleta cromática desde tu logo.
+                    </span>
+                </div>
+                <button
+                    type="button"
+                    onClick={() => {
+                        if (isModoMarca) {
+                            onChange({ ...colors, colorPrimario: '#EC4899' });
+                        } else {
+                            onChange({ ...colors, colorPrimario: 'logo' });
+                        }
+                    }}
+                    className={`w-12 h-6 rounded-full p-0.5 transition-colors duration-300 focus:outline-none shrink-0 ${isModoMarca ? 'bg-pink-500' : 'bg-slate-200'}`}
+                >
+                    <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-300 ${isModoMarca ? 'translate-x-6' : 'translate-x-0'}`} />
+                </button>
             </div>
+
+            {isModoMarca ? (
+                <div className="bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-pink-200/40 rounded-2xl p-5 space-y-2.5 animate-in fade-in duration-300">
+                    <span className="text-[10px] font-black text-pink-600 uppercase tracking-widest block">✨ Inteligencia Cromática Activa</span>
+                    <p className="text-[10px] text-slate-500 font-semibold leading-relaxed">
+                        Zenda está analizando tu logotipo en tiempo real para generar de manera inteligente y matemática el color primario, fondos, acentos y textos con contraste accesible (WCAG AA).
+                    </p>
+                </div>
+            ) : (
+                <div className="space-y-6 animate-in fade-in duration-300">
+                    <ColorField
+                        label="1. Color Principal"
+                        sublabel="Botones y selección"
+                        description="Afecta: Botón de reserva, ícono activo del menú, servicios seleccionados e indicadores de estado."
+                        value={colors.colorPrimario || ''}
+                        defaultValue="#EC4899"
+                        presets={['#EC4899', '#1d4ed8', '#7c3aed', '#ea580c', '#10b981', '#111827']}
+                        onChange={update('colorPrimario')}
+                    />
+
+                    <ColorField
+                        label="2. Color de Barra Inferior"
+                        sublabel="Fondo de navegación"
+                        description="Afecta: El fondo de la barra de menú inferior (Inicio, Reservas, Perfil)."
+                        value={colors.colorSecundario || ''}
+                        defaultValue="#020617"
+                        presets={['#020617', '#0f172a', '#1e1b4b', '#1c1917', '#14532d', '#450a0a']}
+                        onChange={update('colorSecundario')}
+                    />
+
+                    <ColorField
+                        label="3. Color de Títulos"
+                        sublabel="Jerarquía visual"
+                        description="Afecta: Títulos principales de secciones como 'Nuestros Servicios', nombres y encabezados."
+                        value={colors.colorTexto || ''}
+                        defaultValue="#1e293b"
+                        presets={['#1e293b', '#0f172a', '#ffffff', '#f8fafc', '#374151', '#92400e']}
+                        onChange={update('colorTexto')}
+                    />
+
+                    <ColorField
+                        label="4. Color de Acentos"
+                        sublabel="Detalles y calificación"
+                        description="Afecta: Íconos destacados, etiquetas de categoría, estrellas de calificación y detalles decorativos."
+                        value={colors.colorTerciario || ''}
+                        defaultValue="#7B68EE"
+                        presets={['#7B68EE', '#9f1239', '#eab308', '#ec4899', '#8b5cf6', '#14b8a6']}
+                        onChange={update('colorTerciario')}
+                    />
+
+                    <ColorField
+                        label="5. Color de Fondo"
+                        sublabel="Lienzo principal"
+                        description="Afecta: El color de fondo general de toda la aplicación y la cabecera superior donde aparece el logo."
+                        value={colors.colorNeutral || ''}
+                        defaultValue="#FFF5F5"
+                        presets={['#FFF5F5', '#f8fafc', '#fdf4ff', '#fffbeb', '#f0fdf4', '#0f172a']}
+                        onChange={update('colorNeutral')}
+                    />
+
+                    <ColorField
+                        label="6. Color de Subtítulos"
+                        sublabel="Texto secundario"
+                        description="Afecta: Descripciones de servicios, subtítulos del hero, mensajes secundarios y detalles informativos."
+                        value={colors.colorSubTexto || ''}
+                        defaultValue="#475569"
+                        presets={['#475569', '#64748b', '#94a3b8', '#ffffff', '#f1f5f9', '#1e293b']}
+                        onChange={update('colorSubTexto')}
+                    />
+                </div>
+            )}
 
             <button
                 type="button"
                 onClick={() => onSave({
                     colorPrimario: colors.colorPrimario,
-                    colorSecundario: colors.colorSecundario,
-                    colorTexto: colors.colorTexto,
-                    colorTerciario: colors.colorTerciario,
-                    colorNeutral: colors.colorNeutral,
-                    colorSubTexto: colors.colorSubTexto,
+                    colorSecundario: isModoMarca ? undefined : colors.colorSecundario,
+                    colorTexto: isModoMarca ? undefined : colors.colorTexto,
+                    colorTerciario: isModoMarca ? undefined : colors.colorTerciario,
+                    colorNeutral: isModoMarca ? undefined : colors.colorNeutral,
+                    colorSubTexto: isModoMarca ? undefined : colors.colorSubTexto,
                 })}
                 disabled={isSaving}
                 className="w-full py-4 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 transition-opacity"
-                style={{ backgroundColor: colors.colorPrimario || '#EC4899' }}
+                style={{ backgroundColor: isModoMarca ? '#EC4899' : (colors.colorPrimario || '#EC4899') }}
             >
                 {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                 Guardar Paleta de Colores

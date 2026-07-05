@@ -1,4 +1,5 @@
 import { getNegocioBySlug } from '@/lib/services';
+import { generateTheme } from '@/lib/themeGenerator';
 import { notFound } from 'next/navigation';
 import PublicMobileNav from '@/components/public/PublicMobileNav';
 import PublicDesktopNav from '@/components/public/PublicDesktopNav';
@@ -76,127 +77,175 @@ export default async function NegocioLayout({
 
     const canUseCustomColors = await featureService.canUseFeature(negocio.id, 'custom_colors');
 
-    let primaryColor = (negocio as any).colorPrimario && (negocio as any).colorPrimario !== '#1dc95c' ? (negocio as any).colorPrimario : '#1dc95c';
-    let secondaryColor = (negocio as any).colorSecundario && (negocio as any).colorSecundario !== '#112117' ? (negocio as any).colorSecundario : '#112117';
-    let tertiaryColor = (negocio as any).colorTerciario || primaryColor;
-    let neutralColor = (negocio as any).colorNeutral || '#ffffff';
-    let textColor = '#000000';
-    let subTextColor = '#475569';
+    let primaryInput = (negocio as any).colorPrimario && (negocio as any).colorPrimario !== '#1dc95c' ? (negocio as any).colorPrimario : '#db2777';
 
-    if (canUseCustomColors) {
-        primaryColor = (negocio as any).colorPrimario && (negocio as any).colorPrimario !== '#1dc95c' ? (negocio as any).colorPrimario : '#db2777'; // pink-600
-        secondaryColor = (negocio as any).colorSecundario && (negocio as any).colorSecundario !== '#112117' ? (negocio as any).colorSecundario : '#020617'; // slate-950
-        tertiaryColor = (negocio as any).colorTerciario || primaryColor; 
-        neutralColor = (negocio as any).colorNeutral || '#FFF5F5';
-        
-        // Calcular textColor dinámicamente si no está configurado para evitar texto blanco sobre fondo blanco
-        const rawTextColor = (negocio as any).colorTexto;
-        textColor = rawTextColor
-            ? rawTextColor
-            : (() => {
-                const hex = neutralColor.replace('#', '');
-                if (hex.length !== 6) return '#1e293b';
-                const r = parseInt(hex.substring(0, 2), 16);
-                const g = parseInt(hex.substring(2, 4), 16);
-                const b = parseInt(hex.substring(4, 6), 16);
-                const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-                return luma < 140 ? '#f8fafc' : '#1e293b';
-            })();
-            
-        subTextColor = (negocio as any).colorSubTexto || '#475569';
+    // Verificar si el Modo de Marca está activo (por config o por flag "logo" en colorPrimario)
+    const config = negocio.configuracion ? (typeof negocio.configuracion === 'string' ? JSON.parse(negocio.configuracion) : negocio.configuracion) as any : null;
+    const modoMarca = config?.modoMarca || config?.autodetectarColorLogo || (negocio as any).colorPrimario === 'logo' || (negocio as any).colorPrimario === 'AUTO';
+
+    if (modoMarca && negocio.logoUrl) {
+        const { getLogoDominantColor } = await import('@/lib/logoColorExtractor');
+        const logoColor = await getLogoDominantColor(negocio.logoUrl);
+        if (logoColor) {
+            primaryInput = logoColor;
+        }
     }
 
-    const isSecLight = isLightColor(secondaryColor);
-    const navInactiveColor = isSecLight ? 'rgba(15, 23, 42, 0.5)' : 'rgba(255, 255, 255, 0.6)';
-    const navBorderColor = isSecLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.08)';
-
-    // Calcular el color del ítem activo con contraste garantizado sobre el fondo secundario
-    const primaryContrast = contrastRatioHex(primaryColor, secondaryColor);
-    const navActiveColor = primaryContrast >= 3.5
-        ? primaryColor
-        : isSecLight ? '#0f172a' : '#ffffff';
-
-    const isNeutralLight = isLightColor(neutralColor);
-    const cardBgColor = isNeutralLight ? '#ffffff' : 'rgba(255, 255, 255, 0.04)';
-    const cardBorderColor = isNeutralLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.08)';
-
+    const theme = generateTheme(
+        primaryInput,
+        (negocio as any).colorSecundario || undefined,
+        (negocio as any).colorNeutral || undefined
+    );
 
     return (
         <>
             <style dangerouslySetInnerHTML={{
                 __html: `
                 :root {
-                    --primary: ${primaryColor};
-                    --primary-rgb: ${hexToRgb(primaryColor)};
-                    --secondary: ${secondaryColor};
-                    --secondary-rgb: ${hexToRgb(secondaryColor)};
-                    --tertiary: ${tertiaryColor};
-                    --tertiary-rgb: ${hexToRgb(tertiaryColor)};
-                    --neutral: ${neutralColor};
-                    --neutral-rgb: ${hexToRgb(neutralColor)};
-                    --text-header: ${textColor};
-                    --text-header-rgb: ${hexToRgb(textColor)};
-                    --text-secondary: ${subTextColor};
-                    --text-secondary-rgb: ${hexToRgb(subTextColor)};
-                    --card-bg: ${cardBgColor};
-                    --card-border: ${cardBorderColor};
+                    --primary: ${theme.primaryColor};
+                    --primary-light: ${theme.primaryLight};
+                    --primary-dark: ${theme.primaryDark};
+                    --secondary: ${theme.secondaryColor};
+                    --accent: ${theme.accentColor};
+                    --background: ${theme.backgroundColor};
+                    --surface: ${theme.surfaceColor};
+                    --surface-secondary: ${theme.surfaceSecondary};
+                    --border: ${theme.borderColor};
+                    --text-primary: ${theme.textPrimary};
+                    --text-secondary: ${theme.textSecondary};
+                    --text-disabled: ${theme.textDisabled};
+                    --text-on-primary: ${theme.textOnPrimary};
+                    
+                    /* Estados fijos */
+                    --success: ${theme.successColor};
+                    --warning: ${theme.warningColor};
+                    --error: ${theme.errorColor};
+                    --shadow: ${theme.shadowColor};
                     
                     /* Navegación móvil dinámica */
-                    --nav-inactive: ${navInactiveColor};
-                    --nav-border: ${navBorderColor};
-                    --nav-active: ${navActiveColor};
+                    --nav-inactive: var(--text-secondary);
+                    --nav-border: var(--border);
+                    --nav-active: var(--primary);
                 }
 
                 /* Forzar el color de texto dinámico en los encabezados y textos principales */
                 .text-header-dynamic {
-                    color: var(--text-header) !important;
+                    color: var(--text-primary) !important;
                 }
 
                 /* Clase dinámica para tarjetas adaptativas al color de fondo */
                 .bg-card-dynamic {
-                    background-color: var(--card-bg) !important;
-                    border: 1px solid var(--card-border) !important;
+                    background-color: var(--surface) !important;
+                    border: 1px solid var(--border) !important;
                 }
                 
                 /* Dynamic utility classes for Tertiary */
-                .text-tertiary { color: var(--tertiary) !important; }
-                .bg-tertiary { background-color: var(--tertiary) !important; }
-                .border-tertiary { border-color: var(--tertiary) !important; }
+                .text-tertiary { color: var(--accent) !important; }
+                .bg-tertiary { background-color: var(--accent) !important; }
+                .border-tertiary { border-color: var(--accent) !important; }
                 
                 /* Dynamic utility classes for Neutral */
-                .text-neutral-custom { color: var(--neutral) !important; }
-                .bg-neutral-custom { background-color: var(--neutral) !important; }
-                .border-neutral-custom { border-color: var(--neutral) !important; }
+                .text-neutral-custom { color: var(--background) !important; }
+                .bg-neutral-custom { background-color: var(--background) !important; }
+                .border-neutral-custom { border-color: var(--background) !important; }
 
-                /* Interceptar colores de Tailwind y redirigirlos al branding */
-                .text-emerald-300, .text-emerald-400, .text-indigo-400, .text-blue-400 { color: rgba(var(--primary-rgb), 0.85) !important; }
-                .text-emerald-500, .text-indigo-500, .text-blue-500, .text-indigo-600 { color: var(--primary) !important; }
-                .text-emerald-600, .text-indigo-700 { color: var(--primary) !important; filter: brightness(0.9); }
+                /* Interceptores dinámicos del branding sobre clases de Tailwind */
+                
+                /* Botones principales y fondos de color de marca */
+                .bg-pink-500, .bg-emerald-500, .bg-indigo-500, .bg-blue-500, .bg-slate-900:not(.text-white), .bg-primary {
+                    background-color: var(--primary) !important;
+                    color: var(--text-on-primary) !important;
+                }
+                .bg-pink-500:hover, .bg-emerald-500:hover, .bg-indigo-500:hover, .bg-blue-500:hover, .bg-primary:hover {
+                    background-color: var(--primary-dark) !important;
+                }
+                .bg-pink-500:active, .bg-emerald-500:active, .bg-indigo-500:active, .bg-blue-500:active, .bg-primary:active {
+                    background-color: var(--primary-dark) !important;
+                }
+                .bg-pink-500:disabled, .bg-emerald-500:disabled, .bg-indigo-500:disabled, .bg-primary:disabled {
+                    background-color: var(--surface-secondary) !important;
+                    color: var(--text-disabled) !important;
+                    border-color: transparent !important;
+                }
 
-                /* Interceptar colores de Tailwind neutros para descripciones y subtítulos */
-                .text-slate-400 { color: rgba(var(--text-secondary-rgb), 0.8) !important; }
-                .text-slate-500, .text-slate-600 { color: var(--text-secondary) !important; }
-                .text-slate-700 { color: var(--text-secondary) !important; filter: brightness(0.85); }
+                /* Botones secundarios (borde e icono en color de marca) */
+                .border-pink-500, .border-emerald-500, .border-indigo-500, .border-primary {
+                    border-color: var(--primary) !important;
+                    color: var(--primary) !important;
+                }
+                .border-pink-500:hover, .border-emerald-500:hover, .border-indigo-500:hover {
+                    background-color: var(--primary-light) !important;
+                    color: var(--text-on-primary) !important;
+                }
 
-                .bg-emerald-50, .bg-indigo-50, .bg-blue-50, .bg-slate-50  { background-color: rgba(var(--primary-rgb), 0.05) !important; }
-                .bg-emerald-100, .bg-indigo-100, .bg-slate-100 { background-color: rgba(var(--primary-rgb), 0.1)  !important; }
-                .bg-emerald-500, .bg-indigo-500, .bg-blue-500, .bg-slate-500 { background-color: var(--primary) !important; }
-                .bg-emerald-600, .bg-indigo-600, .bg-slate-600 { background-color: var(--primary) !important; filter: brightness(0.9); }
+                /* Textos de Color Primario / Marca */
+                .text-pink-500, .text-emerald-500, .text-indigo-500, .text-blue-500, .text-indigo-600 {
+                    color: var(--primary) !important;
+                }
+                .text-pink-600, .text-emerald-600, .text-indigo-600, .text-blue-600, .text-indigo-700 {
+                    color: var(--primary-dark) !important;
+                }
 
-                .border-emerald-100, .border-indigo-100, .border-blue-100, .border-slate-100 { border-color: rgba(var(--primary-rgb), 0.1) !important; }
-                .border-emerald-500, .border-indigo-500, .border-slate-500 { border-color: rgba(var(--primary-rgb), 0.4) !important; }
+                /* Textos de Color Secundario o Neutrales */
+                .text-slate-900, .text-slate-950, .text-slate-800, .text-slate-850, .text-slate-700 {
+                    color: var(--text-primary) !important;
+                }
+                .text-slate-400, .text-slate-500, .text-slate-650, .text-slate-600 {
+                    color: var(--text-secondary) !important;
+                }
+                .text-slate-300 {
+                    color: var(--text-disabled) !important;
+                }
 
-                /* Fill */
-                .fill-emerald-400, .fill-emerald-500, .fill-indigo-500 { fill: var(--primary) !important; }
+                /* Superficies y Fondos Suaves */
+                .bg-white, .bg-card, .bg-slate-50, .bg-slate-100\/50, .bg-slate-50\/50 {
+                    background-color: var(--surface) !important;
+                }
+                .bg-slate-100, .bg-slate-200, .bg-slate-100\/80 {
+                    background-color: var(--surface-secondary) !important;
+                }
+                .bg-pink-50, .bg-emerald-50, .bg-indigo-50, .bg-blue-50 {
+                    background-color: var(--surface) !important;
+                }
 
-                /* Selection */
-                ::selection { background-color: var(--primary); color: #fff; }
+                /* Bordes de Contenedores y Divisores */
+                .border-slate-100, .border-slate-200, .border-slate-150, .border-slate-100\/80, .border-slate-100\/50 {
+                    border-color: var(--border) !important;
+                }
+                .border-pink-100, .border-emerald-100, .border-indigo-100, .border-blue-100 {
+                    border-color: var(--border) !important;
+                }
 
-                /* Transitions */
-                .transition-colors { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 300ms; }
+                /* Estados fijos */
+                .text-green-500, .text-emerald-500.state-success { color: var(--success) !important; }
+                .text-amber-500, .text-yellow-500.state-warning { color: var(--warning) !important; }
+                .text-red-500, .text-rose-500.state-error { color: var(--error) !important; }
+
+                /* Sombras Inteligentes y Opacidad */
+                .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl {
+                    box-shadow: 0 4px 20px 0 var(--shadow) !important;
+                }
+
+                /* Rellenos e Iconos SVG */
+                .fill-emerald-400, .fill-emerald-500, .fill-indigo-500, .fill-pink-500 {
+                    fill: var(--primary) !important;
+                }
+
+                /* Selección de Texto */
+                ::selection {
+                    background-color: var(--primary);
+                    color: var(--text-on-primary);
+                }
+
+                /* Transiciones de Color */
+                .transition-colors {
+                    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+                    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+                    transition-duration: 300ms;
+                }
                 `
             }} />
-            <div className="flex flex-col min-h-screen" style={{ backgroundColor: 'var(--neutral)' }}>
+            <div className="flex flex-col min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
                 <PublicDesktopNav 
                     slug={slug} 
                     hasActiveCourses={hasActiveCourses} 
@@ -211,33 +260,5 @@ export default async function NegocioLayout({
             </div>
         </>
     );
-}
-
-function hexToRgb(hex: string) {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (!result) return '29, 201, 92'; // Default emerald
-    return `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`;
-}
-
-function isLightColor(hex: string) {
-    const rgbStr = hexToRgb(hex);
-    const rgb = rgbStr.split(',').map(Number);
-    if (rgb.length !== 3) return true;
-    const luma = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
-    return luma > 140;
-}
-
-function contrastRatioHex(hex1: string, hex2: string): number {
-    const luma1 = (() => {
-        const rgb = hexToRgb(hex1).split(',').map(Number);
-        return rgb.length === 3 ? (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255 : 0.5;
-    })();
-    const luma2 = (() => {
-        const rgb = hexToRgb(hex2).split(',').map(Number);
-        return rgb.length === 3 ? (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255 : 0.5;
-    })();
-    const lighter = Math.max(luma1, luma2);
-    const darker = Math.min(luma1, luma2);
-    return (lighter + 0.05) / (darker + 0.05);
 }
 
