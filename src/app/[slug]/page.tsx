@@ -718,7 +718,7 @@ export default async function PublicNegocioPage({
             <section id="servicios" className="px-6 mb-6">
                 <div className="flex justify-between items-end mb-4">
                     <div>
-                        <h3 className="text-2xl font-black leading-none" style={{ color: textColor }}>Nuestros Servicios</h3>
+                        <h3 className="text-2xl font-black leading-none text-slate-900">Nuestros Servicios</h3>
                     </div>
                     {filteredCanchas.length > 0 && (
                         <Link 
@@ -827,7 +827,7 @@ export default async function PublicNegocioPage({
                 <section id="resultados" className="px-6 mb-6">
                     <div className="flex justify-between items-end mb-4">
                         <div>
-                            <h3 className="text-2xl font-black leading-none" style={{ color: textColor }}>Resultados Reales</h3>
+                            <h3 className="text-2xl font-black leading-none text-slate-900">Resultados Reales</h3>
                         </div>
                         <Link 
                             href={`/${slug}/portafolio`}
@@ -881,7 +881,7 @@ export default async function PublicNegocioPage({
                     <div className="flex justify-between items-end mb-4">
                         <div>
                             <span className="text-[10px] font-black uppercase tracking-widest mb-1 block" style={{ color: primaryColor }}>TESTIMONIOS</span>
-                            <h3 className="text-2xl font-black leading-none" style={{ color: textColor }}>Opiniones</h3>
+                            <h3 className="text-2xl font-black leading-none text-slate-900">Opiniones</h3>
                         </div>
                     </div>
                     <ReviewsCarousel 
@@ -898,7 +898,7 @@ export default async function PublicNegocioPage({
                     <div className="flex justify-between items-end mb-4">
                         <div>
                             <span className="text-[10px] font-black uppercase tracking-widest mb-2 block" style={{ color: primaryColor }}>DESCUBRE MÁS</span>
-                            <h3 className="text-2xl font-black leading-none" style={{ color: textColor }}>Contenido Exclusivo</h3>
+                            <h3 className="text-2xl font-black leading-none text-slate-900">Contenido Exclusivo</h3>
                         </div>
                     </div>
                     
@@ -951,7 +951,7 @@ export default async function PublicNegocioPage({
                 <section id="ubicacion" className="px-6 mb-12">
                     <div className="flex items-center gap-3 mb-6">
                          <div className="w-2.5 h-6 rounded-sm" style={{ backgroundColor: tertiaryColor }}></div>
-                         <h3 className="text-xl font-black tracking-tight" style={{ color: textColor }}>Ubicación</h3>
+                         <h3 className="text-xl font-black tracking-tight text-slate-900">Ubicación</h3>
                     </div>
                     <div className="space-y-6">
                         {resolvedUbicaciones.map((sede: any) => (
@@ -959,8 +959,8 @@ export default async function PublicNegocioPage({
                                 <iframe width="100%" height="220" style={{ border: 0 }} loading="lazy" allowFullScreen src={sede.embedSrc}></iframe>
                                 <div className="p-5 flex justify-between items-center">
                                     <div>
-                                        <h4 className="font-black text-lg" style={{ color: textColor }}>{sede.nombre}</h4>
-                                        <p className="text-xs font-semibold opacity-40 flex items-center gap-1.5 mt-1.5">
+                                        <h4 className="font-black text-lg text-slate-900">{sede.nombre}</h4>
+                                        <p className="text-xs font-semibold text-slate-400 flex items-center gap-1.5 mt-1.5">
                                             <MapPin size={14} /> {sede.direccion}
                                         </p>
                                     </div>

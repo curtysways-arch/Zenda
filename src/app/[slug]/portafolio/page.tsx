@@ -85,7 +85,7 @@ export default async function FullPortfolioPage({
 
             <section className="px-6 py-8 text-center max-w-2xl mx-auto">
                 <span className="text-[10px] font-black uppercase tracking-[0.4em] mb-2 block" style={{ color: primaryColor }}>PORTAFOLIO</span>
-                <h1 className="text-5xl font-black tracking-tight leading-none" style={{ color: textColor }}>
+                <h1 className="text-5xl font-black tracking-tight leading-none text-slate-900">
                     Resultados
                 </h1>
             </section>

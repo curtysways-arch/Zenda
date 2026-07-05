@@ -48,7 +48,7 @@ export default function PromotionsSection({
         <div className="space-y-3.5 select-none">
             {/* Cabecera con padding lateral de 24px (px-6) */}
             <div className="flex items-center justify-between px-6">
-                 <span className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: primaryColor }}>PROMOCIONES DESTACADAS</span>
+                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-900">PROMOCIONES DESTACADAS</span>
             </div>
             
             {/* Carrusel de desplazamiento horizontal con Snap Scroll */}

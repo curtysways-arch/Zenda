@@ -179,7 +179,7 @@ export default async function PublicServicesPage({
                 <Link href={`/${slug}`} className="flex items-center justify-center size-9 rounded-full bg-white border border-slate-100 shadow-sm text-slate-600 hover:text-slate-900 transition-all active:scale-90" style={{ color: primaryColor }}>
                     <ChevronLeft size={18} strokeWidth={3} />
                 </Link>
-                <h1 className="text-sm font-black uppercase tracking-[0.2em]" style={{ color: textColor }}>
+                <h1 className="text-sm font-black uppercase tracking-[0.2em] text-slate-900">
                     Servicios
                 </h1>
                 <button className="flex items-center justify-center size-9 rounded-full bg-white border border-slate-100 shadow-sm transition-all active:scale-90" style={{ color: primaryColor }}>
@@ -302,7 +302,7 @@ export default async function PublicServicesPage({
                                     {/* Lado Derecho: Textos, Beneficios, Precio y Botón */}
                                     <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5 pr-1">
                                         <div className="space-y-0.5">
-                                            <h2 className="font-black text-[13px] uppercase text-slate-850 tracking-tight leading-snug truncate" style={{ color: textColor }}>
+                                            <h2 className="font-black text-[13px] uppercase text-slate-850 tracking-tight leading-snug truncate">
                                                 {service.nombre}
                                             </h2>
                                             <p className="text-[10px] text-slate-400 font-semibold line-clamp-1 leading-normal">
