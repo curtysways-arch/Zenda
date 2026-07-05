@@ -160,12 +160,15 @@ export async function POST(req: Request) {
                     }
                 },
                 update: {
-                    nombre: clienteNombre
+                    nombre: clienteNombre,
+                    updatedAt: new Date()
                 },
                 create: {
+                    id: crypto.randomUUID(),
                     nombre: clienteNombre,
                     telefono: clienteTelefono,
-                    negocioId: negocio.id
+                    negocioId: negocio.id,
+                    updatedAt: new Date()
                 }
             });
 
@@ -246,6 +249,7 @@ export async function POST(req: Request) {
             const estadoInicial = isBusiness ? 'confirmed' : (timeoutMinutes === 0 ? 'confirmed' : 'pending');
 
             const dataToCreate: any = {
+                id: crypto.randomUUID(),
                 fecha: reservationDate,
                 horaInicio,
                 horaFin,
@@ -261,7 +265,8 @@ export async function POST(req: Request) {
                 created_by_business: isBusiness,
                 shareToken: isBusiness ? randomBytes(16).toString('hex') : null,
                 usuarioId: usuarioId,
-                expiresAt: estadoInicial === 'confirmed' ? null : expiresAt
+                expiresAt: estadoInicial === 'confirmed' ? null : expiresAt,
+                updatedAt: new Date()
             };
 
             const reserva = await tx.appointment.create({
