@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Calendar, User, Gift } from 'lucide-react';
+import { Home, Calendar, User, Gift, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { clsx } from 'clsx';
@@ -21,7 +21,7 @@ function hexToLuma(hex: string): number {
 }
 
 /** 
- * Calcula el ratio de contraste entre dos colores (WCAG).
+ * Computa el ratio de contraste entre dos colores (WCAG).
  * Retorna un valor entre 1 y 21.
  */
 function contrastRatio(hex1: string, hex2: string): number {
@@ -60,17 +60,17 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
             label: 'Inicio',
             icon: Home,
             href: `/${slug}`,
-            active: pathname === `/${slug}`,
+            active: pathname === `/${slug}` && !pathname.includes('/servicios'),
         },
         {
-            label: 'Reservas',
+            label: 'Mis citas',
             icon: Calendar,
             href: `/${slug}/mis-reservas`,
             active: pathname.includes('/mis-reservas') && activeTabParam !== 'academia',
         },
         {
-            label: 'Reservar',
-            icon: Calendar,
+            label: 'Servicios',
+            icon: Sparkles,
             href: `/${slug}/servicios`,
             active: pathname.includes('/servicios'),
             isCentral: true,
@@ -113,7 +113,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
                                         boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)'
                                     }}
                                 >
-                                    <Calendar size={24} className="text-white" fill="white" />
+                                    <Sparkles size={24} className="text-white" fill="white" />
                                 </div>
                                 <span 
                                     className="text-[9px] font-black uppercase tracking-widest leading-none mt-1.5"

@@ -589,26 +589,36 @@ export default async function PublicNegocioPage({
     }
 
     return (
-        <main className="min-h-screen font-sans pb-32 md:pb-0 relative overflow-x-hidden">
+        <main className="min-h-screen font-sans pb-32 md:pb-12 relative overflow-x-hidden" style={{ backgroundColor: neutralColor }}>
             {/* Cabecera Flotante (Solo Móvil) */}
-            <header className="fixed top-0 left-0 right-0 z-50 px-6 py-6 flex items-center justify-between md:hidden">
-                <Link href={`/${slug}`} className="flex items-center gap-4">
+            <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between md:hidden bg-gradient-to-b from-white/98 via-white/90 to-transparent backdrop-blur-md shadow-[0_2px_15px_rgba(0,0,0,0.02)] border-b border-slate-100/5 transition-all">
+                <Link href={`/${slug}`} className="flex items-center gap-3">
                     {negocio.logoUrl ? (
-                        <img src={negocio.logoUrl} alt={negocio.nombre} className="w-20 h-20 rounded-full object-cover shadow-2xl border-2 border-white" />
+                        <img src={negocio.logoUrl} alt={negocio.nombre} className="w-12 h-12 rounded-full object-cover shadow-sm border border-slate-100/50" />
                     ) : (
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-white font-black text-2xl shadow-2xl border-2 border-white">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-white font-black text-lg shadow-sm border border-slate-100/50">
                             {negocio.nombre.substring(0, 1)}
                         </div>
                     )}
-                    <span className="font-black text-2xl uppercase tracking-[0.1em] leading-none drop-shadow-md" style={{ color: textColor }}>
-                        {negocio.nombre}
-                    </span>
+                    <div className="flex flex-col">
+                        <span className="font-black text-base uppercase tracking-wider leading-none" style={{ color: textColor }}>
+                            {negocio.nombre}
+                        </span>
+                        <div className="flex items-center gap-1 mt-1">
+                            <div className="flex gap-0.5">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                    <Star key={i} size={8} className="text-amber-400" fill="currentColor" />
+                                ))}
+                            </div>
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">4.9 (2.3k+)</span>
+                        </div>
+                    </div>
                 </Link>
 
-                <Link href={`/${slug}/mis-reservas`} className="w-12 h-12 rounded-full glass-card-light flex items-center justify-center text-slate-900 border-white/40 shadow-xl relative">
-                    <Bell size={20} />
+                <Link href={`/${slug}/mis-reservas`} className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-700 shadow-sm relative active:scale-95 transition-transform">
+                    <Bell size={18} />
                     {userReservasActivas > 0 && (
-                        <span className="absolute -top-1 -right-1 w-6 h-6 bg-pink-500 text-white text-[11px] font-black rounded-full flex items-center justify-center border-2 border-white">
+                        <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-pink-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border border-white">
                             {userReservasActivas}
                         </span>
                     )}
@@ -616,90 +626,136 @@ export default async function PublicNegocioPage({
             </header>
 
             {/* Espaciado superior */}
-            <div className={nextAppointment ? "pt-32 md:pt-28" : "pt-28 md:pt-24"}></div>
+            <div className={nextAppointment ? "pt-[110px]" : "pt-20"}></div>
 
-            {/* PRÃ“XIMA CITA ALERT BANNER */}
+            {/* PRÓXIMA CITA ALERT BANNER */}
             {nextAppointment && (
-                <NextAppointmentBanner 
-                    appointment={nextAppointment}
-                    slug={slug}
-                    primaryColor={primaryColor}
-                />
+                <div className="px-6 mb-6">
+                    <NextAppointmentBanner 
+                        appointment={nextAppointment}
+                        slug={slug}
+                        primaryColor={primaryColor}
+                    />
+                </div>
             )}
 
-
             {/* 2. HERO IMAGE CON SUBTÍTULO INTEGRADO */}
-            <section className="px-4 mb-10">
-                <div className="relative w-full aspect-[4/3] max-h-[380px] rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white">
+            <section className="px-6 mb-6">
+                <div className="relative w-full aspect-[16/11] sm:aspect-[16/10] max-h-[380px] rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-100/50">
                     <HeroCarousel images={displayImages} baseClass="absolute inset-0 w-full h-full object-cover" opacityActive="opacity-100" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-black/10" />
                     
-                    {/* Subtítulo integrado en la imagen */}
-                    {(negocio.heroTitulo || negocio.heroSubtitulo || (negocio.horarioApertura && negocio.horarioCierre)) && (
-                        <div className="absolute inset-x-0 bottom-8 px-8 text-center space-y-4">
-                            {negocio.heroTitulo && (
-                                <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter drop-shadow-2xl leading-none">
-                                    {negocio.heroTitulo}
-                                </h2>
-                            )}
-                            {negocio.heroSubtitulo && (
-                                <p className="text-[12px] font-black text-white/90 uppercase tracking-[0.2em] leading-relaxed drop-shadow-lg max-w-[280px] mx-auto">
-                                    {negocio.heroSubtitulo}
-                                </p>
-                            )}
-                            {negocio.horarioApertura && negocio.horarioCierre && (
-                                <div className="inline-flex items-center gap-2.5 px-5 py-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full mt-2 transition-all duration-300">
-                                    <div className={cn(
-                                        "w-2 h-2 rounded-full animate-pulse shrink-0",
-                                        isCurrentlyOpen 
-                                            ? "bg-[#10b981] shadow-[0_0_12px_#10b981]" 
-                                            : "bg-[#ef4444] shadow-[0_0_12px_#ef4444]"
-                                    )} />
-                                    <span className="text-[10px] font-black text-white uppercase tracking-[0.25em] flex items-center gap-1.5">
-                                        <span className={cn(isCurrentlyOpen ? "text-[#10b981]" : "text-[#ef4444]")}>
-                                            {isCurrentlyOpen ? 'ABIERTO' : 'CERRADO'}
-                                        </span>
-                                        <span className="text-white/40 font-normal">|</span>
-                                        <span>{negocio.horarioApertura} - {negocio.horarioCierre}</span>
-                                    </span>
-                                </div>
-                            )}
-
-                            <div className="flex flex-col items-center pt-2">
-                                <Link
-                                    href={`/${slug}/servicios`}
-                                    className="inline-flex items-center gap-2.5 px-8 py-3.5 text-white rounded-full font-black text-xs uppercase tracking-widest shadow-lg hover:brightness-110 active:scale-95 transition-all"
-                                    style={{ backgroundColor: primaryColor }}
-                                >
-                                    Elegir servicio
-                                    <ChevronRight size={14} strokeWidth={3} />
-                                </Link>
-                                <p className="text-[9px] font-bold text-white/60 flex items-center justify-center gap-1.5 mt-2.5 tracking-wider">
-                                    <Clock size={12} />
-                                    Reserva en menos de 1 minuto
-                                </p>
-                            </div>
+                    {/* Contenido integrado en la imagen */}
+                    <div className="absolute inset-x-0 bottom-6 px-6 text-center space-y-3.5">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md border border-white/10 rounded-full">
+                            <span className="text-[7.5px] font-black text-white uppercase tracking-[0.2em]">
+                                BIENVENIDO A {negocio.nombre.toUpperCase()}
+                            </span>
                         </div>
-                    )}
+
+                        {negocio.heroTitulo && (
+                            <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter drop-shadow-md leading-none">
+                                {negocio.heroTitulo}
+                            </h2>
+                        )}
+                        {negocio.heroSubtitulo && (
+                            <p className="text-[10px] font-black text-white/70 uppercase tracking-[0.2em] leading-relaxed drop-shadow-md max-w-[280px] mx-auto">
+                                {negocio.heroSubtitulo}
+                            </p>
+                        )}
+                        {negocio.horarioApertura && negocio.horarioCierre && (
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-black/40 backdrop-blur-md border border-white/5 rounded-full mt-1">
+                                <div className={cn(
+                                    "w-1.5 h-1.5 rounded-full animate-pulse shrink-0",
+                                    isCurrentlyOpen ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.5)]"
+                                )} />
+                                <span className="text-[8px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-1">
+                                    <span className={cn(isCurrentlyOpen ? "text-emerald-400" : "text-rose-400")}>
+                                        {isCurrentlyOpen ? 'ABIERTO' : 'CERRADO'}
+                                    </span>
+                                    <span className="text-white/30 font-normal">|</span>
+                                    <span>{negocio.horarioApertura} - {negocio.horarioCierre}</span>
+                                </span>
+                            </div>
+                        )}
+
+                        <div className="flex flex-col items-center pt-1.5">
+                            <Link
+                                href={`/${slug}/servicios`}
+                                className="inline-flex items-center gap-2 px-7 py-3 text-white rounded-full font-black text-[10px] uppercase tracking-widest shadow-md hover:brightness-110 active:scale-95 transition-all"
+                                style={{ backgroundColor: primaryColor }}
+                            >
+                                Elegir servicio
+                                <ChevronRight size={12} strokeWidth={3} />
+                            </Link>
+                            <p className="text-[8px] font-bold text-white/50 flex items-center justify-center gap-1 mt-2.5 tracking-wide">
+                                <Clock size={10} />
+                                Reserva en menos de un minuto.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* 3. TARJETAS DE CONFIANZA */}
+            <section className="px-6 mb-6">
+                <div className="grid grid-cols-4 gap-2 bg-white rounded-3xl p-3 border border-slate-100/50 shadow-sm">
+                    {/* Calificación */}
+                    <div className="flex flex-col items-center text-center">
+                        <Star size={16} className="text-pink-500" fill="currentColor" />
+                        <span className="text-[11px] font-black text-slate-800 mt-1">4.9/5</span>
+                        <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Opiniones</span>
+                    </div>
+                    {/* Clientes */}
+                    <div className="flex flex-col items-center text-center border-l border-slate-100">
+                        <Users size={16} className="text-pink-500" />
+                        <span className="text-[11px] font-black text-slate-800 mt-1">2.3k+</span>
+                        <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Felices</span>
+                    </div>
+                    {/* Servicios */}
+                    <div className="flex flex-col items-center text-center border-l border-slate-100">
+                        <Sparkles size={16} className="text-pink-500" />
+                        <span className="text-[11px] font-black text-slate-800 mt-1">{filteredCanchas.length}+</span>
+                        <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Servicios</span>
+                    </div>
+                    {/* Ubicación */}
+                    <div className="flex flex-col items-center text-center border-l border-slate-100">
+                        <MapPin size={16} className="text-pink-500" />
+                        <span className="text-[11px] font-black text-slate-800 mt-1 truncate max-w-[64px]">{negocio.ciudad || 'Quito'}</span>
+                        <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Ubicación</span>
+                    </div>
                 </div>
             </section>
 
             {/* 3. MENSAJE DE BIENVENIDA */}
             {negocio.mensajeBienvenida && (
-                <section className="px-10 mb-12 text-center">
-                    <p className="text-xl font-serif italic text-slate-600 leading-relaxed max-w-[320px] mx-auto">
+                <section className="px-10 mb-6 text-center">
+                    <p className="text-xs font-serif italic text-slate-500 leading-relaxed max-w-[280px] mx-auto">
                         "{negocio.mensajeBienvenida}"
                     </p>
                 </section>
             )}
 
+            {/* 4. PROMOCIONES (Movidas inmediatamente debajo de las tarjetas de confianza) */}
+            {promocionesActivas.length > 0 && (
+                <section id="promociones" className="px-6 mb-6">
+                    <PromotionsSection 
+                        promociones={promocionesActivas} 
+                        slug={slug} 
+                        primaryColor={primaryColor}
+                        tertiaryColor={tertiaryColor}
+                        textColor={textColor}
+                        showPrices={negocio.mostrarPrecios !== false}
+                    />
+                </section>
+            )}
 
-            {/* SERVICES LIST */}
-            <section id="servicios" className="px-6 mb-12">
-                <div className="flex justify-between items-end mb-8">
+            {/* 5. NUEVOS SERVICIOS (Rediseñados con tags dinámicos y Ver detalles) */}
+            <section id="servicios" className="px-6 mb-6">
+                <div className="flex justify-between items-end mb-4">
                     <div>
                         <span className="text-[10px] font-black uppercase tracking-widest mb-1 block" style={{ color: primaryColor }}>OPCIONES PARA TI</span>
-                        <h3 className="text-3xl font-black leading-none" style={{ color: textColor }}>Nuestros Servicios</h3>
+                        <h3 className="text-2xl font-black leading-none" style={{ color: textColor }}>Nuestros Servicios</h3>
                     </div>
                     {filteredCanchas.length > 0 && (
                         <Link 
@@ -717,10 +773,13 @@ export default async function PublicNegocioPage({
                         const mockRating = (4.7 + (index * 0.1) % 0.3).toFixed(1);
                         const mockReviews = 180 + (index * 35);
                         
+                        const tags = ["Más reservado", "Nuevo", "Popular", "Favorito"];
+                        const currentTag = tags[index % tags.length];
+
                         return (
                             <div 
                                 key={service.id} 
-                                className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-4 flex flex-col justify-between min-w-[280px] max-w-[280px] shrink-0"
+                                className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-4 flex flex-col justify-between min-w-[280px] max-w-[280px] shrink-0 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
                             >
                                 {/* Imagen del servicio */}
                                 <div className="relative w-full aspect-[4/3] rounded-[2rem] overflow-hidden mb-4 bg-slate-50">
@@ -729,12 +788,10 @@ export default async function PublicNegocioPage({
                                         className="w-full h-full object-cover" 
                                         alt={service.nombre} 
                                     />
-                                    {/* Badge Más Reservado */}
-                                    {index === 0 && (
-                                        <div className="absolute top-3 left-3 bg-pink-500 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
-                                            MÁS RESERVADO
-                                        </div>
-                                    )}
+                                    {/* Badge con la etiqueta dinámica */}
+                                    <div className="absolute top-3 left-3 bg-pink-500 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
+                                        {currentTag}
+                                    </div>
                                     {/* Icono Corazón (Favoritos) */}
                                     <button className="absolute top-3 right-3 size-8 rounded-full bg-white/90 backdrop-blur-sm border border-slate-100 flex items-center justify-center text-slate-400 hover:text-pink-500 active:scale-95 transition-all">
                                         <svg className="size-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -769,16 +826,16 @@ export default async function PublicNegocioPage({
                                             ${service.precio}
                                         </div>
 
-                                        {/* Botón Reservar */}
+                                        {/* Botón Ver detalles */}
                                         <Link 
                                             href={`/${slug}/servicio/${service.id}`}
-                                            className="block w-full text-center py-3 rounded-2xl border text-xs font-black uppercase tracking-widest active:scale-95 transition-all bg-white hover:bg-slate-50"
+                                            className="block w-full text-center py-3 rounded-2xl border text-xs font-black uppercase tracking-widest active:scale-95 transition-all bg-white hover:bg-slate-50 shadow-sm"
                                             style={{ 
                                                 borderColor: `${primaryColor}26`, 
                                                 color: primaryColor 
                                             }}
                                         >
-                                            Reservar
+                                            Ver detalles
                                         </Link>
                                     </div>
                                 </div>
@@ -788,23 +845,9 @@ export default async function PublicNegocioPage({
                 </div>
             </section>
 
-            {/* PROMOCIONES */}
-            {promocionesActivas.length > 0 && (
-                <section id="promociones" className="px-6 mb-12">
-                    <PromotionsSection 
-                        promociones={promocionesActivas} 
-                        slug={slug} 
-                        primaryColor={primaryColor}
-                        tertiaryColor={tertiaryColor}
-                        textColor={textColor}
-                        showPrices={negocio.mostrarPrecios !== false}
-                    />
-                </section>
-            )}
-
             {/* CURSOS Y TALLERES */}
             {coursesModuleEnabled && cursosActivos.length > 0 && (
-                <section id="cursos" className="mb-12">
+                <section id="cursos" className="mb-6 px-6">
                     <PublicCoursesSection 
                         cursosActivos={cursosActivos} 
                         businessSlug={slug}
@@ -816,94 +859,96 @@ export default async function PublicNegocioPage({
                 </section>
             )}
 
-            {/* SECCIÃ“N DE MIS TRABAJOS (RESULTADOS) - Antes y Después Premium */}
+            {/* 6. RESULTADOS REALES (Rediseñados con tarjetas horizontales premium y thumbnail comparador) */}
             {resultadosDestacados.length > 0 && (
-                <section id="resultados" className="px-6 mb-24 overflow-hidden">
-                    <div className="flex justify-between items-end mb-12">
+                <section id="resultados" className="px-6 mb-6">
+                    <div className="flex justify-between items-end mb-4">
                         <div>
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em] mb-3 block" style={{ color: primaryColor }}>RESULTADOS REALES</span>
-                            <h3 className="text-4xl font-black leading-none" style={{ color: textColor }}>Mis <br/>Trabajos</h3>
+                            <span className="text-[10px] font-black uppercase tracking-widest mb-1 block" style={{ color: primaryColor }}>RESULTADOS REALES</span>
+                            <h3 className="text-2xl font-black leading-none" style={{ color: textColor }}>Resultados Reales</h3>
                         </div>
                         <Link 
                             href={`/${slug}/portafolio`}
-                            className="flex flex-col items-center gap-2 group/btn"
+                            className="text-[10px] font-black uppercase tracking-widest" 
+                            style={{ color: primaryColor }}
                         >
-                            <div className="size-16 rounded-[2rem] bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover/btn:bg-slate-900 group-hover/btn:text-white transition-all duration-500 shadow-sm">
-                                <Plus size={28} />
-                            </div>
-                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Ver todos</span>
+                            Ver todos
                         </Link>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-6 sm:gap-8">
-                        {resultadosDestacados.slice(0, 3).map((item) => (
-                            <Link 
-                                key={item.id} 
-                                href={`/${slug}/portafolio#trabajo-${item.id}`}
-                                className="group bg-card-dynamic rounded-3xl sm:rounded-[2.5rem] shadow-xl shadow-slate-200/30 overflow-hidden flex flex-col transition-all duration-500 hover:shadow-pink-100/10 relative active:scale-[0.98]"
-                            >
-                                <div className="absolute top-4 left-4 z-20">
-                                    <div className="px-3.5 py-1.5 bg-white/95 backdrop-blur-md rounded-full text-[8px] font-black text-slate-900 uppercase tracking-widest border border-white shadow-md flex items-center gap-1.5">
-                                        <Sparkles size={10} className="text-pink-500" />
-                                        {item.type === 'GALLERY' ? 'Galería' : 'Transformación'}
-                                    </div>
-                                </div>
+                    <div className="flex flex-col gap-4">
+                        {resultadosDestacados.slice(0, 3).map((item) => {
+                            const isGallery = item.type === 'GALLERY';
+                            const labelText = isGallery ? 'Galería' : (item.videoUrl ? 'Video' : 'Transformación');
 
-                                {/* Media Area */}
-                                {item.type !== 'GALLERY' ? (
-                                    <div className="relative aspect-[16/9] flex overflow-hidden">
-                                        <div className="w-1/2 relative">
-                                            <img src={item.beforeImage} className="w-full h-full object-cover grayscale-[0.2]" alt="Antes" />
-                                            <div className="absolute top-4 left-4 px-2.5 py-1 bg-black/30 backdrop-blur-md rounded-lg text-[7px] font-black text-white uppercase tracking-widest border border-white/10">Antes</div>
-                                        </div>
-                                        <div className="w-1/2 relative">
+                            return (
+                                <Link 
+                                    key={item.id} 
+                                    href={`/${slug}/portafolio#trabajo-${item.id}`}
+                                    className="group bg-white border border-slate-100/50 rounded-[2.2rem] p-3 shadow-sm flex gap-4 items-center transition-all hover:scale-[1.01] active:scale-95 duration-300"
+                                >
+                                    {/* Media Area - Left */}
+                                    {!isGallery ? (
+                                        <div className="relative size-28 shrink-0 rounded-2xl overflow-hidden bg-slate-50">
                                             <img src={item.afterImage} className="w-full h-full object-cover" alt="Después" />
-                                            <div className="absolute top-4 right-4 px-2.5 py-1 bg-white/80 backdrop-blur-md rounded-lg text-[7px] font-black text-slate-900 uppercase tracking-widest border border-white shadow-sm">Después</div>
+                                            {/* Thumbnail de Antes overlay */}
+                                            {item.beforeImage && (
+                                                <div className="absolute bottom-1.5 right-1.5 size-11 rounded-full border-2 border-white overflow-hidden shadow-md">
+                                                    <img src={item.beforeImage} className="w-full h-full object-cover" alt="Antes" />
+                                                    <div className="absolute inset-0 bg-black/10" />
+                                                </div>
+                                            )}
+                                            <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/40 rounded text-[6px] font-black text-white uppercase tracking-widest">
+                                                Antes/Dep
+                                            </div>
                                         </div>
-                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-10 rounded-full bg-white shadow-xl flex items-center justify-center text-slate-900 z-10 group-hover:scale-110 transition-transform duration-500">
-                                            <ArrowLeftRight size={16} />
+                                    ) : (
+                                        <div className="relative size-28 shrink-0 rounded-2xl overflow-hidden bg-slate-50">
+                                            <img src={item.gallery?.[0] || businessImage} className="w-full h-full object-cover" alt={item.title} />
+                                            <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-white/95 backdrop-blur-md rounded-full text-[7px] font-black text-slate-800 border border-slate-100 shadow-sm">
+                                                {item.gallery?.length || 0} Fotos
+                                            </div>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="relative aspect-[16/9] overflow-hidden bg-slate-50">
-                                        <img src={item.gallery?.[0] || businessImage} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[3s]" alt={item.title} />
-                                        <div className="absolute bottom-4 right-4 px-3.5 py-1 bg-white/95 backdrop-blur-md rounded-full text-[8px] font-black text-slate-900 uppercase tracking-widest border border-white shadow-md flex items-center gap-1.5">
-                                            <ImageIcon size={12} /> {item.gallery?.length || 0} Fotos
-                                        </div>
-                                    </div>
-                                )}
+                                    )}
 
-                                {/* Info Area */}
-                                <div className="p-6 sm:p-8 space-y-2.5">
-                                    <div className="flex items-center gap-3">
+                                    {/* Info Area - Right */}
+                                    <div className="flex-1 min-w-0 space-y-1 py-1">
+                                        <div className="flex items-center gap-1.5 text-pink-500 text-[8px] font-black uppercase tracking-widest">
+                                            <Sparkles size={10} fill="currentColor" />
+                                            {labelText}
+                                        </div>
+                                        <h4 className="text-[15px] font-black leading-snug truncate" style={{ color: textColor }}>
+                                            {item.title}
+                                        </h4>
+                                        <p className="text-[11px] text-slate-400 font-medium line-clamp-2 leading-snug italic">
+                                            "{item.description}"
+                                        </p>
+                                        
+                                        {/* Tag del Servicio si está disponible */}
                                         {item.service && (
-                                            <span className="text-[9px] font-black text-pink-500 uppercase tracking-[0.2em]">
+                                            <span className="inline-block text-[8px] font-black text-slate-300 uppercase tracking-widest pt-1">
                                                 {item.service.nombre}
-                                            </span>
-                                        )}
-                                        {item.clientName && (
-                                            <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest italic">
-                                                • {item.clientName}
                                             </span>
                                         )}
                                     </div>
                                     
-                                    <h4 className="text-xl font-black leading-tight" style={{ color: textColor }}>
-                                        {item.title}
-                                    </h4>
-                                    <p className="text-xs font-medium text-slate-400 leading-relaxed line-clamp-2 italic">
-                                        "{item.description}"
-                                    </p>
-                                </div>
-                            </Link>
-                        ))}
+                                    <ChevronRight style={{ color: primaryColor }} className="w-5 h-5 opacity-30 group-hover:opacity-100 transition-opacity shrink-0" />
+                                </Link>
+                            );
+                        })}
                     </div>
                 </section>
             )}
 
-            {/* TESTIMONIALS / OPINIONES */}
+            {/* 7. OPINIONES (ReviewsCarousel con slider dinámico) */}
             {reviews.length > 0 && (
-                <section id="opiniones" className="px-6 mb-24">
+                <section id="opiniones" className="px-6 mb-6">
+                    <div className="flex justify-between items-end mb-4">
+                        <div>
+                            <span className="text-[10px] font-black uppercase tracking-widest mb-1 block" style={{ color: primaryColor }}>TESTIMONIOS</span>
+                            <h3 className="text-2xl font-black leading-none" style={{ color: textColor }}>Opiniones</h3>
+                        </div>
+                    </div>
                     <ReviewsCarousel 
                         reviews={reviews} 
                         primaryColor={primaryColor} 
@@ -914,23 +959,20 @@ export default async function PublicNegocioPage({
 
             {/* PÁGINAS PERSONALIZADAS - BOUTIQUE EXPLORER */}
             {paginasPersonalizadas.length > 0 && (
-                <section id="paginas" className="px-6 mb-24">
-                    <div className="flex justify-between items-end mb-10">
+                <section id="paginas" className="px-6 mb-6">
+                    <div className="flex justify-between items-end mb-4">
                         <div>
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em] mb-2 block" style={{ color: primaryColor }}>DESCUBRE MÁS</span>
-                            <h3 className="text-4xl font-black leading-none" style={{ color: textColor }}>Contenido <br/>Exclusivo</h3>
-                        </div>
-                        <div className="size-16 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300">
-                            <FileText size={24} />
+                            <span className="text-[10px] font-black uppercase tracking-widest mb-2 block" style={{ color: primaryColor }}>DESCUBRE MÁS</span>
+                            <h3 className="text-2xl font-black leading-none" style={{ color: textColor }}>Contenido Exclusivo</h3>
                         </div>
                     </div>
                     
-                    <div className="flex flex-col gap-8">
+                    <div className="flex flex-col gap-6">
                         {paginasPersonalizadas.map((page) => (
                             <Link 
                                 href={`/${slug}/pagina/${page.slug}`} 
                                 key={page.id}
-                                className="group relative w-full bg-card-dynamic rounded-[3.5rem] overflow-hidden shadow-2xl shadow-slate-200/50 transition-all duration-700"
+                                className="group relative w-full bg-white border border-slate-100/50 rounded-[2.5rem] overflow-hidden shadow-sm transition-all duration-500"
                             >
                                 <div className="flex flex-col md:flex-row">
                                     <div className="md:w-2/5 aspect-[16/10] md:aspect-square relative overflow-hidden">
@@ -942,23 +984,22 @@ export default async function PublicNegocioPage({
                                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent" />
                                     </div>
                                     
-                                    <div className="md:w-3/5 p-8 md:p-12 flex flex-col justify-center relative">
-                                        {/* Decorative Element */}
-                                        <div className="absolute top-8 right-8 size-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-200 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500">
-                                            <ArrowUpRight size={24} />
+                                    <div className="md:w-3/5 p-6 md:p-8 flex flex-col justify-center relative">
+                                        <div className="absolute top-6 right-6 size-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-200 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-500">
+                                            <ArrowUpRight size={20} />
                                         </div>
-
-                                        <span className="text-[9px] font-black uppercase tracking-[0.3em] mb-4 block" style={{ color: primaryColor }}>Especial Spa</span>
-                                        <h4 className="text-2xl md:text-3xl font-black leading-tight mb-4 transition-colors" style={{ color: textColor }}>
+ 
+                                        <span className="text-[8px] font-black uppercase tracking-widest mb-2 block" style={{ color: primaryColor }}>Especial Spa</span>
+                                        <h4 className="text-xl font-black leading-tight mb-2 transition-colors" style={{ color: textColor }}>
                                             {page.title}
                                         </h4>
-                                        <p className="text-sm font-medium text-slate-400 leading-relaxed mb-8 max-w-md">
+                                        <p className="text-xs font-semibold text-slate-400 leading-relaxed mb-4 max-w-md line-clamp-2">
                                             Sumérgete en los detalles de nuestra filosofía de bienestar, rituales exclusivos y la esencia que nos hace únicos.
                                         </p>
                                         
-                                        <div className="flex items-center gap-4">
-                                            <div className="h-px w-8 opacity-30" style={{ backgroundColor: primaryColor }} />
-                                            <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: textColor }}>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-px w-6 opacity-30" style={{ backgroundColor: primaryColor }} />
+                                            <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: textColor }}>
                                                 Leer artículo
                                             </span>
                                         </div>
@@ -972,16 +1013,16 @@ export default async function PublicNegocioPage({
 
             {/* UBICACIONES */}
             {resolvedUbicaciones.length > 0 && (
-                <section id="ubicacion" className="px-6 mb-32">
-                    <div className="flex items-center gap-3 mb-8">
-                         <div className="w-2 h-7 rounded-sm" style={{ backgroundColor: tertiaryColor }}></div>
-                         <h3 className="text-2xl font-black tracking-tight" style={{ color: textColor }}>Ubicación</h3>
+                <section id="ubicacion" className="px-6 mb-12">
+                    <div className="flex items-center gap-3 mb-6">
+                         <div className="w-2.5 h-6 rounded-sm" style={{ backgroundColor: tertiaryColor }}></div>
+                         <h3 className="text-xl font-black tracking-tight" style={{ color: textColor }}>Ubicación</h3>
                     </div>
-                    <div className="space-y-8">
+                    <div className="space-y-6">
                         {resolvedUbicaciones.map((sede: any) => (
-                            <div key={sede.id} className="bg-white rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm">
+                            <div key={sede.id} className="bg-white rounded-[2.5rem] overflow-hidden border border-slate-100/50 shadow-sm">
                                 <iframe width="100%" height="220" style={{ border: 0 }} loading="lazy" allowFullScreen src={sede.embedSrc}></iframe>
-                                <div className="p-6 flex justify-between items-center">
+                                <div className="p-5 flex justify-between items-center">
                                     <div>
                                         <h4 className="font-black text-lg" style={{ color: textColor }}>{sede.nombre}</h4>
                                         <p className="text-xs font-semibold opacity-40 flex items-center gap-1.5 mt-1.5">
@@ -1023,10 +1064,7 @@ export default async function PublicNegocioPage({
                                 });
                             }
                             
-                            // Ejecutar al inicio y tras navegaciones del cliente
                             setupSmoothScroll();
-                            
-                            // Re-intentar periódicamente por si el DOM cambia dinámicamente
                             var timer = setInterval(setupSmoothScroll, 1000);
                             setTimeout(function() { clearInterval(timer); }, 10000);
                         })();
@@ -1034,7 +1072,7 @@ export default async function PublicNegocioPage({
                 }} 
             />
 
-            {/* Banner de referido - solo visible si llegó por un enlace de invitación */}
+            {/* Banner de referido */}
             {referralCode && (
                 <ReferralBanner
                     referrerName={referrerName}
