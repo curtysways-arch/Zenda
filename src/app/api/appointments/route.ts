@@ -110,14 +110,14 @@ export async function POST(req: Request) {
                     ]
                 },
                 include: {
-                    course: {
+                    Course: {
                         select: { name: true }
                     }
                 }
             });
 
             if (cursoSchedule) {
-                return { error: `Este horario está reservado para el curso: ${cursoSchedule.course.name}` };
+                return { error: `Este horario está reservado para el curso: ${cursoSchedule.Course.name}` };
             }
 
             // 3. Lógica de Usuario Automática (Reserva Asistida)
