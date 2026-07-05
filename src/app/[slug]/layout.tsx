@@ -123,9 +123,12 @@ export default async function NegocioLayout({
                     --shadow: ${theme.shadowColor};
                     
                     /* Navegación móvil dinámica */
-                    --nav-inactive: var(--text-secondary);
-                    --nav-border: var(--border);
-                    --nav-active: var(--primary);
+                    /* El fondo de la barra es --primary-dark para que contraste bien */
+                    /* Los íconos activos usan --text-on-primary (blanco/negro según luma) */
+                    --nav-bg: ${theme.primaryDark};
+                    --nav-active: ${theme.textOnPrimary};
+                    --nav-inactive: ${theme.textOnPrimary}80;
+                    --nav-border: ${theme.primaryDark};
                 }
 
                 /* Forzar el color de texto dinámico en los encabezados y textos principales */

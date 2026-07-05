@@ -91,9 +91,9 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
 
     return (
         <nav
-            className="fixed bottom-0 left-0 right-0 z-[150] h-[72px] pb-safe border-t pointer-events-auto md:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.08)]"
+            className="fixed bottom-0 left-0 right-0 z-[150] h-[72px] pb-safe border-t pointer-events-auto md:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.15)]"
             style={{
-                backgroundColor: 'var(--secondary)',
+                backgroundColor: 'var(--nav-bg)',
                 borderColor: 'var(--nav-border)',
             }}
         >
@@ -107,13 +107,14 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
                                 className="relative flex flex-col items-center justify-center flex-1 h-full -translate-y-4 pointer-events-auto"
                             >
                                 <div 
-                                    className="size-14 rounded-full flex items-center justify-center shadow-lg border-4 border-white active:scale-95 transition-transform"
+                                    className="size-14 rounded-full flex items-center justify-center shadow-lg border-2 active:scale-95 transition-transform"
                                     style={{
                                         backgroundColor: 'var(--nav-active)',
-                                        boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)'
+                                        borderColor: 'rgba(255,255,255,0.25)',
+                                        boxShadow: '0 4px 14px rgba(0, 0, 0, 0.3)'
                                     }}
                                 >
-                                    <Sparkles size={24} className="text-white" fill="white" />
+                                    <Sparkles size={24} style={{ color: 'var(--nav-bg)' }} fill="currentColor" />
                                 </div>
                                 <span 
                                     className="text-[9px] font-black uppercase tracking-widest leading-none mt-1.5"
@@ -137,31 +138,31 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
                             <div
                                 className={clsx(
                                     'relative transition-all duration-300 flex items-center justify-center p-1 rounded-xl',
-                                    tab.active ? 'scale-105' : 'scale-100'
+                                    tab.active ? 'scale-110' : 'scale-100'
                                 )}
                             >
                                 <tab.icon
                                     size={22}
-                                    strokeWidth={tab.active ? 2.5 : 2}
+                                    strokeWidth={tab.active ? 2.5 : 1.5}
                                     fill={tab.active ? 'currentColor' : 'none'}
                                 />
-                                {tab.active && (
-                                    <div
-                                        className="absolute inset-0 blur-lg opacity-20 -z-10"
-                                        style={{ backgroundColor: 'var(--nav-active)' }}
-                                    />
-                                )}
                             </div>
-                            <span className="text-[9px] font-bold uppercase tracking-widest leading-none mt-1.5">
+                            <span
+                                className="text-[9px] font-bold uppercase tracking-widest leading-none mt-1.5"
+                                style={{ 
+                                    color: tab.active ? 'var(--nav-active)' : 'var(--nav-inactive)',
+                                    fontWeight: tab.active ? 900 : 600,
+                                }}
+                            >
                                 {tab.label}
                             </span>
 
                             {tab.active && (
                                 <div
-                                    className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 rounded-b-full"
+                                    className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-b-full"
                                     style={{
                                         backgroundColor: 'var(--nav-active)',
-                                        boxShadow: '0 0 12px var(--nav-active)',
+                                        opacity: 0.9,
                                     }}
                                 />
                             )}
