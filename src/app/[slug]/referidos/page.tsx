@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Gift, ChevronLeft, Phone, Key, Loader2, Copy, Share2, Award, CheckCircle2, QrCode, Sparkles, X, Globe, Trophy, Users, Heart } from 'lucide-react';
+import { Gift, ChevronLeft, ChevronRight, Star, Phone, Key, Loader2, Copy, Share2, Award, CheckCircle2, QrCode, Sparkles, X, Globe, Trophy, Users, Heart } from 'lucide-react';
 import Link from 'next/link';
 import PhoneInput from "@/components/ui/PhoneInput";
 import { QRCodeSVG } from 'qrcode.react';
@@ -185,19 +185,18 @@ export default function MisRecompensasPage() {
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col pb-12">
             {/* Header público del negocio */}
-            <header className="bg-white border-b border-slate-100 px-4 py-4 sticky top-0 z-30 flex items-center justify-between">
+            <header className="bg-white border-b border-slate-100/80 px-4 py-3 sticky top-0 z-30 flex items-center justify-between">
                 <Link
                     href={`/${slug}`}
-                    className="flex items-center gap-1.5 text-xs font-black text-slate-500 hover:text-slate-800 uppercase tracking-widest"
+                    className="flex items-center justify-center size-9 rounded-full bg-white border border-slate-100 shadow-sm text-slate-600 hover:text-slate-900 transition-all active:scale-90"
+                    style={{ color: primaryColor }}
                 >
-                    <ChevronLeft size={16} />
-                    Volver
+                    <ChevronLeft size={18} strokeWidth={3} />
                 </Link>
-                <div className="text-center">
-                    <span className="text-xs font-black uppercase tracking-widest text-slate-400">Club CitiOx</span>
-                    <h1 className="text-sm font-black text-slate-900 uppercase tracking-tight leading-none mt-0.5">{negocio?.nombre}</h1>
+                <div className="text-center flex-1 pr-9">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: primaryColor }}>CLUB CITIOX</span>
+                    <h1 className="text-sm font-black text-slate-950 uppercase tracking-tight leading-none mt-0.5">{negocio?.nombre}</h1>
                 </div>
-                <div className="w-10" />
             </header>
 
             <main className="flex-1 max-w-md mx-auto w-full px-4 pt-6">
@@ -323,60 +322,87 @@ export default function MisRecompensasPage() {
 
                 {/* ── PASO 3: TABLERO DE RECOMPENSAS ── */}
                 {step === 'rewards' && meData && (
-                    <div className="space-y-6 animate-in fade-in duration-500">
+                    <div className="space-y-5 animate-in fade-in duration-500 pb-8">
                         
                         {/* Tarjeta de Invitación Premium */}
-                        <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-[2.5rem] p-6 shadow-xl relative overflow-hidden border border-white/5">
+                        <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-[2.2rem] p-6 shadow-xl relative overflow-hidden border border-white/5">
                             {/* Decorativos de fondo */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--primary-color)] rounded-full blur-3xl opacity-20 -mr-16 -mt-16" style={{ backgroundColor: primaryColor }} />
-                            <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500 rounded-full blur-3xl opacity-20 -ml-12 -mb-12" />
+                            <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-20 -mr-16 -mt-16" style={{ backgroundColor: primaryColor }} />
+                            <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500 rounded-full blur-3xl opacity-15 -ml-12 -mb-12" />
 
-                            <div className="relative z-10">
-                                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/50 flex items-center gap-1.5 mb-2">
-                                    <Sparkles size={12} className="text-amber-400 animate-spin-slow" />
-                                    Tu Enlace Embajador
-                                </span>
-                                
-                                <h3 className="text-lg font-black uppercase italic tracking-tighter leading-tight mb-4">
-                                    ¡Invita a tus amigos y gana premios!
-                                </h3>
+                            <div className="relative z-10 flex items-center justify-between gap-4">
+                                <div className="flex-1 min-w-0">
+                                    <span className="text-[8px] font-black uppercase tracking-[0.25em] flex items-center gap-1.5 mb-2" style={{ color: primaryColor }}>
+                                        <Sparkles size={11} fill={primaryColor} className="animate-spin-slow" />
+                                        Tu Enlace Embajador
+                                    </span>
+                                    
+                                    <h3 className="text-[17px] font-black uppercase italic tracking-tighter leading-tight mb-4">
+                                        ¡Invita a tus amigos<br /><span style={{ color: primaryColor }}>y gana premios!</span>
+                                    </h3>
 
-                                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between gap-4 mb-5">
-                                    <div className="overflow-hidden">
-                                        <span className="text-[8px] font-black text-white/40 uppercase tracking-widest block leading-none mb-1">Tu Código Único</span>
-                                        <span className="text-base font-black tracking-widest text-[var(--primary-color)]" style={{ color: primaryColor }}>{meData.codigo}</span>
-                                    </div>
-                                    <div className="flex gap-2 shrink-0">
-                                        <button
-                                            onClick={() => setShowQrModal(true)}
-                                            className="size-11 bg-white/10 hover:bg-white/20 text-white rounded-xl flex items-center justify-center transition-all cursor-pointer"
-                                            title="Ver Código QR"
-                                        >
-                                            <QrCode size={16} />
-                                        </button>
-                                        <button
-                                            onClick={handleCopy}
-                                            className={`size-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-                                                copied ? 'bg-emerald-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white'
-                                            }`}
-                                        >
-                                            <Copy size={16} />
-                                        </button>
+                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-3 flex items-center justify-between gap-3 mb-1">
+                                        <div className="overflow-hidden">
+                                            <span className="text-[8px] font-black text-white/40 uppercase tracking-widest block leading-none mb-1">Tu Código Único</span>
+                                            <span className="text-sm font-black tracking-widest uppercase" style={{ color: primaryColor }}>{meData.codigo}</span>
+                                        </div>
+                                        <div className="flex gap-2.5 shrink-0">
+                                            {/* Botón QR */}
+                                            <button
+                                                onClick={() => setShowQrModal(true)}
+                                                className="flex flex-col items-center gap-1 text-white/50 hover:text-white transition-colors"
+                                                title="Ver Código QR"
+                                            >
+                                                <div className="size-10 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl flex items-center justify-center">
+                                                    <QrCode size={16} />
+                                                </div>
+                                                <span className="text-[7px] font-black tracking-wider uppercase">QR</span>
+                                            </button>
+                                            {/* Botón Copiar */}
+                                            <button
+                                                onClick={handleCopy}
+                                                className="flex flex-col items-center gap-1 text-white/50 hover:text-white transition-colors"
+                                            >
+                                                <div className={`size-10 rounded-xl flex items-center justify-center border transition-all ${
+                                                    copied ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white/5 border-white/10 hover:bg-white/10 text-white'
+                                                }`}>
+                                                    <Copy size={16} />
+                                                </div>
+                                                <span className="text-[7px] font-black tracking-wider uppercase">
+                                                    {copied ? 'Copiado' : 'Copiar'}
+                                                </span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <button
-                                    onClick={handleShare}
-                                    className="w-full py-4 text-slate-900 bg-white hover:bg-slate-50 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-md"
-                                >
-                                    <Share2 size={14} />
-                                    Compartir mi Enlace
-                                </button>
+                                {/* Imagen de regalo a la derecha */}
+                                <div className="w-[32%] aspect-[4/5] relative shrink-0 rounded-2xl overflow-hidden shadow-lg border border-white/10 bg-slate-800">
+                                    <img 
+                                        src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=250&auto=format&fit=crop" 
+                                        className="w-full h-full object-cover" 
+                                        alt="Regalos" 
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent" />
+                                </div>
                             </div>
+
+                            {/* Botón de Compartir Enlace */}
+                            <button
+                                onClick={handleShare}
+                                className="w-full mt-4 py-3.5 text-white font-black text-[10px] uppercase tracking-widest rounded-full transition-transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-md select-none"
+                                style={{
+                                    background: `linear-gradient(90deg, ${primaryColor}, ${primaryColor}dd)`,
+                                    boxShadow: `0 10px 20px -5px ${primaryColor}40`
+                                }}
+                            >
+                                <Share2 size={12} strokeWidth={3} />
+                                Compartir mi Enlace
+                            </button>
                         </div>
 
                         {/* Progreso de Campañas */}
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 pl-2">
                                 <Trophy size={14} className="text-amber-500" />
                                 Campañas Activas
@@ -392,23 +418,28 @@ export default function MisRecompensasPage() {
                                 meData.progresoCampañas.map((p: any, idx: number) => {
                                     const pct = Math.min(100, (p.progreso / p.referidosRequeridos) * 100);
                                     return (
-                                        <div key={idx} className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm space-y-4">
-                                            <div>
-                                                <h4 className="text-xs font-black uppercase tracking-tight text-slate-900 leading-tight">
-                                                    {p.nombre}
-                                                </h4>
-                                                <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mt-1">
-                                                    {p.descripcion || `Recomienda a tu negocio y gana.`}
-                                                </p>
+                                        <div key={idx} className="bg-white border border-slate-100 rounded-3xl p-5 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="size-11 rounded-full bg-pink-100 flex items-center justify-center text-pink-500 shrink-0">
+                                                    <Users size={18} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-xs font-black uppercase tracking-tight text-slate-900 leading-tight">
+                                                        {p.nombre}
+                                                    </h4>
+                                                    <p className="text-[10px] text-slate-400 font-semibold leading-none mt-1">
+                                                        {p.descripcion || `Recomienda a tu negocio y gana.`}
+                                                    </p>
+                                                </div>
                                             </div>
 
                                             {/* Barra de progreso */}
-                                            <div className="space-y-1.5">
-                                                <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider">
+                                            <div className="space-y-1.5 pt-1">
+                                                <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-wider">
                                                     <span className="text-slate-400">Progreso</span>
-                                                    <span style={{ color: primaryColor }}>{p.progreso} / {p.referidosRequeridos} Referidos</span>
+                                                    <span className="text-pink-500" style={{ color: primaryColor }}>{p.progreso} / {p.referidosRequeridos} Referidos</span>
                                                 </div>
-                                                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                                                <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
                                                     <div
                                                         className="h-full rounded-full transition-all duration-500"
                                                         style={{
@@ -419,22 +450,27 @@ export default function MisRecompensasPage() {
                                                 </div>
                                             </div>
 
-                                            {/* Premios detalles */}
+                                            {/* Premios detalles (Ganas tú / Gana tu amigo) */}
                                             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100">
-                                                <div className="bg-rose-50/50 rounded-2xl p-3 border border-rose-100/50">
-                                                    <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest block leading-none mb-1">Ganas Tú:</span>
-                                                    <span className="text-[11px] font-black text-rose-600 leading-tight uppercase block">{p.valorRecompensa}</span>
+                                                <div className="bg-[#FFF2F6] rounded-2xl p-3 border border-pink-100/30 flex items-center gap-2">
+                                                    <div className="size-8 rounded-full bg-white flex items-center justify-center text-pink-500 shrink-0">
+                                                        <Gift size={16} />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <span className="text-[7.5px] font-black text-pink-500 uppercase tracking-widest block leading-none mb-1">Ganas Tú:</span>
+                                                        <span className="text-[9.5px] font-black text-slate-800 leading-tight uppercase block truncate">{p.valorRecompensa}</span>
+                                                    </div>
                                                 </div>
-                                                {p.tipoIncentivo ? (
-                                                    <div className="bg-amber-50/50 rounded-2xl p-3 border border-amber-100/50">
-                                                        <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest block leading-none mb-1">Gana tu Amigo:</span>
-                                                        <span className="text-[11px] font-black text-amber-600 leading-tight uppercase block">{p.valorIncentivo}</span>
+                                                
+                                                <div className="bg-[#FFF9F2] rounded-2xl p-3 border border-amber-100/30 flex items-center gap-2">
+                                                    <div className="size-8 rounded-full bg-white flex items-center justify-center text-amber-500 shrink-0">
+                                                        <Award size={16} />
                                                     </div>
-                                                ) : (
-                                                    <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 flex items-center justify-center">
-                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Doble Premio</span>
+                                                    <div className="min-w-0">
+                                                        <span className="text-[7.5px] font-black text-amber-500 uppercase tracking-widest block leading-none mb-1">Gana tu Amigo:</span>
+                                                        <span className="text-[9.5px] font-black text-slate-800 leading-tight uppercase block truncate">{p.valorIncentivo || '10% DTO'}</span>
                                                     </div>
-                                                )}
+                                                </div>
                                             </div>
                                         </div>
                                     );
@@ -442,18 +478,25 @@ export default function MisRecompensasPage() {
                             )}
                         </div>
 
-                        {/* Mis Premios Ganados */}
-                        <div className="space-y-4">
+                        {/* Recompensas Ganadas */}
+                        <div className="space-y-3">
                             <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 pl-2">
                                 <Award size={14} style={{ color: primaryColor }} />
                                 Recompensas Ganadas
                             </h3>
 
                             {meData.premios.length === 0 ? (
-                                <div className="bg-white border border-slate-100 rounded-3xl p-6 text-center shadow-sm">
-                                    <p className="text-slate-400 text-xs font-semibold leading-relaxed">
-                                        ¿Aún no tienes premios? ¡Comparte tu código para empezar a ganar!
-                                    </p>
+                                <div className="bg-white border border-slate-100 rounded-[2rem] p-6 text-center shadow-sm flex flex-col items-center justify-center gap-3">
+                                    {/* Pink Gift Box */}
+                                    <div className="relative size-16 bg-[#FFF2F6] rounded-2xl flex items-center justify-center text-pink-500 shrink-0 border border-pink-100/20">
+                                        <Gift size={28} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-xs font-black text-slate-900 mb-1">¿Aún no tienes premios?</h4>
+                                        <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                                            ¡Comparte tu código para empezar a ganar!
+                                        </p>
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="space-y-3">
@@ -489,23 +532,18 @@ export default function MisRecompensasPage() {
                             )}
                         </div>
 
-                        {/* Top Rankings de Embajadores (Ranking del Negocio) */}
-                        {meData.progresoCampañas.some((c: any) => c.rankingActivo) && (
-                            <div className="bg-white border border-slate-100 rounded-[2.5rem] p-5 shadow-sm space-y-4">
-                                <div className="flex items-center gap-2 border-b border-slate-150 pb-3">
-                                    <Users size={16} className="text-purple-500" />
-                                    <h4 className="text-xs font-black uppercase tracking-tight text-slate-900">Historial del Club</h4>
+                        {/* Tarjeta inferior tip (Entre más amigos invites...) */}
+                        <div className="bg-white border border-slate-100 rounded-[2rem] p-4 shadow-sm flex items-center justify-between gap-3 hover:scale-[1.01] transition-transform cursor-pointer">
+                            <div className="flex items-center gap-3">
+                                <div className="size-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-500 shrink-0">
+                                    <Star size={18} fill="currentColor" />
                                 </div>
-                                <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
-                                    <span className="flex items-center gap-1.5">
-                                        <Heart size={12} className="text-rose-500" />
-                                        Total referidos completados:
-                                    </span>
-                                    <span className="font-black text-slate-900">{meData.totalReferidosValidos} personas</span>
-                                </div>
+                                <p className="text-[11px] text-slate-600 font-black leading-snug">
+                                    Entre más amigos invites,<br /><span className="text-pink-500" style={{ color: primaryColor }}>más premios puedes ganar.</span>
+                                </p>
                             </div>
-                        )}
-
+                            <ChevronRight size={16} className="text-pink-500 shrink-0" style={{ color: primaryColor }} />
+                        </div>
                     </div>
                 )}
             </main>
