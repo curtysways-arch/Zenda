@@ -859,7 +859,7 @@ export default async function PublicNegocioPage({
                 </section>
             )}
 
-            {/* 6. RESULTADOS REALES (Rediseñados con tarjetas horizontales premium y thumbnail comparador) */}
+            {/* 6. RESULTADOS REALES (Rediseñados para mostrar sólo la imagen y el título en un scroll horizontal) */}
             {resultadosDestacados.length > 0 && (
                 <section id="resultados" className="px-6 mb-6">
                     <div className="flex justify-between items-end mb-4">
@@ -876,63 +876,36 @@ export default async function PublicNegocioPage({
                         </Link>
                     </div>
 
-                    <div className="flex flex-col gap-4">
-                        {resultadosDestacados.slice(0, 3).map((item) => {
+                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-none px-1">
+                        {resultadosDestacados.map((item) => {
                             const isGallery = item.type === 'GALLERY';
-                            const labelText = isGallery ? 'Galería' : (item.videoUrl ? 'Video' : 'Transformación');
 
                             return (
                                 <Link 
                                     key={item.id} 
                                     href={`/${slug}/portafolio#trabajo-${item.id}`}
-                                    className="group bg-white border border-slate-100/50 rounded-[2.2rem] p-3 shadow-sm flex gap-4 items-center transition-all hover:scale-[1.01] active:scale-95 duration-300"
+                                    className="group relative aspect-[4/3] w-[180px] sm:w-[220px] rounded-[2rem] overflow-hidden shrink-0 bg-slate-50 border border-slate-100 shadow-sm flex hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
                                 >
-                                    {/* Media Area - Left */}
+                                    {/* Si es transformación (Antes/Después), los mostramos lado a lado */}
                                     {!isGallery ? (
-                                        <div className="relative size-28 shrink-0 rounded-2xl overflow-hidden bg-slate-50">
-                                            <img src={item.afterImage} className="w-full h-full object-cover" alt="Después" />
-                                            {/* Thumbnail de Antes overlay */}
-                                            {item.beforeImage && (
-                                                <div className="absolute bottom-1.5 right-1.5 size-11 rounded-full border-2 border-white overflow-hidden shadow-md">
-                                                    <img src={item.beforeImage} className="w-full h-full object-cover" alt="Antes" />
-                                                    <div className="absolute inset-0 bg-black/10" />
-                                                </div>
-                                            )}
-                                            <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/40 rounded text-[6px] font-black text-white uppercase tracking-widest">
-                                                Antes/Dep
+                                        <>
+                                            <div className="w-1/2 relative h-full">
+                                                <img src={item.beforeImage} className="w-full h-full object-cover" alt="Antes" />
                                             </div>
-                                        </div>
+                                            <div className="w-1/2 relative h-full border-l border-white/60">
+                                                <img src={item.afterImage} className="w-full h-full object-cover" alt="Después" />
+                                            </div>
+                                        </>
                                     ) : (
-                                        <div className="relative size-28 shrink-0 rounded-2xl overflow-hidden bg-slate-50">
-                                            <img src={item.gallery?.[0] || businessImage} className="w-full h-full object-cover" alt={item.title} />
-                                            <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-white/95 backdrop-blur-md rounded-full text-[7px] font-black text-slate-800 border border-slate-100 shadow-sm">
-                                                {item.gallery?.length || 0} Fotos
-                                            </div>
-                                        </div>
+                                        <img src={item.gallery?.[0] || businessImage} className="w-full h-full object-cover" alt={item.title} />
                                     )}
-
-                                    {/* Info Area - Right */}
-                                    <div className="flex-1 min-w-0 space-y-1 py-1">
-                                        <div className="flex items-center gap-1.5 text-pink-500 text-[8px] font-black uppercase tracking-widest">
-                                            <Sparkles size={10} fill="currentColor" />
-                                            {labelText}
-                                        </div>
-                                        <h4 className="text-[15px] font-black leading-snug truncate" style={{ color: textColor }}>
-                                            {item.title}
-                                        </h4>
-                                        <p className="text-[11px] text-slate-400 font-medium line-clamp-2 leading-snug italic">
-                                            "{item.description}"
-                                        </p>
-                                        
-                                        {/* Tag del Servicio si está disponible */}
-                                        {item.service && (
-                                            <span className="inline-block text-[8px] font-black text-slate-300 uppercase tracking-widest pt-1">
-                                                {item.service.nombre}
-                                            </span>
-                                        )}
-                                    </div>
                                     
-                                    <ChevronRight style={{ color: primaryColor }} className="w-5 h-5 opacity-30 group-hover:opacity-100 transition-opacity shrink-0" />
+                                    {/* Badge del título centrado abajo */}
+                                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-md border border-slate-100/50 max-w-[90%] truncate">
+                                        <span className="text-[10px] font-black text-slate-800 tracking-wide uppercase leading-none block text-center">
+                                            {item.title}
+                                        </span>
+                                    </div>
                                 </Link>
                             );
                         })}
