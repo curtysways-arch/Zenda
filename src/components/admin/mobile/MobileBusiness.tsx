@@ -21,7 +21,8 @@ import {
     Palette,
     Image,
     TrendingUp,
-    Users
+    Users,
+    Gift
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -450,6 +451,13 @@ export default function MobileBusiness({
                             desc="Ofertas y marketing"
                             icon={<Tag size={20} />} 
                             color="#f59e0b" 
+                        />
+                        <CatalogLink 
+                            href="/admin/referidos" 
+                            label="Programa de Referidos" 
+                            desc="Recompensas y embajadores"
+                            icon={<Gift size={20} />} 
+                            color="#ec4899" 
                         />
                         <CatalogLink 
                             href="/admin/cursos" 
