@@ -49,9 +49,9 @@ export default function PublicDesktopNav({
         },
         {
             label: 'Servicios',
-            href: `/${slug}#servicios`,
+            href: `/${slug}/servicios`,
             icon: Scissors,
-            active: false
+            active: pathname.includes('/servicios')
         },
         {
             label: 'Reservas',

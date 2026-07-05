@@ -37,7 +37,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
     const searchParams = useSearchParams();
     const activeTabParam = searchParams.get('tab');
 
-    // Visibilidad ampliada: Mostrar en la landing, cursos y reservas
+    // Visibilidad ampliada: Mostrar en la landing, cursos, reservas y servicios
     const isVisible =
         pathname === `/${slug}` ||
         pathname.includes('/cursos') ||
@@ -46,7 +46,8 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
         pathname.includes('/referidos') ||
         pathname.includes('/cancha/') ||
         pathname.includes('/servicio/') ||
-        pathname.includes('/promo/');
+        pathname.includes('/promo/') ||
+        pathname.includes('/servicios');
 
     const isEnrolmentDetail = pathname.includes('/cursos/inscripcion/');
 
@@ -66,6 +67,13 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
             icon: Calendar,
             href: `/${slug}/mis-reservas`,
             active: pathname.includes('/mis-reservas') && activeTabParam !== 'academia',
+        },
+        {
+            label: 'Reservar',
+            icon: Calendar,
+            href: `/${slug}/servicios`,
+            active: pathname.includes('/servicios'),
+            isCentral: true,
         },
         {
             label: 'Premios',
@@ -90,49 +98,76 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
             }}
         >
             <div className="flex items-center justify-around h-full px-2">
-                {tabs.map((tab) => (
-                    <Link
-                        key={tab.label}
-                        href={tab.href}
-                        style={{ color: tab.active ? 'var(--nav-active)' : 'var(--nav-inactive)' }}
-                        className={clsx(
-                            'flex flex-col items-center justify-center transition-all relative flex-1 h-full',
-                            !tab.active && 'hover:opacity-100 transition-opacity'
-                        )}
-                    >
-                        <div
+                {tabs.map((tab) => {
+                    if (tab.isCentral) {
+                        return (
+                            <Link
+                                key={tab.label}
+                                href={tab.href}
+                                className="relative flex flex-col items-center justify-center flex-1 h-full -translate-y-4 pointer-events-auto"
+                            >
+                                <div 
+                                    className="size-14 rounded-full flex items-center justify-center shadow-lg border-4 border-white active:scale-95 transition-transform"
+                                    style={{
+                                        backgroundColor: 'var(--nav-active)',
+                                        boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)'
+                                    }}
+                                >
+                                    <Calendar size={24} className="text-white" fill="white" />
+                                </div>
+                                <span 
+                                    className="text-[9px] font-black uppercase tracking-widest leading-none mt-1.5"
+                                    style={{ color: 'var(--nav-active)' }}
+                                >
+                                    {tab.label}
+                                </span>
+                            </Link>
+                        );
+                    }
+                    return (
+                        <Link
+                            key={tab.label}
+                            href={tab.href}
+                            style={{ color: tab.active ? 'var(--nav-active)' : 'var(--nav-inactive)' }}
                             className={clsx(
-                                'relative transition-all duration-300 flex items-center justify-center p-1 rounded-xl',
-                                tab.active ? 'scale-105' : 'scale-100'
+                                'flex flex-col items-center justify-center transition-all relative flex-1 h-full',
+                                !tab.active && 'hover:opacity-100 transition-opacity'
                             )}
                         >
-                            <tab.icon
-                                size={22}
-                                strokeWidth={tab.active ? 2.5 : 2}
-                                fill={tab.active ? 'currentColor' : 'none'}
-                            />
+                            <div
+                                className={clsx(
+                                    'relative transition-all duration-300 flex items-center justify-center p-1 rounded-xl',
+                                    tab.active ? 'scale-105' : 'scale-100'
+                                )}
+                            >
+                                <tab.icon
+                                    size={22}
+                                    strokeWidth={tab.active ? 2.5 : 2}
+                                    fill={tab.active ? 'currentColor' : 'none'}
+                                />
+                                {tab.active && (
+                                    <div
+                                        className="absolute inset-0 blur-lg opacity-20 -z-10"
+                                        style={{ backgroundColor: 'var(--nav-active)' }}
+                                    />
+                                )}
+                            </div>
+                            <span className="text-[9px] font-bold uppercase tracking-widest leading-none mt-1.5">
+                                {tab.label}
+                            </span>
+
                             {tab.active && (
                                 <div
-                                    className="absolute inset-0 blur-lg opacity-20 -z-10"
-                                    style={{ backgroundColor: 'var(--nav-active)' }}
+                                    className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 rounded-b-full"
+                                    style={{
+                                        backgroundColor: 'var(--nav-active)',
+                                        boxShadow: '0 0 12px var(--nav-active)',
+                                    }}
                                 />
                             )}
-                        </div>
-                        <span className="text-[9px] font-bold uppercase tracking-widest leading-none mt-1.5">
-                            {tab.label}
-                        </span>
-
-                        {tab.active && (
-                            <div
-                                className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 rounded-b-full"
-                                style={{
-                                    backgroundColor: 'var(--nav-active)',
-                                    boxShadow: '0 0 12px var(--nav-active)',
-                                }}
-                            />
-                        )}
-                    </Link>
-                ))}
+                        </Link>
+                    );
+                })}
             </div>
         </nav>
     );
