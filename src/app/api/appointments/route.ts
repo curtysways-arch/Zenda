@@ -125,18 +125,26 @@ export async function POST(req: Request) {
             const isBusiness = body.is_business_creation === true;
 
             if (isBusiness) {
-                let usuario = await tx.usuario.findUnique({
-                    where: { phone: clienteTelefono }
+                let usuario = await tx.usuario.findFirst({
+                    where: {
+                        OR: [
+                            { phone: clienteTelefono },
+                            { phone: clienteTelefono.replace(/\D/g, '') }
+                        ]
+                    }
                 });
 
                 if (!usuario) {
                     usuario = await tx.usuario.create({
                         data: {
+                            id: crypto.randomUUID(),
                             nombre: clienteNombre,
-                            phone: clienteTelefono,
-                            role: 'CUSTOMER',
+                            phone: clienteTelefono.replace(/\D/g, '') || clienteTelefono,
+                            role: 'USER',
                             status: 'unverified',
-                            auth_method: 'phone'
+                            auth_method: 'phone',
+                            negocioId: negocio.id,
+                            updatedAt: new Date()
                         }
                     });
                 }
