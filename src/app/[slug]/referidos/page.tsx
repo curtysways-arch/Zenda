@@ -199,7 +199,7 @@ export default function MisRecompensasPage() {
                 </div>
             </header>
 
-            <main className="flex-1 max-w-md mx-auto w-full px-4 pt-6">
+            <main className="flex-1 max-w-md mx-auto w-full px-2.5 pt-4">
                 
                 {/* ── PASO 1: PEDIR TELÉFONO ── */}
                 {step === 'phone' && (
@@ -325,7 +325,7 @@ export default function MisRecompensasPage() {
                     <div className="space-y-5 animate-in fade-in duration-500 pb-8">
                         
                         {/* Tarjeta de Invitación Premium */}
-                        <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-[2.2rem] p-6 shadow-xl relative overflow-hidden border border-white/5">
+                        <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-[2.2rem] p-4 shadow-xl relative overflow-hidden border border-white/5">
                             {/* Decorativos de fondo */}
                             <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-20 -mr-16 -mt-16" style={{ backgroundColor: primaryColor }} />
                             <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500 rounded-full blur-3xl opacity-15 -ml-12 -mb-12" />
@@ -418,7 +418,7 @@ export default function MisRecompensasPage() {
                                 meData.progresoCampañas.map((p: any, idx: number) => {
                                     const pct = Math.min(100, (p.progreso / p.referidosRequeridos) * 100);
                                     return (
-                                        <div key={idx} className="bg-white border border-slate-100 rounded-3xl p-5 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-4">
+                                        <div key={idx} className="bg-white border border-slate-100 rounded-3xl p-4 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="size-11 rounded-full bg-pink-100 flex items-center justify-center text-pink-500 shrink-0">
                                                     <Users size={18} />
