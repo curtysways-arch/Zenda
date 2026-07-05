@@ -63,7 +63,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
             active: pathname === `/${slug}` && !pathname.includes('/servicios'),
         },
         {
-            label: 'Mis citas',
+            label: 'Agenda',
             icon: Calendar,
             href: `/${slug}/mis-reservas`,
             active: pathname.includes('/mis-reservas') && activeTabParam !== 'academia',
