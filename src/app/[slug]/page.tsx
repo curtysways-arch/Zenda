@@ -738,7 +738,7 @@ export default async function PublicNegocioPage({
 
             {/* 4. PROMOCIONES (Movidas inmediatamente debajo de las tarjetas de confianza) */}
             {promocionesActivas.length > 0 && (
-                <section id="promociones" className="px-6 mb-6">
+                <section id="promociones" className="mb-6">
                     <PromotionsSection 
                         promociones={promocionesActivas} 
                         slug={slug} 
