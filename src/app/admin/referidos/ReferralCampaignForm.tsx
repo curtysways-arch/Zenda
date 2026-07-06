@@ -264,9 +264,12 @@ export default function ReferralCampaignForm() {
                                     className="w-full bg-white border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none focus:border-[var(--primary-color)] transition-colors"
                                     style={{ '--focus-color': primaryColor } as any}
                                 >
-                                    <option value="DESCUENTO">Descuento (ej. 10%)</option>
-                                    <option value="SERVICIO">Servicio extra gratis</option>
-                                    <option value="REGALO">Regalo o bebida de bienvenida</option>
+                                    <option value="DESCUENTO">Descuento porcentual (ej. 10%, 15%)</option>
+                                    <option value="DESCUENTO_FIJO">Descuento de monto fijo (ej. $5, $10)</option>
+                                    <option value="BEBIDA">Bebida o cortesía de bienvenida (ej. Café, Copa de cava)</option>
+                                    <option value="SERVICIO">Servicio extra de cortesía (ej. Masaje capilar extra)</option>
+                                    <option value="REGALO">Regalo físico o kit de bienvenida (ej. Crema mini)</option>
+                                    <option value="OTRO">Otro beneficio personalizado</option>
                                 </select>
                             </div>
                             <div>
@@ -276,7 +279,14 @@ export default function ReferralCampaignForm() {
                                     required={hasIncentivo}
                                     value={valorIncentivo}
                                     onChange={(e) => setValorIncentivo(e.target.value)}
-                                    placeholder="Ej. 10% de descuento en tu primer servicio"
+                                    placeholder={
+                                        tipoIncentivo === 'DESCUENTO' ? "Ej. 10% de descuento en tu primer servicio" :
+                                        tipoIncentivo === 'DESCUENTO_FIJO' ? "Ej. $5 de descuento en el total de tu reserva" :
+                                        tipoIncentivo === 'BEBIDA' ? "Ej. Copa de vino espumoso o café de cortesía al llegar" :
+                                        tipoIncentivo === 'SERVICIO' ? "Ej. Masaje capilar hidratante de 10 min gratis" :
+                                        tipoIncentivo === 'REGALO' ? "Ej. Crema hidratante mini de regalo" :
+                                        "Ej. Describe el incentivo o beneficio especial"
+                                    }
                                     className="w-full bg-white border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none focus:border-[var(--primary-color)] transition-colors"
                                     style={{ '--focus-color': primaryColor } as any}
                                 />
