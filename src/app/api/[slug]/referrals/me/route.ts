@@ -103,12 +103,48 @@ export async function GET(
             where: { referrerId: user.id, negocioId, estado: "VALIDO" }
         });
 
+        // 7. Balance de puntos
+        const pointsRecord = await (prisma as any).userPoints.findUnique({
+            where: { userId_negocioId: { userId: user.id, negocioId } }
+        });
+        const puntos = pointsRecord?.puntos || 0;
+
+        // 8. Verificar si el negocio tiene activos los puntos
+        const negocio = await prisma.negocio.findUnique({
+            where: { id: negocioId },
+            select: { configuracion: true }
+        });
+        const config = negocio?.configuracion
+            ? (typeof negocio.configuracion === 'string' ? JSON.parse(negocio.configuracion) : negocio.configuracion) as any
+            : {};
+        const puntosActivos = config?.puntosActivos || false;
+
+        // 9. Obtener cupones del negocio
+        const cupones = await (prisma as any).coupon.findMany({
+            where: { negocioId, activa: true },
+            orderBy: { createdAt: "desc" }
+        });
+
+        // 10. Obtener ranking de puntos
+        const ranking = await (prisma as any).userPoints.findMany({
+            where: { negocioId },
+            orderBy: { puntos: "desc" },
+            take: 10,
+            include: {
+                Usuario: { select: { nombre: true } }
+            }
+        });
+
         return NextResponse.json({
             codigo: code,
             progresoCampañas: campaignsProgress,
             premios: rewards,
             totalReferidosValidos,
-            nombreCliente: user.nombre
+            nombreCliente: user.nombre,
+            puntos,
+            puntosActivos,
+            cupones,
+            ranking
         });
     } catch (error: any) {
         console.error("Error in referrals/me:", error);
