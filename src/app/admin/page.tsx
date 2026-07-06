@@ -60,7 +60,7 @@ export default async function AdminDashboard() {
         prisma.appointment.aggregate({
             where: {
                 ...commonFilter,
-                estado: { in: ['confirmed', 'completed', 'finalizada', 'finalizado'] },
+                estado: { in: ['completed', 'finalizada', 'finalizado'] },
                 fecha: { gte: startMonth }
             },
             _sum: { total: true }
