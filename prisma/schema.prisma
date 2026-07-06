@@ -336,6 +336,7 @@ model Negocio {
   LoyaltyRedemption      LoyaltyRedemption[]
   Coupon                 Coupon[]
   AutomationRule         AutomationRule[]
+  Notification           Notification[]
 }
 
 model OtpCode {
@@ -732,6 +733,7 @@ model Usuario {
   PointsHistory          PointsHistory[]
   LoyaltyRedemption      LoyaltyRedemption[]
   CouponUsage            CouponUsage[]
+  Notification           Notification[]
 }
 
 model PromotionToService {
@@ -1003,4 +1005,35 @@ model AutomationLog {
   detalles  String?
   estado    String   @default("OK") // OK | ERROR
   createdAt DateTime @default(now())
+}
+
+model Notification {
+  id             String    @id @default(cuid())
+  negocioId      String
+  userId         String?   // Opcional si es global
+  tipo           String    // RESERVA | PROMO | CAMPANA | PREMIO | REFERIDOS | AUTOMATIZACION | NOTICIA | SISTEMA | AVISO | RECORDATORIO
+  categoria      String    // RESERVAS | PROMOCIONES | CAMPANAS | PREMIOS | NOTICIAS | SISTEMA | CUPONES
+  titulo         String
+  descripcion    String
+  imagenUrl      String?
+  icono          String?   // Nombre del icono de Lucide-React
+  prioridad      String    @default("INFO") // INFO | SUCCESS | WARNING | ERROR
+  recipientType  String    @default("USER") // ALL | USER | SEGMENT | VIP | INACTIVE | NEW_CLIENTS
+  actionType     String?   // VER_RESERVA | VER_CAMPANA | VER_PROMO | VER_PREMIO | VER_PERFIL | ABRIR_URL | CUSTOM
+  actionPayload  String?   // JSON string flexible (ej: {"screen": "campaign", "campaignId": "..."})
+  metricas       String?   // JSON string para estadísticas (enviadas, entregadas, vistas, clics)
+  leida          Boolean   @default(false)
+  archived       Boolean   @default(false)
+  fechaLectura   DateTime?
+  scheduledFor   DateTime? // Para envíos programados en el futuro
+  expiresAt      DateTime? // Fecha de expiración
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  Negocio        Negocio   @relation(fields: [negocioId], references: [id])
+  Usuario        Usuario?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([negocioId])
+  @@index([userId])
+  @@index([leida])
+  @@index([archived])
 }

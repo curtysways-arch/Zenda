@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { notificationService } from '@/lib/notifications';
+import { NotificationService } from '@/lib/notifications/notificationService';
 
 const VALID_ADMIN_TRANSITIONS: Record<string, string[]> = {
     pending: ['confirmed', 'cancelled', 'no_show'],
@@ -127,6 +128,26 @@ export async function PATCH(
                         updated.id,
                         updated.comentarios || ''
                     );
+
+                    // Disparar en el nuevo Centro de Actividad
+                    if (updated.usuarioId) {
+                        const dateFormatted = new Date(updated.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                        await NotificationService.createNotification({
+                            negocioId: updated.negocioId,
+                            userId: updated.usuarioId,
+                            tipo: 'RESERVA',
+                            categoria: 'RESERVAS',
+                            titulo: isConfirmed ? '🎉 Cita Confirmada' : '❌ Cita Cancelada',
+                            descripcion: isConfirmed 
+                                ? `Tu cita para el servicio ${updated.service.nombre} el día ${dateFormatted} a las ${updated.horaInicio} hs ha sido confirmada.`
+                                : `Tu cita para el servicio ${updated.service.nombre} el día ${dateFormatted} a las ${updated.horaInicio} hs ha sido cancelada.`,
+                            icono: isConfirmed ? 'Calendar' : 'X',
+                            prioridad: isConfirmed ? 'SUCCESS' : 'ERROR',
+                            recipientType: 'USER',
+                            actionType: 'VER_RESERVA',
+                            actionPayload: { screen: 'appointment', appointmentId: updated.id }
+                        });
+                    }
                 } catch (notifyError) {
                     console.error('Error enviando notificación de estado:', notifyError);
                 }
@@ -142,6 +163,23 @@ export async function PATCH(
                         updated.id,
                         updated.negocio.slug
                     );
+
+                    // Disparar en el nuevo Centro de Actividad
+                    if (updated.usuarioId) {
+                        await NotificationService.createNotification({
+                            negocioId: updated.negocioId,
+                            userId: updated.usuarioId,
+                            tipo: 'RESERVA',
+                            categoria: 'RESERVAS',
+                            titulo: '✨ Cita Finalizada',
+                            descripcion: `¡Gracias por visitarnos! Tu servicio ${updated.service.nombre} con ${updated.staff?.name || 'nuestro profesional'} ha finalizado correctamente.`,
+                            icono: 'CheckCircle2',
+                            prioridad: 'SUCCESS',
+                            recipientType: 'USER',
+                            actionType: 'VER_RESERVA',
+                            actionPayload: { screen: 'appointment', appointmentId: updated.id }
+                        });
+                    }
                 } catch (notifyError) {
                     console.error('Error enviando notificación de cita finalizada:', notifyError);
                 }

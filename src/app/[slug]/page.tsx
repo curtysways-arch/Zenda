@@ -15,6 +15,8 @@ import NewsletterForm from '@/components/NewsletterForm';
 import NextAppointmentBanner from '@/components/public/NextAppointmentBanner';
 import ReferralBanner from '@/components/public/ReferralBanner';
 import ReviewsCarousel from '@/components/public/ReviewsCarousel';
+import NotificationBell from '@/components/public/NotificationBell';
+import { NotificationService } from '@/lib/notifications/notificationService';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,6 +39,7 @@ export default async function PublicNegocioPage({
     negocio.canchas = negocio.services || [];
 
     let userReservasActivas = 0;
+    let initialUnreadCount = 0;
     let nextAppointment: any = null;
     let clientName = '';
 
@@ -144,6 +147,22 @@ export default async function PublicNegocioPage({
                 });
 
                 userReservasActivas = validAppointments.length;
+
+                // 🔔 Calcular el initialUnreadCount de notificaciones no leídas
+                const u = await prisma.usuario.findFirst({
+                    where: {
+                        negocioId: payload.negocioId as string,
+                        OR: [
+                            { phone: { contains: telefono.replace(/\D/g, '') } },
+                            { phone: telefono }
+                        ]
+                    },
+                    select: { id: true }
+                });
+
+                if (u) {
+                    initialUnreadCount = await NotificationService.getUnreadCount(u.id, payload.negocioId as string);
+                }
             }
         }
     } catch (e) {}
@@ -579,14 +598,7 @@ export default async function PublicNegocioPage({
                     </div>
                 </Link>
 
-                <Link href={`/${slug}/mis-reservas`} className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-700 shadow-sm relative active:scale-95 transition-transform">
-                    <Bell size={18} />
-                    {userReservasActivas > 0 && (
-                        <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-pink-500 text-white text-[9px] font-black rounded-full flex items-center justify-center border border-white">
-                            {userReservasActivas}
-                        </span>
-                    )}
-                </Link>
+                <NotificationBell slug={slug} initialUnreadCount={initialUnreadCount} />
             </header>
 
             {/* Espaciado superior */}

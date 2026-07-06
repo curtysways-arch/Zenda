@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { notificationService } from '@/lib/notifications';
 import { whatsappService } from "@/lib/whatsapp";
+import { NotificationService } from '@/lib/notifications/notificationService';
 import crypto from 'crypto';
 import { SignJWT } from 'jose';
 import { planLimitValidator } from '@/lib/services/planLimitValidator';
@@ -377,6 +378,30 @@ export async function POST(
                 { link: '/admin/citas', reservaId: reservaCreated.id }
             );
         } catch (e) { console.error('Push notify error:', e); }
+
+        // Disparar en el nuevo Centro de Actividad del cliente
+        if (reservaCreated.usuarioId) {
+            try {
+                const isConfirmed = reservaCreated.estado === 'confirmed';
+                await NotificationService.createNotification({
+                    negocioId: negocio.id,
+                    userId: reservaCreated.usuarioId,
+                    tipo: 'RESERVA',
+                    categoria: 'RESERVAS',
+                    titulo: isConfirmed ? '📅 Cita Confirmada' : '⏳ Solicitud de Reserva Recibida',
+                    descripcion: isConfirmed
+                        ? `Tu cita para el servicio ${service.nombre} el día ${fechaLegible} a las ${horaInicio} hs ha sido confirmada automáticamente.`
+                        : `Hemos recibido tu solicitud de reserva para el servicio ${service.nombre} el día ${fechaLegible} a las ${horaInicio} hs. Pendiente de confirmación.`,
+                    icono: 'Calendar',
+                    prioridad: 'INFO',
+                    recipientType: 'USER',
+                    actionType: 'VER_RESERVA',
+                    actionPayload: { screen: 'appointment', appointmentId: reservaCreated.id }
+                });
+            } catch (notifyErr) {
+                console.error('Error al crear notificación en base de datos para reserva:', notifyErr);
+            }
+        }
 
         // Generar customer_token para que el cliente pueda ver sus reservas
         const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'default_otp_secret_key_change_me');

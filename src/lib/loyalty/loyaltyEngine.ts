@@ -1,5 +1,6 @@
 import prisma from '../prisma';
 import { whatsappService } from '../whatsapp';
+import { NotificationService } from '../notifications/notificationService';
 
 // ─── TIPOS ────────────────────────────────────────────────────────────────────
 
@@ -87,7 +88,7 @@ export async function addPoints(
 ): Promise<void> {
     try {
         // Upsert del balance de puntos
-        await (prisma as any).userPoints.upsert({
+        const userPoints = await (prisma as any).userPoints.upsert({
             where: { userId_negocioId: { userId, negocioId } },
             create: { userId, negocioId, puntos },
             update: { puntos: { increment: puntos } }
@@ -99,6 +100,31 @@ export async function addPoints(
         });
 
         console.log(`[Puntos] +${puntos} pts para ${userId} (${concepto})`);
+
+        // 1. Notificación al Centro de Actividad
+        const esBono = puntos > 0;
+        await NotificationService.createNotification({
+            negocioId,
+            userId,
+            tipo: 'AUTOMATIZACION',
+            categoria: 'CUPONES',
+            titulo: esBono ? '🪙 ¡Sumaste Puntos!' : '🛍️ Canje de Puntos Exitoso',
+            descripcion: esBono 
+                ? `Acabas de ganar ${puntos} puntos por concepto de: ${concepto || 'Bono de lealtad'}.`
+                : `Has utilizado ${Math.abs(puntos)} puntos para realizar un canje.`,
+            icono: 'Coins',
+            prioridad: esBono ? 'SUCCESS' : 'INFO',
+            recipientType: 'USER',
+            actionType: 'VER_PERFIL',
+            actionPayload: { screen: 'profile' }
+        });
+
+        // 2. Transmitir actualización de puntos por SSE en tiempo real
+        NotificationService.publishRealtime(negocioId, userId, {
+            tipoEvento: 'PUNTOS_UPDATE',
+            payload: { puntos: userPoints.puntos }
+        });
+
     } catch (err: any) {
         console.error(`[Puntos] Error agregando puntos:`, err.message);
     }
@@ -588,6 +614,21 @@ async function notifyRewardEarned(userId: string, negocioId: string, campaign: a
             const msg = `🎉 ¡Felicitaciones ${user.nombre || 'Cliente'}! Ganaste una recompensa en ${negocio?.nombre}: *${campaign.valorRecompensa}*. Muestra este mensaje al llegar a tu próxima cita. 🏆`;
             await whatsappService.sendWhatsApp(user.phone, msg).catch(() => {});
         }
+
+        // Crear notificación interna en el Centro de Actividad
+        await NotificationService.createNotification({
+            negocioId,
+            userId,
+            tipo: 'PREMIO',
+            categoria: 'PREMIOS',
+            titulo: '🎁 ¡Felicidades! Ganaste un Premio',
+            descripcion: `Has completado el reto y ganaste: ${campaign.valorRecompensa}. Muestra este cupón en el negocio para canjearlo.`,
+            icono: 'Gift',
+            prioridad: 'SUCCESS',
+            recipientType: 'USER',
+            actionType: 'VER_PREMIO',
+            actionPayload: { screen: 'reward', rewardId: reward.id }
+        });
     } catch {}
 }
 
@@ -600,6 +641,21 @@ async function notifyOneAway(userId: string, negocioId: string, campaign: any): 
             const msg = `🔥 ¡Ya casi, ${user.nombre || 'Cliente'}! Te falta solo *1 referido* para ganar tu premio en ${negocio?.nombre}: *${campaign.valorRecompensa}*. ¡Sigue así!`;
             await whatsappService.sendWhatsApp(user.phone, msg).catch(() => {});
         }
+
+        // Crear notificación interna en el Centro de Actividad
+        await NotificationService.createNotification({
+            negocioId,
+            userId,
+            tipo: 'CAMPANA',
+            categoria: 'CAMPANAS',
+            titulo: '🔥 ¡Estás a solo 1 paso!',
+            descripcion: `Te falta solo 1 recomendado para ganar tu premio: ${campaign.valorRecompensa}. ¡Comparte tu código de referido!`,
+            icono: 'Trophy',
+            prioridad: 'INFO',
+            recipientType: 'USER',
+            actionType: 'VER_CAMPANA',
+            actionPayload: { screen: 'campaign', campaignId: campaign.id }
+        });
     } catch {}
 }
 
