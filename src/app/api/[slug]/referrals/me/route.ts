@@ -117,7 +117,7 @@ export async function GET(
         const config = negocio?.configuracion
             ? (typeof negocio.configuracion === 'string' ? JSON.parse(negocio.configuracion) : negocio.configuracion) as any
             : {};
-        const puntosActivos = config?.puntosActivos || false;
+        const puntosActivos = config?.puntosActivos !== undefined ? config.puntosActivos : true;
 
         // 9. Obtener cupones del negocio
         const cupones = await (prisma as any).coupon.findMany({
