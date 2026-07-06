@@ -329,6 +329,12 @@ model Negocio {
   ReferralCode           ReferralCode[]
   ReferralEvent          ReferralEvent[]
   ReferralReward         ReferralReward[]
+  UserPoints             UserPoints[]
+  PointsHistory          PointsHistory[]
+  LoyaltyReward          LoyaltyReward[]
+  LoyaltyRedemption      LoyaltyRedemption[]
+  Coupon                 Coupon[]
+  AutomationRule         AutomationRule[]
 }
 
 model OtpCode {
@@ -574,8 +580,9 @@ model Staff {
   StaffSchedule  StaffSchedule[]
   ratingPromedio Float            @default(0)
   totalReviews   Int              @default(0)
-  Service        Service[]        @relation("StaffServices")
-  ReferralReward ReferralReward[]
+  Service           Service[]           @relation("StaffServices")
+  ReferralReward    ReferralReward[]
+  LoyaltyRedemption LoyaltyRedemption[]
 }
 
 model StaffException {
@@ -719,6 +726,10 @@ model Usuario {
   ReferralCode           ReferralCode[]
   ReferralReward         ReferralReward[]
   ReferralEvent          ReferralEvent[]
+  UserPoints             UserPoints[]
+  PointsHistory          PointsHistory[]
+  LoyaltyRedemption      LoyaltyRedemption[]
+  CouponUsage            CouponUsage[]
 }
 
 model PromotionToService {
@@ -801,6 +812,18 @@ model ReferralCampaign {
   rankingActivo       Boolean          @default(false)
   tipoIncentivo       String?          // incentivo para el referido: DESCUENTO | SERVICIO | REGALO | null
   valorIncentivo      String?          // ej: "10% descuento", "Bebida gratis"
+  
+  // Nuevos campos de configuración para Fidelización
+  estado              String?          @default("ACTIVA") // ACTIVA | PAUSADA | FINALIZADA
+  tipoCampana         String?          @default("CLIENTES_NUEVOS") // CLIENTES_NUEVOS, CLIENTES_EXISTENTES, CLIENTES_INACTIVOS, CUMPLEANOS, PRIMERA_RESERVA_MES, CUALQUIER_RESERVA, COMPLETAR_RESERVAS, GASTAR_DOLARES, COMPRAR_SERVICIO, COMPRAR_CATEGORIA, RESERVAR_DIAS, RESERVAR_HORARIOS, FLASH, RANKING, TEMPORADA, RESENA, COMPARTIR, PERSONALIZADA
+  diasInactividad     Int?             // Para CLIENTES_INACTIVOS (30, 60, 90, 180)
+  maxPremiosPorCliente Int?            // Cantidad máxima por cliente
+  permitirRepetir     Boolean?         @default(false)   // Si puede repetirse el premio
+  prioridad           Int?             @default(0)       // Prioridad de campaña
+  combinable          Boolean?         @default(false)   // Combinable con otras
+  color               String?          // Color en UI
+  icono               String?          // Icono en UI
+  
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
   Negocio             Negocio          @relation(fields: [negocioId], references: [id])
@@ -858,4 +881,124 @@ model ReferralReward {
   Usuario       Usuario          @relation(fields: [userId], references: [id])
   Staff         Staff?           @relation(fields: [staffId], references: [id])
   ReferralEvent ReferralEvent[]
+}
+
+// ─── MOTOR DE FIDELIZACIÓN Y MARKETING ──────────────────────────────────────
+
+model UserPoints {
+  id        String   @id @default(cuid())
+  userId    String
+  negocioId String
+  puntos    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Usuario   Usuario  @relation(fields: [userId], references: [id])
+  Negocio   Negocio  @relation(fields: [negocioId], references: [id])
+
+  @@unique([userId, negocioId])
+}
+
+model PointsHistory {
+  id           String   @id @default(cuid())
+  userId       String
+  negocioId    String
+  puntos       Int      // Positivos = acumulación, negativos = canje
+  concepto     String   // RESERVA | REFERIDO | CUMPLEANOS | RESENA | COMPARTIR | CANJE | BONO | AJUSTE
+  referenciaId String?  // ID del recurso asociado (cita, recompensa, evento, etc.)
+  notas        String?
+  createdAt    DateTime @default(now())
+  Usuario      Usuario  @relation(fields: [userId], references: [id])
+  Negocio      Negocio  @relation(fields: [negocioId], references: [id])
+}
+
+model LoyaltyReward {
+  id                 String              @id @default(cuid())
+  negocioId          String
+  nombre             String
+  descripcion        String?
+  imagenUrl          String?
+  costoPuntos        Int                 @default(0) // 0 = solo por campaña, >0 = canjeable por puntos
+  tipo               String              // DESCUENTO | PORCENTAJE | DINERO | SERVICIO_GRATIS | PRODUCTO | REGALO | CUPON | PERSONALIZADO
+  valor              String?             // monto, porcentaje, id del servicio, etc.
+  cantidadTotal      Int?                // null = ilimitado
+  cantidadDisponible Int?
+  activa             Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  Negocio            Negocio             @relation(fields: [negocioId], references: [id])
+  LoyaltyRedemption  LoyaltyRedemption[]
+}
+
+model LoyaltyRedemption {
+  id           String        @id @default(cuid())
+  negocioId    String
+  userId       String
+  rewardId     String
+  estado       String        @default("DISPONIBLE") // DISPONIBLE | CANJEADO | CADUCADO
+  fechaEntrega DateTime?
+  staffId      String?
+  notas        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  Negocio      Negocio       @relation(fields: [negocioId], references: [id])
+  Usuario      Usuario       @relation(fields: [userId], references: [id])
+  Reward       LoyaltyReward @relation(fields: [rewardId], references: [id])
+  Staff        Staff?        @relation(fields: [staffId], references: [id])
+}
+
+model Coupon {
+  id                String        @id @default(cuid())
+  negocioId         String
+  codigo            String
+  tipo              String        // PORCENTAJE | FIJO | SERVICIO | CATEGORIA | CUMPLEANOS | PRIMER_CLIENTE | VIP
+  valor             Float
+  servicioId        String?
+  descripcion       String?
+  fechaInicio       DateTime?
+  fechaFin          DateTime?
+  maxUsos           Int?
+  usosActuales      Int           @default(0)
+  maxUsosPorCliente Int?
+  acumulable        Boolean       @default(false)
+  activa            Boolean       @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  Negocio           Negocio       @relation(fields: [negocioId], references: [id])
+  CouponUsage       CouponUsage[]
+
+  @@unique([negocioId, codigo])
+}
+
+model CouponUsage {
+  id            String   @id @default(cuid())
+  couponId      String
+  userId        String
+  appointmentId String?
+  createdAt     DateTime @default(now())
+  Coupon        Coupon   @relation(fields: [couponId], references: [id])
+  Usuario       Usuario  @relation(fields: [userId], references: [id])
+}
+
+model AutomationRule {
+  id          String   @id @default(cuid())
+  negocioId   String
+  nombre      String
+  descripcion String?
+  disparador  String   // CUMPLEANOS | INACTIVIDAD | RESERVAS_COMPLETADAS | RECOMPENSA_GANADA | PUNTOS_ALCANZADOS | PRIMER_VISITA
+  condiciones Json?    // { diasInactividad: 60 } | { reservasRequeridas: 10 } | { puntosRequeridos: 500 }
+  acciones    Json     // [{ tipo: 'WHATSAPP', mensaje: '...' }, { tipo: 'PUNTOS', cantidad: 100 }, { tipo: 'CUPON', ... }]
+  activa      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  Negocio     Negocio  @relation(fields: [negocioId], references: [id])
+}
+
+model AutomationLog {
+  id        String   @id @default(cuid())
+  ruleId    String
+  negocioId String
+  userId    String
+  detalles  String?
+  estado    String   @default("OK") // OK | ERROR
+  createdAt DateTime @default(now())
 }
