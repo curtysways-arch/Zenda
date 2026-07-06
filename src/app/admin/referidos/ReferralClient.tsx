@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Gift, Plus, Users, Award, History, ToggleLeft, ToggleRight, Check, Trash2, Edit2, Loader2, Calendar, UserCheck, ShieldAlert, Sparkles } from 'lucide-react';
+import { Gift, Plus, Users, Award, History, ToggleLeft, ToggleRight, Check, Trash2, Edit2, Loader2, Calendar, UserCheck, ShieldAlert, Sparkles, Trophy, Settings, TrendingUp, BarChart2, PlusCircle, AlertCircle, Copy, Trash } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -12,7 +12,9 @@ interface Staff {
 
 export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<'campaigns' | 'rewards' | 'ranking' | 'history'>('campaigns');
+    const [activeTab, setActiveTab] = useState<'campaigns' | 'rewards' | 'coupons' | 'points' | 'automations' | 'ranking' | 'stats' | 'history'>('campaigns');
+    
+    // Stats de Citiox
     const [stats, setStats] = useState<any>({
         totalValidos: 0,
         totalPendientes: 0,
@@ -20,11 +22,32 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
         premiosDisponibles: 0,
         premiosCanjeados: 0
     });
+
+    // Stats de Fidelización avanzadas
+    const [loyaltyStats, setLoyaltyStats] = useState<any>({
+        summary: {
+            totalCampanas: 0,
+            totalReferidos: 0,
+            totalPremiosDisponibles: 0,
+            totalPremiosCanjeados: 0,
+            ingresosGenerados: 0,
+            roiEstimado: "0",
+            puntosEntregados: 0,
+            puntosCanjeados: 0
+        },
+        topReferrers: []
+    });
+
     const [campaigns, setCampaigns] = useState<any[]>([]);
     const [rewards, setRewards] = useState<any[]>([]);
     const [ranking, setRanking] = useState<any[]>([]);
     const [history, setHistory] = useState<any[]>([]);
     
+    // Estados de fidelización
+    const [coupons, setCoupons] = useState<any[]>([]);
+    const [automations, setAutomations] = useState<any[]>([]);
+    const [pointsRankings, setPointsRankings] = useState<any[]>([]);
+
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
@@ -35,20 +58,50 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
     const [deliveryStaffId, setDeliveryStaffId] = useState('');
     const [deliveryNotes, setDeliveryNotes] = useState('');
 
+    // Estado del modal de creación de cupones
+    const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
+    const [couponCode, setCouponCode] = useState('');
+    const [couponType, setCouponType] = useState('PORCENTAJE');
+    const [couponValue, setCouponValue] = useState('');
+    const [couponMaxUses, setCouponMaxUses] = useState('');
+    const [couponDesc, setCouponDesc] = useState('');
+    const [couponFin, setCouponFin] = useState('');
+
+    // Estado del modal de ajuste de puntos
+    const [isPointsModalOpen, setIsPointsModalOpen] = useState(false);
+    const [pointsUserId, setPointsUserId] = useState('');
+    const [pointsValue, setPointsValue] = useState('');
+    const [pointsConcept, setPointsConcept] = useState('AJUSTE');
+    const [pointsNotes, setPointsNotes] = useState('');
+    const [usersList, setUsersList] = useState<any[]>([]);
+
+    // Estado del modal de creación de automatizaciones
+    const [isAutomationModalOpen, setIsAutomationModalOpen] = useState(false);
+    const [autoName, setAutoName] = useState('');
+    const [autoDesc, setAutoDesc] = useState('');
+    const [autoTrigger, setAutoTrigger] = useState('CUMPLEANOS');
+    const [autoMsg, setAutoMsg] = useState('');
+    const [autoPoints, setAutoPoints] = useState('');
+
     useEffect(() => {
         const color = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
         if (color) setPrimaryColor(color);
         fetchData();
+        fetchUsers();
     }, []);
 
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [statsRes, campaignsRes, rewardsRes, historyRes] = await Promise.all([
+            const [statsRes, campaignsRes, rewardsRes, historyRes, couponsRes, automationsRes, pointsRes, loyaltyStatsRes] = await Promise.all([
                 fetch('/api/admin/referrals/stats').then(res => res.json()),
                 fetch('/api/admin/referrals/campaigns').then(res => res.json()),
                 fetch('/api/admin/referrals/rewards').then(res => res.json()),
-                fetch('/api/admin/referrals/history').then(res => res.json())
+                fetch('/api/admin/referrals/history').then(res => res.json()),
+                fetch('/api/admin/loyalty/coupons').then(res => res.json()).catch(() => []),
+                fetch('/api/admin/loyalty/automations').then(res => res.json()).catch(() => []),
+                fetch('/api/admin/loyalty/points').then(res => res.json()).catch(() => []),
+                fetch('/api/admin/loyalty/stats').then(res => res.json()).catch(() => null)
             ]);
 
             if (statsRes.stats) {
@@ -58,11 +111,27 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
             setCampaigns(campaignsRes || []);
             setRewards(rewardsRes || []);
             setHistory(historyRes || []);
+            setCoupons(couponsRes || []);
+            setAutomations(automationsRes || []);
+            setPointsRankings(pointsRes || []);
+            if (loyaltyStatsRes) {
+                setLoyaltyStats(loyaltyStatsRes);
+            }
         } catch (err) {
             console.error("Error al cargar datos:", err);
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchUsers = async () => {
+        try {
+            const res = await fetch('/api/admin/usuarios');
+            if (res.ok) {
+                const data = await res.json();
+                setUsersList(data || []);
+            }
+        } catch {}
     };
 
     const handleToggleActive = async (campaign: any) => {
@@ -76,7 +145,6 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
             if (res.ok) {
                 const updated = await res.json();
                 setCampaigns(prev => prev.map(c => c.id === campaign.id ? updated : c));
-                // Recargar estadísticas
                 const statsRes = await fetch('/api/admin/referrals/stats').then(res => res.json());
                 if (statsRes.stats) setStats(statsRes.stats);
             }
@@ -97,12 +165,125 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
             const data = await res.json();
             if (res.ok) {
                 setCampaigns(prev => prev.filter(c => c.id !== id));
-                fetchData(); // Recargar todo
+                fetchData();
             } else {
                 alert(data.error || "No se pudo eliminar la campaña.");
             }
         } catch (err) {
             console.error("Error al eliminar campaña:", err);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleCreateCoupon = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!couponValue) return;
+        setActionLoading('coupon');
+        try {
+            const res = await fetch('/api/admin/loyalty/coupons', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    codigo: couponCode || undefined,
+                    tipo: couponType,
+                    valor: parseFloat(couponValue),
+                    maxUsos: couponMaxUses ? parseInt(couponMaxUses) : null,
+                    descripcion: couponDesc || null,
+                    fechaFin: couponFin ? new Date(couponFin).toISOString() : null
+                })
+            });
+
+            if (res.ok) {
+                setIsCouponModalOpen(false);
+                setCouponCode('');
+                setCouponValue('');
+                setCouponMaxUses('');
+                setCouponDesc('');
+                setCouponFin('');
+                fetchData();
+            } else {
+                const data = await res.json();
+                alert(data.error || "Error al crear cupón.");
+            }
+        } catch (err) {
+            console.error("Error:", err);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleAdjustPoints = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!pointsUserId || !pointsValue) return;
+        setActionLoading('points');
+        try {
+            const res = await fetch('/api/admin/loyalty/points', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: pointsUserId,
+                    puntos: parseInt(pointsValue),
+                    concepto: pointsConcept,
+                    notas: pointsNotes || null
+                })
+            });
+
+            if (res.ok) {
+                setIsPointsModalOpen(false);
+                setPointsUserId('');
+                setPointsValue('');
+                setPointsNotes('');
+                fetchData();
+            } else {
+                const data = await res.json();
+                alert(data.error || "Error al ajustar puntos.");
+            }
+        } catch (err) {
+            console.error("Error:", err);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleCreateAutomation = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!autoName || (!autoMsg && !autoPoints)) return;
+        setActionLoading('auto');
+        
+        const acciones: any[] = [];
+        if (autoMsg) {
+            acciones.push({ tipo: 'WHATSAPP', mensaje: autoMsg });
+        }
+        if (autoPoints) {
+            acciones.push({ tipo: 'PUNTOS', cantidad: parseInt(autoPoints), notas: 'Bono por automatización' });
+        }
+
+        try {
+            const res = await fetch('/api/admin/loyalty/automations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre: autoName,
+                    descripcion: autoDesc || null,
+                    disparador: autoTrigger,
+                    acciones
+                })
+            });
+
+            if (res.ok) {
+                setIsAutomationModalOpen(false);
+                setAutoName('');
+                setAutoDesc('');
+                setAutoMsg('');
+                setAutoPoints('');
+                fetchData();
+            } else {
+                const data = await res.json();
+                alert(data.error || "Error al crear regla.");
+            }
+        } catch (err) {
+            console.error("Error:", err);
         } finally {
             setActionLoading(null);
         }
@@ -132,7 +313,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
             if (res.ok) {
                 setIsDeliveryModalOpen(false);
                 setSelectedReward(null);
-                fetchData(); // Recargar todas las tablas y conteos
+                fetchData();
             } else {
                 const data = await res.json();
                 alert(data.error || "No se pudo entregar el premio.");
@@ -146,62 +327,72 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
 
     return (
         <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 md:p-8 animate-in fade-in duration-300">
+            
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-2xl font-black text-slate-900 tracking-tight uppercase italic flex items-center gap-2">
                         <Gift className="text-[var(--primary-color)]" size={24} style={{ color: primaryColor }} />
-                        Recompensas por Referidos
+                        Fidelización y Marketing
                     </h1>
                     <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">
-                        Crea campañas de recomendación y premia a tus clientes más fieles
+                        Crea campañas, administra puntos, cupones y automatizaciones inteligentes
                     </p>
                 </div>
-                <Link
-                    href="/admin/referidos/nueva"
-                    className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 text-center self-start"
-                    style={{
-                        backgroundColor: primaryColor,
-                        boxShadow: `0 10px 15px -3px ${primaryColor}33`
-                    }}
-                >
-                    <Plus size={16} />
-                    Crear Campaña
-                </Link>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between min-h-[110px]">
-                    <div className="flex items-center justify-between text-slate-400">
-                        <span className="text-[9px] font-black uppercase tracking-widest">Referidos Válidos</span>
-                        <UserCheck size={18} style={{ color: primaryColor }} />
-                    </div>
-                    <span className="text-2xl font-black text-slate-900 mt-2">{loading ? '...' : stats.totalValidos}</span>
-                </div>
-
-                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between min-h-[110px]">
-                    <div className="flex items-center justify-between text-slate-400">
-                        <span className="text-[9px] font-black uppercase tracking-widest">En Progreso</span>
-                        <Users size={18} className="text-amber-500" />
-                    </div>
-                    <span className="text-2xl font-black text-slate-900 mt-2">{loading ? '...' : stats.totalPendientes}</span>
-                </div>
-
-                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between min-h-[110px]">
-                    <div className="flex items-center justify-between text-slate-400">
-                        <span className="text-[9px] font-black uppercase tracking-widest">Premios por Entregar</span>
-                        <Award size={18} className="text-rose-500" />
-                    </div>
-                    <span className="text-2xl font-black text-rose-600 mt-2">{loading ? '...' : stats.premiosDisponibles}</span>
-                </div>
-
-                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between min-h-[110px]">
-                    <div className="flex items-center justify-between text-slate-400">
-                        <span className="text-[9px] font-black uppercase tracking-widest">Premios Entregados</span>
-                        <Check size={18} className="text-emerald-500" />
-                    </div>
-                    <span className="text-2xl font-black text-emerald-600 mt-2">{loading ? '...' : stats.premiosCanjeados}</span>
+                
+                <div className="flex gap-2">
+                    {activeTab === 'campaigns' && (
+                        <Link
+                            href="/admin/referidos/nueva"
+                            className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 text-center"
+                            style={{
+                                backgroundColor: primaryColor,
+                                boxShadow: `0 10px 15px -3px ${primaryColor}33`
+                            }}
+                        >
+                            <Plus size={16} />
+                            Crear Campaña
+                        </Link>
+                    )}
+                    {activeTab === 'coupons' && (
+                        <button
+                            onClick={() => setIsCouponModalOpen(true)}
+                            className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 text-center cursor-pointer"
+                            style={{
+                                backgroundColor: primaryColor,
+                                boxShadow: `0 10px 15px -3px ${primaryColor}33`
+                            }}
+                        >
+                            <PlusCircle size={16} />
+                            Crear Cupón
+                        </button>
+                    )}
+                    {activeTab === 'points' && (
+                        <button
+                            onClick={() => setIsPointsModalOpen(true)}
+                            className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 text-center cursor-pointer"
+                            style={{
+                                backgroundColor: primaryColor,
+                                boxShadow: `0 10px 15px -3px ${primaryColor}33`
+                            }}
+                        >
+                            <Trophy size={16} />
+                            Ajustar Puntos
+                        </button>
+                    )}
+                    {activeTab === 'automations' && (
+                        <button
+                            onClick={() => setIsAutomationModalOpen(true)}
+                            className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 text-center cursor-pointer"
+                            style={{
+                                backgroundColor: primaryColor,
+                                boxShadow: `0 10px 15px -3px ${primaryColor}33`
+                            }}
+                        >
+                            <Settings size={16} />
+                            Nueva Regla
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -210,9 +401,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                 <button
                     onClick={() => setActiveTab('campaigns')}
                     className={`pb-4 text-xs font-black uppercase tracking-widest cursor-pointer border-b-2 transition-all whitespace-nowrap ${
-                        activeTab === 'campaigns'
-                            ? 'border-[var(--primary-color)] text-slate-900'
-                            : 'border-transparent text-slate-400 hover:text-slate-600'
+                        activeTab === 'campaigns' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
                     }`}
                     style={{ borderColor: activeTab === 'campaigns' ? primaryColor : 'transparent' }}
                 >
@@ -221,9 +410,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                 <button
                     onClick={() => setActiveTab('rewards')}
                     className={`pb-4 text-xs font-black uppercase tracking-widest cursor-pointer border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${
-                        activeTab === 'rewards'
-                            ? 'border-[var(--primary-color)] text-slate-900'
-                            : 'border-transparent text-slate-400 hover:text-slate-600'
+                        activeTab === 'rewards' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
                     }`}
                     style={{ borderColor: activeTab === 'rewards' ? primaryColor : 'transparent' }}
                 >
@@ -235,22 +422,45 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                     )}
                 </button>
                 <button
-                    onClick={() => setActiveTab('ranking')}
+                    onClick={() => setActiveTab('coupons')}
                     className={`pb-4 text-xs font-black uppercase tracking-widest cursor-pointer border-b-2 transition-all whitespace-nowrap ${
-                        activeTab === 'ranking'
-                            ? 'border-[var(--primary-color)] text-slate-900'
-                            : 'border-transparent text-slate-400 hover:text-slate-600'
+                        activeTab === 'coupons' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
                     }`}
-                    style={{ borderColor: activeTab === 'ranking' ? primaryColor : 'transparent' }}
+                    style={{ borderColor: activeTab === 'coupons' ? primaryColor : 'transparent' }}
                 >
-                    Top Embajadores
+                    Cupones
+                </button>
+                <button
+                    onClick={() => setActiveTab('points')}
+                    className={`pb-4 text-xs font-black uppercase tracking-widest cursor-pointer border-b-2 transition-all whitespace-nowrap ${
+                        activeTab === 'points' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
+                    }`}
+                    style={{ borderColor: activeTab === 'points' ? primaryColor : 'transparent' }}
+                >
+                    Puntos de Clientes
+                </button>
+                <button
+                    onClick={() => setActiveTab('automations')}
+                    className={`pb-4 text-xs font-black uppercase tracking-widest cursor-pointer border-b-2 transition-all whitespace-nowrap ${
+                        activeTab === 'automations' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
+                    }`}
+                    style={{ borderColor: activeTab === 'automations' ? primaryColor : 'transparent' }}
+                >
+                    Automatizaciones
+                </button>
+                <button
+                    onClick={() => setActiveTab('stats')}
+                    className={`pb-4 text-xs font-black uppercase tracking-widest cursor-pointer border-b-2 transition-all whitespace-nowrap ${
+                        activeTab === 'stats' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
+                    }`}
+                    style={{ borderColor: activeTab === 'stats' ? primaryColor : 'transparent' }}
+                >
+                    Analíticas y ROI
                 </button>
                 <button
                     onClick={() => setActiveTab('history')}
                     className={`pb-4 text-xs font-black uppercase tracking-widest cursor-pointer border-b-2 transition-all whitespace-nowrap ${
-                        activeTab === 'history'
-                            ? 'border-[var(--primary-color)] text-slate-900'
-                            : 'border-transparent text-slate-400 hover:text-slate-600'
+                        activeTab === 'history' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
                     }`}
                     style={{ borderColor: activeTab === 'history' ? primaryColor : 'transparent' }}
                 >
@@ -262,10 +472,11 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                     <Loader2 className="animate-spin mb-4" size={32} style={{ color: primaryColor }} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Cargando módulo...</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Cargando datos...</span>
                 </div>
             ) : (
                 <div className="animate-in fade-in duration-300">
+                    
                     {/* CAMPAIGNS TAB */}
                     {activeTab === 'campaigns' && (
                         campaigns.length === 0 ? (
@@ -273,92 +484,185 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                 <Gift className="mx-auto text-slate-300 mb-4" size={40} />
                                 <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">No tienes campañas creadas</h3>
                                 <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto mb-6">
-                                    Crea tu primera campaña de referidos y define un premio atractivo para empezar a recibir nuevos clientes.
+                                    Crea tu primera campaña de fidelización y define las reglas para empezar a fidelizar clientes.
                                 </p>
-                                <Link
-                                    href="/admin/referidos/nueva"
-                                    className="inline-flex items-center gap-2 px-5 py-3 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95"
-                                    style={{
-                                        backgroundColor: primaryColor,
-                                        boxShadow: `0 10px 15px -3px ${primaryColor}33`
-                                    }}
-                                >
-                                    <Plus size={16} />
-                                    Crear Campaña
-                                </Link>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                 {campaigns.map((camp) => (
                                     <div key={camp.id} className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm flex flex-col justify-between relative hover:shadow-md transition-shadow">
-                                        
-                                        {/* Status indicator top right */}
                                         <button
                                             onClick={() => handleToggleActive(camp)}
                                             disabled={actionLoading === camp.id}
                                             className="absolute top-6 right-6 cursor-pointer opacity-80 hover:opacity-100 transition-opacity"
                                         >
-                                            {camp.activa ? (
+                                            {actionLoading === camp.id ? (
+                                                <Loader2 className="animate-spin text-slate-450" size={20} />
+                                            ) : camp.activa ? (
                                                 <ToggleRight className="text-emerald-500" size={32} />
                                             ) : (
-                                                <ToggleLeft className="text-slate-300" size={32} />
+                                                <ToggleLeft className="text-slate-350" size={32} />
                                             )}
                                         </button>
 
                                         <div>
-                                            <span className={`text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full inline-block mb-3 ${
-                                                camp.activa ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
-                                            }`}>
-                                                {camp.activa ? 'Activa' : 'Inactiva'}
+                                            <span className="text-[7.5px] font-black text-pink-500 uppercase tracking-widest px-2 py-0.5 rounded-md bg-pink-50 border border-pink-100 inline-block mb-3">
+                                                {camp.tipoCampana || 'REFERIDOS'}
                                             </span>
-
-                                            <h3 className="text-base font-black text-slate-900 uppercase tracking-tight mb-1 truncate pr-8">
+                                            <h3 className="text-[13px] font-black text-slate-900 uppercase tracking-tight leading-tight mb-1 pr-10">
                                                 {camp.nombre}
                                             </h3>
-                                            <p className="text-slate-400 text-[11px] font-medium leading-relaxed mb-4 min-h-[33px] line-clamp-2">
-                                                {camp.descripcion || 'Sin descripción.'}
+                                            <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mb-6">
+                                                {camp.descripcion || 'Sin descripción'}
                                             </p>
 
-                                            <div className="bg-slate-50 rounded-2xl p-4 space-y-2 mb-4 border border-slate-100">
-                                                <div className="flex items-center justify-between text-xs font-semibold">
-                                                    <span className="text-slate-400">Meta referidos:</span>
-                                                    <span className="text-slate-800 font-bold">{camp.referidosRequeridos} personas</span>
+                                            <div className="space-y-2.5 bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                                                <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                                    <span className="text-slate-400">Meta:</span>
+                                                    <span className="text-slate-800">{camp.referidosRequeridos} {camp.tipoCampana === 'GASTAR_DOLARES' ? 'Dólares' : 'Reservas'}</span>
                                                 </div>
-                                                <div className="flex items-center justify-between text-xs font-semibold">
-                                                    <span className="text-slate-400">Premio referidor:</span>
-                                                    <span className="text-rose-600 font-black">{camp.valorRecompensa}</span>
+                                                <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                                    <span className="text-slate-400">Recompensa:</span>
+                                                    <span className="text-slate-850" style={{ color: primaryColor }}>{camp.valorRecompensa}</span>
                                                 </div>
-                                                {camp.tipoIncentivo && (
-                                                    <div className="flex items-center justify-between text-xs font-semibold pt-1.5 border-t border-slate-200/50">
-                                                        <span className="text-slate-400 flex items-center gap-1">
-                                                            <Sparkles size={12} className="text-amber-500" />
-                                                            Incentivo invitado:
-                                                        </span>
-                                                        <span className="text-amber-600 font-black">{camp.valorIncentivo}</span>
+                                                {camp.valorIncentivo && (
+                                                    <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                                        <span className="text-slate-400">Incentivo amigo:</span>
+                                                        <span className="text-slate-700">{camp.valorIncentivo}</span>
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-2">
-                                            <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest">
-                                                🏆 Canjes: {camp.premiosEntregados} {camp.limitePremios ? `/ ${camp.limitePremios}` : ''}
-                                            </span>
-                                            
-                                            <div className="flex gap-2">
-                                                <Link
-                                                    href={`/admin/referidos/nueva?edit=${camp.id}`}
-                                                    className="size-9 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl flex items-center justify-center transition-colors"
-                                                >
-                                                    <Edit2 size={14} />
-                                                </Link>
-                                                <button
-                                                    onClick={() => handleDeleteCampaign(camp.id)}
-                                                    disabled={actionLoading === camp.id}
-                                                    className="size-9 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl flex items-center justify-center transition-colors cursor-pointer"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
+                                        <div className="flex gap-2.5 mt-6 pt-4 border-t border-slate-100">
+                                            <Link
+                                                href={`/admin/referidos/nueva?edit=${camp.id}`}
+                                                className="flex-1 py-3 bg-slate-55 hover:bg-slate-100 border border-slate-200/60 rounded-xl text-[8.5px] font-black uppercase tracking-widest text-slate-700 transition-colors text-center"
+                                            >
+                                                Editar
+                                            </Link>
+                                            <button
+                                                onClick={() => handleDeleteCampaign(camp.id)}
+                                                className="px-3 py-3 bg-rose-50 hover:bg-rose-100 border border-rose-200/40 rounded-xl text-rose-600 transition-colors cursor-pointer"
+                                            >
+                                                <Trash size={12} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )
+                    )}
+
+                    {/* REWARDS TAB (PREMIOS PENDIENTES) */}
+                    {activeTab === 'rewards' && (
+                        rewards.length === 0 ? (
+                            <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm">
+                                <Award className="mx-auto text-slate-300 mb-4" size={40} />
+                                <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">No hay canjes pendientes</h3>
+                                <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto">
+                                    Cuando tus clientes alcancen la meta de sus campañas, sus premios listos para canjear aparecerán en esta lista.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-50 border-b border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                                            <th className="p-4 pl-6">Cliente</th>
+                                            <th className="p-4">Premio</th>
+                                            <th className="p-4">Campaña</th>
+                                            <th className="p-4">Fecha</th>
+                                            <th className="p-4 text-right pr-6">Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-xs font-bold text-slate-700 divide-y divide-slate-100">
+                                        {rewards.map((rew) => (
+                                            <tr key={rew.id} className="hover:bg-slate-50/50 transition-colors">
+                                                <td className="p-4 pl-6">
+                                                    <span className="block font-black text-slate-900 leading-none">{rew.Usuario?.nombre || 'Cliente'}</span>
+                                                    <span className="text-[9px] text-slate-400 font-semibold mt-1 block">{rew.Usuario?.phone || 'Sin teléfono'}</span>
+                                                </td>
+                                                <td className="p-4 text-slate-900">{rew.Campaign?.valorRecompensa}</td>
+                                                <td className="p-4">{rew.Campaign?.nombre}</td>
+                                                <td className="p-4 text-[10px] text-slate-400 font-semibold">
+                                                    {new Date(rew.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                                                </td>
+                                                <td className="p-4 text-right pr-6">
+                                                    {rew.estado === 'DISPONIBLE' ? (
+                                                        <button
+                                                            onClick={() => openDeliveryModal(rew)}
+                                                            className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-100 rounded-xl text-[9px] font-black uppercase tracking-widest transition-transform active:scale-95 cursor-pointer"
+                                                        >
+                                                            Entregar
+                                                        </button>
+                                                    ) : (
+                                                        <span className="text-slate-400 text-[9px] uppercase tracking-widest font-black">Entregado</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )
+                    )}
+
+                    {/* COUPONS TAB (CUPONES) */}
+                    {activeTab === 'coupons' && (
+                        coupons.length === 0 ? (
+                            <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm">
+                                <Gift className="mx-auto text-slate-300 mb-4" size={40} />
+                                <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">No tienes cupones creados</h3>
+                                <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto mb-6">
+                                    Crea cupones promocionales de descuento para compartirlos con tus clientes en su club de recompensas.
+                                </p>
+                                <button
+                                    onClick={() => setIsCouponModalOpen(true)}
+                                    className="inline-flex items-center gap-2 px-5 py-3 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 cursor-pointer"
+                                    style={{
+                                        backgroundColor: primaryColor,
+                                        boxShadow: `0 10px 15px -3px ${primaryColor}33`
+                                    }}
+                                >
+                                    <PlusCircle size={16} />
+                                    Crear mi Primer Cupón
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                {coupons.map((coupon) => (
+                                    <div key={coupon.id} className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm flex flex-col justify-between relative hover:shadow-md transition-shadow">
+                                        <div>
+                                            <div className="flex justify-between items-start mb-3">
+                                                <span className="text-[8px] font-black text-purple-600 uppercase tracking-widest px-2.5 py-0.5 rounded-md bg-purple-50 border border-purple-100">
+                                                    {coupon.tipo === 'PORCENTAJE' ? `${coupon.valor}% DTO` : `$${coupon.valor} DTO`}
+                                                </span>
+                                                <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
+                                                    coupon.activa ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-150 text-slate-500'
+                                                }`}>
+                                                    {coupon.activa ? 'ACTIVO' : 'INACTIVO'}
+                                                </span>
+                                            </div>
+
+                                            <h3 className="text-sm font-black text-slate-900 tracking-wider uppercase mb-1">
+                                                CÓDIGO: <span style={{ color: primaryColor }}>{coupon.codigo}</span>
+                                            </h3>
+                                            <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mb-6">
+                                                {coupon.descripcion || 'Sin descripción'}
+                                            </p>
+
+                                            <div className="space-y-2 bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                                                <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                                    <span className="text-slate-400">Usos totales:</span>
+                                                    <span className="text-slate-800">{coupon.usosActuales} / {coupon.maxUsos || 'Ilimitado'}</span>
+                                                </div>
+                                                {coupon.fechaFin && (
+                                                    <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                                        <span className="text-slate-400">Vence:</span>
+                                                        <span className="text-slate-800">{new Date(coupon.fechaFin).toLocaleDateString()}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -367,124 +671,155 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         )
                     )}
 
-                    {/* REWARDS TAB */}
-                    {activeTab === 'rewards' && (
-                        rewards.filter(r => r.estado === 'DISPONIBLE').length === 0 ? (
+                    {/* POINTS TAB (PUNTOS Y BALANCE) */}
+                    {activeTab === 'points' && (
+                        pointsRankings.length === 0 ? (
                             <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm">
-                                <Award className="mx-auto text-slate-300 mb-4" size={40} />
-                                <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">No hay premios pendientes</h3>
-                                <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto">
-                                    Aquí aparecerán los clientes que completen la meta de referidos para que les entregues su premio físico o digital.
+                                <Trophy className="mx-auto text-slate-300 mb-4" size={40} />
+                                <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">No hay balances registrados</h3>
+                                <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto mb-6">
+                                    Los balances de puntos de tus clientes por asistir a citas y referir amigos aparecerán en esta lista.
                                 </p>
                             </div>
                         ) : (
-                            <div className="bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse">
-                                        <thead>
-                                            <tr className="bg-slate-50 border-b border-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-400">
-                                                <th className="py-4 px-6">Cliente</th>
-                                                <th className="py-4 px-6">Contacto</th>
-                                                <th className="py-4 px-6">Campaña / Meta</th>
-                                                <th className="py-4 px-6">Premio ganado</th>
-                                                <th className="py-4 px-6">Fecha Ganado</th>
-                                                <th className="py-4 px-6 text-right">Acciones</th>
+                            <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-50 border-b border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                                            <th className="p-4 pl-6">Cliente</th>
+                                            <th className="p-4">WhatsApp</th>
+                                            <th className="p-4">Balance Acumulado</th>
+                                            <th className="p-4">Última actualización</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-xs font-bold text-slate-700 divide-y divide-slate-100">
+                                        {pointsRankings.map((rank) => (
+                                            <tr key={rank.id} className="hover:bg-slate-50/50 transition-colors">
+                                                <td className="p-4 pl-6 font-black text-slate-900">{rank.Usuario?.nombre || 'Cliente'}</td>
+                                                <td className="p-4 text-slate-450">{rank.Usuario?.phone || 'Sin teléfono'}</td>
+                                                <td className="p-4">
+                                                    <span className="text-sm font-black text-slate-850" style={{ color: primaryColor }}>{rank.puntos}</span> pts
+                                                </td>
+                                                <td className="p-4 text-[10px] text-slate-400 font-semibold">
+                                                    {new Date(rank.updatedAt).toLocaleDateString()}
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
-                                            {rewards.filter(r => r.estado === 'DISPONIBLE').map((rew) => (
-                                                <tr key={rew.id} className="hover:bg-slate-50/50">
-                                                    <td className="py-4 px-6">
-                                                        <span className="font-bold text-slate-900">{rew.Usuario?.nombre}</span>
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <span className="font-medium text-slate-500">{rew.Usuario?.phone}</span>
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <span className="font-bold text-slate-800">{rew.Campaign?.nombre}</span>
-                                                        <span className="text-[10px] text-slate-400 block mt-0.5">Meta: {rew.Campaign?.referidosRequeridos} invitados</span>
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <span className="px-3 py-1.5 bg-rose-50 text-rose-600 rounded-full font-black text-[10px] tracking-wide inline-block uppercase">
-                                                            {rew.Campaign?.valorRecompensa}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-4 px-6 text-slate-400">
-                                                        {new Date(rew.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                                    </td>
-                                                    <td className="py-4 px-6 text-right">
-                                                        <button
-                                                            onClick={() => openDeliveryModal(rew)}
-                                                            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[9px] uppercase tracking-widest rounded-xl transition-all shadow-sm shadow-emerald-500/20 active:scale-95 cursor-pointer"
-                                                        >
-                                                            Entregar Premio
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         )
                     )}
 
-                    {/* RANKING TAB */}
-                    {activeTab === 'ranking' && (
-                        ranking.length === 0 ? (
+                    {/* AUTOMATIONS TAB */}
+                    {activeTab === 'automations' && (
+                        automations.length === 0 ? (
                             <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm">
-                                <Award className="mx-auto text-slate-300 mb-4" size={40} />
-                                <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">Aún no hay embajadores</h3>
-                                <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto">
-                                    El ranking se completará con los clientes que registren sus primeros referidos completados válidos en el sistema.
+                                <Settings className="mx-auto text-slate-300 mb-4" size={40} />
+                                <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">No tienes automatizaciones creadas</h3>
+                                <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto mb-6">
+                                    Configura disparadores automáticos para enviar saludos por cumpleaños, obsequiar cupones o felicitar a tus clientes por WhatsApp.
                                 </p>
+                                <button
+                                    onClick={() => setIsAutomationModalOpen(true)}
+                                    className="inline-flex items-center gap-2 px-5 py-3 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 cursor-pointer"
+                                    style={{
+                                        backgroundColor: primaryColor,
+                                        boxShadow: `0 10px 15px -3px ${primaryColor}33`
+                                    }}
+                                >
+                                    <PlusCircle size={16} />
+                                    Crear mi Primera Regla
+                                </button>
                             </div>
                         ) : (
-                            <div className="bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse">
-                                        <thead>
-                                            <tr className="bg-slate-50 border-b border-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-400">
-                                                <th className="py-4 px-6 w-20">Puesto</th>
-                                                <th className="py-4 px-6">Cliente Embajador</th>
-                                                <th className="py-4 px-6">Contacto</th>
-                                                <th className="py-4 px-6">Referidos Válidos</th>
-                                                <th className="py-4 px-6">Estado</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
-                                            {ranking.map((emb, idx) => (
-                                                <tr key={idx} className="hover:bg-slate-50/50">
-                                                    <td className="py-4 px-6">
-                                                        <span className={`size-7 rounded-full flex items-center justify-center font-black text-[11px] ${
-                                                            idx === 0 ? 'bg-amber-100 text-amber-700' :
-                                                            idx === 1 ? 'bg-slate-200 text-slate-700' :
-                                                            idx === 2 ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-500'
-                                                        }`}>
-                                                            {idx + 1}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <span className="font-bold text-slate-900">{emb.nombre}</span>
-                                                    </td>
-                                                    <td className="py-4 px-6 text-slate-500">
-                                                        {emb.phone}
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <span className="font-black text-slate-900 text-sm">{emb.count}</span>
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600">
-                                                            Líder
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                {automations.map((rule) => (
+                                    <div key={rule.id} className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm flex flex-col justify-between relative hover:shadow-md transition-shadow">
+                                        <div>
+                                            <div className="flex justify-between items-start mb-3">
+                                                <span className="text-[8px] font-black text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-md">
+                                                    DISPARADOR: {rule.disparador}
+                                                </span>
+                                                <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
+                                                    rule.activa ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
+                                                }`}>
+                                                    {rule.activa ? 'ACTIVA' : 'PAUSADA'}
+                                                </span>
+                                            </div>
+
+                                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight leading-tight mb-1">
+                                                {rule.nombre}
+                                            </h3>
+                                            <p className="text-[10px] text-slate-450 font-semibold leading-relaxed mb-6">
+                                                {rule.descripcion || 'Sin descripción'}
+                                            </p>
+
+                                            <div className="space-y-2 bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                                                <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                                    <span className="text-slate-400">Total ejecuciones:</span>
+                                                    <span className="text-slate-800">{rule.totalRuns || 0}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         )
+                    )}
+
+                    {/* STATS TAB */}
+                    {activeTab === 'stats' && (
+                        <div className="space-y-6">
+                            {/* Resumen */}
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ingresos Generados</span>
+                                    <h4 className="text-2xl font-black text-slate-900 mt-2">${loyaltyStats.summary.ingresosGenerados}</h4>
+                                </div>
+                                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">ROI Estimado</span>
+                                    <h4 className="text-2xl font-black text-slate-900 mt-2" style={{ color: primaryColor }}>{loyaltyStats.summary.roiEstimado}%</h4>
+                                </div>
+                                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Puntos Otorgados</span>
+                                    <h4 className="text-2xl font-black text-slate-900 mt-2 text-amber-500">{loyaltyStats.summary.puntosEntregados} pts</h4>
+                                </div>
+                                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Premios Entregados</span>
+                                    <h4 className="text-2xl font-black text-slate-900 mt-2 text-emerald-600">{loyaltyStats.summary.totalPremiosCanjeados}</h4>
+                                </div>
+                            </div>
+
+                            {/* Ranking de Embajadores */}
+                            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+                                <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight mb-4 flex items-center gap-2">
+                                    <Trophy size={16} className="text-amber-500 animate-bounce" />
+                                    Clientes más Influyentes (Referidores Estrella)
+                                </h3>
+
+                                {loyaltyStats.topReferrers.length === 0 ? (
+                                    <p className="text-xs text-slate-400 font-semibold">No se han registrado referidos válidos todavía.</p>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {loyaltyStats.topReferrers.map((ref: any, idx: number) => (
+                                            <div key={idx} className="flex justify-between items-center border-b border-slate-50 pb-3 last:border-b-0 last:pb-0">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="size-6 bg-slate-50 text-slate-700 text-[10px] font-black rounded-full flex items-center justify-center">
+                                                        {idx + 1}
+                                                    </span>
+                                                    <div>
+                                                        <span className="block text-xs font-black text-slate-800">{ref.nombre}</span>
+                                                        <span className="text-[9px] text-slate-450 font-bold">{ref.telefono}</span>
+                                                    </div>
+                                                </div>
+                                                <span className="text-xs font-black text-emerald-600">{ref.cantidad} recomendados</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     )}
 
                     {/* HISTORY TAB */}
@@ -494,107 +829,92 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                 <History className="mx-auto text-slate-300 mb-4" size={40} />
                                 <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">Historial vacío</h3>
                                 <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto">
-                                    Aquí aparecerán todos los registros e invitaciones que realicen los clientes en el sistema.
+                                    El registro de todos los referidos y canjes procesados en tu negocio aparecerá aquí.
                                 </p>
                             </div>
                         ) : (
-                            <div className="bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse">
-                                        <thead>
-                                            <tr className="bg-slate-50 border-b border-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-400">
-                                                <th className="py-4 px-6">Fecha</th>
-                                                <th className="py-4 px-6">Quién Invitó (Referidor)</th>
-                                                <th className="py-4 px-6">Quién Fue Invitado (Referido)</th>
-                                                <th className="py-4 px-6">Campaña / Premio</th>
-                                                <th className="py-4 px-6">Estado</th>
-                                                <th className="py-4 px-6">Seguridad (IP)</th>
+                            <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-50 border-b border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                                            <th className="p-4 pl-6">Referidor</th>
+                                            <th className="p-4">Invitado</th>
+                                            <th className="p-4">Campaña</th>
+                                            <th className="p-4">Estado</th>
+                                            <th className="p-4 text-right pr-6">Fecha</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-xs font-bold text-slate-700 divide-y divide-slate-100">
+                                        {history.map((ev) => (
+                                            <tr key={ev.id} className="hover:bg-slate-50/50 transition-colors">
+                                                <td className="p-4 pl-6">
+                                                    <span className="block font-black text-slate-900 leading-none">{ev.Referrer?.nombre || 'Invitador'}</span>
+                                                    <span className="text-[9px] text-slate-400 font-semibold mt-1 block">{ev.Referrer?.phone || ''}</span>
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className="block font-black text-slate-800 leading-none">{ev.Referred?.nombre || 'Invitado'}</span>
+                                                    <span className="text-[9px] text-slate-400 font-semibold mt-1 block">{ev.Referred?.phone || ''}</span>
+                                                </td>
+                                                <td className="p-4">{ev.Campaign?.nombre}</td>
+                                                <td className="p-4">
+                                                    <span className={`text-[8.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
+                                                        ev.estado === 'VALIDO' ? 'bg-emerald-50 text-emerald-600' : ev.estado === 'INVALIDO' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-500'
+                                                    }`}>
+                                                        {ev.estado}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-[10px] text-slate-450 font-semibold text-right pr-6">
+                                                    {new Date(ev.createdAt).toLocaleDateString()}
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
-                                            {history.map((evt) => (
-                                                <tr key={evt.id} className="hover:bg-slate-50/50">
-                                                    <td className="py-4 px-6 text-slate-400 font-medium">
-                                                        {new Date(evt.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-                                                        <span className="text-[10px] block text-slate-300 font-bold">{new Date(evt.fecha).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <span className="font-bold text-slate-900 block">{evt.referrerName}</span>
-                                                        <span className="text-[10px] text-slate-400 font-bold">{evt.referrerPhone}</span>
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <span className="font-bold text-slate-900 block">{evt.referredName}</span>
-                                                        <span className="text-[10px] text-slate-400 font-bold">{evt.referredPhone}</span>
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <span className="font-semibold text-slate-700 block truncate max-w-[150px]">{evt.campaignName}</span>
-                                                        <span className="text-[9px] text-rose-500 font-black tracking-wide uppercase">{evt.rewardValue}</span>
-                                                    </td>
-                                                    <td className="py-4 px-6">
-                                                        <span className={`text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${
-                                                            evt.estado === 'VALIDO' ? 'bg-emerald-50 text-emerald-600' :
-                                                            evt.estado === 'PENDIENTE' ? 'bg-amber-50 text-amber-600' :
-                                                            'bg-rose-50 text-rose-600'
-                                                        }`}>
-                                                            {evt.estado}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-4 px-6 text-[10px] text-slate-400 font-medium font-mono">
-                                                        {evt.ip}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         )
                     )}
+
                 </div>
             )}
 
             {/* MODAL DE ENTREGA DE PREMIO */}
             {isDeliveryModalOpen && selectedReward && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                    <div className="relative w-full max-w-md bg-white rounded-[2.5rem] p-6 lg:p-8 border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-300">
-                        
-                        <h3 className="text-lg font-black text-slate-950 uppercase italic tracking-tighter mb-2 mt-2">
-                            Canjear Recompensa
-                        </h3>
-                        <p className="text-xs text-slate-400 font-medium mb-6">
-                            Completa los detalles para marcar el premio como entregado. Esto enviará un mensaje al cliente.
-                        </p>
-
-                        <div className="bg-slate-50 border border-slate-100 rounded-3xl p-4 mb-6">
-                            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Premio a Entregar</div>
-                            <div className="text-base font-black text-rose-600">{selectedReward.Campaign?.valorRecompensa}</div>
-                            <div className="text-xs font-bold text-slate-800 mt-1">{selectedReward.Campaign?.nombre}</div>
-                            <div className="text-xs font-semibold text-slate-500 mt-3 border-t border-slate-200/50 pt-2 flex items-center justify-between">
-                                <span>Ganador:</span>
-                                <span className="font-bold text-slate-900">{selectedReward.Usuario?.nombre} ({selectedReward.Usuario?.phone})</span>
-                            </div>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[2.5rem] w-full max-w-md p-6 md:p-8 border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col items-center">
+                        <div className="size-16 rounded-[1.8rem] bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-500 mb-6 shadow-sm">
+                            <Check size={28} />
                         </div>
 
-                        <div className="space-y-4 mb-6">
+                        <h2 className="text-lg font-black text-slate-900 uppercase italic tracking-tight text-center leading-none mb-1">
+                            Confirmar Entrega
+                        </h2>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center mb-6">
+                            Registra el canje físico del premio del cliente
+                        </p>
+
+                        <div className="w-full space-y-4 mb-6">
+                            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block leading-none mb-1">Premio a entregar:</span>
+                                <span className="text-xs font-black text-slate-800 uppercase tracking-tight block">{selectedReward.Campaign?.valorRecompensa}</span>
+                                <span className="text-[9px] text-slate-450 font-semibold mt-2 block">Cliente: {selectedReward.Usuario?.nombre || 'Usuario'} ({selectedReward.Usuario?.phone})</span>
+                            </div>
+
                             <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Entregado por (Personal)</label>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Profesional que entrega (Staff)</label>
                                 <select
                                     value={deliveryStaffId}
                                     onChange={(e) => setDeliveryStaffId(e.target.value)}
                                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none focus:border-[var(--primary-color)] transition-colors"
                                     style={{ '--focus-color': primaryColor } as any}
                                 >
-                                    {staffList.map(staff => (
-                                        <option key={staff.id} value={staff.id}>{staff.name}</option>
+                                    {staffList.map((st) => (
+                                        <option key={st.id} value={st.id}>{st.name}</option>
                                     ))}
-                                    {staffList.length === 0 && (
-                                        <option value="">No hay personal configurado</option>
-                                    )}
                                 </select>
                             </div>
 
                             <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Notas opcionales</label>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Comentarios (opcional)</label>
                                 <textarea
                                     value={deliveryNotes}
                                     onChange={(e) => setDeliveryNotes(e.target.value)}
@@ -622,7 +942,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                 className="flex items-center justify-center gap-2 px-5 py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer active:scale-95 disabled:opacity-50"
                                 style={{
                                     backgroundColor: primaryColor,
-                                    boxShadow: `0 10px 15px -3px ${primaryColor}33, 0 4px 6px -4px ${primaryColor}33`
+                                    boxShadow: `0 10px 15px -3px ${primaryColor}33`
                                 }}
                             >
                                 {actionLoading === selectedReward.id ? (
@@ -637,6 +957,303 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                     </div>
                 </div>
             )}
+
+            {/* MODAL DE CREACIÓN DE CUPÓN */}
+            {isCouponModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <form onSubmit={handleCreateCoupon} className="bg-white rounded-[2.5rem] w-full max-w-md p-6 md:p-8 border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col">
+                        <h2 className="text-lg font-black text-slate-900 uppercase italic tracking-tight text-center leading-none mb-1">
+                            Crear Nuevo Cupón
+                        </h2>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center mb-6">
+                            Define un código de descuento promocional
+                        </p>
+
+                        <div className="space-y-4 mb-6">
+                            <div>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Código del Cupón (Ej: ZENDA20)</label>
+                                <input
+                                    type="text"
+                                    value={couponCode}
+                                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                    placeholder="DEJAR VACÍO PARA GENERACIÓN AUTOMÁTICA"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Tipo de Descuento</label>
+                                    <select
+                                        value={couponType}
+                                        onChange={(e) => setCouponType(e.target.value)}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                                    >
+                                        <option value="PORCENTAJE">Porcentaje (%)</option>
+                                        <option value="FIJO">Monto Fijo ($)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Valor *</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        min={1}
+                                        value={couponValue}
+                                        onChange={(e) => setCouponValue(e.target.value)}
+                                        placeholder="Ej: 15"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Descripción</label>
+                                <input
+                                    type="text"
+                                    value={couponDesc}
+                                    onChange={(e) => setCouponDesc(e.target.value)}
+                                    placeholder="Ej: 15% de descuento en tu primera reserva"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Máximo de Usos</label>
+                                    <input
+                                        type="number"
+                                        value={couponMaxUses}
+                                        onChange={(e) => setCouponMaxUses(e.target.value)}
+                                        placeholder="Ej: 50"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Fecha Límite</label>
+                                    <input
+                                        type="date"
+                                        value={couponFin}
+                                        onChange={(e) => setCouponFin(e.target.value)}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 w-full">
+                            <button
+                                type="button"
+                                onClick={() => setIsCouponModalOpen(false)}
+                                className="px-5 py-4 bg-slate-100 hover:bg-slate-200 rounded-2xl font-black text-[10px] text-slate-700 uppercase tracking-widest transition-all cursor-pointer active:scale-95"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={actionLoading === 'coupon'}
+                                className="flex items-center justify-center gap-2 px-5 py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+                                style={{
+                                    backgroundColor: primaryColor,
+                                    boxShadow: `0 10px 15px -3px ${primaryColor}33`
+                                }}
+                            >
+                                {actionLoading === 'coupon' ? (
+                                    <Loader2 className="animate-spin" size={14} />
+                                ) : (
+                                    <Check size={14} />
+                                )}
+                                Guardar Cupón
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {/* MODAL DE AJUSTE DE PUNTOS */}
+            {isPointsModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <form onSubmit={handleAdjustPoints} className="bg-white rounded-[2.5rem] w-full max-w-md p-6 md:p-8 border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col">
+                        <h2 className="text-lg font-black text-slate-900 uppercase italic tracking-tight text-center leading-none mb-1">
+                            Ajustar Puntos
+                        </h2>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center mb-6">
+                            Modifica manualmente el saldo de un cliente
+                        </p>
+
+                        <div className="space-y-4 mb-6">
+                            <div>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Seleccionar Cliente *</label>
+                                <select
+                                    required
+                                    value={pointsUserId}
+                                    onChange={(e) => setPointsUserId(e.target.value)}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                                >
+                                    <option value="">-- SELECCIONE CLIENTE --</option>
+                                    {usersList.map((u) => (
+                                        <option key={u.id} value={u.id}>{u.nombre || 'Sin nombre'} ({u.phone || 'Sin teléfono'})</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Cantidad de Puntos *</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        value={pointsValue}
+                                        onChange={(e) => setPointsValue(e.target.value)}
+                                        placeholder="Ej: 100 o -50"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                                    />
+                                    <span className="text-[8px] text-slate-400 font-semibold block mt-1">Usa números negativos para deducir saldo</span>
+                                </div>
+                                <div>
+                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Concepto</label>
+                                    <select
+                                        value={pointsConcept}
+                                        onChange={(e) => setPointsConcept(e.target.value)}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                                    >
+                                        <option value="AJUSTE">Ajuste Manual</option>
+                                        <option value="BONO">Bono de Bienvenida</option>
+                                        <option value="CANJE">Canje de Premio</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Notas internas</label>
+                                <input
+                                    type="text"
+                                    value={pointsNotes}
+                                    onChange={(e) => setPointsNotes(e.target.value)}
+                                    placeholder="Ej: Corrección por canje en recepción"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 w-full">
+                            <button
+                                type="button"
+                                onClick={() => setIsPointsModalOpen(false)}
+                                className="px-5 py-4 bg-slate-100 hover:bg-slate-200 rounded-2xl font-black text-[10px] text-slate-700 uppercase tracking-widest transition-all cursor-pointer active:scale-95"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={actionLoading === 'points'}
+                                className="flex items-center justify-center gap-2 px-5 py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+                                style={{
+                                    backgroundColor: primaryColor,
+                                    boxShadow: `0 10px 15px -3px ${primaryColor}33`
+                                }}
+                            >
+                                {actionLoading === 'points' ? (
+                                    <Loader2 className="animate-spin" size={14} />
+                                ) : (
+                                    <Check size={14} />
+                                )}
+                                Aplicar Puntos
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {/* MODAL DE CREACIÓN DE AUTOMATIZACIONES */}
+            {isAutomationModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <form onSubmit={handleCreateAutomation} className="bg-white rounded-[2.5rem] w-full max-w-md p-6 md:p-8 border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col">
+                        <h2 className="text-lg font-black text-slate-900 uppercase italic tracking-tight text-center leading-none mb-1">
+                            Nueva Regla de Automatización
+                        </h2>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center mb-6">
+                            Define un disparador y sus acciones correspondientes
+                        </p>
+
+                        <div className="space-y-4 mb-6">
+                            <div>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Nombre de la Regla *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={autoName}
+                                    onChange={(e) => setAutoName(e.target.value)}
+                                    placeholder="Ej: Saludo de Cumpleaños por WhatsApp"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Disparador (Trigger) *</label>
+                                <select
+                                    value={autoTrigger}
+                                    onChange={(e) => setAutoTrigger(e.target.value)}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                                >
+                                    <option value="CUMPLEANOS">Cumpleaños del cliente (Ejecución Diaria)</option>
+                                    <option value="PRIMER_VISITA">Primera visita completada</option>
+                                    <option value="INACTIVIDAD">Cliente inactivo (60 días sin visitas)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Acción 1: Mensaje WhatsApp (Opcional)</label>
+                                <textarea
+                                    value={autoMsg}
+                                    onChange={(e) => setAutoMsg(e.target.value)}
+                                    placeholder="Ej: ¡Hola {{nombre}}! Feliz cumpleaños te desea el equipo. Te obsequiamos un 15% DTO en tu próxima cita."
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none min-h-[85px]"
+                                />
+                                <span className="text-[8px] text-slate-400 font-semibold block mt-1">Usa {"{{nombre}}"} para personalizar el mensaje</span>
+                            </div>
+
+                            <div>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Acción 2: Regalar Puntos de Bono (Opcional)</label>
+                                <input
+                                    type="number"
+                                    value={autoPoints}
+                                    onChange={(e) => setAutoPoints(e.target.value)}
+                                    placeholder="Ej: 100"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 w-full">
+                            <button
+                                type="button"
+                                onClick={() => setIsAutomationModalOpen(false)}
+                                className="px-5 py-4 bg-slate-100 hover:bg-slate-200 rounded-2xl font-black text-[10px] text-slate-700 uppercase tracking-widest transition-all cursor-pointer active:scale-95"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={actionLoading === 'auto'}
+                                className="flex items-center justify-center gap-2 px-5 py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+                                style={{
+                                    backgroundColor: primaryColor,
+                                    boxShadow: `0 10px 15px -3px ${primaryColor}33`
+                                }}
+                            >
+                                {actionLoading === 'auto' ? (
+                                    <Loader2 className="animate-spin" size={14} />
+                                ) : (
+                                    <Check size={14} />
+                                )}
+                                Activar Regla
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
         </div>
     );
 }
