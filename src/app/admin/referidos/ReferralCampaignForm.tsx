@@ -263,14 +263,23 @@ export default function ReferralCampaignForm() {
                     </div>
 
                     <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Referidos requeridos *</label>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                            {tipoCampana === 'COMPLETAR_RESERVAS' ? 'Reservas requeridas *' :
+                             tipoCampana === 'GASTAR_DOLARES' ? 'Monto de gasto requerido ($) *' :
+                             tipoCampana === 'CLIENTES_NUEVOS' || tipoCampana === 'CLIENTES_EXISTENTES' || tipoCampana === 'CLIENTES_INACTIVOS' ? 'Referidos requeridos *' :
+                             'Reservas requeridas para ganar *'}
+                        </label>
                         <input
                             type="number"
                             required
                             min={1}
                             value={referidosRequeridos}
                             onChange={(e) => setReferidosRequeridos(Math.max(1, parseInt(e.target.value) || 0))}
-                            placeholder="Ej. 5"
+                            placeholder={
+                                tipoCampana === 'GASTAR_DOLARES' ? "Ej. 100" :
+                                tipoCampana === 'COMPLETAR_RESERVAS' ? "Ej. 10" :
+                                "Ej. 5"
+                            }
                             className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none focus:border-[var(--primary-color)] transition-colors"
                             style={{ '--focus-color': primaryColor } as any}
                         />
