@@ -146,12 +146,12 @@ export async function PATCH(
                     console.error('Error enviando notificación de cita finalizada:', notifyError);
                 }
 
-                // Procesar recompensas del sistema de referidos de Citiox
+                // Procesar el motor inteligente de fidelización y recompensas de Citiox
                 try {
-                    const { processReferralCompletion } = require('@/lib/referrals');
-                    await processReferralCompletion(updated.id);
-                } catch (refError) {
-                    console.error('Error al procesar referidos en cita finalizada:', refError);
+                    const { processAppointmentCompleted } = require('@/lib/loyalty/loyaltyEngine');
+                    await processAppointmentCompleted(updated.id);
+                } catch (loyaltyError) {
+                    console.error('Error al procesar fidelización en cita finalizada:', loyaltyError);
                 }
             }
         }

@@ -15,7 +15,7 @@ export async function GET(req: Request) {
 
         const campaigns = await prisma.referralCampaign.findMany({
             where: { negocioId },
-            orderBy: { createdAt: "desc" }
+            orderBy: [{ prioridad: "desc" }, { createdAt: "desc" }]
         });
 
         return NextResponse.json(campaigns);
@@ -40,6 +40,7 @@ export async function POST(req: Request) {
             descripcion,
             imagenUrl,
             activa = true,
+            estado = "ACTIVA",
             tipoRecompensa,
             valorRecompensa,
             referidosRequeridos,
@@ -48,7 +49,16 @@ export async function POST(req: Request) {
             limitePremios,
             rankingActivo = false,
             tipoIncentivo,
-            valorIncentivo
+            valorIncentivo,
+            // Nuevos campos de fidelización
+            tipoCampana = "CLIENTES_NUEVOS",
+            diasInactividad,
+            maxPremiosPorCliente,
+            permitirRepetir = false,
+            prioridad = 0,
+            combinable = false,
+            color,
+            icono
         } = body;
 
         if (!nombre || !tipoRecompensa || !valorRecompensa || !referidosRequeridos) {
@@ -62,7 +72,8 @@ export async function POST(req: Request) {
                 nombre,
                 descripcion: descripcion || null,
                 imagenUrl: imagenUrl || null,
-                activa: Boolean(activa),
+                activa: estado === "ACTIVA",
+                estado,
                 tipoRecompensa,
                 valorRecompensa,
                 referidosRequeridos: parseInt(String(referidosRequeridos)),
@@ -72,6 +83,14 @@ export async function POST(req: Request) {
                 rankingActivo: Boolean(rankingActivo),
                 tipoIncentivo: tipoIncentivo || null,
                 valorIncentivo: valorIncentivo || null,
+                tipoCampana,
+                diasInactividad: diasInactividad ? parseInt(String(diasInactividad)) : null,
+                maxPremiosPorCliente: maxPremiosPorCliente ? parseInt(String(maxPremiosPorCliente)) : null,
+                permitirRepetir: Boolean(permitirRepetir),
+                prioridad: parseInt(String(prioridad)) || 0,
+                combinable: Boolean(combinable),
+                color: color || null,
+                icono: icono || null,
                 updatedAt: new Date()
             }
         });

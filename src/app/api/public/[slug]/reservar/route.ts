@@ -238,37 +238,42 @@ export async function POST(
                 });
 
                 if (codeRecord && codeRecord.negocioId === negocio.id && codeRecord.userId !== usuario.id) {
-                    // Verificar si ya existe un evento de referido pendiente para este cliente
-                    const existingEvent = await tx.referralEvent.findFirst({
+                    // Obtener todas las campañas activas para este negocio
+                    const activeCampaigns = await tx.referralCampaign.findMany({
                         where: {
-                            referredId: usuario.id,
                             negocioId: negocio.id,
-                            estado: 'PENDIENTE'
+                            activa: true,
+                            OR: [
+                                { estado: 'ACTIVA' },
+                                { estado: null }
+                            ],
+                            fechaInicio: { lte: new Date() },
+                            OR: [
+                                { fechaFin: null },
+                                { fechaFin: { gte: new Date() } }
+                            ]
                         }
                     });
 
-                    if (!existingEvent) {
-                        const activeCampaign = await tx.referralCampaign.findFirst({
+                    const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '';
+                    const userAgent = req.headers.get('user-agent') || '';
+
+                    for (const campaign of activeCampaigns) {
+                        // Verificar si ya existe un evento de referido pendiente para este cliente y campaña
+                        const existingEvent = await tx.referralEvent.findFirst({
                             where: {
+                                referredId: usuario.id,
                                 negocioId: negocio.id,
-                                activa: true,
-                                fechaInicio: { lte: new Date() },
-                                OR: [
-                                    { fechaFin: null },
-                                    { fechaFin: { gte: new Date() } }
-                                ]
-                            },
-                            orderBy: { createdAt: 'desc' }
+                                campaignId: campaign.id,
+                                estado: 'PENDIENTE'
+                            }
                         });
 
-                        if (activeCampaign) {
-                            const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '';
-                            const userAgent = req.headers.get('user-agent') || '';
-
+                        if (!existingEvent) {
                             await tx.referralEvent.create({
                                 data: {
                                     id: crypto.randomUUID(),
-                                    campaignId: activeCampaign.id,
+                                    campaignId: campaign.id,
                                     codeId: codeRecord.id,
                                     negocioId: negocio.id,
                                     referrerId: codeRecord.userId,
@@ -280,10 +285,12 @@ export async function POST(
                                     updatedAt: new Date()
                                 }
                             });
-                            console.log(`[Referidos] Evento PENDIENTE creado de ${codeRecord.userId} para ${usuario.id} con cita ${reserva.id}`);
-
-                            // Guardamos el incentivo de la campaña activa
-                            referralIncentive = activeCampaign.valorIncentivo || "";
+                            console.log(`[Referidos] Evento PENDIENTE creado para campaña ${campaign.nombre} (ID: ${campaign.id}) con cita ${reserva.id}`);
+                            
+                            // Guardamos el incentivo de la primera campaña de referidos
+                            if (!referralIncentive) {
+                                referralIncentive = campaign.valorIncentivo || "";
+                            }
                         }
                     }
                 }
