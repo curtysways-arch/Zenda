@@ -21,6 +21,15 @@ export default function ReferralCampaignForm() {
     const [fechaFin, setFechaFin] = useState('');
     const [rankingActivo, setRankingActivo] = useState(false);
     
+    // Nuevos campos de fidelización
+    const [tipoCampana, setTipoCampana] = useState('CLIENTES_NUEVOS');
+    const [estado, setEstado] = useState('ACTIVA');
+    const [diasInactividad, setDiasInactividad] = useState<string>('');
+    const [maxPremiosPorCliente, setMaxPremiosPorCliente] = useState<string>('');
+    const [permitirRepetir, setPermitirRepetir] = useState(false);
+    const [prioridad, setPrioridad] = useState(0);
+    const [combinable, setCombinable] = useState(false);
+
     // Doble nivel: Incentivo para el invitado
     const [hasIncentivo, setHasIncentivo] = useState(false);
     const [tipoIncentivo, setTipoIncentivo] = useState('DESCUENTO');
@@ -53,6 +62,14 @@ export default function ReferralCampaignForm() {
                 setFechaInicio(data.fechaInicio ? new Date(data.fechaInicio).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
                 setFechaFin(data.fechaFin ? new Date(data.fechaFin).toISOString().split('T')[0] : '');
                 setRankingActivo(data.rankingActivo || false);
+
+                setTipoCampana(data.tipoCampana || 'CLIENTES_NUEVOS');
+                setEstado(data.estado || (data.activa ? 'ACTIVA' : 'PAUSADA'));
+                setDiasInactividad(data.diasInactividad !== null ? String(data.diasInactividad) : '');
+                setMaxPremiosPorCliente(data.maxPremiosPorCliente !== null ? String(data.maxPremiosPorCliente) : '');
+                setPermitirRepetir(data.permitirRepetir || false);
+                setPrioridad(data.prioridad || 0);
+                setCombinable(data.combinable || false);
 
                 if (data.limitePremios !== null) {
                     setLimitePremios(String(data.limitePremios));
@@ -97,7 +114,14 @@ export default function ReferralCampaignForm() {
             fechaFin: fechaFin ? new Date(fechaFin).toISOString() : null,
             rankingActivo,
             tipoIncentivo: hasIncentivo ? tipoIncentivo : null,
-            valorIncentivo: hasIncentivo ? valorIncentivo : null
+            valorIncentivo: hasIncentivo ? valorIncentivo : null,
+            tipoCampana,
+            estado,
+            diasInactividad: tipoCampana === 'CLIENTES_INACTIVOS' && diasInactividad ? parseInt(diasInactividad) : null,
+            maxPremiosPorCliente: maxPremiosPorCliente ? parseInt(maxPremiosPorCliente) : null,
+            permitirRepetir,
+            prioridad: parseInt(String(prioridad)) || 0,
+            combinable
         };
 
         try {
@@ -163,6 +187,57 @@ export default function ReferralCampaignForm() {
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Tipo de Campaña *</label>
+                        <select
+                            value={tipoCampana}
+                            onChange={(e) => setTipoCampana(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none focus:border-[var(--primary-color)] transition-colors"
+                            style={{ '--focus-color': primaryColor } as any}
+                        >
+                            <option value="CLIENTES_NUEVOS">Referir clientes nuevos</option>
+                            <option value="CLIENTES_EXISTENTES">Referir clientes existentes</option>
+                            <option value="CLIENTES_INACTIVOS">Reactivar clientes inactivos</option>
+                            <option value="CUMPLEANOS">Cumpleaños</option>
+                            <option value="PRIMERA_RESERVA_MES">Primera reserva del mes</option>
+                            <option value="CUALQUIER_RESERVA">Cualquier reserva</option>
+                            <option value="COMPLETAR_RESERVAS">Completar X reservas</option>
+                            <option value="GASTAR_DOLARES">Gastar X dólares</option>
+                            <option value="FLASH">Campaña Flash</option>
+                            <option value="TEMPORADA">Campaña de Temporada</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Estado de la Campaña *</label>
+                        <select
+                            value={estado}
+                            onChange={(e) => setEstado(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none focus:border-[var(--primary-color)] transition-colors"
+                            style={{ '--focus-color': primaryColor } as any}
+                        >
+                            <option value="ACTIVA">🟢 Activa</option>
+                            <option value="PAUSADA">🟡 Pausada</option>
+                            <option value="FINALIZADA">🔴 Finalizada</option>
+                        </select>
+                    </div>
+
+                    {tipoCampana === 'CLIENTES_INACTIVOS' && (
+                        <div className="md:col-span-2 animate-in slide-in-from-top-2 duration-300">
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Días de inactividad requeridos *</label>
+                            <input
+                                type="number"
+                                required
+                                min={1}
+                                value={diasInactividad}
+                                onChange={(e) => setDiasInactividad(e.target.value)}
+                                placeholder="Ej. 60 (Días sin realizar reservas para considerarlo inactivo)"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none focus:border-[var(--primary-color)] transition-colors"
+                                style={{ '--focus-color': primaryColor } as any}
+                            />
+                        </div>
+                    )}
+
                     <div className="md:col-span-2">
                         <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Nombre de la campaña *</label>
                         <input
@@ -324,7 +399,7 @@ export default function ReferralCampaignForm() {
                     </div>
 
                     <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Límite Total de Premios</label>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Límite Total de Premios (Todos los clientes)</label>
                         <div className="flex items-center gap-4">
                             <input
                                 type="number"
@@ -349,6 +424,60 @@ export default function ReferralCampaignForm() {
                                 />
                                 <label htmlFor="ilimitado" className="text-xs font-bold text-slate-500 cursor-pointer select-none">Ilimitado</label>
                             </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Máximo Premios por Cliente</label>
+                        <input
+                            type="number"
+                            value={maxPremiosPorCliente}
+                            onChange={(e) => setMaxPremiosPorCliente(e.target.value)}
+                            placeholder="Ej. 2 (Dejar vacío para sin límite)"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none focus:border-[var(--primary-color)] transition-colors"
+                            style={{ '--focus-color': primaryColor } as any}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Prioridad de Ejecución</label>
+                        <input
+                            type="number"
+                            value={prioridad}
+                            onChange={(e) => setPrioridad(parseInt(e.target.value) || 0)}
+                            placeholder="Ej. 0 (Prioridad mayor corre primero)"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none focus:border-[var(--primary-color)] transition-colors"
+                            style={{ '--focus-color': primaryColor } as any}
+                        />
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-6">
+                        <input
+                            type="checkbox"
+                            checked={permitirRepetir}
+                            onChange={(e) => setPermitirRepetir(e.target.checked)}
+                            className="w-5 h-5 rounded border-slate-300 accent-[var(--primary-color)] cursor-pointer"
+                            style={{ color: primaryColor } as any}
+                            id="permitirRepetir"
+                        />
+                        <div>
+                            <label htmlFor="permitirRepetir" className="text-xs font-bold text-slate-800 cursor-pointer select-none">Permitir repetir campaña</label>
+                            <span className="text-[10px] text-slate-400 block font-semibold leading-none mt-1">El cliente puede completar la meta más de una vez</span>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-6">
+                        <input
+                            type="checkbox"
+                            checked={combinable}
+                            onChange={(e) => setCombinable(e.target.checked)}
+                            className="w-5 h-5 rounded border-slate-300 accent-[var(--primary-color)] cursor-pointer"
+                            style={{ color: primaryColor } as any}
+                            id="combinable"
+                        />
+                        <div>
+                            <label htmlFor="combinable" className="text-xs font-bold text-slate-800 cursor-pointer select-none">Campaña Combinable</label>
+                            <span className="text-[10px] text-slate-400 block font-semibold leading-none mt-1">Se puede ganar junto con otras campañas activas</span>
                         </div>
                     </div>
 

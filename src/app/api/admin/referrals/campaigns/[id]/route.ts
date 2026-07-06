@@ -69,16 +69,25 @@ export async function PATCH(
             limitePremios,
             rankingActivo,
             tipoIncentivo,
-            valorIncentivo
+            valorIncentivo,
+            // Nuevos campos
+            tipoCampana,
+            estado,
+            diasInactividad,
+            maxPremiosPorCliente,
+            permitirRepetir,
+            prioridad,
+            combinable
         } = body;
 
-        const updated = await prisma.referralCampaign.update({
+        const updated = await (prisma as any).referralCampaign.update({
             where: { id },
             data: {
                 nombre: nombre !== undefined ? nombre : undefined,
                 descripcion: descripcion !== undefined ? descripcion : undefined,
                 imagenUrl: imagenUrl !== undefined ? imagenUrl : undefined,
-                activa: activa !== undefined ? Boolean(activa) : undefined,
+                activa: estado !== undefined ? (estado === "ACTIVA") : (activa !== undefined ? Boolean(activa) : undefined),
+                estado: estado !== undefined ? estado : undefined,
                 tipoRecompensa: tipoRecompensa !== undefined ? tipoRecompensa : undefined,
                 valorRecompensa: valorRecompensa !== undefined ? valorRecompensa : undefined,
                 referidosRequeridos: referidosRequeridos !== undefined ? parseInt(String(referidosRequeridos)) : undefined,
@@ -88,6 +97,12 @@ export async function PATCH(
                 rankingActivo: rankingActivo !== undefined ? Boolean(rankingActivo) : undefined,
                 tipoIncentivo: tipoIncentivo !== undefined ? tipoIncentivo : undefined,
                 valorIncentivo: valorIncentivo !== undefined ? valorIncentivo : undefined,
+                tipoCampana: tipoCampana !== undefined ? tipoCampana : undefined,
+                diasInactividad: diasInactividad !== undefined ? (diasInactividad !== null ? parseInt(String(diasInactividad)) : null) : undefined,
+                maxPremiosPorCliente: maxPremiosPorCliente !== undefined ? (maxPremiosPorCliente !== null ? parseInt(String(maxPremiosPorCliente)) : null) : undefined,
+                permitirRepetir: permitirRepetir !== undefined ? Boolean(permitirRepetir) : undefined,
+                prioridad: prioridad !== undefined ? parseInt(String(prioridad)) : undefined,
+                combinable: combinable !== undefined ? Boolean(combinable) : undefined,
                 updatedAt: new Date()
             }
         });
