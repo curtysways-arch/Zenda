@@ -279,6 +279,32 @@ export default function MobileAppointmentDetail({
                     </div>
                 </div>
 
+                {/* 👥 INFORMACIÓN DE REFERIDOS (INCENTIVO) */}
+                {reserva.referralInfo && (
+                    <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/60 rounded-3xl p-5 space-y-3 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-amber-800">
+                                <Sparkles size={16} className="text-amber-500 fill-amber-500/20" />
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] italic">Premio de Referido</h4>
+                            </div>
+                            <span className="bg-amber-800/10 text-amber-800 text-[7px] font-black uppercase px-2 py-0.5 rounded-full border border-amber-800/20">Invitado/a</span>
+                        </div>
+                        
+                        <div className="space-y-1">
+                            <p className="text-[9px] font-bold text-amber-800/60 uppercase tracking-wide">
+                                Recomendado/a por: <strong className="text-amber-900 font-black">{reserva.referralInfo.referidorNombre}</strong>
+                            </p>
+                            <div className="bg-white/80 backdrop-blur-sm border border-amber-200/30 rounded-2xl p-3 flex items-center justify-between mt-2">
+                                <div>
+                                    <p className="text-[8px] font-black text-amber-800/50 uppercase tracking-widest">Beneficio a entregar:</p>
+                                    <p className="text-sm font-black text-amber-950 italic mt-0.5 leading-none">{reserva.referralInfo.valorIncentivo}</p>
+                                </div>
+                                <div className="size-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black text-lg italic shadow-md shadow-amber-500/10">🎁</div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* 📝 COMPACT NOTES */}
                 {(reserva.comentarios || reserva.notas) && (
                     <div className="bg-slate-900/5 rounded-2xl p-4 border border-dashed border-slate-200 space-y-2">

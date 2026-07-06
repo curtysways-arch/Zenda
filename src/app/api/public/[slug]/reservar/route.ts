@@ -90,6 +90,8 @@ export async function POST(
             0, 0, 0, 0
         ));
 
+        let referralIncentive = "";
+
         // 2. Transacción para crear reserva
         const result = await prisma.$transaction(async (tx: any) => {
             // Validar que NO exista ninguna reserva que se cruce
@@ -151,74 +153,6 @@ export async function POST(
                         updatedAt: new Date()
                     }
                 });
-            }
-
-            // 🔗 Procesar código de referido: prioridad cookie → body (localStorage fallback)
-            let referralCode = null;
-            try {
-                const { cookies } = require('next/headers');
-                const cookieStore = await cookies();
-                referralCode = cookieStore.get('referral_code')?.value;
-            } catch (cookieErr) {
-                console.error('[Referidos] Error al leer cookies:', cookieErr);
-            }
-            // Fallback: si el frontend envió el código desde localStorage
-            if (!referralCode && body.referralCode) {
-                referralCode = body.referralCode;
-            }
-
-            if (referralCode && usuario) {
-                const cleanCode = referralCode.trim().toUpperCase();
-                const codeRecord = await tx.referralCode.findUnique({
-                    where: { codigo: cleanCode }
-                });
-
-                if (codeRecord && codeRecord.negocioId === negocio.id && codeRecord.userId !== usuario.id) {
-                    // Verificar si ya existe un evento de referido pendiente para este cliente
-                    const existingEvent = await tx.referralEvent.findFirst({
-                        where: {
-                            referredId: usuario.id,
-                            negocioId: negocio.id,
-                            estado: 'PENDIENTE'
-                        }
-                    });
-
-                    if (!existingEvent) {
-                        const activeCampaign = await tx.referralCampaign.findFirst({
-                            where: {
-                                negocioId: negocio.id,
-                                activa: true,
-                                fechaInicio: { lte: new Date() },
-                                OR: [
-                                    { fechaFin: null },
-                                    { fechaFin: { gte: new Date() } }
-                                ]
-                            },
-                            orderBy: { createdAt: 'desc' }
-                        });
-
-                        if (activeCampaign) {
-                            const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '';
-                            const userAgent = req.headers.get('user-agent') || '';
-
-                            await tx.referralEvent.create({
-                                data: {
-                                    id: crypto.randomUUID(),
-                                    campaignId: activeCampaign.id,
-                                    codeId: codeRecord.id,
-                                    negocioId: negocio.id,
-                                    referrerId: codeRecord.userId,
-                                    referredId: usuario.id,
-                                    estado: 'PENDIENTE',
-                                    ipAddress,
-                                    userAgent,
-                                    updatedAt: new Date()
-                                }
-                            });
-                            console.log(`[Referidos] Evento PENDIENTE creado de ${codeRecord.userId} para ${usuario.id}`);
-                        }
-                    }
-                }
             }
 
             // Configuración de Expiración
@@ -283,6 +217,78 @@ export async function POST(
                 }
             });
 
+            // 🔗 Procesar código de referido: prioridad cookie → body (localStorage fallback)
+            let referralCode = null;
+            try {
+                const { cookies } = require('next/headers');
+                const cookieStore = await cookies();
+                referralCode = cookieStore.get('referral_code')?.value;
+            } catch (cookieErr) {
+                console.error('[Referidos] Error al leer cookies:', cookieErr);
+            }
+            // Fallback: si el frontend envió el código desde localStorage
+            if (!referralCode && body.referralCode) {
+                referralCode = body.referralCode;
+            }
+
+            if (referralCode && usuario) {
+                const cleanCode = referralCode.trim().toUpperCase();
+                const codeRecord = await tx.referralCode.findUnique({
+                    where: { codigo: cleanCode }
+                });
+
+                if (codeRecord && codeRecord.negocioId === negocio.id && codeRecord.userId !== usuario.id) {
+                    // Verificar si ya existe un evento de referido pendiente para este cliente
+                    const existingEvent = await tx.referralEvent.findFirst({
+                        where: {
+                            referredId: usuario.id,
+                            negocioId: negocio.id,
+                            estado: 'PENDIENTE'
+                        }
+                    });
+
+                    if (!existingEvent) {
+                        const activeCampaign = await tx.referralCampaign.findFirst({
+                            where: {
+                                negocioId: negocio.id,
+                                activa: true,
+                                fechaInicio: { lte: new Date() },
+                                OR: [
+                                    { fechaFin: null },
+                                    { fechaFin: { gte: new Date() } }
+                                ]
+                            },
+                            orderBy: { createdAt: 'desc' }
+                        });
+
+                        if (activeCampaign) {
+                            const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '';
+                            const userAgent = req.headers.get('user-agent') || '';
+
+                            await tx.referralEvent.create({
+                                data: {
+                                    id: crypto.randomUUID(),
+                                    campaignId: activeCampaign.id,
+                                    codeId: codeRecord.id,
+                                    negocioId: negocio.id,
+                                    referrerId: codeRecord.userId,
+                                    referredId: usuario.id,
+                                    appointmentId: reserva.id,
+                                    estado: 'PENDIENTE',
+                                    ipAddress,
+                                    userAgent,
+                                    updatedAt: new Date()
+                                }
+                            });
+                            console.log(`[Referidos] Evento PENDIENTE creado de ${codeRecord.userId} para ${usuario.id} con cita ${reserva.id}`);
+
+                            // Guardamos el incentivo de la campaña activa
+                            referralIncentive = activeCampaign.valorIncentivo || "";
+                        }
+                    }
+                }
+            }
+
             return { success: true, reserva };
         });
 
@@ -334,10 +340,14 @@ export async function POST(
         // Enviar WhatsApp al cliente SIEMPRE, independientemente del OTP
         try {
             const isConfirmed = reservaCreated.estado === 'confirmed';
-            const mensajeCliente = isConfirmed
+            let mensajeCliente = isConfirmed
                 ? `👋 ¡Hola ${clienteNombre}!\n\nTu reserva en *${negocio.nombre}* ha sido confirmada con éxito. ✅\n\n✨ *Servicio:* ${service.nombre}\n📅 *Fecha:* ${fechaLegible}\n⏰ *Hora:* ${horaInicio}\n\n🔗 Ver tus reservas: ${magicLink}`
                 : `👋 ¡Hola ${clienteNombre}!\n\nHemos recibido tu solicitud de reserva en *${negocio.nombre}*.\n\n✨ *Servicio:* ${service.nombre}\n📅 *Fecha:* ${fechaLegible}\n⏰ *Hora:* ${horaInicio}\n\n⏳ *Estado:* Pendiente de confirmación. El negocio revisará tu solicitud y recibirás una respuesta pronto.\n\n🔗 Ver tus reservas: ${magicLink}`;
             
+            if (referralIncentive) {
+                mensajeCliente += `\n\n🎁 *¡Premio de Bienvenida!* Por venir recomendado/a, tienes de regalo:\n✨ *${referralIncentive}*\n👉 Solicítalo en tu cita.`;
+            }
+
             console.log(`[WA CLIENTE] Enviando mensaje a ${clienteTelefono} (Estado: ${reservaCreated.estado})...`);
             await whatsappService.sendWhatsApp(clienteTelefono, mensajeCliente, true, isConfirmed ? 'confirmacion_cliente' : 'solicitud_cliente');
             console.log(`[WA CLIENTE] ✅ Mensaje enviado correctamente a ${clienteTelefono}`);

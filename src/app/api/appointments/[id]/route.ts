@@ -74,6 +74,24 @@ export async function GET(
             return NextResponse.json({ error: "Reserva no encontrada" }, { status: 404 });
         }
 
+        // Buscar si es un referido y obtener la campaña asociada
+        const referralEvent = await prisma.referralEvent.findFirst({
+            where: { appointmentId: appointment.id },
+            include: {
+                Campaign: {
+                    select: {
+                        valorIncentivo: true,
+                        tipoIncentivo: true
+                    }
+                },
+                Usuario: {
+                    select: {
+                        nombre: true
+                    }
+                }
+            }
+        });
+
         // 4. Normalizar respuesta
         const normalized = {
             ...appointment,
@@ -87,7 +105,12 @@ export async function GET(
             ratings: appointment.ratings || [],
             pagos: appointment.pagoReserva || [],
             pagoReserva: appointment.pagoReserva || [],
-            negocio: appointment.negocio
+            negocio: appointment.negocio,
+            referralInfo: referralEvent ? {
+                referidorNombre: referralEvent.Usuario?.nombre || "Un amigo",
+                valorIncentivo: referralEvent.Campaign?.valorIncentivo || null,
+                tipoIncentivo: referralEvent.Campaign?.tipoIncentivo || null
+            } : null
         };
 
         const { getServerSession } = await import("next-auth/next");

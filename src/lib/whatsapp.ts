@@ -542,6 +542,22 @@ export class WhatsAppService {
             select: { nombre: true, whatsapp: true }
         });
 
+        // Buscar si es un referido y obtener la campaña asociada
+        const referralEvent = await (prisma as any).referralEvent.findFirst({
+            where: { appointmentId: reserva.id },
+            include: {
+                Campaign: { select: { valorIncentivo: true } },
+                Usuario: { select: { nombre: true } } // El que invitó
+            }
+        });
+
+        let referralMsg = "";
+        if (referralEvent) {
+            const referidorNombre = referralEvent.Usuario?.nombre || "Un amigo";
+            const premioInvitado = referralEvent.Campaign?.valorIncentivo || "Descuento/Regalo";
+            referralMsg = `\n\n👥 *Referido por:* ${referidorNombre}\n🎁 *Premio a entregar:* ${premioInvitado}`;
+        }
+
         const shortId = reserva.id.slice(-4).toUpperCase();
         
         // 1. Notificar a administradores del negocio
@@ -565,8 +581,8 @@ export class WhatsAppService {
         const isConfirmedDirectly = reserva.estado === 'confirmed';
 
         const message = isConfirmedDirectly
-            ? `🚨 *NUEVA CITA CONFIRMADA* 💆\n\nID: *#${shortId}*\n\n✨ *Servicio:* ${serviceName}${extrasMsg}\n📅 *Fecha:* ${fechaLegible}\n⏰ *Hora:* ${reserva.horaInicio} - ${reserva.horaFin}\n👤 *Cliente:* ${reserva.cliente?.nombre || 'Cliente'}\n📞 *Tel:* ${reserva.cliente?.telefono || 'N/A'}\n\n✅ *Estado:* Confirmada directamente (sin tiempo de espera).\n\n_Gestiona tus citas desde el panel admin._`
-            : `🚨 *NUEVA CITA RECIBIDA* 💆\n\nID: *#${shortId}*\n\n✨ *Servicio:* ${serviceName}${extrasMsg}\n📅 *Fecha:* ${fechaLegible}\n⏰ *Hora:* ${reserva.horaInicio} - ${reserva.horaFin}\n👤 *Cliente:* ${reserva.cliente?.nombre || 'Cliente'}\n📞 *Tel:* ${reserva.cliente?.telefono || 'N/A'}\n\n⚠️ Responde con:\n*1-${shortId}* para Confirmar ✅\n*2-${shortId}* para Rechazar ❌\n\n_Gestiona tus citas desde el panel admin._`;
+            ? `🚨 *NUEVA CITA CONFIRMADA* 💆\n\nID: *#${shortId}*\n\n✨ *Servicio:* ${serviceName}${extrasMsg}\n📅 *Fecha:* ${fechaLegible}\n⏰ *Hora:* ${reserva.horaInicio} - ${reserva.horaFin}\n👤 *Cliente:* ${reserva.cliente?.nombre || 'Cliente'}\n📞 *Tel:* ${reserva.cliente?.telefono || 'N/A'}${referralMsg}\n\n✅ *Estado:* Confirmada directamente (sin tiempo de espera).\n\n_Gestiona tus citas desde el panel admin._`
+            : `🚨 *NUEVA CITA RECIBIDA* 💆\n\nID: *#${shortId}*\n\n✨ *Servicio:* ${serviceName}${extrasMsg}\n📅 *Fecha:* ${fechaLegible}\n⏰ *Hora:* ${reserva.horaInicio} - ${reserva.horaFin}\n👤 *Cliente:* ${reserva.cliente?.nombre || 'Cliente'}\n📞 *Tel:* ${reserva.cliente?.telefono || 'N/A'}${referralMsg}\n\n⚠️ Responde con:\n*1-${shortId}* para Confirmar ✅\n*2-${shortId}* para Rechazar ❌\n\n_Gestiona tus citas desde el panel admin._`;
 
         const uniquePhones = new Set<string>();
         
