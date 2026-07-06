@@ -1,6 +1,6 @@
 'use client';
 
-import { Sparkles, Bell, User, LogOut, QrCode, Share2, Copy, Check, ExternalLink, X, CalendarDays } from 'lucide-react';
+import { Sparkles, Bell, User, LogOut, QrCode, Share2, Copy, Check, ExternalLink, X, CalendarDays, MessageSquare } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { useConfirm } from '@/components/admin/ConfirmContext';
@@ -112,6 +112,14 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN' }: TopBarPr
                     >
                         <QrCode size={18} />
                     </button>
+
+                    <Link 
+                        href="/admin/comunicacion"
+                        className="size-10 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full text-slate-600 transition-all active:scale-90 relative"
+                        title="Comunicación"
+                    >
+                        <MessageSquare size={18} style={{ color: primaryColor }} />
+                    </Link>
 
                     <button className="size-10 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full text-slate-600 transition-all active:scale-90 relative">
                         <Bell size={18} />
