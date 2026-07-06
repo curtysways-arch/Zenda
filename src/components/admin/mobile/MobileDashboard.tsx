@@ -268,6 +268,26 @@ export default function MobileDashboard({
                     </div>
                 </Link>
 
+                {/* Crecimiento - Referidos */}
+                <Link 
+                    href="/admin/referidos"
+                    className="flex flex-col justify-between p-5 bg-white border border-slate-100/80 rounded-[2rem] shadow-sm hover:shadow-md active:scale-95 transition-all min-h-[145px] group text-left"
+                >
+                    <div className="size-10 rounded-full flex items-center justify-center bg-purple-50 text-purple-500 border border-purple-100/30">
+                        <Gift size={18} />
+                    </div>
+                    <div className="mt-4 flex items-end justify-between">
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Crecimiento</p>
+                            <p className="text-sm font-black tracking-tight leading-none text-slate-900">Referidos</p>
+                            <p className="text-[9px] text-slate-400 font-medium mt-1 leading-tight">Programa de recomendados</p>
+                        </div>
+                        <div className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-800 shrink-0 ml-2 transition-colors">
+                            <ArrowRight size={14} />
+                        </div>
+                    </div>
+                </Link>
+
                 {/* Suscripción - Mi Plan */}
                 <Link 
                     href="/admin/plan"

@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { DEFAULT_CONFIGS } from '@/app/admin/config/page';
 import ColorPaletteEditor from '@/components/admin/ColorPaletteEditor';
+import ImageUploader from '@/components/ui/ImageUploader';
 
 interface MobileBusinessProps {
     configs: any;
@@ -229,20 +230,28 @@ export default function MobileBusiness({
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[9px] font-black text-slate-400 uppercase mb-2 block">URL del Logo</label>
-                                    <div className="flex gap-2">
-                                        <input 
-                                            type="text" 
-                                            value={localNegocio.logoUrl || ''}
-                                            onChange={(e) => handleLocalNegocioChange('logoUrl', e.target.value)}
-                                            placeholder="https://..."
-                                            className="flex-1 bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-bold"
-                                        />
-                                        {localNegocio.logoUrl && (
-                                            <div className="size-11 rounded-xl bg-slate-50 border border-slate-100 p-1.5 flex items-center justify-center">
-                                                <img src={localNegocio.logoUrl} className="size-full object-contain" alt="Logo" />
-                                            </div>
-                                        )}
+                                    <label className="text-[9px] font-black text-slate-400 uppercase mb-2 block">Logo del Negocio</label>
+                                    <div className="space-y-4">
+                                        <div className="max-w-[200px]">
+                                            <ImageUploader
+                                                category="logo"
+                                                currentUrl={localNegocio.logoUrl || ''}
+                                                onUploadSuccess={(media) => handleLocalNegocioChange('logoUrl', media.url)}
+                                                onRemove={() => handleLocalNegocioChange('logoUrl', '')}
+                                                label="Subir Logo"
+                                                aspect="square"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[8px] font-black text-slate-400 uppercase mb-1.5 block">O pegar enlace directo (URL)</label>
+                                            <input 
+                                                type="text" 
+                                                value={localNegocio.logoUrl || ''}
+                                                onChange={(e) => handleLocalNegocioChange('logoUrl', e.target.value)}
+                                                placeholder="https://..."
+                                                className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-xs font-bold"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
