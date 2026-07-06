@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Gift, Plus, Users, Award, History, ToggleLeft, ToggleRight, Check, Trash2, Edit2, Loader2, Calendar, UserCheck, ShieldAlert, Sparkles, Trophy, Settings, TrendingUp, BarChart2, PlusCircle, AlertCircle, Copy, Trash } from 'lucide-react';
+import { Gift, Plus, Users, Award, History, ToggleLeft, ToggleRight, Check, Trash2, Edit2, Loader2, Calendar, UserCheck, ShieldAlert, Sparkles, Trophy, Settings, TrendingUp, BarChart2, PlusCircle, AlertCircle, Copy, Trash, ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -13,7 +13,8 @@ interface Staff {
 export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'campaigns' | 'rewards' | 'coupons' | 'points' | 'automations' | 'ranking' | 'stats' | 'history'>('campaigns');
-    
+    const [activeView, setActiveView] = useState<'list' | 'create-coupon' | 'adjust-points' | 'create-automation'>('list');
+
     // Stats de Citiox
     const [stats, setStats] = useState<any>({
         totalValidos: 0,
@@ -52,14 +53,13 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
 
-    // Estado del modal de entrega de premio
+    // Estado del modal de entrega de premio (se queda como modal clásico de acción rápida en escritorio/móvil con scroll interno controlado)
     const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
     const [selectedReward, setSelectedReward] = useState<any>(null);
     const [deliveryStaffId, setDeliveryStaffId] = useState('');
     const [deliveryNotes, setDeliveryNotes] = useState('');
 
-    // Estado del modal de creación de cupones
-    const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
+    // Estado del formulario a pantalla completa de cupones
     const [couponCode, setCouponCode] = useState('');
     const [couponType, setCouponType] = useState('PORCENTAJE');
     const [couponValue, setCouponValue] = useState('');
@@ -67,16 +67,14 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
     const [couponDesc, setCouponDesc] = useState('');
     const [couponFin, setCouponFin] = useState('');
 
-    // Estado del modal de ajuste de puntos
-    const [isPointsModalOpen, setIsPointsModalOpen] = useState(false);
+    // Estado del formulario a pantalla completa de ajuste de puntos
     const [pointsUserId, setPointsUserId] = useState('');
     const [pointsValue, setPointsValue] = useState('');
     const [pointsConcept, setPointsConcept] = useState('AJUSTE');
     const [pointsNotes, setPointsNotes] = useState('');
     const [usersList, setUsersList] = useState<any[]>([]);
 
-    // Estado del modal de creación de automatizaciones
-    const [isAutomationModalOpen, setIsAutomationModalOpen] = useState(false);
+    // Estado del formulario a pantalla completa de creación de automatizaciones
     const [autoName, setAutoName] = useState('');
     const [autoDesc, setAutoDesc] = useState('');
     const [autoTrigger, setAutoTrigger] = useState('CUMPLEANOS');
@@ -195,7 +193,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
             });
 
             if (res.ok) {
-                setIsCouponModalOpen(false);
+                setActiveView('list');
                 setCouponCode('');
                 setCouponValue('');
                 setCouponMaxUses('');
@@ -230,7 +228,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
             });
 
             if (res.ok) {
-                setIsPointsModalOpen(false);
+                setActiveView('list');
                 setPointsUserId('');
                 setPointsValue('');
                 setPointsNotes('');
@@ -272,7 +270,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
             });
 
             if (res.ok) {
-                setIsAutomationModalOpen(false);
+                setActiveView('list');
                 setAutoName('');
                 setAutoDesc('');
                 setAutoMsg('');
@@ -325,6 +323,338 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
         }
     };
 
+    // ─── RENDERS DE VISTA A PANTALLA COMPLETA ─────────────────────────────────────
+
+    // Formulario de Cupones a Pantalla Completa
+    if (activeView === 'create-coupon') {
+        return (
+            <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 md:p-8 animate-in fade-in duration-300">
+                <div className="flex items-center gap-4 mb-8">
+                    <button
+                        onClick={() => setActiveView('list')}
+                        className="size-11 bg-white hover:bg-slate-100 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-600 transition-colors shadow-sm cursor-pointer"
+                    >
+                        <ArrowLeft size={16} />
+                    </button>
+                    <div>
+                        <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase italic flex items-center gap-2">
+                            <PlusCircle style={{ color: primaryColor }} size={22} />
+                            Crear Nuevo Cupón
+                        </h1>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                            Define un código de descuento promocional para tu club
+                        </p>
+                    </div>
+                </div>
+
+                <form onSubmit={handleCreateCoupon} className="max-w-3xl bg-white border border-slate-100 rounded-[2.5rem] p-6 md:p-8 shadow-sm space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="md:col-span-2">
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Código del Cupón (Ej: ZENDA20)</label>
+                            <input
+                                type="text"
+                                value={couponCode}
+                                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                placeholder="DEJAR VACÍO PARA GENERACIÓN AUTOMÁTICA"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none focus:border-[var(--primary-color)] transition-colors"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Tipo de Descuento</label>
+                            <select
+                                value={couponType}
+                                onChange={(e) => setCouponType(e.target.value)}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            >
+                                <option value="PORCENTAJE">Porcentaje (%)</option>
+                                <option value="FIJO">Monto Fijo ($)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Valor *</label>
+                            <input
+                                type="number"
+                                required
+                                min={1}
+                                value={couponValue}
+                                onChange={(e) => setCouponValue(e.target.value)}
+                                placeholder="Ej: 15"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            />
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Descripción</label>
+                            <input
+                                type="text"
+                                value={couponDesc}
+                                onChange={(e) => setCouponDesc(e.target.value)}
+                                placeholder="Ej: 15% de descuento en tu primera reserva"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Límite Máximo de Usos</label>
+                            <input
+                                type="number"
+                                value={couponMaxUses}
+                                onChange={(e) => setCouponMaxUses(e.target.value)}
+                                placeholder="Ej: 50 (Vacío para ilimitado)"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Fecha Límite (Expiración)</label>
+                            <input
+                                type="date"
+                                value={couponFin}
+                                onChange={(e) => setCouponFin(e.target.value)}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setActiveView('list')}
+                            className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-transform active:scale-95 cursor-pointer"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={actionLoading === 'coupon'}
+                            className="flex items-center gap-2 px-6 py-4 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 disabled:opacity-50 cursor-pointer"
+                            style={{
+                                backgroundColor: primaryColor,
+                                boxShadow: `0 10px 15px -3px ${primaryColor}33`
+                            }}
+                        >
+                            {actionLoading === 'coupon' ? (
+                                <Loader2 className="animate-spin" size={14} />
+                            ) : (
+                                <Save size={14} />
+                            )}
+                            Guardar Cupón
+                        </button>
+                    </div>
+                </form>
+            </div>
+        );
+    }
+
+    // Formulario de Ajuste de Puntos a Pantalla Completa
+    if (activeView === 'adjust-points') {
+        return (
+            <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 md:p-8 animate-in fade-in duration-300">
+                <div className="flex items-center gap-4 mb-8">
+                    <button
+                        onClick={() => setActiveView('list')}
+                        className="size-11 bg-white hover:bg-slate-100 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-600 transition-colors shadow-sm cursor-pointer"
+                    >
+                        <ArrowLeft size={16} />
+                    </button>
+                    <div>
+                        <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase italic flex items-center gap-2">
+                            <Trophy style={{ color: primaryColor }} size={22} />
+                            Ajustar Puntos
+                        </h1>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                            Modifica manualmente el saldo de puntos de un cliente
+                        </p>
+                    </div>
+                </div>
+
+                <form onSubmit={handleAdjustPoints} className="max-w-3xl bg-white border border-slate-100 rounded-[2.5rem] p-6 md:p-8 shadow-sm space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="md:col-span-2">
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Seleccionar Cliente *</label>
+                            <select
+                                required
+                                value={pointsUserId}
+                                onChange={(e) => setPointsUserId(e.target.value)}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            >
+                                <option value="">-- SELECCIONE CLIENTE --</option>
+                                {usersList.map((u) => (
+                                    <option key={u.id} value={u.id}>{u.nombre || 'Sin nombre'} ({u.phone || 'Sin teléfono'})</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Cantidad de Puntos *</label>
+                            <input
+                                type="number"
+                                required
+                                value={pointsValue}
+                                onChange={(e) => setPointsValue(e.target.value)}
+                                placeholder="Ej: 100 o -50"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            />
+                            <span className="text-[8px] text-slate-400 font-semibold block mt-1">Usa números negativos para deducir saldo</span>
+                        </div>
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Concepto de Ajuste</label>
+                            <select
+                                value={pointsConcept}
+                                onChange={(e) => setPointsConcept(e.target.value)}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            >
+                                <option value="AJUSTE">Ajuste Manual</option>
+                                <option value="BONO">Bono de Bienvenida</option>
+                                <option value="CANJE">Canje de Premio</option>
+                            </select>
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Notas internas</label>
+                            <input
+                                type="text"
+                                value={pointsNotes}
+                                onChange={(e) => setPointsNotes(e.target.value)}
+                                placeholder="Ej: Corrección por canje o cortesía en recepción"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setActiveView('list')}
+                            className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-transform active:scale-95 cursor-pointer"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={actionLoading === 'points'}
+                            className="flex items-center gap-2 px-6 py-4 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 disabled:opacity-50 cursor-pointer"
+                            style={{
+                                backgroundColor: primaryColor,
+                                boxShadow: `0 10px 15px -3px ${primaryColor}33`
+                            }}
+                        >
+                            {actionLoading === 'points' ? (
+                                <Loader2 className="animate-spin" size={14} />
+                            ) : (
+                                <Save size={14} />
+                            )}
+                            Aplicar Ajuste
+                        </button>
+                    </div>
+                </form>
+            </div>
+        );
+    }
+
+    // Formulario de Creación de Automatizaciones a Pantalla Completa
+    if (activeView === 'create-automation') {
+        return (
+            <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 md:p-8 animate-in fade-in duration-300">
+                <div className="flex items-center gap-4 mb-8">
+                    <button
+                        onClick={() => setActiveView('list')}
+                        className="size-11 bg-white hover:bg-slate-100 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-600 transition-colors shadow-sm cursor-pointer"
+                    >
+                        <ArrowLeft size={16} />
+                    </button>
+                    <div>
+                        <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase italic flex items-center gap-2">
+                            <Settings style={{ color: primaryColor }} size={22} />
+                            Nueva Regla de Automatización
+                        </h1>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                            Define un disparador de fidelidad y sus acciones asociadas
+                        </p>
+                    </div>
+                </div>
+
+                <form onSubmit={handleCreateAutomation} className="max-w-3xl bg-white border border-slate-100 rounded-[2.5rem] p-6 md:p-8 shadow-sm space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="md:col-span-2">
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Nombre de la Regla *</label>
+                            <input
+                                type="text"
+                                required
+                                value={autoName}
+                                onChange={(e) => setAutoName(e.target.value)}
+                                placeholder="Ej: Saludo de Cumpleaños por WhatsApp"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            />
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Disparador (Trigger) *</label>
+                            <select
+                                value={autoTrigger}
+                                onChange={(e) => setAutoTrigger(e.target.value)}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            >
+                                <option value="CUMPLEANOS">Cumpleaños del cliente (Ejecución Diaria)</option>
+                                <option value="PRIMER_VISITA">Primera visita completada</option>
+                                <option value="INACTIVIDAD">Cliente inactivo (60 días sin visitas)</option>
+                            </select>
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Acción 1: Mensaje WhatsApp (Opcional)</label>
+                            <textarea
+                                value={autoMsg}
+                                onChange={(e) => setAutoMsg(e.target.value)}
+                                placeholder="Ej: ¡Hola {{nombre}}! Feliz cumpleaños te desea el equipo. Te obsequiamos un 15% DTO en tu próxima cita."
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none min-h-[100px]"
+                            />
+                            <span className="text-[8px] text-slate-400 font-semibold block mt-1">Usa {"{{nombre}}"} para personalizar el mensaje</span>
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Acción 2: Regalar Puntos de Bono (Opcional)</label>
+                            <input
+                                type="number"
+                                value={autoPoints}
+                                onChange={(e) => setAutoPoints(e.target.value)}
+                                placeholder="Ej: 100"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setActiveView('list')}
+                            className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-transform active:scale-95 cursor-pointer"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={actionLoading === 'auto'}
+                            className="flex items-center gap-2 px-6 py-4 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 disabled:opacity-50 cursor-pointer"
+                            style={{
+                                backgroundColor: primaryColor,
+                                boxShadow: `0 10px 15px -3px ${primaryColor}33`
+                            }}
+                        >
+                            {actionLoading === 'auto' ? (
+                                <Loader2 className="animate-spin" size={14} />
+                            ) : (
+                                <Save size={14} />
+                            )}
+                            Activar Regla
+                        </button>
+                    </div>
+                </form>
+            </div>
+        );
+    }
+
+    // ─── RENDER DE LA VISTA PRINCIPAL (LISTADOS) ──────────────────────────────────
     return (
         <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 md:p-8 animate-in fade-in duration-300">
             
@@ -356,7 +686,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                     )}
                     {activeTab === 'coupons' && (
                         <button
-                            onClick={() => setIsCouponModalOpen(true)}
+                            onClick={() => setActiveView('create-coupon')}
                             className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 text-center cursor-pointer"
                             style={{
                                 backgroundColor: primaryColor,
@@ -369,7 +699,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                     )}
                     {activeTab === 'points' && (
                         <button
-                            onClick={() => setIsPointsModalOpen(true)}
+                            onClick={() => setActiveView('adjust-points')}
                             className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 text-center cursor-pointer"
                             style={{
                                 backgroundColor: primaryColor,
@@ -382,7 +712,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                     )}
                     {activeTab === 'automations' && (
                         <button
-                            onClick={() => setIsAutomationModalOpen(true)}
+                            onClick={() => setActiveView('create-automation')}
                             className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 text-center cursor-pointer"
                             style={{
                                 backgroundColor: primaryColor,
@@ -618,7 +948,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                     Crea cupones promocionales de descuento para compartirlos con tus clientes en su club de recompensas.
                                 </p>
                                 <button
-                                    onClick={() => setIsCouponModalOpen(true)}
+                                    onClick={() => setActiveView('create-coupon')}
                                     className="inline-flex items-center gap-2 px-5 py-3 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 cursor-pointer"
                                     style={{
                                         backgroundColor: primaryColor,
@@ -680,6 +1010,17 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                 <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto mb-6">
                                     Los balances de puntos de tus clientes por asistir a citas y referir amigos aparecerán en esta lista.
                                 </p>
+                                <button
+                                    onClick={() => setActiveView('adjust-points')}
+                                    className="inline-flex items-center gap-2 px-5 py-3 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 cursor-pointer"
+                                    style={{
+                                        backgroundColor: primaryColor,
+                                        boxShadow: `0 10px 15px -3px ${primaryColor}33`
+                                    }}
+                                >
+                                    <Trophy size={16} />
+                                    Ajustar Puntos
+                                </button>
                             </div>
                         ) : (
                             <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
@@ -721,7 +1062,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                     Configura disparadores automáticos para enviar saludos por cumpleaños, obsequiar cupones o felicitar a tus clientes por WhatsApp.
                                 </p>
                                 <button
-                                    onClick={() => setIsAutomationModalOpen(true)}
+                                    onClick={() => setActiveView('create-automation')}
                                     className="inline-flex items-center gap-2 px-5 py-3 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 cursor-pointer"
                                     style={{
                                         backgroundColor: primaryColor,
@@ -863,7 +1204,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                                         {ev.estado}
                                                     </span>
                                                 </td>
-                                                <td className="p-4 text-[10px] text-slate-450 font-semibold text-right pr-6">
+                                                <td className="p-4 text-[10px] text-slate-455 font-semibold text-right pr-6">
                                                     {new Date(ev.createdAt).toLocaleDateString()}
                                                 </td>
                                             </tr>
@@ -877,10 +1218,10 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                 </div>
             )}
 
-            {/* MODAL DE ENTREGA DE PREMIO */}
+            {/* MODAL DE ENTREGA DE PREMIO (ACCIÓN RÁPIDA) */}
             {isDeliveryModalOpen && selectedReward && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-md p-6 md:p-8 border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col items-center">
+                    <div className="bg-white rounded-[2.5rem] w-full max-w-md p-6 border border-slate-105 shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col items-center">
                         <div className="size-16 rounded-[1.8rem] bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-500 mb-6 shadow-sm">
                             <Check size={28} />
                         </div>
@@ -896,7 +1237,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                             <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
                                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block leading-none mb-1">Premio a entregar:</span>
                                 <span className="text-xs font-black text-slate-800 uppercase tracking-tight block">{selectedReward.Campaign?.valorRecompensa}</span>
-                                <span className="text-[9px] text-slate-450 font-semibold mt-2 block">Cliente: {selectedReward.Usuario?.nombre || 'Usuario'} ({selectedReward.Usuario?.phone})</span>
+                                <span className="text-[9px] text-slate-455 font-semibold mt-2 block">Cliente: {selectedReward.Usuario?.nombre || 'Usuario'} ({selectedReward.Usuario?.phone})</span>
                             </div>
 
                             <div>
@@ -955,302 +1296,6 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                         </div>
 
                     </div>
-                </div>
-            )}
-
-            {/* MODAL DE CREACIÓN DE CUPÓN */}
-            {isCouponModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                    <form onSubmit={handleCreateCoupon} className="bg-white rounded-[2.5rem] w-full max-w-md p-6 md:p-8 border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col">
-                        <h2 className="text-lg font-black text-slate-900 uppercase italic tracking-tight text-center leading-none mb-1">
-                            Crear Nuevo Cupón
-                        </h2>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center mb-6">
-                            Define un código de descuento promocional
-                        </p>
-
-                        <div className="space-y-4 mb-6">
-                            <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Código del Cupón (Ej: ZENDA20)</label>
-                                <input
-                                    type="text"
-                                    value={couponCode}
-                                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                                    placeholder="DEJAR VACÍO PARA GENERACIÓN AUTOMÁTICA"
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Tipo de Descuento</label>
-                                    <select
-                                        value={couponType}
-                                        onChange={(e) => setCouponType(e.target.value)}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
-                                    >
-                                        <option value="PORCENTAJE">Porcentaje (%)</option>
-                                        <option value="FIJO">Monto Fijo ($)</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Valor *</label>
-                                    <input
-                                        type="number"
-                                        required
-                                        min={1}
-                                        value={couponValue}
-                                        onChange={(e) => setCouponValue(e.target.value)}
-                                        placeholder="Ej: 15"
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Descripción</label>
-                                <input
-                                    type="text"
-                                    value={couponDesc}
-                                    onChange={(e) => setCouponDesc(e.target.value)}
-                                    placeholder="Ej: 15% de descuento en tu primera reserva"
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Máximo de Usos</label>
-                                    <input
-                                        type="number"
-                                        value={couponMaxUses}
-                                        onChange={(e) => setCouponMaxUses(e.target.value)}
-                                        placeholder="Ej: 50"
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Fecha Límite</label>
-                                    <input
-                                        type="date"
-                                        value={couponFin}
-                                        onChange={(e) => setCouponFin(e.target.value)}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 w-full">
-                            <button
-                                type="button"
-                                onClick={() => setIsCouponModalOpen(false)}
-                                className="px-5 py-4 bg-slate-100 hover:bg-slate-200 rounded-2xl font-black text-[10px] text-slate-700 uppercase tracking-widest transition-all cursor-pointer active:scale-95"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={actionLoading === 'coupon'}
-                                className="flex items-center justify-center gap-2 px-5 py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer active:scale-95 disabled:opacity-50"
-                                style={{
-                                    backgroundColor: primaryColor,
-                                    boxShadow: `0 10px 15px -3px ${primaryColor}33`
-                                }}
-                            >
-                                {actionLoading === 'coupon' ? (
-                                    <Loader2 className="animate-spin" size={14} />
-                                ) : (
-                                    <Check size={14} />
-                                )}
-                                Guardar Cupón
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
-
-            {/* MODAL DE AJUSTE DE PUNTOS */}
-            {isPointsModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                    <form onSubmit={handleAdjustPoints} className="bg-white rounded-[2.5rem] w-full max-w-md p-6 md:p-8 border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col">
-                        <h2 className="text-lg font-black text-slate-900 uppercase italic tracking-tight text-center leading-none mb-1">
-                            Ajustar Puntos
-                        </h2>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center mb-6">
-                            Modifica manualmente el saldo de un cliente
-                        </p>
-
-                        <div className="space-y-4 mb-6">
-                            <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Seleccionar Cliente *</label>
-                                <select
-                                    required
-                                    value={pointsUserId}
-                                    onChange={(e) => setPointsUserId(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
-                                >
-                                    <option value="">-- SELECCIONE CLIENTE --</option>
-                                    {usersList.map((u) => (
-                                        <option key={u.id} value={u.id}>{u.nombre || 'Sin nombre'} ({u.phone || 'Sin teléfono'})</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Cantidad de Puntos *</label>
-                                    <input
-                                        type="number"
-                                        required
-                                        value={pointsValue}
-                                        onChange={(e) => setPointsValue(e.target.value)}
-                                        placeholder="Ej: 100 o -50"
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
-                                    />
-                                    <span className="text-[8px] text-slate-400 font-semibold block mt-1">Usa números negativos para deducir saldo</span>
-                                </div>
-                                <div>
-                                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Concepto</label>
-                                    <select
-                                        value={pointsConcept}
-                                        onChange={(e) => setPointsConcept(e.target.value)}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
-                                    >
-                                        <option value="AJUSTE">Ajuste Manual</option>
-                                        <option value="BONO">Bono de Bienvenida</option>
-                                        <option value="CANJE">Canje de Premio</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Notas internas</label>
-                                <input
-                                    type="text"
-                                    value={pointsNotes}
-                                    onChange={(e) => setPointsNotes(e.target.value)}
-                                    placeholder="Ej: Corrección por canje en recepción"
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 w-full">
-                            <button
-                                type="button"
-                                onClick={() => setIsPointsModalOpen(false)}
-                                className="px-5 py-4 bg-slate-100 hover:bg-slate-200 rounded-2xl font-black text-[10px] text-slate-700 uppercase tracking-widest transition-all cursor-pointer active:scale-95"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={actionLoading === 'points'}
-                                className="flex items-center justify-center gap-2 px-5 py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer active:scale-95 disabled:opacity-50"
-                                style={{
-                                    backgroundColor: primaryColor,
-                                    boxShadow: `0 10px 15px -3px ${primaryColor}33`
-                                }}
-                            >
-                                {actionLoading === 'points' ? (
-                                    <Loader2 className="animate-spin" size={14} />
-                                ) : (
-                                    <Check size={14} />
-                                )}
-                                Aplicar Puntos
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
-
-            {/* MODAL DE CREACIÓN DE AUTOMATIZACIONES */}
-            {isAutomationModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                    <form onSubmit={handleCreateAutomation} className="bg-white rounded-[2.5rem] w-full max-w-md p-6 md:p-8 border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col">
-                        <h2 className="text-lg font-black text-slate-900 uppercase italic tracking-tight text-center leading-none mb-1">
-                            Nueva Regla de Automatización
-                        </h2>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center mb-6">
-                            Define un disparador y sus acciones correspondientes
-                        </p>
-
-                        <div className="space-y-4 mb-6">
-                            <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Nombre de la Regla *</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={autoName}
-                                    onChange={(e) => setAutoName(e.target.value)}
-                                    placeholder="Ej: Saludo de Cumpleaños por WhatsApp"
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Disparador (Trigger) *</label>
-                                <select
-                                    value={autoTrigger}
-                                    onChange={(e) => setAutoTrigger(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
-                                >
-                                    <option value="CUMPLEANOS">Cumpleaños del cliente (Ejecución Diaria)</option>
-                                    <option value="PRIMER_VISITA">Primera visita completada</option>
-                                    <option value="INACTIVIDAD">Cliente inactivo (60 días sin visitas)</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Acción 1: Mensaje WhatsApp (Opcional)</label>
-                                <textarea
-                                    value={autoMsg}
-                                    onChange={(e) => setAutoMsg(e.target.value)}
-                                    placeholder="Ej: ¡Hola {{nombre}}! Feliz cumpleaños te desea el equipo. Te obsequiamos un 15% DTO en tu próxima cita."
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none min-h-[85px]"
-                                />
-                                <span className="text-[8px] text-slate-400 font-semibold block mt-1">Usa {"{{nombre}}"} para personalizar el mensaje</span>
-                            </div>
-
-                            <div>
-                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Acción 2: Regalar Puntos de Bono (Opcional)</label>
-                                <input
-                                    type="number"
-                                    value={autoPoints}
-                                    onChange={(e) => setAutoPoints(e.target.value)}
-                                    placeholder="Ej: 100"
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 w-full">
-                            <button
-                                type="button"
-                                onClick={() => setIsAutomationModalOpen(false)}
-                                className="px-5 py-4 bg-slate-100 hover:bg-slate-200 rounded-2xl font-black text-[10px] text-slate-700 uppercase tracking-widest transition-all cursor-pointer active:scale-95"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={actionLoading === 'auto'}
-                                className="flex items-center justify-center gap-2 px-5 py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer active:scale-95 disabled:opacity-50"
-                                style={{
-                                    backgroundColor: primaryColor,
-                                    boxShadow: `0 10px 15px -3px ${primaryColor}33`
-                                }}
-                            >
-                                {actionLoading === 'auto' ? (
-                                    <Loader2 className="animate-spin" size={14} />
-                                ) : (
-                                    <Check size={14} />
-                                )}
-                                Activar Regla
-                            </button>
-                        </div>
-                    </form>
                 </div>
             )}
 
