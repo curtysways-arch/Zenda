@@ -243,14 +243,20 @@ export async function POST(
                         where: {
                             negocioId: negocio.id,
                             activa: true,
-                            OR: [
-                                { estado: 'ACTIVA' },
-                                { estado: null }
-                            ],
                             fechaInicio: { lte: new Date() },
-                            OR: [
-                                { fechaFin: null },
-                                { fechaFin: { gte: new Date() } }
+                            AND: [
+                                {
+                                    OR: [
+                                        { estado: 'ACTIVA' },
+                                        { estado: null }
+                                    ]
+                                },
+                                {
+                                    OR: [
+                                        { fechaFin: null },
+                                        { fechaFin: { gte: new Date() } }
+                                    ]
+                                }
                             ]
                         }
                     });

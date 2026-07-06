@@ -35,7 +35,7 @@ export async function processAppointmentCompleted(appointmentId: string): Promis
 
         const appointment = await prisma.appointment.findUnique({
             where: { id: appointmentId },
-            include: { cliente: true, negocio: true, cancha: true }
+            include: { cliente: true, negocio: true, service: true }
         });
 
         if (!appointment || appointment.estado !== 'completed') return;
@@ -45,10 +45,10 @@ export async function processAppointmentCompleted(appointmentId: string): Promis
 
         if (!usuarioId) return;
 
-        const config = appointment.negocio.configuracion
-            ? (typeof appointment.negocio.configuracion === 'string'
-                ? JSON.parse(appointment.negocio.configuracion)
-                : appointment.negocio.configuracion) as any
+        const config = (appointment as any).negocio.configuracion
+            ? (typeof (appointment as any).negocio.configuracion === 'string'
+                ? JSON.parse((appointment as any).negocio.configuracion)
+                : (appointment as any).negocio.configuracion) as any
             : {};
 
         // 1. Sumar puntos por reserva completada (si el módulo de puntos está activo)
@@ -130,14 +130,20 @@ async function evaluateLoyaltyCampaigns(
         where: {
             negocioId,
             activa: true,
-            OR: [
-                { estado: 'ACTIVA' },
-                { estado: null }
-            ],
             fechaInicio: { lte: new Date() },
-            OR: [
-                { fechaFin: null },
-                { fechaFin: { gte: new Date() } }
+            AND: [
+                {
+                    OR: [
+                        { estado: 'ACTIVA' },
+                        { estado: null }
+                    ]
+                },
+                {
+                    OR: [
+                        { fechaFin: null },
+                        { fechaFin: { gte: new Date() } }
+                    ]
+                }
             ]
         }
     });
@@ -543,7 +549,7 @@ async function executeAutomationAction(accion: any, userId: string, negocioId: s
         case 'WHATSAPP':
             if (user?.phone && accion.mensaje) {
                 const msg = accion.mensaje.replace('{{nombre}}', user.nombre || 'Cliente');
-                await whatsappService.sendMessage(user.phone, msg).catch(() => {});
+                await whatsappService.sendWhatsApp(user.phone, msg).catch(() => {});
             }
             break;
 
@@ -580,7 +586,7 @@ async function notifyRewardEarned(userId: string, negocioId: string, campaign: a
 
         if (user?.phone) {
             const msg = `🎉 ¡Felicitaciones ${user.nombre || 'Cliente'}! Ganaste una recompensa en ${negocio?.nombre}: *${campaign.valorRecompensa}*. Muestra este mensaje al llegar a tu próxima cita. 🏆`;
-            await whatsappService.sendMessage(user.phone, msg).catch(() => {});
+            await whatsappService.sendWhatsApp(user.phone, msg).catch(() => {});
         }
     } catch {}
 }
@@ -592,7 +598,7 @@ async function notifyOneAway(userId: string, negocioId: string, campaign: any): 
 
         if (user?.phone) {
             const msg = `🔥 ¡Ya casi, ${user.nombre || 'Cliente'}! Te falta solo *1 referido* para ganar tu premio en ${negocio?.nombre}: *${campaign.valorRecompensa}*. ¡Sigue así!`;
-            await whatsappService.sendMessage(user.phone, msg).catch(() => {});
+            await whatsappService.sendWhatsApp(user.phone, msg).catch(() => {});
         }
     } catch {}
 }
@@ -638,20 +644,17 @@ async function runBirthdayAutomations(): Promise<void> {
     const month = today.getMonth() + 1;
     const day = today.getDate();
 
-    const clients = await prisma.cliente.findMany({
-        where: {
-            fechaNacimiento: {
-                not: null
-            }
-        },
-        select: { id: true, negocioId: true, usuarioId: true, fechaNacimiento: true }
+    // Buscar usuarios con cumpleaños registrado (cast a any para nuevos campos)
+    const users = await (prisma as any).usuario.findMany({
+        where: { fechaNacimiento: { not: null } },
+        select: { id: true, negocioId: true, fechaNacimiento: true }
     });
 
-    for (const client of clients) {
-        if (!client.fechaNacimiento || !client.usuarioId || !client.negocioId) continue;
-        const bday = new Date(client.fechaNacimiento);
+    for (const u of users) {
+        if (!u.fechaNacimiento || !u.negocioId) continue;
+        const bday = new Date(u.fechaNacimiento);
         if (bday.getMonth() + 1 === month && bday.getDate() === day) {
-            await runAutomations(client.usuarioId, client.negocioId, 'CUMPLEANOS', {});
+            await runAutomations(u.id, u.negocioId, 'CUMPLEANOS', {});
         }
     }
 }

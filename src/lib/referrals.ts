@@ -79,14 +79,20 @@ export async function getReferralProgress(userId: string, negocioId: string) {
         where: {
             negocioId,
             activa: true,
-            OR: [
-                { estado: 'ACTIVA' },
-                { estado: null }
-            ],
             fechaInicio: { lte: new Date() },
-            OR: [
-                { fechaFin: null },
-                { fechaFin: { gte: new Date() } }
+            AND: [
+                {
+                    OR: [
+                        { estado: 'ACTIVA' },
+                        { estado: null }
+                    ]
+                },
+                {
+                    OR: [
+                        { fechaFin: null },
+                        { fechaFin: { gte: new Date() } }
+                    ]
+                }
             ]
         },
         orderBy: { createdAt: 'desc' }
@@ -116,7 +122,8 @@ export async function getReferralProgress(userId: string, negocioId: string) {
             progreso: validCount,
             completado: validCount >= campaign.referidosRequeridos,
             tipoIncentivo: campaign.tipoIncentivo,
-            valorIncentivo: campaign.valorIncentivo
+            valorIncentivo: campaign.valorIncentivo,
+            tipoCampana: (campaign as any).tipoCampana || "CLIENTES_NUEVOS"
         });
     }
 

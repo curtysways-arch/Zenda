@@ -324,6 +324,27 @@ export default function MisRecompensasPage() {
                 {step === 'rewards' && meData && (
                     <div className="space-y-5 animate-in fade-in duration-500 pb-8">
                         
+                        {/* Tarjeta de Puntos si están activos */}
+                        {meData.puntosActivos && (
+                            <div className="bg-white border border-slate-100 rounded-[1.8rem] p-4 shadow-[0_4px_25px_rgba(0,0,0,0.02)] flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-12 rounded-full bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-500 shrink-0 shadow-sm">
+                                        <Trophy size={20} className="animate-pulse" />
+                                    </div>
+                                    <div>
+                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block leading-none mb-1">Tu Balance</span>
+                                        <h3 className="text-xl font-black text-slate-900 leading-none">{meData.puntos} <span className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Puntos</span></h3>
+                                    </div>
+                                </div>
+                                <Link 
+                                    href={`/${slug}/servicios`} 
+                                    className="px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200/60 rounded-xl text-[8px] font-black uppercase tracking-widest text-slate-700 transition-colors"
+                                >
+                                    Ganar Más
+                                </Link>
+                            </div>
+                        )}
+
                         {/* Tarjeta de Invitación Premium */}
                         <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-[2.2rem] p-4 shadow-xl relative overflow-hidden border border-white/5">
                             {/* Decorativos de fondo */}
@@ -437,7 +458,15 @@ export default function MisRecompensasPage() {
                                             <div className="space-y-1.5 pt-1">
                                                 <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-wider">
                                                     <span className="text-slate-400">Progreso</span>
-                                                    <span className="text-pink-500" style={{ color: primaryColor }}>{p.progreso} / {p.referidosRequeridos} Referidos</span>
+                                                    <span className="text-pink-500" style={{ color: primaryColor }}>
+                                                        {p.progreso} / {p.referidosRequeridos} {
+                                                            p.tipoCampana === 'COMPLETAR_RESERVAS' || p.tipoCampana === 'CUALQUIER_RESERVA' || p.tipoCampana === 'PRIMERA_RESERVA_MES'
+                                                                ? 'Reservas' 
+                                                                : p.tipoCampana === 'GASTAR_DOLARES'
+                                                                ? 'Dólares'
+                                                                : 'Referidos'
+                                                        }
+                                                    </span>
                                                 </div>
                                                 <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
                                                     <div
@@ -531,6 +560,74 @@ export default function MisRecompensasPage() {
                                 </div>
                             )}
                         </div>
+
+                        {/* Cupones de Descuento */}
+                        {meData.cupones && meData.cupones.length > 0 && (
+                            <div className="space-y-3">
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 pl-2">
+                                    <Gift size={14} className="text-purple-500" />
+                                    Cupones de Descuento
+                                </h3>
+                                <div className="grid grid-cols-1 gap-2.5">
+                                    {meData.cupones.map((coupon: any) => (
+                                        <div key={coupon.id} className="bg-white border border-slate-100 rounded-3xl p-4 shadow-sm flex items-center justify-between gap-4 relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl" />
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-[9px] font-black uppercase tracking-widest text-purple-600 bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-md" style={{ color: primaryColor, backgroundColor: `${primaryColor}10`, borderColor: `${primaryColor}20` }}>
+                                                        {coupon.tipo === 'PORCENTAJE' ? `${coupon.valor}% DTO` : `$${coupon.valor} DTO`}
+                                                    </span>
+                                                </div>
+                                                <h4 className="text-xs font-black text-slate-900 uppercase tracking-tight">
+                                                    Código: <span style={{ color: primaryColor }}>{coupon.codigo}</span>
+                                                </h4>
+                                                <p className="text-[9px] text-slate-400 font-semibold mt-1">
+                                                    {coupon.descripcion || "Cupón de descuento para tu reserva."}
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(coupon.codigo);
+                                                    alert("¡Código de cupón copiado!");
+                                                }}
+                                                className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200/60 rounded-xl text-[8px] font-black uppercase tracking-widest text-slate-700 transition-colors"
+                                            >
+                                                Copiar
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Ranking de Embajadores */}
+                        {meData.ranking && meData.ranking.length > 0 && (
+                            <div className="space-y-3">
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 pl-2">
+                                    <Trophy size={14} className="text-yellow-500" />
+                                    Ranking Mensual
+                                </h3>
+                                <div className="bg-white border border-slate-100 rounded-3xl p-4 shadow-sm space-y-3">
+                                    {meData.ranking.map((rank: any, index: number) => (
+                                        <div key={rank.id} className="flex items-center justify-between gap-3 text-xs">
+                                            <div className="flex items-center gap-3">
+                                                <span className={`size-6 rounded-full flex items-center justify-center font-black text-[10px] ${
+                                                    index === 0 ? 'bg-amber-100 text-amber-700' : index === 1 ? 'bg-slate-100 text-slate-700' : index === 2 ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-500'
+                                                }`}>
+                                                    {index + 1}
+                                                </span>
+                                                <span className="font-semibold text-slate-750">
+                                                    {rank.Usuario?.nombre || "Embajador"}
+                                                </span>
+                                            </div>
+                                            <span className="font-black text-slate-900">
+                                                {rank.puntos} pts
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Tarjeta inferior tip (Entre más amigos invites...) */}
                         <div className="bg-white border border-slate-100 rounded-[2rem] p-4 shadow-sm flex items-center justify-between gap-3 hover:scale-[1.01] transition-transform cursor-pointer">

@@ -13,7 +13,7 @@ export async function GET(req: Request) {
         const negocioId = user.negocioId;
         if (!negocioId) return NextResponse.json({ error: "Negocio no especificado" }, { status: 400 });
 
-        const campaigns = await prisma.referralCampaign.findMany({
+        const campaigns = await (prisma as any).referralCampaign.findMany({
             where: { negocioId },
             orderBy: [{ prioridad: "desc" }, { createdAt: "desc" }]
         });
@@ -65,7 +65,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
         }
 
-        const campaign = await prisma.referralCampaign.create({
+        const campaign = await (prisma as any).referralCampaign.create({
             data: {
                 id: crypto.randomUUID(),
                 negocioId,

@@ -41,7 +41,7 @@ export async function GET(req: Request) {
 
         // 3. Ingresos estimados generados por campañas
         // Sumamos el total cobrado de todas las citas asociadas a referidos válidos
-        const appointmentsWithRevenue = await prisma.appointment.findMany({
+        const appointmentsWithRevenue = await (prisma as any).appointment.findMany({
             where: {
                 negocioId,
                 estado: "completed",

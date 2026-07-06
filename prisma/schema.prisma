@@ -93,7 +93,8 @@ model Cliente {
   negocioId      String
   createdAt      DateTime      @default(now())
   updatedAt      DateTime
-  imagenUrl      String?
+  imagenUrl       String?
+  fechaNacimiento DateTime?
   Negocio        Negocio       @relation(fields: [negocioId], references: [id])
   ratingPromedio Float         @default(0)
   totalReviews   Int           @default(0)
@@ -714,6 +715,7 @@ model Usuario {
   magic_token            String?            @unique
   last_interaction       DateTime?
   last_message_at        DateTime?
+  fechaNacimiento        DateTime?
   createdAt              DateTime           @default(now())
   updatedAt              DateTime
   Course                 Course[]
