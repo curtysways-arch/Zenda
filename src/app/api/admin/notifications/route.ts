@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
         } else if (recipientType === 'ALL') {
             // Todos los usuarios de este negocio
             targetUsers = await prisma.usuario.findMany({
-                where: { negocioId, role: 'CLIENTE' },
+                where: { negocioId, role: 'USER' },
                 select: { id: true }
             });
         } else if (recipientType === 'VIP') {
@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
             const activeIds = activeRecently.map(a => a.usuarioId).filter((id): id is string => !!id);
 
             targetUsers = await prisma.usuario.findMany({
-                where: { negocioId, role: 'CLIENTE', id: { notIn: activeIds } },
+                where: { negocioId, role: 'USER', id: { notIn: activeIds } },
                 select: { id: true }
             });
         } else if (recipientType === 'NEW_CLIENTS') {
@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
             treintaDiasAgo.setDate(treintaDiasAgo.getDate() - 30);
 
             targetUsers = await prisma.usuario.findMany({
-                where: { negocioId, role: 'CLIENTE', createdAt: { gte: treintaDiasAgo } },
+                where: { negocioId, role: 'USER', createdAt: { gte: treintaDiasAgo } },
                 select: { id: true }
             });
         }
