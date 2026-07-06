@@ -123,7 +123,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
             setAutomations(automationsRes || []);
             setPointsRankings(pointsRes || []);
             setLoyaltyRewards(loyaltyRewardsRes || []);
-            if (loyaltyStatsRes) {
+            if (loyaltyStatsRes && loyaltyStatsRes.summary) {
                 setLoyaltyStats(loyaltyStatsRes);
             }
         } catch (err) {
@@ -1410,19 +1410,19 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ingresos Generados</span>
-                                    <h4 className="text-2xl font-black text-slate-900 mt-2">${loyaltyStats.summary.ingresosGenerados}</h4>
+                                    <h4 className="text-2xl font-black text-slate-900 mt-2">${loyaltyStats?.summary?.ingresosGenerados || 0}</h4>
                                 </div>
                                 <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">ROI Estimado</span>
-                                    <h4 className="text-2xl font-black text-slate-900 mt-2" style={{ color: primaryColor }}>{loyaltyStats.summary.roiEstimated || loyaltyStats.summary.roiEstimado}%</h4>
+                                    <h4 className="text-2xl font-black text-slate-900 mt-2" style={{ color: primaryColor }}>{loyaltyStats?.summary?.roiEstimated || loyaltyStats?.summary?.roiEstimado || "0"}%</h4>
                                 </div>
                                 <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Puntos Otorgados</span>
-                                    <h4 className="text-2xl font-black text-slate-900 mt-2 text-amber-500">{loyaltyStats.summary.puntosEntregados} pts</h4>
+                                    <h4 className="text-2xl font-black text-slate-900 mt-2 text-amber-500">{loyaltyStats?.summary?.puntosEntregados || 0} pts</h4>
                                 </div>
                                 <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Premios Entregados</span>
-                                    <h4 className="text-2xl font-black text-slate-900 mt-2 text-emerald-600">{loyaltyStats.summary.totalPremiosCanjeados}</h4>
+                                    <h4 className="text-2xl font-black text-slate-900 mt-2 text-emerald-600">{loyaltyStats?.summary?.totalPremiosCanjeados || 0}</h4>
                                 </div>
                             </div>
 
@@ -1433,7 +1433,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                     Clientes más Influyentes (Referidores Estrella)
                                 </h3>
 
-                                {loyaltyStats.topReferrers.length === 0 ? (
+                                {!loyaltyStats?.topReferrers || loyaltyStats.topReferrers.length === 0 ? (
                                     <p className="text-xs text-slate-400 font-semibold">No se han registrado referidos válidos todavía.</p>
                                 ) : (
                                     <div className="space-y-4">

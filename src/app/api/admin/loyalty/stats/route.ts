@@ -39,20 +39,30 @@ export async function GET(req: Request) {
             };
         }));
 
-        // 3. Ingresos estimados generados por campañas
-        // Sumamos el total cobrado de todas las citas asociadas a referidos válidos
-        const appointmentsWithRevenue = await (prisma as any).appointment.findMany({
+        const validReferrals = await prisma.referralEvent.findMany({
             where: {
                 negocioId,
-                estado: "completed",
-                ReferralEvent: {
-                    some: { estado: "VALIDO" }
-                }
+                estado: "VALIDO",
+                appointmentId: { not: null }
             },
-            select: { total: true }
+            select: { appointmentId: true }
         });
 
-        const ingresosGenerados = appointmentsWithRevenue.reduce((acc, appt) => acc + (appt.total || 0), 0);
+        const apptIds = validReferrals
+            .map(r => r.appointmentId)
+            .filter((id): id is string => !!id);
+
+        let ingresosGenerados = 0;
+        if (apptIds.length > 0) {
+            const appointmentsWithRevenue = await (prisma as any).appointment.findMany({
+                where: {
+                    id: { in: apptIds },
+                    estado: "completed"
+                },
+                select: { total: true }
+            });
+            ingresosGenerados = appointmentsWithRevenue.reduce((acc: number, appt: any) => acc + (appt.total || 0), 0);
+        }
 
         // 4. ROI Estimado (Ingresos / Premios canjeados de valor ficticio o real)
         const costoEstimadoPremios = totalPremiosCanjeados * 15; // Asumimos un costo promedio de $15 por premio
