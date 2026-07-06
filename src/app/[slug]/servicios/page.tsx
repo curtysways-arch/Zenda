@@ -142,15 +142,7 @@ export default async function PublicServicesPage({
         return '🌸';
     };
 
-    // Filtrar por término de búsqueda (q)
-    let filteredServices = query 
-        ? services.filter((s: any) => s.nombre.toLowerCase().includes(query) || (s.descripcion && s.descripcion.toLowerCase().includes(query)))
-        : services;
-
-    // Filtrar por categoría seleccionada
-    if (selectedCategory !== 'Todos') {
-        filteredServices = filteredServices.filter((s: any) => getServiceCategory(s.nombre) === selectedCategory);
-    }
+    const filteredServices = services;
 
     const primaryColor = (negocio as any).colorPrimario || '#e21d6e';
     const secondaryColor = (negocio as any).colorSecundario || '#0f172a';
@@ -201,54 +193,7 @@ export default async function PublicServicesPage({
                 </div>
             )}
 
-            {/* BARRA DE BÚSQUEDA Y FILTRO */}
-            <section className="px-6 mb-5 flex items-center gap-3">
-                <form method="GET" action={`/${slug}/servicios`} className="relative flex-1">
-                    <input 
-                        type="text"
-                        name="q"
-                        defaultValue={query}
-                        placeholder="Buscar servicios..."
-                        className="w-full pl-11 pr-5 py-3 rounded-[1.8rem] border border-slate-150 focus:border-slate-200 outline-none font-semibold text-xs shadow-sm bg-white"
-                    />
-                    <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                </form>
-                
-                {/* Botón de Filtro */}
-                <button className="flex items-center justify-center size-9 rounded-full bg-white border border-slate-100 shadow-sm transition-all active:scale-90 shrink-0" style={{ color: primaryColor }}>
-                    <SlidersHorizontal size={14} strokeWidth={2.5} />
-                </button>
-            </section>
 
-            {/* CATEGORÍAS EN HORIZONTAL SCROLL PILLS */}
-            <section className="px-6 mb-5 flex gap-2.5 overflow-x-auto scrollbar-none select-none">
-                {uniqueCategories.map((cat: string) => {
-                    const isActive = selectedCategory === cat;
-                    const icon = getCategoryIcon(cat);
-                    
-                    const queryParams = new URLSearchParams();
-                    if (query) queryParams.set('q', query);
-                    if (cat !== 'Todos') queryParams.set('category', cat);
-                    const href = `/${slug}/servicios?${queryParams.toString()}`;
-                    
-                    return (
-                        <Link 
-                            key={cat}
-                            href={href}
-                            className={cn(
-                                "flex items-center gap-1.5 px-4 py-2 rounded-full font-black text-[9px] uppercase tracking-widest border transition-all shrink-0 active:scale-95",
-                                isActive 
-                                    ? "text-white border-transparent" 
-                                    : "bg-white border-slate-100 text-slate-400 hover:text-slate-600"
-                            )}
-                            style={isActive ? { backgroundColor: primaryColor } : {}}
-                        >
-                            <span className="text-[11px] leading-none">{icon}</span>
-                            {cat}
-                        </Link>
-                    );
-                })}
-            </section>
 
             {/* LISTA DE SERVICIOS */}
             <section className="px-6 pb-12">
