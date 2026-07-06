@@ -79,6 +79,10 @@ export async function getReferralProgress(userId: string, negocioId: string) {
         where: {
             negocioId,
             activa: true,
+            OR: [
+                { estado: 'ACTIVA' },
+                { estado: null }
+            ],
             fechaInicio: { lte: new Date() },
             OR: [
                 { fechaFin: null },
