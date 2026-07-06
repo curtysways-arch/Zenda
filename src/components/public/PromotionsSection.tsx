@@ -32,9 +32,7 @@ export default function PromotionsSection({
         const scrollLeft = container.scrollLeft;
         const width = container.offsetWidth;
         
-        // Ajustamos la estimación de índice basado en el ancho visible de la tarjeta + gap
-        // Cada tarjeta es w-[84%] de la pantalla, más gap-4 (16px)
-        const cardWidth = container.querySelector('.snap-center')?.getBoundingClientRect().width || (width * 0.84);
+        const cardWidth = container.querySelector('.snap-center')?.getBoundingClientRect().width || width;
         const gap = 16;
         const step = cardWidth + gap;
         
@@ -79,10 +77,10 @@ export default function PromotionsSection({
                         <div
                             key={promo.id}
                             onClick={() => router.push(`/${slug}/promo/${promo.id}`)}
-                            className="group bg-white border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] rounded-[24px] p-3 flex items-center cursor-pointer snap-center w-[84%] shrink-0 h-[120px] hover:scale-[1.01] hover:shadow-[0_6px_25px_rgba(0,0,0,0.04)] active:scale-[0.99] transition-all duration-300 gap-3"
+                            className="group bg-white border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] rounded-xl p-3 flex items-center cursor-pointer snap-center w-full shrink-0 h-[120px] hover:scale-[1.01] hover:shadow-[0_6px_25px_rgba(0,0,0,0.04)] active:scale-[0.99] transition-all duration-300 gap-3"
                         >
-                            {/* Lado izquierdo: Imagen fija tamaño 20 (size-20) */}
-                            <div className="relative size-20 shrink-0 rounded-2xl overflow-hidden bg-slate-50">
+                            {/* Lado izquierdo: Imagen fija tamaño w-28 h-24 */}
+                            <div className="relative w-28 h-24 shrink-0 rounded-lg overflow-hidden bg-slate-50">
                                 <img
                                     src={promo.imagenUrl || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150'}
                                     alt={promo.titulo}
@@ -97,7 +95,7 @@ export default function PromotionsSection({
                             </div>
 
                             {/* Lado derecho: Contenido en formato de columna compacta vertical */}
-                            <div className="flex-1 min-w-0 flex flex-col justify-center space-y-1">
+                            <div className="flex-1 min-w-0 flex flex-col justify-center space-y-1.5">
                                 <div className="flex items-center gap-1">
                                     {currentTag && (
                                         <span className="px-2 py-0.5 bg-pink-50 text-pink-600 rounded-md text-[7.5px] font-black uppercase tracking-widest border border-pink-100/20 leading-none">
@@ -106,7 +104,7 @@ export default function PromotionsSection({
                                     )}
                                 </div>
                                 
-                                <h4 className="text-[13px] font-black text-slate-800 leading-tight uppercase tracking-tight truncate">
+                                <h4 className="text-sm font-black text-slate-800 leading-tight uppercase tracking-tight truncate">
                                     {promo.titulo}
                                 </h4>
                                 
@@ -120,7 +118,7 @@ export default function PromotionsSection({
                                             e.stopPropagation();
                                             router.push(`/${slug}/promo/${promo.id}`);
                                         }}
-                                        className="inline-flex items-center justify-center gap-1 px-4.5 py-1.5 rounded-full font-black text-[8px] uppercase tracking-widest text-white shadow-sm transition-all duration-300 hover:brightness-110 active:scale-95 leading-none"
+                                        className="inline-flex items-center justify-center gap-1 px-4.5 py-1.5 rounded-lg font-black text-[8px] uppercase tracking-widest text-white shadow-sm transition-all duration-300 hover:brightness-110 active:scale-95 leading-none"
                                         style={{ backgroundColor: primaryColor }}
                                     >
                                         Reservar ahora
@@ -142,7 +140,7 @@ export default function PromotionsSection({
                             if (scrollRef.current) {
                                 const container = scrollRef.current;
                                 const cardElement = container.querySelector('.snap-center');
-                                const cardWidth = cardElement?.getBoundingClientRect().width || (container.offsetWidth * 0.84);
+                                const cardWidth = cardElement?.getBoundingClientRect().width || container.offsetWidth;
                                 const gap = 16;
                                 container.scrollTo({
                                     left: idx * (cardWidth + gap),
