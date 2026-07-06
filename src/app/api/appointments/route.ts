@@ -183,7 +183,7 @@ export async function POST(req: Request) {
                     estado: 'activa',
                     fechaInicio: { lte: reservationDate },
                     fechaFin: { gte: reservationDate },
-                    services: { some: { id: service.id } }
+                    PromotionToService: { some: { B: service.id } }
                 },
                 orderBy: { createdAt: 'desc' }
             });
