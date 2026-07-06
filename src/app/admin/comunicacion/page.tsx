@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { 
     MessageSquare, Send, Calendar, Users, Info, AlertTriangle, CheckCircle, 
-    Gift, Sparkles, Loader2, ArrowRight, TrendingUp, BarChart2, Bell, Check 
+    Gift, Sparkles, Loader2, ArrowRight, TrendingUp, BarChart2, Bell, Check, Trophy 
 } from 'lucide-react';
 import { useConfirm } from '@/components/admin/ConfirmContext';
 
