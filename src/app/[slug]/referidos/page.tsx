@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Gift, ChevronLeft, ChevronRight, Star, Phone, Key, Loader2, Copy, Share2, Award, CheckCircle2, QrCode, Sparkles, X, Globe, Trophy, Users, Heart } from 'lucide-react';
+import { Gift, ChevronLeft, ChevronRight, Star, Phone, Key, Loader2, Copy, Share2, Award, CheckCircle2, QrCode, Sparkles, X, Globe, Trophy, Users, Heart, Coins } from 'lucide-react';
 import Link from 'next/link';
 import PhoneInput from "@/components/ui/PhoneInput";
 import { QRCodeSVG } from 'qrcode.react';
@@ -24,6 +24,10 @@ export default function MisRecompensasPage() {
     const [meData, setMeData] = useState<any>(null);
     const [copied, setCopied] = useState(false);
     const [showQrModal, setShowQrModal] = useState(false);
+
+    // Estados de catálogo de premios por puntos
+    const [loyaltyRewards, setLoyaltyRewards] = useState<any[]>([]);
+    const [redeemLoading, setRedeemLoading] = useState<string | null>(null);
 
     const otpInputRef = useRef<HTMLInputElement>(null);
 
@@ -47,6 +51,7 @@ export default function MisRecompensasPage() {
                     const data = await res.json();
                     setMeData(data);
                     setStep('rewards');
+                    fetchLoyaltyRewards();
                 }
             } catch (err) {
                 console.error("Error al validar sesión:", err);
@@ -72,6 +77,18 @@ export default function MisRecompensasPage() {
             otpInputRef.current?.focus();
         }
     }, [step]);
+
+    const fetchLoyaltyRewards = async () => {
+        try {
+            const res = await fetch(`/api/public/${slug}/loyalty/rewards`);
+            if (res.ok) {
+                const data = await res.json();
+                setLoyaltyRewards(data || []);
+            }
+        } catch (e) {
+            console.error("Error fetching loyalty rewards:", e);
+        }
+    };
 
     const primaryColor = negocio?.colorPrimario || '#1dc95c';
     const secondaryColor = negocio?.colorSecundario || '#112117';
@@ -119,6 +136,7 @@ export default function MisRecompensasPage() {
                     const data = await meRes.json();
                     setMeData(data);
                     setStep('rewards');
+                    fetchLoyaltyRewards();
                 } else {
                     setError("Error al cargar perfil de referidos.");
                 }
@@ -133,6 +151,34 @@ export default function MisRecompensasPage() {
         }
     };
 
+    const handleRedeemReward = async (reward: any) => {
+        if (!confirm(`¿Estás seguro de que deseas canjear "${reward.nombre}" por ${reward.costoPuntos} puntos?`)) return;
+        setRedeemLoading(reward.id);
+        try {
+            const res = await fetch(`/api/public/${slug}/loyalty/rewards`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ rewardId: reward.id })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert(`¡Canje exitoso! Se han descontado ${reward.costoPuntos} puntos. Presenta tu premio en recepción.`);
+                // Actualizar balance
+                const meRes = await fetch(`/api/${slug}/referrals/me`);
+                if (meRes.ok) {
+                    const updatedMe = await meRes.json();
+                    setMeData(updatedMe);
+                }
+            } else {
+                alert(data.error || "Error al procesar el canje.");
+            }
+        } catch (err) {
+            console.error("Error al canjear:", err);
+            alert("Ocurrió un error inesperado al canjear.");
+        } finally {
+            setRedeemLoading(null);
+        }
+    };
 
     const getReferralUrl = () => {
         if (typeof window !== 'undefined' && meData?.codigo) {
@@ -305,7 +351,7 @@ export default function MisRecompensasPage() {
                                 )}
                                 Verificar código
                             </button>
-
+ 
                             <button
                                 type="button"
                                 onClick={handleSendOtp}
@@ -421,6 +467,54 @@ export default function MisRecompensasPage() {
                                 Compartir mi Enlace
                             </button>
                         </div>
+
+                        {/* Catálogo de Premios por Puntos */}
+                        {meData.puntosActivos && loyaltyRewards.length > 0 && (
+                            <div className="space-y-3">
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 pl-2">
+                                    <Coins size={14} className="text-amber-500" />
+                                    Canje de Premios del Club
+                                </h3>
+                                <div className="grid grid-cols-1 gap-3">
+                                    {loyaltyRewards.map((reward) => {
+                                        const tienePuntos = meData.puntos >= reward.costoPuntos;
+                                        return (
+                                            <div key={reward.id} className="bg-white border border-slate-100 rounded-3xl p-4 shadow-sm flex items-center justify-between gap-4">
+                                                <div className="min-w-0">
+                                                    <span className="text-[8px] font-black text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-md inline-block mb-1.5">
+                                                        CUESTA: {reward.costoPuntos} PUNTOS
+                                                    </span>
+                                                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-tight truncate">
+                                                        {reward.nombre}
+                                                    </h4>
+                                                    {reward.descripcion && (
+                                                        <p className="text-[9px] text-slate-450 font-semibold mt-1">
+                                                            {reward.descripcion}
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                <button
+                                                    onClick={() => handleRedeemReward(reward)}
+                                                    disabled={!tienePuntos || redeemLoading === reward.id}
+                                                    className="px-4 py-2 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-white shadow-sm shrink-0"
+                                                    style={{
+                                                        backgroundColor: tienePuntos ? primaryColor : '#94a3b8',
+                                                        boxShadow: tienePuntos ? `0 4px 6px -1px ${primaryColor}33` : 'none'
+                                                    }}
+                                                >
+                                                    {redeemLoading === reward.id ? (
+                                                        <Loader2 className="animate-spin" size={12} />
+                                                    ) : (
+                                                        'Canjear'
+                                                    )}
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Progreso de Campañas */}
                         <div className="space-y-3">

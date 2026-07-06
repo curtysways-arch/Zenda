@@ -20,7 +20,62 @@ export async function PATCH(
         const body = await req.json();
         const { estado, staffId, notas } = body;
 
-        // Verificar existencia del premio
+        // 1. Verificar primero si el id corresponde a un canje de puntos (LoyaltyRedemption)
+        const loyaltyRedemption = await (prisma as any).loyaltyRedemption.findFirst({
+            where: { id, negocioId },
+            include: {
+                Reward: true,
+                Negocio: true,
+                Usuario: true
+            }
+        });
+
+        if (loyaltyRedemption) {
+            const dataToUpdate: any = {
+                estado: estado || undefined,
+                notas: notas !== undefined ? notas : undefined,
+                updatedAt: new Date()
+            };
+
+            if (estado === "CANJEADO") {
+                dataToUpdate.fechaEntrega = new Date();
+                if (staffId) {
+                    dataToUpdate.staffId = staffId;
+                }
+            }
+
+            const updatedRed = await (prisma as any).loyaltyRedemption.update({
+                where: { id },
+                data: dataToUpdate,
+                include: {
+                    Usuario: true,
+                    Reward: true,
+                    Staff: true
+                }
+            });
+
+            // Enviar WhatsApp de confirmación de entrega de premio por puntos
+            if (estado === "CANJEADO" && updatedRed.Usuario?.phone) {
+                try {
+                    const staffName = updatedRed.Staff?.name ? ` por *${updatedRed.Staff.name}*` : "";
+                    const msg = `🎁 *¡Premio de Lealtad Entregado!* 🎁\n\nHola *${updatedRed.Usuario.nombre}*,\n\nConfirmamos la entrega física de tu premio:\n🏆 *"${updatedRed.Reward.nombre}"* (Canjeado por ${updatedRed.Reward.costoPuntos} pts)\n🏢 En: *${loyaltyRedemption.Negocio.nombre}*${staffName}.\n\n¡Gracias por tu preferencia! Sigue acumulando puntos en cada cita. 🚀`;
+                    await whatsappService.sendWhatsApp(updatedRed.Usuario.phone, msg, true, 'recompensa_entregada');
+                } catch (err) {
+                    console.error("[Puntos] Error al enviar WhatsApp de entrega:", err);
+                }
+            }
+
+            return NextResponse.json({
+                ...updatedRed,
+                tipoOrigen: "PUNTOS",
+                Campaign: {
+                    nombre: `Canje por puntos`,
+                    valorRecompensa: updatedRed.Reward.nombre
+                }
+            });
+        }
+
+        // 2. Si no es canje de puntos, procesar como premio de referido tradicional
         const reward = await prisma.referralReward.findFirst({
             where: { id, negocioId },
             include: {
@@ -56,7 +111,7 @@ export async function PATCH(
             }
         });
 
-        // Enviar notificación al cliente de que se entregó su premio
+        // Enviar notificación al cliente de que se entregó su premio de referido
         if (estado === "CANJEADO" && updated.Usuario?.phone) {
             try {
                 const staffName = updated.Staff?.name ? ` por *${updated.Staff.name}*` : "";
@@ -67,7 +122,10 @@ export async function PATCH(
             }
         }
 
-        return NextResponse.json(updated);
+        return NextResponse.json({
+            ...updated,
+            tipoOrigen: "REFERIDO"
+        });
     } catch (error: any) {
         console.error("Error updating reward status:", error);
         return NextResponse.json({ error: "Internal Error", details: error.message }, { status: 500 });

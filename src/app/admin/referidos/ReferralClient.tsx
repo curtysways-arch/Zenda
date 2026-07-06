@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Gift, Plus, Users, Award, History, ToggleLeft, ToggleRight, Check, Trash2, Edit2, Loader2, Calendar, UserCheck, ShieldAlert, Sparkles, Trophy, Settings, TrendingUp, BarChart2, PlusCircle, AlertCircle, Copy, Trash, ArrowLeft, Save } from 'lucide-react';
+import { Gift, Plus, Users, Award, History, ToggleLeft, ToggleRight, Check, Trash2, Edit2, Loader2, Calendar, UserCheck, ShieldAlert, Sparkles, Trophy, Settings, TrendingUp, BarChart2, PlusCircle, AlertCircle, Copy, Trash, ArrowLeft, Save, Coins } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -12,8 +12,8 @@ interface Staff {
 
 export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<'campaigns' | 'rewards' | 'coupons' | 'points' | 'automations' | 'ranking' | 'stats' | 'history'>('campaigns');
-    const [activeView, setActiveView] = useState<'list' | 'create-coupon' | 'adjust-points' | 'create-automation'>('list');
+    const [activeTab, setActiveTab] = useState<'campaigns' | 'rewards' | 'coupons' | 'points' | 'automations' | 'loyaltyRewards' | 'stats' | 'history'>('campaigns');
+    const [activeView, setActiveView] = useState<'list' | 'create-coupon' | 'adjust-points' | 'create-automation' | 'create-loyalty-reward'>('list');
 
     // Stats de Citiox
     const [stats, setStats] = useState<any>({
@@ -48,6 +48,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
     const [coupons, setCoupons] = useState<any[]>([]);
     const [automations, setAutomations] = useState<any[]>([]);
     const [pointsRankings, setPointsRankings] = useState<any[]>([]);
+    const [loyaltyRewards, setLoyaltyRewards] = useState<any[]>([]);
 
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -81,6 +82,14 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
     const [autoMsg, setAutoMsg] = useState('');
     const [autoPoints, setAutoPoints] = useState('');
 
+    // Estado del formulario de nuevo premio por puntos (Catálogo)
+    const [rewardName, setRewardName] = useState('');
+    const [rewardDesc, setRewardDesc] = useState('');
+    const [rewardPoints, setRewardPoints] = useState('');
+    const [rewardType, setRewardType] = useState('SERVICIO_GRATIS');
+    const [rewardValue, setRewardValue] = useState('');
+    const [rewardStock, setRewardStock] = useState('');
+
     useEffect(() => {
         const color = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
         if (color) setPrimaryColor(color);
@@ -91,7 +100,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [statsRes, campaignsRes, rewardsRes, historyRes, couponsRes, automationsRes, pointsRes, loyaltyStatsRes] = await Promise.all([
+            const [statsRes, campaignsRes, rewardsRes, historyRes, couponsRes, automationsRes, pointsRes, loyaltyStatsRes, loyaltyRewardsRes] = await Promise.all([
                 fetch('/api/admin/referrals/stats').then(res => res.json()),
                 fetch('/api/admin/referrals/campaigns').then(res => res.json()),
                 fetch('/api/admin/referrals/rewards').then(res => res.json()),
@@ -99,7 +108,8 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                 fetch('/api/admin/loyalty/coupons').then(res => res.json()).catch(() => []),
                 fetch('/api/admin/loyalty/automations').then(res => res.json()).catch(() => []),
                 fetch('/api/admin/loyalty/points').then(res => res.json()).catch(() => []),
-                fetch('/api/admin/loyalty/stats').then(res => res.json()).catch(() => null)
+                fetch('/api/admin/loyalty/stats').then(res => res.json()).catch(() => null),
+                fetch('/api/admin/loyalty/rewards').then(res => res.json()).catch(() => [])
             ]);
 
             if (statsRes.stats) {
@@ -112,6 +122,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
             setCoupons(couponsRes || []);
             setAutomations(automationsRes || []);
             setPointsRankings(pointsRes || []);
+            setLoyaltyRewards(loyaltyRewardsRes || []);
             if (loyaltyStatsRes) {
                 setLoyaltyStats(loyaltyStatsRes);
             }
@@ -282,6 +293,64 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
             }
         } catch (err) {
             console.error("Error:", err);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleCreateLoyaltyReward = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!rewardName || !rewardPoints) return;
+        setActionLoading('loyaltyReward');
+        try {
+            const res = await fetch('/api/admin/loyalty/rewards', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre: rewardName,
+                    descripcion: rewardDesc || null,
+                    costoPuntos: parseInt(rewardPoints),
+                    tipo: rewardType,
+                    valor: rewardValue || null,
+                    cantidadTotal: rewardStock ? parseInt(rewardStock) : null
+                })
+            });
+
+            if (res.ok) {
+                setActiveView('list');
+                setRewardName('');
+                setRewardDesc('');
+                setRewardPoints('');
+                setRewardType('SERVICIO_GRATIS');
+                setRewardValue('');
+                setRewardStock('');
+                fetchData();
+            } else {
+                const data = await res.json();
+                alert(data.error || "Error al crear premio por puntos.");
+            }
+        } catch (err) {
+            console.error("Error creating loyalty reward:", err);
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleDeleteLoyaltyReward = async (id: string) => {
+        if (!confirm("¿Estás seguro de eliminar este premio del catálogo?")) return;
+        setActionLoading(id);
+        try {
+            const res = await fetch(`/api/admin/loyalty/rewards/${id}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                fetchData();
+            } else {
+                const data = await res.json();
+                alert(data.error || "Error al eliminar premio.");
+            }
+        } catch (err) {
+            console.error("Error deleting loyalty reward:", err);
         } finally {
             setActionLoading(null);
         }
@@ -654,6 +723,131 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
         );
     }
 
+    // Formulario de Recompensas por Puntos (Catálogo) a Pantalla Completa
+    if (activeView === 'create-loyalty-reward') {
+        return (
+            <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 md:p-8 animate-in fade-in duration-300">
+                <div className="flex items-center gap-4 mb-8">
+                    <button
+                        onClick={() => setActiveView('list')}
+                        className="size-11 bg-white hover:bg-slate-100 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-600 transition-colors shadow-sm cursor-pointer"
+                    >
+                        <ArrowLeft size={16} />
+                    </button>
+                    <div>
+                        <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase italic flex items-center gap-2">
+                            <Coins style={{ color: primaryColor }} size={22} />
+                            Crear Premio de Catálogo
+                        </h1>
+                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                            Crea una recompensa que tus clientes puedan canjear a cambio de sus puntos
+                        </p>
+                    </div>
+                </div>
+
+                <form onSubmit={handleCreateLoyaltyReward} className="max-w-3xl bg-white border border-slate-100 rounded-[2.5rem] p-6 md:p-8 shadow-sm space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="md:col-span-2">
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Nombre del Premio *</label>
+                            <input
+                                type="text"
+                                required
+                                value={rewardName}
+                                onChange={(e) => setRewardName(e.target.value)}
+                                placeholder="Ej: Limpieza Dental Gratis o 20% DTO en Masajes"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Costo en Puntos *</label>
+                            <input
+                                type="number"
+                                required
+                                min={1}
+                                value={rewardPoints}
+                                onChange={(e) => setRewardPoints(e.target.value)}
+                                placeholder="Ej: 150"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Tipo de Premio</label>
+                            <select
+                                value={rewardType}
+                                onChange={(e) => setRewardType(e.target.value)}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            >
+                                <option value="SERVICIO_GRATIS">Servicio Gratis</option>
+                                <option value="PRODUCTO">Producto de Regalo</option>
+                                <option value="DESCUENTO">Descuento Promocional</option>
+                                <option value="PERSONALIZADO">Otro Premio</option>
+                            </select>
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Descripción</label>
+                            <input
+                                type="text"
+                                value={rewardDesc}
+                                onChange={(e) => setRewardDesc(e.target.value)}
+                                placeholder="Ej: Incluye valoración completa de cortesía"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Valor Asociado (Opcional)</label>
+                            <input
+                                type="text"
+                                value={rewardValue}
+                                onChange={(e) => setRewardValue(e.target.value)}
+                                placeholder="Ej: Monto del descuento o ID"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Límite de Stock (Opcional)</label>
+                            <input
+                                type="number"
+                                value={rewardStock}
+                                onChange={(e) => setRewardStock(e.target.value)}
+                                placeholder="Ej: 30 (Vacío para ilimitado)"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="pt-6 border-t border-slate-100 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setActiveView('list')}
+                            className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-transform active:scale-95 cursor-pointer"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={actionLoading === 'loyaltyReward'}
+                            className="flex items-center gap-2 px-6 py-4 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 disabled:opacity-50 cursor-pointer"
+                            style={{
+                                backgroundColor: primaryColor,
+                                boxShadow: `0 10px 15px -3px ${primaryColor}33`
+                            }}
+                        >
+                            {actionLoading === 'loyaltyReward' ? (
+                                <Loader2 className="animate-spin" size={14} />
+                            ) : (
+                                <Save size={14} />
+                            )}
+                            Crear Premio
+                        </button>
+                    </div>
+                </form>
+            </div>
+        );
+    }
+
     // ─── RENDER DE LA VISTA PRINCIPAL (LISTADOS) ──────────────────────────────────
     return (
         <div className="flex-1 overflow-y-auto bg-slate-50/50 p-4 md:p-8 animate-in fade-in duration-300">
@@ -723,6 +917,19 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                             Nueva Regla
                         </button>
                     )}
+                    {activeTab === 'loyaltyRewards' && (
+                        <button
+                            onClick={() => setActiveView('create-loyalty-reward')}
+                            className="flex items-center justify-center gap-2 px-5 py-3.5 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 text-center cursor-pointer"
+                            style={{
+                                backgroundColor: primaryColor,
+                                boxShadow: `0 10px 15px -3px ${primaryColor}33`
+                            }}
+                        >
+                            <Coins size={16} />
+                            Crear Premio
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -759,6 +966,15 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                     style={{ borderColor: activeTab === 'coupons' ? primaryColor : 'transparent' }}
                 >
                     Cupones
+                </button>
+                <button
+                    onClick={() => setActiveTab('loyaltyRewards')}
+                    className={`pb-4 text-xs font-black uppercase tracking-widest cursor-pointer border-b-2 transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                        activeTab === 'loyaltyRewards' ? 'border-[var(--primary-color)] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'
+                    }`}
+                    style={{ borderColor: activeTab === 'loyaltyRewards' ? primaryColor : 'transparent' }}
+                >
+                    Catálogo Puntos
                 </button>
                 <button
                     onClick={() => setActiveTab('points')}
@@ -853,7 +1069,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                                 </div>
                                                 <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
                                                     <span className="text-slate-400">Recompensa:</span>
-                                                    <span className="text-slate-850" style={{ color: primaryColor }}>{camp.valorRecompensa}</span>
+                                                    <span className="text-slate-855" style={{ color: primaryColor }}>{camp.valorRecompensa}</span>
                                                 </div>
                                                 {camp.valorIncentivo && (
                                                     <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
@@ -891,7 +1107,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                 <Award className="mx-auto text-slate-300 mb-4" size={40} />
                                 <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">No hay canjes pendientes</h3>
                                 <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto">
-                                    Cuando tus clientes alcancen la meta de sus campañas, sus premios listos para canjear aparecerán en esta lista.
+                                    Cuando tus clientes alcancen la meta o soliciten un canje por sus puntos, sus premios listos para entregar aparecerán aquí.
                                 </p>
                             </div>
                         ) : (
@@ -901,7 +1117,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                         <tr className="bg-slate-50 border-b border-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-wider">
                                             <th className="p-4 pl-6">Cliente</th>
                                             <th className="p-4">Premio</th>
-                                            <th className="p-4">Campaña</th>
+                                            <th className="p-4">Origen</th>
                                             <th className="p-4">Fecha</th>
                                             <th className="p-4 text-right pr-6">Acción</th>
                                         </tr>
@@ -914,7 +1130,13 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                                     <span className="text-[9px] text-slate-400 font-semibold mt-1 block">{rew.Usuario?.phone || 'Sin teléfono'}</span>
                                                 </td>
                                                 <td className="p-4 text-slate-900">{rew.Campaign?.valorRecompensa}</td>
-                                                <td className="p-4">{rew.Campaign?.nombre}</td>
+                                                <td className="p-4">
+                                                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                                                        rew.tipoOrigen === 'PUNTOS' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-pink-50 text-pink-600 border border-pink-100'
+                                                    }`}>
+                                                        {rew.tipoOrigen || 'REFERIDO'}
+                                                    </span>
+                                                </td>
                                                 <td className="p-4 text-[10px] text-slate-400 font-semibold">
                                                     {new Date(rew.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
                                                 </td>
@@ -994,6 +1216,78 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                                     </div>
                                                 )}
                                             </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )
+                    )}
+
+                    {/* LOYALTY REWARDS TAB (CATÁLOGO DE PUNTOS) */}
+                    {activeTab === 'loyaltyRewards' && (
+                        loyaltyRewards.length === 0 ? (
+                            <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm">
+                                <Coins className="mx-auto text-slate-300 mb-4" size={40} />
+                                <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">Catálogo de Puntos Vacío</h3>
+                                <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto mb-6">
+                                    Crea premios (como servicios gratuitos o regalos) que tus clientes puedan canjear a cambio de sus puntos.
+                                </p>
+                                <button
+                                    onClick={() => setActiveView('create-loyalty-reward')}
+                                    className="inline-flex items-center gap-2 px-5 py-3 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg transition-transform active:scale-95 cursor-pointer"
+                                    style={{
+                                        backgroundColor: primaryColor,
+                                        boxShadow: `0 10px 15px -3px ${primaryColor}33`
+                                    }}
+                                >
+                                    <PlusCircle size={16} />
+                                    Crear mi Primer Premio
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                {loyaltyRewards.map((reward) => (
+                                    <div key={reward.id} className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm flex flex-col justify-between relative hover:shadow-md transition-shadow">
+                                        <div>
+                                            <div className="flex justify-between items-start mb-3">
+                                                <span className="text-[8px] font-black text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-md">
+                                                    VALOR: {reward.costoPuntos} PUNTOS
+                                                </span>
+                                                <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
+                                                    reward.activa ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
+                                                }`}>
+                                                    {reward.activa ? 'ACTIVO' : 'PAUSADO'}
+                                                </span>
+                                            </div>
+
+                                            <h3 className="text-sm font-black text-slate-900 tracking-wider uppercase mb-1">
+                                                {reward.nombre}
+                                            </h3>
+                                            <p className="text-[10px] text-slate-450 font-semibold leading-relaxed mb-6">
+                                                {reward.descripcion || 'Sin descripción'}
+                                            </p>
+
+                                            <div className="space-y-2 bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                                                <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                                    <span className="text-slate-400">Tipo de Premio:</span>
+                                                    <span className="text-slate-800">{reward.tipo}</span>
+                                                </div>
+                                                {reward.cantidadTotal && (
+                                                    <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
+                                                        <span className="text-slate-400">Stock disponible:</span>
+                                                        <span className="text-slate-850">{reward.cantidadDisponible} / {reward.cantidadTotal}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-2.5 mt-6 pt-4 border-t border-slate-100">
+                                            <button
+                                                onClick={() => handleDeleteLoyaltyReward(reward.id)}
+                                                className="w-full py-3 bg-rose-50 hover:bg-rose-100 border border-rose-200/40 rounded-xl text-[9px] font-black uppercase tracking-widest text-rose-600 transition-colors cursor-pointer text-center"
+                                            >
+                                                Eliminar Premio
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
@@ -1120,7 +1414,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                 </div>
                                 <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">ROI Estimado</span>
-                                    <h4 className="text-2xl font-black text-slate-900 mt-2" style={{ color: primaryColor }}>{loyaltyStats.summary.roiEstimado}%</h4>
+                                    <h4 className="text-2xl font-black text-slate-900 mt-2" style={{ color: primaryColor }}>{loyaltyStats.summary.roiEstimated || loyaltyStats.summary.roiEstimado}%</h4>
                                 </div>
                                 <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Puntos Otorgados</span>
@@ -1151,7 +1445,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                                     </span>
                                                     <div>
                                                         <span className="block text-xs font-black text-slate-800">{ref.nombre}</span>
-                                                        <span className="text-[9px] text-slate-450 font-bold">{ref.telefono}</span>
+                                                        <span className="text-[9px] text-slate-455 font-bold">{ref.telefono}</span>
                                                     </div>
                                                 </div>
                                                 <span className="text-xs font-black text-emerald-600">{ref.cantidad} recomendados</span>
