@@ -127,7 +127,7 @@ export class NotificationService {
 
         // Canal APP: Empujar vía SSE
         if (channels.includes('APP') && notificationId) {
-            // Publicar el evento
+            // Publicar el evento SSE
             this.publishRealtime(negocioId, userId || 'ALL', {
                 tipoEvento: 'NOTIFICATION',
                 payload: {
@@ -155,7 +155,6 @@ export class NotificationService {
         // Canal WHATSAPP
         if (channels.includes('WHATSAPP') && usuario.phone) {
             try {
-                // Limpiar el teléfono
                 const dest = usuario.phone.replace(/\D/g, '');
                 const cleanMsg = `*${titulo}*\n${descripcion}`;
                 await whatsappService.sendWhatsApp(dest, cleanMsg, true, 'general');
@@ -165,10 +164,10 @@ export class NotificationService {
             }
         }
 
-        // Canal PUSH (Firebase)
-        if (channels.includes('PUSH')) {
+        // Canal PUSH (Firebase) — se dispara cuando APP o PUSH está seleccionado
+        // APP implica notificación interna + push al dispositivo físico
+        if (channels.includes('PUSH') || channels.includes('APP')) {
             try {
-                // Obtener tokens push registrados para el usuario
                 const pushTokens = await prisma.pushToken.findMany({
                     where: { userId },
                     select: { token: true }
@@ -176,7 +175,8 @@ export class NotificationService {
 
                 if (pushTokens.length > 0 && admin.apps.length > 0) {
                     const tokens = pushTokens.map(t => t.token);
-                    const payload = {
+                    await admin.messaging().sendEachForMulticast({
+                        tokens,
                         notification: {
                             title: titulo,
                             body: descripcion,
@@ -187,13 +187,6 @@ export class NotificationService {
                             actionPayload: actionPayload ? JSON.stringify(actionPayload) : '',
                             click_action: 'FLUTTER_NOTIFICATION_CLICK'
                         }
-                    };
-                    
-                    // Enviar multicast si hay múltiples tokens
-                    await admin.messaging().sendEachForMulticast({
-                        tokens,
-                        notification: payload.notification,
-                        data: payload.data
                     });
                     this.trackMetricDirectly(notificationId, 'entregadas');
                 }

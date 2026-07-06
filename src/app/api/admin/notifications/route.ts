@@ -25,12 +25,12 @@ export async function GET(req: NextRequest) {
         const page = parseInt(searchParams.get("page") || "1", 10);
         const skip = (page - 1) * limit;
 
-        // Listar notificaciones enviadas (globales o con segmentaciones)
+        // Listar notificaciones enviadas desde el panel de comunicación (todos los tipos manuales)
+        const ADMIN_TIPOS = ['AVISO', 'PROMO', 'NOTICIA', 'RECORDATORIO', 'PREMIO', 'CAMPANA', 'AUTOMATIZACION'];
         const notifications = await prisma.notification.findMany({
             where: {
                 negocioId,
-                // Filtramos por notificaciones enviadas por campañas (tipo RECORDATORIO, AVISO, PROMO, NOTICIA)
-                tipo: { in: ['AVISO', 'PROMO', 'NOTICIA', 'RECORDATORIO'] }
+                tipo: { in: ADMIN_TIPOS }
             },
             orderBy: { createdAt: 'desc' },
             skip,
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
         const total = await prisma.notification.count({
             where: {
                 negocioId,
-                tipo: { in: ['AVISO', 'PROMO', 'NOTICIA', 'RECORDATORIO'] }
+                tipo: { in: ADMIN_TIPOS }
             }
         });
 

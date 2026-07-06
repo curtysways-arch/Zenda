@@ -1,11 +1,177 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
-    MessageSquare, Send, Calendar, Users, Info, AlertTriangle, CheckCircle, 
-    Gift, Sparkles, Loader2, ArrowRight, TrendingUp, BarChart2, Bell, Check, Trophy 
+    MessageSquare, Send, Bell, Gift, Trophy, Calendar,
+    Sparkles, Loader2, BarChart2, Link2, X, ChevronDown,
+    ExternalLink, Check
 } from 'lucide-react';
 import { useConfirm } from '@/components/admin/ConfirmContext';
+
+// ─── Selector de Link (igual al de páginas/contenido) ─────────────────────────
+interface LinkOption {
+    label: string;
+    value: string;
+    group?: string;
+    isCustom?: boolean;
+}
+
+function LinkSelector({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+    const [open, setOpen] = useState(false);
+    const [customUrl, setCustomUrl] = useState('');
+    const [showCustom, setShowCustom] = useState(false);
+    const [services, setServices] = useState<any[]>([]);
+    const [promotions, setPromotions] = useState<any[]>([]);
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [sRes, pRes] = await Promise.all([
+                    fetch('/api/services'),
+                    fetch('/api/admin/loyalty/rewards')
+                ]);
+                if (sRes.ok) setServices(await sRes.json());
+                if (pRes.ok) {
+                    const pData = await pRes.json();
+                    setPromotions(pData?.rewards || []);
+                }
+            } catch {}
+        };
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const staticOptions: LinkOption[] = [
+        { label: 'Sin enlace de destino', value: '', group: 'General' },
+        { label: 'Página de Inicio', value: '/', group: 'General' },
+        { label: 'Mis Reservas', value: '/mis-reservas', group: 'General' },
+        { label: 'Mi Perfil y Puntos', value: '/perfil', group: 'General' },
+        { label: 'Mis Referidos y Premios', value: '/referidos', group: 'General' },
+        { label: 'Sección Servicios', value: '/servicios', group: 'General' },
+        { label: 'Mis Notificaciones', value: '/notificaciones', group: 'General' },
+    ];
+
+    const allOptions = [
+        ...staticOptions,
+        ...services.map((s: any) => ({ label: s.nombre, value: `/servicio/${s.id}`, group: 'Servicios' })),
+        ...promotions.map((p: any) => ({ label: p.nombre || p.titulo, value: `/promo/${p.id}`, group: 'Premios' })),
+        { label: 'Escribir URL personalizada...', value: '__custom__', group: 'Personalizado', isCustom: true }
+    ];
+
+    const grouped = allOptions.reduce((acc: Record<string, LinkOption[]>, opt) => {
+        const g = opt.group || 'General';
+        if (!acc[g]) acc[g] = [];
+        acc[g].push(opt);
+        return acc;
+    }, {});
+
+    const selectedLabel = allOptions.find(o => o.value === value)?.label || (value ? value : 'Sin enlace');
+
+    const handleSelect = (opt: LinkOption) => {
+        if (opt.isCustom) {
+            setShowCustom(true);
+            setOpen(false);
+        } else {
+            onChange(opt.value);
+            setShowCustom(false);
+            setOpen(false);
+        }
+    };
+
+    const handleCustomConfirm = () => {
+        onChange(customUrl);
+        setShowCustom(false);
+    };
+
+    return (
+        <div ref={ref} className="relative">
+            <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest mb-2 pl-1 block">
+                Botón de Acción / Enlace de Destino (Opcional)
+            </label>
+            <button
+                type="button"
+                onClick={() => setOpen(!open)}
+                className="w-full flex items-center justify-between bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-xs font-semibold focus:outline-none hover:border-slate-200 transition-colors"
+            >
+                <span className="flex items-center gap-2 text-slate-700 truncate">
+                    <Link2 size={13} className="text-slate-400 shrink-0" />
+                    {value ? selectedLabel : <span className="text-slate-400">Sin enlace de destino</span>}
+                </span>
+                <ChevronDown size={14} className={`text-slate-400 transition-transform shrink-0 ${open ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Dropdown */}
+            {open && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden">
+                    <div className="max-h-60 overflow-y-auto py-2">
+                        {Object.entries(grouped).map(([group, opts]) => (
+                            <div key={group}>
+                                <div className="px-4 py-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50/50">
+                                    {group}
+                                </div>
+                                {opts.map(opt => (
+                                    <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => handleSelect(opt)}
+                                        className={`w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-slate-50 flex items-center justify-between transition-colors ${opt.isCustom ? 'text-blue-600' : 'text-slate-700'}`}
+                                    >
+                                        <span>{opt.label}</span>
+                                        {value === opt.value && <Check size={12} className="text-emerald-500" />}
+                                    </button>
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Input personalizado */}
+            {showCustom && (
+                <div className="mt-2 flex gap-2">
+                    <input
+                        type="url"
+                        placeholder="https://..."
+                        value={customUrl}
+                        onChange={(e) => setCustomUrl(e.target.value)}
+                        className="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2.5 text-xs font-semibold focus:outline-none focus:border-slate-300"
+                    />
+                    <button
+                        type="button"
+                        onClick={handleCustomConfirm}
+                        className="px-3 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-xl text-xs font-black transition-colors hover:bg-emerald-100"
+                    >
+                        OK
+                    </button>
+                    <button type="button" onClick={() => setShowCustom(false)} className="p-2 text-slate-400 hover:text-slate-600">
+                        <X size={14} />
+                    </button>
+                </div>
+            )}
+
+            {/* Mostrar link seleccionado */}
+            {value && (
+                <div className="mt-1.5 flex items-center gap-1.5 pl-1">
+                    <ExternalLink size={10} className="text-slate-400" />
+                    <span className="text-[10px] text-slate-400 font-semibold truncate">{value}</span>
+                    <button type="button" onClick={() => onChange('')} className="text-slate-300 hover:text-red-400 ml-auto">
+                        <X size={10} />
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ─── Página Principal ──────────────────────────────────────────────────────────
 
 export default function ComunicacionAdminPage() {
     const { confirm } = useConfirm();
@@ -22,6 +188,7 @@ export default function ComunicacionAdminPage() {
     const [channels, setChannels] = useState<string[]>(['APP']);
     const [scheduledFor, setScheduledFor] = useState('');
     const [specificUserId, setSpecificUserId] = useState('');
+    const [actionUrl, setActionUrl] = useState(''); // Link de destino
 
     // Datos auxiliares
     const [clientes, setClientes] = useState<any[]>([]);
@@ -30,7 +197,6 @@ export default function ComunicacionAdminPage() {
     const [loadingHistory, setLoadingHistory] = useState(true);
     const [sending, setSending] = useState(false);
 
-    // Cargar perfil del negocio para diseño HSL
     useEffect(() => {
         const fetchNegocio = async () => {
             try {
@@ -44,7 +210,6 @@ export default function ComunicacionAdminPage() {
         fetchNegocio();
     }, []);
 
-    // Cargar historial de notificaciones
     const fetchHistory = async () => {
         setLoadingHistory(true);
         try {
@@ -53,47 +218,39 @@ export default function ComunicacionAdminPage() {
                 const data = await res.json();
                 setHistory(data.items || []);
             }
-        } catch (err) {
-            console.error("Error fetching notification history:", err);
-        } finally {
-            setLoadingHistory(false);
-        }
+        } catch {}
+        finally { setLoadingHistory(false); }
     };
 
-    // Cargar clientes para selección manual
     const fetchClients = async () => {
         setLoadingClients(true);
         try {
             const res = await fetch('/api/clientes');
-            if (res.ok) {
-                const data = await res.json();
-                setClientes(data || []);
-            }
-        } catch (err) {
-            console.error("Error fetching clients:", err);
-        } finally {
-            setLoadingClients(false);
-        }
+            if (res.ok) setClientes((await res.json()) || []);
+        } catch {}
+        finally { setLoadingClients(false); }
     };
 
-    useEffect(() => {
-        fetchHistory();
-    }, []);
+    useEffect(() => { fetchHistory(); }, []);
+    useEffect(() => { if (recipientType === 'USER') fetchClients(); }, [recipientType]);
 
-    useEffect(() => {
-        if (recipientType === 'USER') {
-            fetchClients();
-        }
-    }, [recipientType]);
+    // Calcular actionType y actionPayload según link seleccionado
+    const buildAction = () => {
+        if (!actionUrl) return { actionType: 'VER_PERFIL', actionPayload: { screen: 'home' } };
+        if (actionUrl.startsWith('/servicio/')) return { actionType: 'ABRIR_URL', actionPayload: { url: actionUrl, screen: 'service' } };
+        if (actionUrl.startsWith('/referidos')) return { actionType: 'VER_CAMPANA', actionPayload: { screen: 'campaign' } };
+        if (actionUrl.startsWith('/mis-reservas')) return { actionType: 'VER_RESERVA', actionPayload: { screen: 'appointment' } };
+        if (actionUrl.startsWith('/notificaciones')) return { actionType: 'VER_PERFIL', actionPayload: { screen: 'notifications' } };
+        return { actionType: 'ABRIR_URL', actionPayload: { url: actionUrl } };
+    };
 
-    // Manejar Envío
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!titulo || !descripcion) return;
 
         const isOk = await confirm(
-            scheduledFor 
-                ? `¿Deseas programar este mensaje para el ${new Date(scheduledFor).toLocaleString()}?` 
+            scheduledFor
+                ? `¿Deseas programar este mensaje para el ${new Date(scheduledFor).toLocaleString()}?`
                 : '¿Deseas enviar esta notificación ahora mismo a todos los destinatarios seleccionados?',
             {
                 title: scheduledFor ? 'Programar Notificación' : 'Enviar Notificación',
@@ -105,6 +262,7 @@ export default function ComunicacionAdminPage() {
 
         setSending(true);
         try {
+            const { actionType, actionPayload } = buildAction();
             const payload: any = {
                 tipo,
                 categoria,
@@ -115,8 +273,8 @@ export default function ComunicacionAdminPage() {
                 recipientType,
                 channels,
                 scheduledFor: scheduledFor || undefined,
-                actionType: categoria === 'PREMIOS' ? 'VER_PREMIO' : categoria === 'CAMPANAS' ? 'VER_CAMPANA' : 'VER_PERFIL',
-                actionPayload: { screen: categoria === 'PREMIOS' ? 'reward' : categoria === 'CAMPANAS' ? 'campaign' : 'profile' }
+                actionType,
+                actionPayload
             };
 
             if (recipientType === 'USER' && specificUserId) {
@@ -130,11 +288,11 @@ export default function ComunicacionAdminPage() {
             });
 
             if (res.ok) {
-                // Resetear
                 setTitulo('');
                 setDescripcion('');
                 setScheduledFor('');
                 setSpecificUserId('');
+                setActionUrl('');
                 fetchHistory();
                 alert(scheduledFor ? 'Notificación programada con éxito' : 'Notificación enviada con éxito');
             } else {
@@ -149,10 +307,8 @@ export default function ComunicacionAdminPage() {
     };
 
     const toggleChannel = (channel: string) => {
-        setChannels(prev => 
-            prev.includes(channel) 
-                ? prev.filter(c => c !== channel) 
-                : [...prev, channel]
+        setChannels(prev =>
+            prev.includes(channel) ? prev.filter(c => c !== channel) : [...prev, channel]
         );
     };
 
@@ -170,7 +326,7 @@ export default function ComunicacionAdminPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Formulario de Redacción */}
+                {/* ── Formulario ─────────────────────────────────────────────── */}
                 <div className="lg:col-span-2 bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6">
                     <h3 className="text-base font-black text-slate-900 uppercase tracking-tight flex items-center gap-2 border-b border-slate-50 pb-4">
                         <Sparkles size={18} className="text-amber-500" />
@@ -182,11 +338,10 @@ export default function ComunicacionAdminPage() {
                             {/* Categoría */}
                             <div className="flex flex-col">
                                 <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest mb-2 pl-1">Categoría</label>
-                                <select 
+                                <select
                                     value={categoria}
                                     onChange={(e) => {
                                         setCategoria(e.target.value);
-                                        // Ajustar tipo y icono por defecto
                                         if (e.target.value === 'PREMIOS') { setTipo('PREMIO'); setIcono('Gift'); }
                                         else if (e.target.value === 'CAMPANAS') { setTipo('CAMPANA'); setIcono('Trophy'); }
                                         else if (e.target.value === 'RESERVAS') { setTipo('RESERVA'); setIcono('Calendar'); }
@@ -202,10 +357,10 @@ export default function ComunicacionAdminPage() {
                                 </select>
                             </div>
 
-                            {/* Prioridad Visual */}
+                            {/* Prioridad */}
                             <div className="flex flex-col">
                                 <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest mb-2 pl-1">Prioridad / Enfoque</label>
-                                <select 
+                                <select
                                     value={prioridad}
                                     onChange={(e) => setPrioridad(e.target.value)}
                                     className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 text-xs font-semibold focus:outline-none focus:border-slate-200"
@@ -221,8 +376,8 @@ export default function ComunicacionAdminPage() {
                         {/* Destinatarios */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div className="flex flex-col">
-                                <label className="text-[10px] font-black text-slate-455 uppercase tracking-widest mb-2 pl-1">Destinatarios Segmentados</label>
-                                <select 
+                                <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest mb-2 pl-1">Destinatarios Segmentados</label>
+                                <select
                                     value={recipientType}
                                     onChange={(e) => setRecipientType(e.target.value)}
                                     className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 text-xs font-semibold focus:outline-none focus:border-slate-200"
@@ -243,7 +398,7 @@ export default function ComunicacionAdminPage() {
                                             <Loader2 className="animate-spin text-slate-400" size={16} />
                                         </div>
                                     ) : (
-                                        <select 
+                                        <select
                                             value={specificUserId}
                                             onChange={(e) => setSpecificUserId(e.target.value)}
                                             className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 text-xs font-semibold focus:outline-none focus:border-slate-200"
@@ -258,53 +413,47 @@ export default function ComunicacionAdminPage() {
                             )}
                         </div>
 
-                        {/* Canales de envío */}
+                        {/* Canales */}
                         <div className="flex flex-col">
                             <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest mb-2.5 pl-1">Canales de Comunicación</label>
-                            <div className="flex gap-4">
+                            <div className="flex gap-3 flex-wrap">
                                 <button
                                     type="button"
                                     onClick={() => toggleChannel('APP')}
-                                    className={`px-4 py-3 rounded-2xl border text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all active:scale-95`}
+                                    className="px-4 py-3 rounded-2xl border text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all active:scale-95"
                                     style={channels.includes('APP') ? {
-                                        backgroundColor: `${primaryColor}10`,
+                                        backgroundColor: `${primaryColor}15`,
                                         borderColor: primaryColor,
                                         color: primaryColor
-                                    } : {
-                                        backgroundColor: '#f8fafc',
-                                        borderColor: '#e2e8f0',
-                                        color: '#64748b'
-                                    }}
+                                    } : { backgroundColor: '#f8fafc', borderColor: '#e2e8f0', color: '#64748b' }}
                                 >
                                     <Bell size={14} />
-                                    Centro Actividad App
+                                    App + Push
                                 </button>
-
                                 <button
                                     type="button"
                                     onClick={() => toggleChannel('WHATSAPP')}
-                                    className={`px-4 py-3 rounded-2xl border text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all active:scale-95`}
+                                    className="px-4 py-3 rounded-2xl border text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all active:scale-95"
                                     style={channels.includes('WHATSAPP') ? {
                                         backgroundColor: '#e8f5e9',
                                         borderColor: '#2e7d32',
                                         color: '#2e7d32'
-                                    } : {
-                                        backgroundColor: '#f8fafc',
-                                        borderColor: '#e2e8f0',
-                                        color: '#64748b'
-                                    }}
+                                    } : { backgroundColor: '#f8fafc', borderColor: '#e2e8f0', color: '#64748b' }}
                                 >
                                     <MessageSquare size={14} />
                                     WhatsApp Oficial
                                 </button>
                             </div>
+                            <p className="text-[9px] text-slate-400 font-medium pl-1 mt-2">
+                                "App + Push" envía al Centro de Actividad y dispara la notificación push en el celular del cliente.
+                            </p>
                         </div>
 
                         {/* Título */}
                         <div className="flex flex-col">
                             <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest mb-2 pl-1">Título del Mensaje</label>
-                            <input 
-                                type="text" 
+                            <input
+                                type="text"
                                 placeholder="Ej: 🎉 ¡Feliz Cumpleaños! Reclama tu regalo..."
                                 value={titulo}
                                 onChange={(e) => setTitulo(e.target.value)}
@@ -314,10 +463,10 @@ export default function ComunicacionAdminPage() {
                             />
                         </div>
 
-                        {/* Descripción / Mensaje */}
+                        {/* Descripción */}
                         <div className="flex flex-col">
                             <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest mb-2 pl-1">Contenido / Descripción</label>
-                            <textarea 
+                            <textarea
                                 placeholder="Escribe el cuerpo del mensaje. Puedes usar emojis."
                                 value={descripcion}
                                 onChange={(e) => setDescripcion(e.target.value)}
@@ -327,11 +476,14 @@ export default function ComunicacionAdminPage() {
                             />
                         </div>
 
-                        {/* Programar para después */}
+                        {/* ── SELECTOR DE LINK ───────────────────────────────── */}
+                        <LinkSelector value={actionUrl} onChange={setActionUrl} />
+
+                        {/* Programar */}
                         <div className="flex flex-col">
                             <label className="text-[10px] font-black text-slate-450 uppercase tracking-widest mb-2 pl-1">Programar Envío (Opcional)</label>
-                            <input 
-                                type="datetime-local" 
+                            <input
+                                type="datetime-local"
                                 value={scheduledFor}
                                 onChange={(e) => setScheduledFor(e.target.value)}
                                 className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 text-xs font-semibold focus:outline-none focus:border-slate-200"
@@ -339,7 +491,7 @@ export default function ComunicacionAdminPage() {
                             <span className="text-[9px] text-slate-400 font-medium pl-1 mt-1">Déjalo en blanco para enviar de forma inmediata.</span>
                         </div>
 
-                        {/* Botón de Enviar */}
+                        {/* Botón Enviar */}
                         <button
                             type="submit"
                             disabled={sending}
@@ -358,30 +510,27 @@ export default function ComunicacionAdminPage() {
                     </form>
                 </div>
 
-                {/* Previsualización en Tiempo Real */}
-                <div className="bg-slate-900 rounded-[2.5rem] p-6 text-white h-fit shadow-xl border border-slate-800 space-y-6 relative overflow-hidden">
+                {/* ── Previsualización ─────────────────────────────────────── */}
+                <div className="bg-slate-900 rounded-[2.5rem] p-6 text-white h-fit shadow-xl border border-slate-800 space-y-5 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl" />
-                    
                     <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 border-b border-slate-800 pb-4">
                         📱 Vista Previa en Móvil
                     </h3>
 
-                    <div className="bg-slate-850 rounded-[2rem] p-4 border border-slate-800 shadow-inner flex flex-col gap-3 relative">
+                    <div className="bg-slate-850 rounded-[2rem] p-4 border border-slate-800 flex flex-col gap-3">
                         <div className="flex items-center justify-between border-b border-slate-800/50 pb-2">
                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Hoy</span>
                             <span className="text-[8px] text-slate-500 font-bold">Ahora</span>
                         </div>
-
                         <div className="flex gap-3">
                             <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700">
-                                {categoria === 'PREMIOS' ? <Gift size={16} className="text-emerald-400" /> : 
-                                 categoria === 'CAMPANAS' ? <Trophy size={16} className="text-amber-400" /> : 
-                                 categoria === 'RESERVAS' ? <Calendar size={16} className="text-sky-400" /> : 
-                                 <Bell size={16} className="text-slate-300" />}
+                                {categoria === 'PREMIOS' ? <Gift size={16} className="text-emerald-400" /> :
+                                    categoria === 'CAMPANAS' ? <Trophy size={16} className="text-amber-400" /> :
+                                        categoria === 'RESERVAS' ? <Calendar size={16} className="text-sky-400" /> :
+                                            <Bell size={16} className="text-slate-300" />}
                             </div>
-
                             <div className="flex-1 min-w-0">
-                                <span className="text-[8px] font-black uppercase tracking-wider text-pink-450 block mb-0.5">{categoria}</span>
+                                <span className="text-[8px] font-black uppercase tracking-wider text-pink-400 block mb-0.5">{categoria}</span>
                                 <h4 className="text-xs font-bold text-white uppercase tracking-tight truncate leading-none">
                                     {titulo || 'Escribe un Título...'}
                                 </h4>
@@ -390,32 +539,33 @@ export default function ComunicacionAdminPage() {
                                 </p>
                             </div>
                         </div>
-
-                        {/* Botón de acción simulado */}
-                        <div className="border-t border-slate-800/50 pt-2.5 flex items-center justify-end">
-                            <span className="text-[8px] font-black uppercase tracking-widest px-3 py-1 bg-slate-800 text-white rounded-lg border border-slate-700">
-                                Action Button
-                            </span>
-                        </div>
+                        {actionUrl && (
+                            <div className="border-t border-slate-800/50 pt-2.5 flex items-center justify-end gap-1.5">
+                                <ExternalLink size={9} className="text-slate-500" />
+                                <span className="text-[8px] font-bold text-slate-500 truncate">{actionUrl}</span>
+                                <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-1 bg-slate-800 text-white rounded-lg border border-slate-700 ml-auto">
+                                    Ir Ahora →
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* Historial de Notificaciones Enviadas */}
+            {/* ── Historial ──────────────────────────────────────────────────── */}
             <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6">
                 <h3 className="text-base font-black text-slate-900 uppercase tracking-tight flex items-center gap-2 pb-2">
                     <BarChart2 size={18} className="text-slate-700" />
-                    Historial de Notificaciones & Tasa de Apertura (ROI)
+                    Historial & Tasa de Apertura
                 </h3>
 
                 {loadingHistory ? (
                     <div className="py-12 flex flex-col items-center justify-center gap-3">
                         <Loader2 className="animate-spin text-slate-400" size={24} style={{ color: primaryColor }} />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Cargando historial...</span>
                     </div>
                 ) : history.length === 0 ? (
                     <div className="text-center py-10 border border-dashed border-slate-100 rounded-3xl">
-                        <p className="text-xs text-slate-400 font-semibold">No se han registrado envíos de campañas de mensajería todavía.</p>
+                        <p className="text-xs text-slate-400 font-semibold">No se han registrado envíos todavía.</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -425,10 +575,10 @@ export default function ComunicacionAdminPage() {
                                     <th className="py-3 px-4">Fecha</th>
                                     <th className="py-3 px-4">Mensaje</th>
                                     <th className="py-3 px-4">Segmento</th>
-                                    <th className="py-3 px-4">Despachados</th>
-                                    <th className="py-3 px-4">Vistos (Aperturas)</th>
+                                    <th className="py-3 px-4">Enviadas</th>
+                                    <th className="py-3 px-4">Vistas</th>
                                     <th className="py-3 px-4">Clics</th>
-                                    <th className="py-3 px-4">Tasa de Apertura</th>
+                                    <th className="py-3 px-4">Apertura</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -436,7 +586,7 @@ export default function ComunicacionAdminPage() {
                                     const ctr = n.metricas.enviadas > 0 ? (n.metricas.vistas / n.metricas.enviadas * 100).toFixed(1) : '0.0';
                                     return (
                                         <tr key={n.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                                            <td className="py-3.5 px-4 font-semibold text-slate-500 shrink-0">
+                                            <td className="py-3.5 px-4 font-semibold text-slate-500 whitespace-nowrap">
                                                 {new Date(n.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                             </td>
                                             <td className="py-3.5 px-4 max-w-xs">
@@ -448,22 +598,16 @@ export default function ComunicacionAdminPage() {
                                                     {n.recipientType}
                                                 </span>
                                             </td>
-                                            <td className="py-3.5 px-4 font-bold text-slate-700">
-                                                {n.metricas.enviadas}
-                                            </td>
-                                            <td className="py-3.5 px-4 font-bold text-slate-700">
-                                                {n.metricas.vistas}
-                                            </td>
-                                            <td className="py-3.5 px-4 font-bold text-slate-700">
-                                                {n.metricas.clics}
-                                            </td>
+                                            <td className="py-3.5 px-4 font-bold text-slate-700">{n.metricas.enviadas}</td>
+                                            <td className="py-3.5 px-4 font-bold text-slate-700">{n.metricas.vistas}</td>
+                                            <td className="py-3.5 px-4 font-bold text-slate-700">{n.metricas.clics}</td>
                                             <td className="py-3.5 px-4">
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-black text-slate-900">{ctr}%</span>
                                                     <div className="w-16 bg-slate-100 h-1.5 rounded-full overflow-hidden shrink-0">
-                                                        <div 
-                                                            className="h-full rounded-full" 
-                                                            style={{ 
+                                                        <div
+                                                            className="h-full rounded-full"
+                                                            style={{
                                                                 width: `${Math.min(100, parseFloat(ctr))}%`,
                                                                 backgroundColor: parseFloat(ctr) > 40 ? '#10b981' : parseFloat(ctr) > 15 ? primaryColor : '#f59e0b'
                                                             }}
