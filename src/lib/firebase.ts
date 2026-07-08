@@ -169,10 +169,41 @@ export const getFcmToken = async () => {
     // Registrar el Service Worker unificado de la PWA (/sw.js) que importa dinámicamente a firebase-messaging-sw.js
     let serviceWorkerRegistration;
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-        serviceWorkerRegistration = await navigator.serviceWorker.register('/sw.js', {
-            scope: '/'
-        });
-        console.log("[FCM Client] Service Worker unificado (/sw.js) registrado con éxito.");
+        try {
+            // 1. Limpieza activa: buscar y desregistrar Service Workers obsoletos o en conflicto
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (const registration of registrations) {
+                const scriptUrl = registration.active?.scriptURL || registration.installing?.scriptURL || registration.waiting?.scriptURL || '';
+                if (scriptUrl.includes('firebase-messaging-sw.js')) {
+                    console.log(`[FCM Client] Desregistrando Service Worker obsoleto conflictivo: ${scriptUrl}`);
+                    await registration.unregister();
+                }
+            }
+
+            // 2. Registrar el Service Worker unificado
+            serviceWorkerRegistration = await navigator.serviceWorker.register('/sw.js', {
+                scope: '/'
+            });
+            console.log("[FCM Client] Service Worker unificado (/sw.js) registrado con éxito.");
+
+            // 3. Forzar regeneración del token FCM si es la primera vez con la arquitectura unificada (v3)
+            const CURRENT_SW_VERSION = 'v3';
+            const localVersion = localStorage.getItem('fcm_sw_version');
+            if (localVersion !== CURRENT_SW_VERSION) {
+                console.log(`[FCM Client] Nueva versión de arquitectura SW (${CURRENT_SW_VERSION}). Purgando token antiguo...`);
+                try {
+                    // Importar deleteToken dinámicamente o llamarlo directamente
+                    const { deleteToken } = await import('firebase/messaging');
+                    await deleteToken(messaging);
+                    console.log("[FCM Client] Token FCM anterior eliminado con éxito.");
+                } catch (delError) {
+                    console.warn("[FCM Client] No se pudo borrar el token FCM antiguo (puede que no existiera aún):", delError);
+                }
+                localStorage.setItem('fcm_sw_version', CURRENT_SW_VERSION);
+            }
+        } catch (swError) {
+            console.error("[FCM Client] Error al gestionar registros de Service Worker:", swError);
+        }
     }
 
     const currentToken = await getToken(messaging, { 
