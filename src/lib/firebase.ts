@@ -170,24 +170,18 @@ export const getFcmToken = async () => {
     let serviceWorkerRegistration;
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
         try {
-            // 1. Limpieza activa (no bloqueante) de Service Workers obsoletos
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                for (const registration of registrations) {
-                    const scriptUrl = registration.active?.scriptURL || registration.installing?.scriptURL || registration.waiting?.scriptURL || '';
-                    if (scriptUrl.includes('firebase-messaging-sw.js')) {
-                        console.log(`[FCM Client] Desregistrando Service Worker obsoleto de forma asíncrona: ${scriptUrl}`);
-                        registration.unregister().catch(() => {});
-                    }
-                }
-            }).catch(() => {});
+            // 1. Registrar /sw.js de Workbox de forma paralela y no bloqueante para mantener las funciones PWA (offline, cache)
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then(() => console.log("[FCM Client] Service Worker de PWA (/sw.js) registrado."))
+                .catch(err => console.warn("[FCM Client] Error no crítico al registrar sw.js PWA:", err));
 
-            // 2. Registrar el Service Worker unificado
-            const reg = await navigator.serviceWorker.register('/sw.js', {
-                scope: '/'
+            // 2. Registrar el Service Worker dedicado y ultra-liviano para Firebase Messaging en un scope aislado
+            const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                scope: '/firebase-cloud-messaging-push-scope'
             });
-            console.log("[FCM Client] Service Worker unificado (/sw.js) registrado.");
+            console.log("[FCM Client] Service Worker dedicado de Firebase registrado en scope aislado.");
 
-            // 3. Garantizar que el Service Worker esté activo de forma segura (con timeout de 2s)
+            // 3. Esperar que se active el Service Worker de Firebase (al ser mini, es casi instantáneo)
             if (reg.installing) {
                 const sw = reg.installing;
                 await new Promise((resolve) => {
@@ -198,19 +192,19 @@ export const getFcmToken = async () => {
                         }
                     };
                     sw.addEventListener('statechange', handler);
-                    setTimeout(resolve, 2000); // Límite de espera de 2 segundos
+                    setTimeout(resolve, 3000); // Límite de espera de 3 segundos
                 });
             }
 
             serviceWorkerRegistration = reg;
-            console.log("[FCM Client] Service Worker listo para FCM.");
+            console.log("[FCM Client] Service Worker de Firebase listo y activo.");
 
-            // 4. Registrar la versión local
-            const CURRENT_SW_VERSION = 'v4';
+            // 4. Actualizar versión local
+            const CURRENT_SW_VERSION = 'v5';
             localStorage.setItem('fcm_sw_version', CURRENT_SW_VERSION);
 
         } catch (swError) {
-            console.error("[FCM Client] Error al gestionar registros de Service Worker:", swError);
+            console.error("[FCM Client] Error crítico al inicializar Service Workers:", swError);
         }
     }
 

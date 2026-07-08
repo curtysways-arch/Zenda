@@ -17,7 +17,6 @@ const withPWAConfig = withPWA({
     disable: process.env.NODE_ENV === "development",
     register: true,
     skipWaiting: true,
-    importScripts: ['/firebase-messaging-sw.js'],
     runtimeCaching: [
         {
             urlPattern: /^https:\/\/fonts\.(?:gstatic)\.com\/.*/i,

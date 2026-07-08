@@ -107,8 +107,14 @@ self.addEventListener('push', (event) => {
     );
 });
 
-// Los eventos 'install' y 'activate' son manejados directamente por el Service Worker principal (/sw.js) generado por Workbox (next-pwa).
-// No los redefinimos aquí para evitar colisiones y asegurar el ciclo de vida unificado.
+// Forzar la activación inmediata de este Service Worker al instalarse
+self.addEventListener('install', (event) => {
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+    event.waitUntil(self.clients.claim());
+});
 
 // Manejar click en notificación nativa
 self.addEventListener('notificationclick', (event) => {
