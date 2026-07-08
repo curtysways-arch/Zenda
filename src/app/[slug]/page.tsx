@@ -936,64 +936,83 @@ export default async function PublicNegocioPage({
                                 </div>
 
                                 {/* Tarjeta Informativa Inferior */}
-                                <div className="p-6 bg-white border-b border-slate-50 flex flex-col md:flex-row items-stretch gap-6 md:gap-0">
-                                    {/* Sede y Dirección */}
-                                    <div className="flex-1 flex items-start gap-4">
-                                        <div className="p-3 bg-pink-50 text-pink-500 rounded-2xl border border-pink-100/30 flex items-center justify-center shrink-0">
-                                            <MapPin size={20} className="stroke-[2.5]" />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <h4 className="font-black text-slate-800 uppercase text-sm tracking-tight">{sede.nombre}</h4>
-                                            <p className="text-[10px] text-slate-400 font-semibold leading-relaxed max-w-sm">
-                                                {sede.direccion}
-                                            </p>
-                                            <a 
-                                                href={sede.navUrl} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer" 
-                                                className="inline-flex items-center gap-1 text-[10px] font-black text-pink-500 hover:text-pink-600 uppercase tracking-wider pt-1.5 transition-colors"
-                                            >
-                                                Cómo llegar <span className="text-xs">→</span>
-                                            </a>
-                                        </div>
-                                    </div>
+                                {(() => {
+                                    const rawPhone = sede.telefono || "0991234567";
+                                    const cleanPhone = rawPhone.replace(/\D/g, "");
+                                    const formattedPhone = cleanPhone.startsWith("593") 
+                                        ? cleanPhone 
+                                        : cleanPhone.startsWith("0") 
+                                            ? `593${cleanPhone.slice(1)}` 
+                                            : `593${cleanPhone}`;
+                                    const whatsappUrl = `https://wa.me/${formattedPhone}`;
 
-                                    {/* Horario */}
-                                    <div className="flex-1 md:border-l border-slate-100 md:pl-6 flex items-start gap-4">
-                                        <div className="p-3 bg-pink-50/50 text-pink-500 rounded-2xl flex items-center justify-center shrink-0">
-                                            <Clock size={20} className="stroke-[2.5]" />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Horario</h5>
-                                            <p className="text-xs font-black text-slate-800 leading-tight">
-                                                {sede.horario ? (
-                                                    sede.horario.split(/(\d+:\d+\s*(?:AM|PM|am|pm))/).map((txt: string, idx: number) => {
-                                                        const isTime = /\d+:\d+\s*(?:AM|PM|am|pm)/.test(txt);
-                                                        return isTime ? <span key={idx} className="block text-[10px] text-slate-400 font-semibold mt-0.5">{txt}</span> : <span key={idx}>{txt}</span>;
-                                                    })
-                                                ) : (
-                                                    <>
-                                                        Lun - Dom
-                                                        <span className="block text-[10px] text-slate-400 font-semibold mt-0.5">8:00 AM - 11:00 PM</span>
-                                                    </>
-                                                )}
-                                            </p>
-                                        </div>
-                                    </div>
+                                    return (
+                                        <div className="p-6 bg-white border-b border-slate-50 flex flex-col md:flex-row items-stretch gap-6 md:gap-0">
+                                            {/* Sede y Dirección */}
+                                            <div className="flex-1 flex items-start gap-4">
+                                                <div className="p-3 bg-pink-50 text-pink-500 rounded-2xl border border-pink-100/30 flex items-center justify-center shrink-0">
+                                                    <MapPin size={20} className="stroke-[2.5]" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <h4 className="font-black text-slate-800 uppercase text-sm tracking-tight">{sede.nombre}</h4>
+                                                    <p className="text-[10px] text-slate-400 font-semibold leading-relaxed max-w-sm">
+                                                        {sede.direccion}
+                                                    </p>
+                                                    <a 
+                                                        href={sede.navUrl} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer" 
+                                                        className="inline-flex items-center gap-1 text-[10px] font-black text-pink-500 hover:text-pink-600 uppercase tracking-wider pt-1.5 transition-colors"
+                                                    >
+                                                        Cómo llegar <span className="text-xs">→</span>
+                                                    </a>
+                                                </div>
+                                            </div>
 
-                                    {/* Teléfono */}
-                                    <div className="flex-1 md:border-l border-slate-100 md:pl-6 flex items-start gap-4">
-                                        <div className="p-3 bg-pink-50/50 text-pink-500 rounded-2xl flex items-center justify-center shrink-0">
-                                            <Phone size={20} className="stroke-[2.5]" />
+                                            {/* Horario */}
+                                            <div className="flex-1 md:border-l border-slate-100 md:pl-6 flex items-start gap-4">
+                                                <div className="p-3 bg-pink-50/50 text-pink-500 rounded-2xl flex items-center justify-center shrink-0">
+                                                    <Clock size={20} className="stroke-[2.5]" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Horario</h5>
+                                                    <p className="text-xs font-black text-slate-800 leading-tight">
+                                                        {sede.horario ? (
+                                                            sede.horario.split(/(\d+:\d+\s*(?:AM|PM|am|pm))/).map((txt: string, idx: number) => {
+                                                                const isTime = /\d+:\d+\s*(?:AM|PM|am|pm)/.test(txt);
+                                                                return isTime ? <span key={idx} className="block text-[10px] text-slate-400 font-semibold mt-0.5">{txt}</span> : <span key={idx}>{txt}</span>;
+                                                            })
+                                                        ) : (
+                                                            <>
+                                                                Lun - Dom
+                                                                <span className="block text-[10px] text-slate-400 font-semibold mt-0.5">8:00 AM - 11:00 PM</span>
+                                                            </>
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Teléfono */}
+                                            <div className="flex-1 md:border-l border-slate-100 md:pl-6 flex items-start gap-4">
+                                                <div className="p-3 bg-pink-50/50 text-pink-500 rounded-2xl flex items-center justify-center shrink-0">
+                                                    <Phone size={20} className="stroke-[2.5]" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Teléfono</h5>
+                                                    <a 
+                                                        href={whatsappUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center text-xs font-black text-slate-800 hover:text-pink-500 leading-tight transition-colors"
+                                                    >
+                                                        {sede.telefono || "099 123 4567"}
+                                                        <span className="text-[8px] text-emerald-600 font-black bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5 ml-2 uppercase tracking-wider">WhatsApp</span>
+                                                    </a>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="space-y-1">
-                                            <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Teléfono</h5>
-                                            <p className="text-xs font-black text-slate-800 leading-tight">
-                                                {sede.telefono || "099 123 4567"}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                                    );
+                                })()}
 
                                 {/* Barra de Características / Servicios de Valor Agregado (si hay al menos uno habilitado) */}
                                 {(sede.tieneParqueadero || sede.tieneTransporte || sede.tieneZonaSegura || sede.tieneAccesoFacil) && (
