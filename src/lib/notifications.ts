@@ -166,18 +166,18 @@ export class FirebasePushProvider implements INotificationProvider {
                         // Datos adicionales accesibles en notificationclick
                         data: {
                             ...(payload.variables || {}),
-                            link: payload.variables?.link || '/admin/reservas',
+                            link: payload.variables?.link || '/admin/citas',
                         },
                     },
                     fcmOptions: {
-                        link: payload.variables?.link || '/admin/reservas',
+                        link: payload.variables?.link || '/admin/citas',
                     },
                 },
                 data: {
                     title: payload.template || 'Nueva notificación',
                     body: payload.message,
                     icon: payload.variables?.icon || '/icons/icon-192x192.png',
-                    link: payload.variables?.link || '/admin/reservas',
+                    link: payload.variables?.link || '/admin/citas',
                     reservaId: payload.variables?.reservaId || '',
                 },
                 token: payload.to,
@@ -389,14 +389,23 @@ export class NotificationService {
 
             if (tokens.length === 0) return;
 
-            const promises = tokens.map(t =>
-                this.pushProvider.sendMessage({
-                    to: t.token,
-                    message: body,
-                    template: title,
-                    variables: data
-                })
-            );
+            const promises = tokens.map(async t => {
+                try {
+                    await this.pushProvider.sendMessage({
+                        to: t.token,
+                        message: body,
+                        template: title,
+                        variables: data
+                    });
+                } catch (err: any) {
+                    console.warn(`[PUSH] Error enviando a token de usuario ${t.token.substring(0, 10)}... :`, err.message);
+                    // Si el token no está registrado o es inválido, lo removemos para limpiar la base de datos
+                    if (err.code === 'messaging/registration-token-not-registered' || err.message?.includes('not-registered') || err.message?.includes('invalid')) {
+                        await prisma.pushToken.delete({ where: { token: t.token } }).catch(() => {});
+                        console.log(`[PUSH] Token de usuario obsoleto eliminado.`);
+                    }
+                }
+            });
 
             await Promise.all(promises);
         } catch (error) {
@@ -412,14 +421,23 @@ export class NotificationService {
 
             if (tokens.length === 0) return;
 
-            const promises = tokens.map(t =>
-                this.pushProvider.sendMessage({
-                    to: t.token,
-                    message: body,
-                    template: title,
-                    variables: data
-                })
-            );
+            const promises = tokens.map(async t => {
+                try {
+                    await this.pushProvider.sendMessage({
+                        to: t.token,
+                        message: body,
+                        template: title,
+                        variables: data
+                    });
+                } catch (err: any) {
+                    console.warn(`[PUSH] Error enviando a token de negocio ${t.token.substring(0, 10)}... :`, err.message);
+                    // Si el token no está registrado o es inválido, lo removemos para limpiar la base de datos
+                    if (err.code === 'messaging/registration-token-not-registered' || err.message?.includes('not-registered') || err.message?.includes('invalid')) {
+                        await prisma.pushToken.delete({ where: { token: t.token } }).catch(() => {});
+                        console.log(`[PUSH] Token de negocio obsoleto eliminado.`);
+                    }
+                }
+            });
 
             await Promise.all(promises);
         } catch (error) {

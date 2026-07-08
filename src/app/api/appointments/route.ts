@@ -338,7 +338,7 @@ export async function POST(req: Request) {
                 negocio.id,
                 '🔔 Nueva Reserva',
                 `${clienteNombre} - ${service.nombre} a las ${horaInicio} (${dur}h)`,
-                { link: '/admin/reservas', reservaId: reserva.id, icon: iconUrl }
+                { link: '/admin/citas', reservaId: reserva.id, icon: iconUrl }
             );
             console.log(`[PUSH] Push enviada correctamente`);
         } catch (pushErr) {

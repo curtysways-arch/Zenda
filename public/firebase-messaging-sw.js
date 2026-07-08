@@ -64,7 +64,7 @@ self.addEventListener('push', (event) => {
 // Manejar click en notificación nativa
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-    const link = event.notification.data?.link || '/admin/reservas';
+    const link = event.notification.data?.link || '/admin/citas';
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
             if (clients.length > 0) {
