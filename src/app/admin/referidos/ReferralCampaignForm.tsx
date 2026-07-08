@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Gift, ArrowLeft, Loader2, Save, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import ImageUploader from '@/components/ui/ImageUploader';
 
 export default function ReferralCampaignForm() {
     const router = useRouter();
@@ -29,6 +30,7 @@ export default function ReferralCampaignForm() {
     const [permitirRepetir, setPermitirRepetir] = useState(false);
     const [prioridad, setPrioridad] = useState(0);
     const [combinable, setCombinable] = useState(false);
+    const [imagenUrl, setImagenUrl] = useState('');
 
     // Doble nivel: Incentivo para el invitado
     const [hasIncentivo, setHasIncentivo] = useState(false);
@@ -56,6 +58,7 @@ export default function ReferralCampaignForm() {
                 const data = await res.json();
                 setNombre(data.nombre || '');
                 setDescripcion(data.descripcion || '');
+                setImagenUrl(data.imagenUrl || '');
                 setTipoRecompensa(data.tipoRecompensa || 'SERVICIO_GRATIS');
                 setValorRecompensa(data.valorRecompensa || '');
                 setReferidosRequeridos(data.referidosRequeridos || 5);
@@ -106,6 +109,7 @@ export default function ReferralCampaignForm() {
         const payload = {
             nombre,
             descripcion,
+            imagenUrl,
             tipoRecompensa,
             valorRecompensa,
             referidosRequeridos: parseInt(String(referidosRequeridos)),
@@ -260,6 +264,16 @@ export default function ReferralCampaignForm() {
                             className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none focus:border-[var(--primary-color)] transition-colors min-h-[100px]"
                             style={{ '--focus-color': primaryColor } as any}
                         />
+                    </div>
+
+                    <div className="md:col-span-2">
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Imagen de la Campaña (Opcional)</label>
+                        <ImageUploader 
+                            currentUrl={imagenUrl}
+                            onUploadSuccess={(media) => setImagenUrl(media.url)}
+                            onRemove={() => setImagenUrl('')}
+                        />
+                        <span className="text-[9px] text-slate-400 font-medium pl-1 mt-1 block">Esta imagen se mostrará en la tarjeta de la campaña y en su página de detalles de lujo.</span>
                     </div>
 
                     <div>

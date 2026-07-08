@@ -116,6 +116,7 @@ export async function getReferralProgress(userId: string, negocioId: string) {
             campaignId: campaign.id,
             nombre: campaign.nombre,
             descripcion: campaign.descripcion,
+            imagenUrl: campaign.imagenUrl,
             tipoRecompensa: campaign.tipoRecompensa,
             valorRecompensa: campaign.valorRecompensa,
             referidosRequeridos: campaign.referidosRequeridos,

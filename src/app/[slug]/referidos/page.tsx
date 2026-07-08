@@ -533,18 +533,33 @@ export default function MisRecompensasPage() {
                                 meData.progresoCampañas.map((p: any, idx: number) => {
                                     const pct = Math.min(100, (p.progreso / p.referidosRequeridos) * 100);
                                     return (
-                                        <div key={idx} className="bg-white border border-slate-100 rounded-3xl p-4 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="size-11 rounded-full bg-pink-100 flex items-center justify-center text-pink-500 shrink-0">
-                                                    <Users size={18} />
+                                        <Link 
+                                            key={idx} 
+                                            href={`/${slug}/campana/${p.campaignId}`}
+                                            className="relative block bg-white border border-slate-100 rounded-3xl p-4 shadow-[0_4px_25px_rgba(0,0,0,0.02)] space-y-4 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 group"
+                                        >
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    {p.imagenUrl ? (
+                                                        <div className="size-11 rounded-2xl overflow-hidden shrink-0 bg-slate-50 border border-slate-100/40">
+                                                            <img src={p.imagenUrl} alt={p.nombre} className="w-full h-full object-cover" />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="size-11 rounded-2xl bg-pink-100 flex items-center justify-center text-pink-500 shrink-0">
+                                                            <Users size={18} />
+                                                        </div>
+                                                    )}
+                                                    <div className="min-w-0">
+                                                        <h4 className="text-xs font-black uppercase tracking-tight text-slate-900 leading-tight group-hover:text-pink-500 transition-colors" style={{ '--hover-color': primaryColor } as any}>
+                                                            {p.nombre}
+                                                        </h4>
+                                                        <p className="text-[10px] text-slate-400 font-semibold leading-none mt-1 truncate">
+                                                            {p.descripcion || `Recomienda a tu negocio y gana.`}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <h4 className="text-xs font-black uppercase tracking-tight text-slate-900 leading-tight">
-                                                        {p.nombre}
-                                                    </h4>
-                                                    <p className="text-[10px] text-slate-400 font-semibold leading-none mt-1">
-                                                        {p.descripcion || `Recomienda a tu negocio y gana.`}
-                                                    </p>
+                                                <div className="size-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-pink-500 group-hover:bg-pink-50 transition-all shrink-0">
+                                                    <ChevronRight size={14} strokeWidth={2.5} />
                                                 </div>
                                             </div>
 
@@ -595,7 +610,7 @@ export default function MisRecompensasPage() {
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </Link>
                                     );
                                 })
                             )}
