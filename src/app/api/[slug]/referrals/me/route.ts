@@ -135,6 +135,38 @@ export async function GET(
             }
         });
 
+        // 11. Obtener puntos acumulados por reservas de forma reciente (últimos 3 días) para animaciones de celebración
+        const recentPoints = await prisma.pointsHistory.findMany({
+            where: {
+                userId: user.id,
+                negocioId,
+                concepto: 'RESERVA',
+                puntos: { gt: 0 },
+                createdAt: { gte: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) } // 3 días
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        const citasPuntosRecientes = [];
+        for (const pt of recentPoints) {
+            let servicioNombre = 'tu tratamiento';
+            if (pt.referenciaId) {
+                const appt = await prisma.appointment.findUnique({
+                    where: { id: pt.referenciaId },
+                    include: { service: { select: { nombre: true } } }
+                });
+                if (appt?.service?.nombre) {
+                    servicioNombre = appt.service.nombre;
+                }
+            }
+            citasPuntosRecientes.push({
+                id: pt.id,
+                puntos: pt.puntos,
+                servicioNombre,
+                fecha: pt.createdAt
+            });
+        }
+
         return NextResponse.json({
             codigo: code,
             progresoCampañas: campaignsProgress,
@@ -144,7 +176,8 @@ export async function GET(
             puntos,
             puntosActivos,
             cupones,
-            ranking
+            ranking,
+            citasPuntosRecientes
         });
     } catch (error: any) {
         console.error("Error in referrals/me:", error);

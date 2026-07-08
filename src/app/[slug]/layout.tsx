@@ -3,6 +3,7 @@ import { generateTheme } from '@/lib/themeGenerator';
 import { notFound } from 'next/navigation';
 import PublicMobileNav from '@/components/public/PublicMobileNav';
 import PublicDesktopNav from '@/components/public/PublicDesktopNav';
+import LoyaltyCelebration from '@/components/public/LoyaltyCelebration';
 import prisma from '@/lib/prisma';
 import { featureService } from '@/lib/services/featureService';
 import { cache } from 'react';
@@ -284,6 +285,7 @@ export default async function NegocioLayout({
                 <div className="flex-1">
                     {children}
                 </div>
+                <LoyaltyCelebration slug={slug} primaryColor={primaryInput} />
                 <PublicMobileNav slug={slug} hasActiveCourses={hasActiveCourses} />
             </div>
         </>

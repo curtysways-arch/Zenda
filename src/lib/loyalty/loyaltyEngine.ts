@@ -54,8 +54,12 @@ export async function processAppointmentCompleted(appointmentId: string): Promis
 
         // 1. Sumar puntos por reserva completada (si el módulo de puntos está activo)
         if (config?.puntosActivos) {
-            const puntosReserva = config?.puntosReserva ?? 10;
-            await addPoints(usuarioId, negocioId, puntosReserva, 'RESERVA', appointmentId);
+            const serviceExtra = (appointment.service?.extraInfo as any) || {};
+            const puntosOtorgados = serviceExtra.puntosOtorgados !== undefined 
+                ? parseInt(String(serviceExtra.puntosOtorgados)) 
+                : (config?.puntosReserva ?? 10);
+            
+            await addPoints(usuarioId, negocioId, puntosOtorgados, 'RESERVA', appointmentId);
         }
 
         // 2. Procesar referidos del sistema actual (compatibilidad total)

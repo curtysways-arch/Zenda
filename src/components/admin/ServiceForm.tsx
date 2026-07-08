@@ -60,6 +60,11 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
     const [precio, setPrecio] = useState(initialData?.precio?.toString() || '');
     const [estaActivo, setEstaActivo] = useState(initialData?.estaActivo ?? true);
     const [ubicacionId, setUbicacionId] = useState(initialData?.ubicacionId || '');
+    const [puntosOtorgados, setPuntosOtorgados] = useState(
+        initialData?.extraInfo?.puntosOtorgados !== undefined 
+            ? initialData.extraInfo.puntosOtorgados.toString() 
+            : '10'
+    );
 
     // Imagen principal y su ID en el nuevo sistema
     const [imageMediaId, setImageMediaId] = useState<string | null>(initialData?.imageMediaId || null);
@@ -183,7 +188,8 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                 ubicacionId: ubicacionId || null,
                 imageMediaId,
                 extraInfo: {
-                    features: features.filter(f => f.title.trim() || f.content.trim())
+                    features: features.filter(f => f.title.trim() || f.content.trim()),
+                    puntosOtorgados: parseInt(puntosOtorgados) || 0
                 },
             };
 
@@ -482,6 +488,20 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                         placeholder="25.00"
                                         value={precio}
                                         onChange={e => setPrecio(e.target.value)}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label htmlFor="puntosOtorgados" className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Puntos Otorgados por Cita</label>
+                                    <input
+                                        id="puntosOtorgados"
+                                        type="number"
+                                        min="0"
+                                        required
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-gray-900 font-medium"
+                                        placeholder="Ej: 10 (Puntos que gana el cliente al realizarse este servicio)"
+                                        value={puntosOtorgados}
+                                        onChange={e => setPuntosOtorgados(e.target.value)}
                                     />
                                 </div>
 
