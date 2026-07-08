@@ -215,8 +215,14 @@ export default async function PublicServicesPage({
                             return (
                                 <div 
                                     key={service.id} 
-                                    className="bg-white rounded-[24px] border border-slate-100 shadow-[0_4px_25px_rgba(0,0,0,0.02)] p-3 flex gap-3 h-[165px] transition-all hover:scale-[1.01] active:scale-[0.99] duration-300"
+                                    className="relative bg-white rounded-[24px] border border-slate-100 shadow-[0_4px_25px_rgba(0,0,0,0.02)] p-3 flex gap-3 h-[165px] transition-all hover:scale-[1.01] active:scale-[0.99] duration-300"
                                 >
+                                    {/* Link invisible absoluto que cubre todo el contenedor */}
+                                    <Link 
+                                        href={`/${slug}/servicio/${service.id}`}
+                                        className="absolute inset-0 z-10 rounded-[24px]"
+                                    />
+
                                     {/* Lado Izquierdo: Imagen del servicio (38%) */}
                                     <div className="relative w-[38%] h-full rounded-[20px] overflow-hidden bg-slate-50 shrink-0 select-none">
                                         <img 
@@ -227,13 +233,13 @@ export default async function PublicServicesPage({
                                         
                                         {/* Tag de popularidad/novedad */}
                                         {tagLabel && (
-                                            <div className="absolute top-2 left-2 bg-pink-500 text-white text-[6px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-md select-none" style={{ backgroundColor: primaryColor }}>
+                                            <div className="absolute top-2 left-2 bg-pink-500 text-white text-[6px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-md select-none z-20" style={{ backgroundColor: primaryColor }}>
                                                 {tagLabel}
                                             </div>
                                         )}
                                         
                                         {/* Corazón favoritos sobre la imagen */}
-                                        <button className="absolute top-2 right-2 size-6 rounded-full bg-white/95 border border-slate-100/50 flex items-center justify-center text-slate-400 hover:text-pink-500 active:scale-90 transition-all shadow-sm">
+                                        <button className="absolute top-2 right-2 size-6 rounded-full bg-white/95 border border-slate-100/50 flex items-center justify-center text-slate-400 hover:text-pink-500 active:scale-90 transition-all shadow-sm z-20">
                                             <Heart size={10} fill="none" strokeWidth={2.5} />
                                         </button>
                                         
@@ -277,14 +283,14 @@ export default async function PublicServicesPage({
                                                 ${service.precio || 30}
                                             </div>
 
-                                            <Link 
-                                                href={`/${slug}/servicio/${service.id}`}
-                                                className="px-4 py-2 rounded-[14px] font-black text-[9px] uppercase tracking-widest text-white shadow-sm hover:brightness-110 active:scale-95 transition-all flex items-center gap-0.5"
+                                            {/* Botón Reservar (Visual, no enlace anidado) */}
+                                            <div 
+                                                className="px-4 py-2 rounded-[14px] font-black text-[9px] uppercase tracking-widest text-white shadow-sm flex items-center gap-0.5"
                                                 style={{ backgroundColor: primaryColor }}
                                             >
                                                 Reservar
                                                 <ChevronRight size={9} strokeWidth={3} />
-                                            </Link>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

@@ -754,8 +754,14 @@ export default async function PublicNegocioPage({
                         return (
                             <div 
                                 key={service.id} 
-                                className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-4 flex flex-col justify-between min-w-[280px] max-w-[280px] shrink-0 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                                className="relative bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-4 flex flex-col justify-between min-w-[280px] max-w-[280px] shrink-0 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
                             >
+                                {/* Link invisible absoluto que cubre todo el contenedor */}
+                                <Link 
+                                    href={`/${slug}/servicio/${service.id}`}
+                                    className="absolute inset-0 z-10 rounded-[2.5rem]"
+                                />
+
                                 {/* Imagen del servicio */}
                                 <div className="relative w-full aspect-[4/3] rounded-[2rem] overflow-hidden mb-4 bg-slate-50">
                                     <img 
@@ -764,11 +770,11 @@ export default async function PublicNegocioPage({
                                         alt={service.nombre} 
                                     />
                                     {/* Badge con la etiqueta dinámica */}
-                                    <div className="absolute top-3 left-3 bg-pink-500 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
+                                    <div className="absolute top-3 left-3 bg-pink-500 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-md z-20">
                                         {currentTag}
                                     </div>
                                     {/* Icono Corazón (Favoritos) */}
-                                    <button className="absolute top-3 right-3 size-8 rounded-full bg-white/90 backdrop-blur-sm border border-slate-100 flex items-center justify-center text-slate-400 hover:text-pink-500 active:scale-95 transition-all">
+                                    <button className="absolute top-3 right-3 size-8 rounded-full bg-white/90 backdrop-blur-sm border border-slate-100 flex items-center justify-center text-slate-400 hover:text-pink-500 active:scale-95 transition-all z-20">
                                         <svg className="size-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                                         </svg>
@@ -801,17 +807,16 @@ export default async function PublicNegocioPage({
                                             ${service.precio}
                                         </div>
 
-                                        {/* Botón Ver detalles */}
-                                        <Link 
-                                            href={`/${slug}/servicio/${service.id}`}
-                                            className="block w-full text-center py-3 rounded-2xl border text-xs font-black uppercase tracking-widest active:scale-95 transition-all bg-white hover:bg-slate-50 shadow-sm"
+                                        {/* Botón Ver detalles (Visual, no enlace anidado) */}
+                                        <div 
+                                            className="block w-full text-center py-3 rounded-2xl border text-xs font-black uppercase tracking-widest bg-white shadow-sm"
                                             style={{ 
                                                 borderColor: `${primaryColor}26`, 
                                                 color: primaryColor 
                                             }}
                                         >
                                             Ver detalles
-                                        </Link>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
