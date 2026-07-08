@@ -37,7 +37,19 @@ export async function POST(req: Request) {
     if (!negocioId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     try {
-        const { nombre, direccion, mapUrl } = await req.json();
+        const { 
+            nombre, 
+            direccion, 
+            mapUrl, 
+            telefono, 
+            horario, 
+            imagenUrl,
+            tieneParqueadero = false,
+            tieneTransporte = false,
+            tieneZonaSegura = false,
+            tieneAccesoFacil = false
+        } = await req.json();
+        
         if (!nombre?.trim()) return NextResponse.json({ error: "El nombre es obligatorio" }, { status: 400 });
 
         // Validar límites del plan
@@ -59,6 +71,13 @@ export async function POST(req: Request) {
                 nombre: nombre.trim(),
                 direccion: direccion?.trim() || null,
                 mapUrl: mapUrl?.trim() || null,
+                telefono: telefono?.trim() || null,
+                horario: horario?.trim() || null,
+                imagenUrl: imagenUrl?.trim() || null,
+                tieneParqueadero: Boolean(tieneParqueadero),
+                tieneTransporte: Boolean(tieneTransporte),
+                tieneZonaSegura: Boolean(tieneZonaSegura),
+                tieneAccesoFacil: Boolean(tieneAccesoFacil),
                 negocioId,
                 updatedAt: new Date(),
             }

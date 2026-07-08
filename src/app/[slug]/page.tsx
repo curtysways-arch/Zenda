@@ -9,7 +9,7 @@ import Script from 'next/script';
 import prisma from '@/lib/prisma';
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { MapPin, Search, Star, Zap, Clock, ChevronRight, ArrowUpRight, ArrowLeftRight, Wifi, Car, Coffee, Shirt, ShoppingBag, Phone, Globe, Mail, Send, Trophy, Home, Calendar, User, Users, Swords, Instagram, Facebook, FileText, Dribbble, Rocket, MessageCircle, Sparkles, Scissors, ChevronLeft, Bell, CheckCircle, Compass, Image as ImageIcon, Plus } from 'lucide-react';
+import { MapPin, Search, Star, Zap, Clock, ChevronRight, ArrowUpRight, ArrowLeftRight, Wifi, Car, Coffee, Shirt, ShoppingBag, Phone, Globe, Mail, Send, Trophy, Home, Calendar, User, Users, Swords, Instagram, Facebook, FileText, Dribbble, Rocket, MessageCircle, Sparkles, Scissors, ChevronLeft, Bell, CheckCircle, Compass, Image as ImageIcon, Plus, Bus, ShieldCheck, Accessibility, Maximize, Locate } from 'lucide-react';
 import HeroCarousel from '@/components/HeroCarousel';
 import NewsletterForm from '@/components/NewsletterForm';
 import NextAppointmentBanner from '@/components/public/NextAppointmentBanner';
@@ -876,25 +876,169 @@ export default async function PublicNegocioPage({
             {/* UBICACIONES */}
             {resolvedUbicaciones.length > 0 && (
                 <section id="ubicacion" className="px-6 mb-12">
-                    <div className="flex items-center gap-3 mb-6">
-                         <div className="w-2.5 h-6 rounded-sm" style={{ backgroundColor: tertiaryColor }}></div>
-                         <h3 className="text-xl font-black tracking-tight text-slate-900">Ubicación</h3>
+                    <div className="flex items-center gap-2 mb-6">
+                        <div className="p-2 bg-pink-50 text-pink-500 rounded-2xl border border-pink-100/50">
+                            <MapPin size={20} className="stroke-[2.5]" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black tracking-tight text-slate-800 uppercase leading-none">Ubicación</h3>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Encuéntranos fácilmente</p>
+                        </div>
                     </div>
-                    <div className="space-y-6">
+                    
+                    <div className="space-y-8">
                         {resolvedUbicaciones.map((sede: any) => (
-                            <div key={sede.id} className="bg-white rounded-[2.5rem] overflow-hidden border border-slate-100/50 shadow-sm">
-                                <iframe width="100%" height="220" style={{ border: 0 }} loading="lazy" allowFullScreen src={sede.embedSrc}></iframe>
-                                <div className="p-5 flex justify-between items-center">
-                                    <div>
-                                        <h4 className="font-black text-lg text-slate-900">{sede.nombre}</h4>
-                                        <p className="text-xs font-semibold text-slate-400 flex items-center gap-1.5 mt-1.5">
-                                            <MapPin size={14} /> {sede.direccion}
-                                        </p>
-                                    </div>
-                                    <a href={sede.navUrl} target="_blank" rel="noopener noreferrer" className="p-4 rounded-2xl transition-all active:scale-95" style={{ backgroundColor: primaryColor, color: 'white' }}>
-                                        <Compass size={24} />
+                            <div key={sede.id} className="bg-white rounded-[2.5rem] overflow-hidden border border-slate-100/70 shadow-sm flex flex-col">
+                                
+                                {/* Contenedor del Mapa con Botones e Imagen de Fachada */}
+                                <div className="relative w-full h-[240px] bg-slate-50 overflow-hidden">
+                                    <iframe 
+                                        width="100%" 
+                                        height="100%" 
+                                        style={{ border: 0, filter: 'contrast(1.05) brightness(0.98)' }} 
+                                        loading="lazy" 
+                                        allowFullScreen 
+                                        src={sede.embedSrc}
+                                    />
+                                    
+                                    {/* Botón flotante: Mi ubicación (arriba derecha) */}
+                                    <a 
+                                        href="https://www.google.com/maps/search/?api=1&query=mi+ubicacion" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        className="absolute top-4 right-4 bg-white/95 hover:bg-white text-pink-500 border border-slate-100 rounded-full px-4 py-2 text-[9px] font-black uppercase tracking-widest shadow-md flex items-center gap-1.5 active:scale-95 transition-all z-10"
+                                    >
+                                        <Locate size={10} className="stroke-[3]" />
+                                        Mi ubicación
                                     </a>
+
+                                    {/* Botón flotante: Ver mapa (abajo derecha) */}
+                                    <a 
+                                        href={sede.navUrl} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        className="absolute bottom-4 right-4 bg-white/95 hover:bg-white text-slate-800 border border-slate-100 rounded-full px-4 py-2 text-[9px] font-black uppercase tracking-widest shadow-md flex items-center gap-1.5 active:scale-95 transition-all z-10"
+                                    >
+                                        <Maximize size={10} className="stroke-[3]" />
+                                        Ver mapa
+                                    </a>
+
+                                    {/* Foto de la fachada (abajo izquierda) */}
+                                    {sede.imagenUrl && (
+                                        <div className="absolute bottom-4 left-4 size-16 rounded-2xl overflow-hidden border-2 border-white shadow-lg z-10 bg-slate-200">
+                                            <img 
+                                                src={sede.imagenUrl} 
+                                                alt="Fachada del local" 
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
+
+                                {/* Tarjeta Informativa Inferior */}
+                                <div className="p-6 bg-white border-b border-slate-50 flex flex-col md:flex-row items-stretch gap-6 md:gap-0">
+                                    {/* Sede y Dirección */}
+                                    <div className="flex-1 flex items-start gap-4">
+                                        <div className="p-3 bg-pink-50 text-pink-500 rounded-2xl border border-pink-100/30 flex items-center justify-center shrink-0">
+                                            <MapPin size={20} className="stroke-[2.5]" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h4 className="font-black text-slate-800 uppercase text-sm tracking-tight">{sede.nombre}</h4>
+                                            <p className="text-[10px] text-slate-400 font-semibold leading-relaxed max-w-sm">
+                                                {sede.direccion}
+                                            </p>
+                                            <a 
+                                                href={sede.navUrl} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                className="inline-flex items-center gap-1 text-[10px] font-black text-pink-500 hover:text-pink-600 uppercase tracking-wider pt-1.5 transition-colors"
+                                            >
+                                                Cómo llegar <span className="text-xs">→</span>
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    {/* Horario */}
+                                    <div className="flex-1 md:border-l border-slate-100 md:pl-6 flex items-start gap-4">
+                                        <div className="p-3 bg-pink-50/50 text-pink-500 rounded-2xl flex items-center justify-center shrink-0">
+                                            <Clock size={20} className="stroke-[2.5]" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Horario</h5>
+                                            <p className="text-xs font-black text-slate-800 leading-tight">
+                                                {sede.horario ? (
+                                                    sede.horario.split(/(\d+:\d+\s*(?:AM|PM|am|pm))/).map((txt: string, idx: number) => {
+                                                        const isTime = /\d+:\d+\s*(?:AM|PM|am|pm)/.test(txt);
+                                                        return isTime ? <span key={idx} className="block text-[10px] text-slate-400 font-semibold mt-0.5">{txt}</span> : <span key={idx}>{txt}</span>;
+                                                    })
+                                                ) : (
+                                                    <>
+                                                        Lun - Dom
+                                                        <span className="block text-[10px] text-slate-400 font-semibold mt-0.5">8:00 AM - 11:00 PM</span>
+                                                    </>
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Teléfono */}
+                                    <div className="flex-1 md:border-l border-slate-100 md:pl-6 flex items-start gap-4">
+                                        <div className="p-3 bg-pink-50/50 text-pink-500 rounded-2xl flex items-center justify-center shrink-0">
+                                            <Phone size={20} className="stroke-[2.5]" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Teléfono</h5>
+                                            <p className="text-xs font-black text-slate-800 leading-tight">
+                                                {sede.telefono || "099 123 4567"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Barra de Características / Servicios de Valor Agregado (si hay al menos uno habilitado) */}
+                                {(sede.tieneParqueadero || sede.tieneTransporte || sede.tieneZonaSegura || sede.tieneAccesoFacil) && (
+                                    <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex flex-nowrap overflow-x-auto gap-4 scrollbar-none items-center justify-start md:justify-around">
+                                        {/* Parqueadero */}
+                                        {sede.tieneParqueadero && (
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <div className="p-2 bg-pink-100/60 text-pink-500 rounded-xl">
+                                                    <Car size={14} className="stroke-[2.5]" />
+                                                </div>
+                                                <span className="text-[9px] font-bold text-slate-600 uppercase tracking-wider">Parqueadero Disponible</span>
+                                            </div>
+                                        )}
+
+                                        {/* Transporte */}
+                                        {sede.tieneTransporte && (
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <div className="p-2 bg-pink-100/60 text-pink-500 rounded-xl">
+                                                    <Bus size={14} className="stroke-[2.5]" />
+                                                </div>
+                                                <span className="text-[9px] font-bold text-slate-600 uppercase tracking-wider">Transporte Cercano</span>
+                                            </div>
+                                        )}
+
+                                        {/* Zona Segura */}
+                                        {sede.tieneZonaSegura && (
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <div className="p-2 bg-pink-100/60 text-pink-500 rounded-xl">
+                                                    <ShieldCheck size={14} className="stroke-[2.5]" />
+                                                </div>
+                                                <span className="text-[9px] font-bold text-slate-600 uppercase tracking-wider">Zona Segura</span>
+                                            </div>
+                                        )}
+
+                                        {/* Acceso Fácil */}
+                                        {sede.tieneAccesoFacil && (
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <div className="p-2 bg-pink-100/60 text-pink-500 rounded-xl">
+                                                    <Accessibility size={14} className="stroke-[2.5]" />
+                                                </div>
+                                                <span className="text-[9px] font-bold text-slate-600 uppercase tracking-wider">Acceso Fácil</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>

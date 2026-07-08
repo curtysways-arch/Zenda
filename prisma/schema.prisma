@@ -677,15 +677,22 @@ model Suscripcion {
 }
 
 model Ubicacion {
-  id        String    @id
-  nombre    String
-  direccion String?
-  mapUrl    String?
-  negocioId String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime
-  Service   Service[]
-  Negocio   Negocio   @relation(fields: [negocioId], references: [id])
+  id               String    @id
+  nombre           String
+  direccion        String?
+  mapUrl           String?
+  telefono         String?
+  horario          String?
+  imagenUrl        String?
+  tieneParqueadero Boolean   @default(false)
+  tieneTransporte  Boolean   @default(false)
+  tieneZonaSegura  Boolean   @default(false)
+  tieneAccesoFacil Boolean   @default(false)
+  negocioId        String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime
+  Service          Service[]
+  Negocio          Negocio   @relation(fields: [negocioId], references: [id])
 
   @@unique([nombre, negocioId])
 }

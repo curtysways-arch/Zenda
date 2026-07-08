@@ -15,7 +15,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const { id } = await params;
     
     try {
-        const { nombre, direccion, mapUrl } = await req.json();
+        const { 
+            nombre, 
+            direccion, 
+            mapUrl, 
+            telefono, 
+            horario, 
+            imagenUrl,
+            tieneParqueadero,
+            tieneTransporte,
+            tieneZonaSegura,
+            tieneAccesoFacil
+        } = await req.json();
+
         if (!nombre?.trim()) {
             return NextResponse.json({ error: "El nombre es obligatorio" }, { status: 400 });
         }
@@ -36,8 +48,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             where: { id, negocioId },
             data: {
                 nombre: nombre.trim(),
-                direccion: direccion?.trim() || null,
-                mapUrl: mapUrl?.trim() || null,
+                direccion: direccion !== undefined ? (direccion?.trim() || null) : undefined,
+                mapUrl: mapUrl !== undefined ? (mapUrl?.trim() || null) : undefined,
+                telefono: telefono !== undefined ? (telefono?.trim() || null) : undefined,
+                horario: horario !== undefined ? (horario?.trim() || null) : undefined,
+                imagenUrl: imagenUrl !== undefined ? (imagenUrl?.trim() || null) : undefined,
+                tieneParqueadero: tieneParqueadero !== undefined ? Boolean(tieneParqueadero) : undefined,
+                tieneTransporte: tieneTransporte !== undefined ? Boolean(tieneTransporte) : undefined,
+                tieneZonaSegura: tieneZonaSegura !== undefined ? Boolean(tieneZonaSegura) : undefined,
+                tieneAccesoFacil: tieneAccesoFacil !== undefined ? Boolean(tieneAccesoFacil) : undefined,
                 updatedAt: new Date()
             }
         });
