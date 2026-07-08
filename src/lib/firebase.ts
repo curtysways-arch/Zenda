@@ -166,14 +166,13 @@ export const getFcmToken = async () => {
         ? rawVapidKey.replace(/['"]/g, '').trim() 
         : undefined;
 
-    // Registrar el Service Worker manualmente pasando las credenciales en el query string
+    // Registrar el Service Worker unificado de la PWA (/sw.js) que importa dinámicamente a firebase-messaging-sw.js
     let serviceWorkerRegistration;
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-        const swUrl = `/firebase-messaging-sw.js?apiKey=${encodeURIComponent(apiKey || '')}&messagingSenderId=${encodeURIComponent(messagingSenderId || '')}&projectId=${encodeURIComponent(projectId || '')}&appId=${encodeURIComponent(appId || '')}&authDomain=${encodeURIComponent(authDomain || '')}&storageBucket=${encodeURIComponent(storageBucket || '')}`;
-        serviceWorkerRegistration = await navigator.serviceWorker.register(swUrl, {
+        serviceWorkerRegistration = await navigator.serviceWorker.register('/sw.js', {
             scope: '/'
         });
-        console.log("[FCM Client] Service Worker registrado dinámicamente:", swUrl);
+        console.log("[FCM Client] Service Worker unificado (/sw.js) registrado con éxito.");
     }
 
     const currentToken = await getToken(messaging, { 

@@ -187,7 +187,21 @@ export default function CentroActividadPage() {
         } else if (notification.actionType === 'VER_PERFIL' || payload.screen === 'profile') {
             router.push(`/${slug}/perfil`);
         } else if (notification.actionType === 'ABRIR_URL' || payload.url) {
-            window.open(payload.url, '_blank');
+            const url = payload.url || '';
+            if (url) {
+                if (url.startsWith('http://') || url.startsWith('https://')) {
+                    window.open(url, '_blank');
+                } else {
+                    const cleanPath = url.startsWith('/') ? url : `/${url}`;
+                    if (cleanPath.startsWith(`/${slug}/`) || cleanPath === `/${slug}`) {
+                        router.push(cleanPath);
+                    } else {
+                        router.push(`/${slug}${cleanPath}`);
+                    }
+                }
+            } else {
+                router.push(`/${slug}`);
+            }
         } else {
             router.push(`/${slug}`);
         }

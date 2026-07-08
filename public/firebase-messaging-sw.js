@@ -2,41 +2,71 @@
 importScripts("https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.0.0/firebase-messaging-compat.js");
 
-// Obtener parámetros de la URL del Service Worker (query string)
+// Obtener parámetros de la URL del Service Worker (query string si los hay)
 const urlParams = new URLSearchParams(self.location.search);
-const apiKey = urlParams.get('apiKey') || "AIzaSyDlErcTHuplaip1cuzXrBMNxUaFJzG52OA";
-const authDomain = urlParams.get('authDomain') || "canchas-saas.firebaseapp.com";
-const projectId = urlParams.get('projectId') || "canchas-saas";
-const storageBucket = urlParams.get('storageBucket') || "canchas-saas.firebasestorage.app";
-const messagingSenderId = urlParams.get('messagingSenderId') || "1082356572409";
-const appId = urlParams.get('appId') || "1:1082356572409:web:7460b04ede9724e610c228";
+let urlApiKey = urlParams.get('apiKey');
+let urlAuthDomain = urlParams.get('authDomain');
+let urlProjectId = urlParams.get('projectId');
+let urlStorageBucket = urlParams.get('storageBucket');
+let urlMessagingSenderId = urlParams.get('messagingSenderId');
+let urlAppId = urlParams.get('appId');
 
-// Inicializar Firebase en el Service Worker con la configuración dinámica recibida
-firebase.initializeApp({
-    apiKey,
-    authDomain,
-    projectId,
-    storageBucket,
-    messagingSenderId,
-    appId
-});
+function initFirebase(config) {
+    try {
+        firebase.initializeApp(config);
+        const messaging = firebase.messaging();
+        
+        messaging.onBackgroundMessage((payload) => {
+            console.log('[SW] Mensaje background recibido:', payload);
+            const notificationTitle = payload.notification?.title || 'Nueva notificación';
+            const notificationOptions = {
+                body: payload.notification?.body || '',
+                icon: payload.data?.icon || payload.notification?.image || '/icons/icon-192x192.png',
+                badge: '/icons/icon-72x72.png',
+                data: payload.data,
+                vibrate: [200, 100, 200],
+                requireInteraction: false
+            };
+            self.registration.showNotification(notificationTitle, notificationOptions);
+        });
+        console.log('[SW] Firebase Messaging inicializado correctamente.');
+    } catch (e) {
+        console.error('[SW] Error al inicializar Firebase en SW:', e);
+    }
+}
 
-const messaging = firebase.messaging();
-
-// Manejar notificaciones en segundo plano (Service Worker en background)
-messaging.onBackgroundMessage((payload) => {
-    console.log('[SW] Mensaje background recibido:', payload);
-    const notificationTitle = payload.notification?.title || 'Nueva notificación';
-    const notificationOptions = {
-        body: payload.notification?.body || '',
-        icon: payload.data?.icon || payload.notification?.image || '/icons/icon-192x192.png',
-        badge: '/icons/icon-72x72.png',
-        data: payload.data,
-        vibrate: [200, 100, 200],
-        requireInteraction: false
-    };
-    self.registration.showNotification(notificationTitle, notificationOptions);
-});
+// Intentar inicialización asíncrona mediante fetch a la API de configuración dinámica
+fetch('/api/config/firebase')
+    .then(res => {
+        if (!res.ok) throw new Error('API config no disponible');
+        return res.json();
+    })
+    .then(config => {
+        const getVal = (key, envVal) => {
+            const dbVal = config[key];
+            return dbVal || envVal;
+        };
+        const fConfig = {
+            apiKey: getVal('NEXT_PUBLIC_FIREBASE_API_KEY', urlApiKey) || "AIzaSyDlErcTHuplaip1cuzXrBMNxUaFJzG52OA",
+            authDomain: getVal('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN', urlAuthDomain) || "canchas-saas.firebaseapp.com",
+            projectId: getVal('NEXT_PUBLIC_FIREBASE_PROJECT_ID', urlProjectId) || "canchas-saas",
+            storageBucket: getVal('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET', urlStorageBucket) || "canchas-saas.firebasestorage.app",
+            messagingSenderId: getVal('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID', urlMessagingSenderId) || "1082356572409",
+            appId: getVal('NEXT_PUBLIC_FIREBASE_APP_ID', urlAppId) || "1:1082356572409:web:7460b04ede9724e610c228"
+        };
+        initFirebase(fConfig);
+    })
+    .catch(() => {
+        // Fallback síncrono si el fetch falla (offline o fase inicial)
+        initFirebase({
+            apiKey: urlApiKey || "AIzaSyDlErcTHuplaip1cuzXrBMNxUaFJzG52OA",
+            authDomain: urlAuthDomain || "canchas-saas.firebaseapp.com",
+            projectId: urlProjectId || "canchas-saas",
+            storageBucket: urlStorageBucket || "canchas-saas.firebasestorage.app",
+            messagingSenderId: urlMessagingSenderId || "1082356572409",
+            appId: urlAppId || "1:1082356572409:web:7460b04ede9724e610c228"
+        });
+    });
 
 // Listener raw de 'push' para garantizar entrega durante navegación entre páginas
 // Este handler se dispara SIEMPRE, incluso si la página está en transición
@@ -59,6 +89,15 @@ self.addEventListener('push', (event) => {
             data: payload.data || {}
         })
     );
+});
+
+// Forzar la activación inmediata del nuevo Service Worker sin esperar a cerrar pestañas
+self.addEventListener('install', (event) => {
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+    event.waitUntil(self.clients.claim());
 });
 
 // Manejar click en notificación nativa
