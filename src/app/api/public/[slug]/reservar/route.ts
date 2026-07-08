@@ -314,6 +314,7 @@ export async function POST(
         }
 
         const reservaCreated = result.reserva;
+        console.log(`[PUSH-AUDIT][PASO 0A] Reserva creada exitosamente. ID=${reservaCreated.id} Estado=${reservaCreated.estado} negocioId=${negocio.id}`);
 
         // 3. Notificaciones (Segundo plano relativo)
         
@@ -371,6 +372,7 @@ export async function POST(
 
         // Guardar y despachar notificación para administradores del negocio (incluye Push FCM)
         try {
+            console.log(`[PUSH-AUDIT][PASO 0B] Invocando NotificationService.createNotification() para el negocio (admins). channels=['APP','PUSH']`);
             await NotificationService.createNotification({
                 negocioId: negocio.id,
                 tipo: 'RESERVA',

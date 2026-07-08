@@ -55,6 +55,15 @@ export class NotificationService {
             channels = ['APP']
         } = params;
 
+        console.log(`[PUSH-AUDIT][PASO 1] createNotification() invocado`, {
+            negocioId,
+            userId: userId || '(sin userId - será para admins)',
+            tipo,
+            titulo,
+            channels,
+            priority
+        });
+
         // Estructura básica de métricas iniciales
         const metricasStr = JSON.stringify({
             enviadas: channels.length,
@@ -68,6 +77,7 @@ export class NotificationService {
         // 1. Persistir si incluye canal APP o si está programada
         let notification = null;
         if (channels.includes('APP') || scheduledFor) {
+            console.log(`[PUSH-AUDIT][PASO 2] Persistiendo notificación en BD (canal APP detectado)...`);
             notification = await prisma.notification.create({
                 data: {
                     negocioId,
@@ -89,6 +99,9 @@ export class NotificationService {
                     archived: false
                 }
             });
+            console.log(`[PUSH-AUDIT][PASO 2] Notificación persistida en BD con ID: ${notification?.id}`);
+        } else {
+            console.log(`[PUSH-AUDIT][PASO 2] Canal APP no incluido y sin scheduledFor → NO se persiste en BD.`);
         }
 
         // Si está programada para el futuro, salimos aquí (un cron posterior la despachará)
@@ -97,6 +110,7 @@ export class NotificationService {
         }
 
         // 2. Encolar/Despachar en segundo plano (arquitectura desacoplada)
+        console.log(`[PUSH-AUDIT][PASO 3] Llamando a enqueueNotificationDispatch() con channels=[${channels.join(', ')}]`);
         await this.enqueueNotificationDispatch({
             negocioId,
             userId,
@@ -109,6 +123,7 @@ export class NotificationService {
             channels,
             priority
         });
+        console.log(`[PUSH-AUDIT][PASO 3] enqueueNotificationDispatch() lanzado en segundo plano.`);
 
         return notification;
     }
@@ -130,8 +145,9 @@ export class NotificationService {
         priority: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
     }) {
         // Ejecutar de forma asíncrona no bloqueante
+        console.log(`[PUSH-AUDIT][PASO 4] enqueueNotificationDispatch() → lanzando dispatchChannels() de forma no bloqueante.`);
         this.dispatchChannels(data).catch(err => {
-            console.error('[Notification] Error en despacho asíncrono de canales:', err);
+            console.error('[PUSH-AUDIT][PASO 4][ERROR] dispatchChannels() falló con error:', err);
         });
     }
 
@@ -153,15 +169,18 @@ export class NotificationService {
         const { negocioId, userId, tipo, titulo, descripcion, notificationId, actionType, actionPayload, channels, priority } = data;
         const startTime = Date.now();
 
+        console.log(`[PUSH-AUDIT][PASO 5] dispatchChannels() iniciado. Canales a procesar: [${channels.join(', ')}]`);
+
         // 1. Obtener datos del negocio (siempre necesario para slug/nombre)
         const negocio = await prisma.negocio.findUnique({
             where: { id: negocioId },
             select: { slug: true, nombre: true }
         });
         if (!negocio) {
-            console.warn(`[Notification] Abortando despacho: Negocio ID ${negocioId} no encontrado.`);
+            console.warn(`[PUSH-AUDIT][PASO 5][ABORT] Negocio ID ${negocioId} no encontrado en BD. Despacho cancelado.`);
             return;
         }
+        console.log(`[PUSH-AUDIT][PASO 5] Negocio encontrado: ${negocio.nombre} (slug: ${negocio.slug})`);
 
         // Calcular la ruta de destino/enlace
         let targetPath = '';
@@ -227,25 +246,32 @@ export class NotificationService {
         let pushSuccessCount = 0;
         let pushFailureCount = 0;
 
+        console.log(`[PUSH-AUDIT][PASO 6] Verificando si se debe procesar canal PUSH. channels=[${channels.join(', ')}] → includes('PUSH')=${channels.includes('PUSH')}, includes('APP')=${channels.includes('APP')}`);
+
         if (channels.includes('PUSH') || channels.includes('APP')) {
+            console.log(`[PUSH-AUDIT][PASO 6] ✅ Canal PUSH/APP detectado → entrando al bloque de Firebase FCM.`);
             try {
                 // Obtener tokens FCM de destino
                 let pushTokens: { token: string }[] = [];
                 
                 if (userId) {
                     // Si hay un usuario específico, buscar sus tokens
+                    console.log(`[PUSH-AUDIT][PASO 7] Modo USER → buscando tokens FCM para userId=${userId}`);
                     pushTokens = await prisma.pushToken.findMany({
                         where: { userId },
                         select: { token: true }
                     });
+                    console.log(`[PUSH-AUDIT][PASO 7] Tokens encontrados para usuario: ${pushTokens.length}`);
                 } else {
                     // Si no hay usuario específico, es una notificación del negocio (ej: nueva reserva para los admins)
+                    console.log(`[PUSH-AUDIT][PASO 7] Modo NEGOCIO (sin userId) → buscando admins del negocio ${negocioId}`);
                     // 1. Obtener todos los usuarios con rol ADMIN asociados al negocio
                     const admins = await prisma.usuario.findMany({
                         where: { negocioId, role: 'ADMIN' },
                         select: { id: true }
                     });
                     const adminIds = admins.map(a => a.id);
+                    console.log(`[PUSH-AUDIT][PASO 7] Admins encontrados: ${admins.length} → IDs: [${adminIds.slice(0,5).join(', ')}${adminIds.length > 5 ? '...' : ''}]`);
 
                     if (adminIds.length > 0) {
                         // 2. Buscar los tokens de esos administradores
@@ -253,6 +279,9 @@ export class NotificationService {
                             where: { userId: { in: adminIds } },
                             select: { token: true }
                         });
+                        console.log(`[PUSH-AUDIT][PASO 7] Tokens de admins encontrados: ${pushTokens.length}`);
+                    } else {
+                        console.warn(`[PUSH-AUDIT][PASO 7][WARN] No se encontraron admins con role='ADMIN' para negocio ${negocioId}`);
                     }
 
                     // 3. Obtener tokens asociados directamente al negocio en la tabla PushToken
@@ -260,6 +289,7 @@ export class NotificationService {
                         where: { businessId: negocioId },
                         select: { token: true }
                     });
+                    console.log(`[PUSH-AUDIT][PASO 7] Tokens directos del negocio (businessId): ${businessTokens.length}`);
 
                     // Unificar tokens y quitar duplicados
                     const allTokens = [...pushTokens, ...businessTokens];
@@ -268,6 +298,7 @@ export class NotificationService {
                         if (t.token) uniqueTokensMap.set(t.token, t);
                     });
                     pushTokens = Array.from(uniqueTokensMap.values());
+                    console.log(`[PUSH-AUDIT][PASO 7] Total tokens únicos (admins + negocio): ${pushTokens.length}`);
                 }
 
                 // Filtrar tokens nulos, vacíos o no string
@@ -276,11 +307,20 @@ export class NotificationService {
                     .filter(t => typeof t === 'string' && t.trim().length > 0);
 
                 totalTokensSent = validTokens.length;
+                console.log(`[PUSH-AUDIT][PASO 8] Tokens válidos (no nulos/vacíos) listos para envío: ${validTokens.length}`);
+                if (validTokens.length === 0) {
+                    console.warn(`[PUSH-AUDIT][PASO 8][WARN] ⚠️ CERO tokens válidos. No se enviará ningún push. Verifica que los dispositivos hayan registrado su token FCM en la tabla PushToken.`);
+                } else {
+                    console.log(`[PUSH-AUDIT][PASO 8] Primeros tokens (prefijo): ${validTokens.slice(0, 3).map(t => t.substring(0, 20) + '...').join(' | ')}`);
+                }
 
                 if (validTokens.length > 0) {
+                    console.log(`[PUSH-AUDIT][PASO 9] Inicializando Firebase Admin...`);
                     await initFirebaseAdmin();
+                    console.log(`[PUSH-AUDIT][PASO 9] Firebase Admin apps activas: ${admin.apps.length}`);
 
                     if (admin.apps.length > 0) {
+                        console.log(`[PUSH-AUDIT][PASO 9] ✅ Firebase Admin inicializado correctamente.`);
                         const pushLink = targetPath ? (targetPath.startsWith('http') ? targetPath : `/${negocio.slug}${targetPath}`) : `/${negocio.slug}`;
                         
                         // Configurar prioridades FCM
@@ -325,6 +365,7 @@ export class NotificationService {
                             });
                         }
 
+                        console.log(`[PUSH-AUDIT][PASO 10] Llamando a admin.messaging().sendEachForMulticast() con ${validTokens.length} token(s)...`);
                         const response = await admin.messaging().sendEachForMulticast({
                             tokens: validTokens,
                             notification: {
@@ -338,6 +379,17 @@ export class NotificationService {
 
                         pushSuccessCount = response.successCount;
                         pushFailureCount = response.failureCount;
+                        console.log(`[PUSH-AUDIT][PASO 11] Respuesta de Firebase FCM:`, {
+                            successCount: response.successCount,
+                            failureCount: response.failureCount,
+                            responses: response.responses.map((r, i) => ({
+                                token: validTokens[i]?.substring(0, 20) + '...',
+                                success: r.success,
+                                messageId: r.messageId || null,
+                                errorCode: r.error?.code || null,
+                                errorMessage: r.error?.message || null
+                            }))
+                        });
 
                         // Limpieza de tokens inválidos u obsoletos en segundo plano
                         response.responses.forEach(async (res, index) => {
@@ -365,27 +417,25 @@ export class NotificationService {
                             this.trackMetricDirectly(notificationId, 'entregadas');
                         }
                     } else {
-                        console.warn('[Notification] Firebase Admin no está inicializado.');
+                        console.error(`[PUSH-AUDIT][PASO 9][ERROR] ⛔ Firebase Admin NO está inicializado (admin.apps.length=0). Verifica credenciales FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL y FIREBASE_PRIVATE_KEY en las variables de entorno o en GlobalConfig de la BD.`);
                     }
                 }
             } catch (err) {
-                console.error('[Notification] Error en el canal PUSH (Firebase):', err);
+                console.error('[PUSH-AUDIT][PASO 10][ERROR] ⛔ Error crítico en el canal PUSH (Firebase):', err);
             }
         }
 
         const duration = Date.now() - startTime;
 
-        // Imprimir log de depuración claro según requerimiento del usuario
-        console.log(`
-[Notification]
-Tipo: ${tipo}
-Destino: ${userId ? `Usuario (${userId})` : `Negocio (${negocioId} - administradores)`}
-Canales: ${channels.join(', ')}
-Push enviados: ${totalTokensSent}
-Push exitosos: ${pushSuccessCount}
-Push fallidos: ${pushFailureCount}
-Tiempo total: ${duration} ms
-`);
+        console.log(`[PUSH-AUDIT][PASO 12] ✅ dispatchChannels() completado.`, {
+            tipo,
+            destino: userId ? `Usuario (${userId})` : `Negocio (${negocioId} - admins)`,
+            canales: channels.join(', '),
+            pushTokensEncontrados: totalTokensSent,
+            pushExitosos: pushSuccessCount,
+            pushFallidos: pushFailureCount,
+            duracionMs: duration
+        });
     }
 
     /**
