@@ -821,9 +821,6 @@ function UbicacionesManager() {
                             </div>
                         </div>
                     ))}
-                </div>>
-                        </div>
-                    ))}
                 </div>
             </div>
         </div>
