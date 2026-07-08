@@ -181,10 +181,14 @@ export const getFcmToken = async () => {
             }
 
             // 2. Registrar el Service Worker unificado
-            serviceWorkerRegistration = await navigator.serviceWorker.register('/sw.js', {
+            await navigator.serviceWorker.register('/sw.js', {
                 scope: '/'
             });
-            console.log("[FCM Client] Service Worker unificado (/sw.js) registrado con éxito.");
+            console.log("[FCM Client] Service Worker unificado (/sw.js) registrado.");
+
+            // Esperar a que el service worker esté completamente activo y listo
+            serviceWorkerRegistration = await navigator.serviceWorker.ready;
+            console.log("[FCM Client] Service Worker listo y activo para FCM.");
 
             // 3. Forzar regeneración del token FCM si es la primera vez con la arquitectura unificada (v3)
             const CURRENT_SW_VERSION = 'v3';
