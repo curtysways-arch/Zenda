@@ -50,24 +50,24 @@ fetch('/api/config/firebase')
             return dbVal || envVal;
         };
         const fConfig = {
-            apiKey: getVal('NEXT_PUBLIC_FIREBASE_API_KEY', urlApiKey) || "AIzaSyDlErcTHuplaip1cuzXrBMNxUaFJzG52OA",
-            authDomain: getVal('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN', urlAuthDomain) || "canchas-saas.firebaseapp.com",
-            projectId: getVal('NEXT_PUBLIC_FIREBASE_PROJECT_ID', urlProjectId) || "canchas-saas",
-            storageBucket: getVal('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET', urlStorageBucket) || "canchas-saas.firebasestorage.app",
-            messagingSenderId: getVal('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID', urlMessagingSenderId) || "1082356572409",
-            appId: getVal('NEXT_PUBLIC_FIREBASE_APP_ID', urlAppId) || "1:1082356572409:web:7460b04ede9724e610c228"
+            apiKey: getVal('NEXT_PUBLIC_FIREBASE_API_KEY', urlApiKey) || "AIzaSyCNZYSiXnzpuz7BMarfIQ-SwWE-Toj6TU8",
+            authDomain: getVal('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN', urlAuthDomain) || "spa-citas-c5c3d.firebaseapp.com",
+            projectId: getVal('NEXT_PUBLIC_FIREBASE_PROJECT_ID', urlProjectId) || "spa-citas-c5c3d",
+            storageBucket: getVal('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET', urlStorageBucket) || "spa-citas-c5c3d.firebasestorage.app",
+            messagingSenderId: getVal('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID', urlMessagingSenderId) || "1071729504920",
+            appId: getVal('NEXT_PUBLIC_FIREBASE_APP_ID', urlAppId) || "1:1071729504920:web:933b5060cc87428f8a96ed"
         };
         initFirebase(fConfig);
     })
     .catch(() => {
         // Fallback síncrono si el fetch falla (offline o fase inicial)
         initFirebase({
-            apiKey: urlApiKey || "AIzaSyDlErcTHuplaip1cuzXrBMNxUaFJzG52OA",
-            authDomain: urlAuthDomain || "canchas-saas.firebaseapp.com",
-            projectId: urlProjectId || "canchas-saas",
-            storageBucket: urlStorageBucket || "canchas-saas.firebasestorage.app",
-            messagingSenderId: urlMessagingSenderId || "1082356572409",
-            appId: urlAppId || "1:1082356572409:web:7460b04ede9724e610c228"
+            apiKey: urlApiKey || "AIzaSyCNZYSiXnzpuz7BMarfIQ-SwWE-Toj6TU8",
+            authDomain: urlAuthDomain || "spa-citas-c5c3d.firebaseapp.com",
+            projectId: urlProjectId || "spa-citas-c5c3d",
+            storageBucket: urlStorageBucket || "spa-citas-c5c3d.firebasestorage.app",
+            messagingSenderId: urlMessagingSenderId || "1071729504920",
+            appId: urlAppId || "1:1071729504920:web:933b5060cc87428f8a96ed"
         });
     });
 
