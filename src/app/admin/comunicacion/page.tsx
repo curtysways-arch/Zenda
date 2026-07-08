@@ -7,6 +7,7 @@ import {
     ExternalLink, Check
 } from 'lucide-react';
 import { useConfirm } from '@/components/admin/ConfirmContext';
+import { getFcmToken } from '@/lib/firebase';
 
 // ─── Selector de Link (igual al de páginas/contenido) ─────────────────────────
 interface LinkOption {
@@ -176,6 +177,112 @@ function LinkSelector({ value, onChange }: { value: string; onChange: (v: string
 export default function ComunicacionAdminPage() {
     const { confirm } = useConfirm();
     const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
+
+    // Diagnóstico Push
+    const [testPushState, setTestPushState] = useState<{
+        permission: string;
+        token: string;
+        loadingToken: boolean;
+        copied: boolean;
+        sendingTest: boolean;
+        statusMessage: { text: string; type: 'success' | 'error' } | null;
+    }>({
+        permission: 'default',
+        token: '',
+        loadingToken: false,
+        copied: false,
+        sendingTest: false,
+        statusMessage: null
+    });
+
+    const loadDeviceToken = async () => {
+        setTestPushState(prev => ({ ...prev, loadingToken: true, statusMessage: null }));
+        try {
+            const token = await getFcmToken();
+            setTestPushState(prev => ({ ...prev, token: token || '', loadingToken: false }));
+        } catch (err: any) {
+            console.error('[PUSH TEST] Error:', err);
+            setTestPushState(prev => ({ 
+                ...prev, 
+                loadingToken: false,
+                statusMessage: { text: `Error al generar token: ${err.message || err}`, type: 'error' }
+            }));
+        }
+    };
+
+    const handleRequestPermission = async () => {
+        if (typeof window === 'undefined') return;
+        try {
+            const perm = await Notification.requestPermission();
+            setTestPushState(prev => ({ ...prev, permission: perm }));
+            if (perm === 'granted') {
+                await loadDeviceToken();
+            } else if (perm === 'denied') {
+                setTestPushState(prev => ({
+                    ...prev,
+                    statusMessage: { text: "Permisos denegados. Debes habilitarlos en la configuración de tu navegador.", type: 'error' }
+                }));
+            }
+        } catch (err: any) {
+            setTestPushState(prev => ({
+                ...prev,
+                statusMessage: { text: `Error al solicitar permisos: ${err.message || err}`, type: 'error' }
+            }));
+        }
+    };
+
+    const handleCopyToken = () => {
+        if (!testPushState.token) return;
+        navigator.clipboard.writeText(testPushState.token);
+        setTestPushState(prev => ({ ...prev, copied: true }));
+        setTimeout(() => setTestPushState(prev => ({ ...prev, copied: false })), 2000);
+    };
+
+    const handleRegenerateToken = async () => {
+        await handleRequestPermission();
+    };
+
+    const handleSendTestPush = async () => {
+        if (!testPushState.token) return;
+        setTestPushState(prev => ({ ...prev, sendingTest: true, statusMessage: null }));
+        try {
+            const res = await fetch('/api/admin/notifications/test-push', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: testPushState.token })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                setTestPushState(prev => ({
+                    ...prev,
+                    sendingTest: false,
+                    statusMessage: { text: "¡Notificación de prueba enviada! Debería llegarte en unos segundos.", type: 'success' }
+                }));
+            } else {
+                setTestPushState(prev => ({
+                    ...prev,
+                    sendingTest: false,
+                    statusMessage: { text: `Error del servidor: ${data.error || 'Código ' + res.status}`, type: 'error' }
+                }));
+            }
+        } catch (err: any) {
+            setTestPushState(prev => ({
+                ...prev,
+                sendingTest: false,
+                statusMessage: { text: `Error de red: ${err.message || err}`, type: 'error' }
+            }));
+        }
+    };
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const perm = Notification.permission;
+            setTestPushState(prev => ({ ...prev, permission: perm }));
+            if (perm === 'granted') {
+                loadDeviceToken();
+            }
+        }
+    }, []);
 
     // Formulario
     const [titulo, setTitulo] = useState('');
@@ -550,6 +657,93 @@ export default function ComunicacionAdminPage() {
                         )}
                     </div>
                 </div>
+            </div>
+
+            {/* ── Diagnóstico Push de este dispositivo ────────────────────────────── */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+                <h3 className="text-base font-black text-slate-900 uppercase tracking-tight flex items-center gap-2 pb-2">
+                    <Sparkles size={18} className="text-emerald-500" />
+                    Diagnóstico de Notificaciones Push de este Celular / Navegador
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-semibold">
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col gap-1.5">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Permiso del Navegador</span>
+                        <span className="text-slate-800 flex items-center gap-2 font-bold uppercase">
+                            <span className={`w-2.5 h-2.5 rounded-full ${
+                                testPushState.permission === 'granted' ? 'bg-emerald-500' : testPushState.permission === 'denied' ? 'bg-rose-500' : 'bg-amber-500'
+                            }`} />
+                            {testPushState.permission}
+                        </span>
+                        {testPushState.permission === 'denied' && (
+                            <p className="text-[10px] text-rose-500 font-semibold mt-1 leading-normal">
+                                Has bloqueado las notificaciones. Habilítalas presionando el candado de la barra de direcciones del navegador.
+                            </p>
+                        )}
+                        {testPushState.permission === 'default' && (
+                            <button 
+                                onClick={handleRequestPermission}
+                                className="mt-2 text-[10px] font-black uppercase text-emerald-600 bg-emerald-55/20 py-1.5 px-3 rounded-lg hover:bg-emerald-55/35 transition-colors self-start"
+                            >
+                                Solicitar Permisos
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col gap-1.5 md:col-span-2">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Token de Notificación (FCM) de este Dispositivo</span>
+                        <div className="flex gap-2 items-center min-w-0">
+                            {testPushState.loadingToken ? (
+                                <Loader2 className="animate-spin text-slate-400" size={16} />
+                            ) : testPushState.token ? (
+                                <>
+                                    <span className="text-slate-700 font-mono truncate flex-1 bg-white border border-slate-100 px-2 py-1.5 rounded-md text-[10px]">
+                                        {testPushState.token}
+                                    </span>
+                                    <button 
+                                        type="button"
+                                        onClick={handleCopyToken}
+                                        className="text-[9px] font-black uppercase px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg whitespace-nowrap"
+                                    >
+                                        {testPushState.copied ? 'Copiado ✓' : 'Copiar'}
+                                    </button>
+                                </>
+                            ) : (
+                                <span className="text-slate-400">No generado</span>
+                            )}
+                        </div>
+                        
+                        <div className="flex gap-2 mt-2">
+                            <button
+                                type="button"
+                                onClick={handleRegenerateToken}
+                                className="text-[9px] font-black uppercase text-slate-700 bg-white border border-slate-200 py-1.5 px-3 rounded-lg hover:bg-slate-50 transition-colors"
+                            >
+                                Activar / Re-registrar este dispositivo
+                            </button>
+                            
+                            {testPushState.token && (
+                                <button
+                                    type="button"
+                                    onClick={handleSendTestPush}
+                                    disabled={testPushState.sendingTest}
+                                    className="text-[9px] font-black uppercase text-white bg-emerald-500 py-1.5 px-4 rounded-lg hover:bg-emerald-600 disabled:opacity-50 transition-colors flex items-center gap-1.5 shadow-md shadow-emerald-500/10"
+                                >
+                                    {testPushState.sendingTest ? <Loader2 className="animate-spin" size={12} /> : null}
+                                    Probar Push Aquí
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {testPushState.statusMessage && (
+                    <div className={`p-3.5 rounded-xl text-[10px] font-bold ${
+                        testPushState.statusMessage.type === 'success' ? 'bg-emerald-55/10 border border-emerald-250/20 text-emerald-800' : 'bg-rose-55/10 border border-rose-250/20 text-rose-800'
+                    }`}>
+                        {testPushState.statusMessage.text}
+                    </div>
+                )}
             </div>
 
             {/* ── Historial ──────────────────────────────────────────────────── */}
