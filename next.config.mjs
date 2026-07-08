@@ -5,7 +5,7 @@ const nextConfig = {
     reactStrictMode: true,
     serverExternalPackages: ["@libsql/client"],
     compiler: {
-        removeConsole: process.env.NODE_ENV === "production",
+        removeConsole: false,
     },
     // Silencia el error de Turbopack si detecta conflicto de webpack plugins
     // (Removido 'turbo' experimental porque ya es default y causa errores)
