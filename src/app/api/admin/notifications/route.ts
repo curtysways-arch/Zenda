@@ -114,9 +114,9 @@ export async function POST(req: NextRequest) {
             // Clientes específicos
             targetUsers = userIds.map((id: string) => ({ id }));
         } else if (recipientType === 'ALL') {
-            // Todos los usuarios de este negocio
+            // Todos los usuarios de este negocio (incluye administradores para pruebas de push en producción)
             targetUsers = await prisma.usuario.findMany({
-                where: { negocioId, role: 'USER' },
+                where: { negocioId },
                 select: { id: true }
             });
         } else if (recipientType === 'VIP') {
