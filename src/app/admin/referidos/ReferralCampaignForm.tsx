@@ -269,6 +269,7 @@ export default function ReferralCampaignForm() {
                     <div className="md:col-span-2">
                         <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Imagen de la Campaña (Opcional)</label>
                         <ImageUploader 
+                            category="promotion"
                             currentUrl={imagenUrl}
                             onUploadSuccess={(media) => setImagenUrl(media.url)}
                             onRemove={() => setImagenUrl('')}
