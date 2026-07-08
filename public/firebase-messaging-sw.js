@@ -17,7 +17,7 @@ function initFirebase(config) {
         const messaging = firebase.messaging();
         
         messaging.onBackgroundMessage((payload) => {
-            console.log('[SW] Mensaje background recibido:', payload);
+            console.log('[SW-AUDIT][PASO 1] onBackgroundMessage disparado. Payload:', JSON.stringify(payload));
             const notificationTitle = payload.notification?.title || 'Nueva notificación';
             const notificationOptions = {
                 body: payload.notification?.body || '',
@@ -27,7 +27,10 @@ function initFirebase(config) {
                 vibrate: [200, 100, 200],
                 requireInteraction: false
             };
-            self.registration.showNotification(notificationTitle, notificationOptions);
+            console.log('[SW-AUDIT][PASO 2] Llamando a showNotification desde onBackgroundMessage:', notificationTitle, JSON.stringify(notificationOptions));
+            self.registration.showNotification(notificationTitle, notificationOptions)
+                .then(() => console.log('[SW-AUDIT][PASO 3] showNotification completado con éxito (onBackgroundMessage)'))
+                .catch(err => console.error('[SW-AUDIT][ERROR] error en showNotification (onBackgroundMessage):', err));
         });
         console.log('[SW] Firebase Messaging inicializado correctamente.');
     } catch (e) {
@@ -71,15 +74,26 @@ fetch('/api/config/firebase')
 // Listener raw de 'push' para garantizar entrega durante navegación entre páginas
 // Este handler se dispara SIEMPRE, incluso si la página está en transición
 self.addEventListener('push', (event) => {
-    if (!event.data) return;
+    console.log('[SW-AUDIT][PASO A] Evento push raw interceptado.');
+    if (!event.data) {
+        console.warn('[SW-AUDIT][PASO A] Evento push no contiene data.');
+        return;
+    }
+    
     let payload;
-    try { payload = event.data.json(); } catch { return; }
+    try { 
+        payload = event.data.json(); 
+        console.log('[SW-AUDIT][PASO B] Payload push descodificado exitosamente:', JSON.stringify(payload));
+    } catch (err) { 
+        console.error('[SW-AUDIT][PASO B][ERROR] Error al descodificar JSON del push:', err);
+        return; 
+    }
 
     const title = payload.notification?.title || payload.data?.title || 'Nueva notificación';
     const body = payload.notification?.body || payload.data?.body || '';
     const icon = payload.data?.icon || payload.notification?.image || '/icons/icon-192x192.png';
 
-// Solo mostrar si no hay cliente visible (evita duplicados con onMessage del app)
+    console.log('[SW-AUDIT][PASO C] Llamando a showNotification desde evento push:', title);
     event.waitUntil(
         self.registration.showNotification(title, {
             body,
@@ -88,6 +102,8 @@ self.addEventListener('push', (event) => {
             vibrate: [200, 100, 200],
             data: payload.data || {}
         })
+        .then(() => console.log('[SW-AUDIT][PASO D] showNotification completado (evento push)'))
+        .catch(err => console.error('[SW-AUDIT][ERROR] error en showNotification (evento push):', err))
     );
 });
 

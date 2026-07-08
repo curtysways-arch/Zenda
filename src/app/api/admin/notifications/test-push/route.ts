@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
             token: token
         };
 
+        console.log('[PUSH-TEST-AUDIT] Mensaje de test push completo antes de enviar:', JSON.stringify(message, null, 2));
         const response = await admin.messaging().send(message);
 
         return NextResponse.json({

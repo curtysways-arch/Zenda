@@ -365,8 +365,7 @@ export class NotificationService {
                             });
                         }
 
-                        console.log(`[PUSH-AUDIT][PASO 10] Llamando a admin.messaging().sendEachForMulticast() con ${validTokens.length} token(s)...`);
-                        const response = await admin.messaging().sendEachForMulticast({
+                        const multicastPayload = {
                             tokens: validTokens,
                             notification: {
                                 title: titulo,
@@ -375,7 +374,11 @@ export class NotificationService {
                             data: dataPayload,
                             android: androidConfig,
                             apns: apnsConfig
-                        });
+                        };
+
+                        console.log('[PUSH-RESERVA-AUDIT] Payload de multicast completo antes de enviar:', JSON.stringify(multicastPayload, null, 2));
+                        console.log(`[PUSH-AUDIT][PASO 10] Llamando a admin.messaging().sendEachForMulticast() con ${validTokens.length} token(s)...`);
+                        const response = await admin.messaging().sendEachForMulticast(multicastPayload);
 
                         pushSuccessCount = response.successCount;
                         pushFailureCount = response.failureCount;
