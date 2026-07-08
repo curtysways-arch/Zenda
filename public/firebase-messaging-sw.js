@@ -18,19 +18,7 @@ function initFirebase(config) {
         
         messaging.onBackgroundMessage((payload) => {
             console.log('[SW-AUDIT][PASO 1] onBackgroundMessage disparado. Payload:', JSON.stringify(payload));
-            const notificationTitle = payload.notification?.title || 'Nueva notificación';
-            const notificationOptions = {
-                body: payload.notification?.body || '',
-                icon: payload.data?.icon || payload.notification?.image || '/icons/icon-192x192.png',
-                badge: '/icons/icon-72x72.png',
-                data: payload.data,
-                vibrate: [200, 100, 200],
-                requireInteraction: false
-            };
-            console.log('[SW-AUDIT][PASO 2] Llamando a showNotification desde onBackgroundMessage:', notificationTitle, JSON.stringify(notificationOptions));
-            self.registration.showNotification(notificationTitle, notificationOptions)
-                .then(() => console.log('[SW-AUDIT][PASO 3] showNotification completado con éxito (onBackgroundMessage)'))
-                .catch(err => console.error('[SW-AUDIT][ERROR] error en showNotification (onBackgroundMessage):', err));
+            console.log('[SW-AUDIT][PASO 2] Omitiendo showNotification duplicado en onBackgroundMessage. Será manejado exclusivamente por el listener raw de push.');
         });
         console.log('[SW] Firebase Messaging inicializado correctamente.');
     } catch (e) {
