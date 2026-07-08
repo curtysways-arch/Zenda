@@ -181,14 +181,22 @@ export const getFcmToken = async () => {
             }
 
             // 2. Registrar el Service Worker unificado
-            await navigator.serviceWorker.register('/sw.js', {
+            const reg = await navigator.serviceWorker.register('/sw.js', {
                 scope: '/'
             });
             console.log("[FCM Client] Service Worker unificado (/sw.js) registrado.");
 
-            // Esperar a que el service worker esté completamente activo y listo
-            serviceWorkerRegistration = await navigator.serviceWorker.ready;
-            console.log("[FCM Client] Service Worker listo y activo para FCM.");
+            // Esperar a que el service worker esté completamente activo y listo con timeout de 4s
+            serviceWorkerRegistration = await Promise.race([
+                navigator.serviceWorker.ready,
+                new Promise((resolve) => {
+                    setTimeout(() => {
+                        console.warn("[FCM Client] Timeout esperando navigator.serviceWorker.ready. Usando registro inmediato.");
+                        resolve(reg);
+                    }, 4000);
+                })
+            ]) as ServiceWorkerRegistration;
+            console.log("[FCM Client] Service Worker listo para FCM.");
 
             // 3. Forzar regeneración del token FCM si es la primera vez con la arquitectura unificada (v3)
             const CURRENT_SW_VERSION = 'v3';
