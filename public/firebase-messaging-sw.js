@@ -16,9 +16,23 @@ function initFirebase(config) {
         firebase.initializeApp(config);
         const messaging = firebase.messaging();
         
+        // El SDK de Firebase muestra las notificaciones del bloque 'notification' automáticamente.
+        // onBackgroundMessage se encarga de manejar mensajes cuando el app está cerrada (segundo plano).
         messaging.onBackgroundMessage((payload) => {
             console.log('[SW-AUDIT][PASO 1] onBackgroundMessage disparado. Payload:', JSON.stringify(payload));
-            console.log('[SW-AUDIT][PASO 2] Omitiendo showNotification duplicado en onBackgroundMessage. Será manejado exclusivamente por el listener raw de push.');
+            const notificationTitle = payload.notification?.title || payload.data?.title || 'Nueva notificación';
+            const notificationOptions = {
+                body: payload.notification?.body || payload.data?.body || '',
+                icon: payload.data?.icon || payload.notification?.image || '/icons/icon-192x192.png',
+                badge: '/icons/icon-72x72.png',
+                data: payload.data || {},
+                vibrate: [200, 100, 200],
+                requireInteraction: false
+            };
+            console.log('[SW-AUDIT][PASO 2] Llamando a showNotification desde onBackgroundMessage:', notificationTitle, JSON.stringify(notificationOptions));
+            self.registration.showNotification(notificationTitle, notificationOptions)
+                .then(() => console.log('[SW-AUDIT][PASO 3] showNotification completado con éxito (onBackgroundMessage)'))
+                .catch(err => console.error('[SW-AUDIT][ERROR] error en showNotification (onBackgroundMessage):', err));
         });
         console.log('[SW] Firebase Messaging inicializado correctamente.');
     } catch (e) {
@@ -58,42 +72,6 @@ fetch('/api/config/firebase')
             appId: urlAppId || "1:1071729504920:web:933b5060cc87428f8a96ed"
         });
     });
-
-// Listener raw de 'push' para garantizar entrega durante navegación entre páginas
-// Este handler se dispara SIEMPRE, incluso si la página está en transición
-self.addEventListener('push', (event) => {
-    console.log('[SW-AUDIT][PASO A] Evento push raw interceptado.');
-    if (!event.data) {
-        console.warn('[SW-AUDIT][PASO A] Evento push no contiene data.');
-        return;
-    }
-    
-    let payload;
-    try { 
-        payload = event.data.json(); 
-        console.log('[SW-AUDIT][PASO B] Payload push descodificado exitosamente:', JSON.stringify(payload));
-    } catch (err) { 
-        console.error('[SW-AUDIT][PASO B][ERROR] Error al descodificar JSON del push:', err);
-        return; 
-    }
-
-    const title = payload.notification?.title || payload.data?.title || 'Nueva notificación';
-    const body = payload.notification?.body || payload.data?.body || '';
-    const icon = payload.data?.icon || payload.notification?.image || '/icons/icon-192x192.png';
-
-    console.log('[SW-AUDIT][PASO C] Llamando a showNotification desde evento push:', title);
-    event.waitUntil(
-        self.registration.showNotification(title, {
-            body,
-            icon,
-            badge: '/icons/icon-72x72.png',
-            vibrate: [200, 100, 200],
-            data: payload.data || {}
-        })
-        .then(() => console.log('[SW-AUDIT][PASO D] showNotification completado (evento push)'))
-        .catch(err => console.error('[SW-AUDIT][ERROR] error en showNotification (evento push):', err))
-    );
-});
 
 // Forzar la activación inmediata de este Service Worker al instalarse
 self.addEventListener('install', (event) => {
