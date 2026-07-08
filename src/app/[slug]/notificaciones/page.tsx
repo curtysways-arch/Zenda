@@ -374,38 +374,44 @@ export default function CentroActividadPage() {
                                                 />
                                             )}
 
-                                            <div className="flex gap-3">
-                                                {/* Icono de Categoría */}
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm ${getPriorityStyles(n.prioridad)}`}>
-                                                    {getCategoryIcon(n.categoria)}
-                                                </div>
-
-                                                <div className="flex-1 min-w-0 pr-2">
-                                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                                        <span className="text-[8px] font-black uppercase tracking-wider text-slate-400">
-                                                            {n.categoria}
-                                                        </span>
-                                                        <span className="text-[8px] text-slate-400 font-bold">
-                                                            • {new Date(n.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
+                                            {/* Cuerpo interactivo de la notificación */}
+                                            <div 
+                                                onClick={() => handleActionClick(n)}
+                                                className="flex flex-col gap-3 cursor-pointer hover:bg-slate-50/30 rounded-2xl p-1.5 -m-1.5 transition-all"
+                                            >
+                                                <div className="flex gap-3">
+                                                    {/* Icono de Categoría */}
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm ${getPriorityStyles(n.prioridad)}`}>
+                                                        {getCategoryIcon(n.categoria)}
                                                     </div>
-                                                    
-                                                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-tight leading-snug mt-1">
-                                                        {n.titulo}
-                                                    </h4>
-                                                    
-                                                    <p className="text-[10px] text-slate-550 font-semibold leading-relaxed mt-1">
-                                                        {n.descripcion}
-                                                    </p>
-                                                </div>
-                                            </div>
 
-                                            {/* Imagen Adjunta */}
-                                            {n.imagenUrl && (
-                                                <div className="w-full h-32 rounded-2xl overflow-hidden mt-1 bg-slate-50 border border-slate-100">
-                                                    <img src={n.imagenUrl} className="w-full h-full object-cover" alt="Detalle" />
+                                                    <div className="flex-1 min-w-0 pr-2">
+                                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                                            <span className="text-[8px] font-black uppercase tracking-wider text-slate-400">
+                                                                {n.categoria}
+                                                            </span>
+                                                            <span className="text-[8px] text-slate-400 font-bold">
+                                                                • {new Date(n.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                                            </span>
+                                                        </div>
+                                                        
+                                                        <h4 className="text-xs font-black text-slate-900 uppercase tracking-tight leading-snug mt-1">
+                                                            {n.titulo}
+                                                        </h4>
+                                                        
+                                                        <p className="text-[10px] text-slate-550 font-semibold leading-relaxed mt-1">
+                                                            {n.descripcion}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            )}
+
+                                                {/* Imagen Adjunta */}
+                                                {n.imagenUrl && (
+                                                    <div className="w-full h-32 rounded-2xl overflow-hidden mt-1 bg-slate-50 border border-slate-100">
+                                                        <img src={n.imagenUrl} className="w-full h-full object-cover" alt="Detalle" />
+                                                    </div>
+                                                )}
+                                            </div>
 
                                             {/* Botones de acción */}
                                             <div className="flex items-center justify-between border-t border-slate-50 pt-3">

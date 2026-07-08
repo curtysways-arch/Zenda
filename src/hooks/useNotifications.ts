@@ -116,6 +116,19 @@ export function useNotifications(slug: string): UseNotificationsResult {
         };
     }, [slug, refresh]);
 
+    // Sincronizar el badge del icono de la aplicación en la pantalla de inicio del teléfono
+    useEffect(() => {
+        if (typeof window !== 'undefined' && 'setAppBadge' in navigator) {
+            try {
+                if (unreadCount > 0) {
+                    navigator.setAppBadge(unreadCount).catch(() => {});
+                } else {
+                    navigator.clearAppBadge().catch(() => {});
+                }
+            } catch {}
+        }
+    }, [unreadCount]);
+
     return {
         unreadCount,
         pointsBalance,

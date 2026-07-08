@@ -2,6 +2,7 @@ import prisma from '../prisma';
 import { EventEmitter } from 'events';
 import { whatsappService } from '../whatsapp';
 import * as admin from 'firebase-admin';
+import { initFirebaseAdmin } from '../notifications';
 
 // Bus global de eventos SSE en memoria único
 const globalSse = global as any;
@@ -144,19 +145,47 @@ export class NotificationService {
         // Si no hay usuario destinatario, los canales directos (WhatsApp/Push) no aplican de forma individual
         if (!userId) return;
 
-        // Obtener datos del usuario
-        const usuario = await prisma.usuario.findUnique({
-            where: { id: userId },
-            select: { phone: true, email: true }
-        });
+        // Obtener datos del usuario y del negocio
+        const [usuario, negocio] = await Promise.all([
+            prisma.usuario.findUnique({
+                where: { id: userId },
+                select: { phone: true, email: true }
+            }),
+            prisma.negocio.findUnique({
+                where: { id: negocioId },
+                select: { slug: true }
+            })
+        ]);
 
-        if (!usuario) return;
+        if (!usuario || !negocio) return;
+
+        // Calcular la ruta del link seleccionado
+        let targetPath = '';
+        if (actionType) {
+            targetPath = actionPayload?.url || '';
+            if (!targetPath) {
+                if (actionType === 'VER_CAMPANA') targetPath = '/referidos';
+                else if (actionType === 'VER_RESERVA') targetPath = '/mis-reservas';
+                else if (actionType === 'VER_PERFIL') {
+                    if (actionPayload?.screen === 'notifications') targetPath = '/notificaciones';
+                    else targetPath = '/perfil';
+                }
+            }
+        }
 
         // Canal WHATSAPP
         if (channels.includes('WHATSAPP') && usuario.phone) {
             try {
                 const dest = usuario.phone.replace(/\D/g, '');
-                const cleanMsg = `*${titulo}*\n${descripcion}`;
+                let cleanMsg = `*${titulo}*\n${descripcion}`;
+                
+                // Si hay enlace, construir la URL absoluta y agregarla al WhatsApp
+                if (targetPath) {
+                    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://citiox.com';
+                    const fullUrl = targetPath.startsWith('http') ? targetPath : `${baseUrl}/${negocio.slug}${targetPath}`;
+                    cleanMsg += `\n\n👉 Entra aquí: ${fullUrl}`;
+                }
+
                 await whatsappService.sendWhatsApp(dest, cleanMsg, true, 'general');
                 this.trackMetricDirectly(notificationId, 'entregadas');
             } catch (err) {
@@ -168,6 +197,9 @@ export class NotificationService {
         // APP implica notificación interna + push al dispositivo físico
         if (channels.includes('PUSH') || channels.includes('APP')) {
             try {
+                // Asegurar inicialización de Firebase Admin en el proceso actual
+                await initFirebaseAdmin();
+
                 const pushTokens = await prisma.pushToken.findMany({
                     where: { userId },
                     select: { token: true }
@@ -175,6 +207,10 @@ export class NotificationService {
 
                 if (pushTokens.length > 0 && admin.apps.length > 0) {
                     const tokens = pushTokens.map(t => t.token);
+                    
+                    // Construir link relativo para el PWA Service Worker
+                    const pushLink = targetPath ? (targetPath.startsWith('http') ? targetPath : `/${negocio.slug}${targetPath}`) : `/${negocio.slug}`;
+
                     await admin.messaging().sendEachForMulticast({
                         tokens,
                         notification: {
@@ -185,7 +221,8 @@ export class NotificationService {
                             notificationId: notificationId || '',
                             actionType: actionType || '',
                             actionPayload: actionPayload ? JSON.stringify(actionPayload) : '',
-                            click_action: 'FLUTTER_NOTIFICATION_CLICK'
+                            click_action: 'FLUTTER_NOTIFICATION_CLICK',
+                            link: pushLink // 👈 Inyectamos la URL que lee el Service Worker al hacer click
                         }
                     });
                     this.trackMetricDirectly(notificationId, 'entregadas');

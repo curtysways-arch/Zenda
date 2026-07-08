@@ -10,10 +10,10 @@ interface NotificationBellProps {
 }
 
 export default function NotificationBell({ slug, initialUnreadCount }: NotificationBellProps) {
-    const { unreadCount } = useNotifications(slug);
+    const { unreadCount, loading } = useNotifications(slug);
 
-    // Si SSE aún no cargó, usamos el inicial calculado en el servidor
-    const activeUnreadCount = unreadCount !== 0 ? unreadCount : initialUnreadCount;
+    // Si está cargando el cliente, mostramos el conteo del servidor, si no, mostramos el valor real del cliente
+    const activeUnreadCount = loading ? initialUnreadCount : unreadCount;
 
     return (
         <Link 

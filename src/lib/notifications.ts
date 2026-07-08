@@ -19,7 +19,7 @@ async function getGlobalConfig(clave: string): Promise<string | null> {
 // Variable to track initialization promise
 let firebaseInitPromise: Promise<void> | null = null;
 
-async function initFirebaseAdmin() {
+export async function initFirebaseAdmin() {
     if (admin.apps.length > 0) return;
     if (firebaseInitPromise) return firebaseInitPromise;
 
