@@ -369,15 +369,24 @@ export async function POST(
             console.error('❌ Error WA mensaje cliente:', waErr); 
         }
 
-        // Push a administradores
+        // Guardar y despachar notificación para administradores del negocio (incluye Push FCM)
         try {
-            await notificationService.sendPushToBusiness(
-                negocio.id,
-                '🔔 Nueva Reserva',
-                `${clienteNombre} - ${service.nombre} a las ${horaInicio}`,
-                { link: '/admin/citas', reservaId: reservaCreated.id }
-            );
-        } catch (e) { console.error('Push notify error:', e); }
+            await NotificationService.createNotification({
+                negocioId: negocio.id,
+                tipo: 'RESERVA',
+                categoria: 'RESERVAS',
+                titulo: '🔔 Nueva Reserva',
+                descripcion: `${clienteNombre} - ${service.nombre} a las ${horaInicio}`,
+                prioridad: 'SUCCESS',
+                priority: 'HIGH',
+                recipientType: 'ALL',
+                actionType: 'VER_RESERVA',
+                actionPayload: { screen: 'appointment', appointmentId: reservaCreated.id, url: '/admin/citas' },
+                channels: ['APP', 'PUSH']
+            });
+        } catch (e) { 
+            console.error('Error al crear notificación de negocio para nueva reserva:', e); 
+        }
 
         // Disparar en el nuevo Centro de Actividad del cliente
         if (reservaCreated.usuarioId) {

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { notificationService } from '@/lib/notifications';
+import { NotificationService } from '@/lib/notifications/notificationService';
 
 export async function POST(
     req: Request,
@@ -92,16 +93,20 @@ export async function POST(
         const servicio = updated.service.nombre;
         const negocioId = updated.negocio.id;
 
-        notificationService.sendPushToBusiness(
+        // Enviar notificación inteligente al negocio (tiempo real + push FCM)
+        NotificationService.createNotification({
             negocioId,
-            '🚶 Cliente ha llegado',
-            `${clienteNombre} está esperando para ${servicio} (${hora})`,
-            {
-                type: 'check_in',
-                appointmentId: id,
-                link: '/admin',
-            }
-        ).catch(console.error);
+            tipo: 'RESERVA',
+            categoria: 'RESERVAS',
+            titulo: '🚶 Cliente ha llegado',
+            descripcion: `${clienteNombre} está esperando para ${servicio} (${hora})`,
+            prioridad: 'INFO',
+            priority: 'HIGH',
+            recipientType: 'ALL',
+            actionType: 'VER_RESERVA',
+            actionPayload: { screen: 'appointment', appointmentId: id, url: '/admin' },
+            channels: ['APP', 'PUSH']
+        }).catch(console.error);
 
         // Enviar WhatsApp al negocio
         notificationService.sendCheckInNotification(

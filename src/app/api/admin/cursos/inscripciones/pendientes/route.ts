@@ -14,7 +14,7 @@ export async function GET() {
         const count = await (prisma as any).courseEnrollment.count({
             where: {
                 status: 'pending',
-                course: {
+                Course: {
                     businessId: negocioId
                 }
             }

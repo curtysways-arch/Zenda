@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { notificationService } from '@/lib/notifications';
+import { NotificationService } from '@/lib/notifications/notificationService';
 import { whatsappService } from "@/lib/whatsapp";
 import { randomBytes } from 'crypto';
 import crypto from 'crypto';
@@ -330,19 +331,23 @@ export async function POST(req: Request) {
             console.error('❌ Error OTP/WA cliente:', otpErr);
         }
 
-        // 6c. Push notification a administradores del negocio
+        // 6c. Guardar y despachar notificación para administradores del negocio (Centro de Actividad + Push FCM)
         try {
-            const iconUrl = negocio.logoUrl || '/icons/icon-192x192.png';
-            console.log(`[PUSH] Enviando push a negocio ${negocio.id} por nueva reserva de ${clienteNombre}`);
-            await notificationService.sendPushToBusiness(
-                negocio.id,
-                '🔔 Nueva Reserva',
-                `${clienteNombre} - ${service.nombre} a las ${horaInicio} (${dur}h)`,
-                { link: '/admin/citas', reservaId: reserva.id, icon: iconUrl }
-            );
-            console.log(`[PUSH] Push enviada correctamente`);
+            await NotificationService.createNotification({
+                negocioId: negocio.id,
+                tipo: 'RESERVA',
+                categoria: 'RESERVAS',
+                titulo: '🔔 Nueva Reserva',
+                descripcion: `${clienteNombre} - ${service.nombre} a las ${horaInicio} (${dur}h)`,
+                prioridad: 'SUCCESS',
+                priority: 'HIGH',
+                recipientType: 'ALL',
+                actionType: 'VER_RESERVA',
+                actionPayload: { screen: 'appointment', appointmentId: reserva.id, url: '/admin/citas' },
+                channels: ['APP', 'PUSH']
+            });
         } catch (pushErr) {
-            console.error('❌ Error Push to business:', pushErr);
+            console.error('❌ Error creando notificación de reserva:', pushErr);
         }
 
         // 7. Generar token de dueño para el navegador actual (COMPLETO)

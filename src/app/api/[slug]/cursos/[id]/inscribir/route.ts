@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { notificationService } from "@/lib/notifications";
+import { NotificationService } from "@/lib/notifications/notificationService";
 import crypto from "crypto";
 
 export async function POST(
@@ -125,12 +126,19 @@ export async function POST(
                 studentList.length
             ).catch(() => {});
 
-            notificationService.sendPushToBusiness(
-                negocio.id,
-                "Nueva Inscripción",
-                `📢 ${representative_name} inscribió a ${studentList.length} alumno(s) en ${course.name}.`,
-                { type: 'course_enrollment', enrollmentId: enrollments[0].id }
-            ).catch(() => {});
+            NotificationService.createNotification({
+                negocioId: negocio.id,
+                tipo: 'CAMPANA',
+                categoria: 'SISTEMA',
+                titulo: 'Nueva Inscripción',
+                descripcion: `📢 ${representative_name} inscribió a ${studentList.length} alumno(s) en ${course.name}.`,
+                prioridad: 'INFO',
+                priority: 'NORMAL',
+                recipientType: 'ALL',
+                actionType: 'CUSTOM',
+                actionPayload: { screen: 'course_enrollment', enrollmentId: enrollments[0].id },
+                channels: ['APP', 'PUSH']
+            }).catch(() => {});
         } catch (e) {}
 
         return NextResponse.json({ 

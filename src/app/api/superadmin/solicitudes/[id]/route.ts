@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { notificationService } from "@/lib/notifications";
+import { NotificationService } from "@/lib/notifications/notificationService";
 import { getBusinessTimeZone, getSubscriptionDates } from "@/lib/dateUtils";
 
 async function isSuperAdmin() {
@@ -130,12 +131,21 @@ export async function PATCH(
                 });
 
                 if (adminUsuario) {
-                    await notificationService.sendPushToUser(
-                        adminUsuario.id,
-                        '🎉 ¡Plan Activado!',
-                        `Tu plan ${nuevoPlan?.name || 'nuevo'} ha sido activado exitosamente. ¡Disfruta de todas las funciones!`,
-                        { type: 'PLAN_APPROVED' }
-                    );
+                    await NotificationService.createNotification({
+                        negocioId: sub.negocioId,
+                        userId: adminUsuario.id,
+                        tipo: 'SISTEMA',
+                        categoria: 'SISTEMA',
+                        titulo: '🎉 ¡Plan Activado!',
+                        descripcion: `Tu plan ${nuevoPlan?.name || 'nuevo'} ha sido activado exitosamente. ¡Disfruta de todas las funciones!`,
+                        icono: 'Sparkles',
+                        prioridad: 'SUCCESS',
+                        priority: 'HIGH',
+                        recipientType: 'USER',
+                        actionType: 'CUSTOM',
+                        actionPayload: { screen: 'subscription' },
+                        channels: ['APP', 'PUSH']
+                    });
                 }
 
                 // NUEVO: Notificar por WhatsApp al administrador del negocio
@@ -178,12 +188,21 @@ export async function PATCH(
                 });
 
                 if (adminUsuario) {
-                    await notificationService.sendPushToUser(
-                        adminUsuario.id,
-                        'Solicitud de Plan',
-                        `Tu solicitud de cambio de plan no pudo ser procesada. Contacta a soporte para más detalles.`,
-                        { type: 'PLAN_REJECTED' }
-                    );
+                    await NotificationService.createNotification({
+                        negocioId: sub.negocioId,
+                        userId: adminUsuario.id,
+                        tipo: 'SISTEMA',
+                        categoria: 'SISTEMA',
+                        titulo: 'Solicitud de Plan',
+                        descripcion: `Tu solicitud de cambio de plan no pudo ser procesada. Contacta a soporte para más detalles.`,
+                        icono: 'XCircle',
+                        prioridad: 'ERROR',
+                        priority: 'HIGH',
+                        recipientType: 'USER',
+                        actionType: 'CUSTOM',
+                        actionPayload: { screen: 'subscription' },
+                        channels: ['APP', 'PUSH']
+                    });
                 }
             } catch (e) {
                 console.error('Error notificando rechazo:', e);

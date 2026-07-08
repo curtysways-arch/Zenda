@@ -19,13 +19,13 @@ export async function DELETE(
         const schedule = await p.courseSchedule.findFirst({
             where: { id },
             include: {
-                course: {
+                Course: {
                     select: { businessId: true }
                 }
             }
         });
 
-        if (!schedule || schedule.course.businessId !== negocioId) {
+        if (!schedule || schedule.Course.businessId !== negocioId) {
             return NextResponse.json({ error: "Horario no encontrado" }, { status: 404 });
         }
 

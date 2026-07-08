@@ -16,7 +16,7 @@ export async function GET(req: Request) {
             include: {
                 enrollments: {
                     include: {
-                        course: {
+                        Course: {
                             select: { name: true }
                         }
                     }

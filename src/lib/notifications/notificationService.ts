@@ -15,13 +15,14 @@ export const sseEmitter: EventEmitter = globalSse.sseEmitter;
 export interface CreateNotificationParams {
     negocioId: string;
     userId?: string; // Opcional (ej: si es una promo masiva o noticia global)
-    tipo: 'RESERVA' | 'PROMO' | 'CAMPANA' | 'PREMIO' | 'REFERIDOS' | 'AUTOMATIZACION' | 'NOTICIA' | 'SISTEMA' | 'AVISO' | 'RECORDATORIO';
+    tipo: 'RESERVA' | 'PROMO' | 'CAMPANA' | 'PREMIO' | 'REFERIDOS' | 'AUTOMATIZACION' | 'NOTICIA' | 'SISTEMA' | 'AVISO' | 'RECORDATORIO' | 'RESERVA_CREADA'; // Permitiendo RESERVA_CREADA para compatibilidad
     categoria: 'RESERVAS' | 'PROMOCIONES' | 'CAMPANAS' | 'PREMIOS' | 'NOTICIAS' | 'SISTEMA' | 'CUPONES';
     titulo: string;
     descripcion: string;
     imagenUrl?: string;
     icono?: string; // Nombre del icono de Lucide (ej: "Coins", "Gift", "Award")
     prioridad?: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR';
+    priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'; // Prioridad de despacho/FCM
     recipientType?: 'ALL' | 'USER' | 'SEGMENT' | 'VIP' | 'INACTIVE' | 'NEW_CLIENTS';
     actionType?: 'VER_RESERVA' | 'VER_CAMPANA' | 'VER_PROMO' | 'VER_PREMIO' | 'VER_PERFIL' | 'ABRIR_URL' | 'CUSTOM';
     actionPayload?: any; // JSON stringificable
@@ -45,6 +46,7 @@ export class NotificationService {
             imagenUrl,
             icono,
             prioridad = 'INFO',
+            priority = 'NORMAL',
             recipientType = 'USER',
             actionType,
             actionPayload,
@@ -61,7 +63,7 @@ export class NotificationService {
             clics: 0
         });
 
-        const actionPayloadStr = actionPayload ? JSON.stringify(actionPayload) : null;
+        const actionPayloadStr = actionPayload ? (typeof actionPayload === 'string' ? actionPayload : JSON.stringify(actionPayload)) : null;
 
         // 1. Persistir si incluye canal APP o si está programada
         let notification = null;
@@ -69,7 +71,7 @@ export class NotificationService {
             notification = await prisma.notification.create({
                 data: {
                     negocioId,
-                    userId,
+                    userId: userId || null,
                     tipo,
                     categoria,
                     titulo,
@@ -94,8 +96,8 @@ export class NotificationService {
             return notification;
         }
 
-        // 2. Despachar inmediatamente por canales
-        await this.dispatchChannels({
+        // 2. Encolar/Despachar en segundo plano (arquitectura desacoplada)
+        await this.enqueueNotificationDispatch({
             negocioId,
             userId,
             tipo,
@@ -104,10 +106,33 @@ export class NotificationService {
             notificationId: notification?.id,
             actionType,
             actionPayload,
-            channels
+            channels,
+            priority
         });
 
         return notification;
+    }
+
+    /**
+     * Encolar o despachar en segundo plano el procesamiento de canales
+     * (Abstracción desacoplada lista para BullMQ en el futuro)
+     */
+    private static async enqueueNotificationDispatch(data: {
+        negocioId: string;
+        userId?: string;
+        tipo: string;
+        titulo: string;
+        descripcion: string;
+        notificationId?: string;
+        actionType?: string;
+        actionPayload?: any;
+        channels: string[];
+        priority: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+    }) {
+        // Ejecutar de forma asíncrona no bloqueante
+        this.dispatchChannels(data).catch(err => {
+            console.error('[Notification] Error en despacho asíncrono de canales:', err);
+        });
     }
 
     /**
@@ -123,43 +148,22 @@ export class NotificationService {
         actionType?: string;
         actionPayload?: any;
         channels: string[];
+        priority: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
     }) {
-        const { negocioId, userId, tipo, titulo, descripcion, notificationId, actionType, actionPayload, channels } = data;
+        const { negocioId, userId, tipo, titulo, descripcion, notificationId, actionType, actionPayload, channels, priority } = data;
+        const startTime = Date.now();
 
-        // Canal APP: Empujar vía SSE
-        if (channels.includes('APP') && notificationId) {
-            // Publicar el evento SSE
-            this.publishRealtime(negocioId, userId || 'ALL', {
-                tipoEvento: 'NOTIFICATION',
-                payload: {
-                    id: notificationId,
-                    tipo,
-                    titulo,
-                    descripcion,
-                    actionType,
-                    actionPayload
-                }
-            });
+        // 1. Obtener datos del negocio (siempre necesario para slug/nombre)
+        const negocio = await prisma.negocio.findUnique({
+            where: { id: negocioId },
+            select: { slug: true, nombre: true }
+        });
+        if (!negocio) {
+            console.warn(`[Notification] Abortando despacho: Negocio ID ${negocioId} no encontrado.`);
+            return;
         }
 
-        // Si no hay usuario destinatario, los canales directos (WhatsApp/Push) no aplican de forma individual
-        if (!userId) return;
-
-        // Obtener datos del usuario y del negocio
-        const [usuario, negocio] = await Promise.all([
-            prisma.usuario.findUnique({
-                where: { id: userId },
-                select: { phone: true, email: true }
-            }),
-            prisma.negocio.findUnique({
-                where: { id: negocioId },
-                select: { slug: true }
-            })
-        ]);
-
-        if (!usuario || !negocio) return;
-
-        // Calcular la ruta del link seleccionado
+        // Calcular la ruta de destino/enlace
         let targetPath = '';
         if (actionType) {
             targetPath = actionPayload?.url || '';
@@ -173,64 +177,215 @@ export class NotificationService {
             }
         }
 
-        // Canal WHATSAPP
-        if (channels.includes('WHATSAPP') && usuario.phone) {
+        // --- CANAL APP (SSE) ---
+        if (channels.includes('APP') && notificationId) {
             try {
-                const dest = usuario.phone.replace(/\D/g, '');
-                let cleanMsg = `*${titulo}*\n${descripcion}`;
-                
-                // Si hay enlace, construir la URL absoluta y agregarla al WhatsApp
-                if (targetPath) {
-                    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://citiox.com';
-                    const fullUrl = targetPath.startsWith('http') ? targetPath : `${baseUrl}/${negocio.slug}${targetPath}`;
-                    cleanMsg += `\n\n👉 Entra aquí: ${fullUrl}`;
-                }
-
-                await whatsappService.sendWhatsApp(dest, cleanMsg, true, 'general');
-                this.trackMetricDirectly(notificationId, 'entregadas');
-            } catch (err) {
-                console.error('[NotificationService] Error enviando WhatsApp:', err);
+                this.publishRealtime(negocioId, userId || 'ALL', {
+                    tipoEvento: 'NOTIFICATION',
+                    payload: {
+                        id: notificationId,
+                        tipo,
+                        titulo,
+                        descripcion,
+                        actionType,
+                        actionPayload
+                    }
+                });
+            } catch (sseErr) {
+                console.error('[Notification] Error publicando evento SSE:', sseErr);
             }
         }
 
-        // Canal PUSH (Firebase) — se dispara cuando APP o PUSH está seleccionado
-        // APP implica notificación interna + push al dispositivo físico
-        if (channels.includes('PUSH') || channels.includes('APP')) {
+        // --- CANAL WHATSAPP ---
+        if (channels.includes('WHATSAPP') && userId) {
             try {
-                // Asegurar inicialización de Firebase Admin en el proceso actual
-                await initFirebaseAdmin();
-
-                const pushTokens = await prisma.pushToken.findMany({
-                    where: { userId },
-                    select: { token: true }
+                const usuario = await prisma.usuario.findUnique({
+                    where: { id: userId },
+                    select: { phone: true }
                 });
 
-                if (pushTokens.length > 0 && admin.apps.length > 0) {
-                    const tokens = pushTokens.map(t => t.token);
+                if (usuario && usuario.phone) {
+                    const dest = usuario.phone.replace(/\D/g, '');
+                    let cleanMsg = `*${titulo}*\n${descripcion}`;
                     
-                    // Construir link relativo para el PWA Service Worker
-                    const pushLink = targetPath ? (targetPath.startsWith('http') ? targetPath : `/${negocio.slug}${targetPath}`) : `/${negocio.slug}`;
+                    if (targetPath) {
+                        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://citiox.com';
+                        const fullUrl = targetPath.startsWith('http') ? targetPath : `${baseUrl}/${negocio.slug}${targetPath}`;
+                        cleanMsg += `\n\n👉 Entra aquí: ${fullUrl}`;
+                    }
 
-                    await admin.messaging().sendEachForMulticast({
-                        tokens,
-                        notification: {
-                            title: titulo,
-                            body: descripcion,
-                        },
-                        data: {
-                            notificationId: notificationId || '',
-                            actionType: actionType || '',
-                            actionPayload: actionPayload ? JSON.stringify(actionPayload) : '',
-                            click_action: 'FLUTTER_NOTIFICATION_CLICK',
-                            link: pushLink // 👈 Inyectamos la URL que lee el Service Worker al hacer click
-                        }
-                    });
+                    await whatsappService.sendWhatsApp(dest, cleanMsg, true, 'general');
                     this.trackMetricDirectly(notificationId, 'entregadas');
                 }
             } catch (err) {
-                console.error('[NotificationService] Error enviando Push Notification:', err);
+                console.error('[Notification] Error enviando WhatsApp:', err);
             }
         }
+
+        // --- CANAL PUSH (FIREBASE FCM) ---
+        let totalTokensSent = 0;
+        let pushSuccessCount = 0;
+        let pushFailureCount = 0;
+
+        if (channels.includes('PUSH') || channels.includes('APP')) {
+            try {
+                // Obtener tokens FCM de destino
+                let pushTokens: { token: string }[] = [];
+                
+                if (userId) {
+                    // Si hay un usuario específico, buscar sus tokens
+                    pushTokens = await prisma.pushToken.findMany({
+                        where: { userId },
+                        select: { token: true }
+                    });
+                } else {
+                    // Si no hay usuario específico, es una notificación del negocio (ej: nueva reserva para los admins)
+                    // 1. Obtener todos los usuarios con rol ADMIN asociados al negocio
+                    const admins = await prisma.usuario.findMany({
+                        where: { negocioId, role: 'ADMIN' },
+                        select: { id: true }
+                    });
+                    const adminIds = admins.map(a => a.id);
+
+                    if (adminIds.length > 0) {
+                        // 2. Buscar los tokens de esos administradores
+                        pushTokens = await prisma.pushToken.findMany({
+                            where: { userId: { in: adminIds } },
+                            select: { token: true }
+                        });
+                    }
+
+                    // 3. Obtener tokens asociados directamente al negocio en la tabla PushToken
+                    const businessTokens = await prisma.pushToken.findMany({
+                        where: { businessId: negocioId },
+                        select: { token: true }
+                    });
+
+                    // Unificar tokens y quitar duplicados
+                    const allTokens = [...pushTokens, ...businessTokens];
+                    const uniqueTokensMap = new Map();
+                    allTokens.forEach(t => {
+                        if (t.token) uniqueTokensMap.set(t.token, t);
+                    });
+                    pushTokens = Array.from(uniqueTokensMap.values());
+                }
+
+                // Filtrar tokens nulos, vacíos o no string
+                const validTokens = pushTokens
+                    .map(t => t.token)
+                    .filter(t => typeof t === 'string' && t.trim().length > 0);
+
+                totalTokensSent = validTokens.length;
+
+                if (validTokens.length > 0) {
+                    await initFirebaseAdmin();
+
+                    if (admin.apps.length > 0) {
+                        const pushLink = targetPath ? (targetPath.startsWith('http') ? targetPath : `/${negocio.slug}${targetPath}`) : `/${negocio.slug}`;
+                        
+                        // Configurar prioridades FCM
+                        // Las reservas (nueva, cancelada), check-in y pagos se priorizan automáticamente
+                        const isHighPriority = priority === 'HIGH' || priority === 'URGENT' || 
+                            ['RESERVA', 'RESERVA_CREADA', 'check_in'].includes(tipo) || 
+                            titulo.toLowerCase().includes('reserva') || 
+                            titulo.toLowerCase().includes('pago');
+
+                        const androidConfig: admin.messaging.AndroidConfig = {
+                            priority: isHighPriority ? 'high' : 'normal'
+                        };
+
+                        const apnsConfig: admin.messaging.ApnsConfig = {
+                            payload: {
+                                aps: {
+                                    sound: 'default',
+                                    badge: 1,
+                                    contentAvailable: true
+                                }
+                            },
+                            headers: {
+                                'apns-priority': isHighPriority ? '10' : '5'
+                            }
+                        };
+
+                        const clickAction = 'FLUTTER_NOTIFICATION_CLICK';
+                        const dataPayload: Record<string, string> = {
+                            notificationId: notificationId || '',
+                            actionType: actionType || '',
+                            actionPayload: actionPayload ? (typeof actionPayload === 'string' ? actionPayload : JSON.stringify(actionPayload)) : '',
+                            click_action: clickAction,
+                            link: pushLink
+                        };
+
+                        // Aplanar variables del actionPayload para retrocompatibilidad
+                        if (actionPayload && typeof actionPayload === 'object') {
+                            Object.keys(actionPayload).forEach(key => {
+                                if (actionPayload[key] !== undefined && actionPayload[key] !== null) {
+                                    dataPayload[key] = String(actionPayload[key]);
+                                }
+                            });
+                        }
+
+                        const response = await admin.messaging().sendEachForMulticast({
+                            tokens: validTokens,
+                            notification: {
+                                title: titulo,
+                                body: descripcion
+                            },
+                            data: dataPayload,
+                            android: androidConfig,
+                            apns: apnsConfig
+                        });
+
+                        pushSuccessCount = response.successCount;
+                        pushFailureCount = response.failureCount;
+
+                        // Limpieza de tokens inválidos u obsoletos en segundo plano
+                        response.responses.forEach(async (res, index) => {
+                            const currentToken = validTokens[index];
+                            if (!res.success && res.error) {
+                                const error = res.error;
+                                const errCode = error.code;
+                                const errMsg = error.message || '';
+
+                                if (
+                                    errCode === 'messaging/registration-token-not-registered' ||
+                                    errCode === 'messaging/invalid-registration-token' ||
+                                    errMsg.includes('not-registered') ||
+                                    errMsg.includes('invalid')
+                                ) {
+                                    await prisma.pushToken.delete({
+                                        where: { token: currentToken }
+                                    }).catch(() => {});
+                                    console.log(`[Notification] Token obsoleto limpiado de la base de datos: ${currentToken.substring(0, 15)}...`);
+                                }
+                            }
+                        });
+
+                        if (pushSuccessCount > 0) {
+                            this.trackMetricDirectly(notificationId, 'entregadas');
+                        }
+                    } else {
+                        console.warn('[Notification] Firebase Admin no está inicializado.');
+                    }
+                }
+            } catch (err) {
+                console.error('[Notification] Error en el canal PUSH (Firebase):', err);
+            }
+        }
+
+        const duration = Date.now() - startTime;
+
+        // Imprimir log de depuración claro según requerimiento del usuario
+        console.log(`
+[Notification]
+Tipo: ${tipo}
+Destino: ${userId ? `Usuario (${userId})` : `Negocio (${negocioId} - administradores)`}
+Canales: ${channels.join(', ')}
+Push enviados: ${totalTokensSent}
+Push exitosos: ${pushSuccessCount}
+Push fallidos: ${pushFailureCount}
+Tiempo total: ${duration} ms
+`);
     }
 
     /**
