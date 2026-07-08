@@ -325,10 +325,7 @@ export class NotificationService {
                         
                         // Configurar prioridades FCM
                         // Las reservas (nueva, cancelada), check-in y pagos se priorizan automáticamente
-                        const isHighPriority = priority === 'HIGH' || priority === 'URGENT' || 
-                            ['RESERVA', 'RESERVA_CREADA', 'check_in'].includes(tipo) || 
-                            titulo.toLowerCase().includes('reserva') || 
-                            titulo.toLowerCase().includes('pago');
+                        const isHighPriority = true; // Forzar prioridad alta para todos los canales para entrega inmediata nativa (campañas, avisos, reservas)
 
                         const androidConfig: admin.messaging.AndroidConfig = {
                             priority: isHighPriority ? 'high' : 'normal'
