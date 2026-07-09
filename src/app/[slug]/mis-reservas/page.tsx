@@ -59,6 +59,8 @@ export default function MisReservasPage() {
     const [verifyingSession, setVerifyingSession] = useState(true);
     const [activeTab, setActiveTab] = useState<TabType>('reservas');
     const [filter, setFilter] = useState<FilterType>('proximas');
+    const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+    const [weekOffset, setWeekOffset] = useState(0);
     
     // Efecto para manejar el cambio de pestaña vía URL
     useEffect(() => {
@@ -533,81 +535,120 @@ export default function MisReservasPage() {
                         <div className="px-5 mt-4">
                             <div className="flex items-center gap-1">
                                 <button
-                                    onClick={() => {
-                                        const d = new Date();
-                                        d.setDate(d.getDate() - 7);
-                                    }}
-                                    className="size-8 flex items-center justify-center text-slate-400 shrink-0"
+                                    onClick={() => setWeekOffset(w => w - 1)}
+                                    className="size-8 flex items-center justify-center text-slate-400 active:text-slate-700 shrink-0 transition-colors"
                                 >
                                     <ChevronLeft size={18} />
                                 </button>
 
-                                <div className="flex-1 flex justify-between overflow-x-auto no-scrollbar gap-1">
-                                    {Array.from({ length: 5 }).map((_, i) => {
-                                        const today = new Date();
-                                        const d = new Date(today);
-                                        d.setDate(today.getDate() - 2 + i);
-                                        const isToday = d.toDateString() === today.toDateString();
+                                <div className="flex-1 flex justify-between gap-1">
+                                    {Array.from({ length: 7 }).map((_, i) => {
+                                        const base = new Date();
+                                        base.setDate(base.getDate() + weekOffset * 7);
+                                        const d = new Date(base);
+                                        d.setDate(base.getDate() - 3 + i);
+                                        const isToday = d.toDateString() === new Date().toDateString();
+                                        const isSelected = selectedDay?.toDateString() === d.toDateString();
                                         const dayStr = d.toLocaleDateString('es', { weekday: 'short' }).toUpperCase().slice(0, 3);
                                         const dateNum = d.getDate();
 
-                                        // Ver si hay citas en ese día
                                         const hasCitas = (filter === 'proximas' ? proximas : pasadas).some(r => {
-                                            const rd = new Date(r.fecha);
-                                            return rd.toDateString() === d.toDateString();
+                                            try { return new Date(r.fecha).toDateString() === d.toDateString(); } catch { return false; }
                                         });
 
                                         return (
-                                            <div key={i} className="flex flex-col items-center gap-1 flex-1">
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase">{dayStr}</span>
+                                            <button
+                                                key={i}
+                                                onClick={() => setSelectedDay(isSelected ? null : new Date(d))}
+                                                className="flex flex-col items-center gap-1 flex-1 py-1"
+                                            >
+                                                <span className={cn(
+                                                    "text-[9px] font-bold uppercase transition-colors",
+                                                    isSelected ? "font-black" : "text-slate-400"
+                                                )} style={isSelected ? { color: primaryColor } : {}}>{dayStr}</span>
                                                 <div
                                                     className={cn(
-                                                        "size-9 rounded-full flex items-center justify-center text-sm font-black transition-all",
-                                                        isToday ? "text-white shadow-md" : "text-slate-700"
+                                                        "size-8 rounded-full flex items-center justify-center text-[13px] font-black transition-all",
+                                                        isSelected ? "text-white shadow-md scale-110" :
+                                                        isToday ? "border-2 text-slate-800" : "text-slate-600"
                                                     )}
-                                                    style={isToday ? { backgroundColor: primaryColor } : {}}
+                                                    style={
+                                                        isSelected
+                                                            ? { backgroundColor: primaryColor }
+                                                            : isToday
+                                                                ? { borderColor: primaryColor, color: primaryColor }
+                                                                : {}
+                                                    }
                                                 >
                                                     {dateNum}
                                                 </div>
-                                                {hasCitas && (
-                                                    <div className="size-1.5 rounded-full" style={{ backgroundColor: isToday ? primaryColor : '#cbd5e1' }} />
-                                                )}
-                                            </div>
+                                                <div className={cn(
+                                                    "size-1.5 rounded-full transition-all",
+                                                    hasCitas ? "opacity-100" : "opacity-0"
+                                                )} style={{ backgroundColor: isSelected ? primaryColor : '#94a3b8' }} />
+                                            </button>
                                         );
                                     })}
                                 </div>
 
-                                <button className="size-8 flex items-center justify-center text-slate-400 shrink-0">
+                                <button
+                                    onClick={() => setWeekOffset(w => w + 1)}
+                                    className="size-8 flex items-center justify-center text-slate-400 active:text-slate-700 shrink-0 transition-colors"
+                                >
                                     <ChevronRight size={18} />
                                 </button>
                             </div>
                         </div>
 
-                        {/* FECHA ACTUAL + FILTRO */}
+                        {/* FECHA MOSTRADA + limpiar filtro */}
                         <div className="px-5 mt-5 flex items-center justify-between">
-                            <h2 className="font-black text-slate-900 text-[15px]">
-                                {new Date().toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' }).replace(/^\w/, c => c.toUpperCase())}
-                            </h2>
-                            <button className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full">
-                                <SlidersHorizontal size={12} />
-                                Filtrar
-                            </button>
+                            <div>
+                                <h2 className="font-black text-slate-900 text-[15px]">
+                                    {selectedDay
+                                        ? selectedDay.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' }).replace(/^\w/, c => c.toUpperCase())
+                                        : new Date().toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' }).replace(/^\w/, c => c.toUpperCase())
+                                    }
+                                </h2>
+                                {selectedDay && (
+                                    <button
+                                        onClick={() => setSelectedDay(null)}
+                                        className="text-[9px] font-black uppercase tracking-widest mt-0.5"
+                                        style={{ color: primaryColor }}
+                                    >
+                                        × Limpiar filtro
+                                    </button>
+                                )}
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full">
+                                {(() => {
+                                    const lista = filter === 'proximas' ? proximas : pasadas;
+                                    const count = selectedDay
+                                        ? lista.filter(r => { try { return new Date(r.fecha).toDateString() === selectedDay.toDateString(); } catch { return false; } }).length
+                                        : lista.length;
+                                    return `${count} cita${count !== 1 ? 's' : ''}`;
+                                })()}
+                            </span>
                         </div>
 
-                        {/* LISTADO DE CITAS */}
+                        {/* LISTADO DE CITAS (filtrado por día si hay uno seleccionado) */}
                         <div className="px-5 mt-4 space-y-3">
-                            {(filter === 'proximas' ? proximas : pasadas).length === 0 ? (
-                                <div className="py-16 text-center">
-                                    <Calendar size={40} className="mx-auto mb-3 text-slate-200" />
-                                    <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest">
-                                        {filter === 'proximas' ? 'Sin citas próximas' : 'Sin citas pasadas'}
-                                    </p>
-                                    <p className="text-[10px] text-slate-300 mt-1">
-                                        {filter === 'proximas' ? 'Agenda tu primera cita 💆‍♀️' : 'Aquí aparecerán tus citas anteriores'}
-                                    </p>
-                                </div>
-                            ) : (
-                                (filter === 'proximas' ? proximas : pasadas).map((res) => {
+                            {(() => {
+                                const lista = filter === 'proximas' ? proximas : pasadas;
+                                const citasFiltradas = selectedDay
+                                    ? lista.filter(r => { try { return new Date(r.fecha).toDateString() === selectedDay.toDateString(); } catch { return false; } })
+                                    : lista;
+                                if (citasFiltradas.length === 0) return (
+                                    <div className="py-16 text-center">
+                                        <Calendar size={40} className="mx-auto mb-3 text-slate-200" />
+                                        <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest">
+                                            {selectedDay ? 'Sin citas este día' : filter === 'proximas' ? 'Sin citas próximas' : 'Sin citas pasadas'}
+                                        </p>
+                                        <p className="text-[10px] text-slate-300 mt-1">
+                                            {selectedDay ? 'Selecciona otro día o limpia el filtro' : filter === 'proximas' ? 'Agenda tu primera cita 💆‍♀️' : 'Aquí aparecerán tus citas anteriores'}
+                                        </p>
+                                    </div>
+                                );
+                                return citasFiltradas.map((res) => {
                                     const lowerEstado = res.estado?.toLowerCase();
                                     const isConfirmed = lowerEstado === 'confirmed' || lowerEstado === 'confirmada' || lowerEstado === 'approved';
                                     const isPending = lowerEstado === 'pending' || lowerEstado === 'pendiente';
@@ -686,29 +727,10 @@ export default function MisReservasPage() {
                                             </div>
                                         </div>
                                     );
-                                })
-                            )}
+                                });
+                            })()}
                         </div>
 
-                        {/* CARD: Recordatorio */}
-                        <div className="px-5 mt-5">
-                            <div className="bg-pink-50 border border-pink-100 rounded-3xl p-4 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="size-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                                        <Calendar size={18} />
-                                    </div>
-                                    <div>
-                                        <p className="font-black text-slate-800 text-[12px]">¡No olvides tu cita!</p>
-                                        <p className="text-[10px] text-slate-500 font-medium">Te enviaremos un recordatorio<br />24 horas antes</p>
-                                    </div>
-                                </div>
-                                {/* Toggle visual */}
-                                <div className="relative w-11 h-6 shrink-0">
-                                    <div className="w-11 h-6 rounded-full" style={{ backgroundColor: primaryColor }} />
-                                    <div className="absolute right-1 top-1 size-4 bg-white rounded-full shadow-sm" />
-                                </div>
-                            </div>
-                        </div>
 
                         {/* CARD: ¿Necesitas ayuda? */}
                         <div className="px-5 mt-3 mb-6">
