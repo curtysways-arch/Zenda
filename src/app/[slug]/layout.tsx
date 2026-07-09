@@ -101,8 +101,7 @@ export default async function NegocioLayout({
     return (
         <>
             <style dangerouslySetInnerHTML={{
-                __html: `
-                :root {
+                __html: `                :root {
                     --primary: ${theme.primaryColor};
                     --primary-light: ${theme.primaryLight};
                     --primary-dark: ${theme.primaryDark};
@@ -116,6 +115,8 @@ export default async function NegocioLayout({
                     --text-secondary: ${theme.textSecondary};
                     --text-disabled: ${theme.textDisabled};
                     --text-on-primary: ${theme.textOnPrimary};
+                    --text-on-surface: ${theme.textOnSurface};
+                    --text-on-surface-secondary: ${theme.textOnSurfaceSecondary};
                     
                     /* Estados fijos */
                     --success: ${theme.successColor};
@@ -125,7 +126,7 @@ export default async function NegocioLayout({
                     
                     /* Navegación móvil dinámica */
                     /* El fondo de la barra es --primary-dark para que contraste bien */
-                    /* Los íconos activos usan --text-on-primary (blanco/negro según luma) */
+                    /* Los íonos activos usan --text-on-primary (blanco/negro según luma) */
                     --nav-bg: ${theme.primaryDark};
                     --nav-active: ${theme.textOnPrimary};
                     --nav-inactive: ${theme.textOnPrimary}80;
@@ -220,7 +221,7 @@ export default async function NegocioLayout({
                 .bg-surface .text-slate-900, .bg-surface .text-slate-950, .bg-surface .text-slate-800, .bg-surface .text-slate-850, .bg-surface .text-slate-700,
                 .bg-card-dynamic .text-slate-900, .bg-card-dynamic .text-slate-950, .bg-card-dynamic .text-slate-800, .bg-card-dynamic .text-slate-850, .bg-card-dynamic .text-slate-700,
                 [class*="bg-[#FFF"] .text-slate-900, [class*="bg-[#FFF"] .text-slate-950, [class*="bg-[#FFF"] .text-slate-800, [class*="bg-[#FFF"] .text-slate-850, [class*="bg-[#FFF"] .text-slate-700 {
-                    color: #0f172a !important;
+                    color: var(--text-on-surface) !important;
                 }
 
                 .bg-white .text-slate-400, .bg-white .text-slate-500, .bg-white .text-slate-600,
@@ -230,11 +231,11 @@ export default async function NegocioLayout({
                 .bg-surface .text-slate-400, .bg-surface .text-slate-500, .bg-surface .text-slate-600,
                 .bg-card-dynamic .text-slate-400, .bg-card-dynamic .text-slate-500, .bg-card-dynamic .text-slate-600,
                 [class*="bg-[#FFF"] .text-slate-400, [class*="bg-[#FFF"] .text-slate-500, [class*="bg-[#FFF"] .text-slate-600 {
-                    color: #475569 !important;
+                    color: var(--text-on-surface-secondary) !important;
                 }
 
                 .bg-white .text-slate-300, .bg-slate-50 .text-slate-300, .bg-surface .text-slate-300, .bg-card .text-slate-300, .bg-card-dynamic .text-slate-300, [class*="bg-[#FFF"] .text-slate-300 {
-                    color: #64748b !important;
+                    color: var(--text-on-surface-secondary) !important;
                 }
 
                 /* Bordes de Contenedores y Divisores */

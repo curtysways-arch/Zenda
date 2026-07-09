@@ -12,6 +12,8 @@ export interface GeneratedTheme {
     textSecondary: string;
     textDisabled: string;
     textOnPrimary: string;
+    textOnSurface: string;
+    textOnSurfaceSecondary: string;
     successColor: string;
     warningColor: string;
     errorColor: string;
@@ -152,6 +154,12 @@ export function generateTheme(
     const textSecondary = bgLuma < 0.5 ? '#cbd5e1' : '#475569';
     const textDisabled = bgLuma < 0.5 ? '#64748b' : '#94a3b8';
 
+    // Contraste para texto sobre superficie (tarjetas) — siempre basado en luminosidad de surface
+    const surfRgbHex = hexToRgb(surfaceColor) || { r: 255, g: 255, b: 255 };
+    const surfLuma = (0.2126 * surfRgbHex.r + 0.7152 * surfRgbHex.g + 0.0722 * surfRgbHex.b) / 255;
+    const textOnSurface = surfLuma < 0.5 ? '#ffffff' : '#0f172a';
+    const textOnSurfaceSecondary = surfLuma < 0.5 ? '#cbd5e1' : '#475569';
+
     // Contraste para texto sobre el color primario
     const primaryLuma = (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255;
     const textOnPrimary = primaryLuma < 0.5 ? '#ffffff' : '#0f172a';
@@ -175,6 +183,8 @@ export function generateTheme(
         textSecondary,
         textDisabled,
         textOnPrimary,
+        textOnSurface,
+        textOnSurfaceSecondary,
         successColor,
         warningColor,
         errorColor,

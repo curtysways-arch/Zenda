@@ -69,6 +69,7 @@ export default function MiPerfilPage() {
     const [editEmail, setEditEmail] = useState("");
     const [editFechaNacimiento, setEditFechaNacimiento] = useState("");
     const [saving, setSaving] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -179,7 +180,7 @@ export default function MiPerfilPage() {
             if (res.ok) {
                 const data = await res.json();
                 setCliente(data.cliente || data);
-                alert("Perfil actualizado correctamente");
+                setIsEditing(false);
             } else {
                 const data = await res.json();
                 setError(data.error || "No se pudo actualizar el perfil");
@@ -519,88 +520,152 @@ export default function MiPerfilPage() {
                             );
                         })()}
 
-                        {/* Formulario de Información Personal */}
+                        {/* Sección de Información Personal */}
                         <div className="px-5 mt-5">
                             <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
-                                <h3 className="text-[14px] font-black text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                    <User size={18} style={{ color: primaryColor }} />
-                                    Información Personal
-                                </h3>
-                                
-                                <form onSubmit={handleSaveProfile} className="space-y-4">
-                                    {/* Campo Nombre */}
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Nombre Completo</label>
-                                        <input
-                                            type="text"
-                                            value={editNombre}
-                                            onChange={(e) => setEditNombre(e.target.value)}
-                                            placeholder="Ingresa tu nombre"
-                                            className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-200"
-                                            required
-                                        />
-                                    </div>
-
-                                    {/* Campo Correo */}
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Correo Electrónico</label>
-                                        <input
-                                            type="email"
-                                            value={editEmail}
-                                            onChange={(e) => setEditEmail(e.target.value)}
-                                            placeholder="correo@ejemplo.com"
-                                            className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-200"
-                                        />
-                                    </div>
-
-                                    {/* Campo Fecha de Nacimiento */}
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Fecha de Nacimiento</label>
-                                        <input
-                                            type="date"
-                                            value={editFechaNacimiento}
-                                            onChange={(e) => setEditFechaNacimiento(e.target.value)}
-                                            className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-bold text-slate-800 focus:outline-none focus:border-slate-200"
-                                        />
-                                    </div>
-
-                                    {/* Campo Teléfono (No editable) */}
-                                    <div className="space-y-1.5">
-                                        <div className="flex items-center justify-between ml-1">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Teléfono Móvil</label>
-                                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                                No editable
-                                            </span>
-                                        </div>
-                                        <input
-                                            type="text"
-                                            value={cliente.telefono?.startsWith('+') ? cliente.telefono : `+${cliente.telefono || '—'}`}
-                                            disabled
-                                            className="w-full h-12 bg-slate-100/80 border border-slate-100 rounded-xl px-4 text-xs font-bold text-slate-400 cursor-not-allowed select-none"
-                                        />
-                                    </div>
-
-                                    {error && (
-                                        <div className="p-3.5 bg-rose-50 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2.5 border border-rose-100">
-                                            <AlertCircle size={14} /> {error}
-                                        </div>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-[14px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                                        <User size={18} style={{ color: primaryColor }} />
+                                        Información Personal
+                                    </h3>
+                                    {!isEditing && (
+                                        <button
+                                            onClick={() => { setIsEditing(true); setError(''); }}
+                                            className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border active:scale-95 transition-all"
+                                            style={{ borderColor: primaryColor, color: primaryColor }}
+                                        >
+                                            Editar
+                                        </button>
                                     )}
+                                </div>
 
-                                    {/* Botón Guardar Cambios */}
-                                    <button
-                                        type="submit"
-                                        disabled={saving}
-                                        className="w-full h-12 text-white font-black text-[11px] uppercase tracking-widest rounded-xl shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 mt-2"
-                                        style={{ background: `linear-gradient(135deg, ${primaryColor}, #ec4899)` }}
-                                    >
-                                        {saving ? (
-                                            <Loader2 className="animate-spin" size={16} />
-                                        ) : (
-                                            <>Guardar Cambios</>
+                                {/* Vista de solo lectura */}
+                                {!isEditing && (
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-3 py-2.5 border-b border-slate-100">
+                                            <div className="size-8 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${primaryColor}12` }}>
+                                                <User size={14} style={{ color: primaryColor }} />
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nombre</p>
+                                                <p className="text-[13px] font-black text-slate-800">{cliente.nombre || '—'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3 py-2.5 border-b border-slate-100">
+                                            <div className="size-8 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${primaryColor}12` }}>
+                                                <Mail size={14} style={{ color: primaryColor }} />
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Correo</p>
+                                                <p className="text-[13px] font-black text-slate-800">{cliente.email || '—'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3 py-2.5 border-b border-slate-100">
+                                            <div className="size-8 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${primaryColor}12` }}>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={primaryColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Fecha de Nacimiento</p>
+                                                <p className="text-[13px] font-black text-slate-800">
+                                                    {cliente.fechaNacimiento
+                                                        ? format(new Date(cliente.fechaNacimiento), "d 'de' MMMM, yyyy", { locale: es })
+                                                        : '—'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3 py-2.5">
+                                            <div className="size-8 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${primaryColor}12` }}>
+                                                <Phone size={14} style={{ color: primaryColor }} />
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Teléfono</p>
+                                                <p className="text-[13px] font-black text-slate-800">{cliente.telefono?.startsWith('+') ? cliente.telefono : `+${cliente.telefono || '—'}`}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Formulario de edición */}
+                                {isEditing && (
+                                    <form onSubmit={handleSaveProfile} className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        {/* Campo Nombre */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Nombre Completo</label>
+                                            <input
+                                                type="text"
+                                                value={editNombre}
+                                                onChange={(e) => setEditNombre(e.target.value)}
+                                                placeholder="Ingresa tu nombre"
+                                                className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-200"
+                                                required
+                                            />
+                                        </div>
+
+                                        {/* Campo Correo */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Correo Electrónico</label>
+                                            <input
+                                                type="email"
+                                                value={editEmail}
+                                                onChange={(e) => setEditEmail(e.target.value)}
+                                                placeholder="correo@ejemplo.com"
+                                                className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-200"
+                                            />
+                                        </div>
+
+                                        {/* Campo Fecha de Nacimiento */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Fecha de Nacimiento</label>
+                                            <input
+                                                type="date"
+                                                value={editFechaNacimiento}
+                                                onChange={(e) => setEditFechaNacimiento(e.target.value)}
+                                                className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-bold text-slate-800 focus:outline-none focus:border-slate-200"
+                                            />
+                                        </div>
+
+                                        {/* Campo Teléfono (No editable) */}
+                                        <div className="space-y-1.5">
+                                            <div className="flex items-center justify-between ml-1">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Teléfono Móvil</label>
+                                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                                    No editable
+                                                </span>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={cliente.telefono?.startsWith('+') ? cliente.telefono : `+${cliente.telefono || '—'}`}
+                                                disabled
+                                                className="w-full h-12 bg-slate-100/80 border border-slate-100 rounded-xl px-4 text-xs font-bold text-slate-400 cursor-not-allowed select-none"
+                                            />
+                                        </div>
+
+                                        {error && (
+                                            <div className="p-3.5 bg-rose-50 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2.5 border border-rose-100">
+                                                <AlertCircle size={14} /> {error}
+                                            </div>
                                         )}
-                                    </button>
-                                </form>
+
+                                        <div className="flex gap-3 mt-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => { setIsEditing(false); setError(''); }}
+                                                className="flex-1 h-12 font-black text-[11px] uppercase tracking-widest rounded-xl border border-slate-200 text-slate-500 active:scale-95 transition-all"
+                                            >
+                                                Cancelar
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                disabled={saving}
+                                                className="flex-1 h-12 text-white font-black text-[11px] uppercase tracking-widest rounded-xl shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
+                                                style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}
+                                            >
+                                                {saving ? <Loader2 className="animate-spin" size={16} /> : <>Guardar</>}
+                                            </button>
+                                        </div>
+                                    </form>
+                                )}
                             </div>
                         </div>
 
