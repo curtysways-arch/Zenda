@@ -26,6 +26,10 @@ export default async function AdminDashboard() {
     const role = (session.user as any).role;
     const staffId = (session.user as any).staffId;
 
+    if (!negocioId) {
+        return null;
+    }
+
     const isStaff = role === 'STAFF' || role === 'PROFESIONAL';
 
     const now = new Date();

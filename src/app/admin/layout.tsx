@@ -29,8 +29,12 @@ export default async function AdminLayout({
 
     const negocioId = (session.user as any).negocioId;
 
-    // Si no tiene negocioId (y no es super admin), redirigir
     const isSuperAdmin = role === 'SUPER_ADMIN' || roles.includes('SUPERADMIN');
+    if (isSuperAdmin && !negocioId) {
+        redirect('/superadmin');
+    }
+
+    // Si no tiene negocioId (y no es super admin), redirigir
     if (!negocioId && !isSuperAdmin) {
         redirect('/login');
     }
