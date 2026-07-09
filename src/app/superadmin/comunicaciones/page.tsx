@@ -524,6 +524,12 @@ export default function CommunicationsHub() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-8 custom-scrollbar">
+      <style>{`
+        select option {
+          background-color: #020617 !important;
+          color: #ffffff !important;
+        }
+      `}</style>
       {/* Toast Alert */}
       {toast && (
         <div className={`fixed top-6 right-6 px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 z-50 animate-bounce border ${
