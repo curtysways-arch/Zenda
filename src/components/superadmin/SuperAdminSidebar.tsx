@@ -19,7 +19,8 @@ import {
     Smartphone,
     Banknote,
     Gift,
-    UserCog
+    UserCog,
+    Megaphone
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -65,6 +66,7 @@ export default function SuperAdminSidebar() {
         { name: 'Dashboard', href: '/superadmin', icon: LayoutDashboard },
         { name: 'Negocios', href: '/superadmin/negocios', icon: Building2 },
         { name: 'WhatsApp', href: '/superadmin/whatsapp', icon: MessageCircle },
+        { name: 'Comunicaciones', href: '/superadmin/comunicaciones', icon: Megaphone },
         { name: 'Planes', href: '/superadmin/planes', icon: Package },
         { name: 'Suscripciones', href: '/superadmin/suscripciones', icon: CreditCard },
         { 

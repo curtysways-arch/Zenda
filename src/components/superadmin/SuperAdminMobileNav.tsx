@@ -18,7 +18,8 @@ import {
     Smartphone,
     LogOut,
     UserCog,
-    Gift
+    Gift,
+    Megaphone
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
@@ -71,6 +72,7 @@ export default function SuperAdminMobileNav() {
     ];
 
     const extraNavItems = [
+        { name: 'Comunicaciones', href: '/superadmin/comunicaciones', icon: Megaphone },
         { name: 'Planes', href: '/superadmin/planes', icon: Package },
         { name: 'Suscripciones', href: '/superadmin/suscripciones', icon: CreditCard },
         { 
@@ -80,6 +82,7 @@ export default function SuperAdminMobileNav() {
             badge: pendingPaymentsCount > 0 ? pendingPaymentsCount : null 
         },
         { name: 'Métricas', href: '/superadmin/metricas', icon: BarChart3 },
+        { name: 'Referidos', href: '/superadmin/referidos', icon: Gift },
         { name: 'Equipo', href: '/superadmin/equipo', icon: UserCog },
         { name: 'Administradores', href: '/superadmin/administradores', icon: ShieldCheck },
         { name: 'PWA Preview', href: '/superadmin/pwa', icon: Smartphone },

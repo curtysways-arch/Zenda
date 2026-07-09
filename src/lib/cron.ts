@@ -64,6 +64,14 @@ export async function sendUpcomingReminders() {
     let sentCount = 0;
     console.log(`[JOB] Verificando recordatorios (DÍA y 2H). Hora actual: ${currentTimeHHMM}`);
 
+    // --- COMMUNICATIONS HUB CRON ---
+    try {
+        const { CommunicationService } = await import('@/lib/services/communicationService');
+        await CommunicationService.checkAndDispatchScheduled();
+    } catch (e) {
+        console.error("Error en Communications Hub Cron:", e);
+    }
+
     // --- 1. RECORDATORIO DEL DÍA ---
     // Consultamos un rango amplio en UTC y filtramos por día local en memoria
     const reservasDiaRaw = await (prisma as any).appointment.findMany({
