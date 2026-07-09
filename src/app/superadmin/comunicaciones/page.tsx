@@ -1263,6 +1263,17 @@ export default function CommunicationsHub() {
                   />
                 </div>
 
+                <div>
+                  <label className="text-[10px] text-slate-400 font-black uppercase tracking-widest block mb-2">Enlace de Redirección (Opcional)</label>
+                  <input
+                    type="text"
+                    value={campaignForm.videoUrl}
+                    onChange={(e) => setCampaignForm(prev => ({ ...prev, videoUrl: e.target.value }))}
+                    placeholder="Ej: https://ejemplo.com o /referidos"
+                    className="w-full px-4 py-3.5 bg-slate-950 border border-slate-850 rounded-xl text-xs font-semibold text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
                 {/* Segmentación inteligente */}
                 <div className="p-4 bg-slate-950 rounded-2xl border border-slate-850">
                   <span className="text-[10px] text-indigo-400 font-black uppercase tracking-widest block mb-4">Segmentación Inteligente</span>

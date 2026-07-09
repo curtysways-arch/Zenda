@@ -384,7 +384,7 @@ export class CommunicationService {
                       prioridad: communication.prioridad as any,
                       channels: ['APP'],
                       actionType: 'ABRIR_URL',
-                      actionPayload: { url: `/superadmin/comunicaciones` },
+                      actionPayload: { url: communication.videoUrl || '' },
                     });
                   }
                   deliverySuccess = true;
