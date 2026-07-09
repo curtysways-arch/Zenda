@@ -342,56 +342,6 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
     return (
         <div className="flex flex-col min-h-screen bg-[#fafafc] animate-in fade-in duration-500 pb-24">
             
-            {/* 1. Header General de Demo / Logo (Captura) */}
-            <div className="bg-white border-b border-slate-100 px-6 py-4 space-y-4 shadow-sm">
-                
-                {/* Banner de Negocio y Utilidades */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                        <div 
-                            className="size-9 rounded-2xl flex items-center justify-center text-white shadow-md"
-                            style={{ backgroundColor: primaryColor }}
-                        >
-                            <Sparkles size={18} className="animate-pulse" />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-xs font-black uppercase tracking-tight text-slate-800 leading-none">Aura Spa</span>
-                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">Spa Premium</span>
-                        </div>
-                    </div>
-
-                    {/* Iconos de utilidad rápida del header */}
-                    <div className="flex items-center gap-1.5">
-                        <button className="size-9 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-150 flex items-center justify-center text-slate-600 transition-colors">
-                            <QrCode size={16} strokeWidth={2.5} />
-                        </button>
-                        <button className="size-9 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-150 flex items-center justify-center text-slate-600 transition-colors">
-                            <MessageCircle size={16} strokeWidth={2.5} />
-                        </button>
-                        <button className="size-9 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-150 flex items-center justify-center text-slate-600 transition-colors relative">
-                            <Bell size={16} strokeWidth={2.5} />
-                            <span className="absolute top-1.5 right-1.5 size-4 bg-pink-500 text-white rounded-full flex items-center justify-center text-[7px] font-black leading-none border border-white">
-                                3
-                            </span>
-                        </button>
-                        <div className="size-9 rounded-full overflow-hidden border border-slate-200 flex items-center justify-center bg-slate-100">
-                            <UserIcon size={14} className="text-slate-400" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Banner Modo Demo */}
-                <div className="p-1 px-4 bg-gradient-to-r from-pink-500 to-pink-600 rounded-3xl flex items-center justify-between text-white shadow-md">
-                    <div className="flex items-center gap-2 py-2">
-                        <Sparkles size={14} className="animate-pulse shrink-0" />
-                        <span className="text-[10px] font-black uppercase tracking-wider">Modo demo activo</span>
-                    </div>
-                    <button className="bg-white text-pink-500 rounded-full px-4 py-2 text-[9px] font-black uppercase tracking-widest shadow-sm hover:scale-102 active:scale-98 transition-all">
-                        Crear mi Spa
-                    </button>
-                </div>
-            </div>
-
             {/* 2. Sección Título "Mi Agenda" con botón de creación */}
             <div className="px-6 py-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
