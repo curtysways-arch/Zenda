@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
     Calendar,
     ChevronLeft,
+    ChevronRight,
     Phone,
     Key,
     Loader2,
@@ -19,6 +20,8 @@ import {
     X,
     Search,
     Plus,
+    MoreVertical,
+    SlidersHorizontal,
     MapPin,
     Hash,
     ExternalLink,
@@ -27,6 +30,7 @@ import {
     Navigation,
     Share2,
     Zap,
+    User as UserIcon,
     Sparkles
 } from "lucide-react";
 import Link from "next/link";
@@ -371,46 +375,32 @@ export default function MisReservasPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50/50 text-slate-900 font-sans selection:bg-pink-500/30 overflow-x-hidden">
-            {/* Cabecera Estilo App */}
-            {step !== 'history' && (
-                <div className="sticky top-0 z-[100] px-6 py-5 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between">
-                    <button onClick={() => router.push(`/${slug}`)} className="p-2 -ml-2">
-                        <ChevronLeft size={24} style={{ color: primaryColor }} />
-                    </button>
-                    <div className="flex items-center gap-2">
-                        {negocio?.logoUrl && <img src={negocio.logoUrl} className="size-8 rounded-full border border-gray-100 object-cover" />}
-                        <span className="font-black text-sm uppercase tracking-widest leading-none mt-1" style={{ color: primaryColor }}>{negocio?.nombre}</span>
-                    </div>
-                    <div className="w-8" />
-                </div>
-            )}
+        <div className="min-h-screen bg-slate-50 text-slate-900 font-sans overflow-x-hidden">
 
-
-
-            {/* 🛡️ APP NATIVE HEADER */}
+            {/* ── HEADER: Mi Agenda ── */}
             {step === 'history' && (
-                <header className="fixed top-0 left-0 right-0 z-[100] backdrop-blur-xl border-b h-16 flex items-center px-6" style={{ backgroundColor: `${neutralColor}CC`, borderColor: `${textColor}10` }}>
-                    <div className="max-w-xl mx-auto w-full flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <button onClick={() => router.push(`/${slug}`)} className="size-10 rounded-2xl flex items-center justify-center border active:scale-95 transition-all" style={{ backgroundColor: `${textColor}05`, borderColor: `${textColor}10` }}>
-                                <ChevronLeft size={20} style={{ color: textColor }} />
-                            </button>
-                            <h1 className="text-[10px] font-black uppercase italic tracking-[0.2em] leading-none" style={{ color: textColor }}>Mis Reservas</h1>
+                <header className="sticky top-0 z-[100] bg-white px-5 pt-5 pb-4 border-b border-slate-100">
+                    <div className="max-w-xl mx-auto flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="size-11 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                                <Calendar size={22} strokeWidth={2.5} />
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-black text-slate-900 leading-none">Mi Agenda</h1>
+                                <p className="text-[10px] font-semibold text-slate-400 mt-0.5">Gestiona tus citas fácilmente</p>
+                            </div>
                         </div>
-                        <Link href={`/${slug}/perfil`} className="size-10 rounded-full bg-white flex items-center justify-center border text-[11px] font-black shadow-sm" style={{ color: primaryColor, borderColor: `${primaryColor}20` }}>
-                            {cliente?.nombre?.charAt(0).toUpperCase() || 'U'}
-                        </Link>
+                        <button className="relative size-11 rounded-full flex items-center justify-center bg-slate-50 border border-slate-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                            <span className="absolute top-2 right-2 size-2 bg-rose-500 rounded-full border border-white" />
+                        </button>
                     </div>
                 </header>
             )}
 
-            <main className={cn(
-                "max-w-xl mx-auto px-6 w-full",
-                step === 'history' ? "pt-24 pb-28" : "pt-2 pb-12 overflow-x-hidden"
-            )}>
+            <main className={cn("max-w-xl mx-auto w-full", step === 'history' ? "pb-28" : "px-6 pt-2 pb-12 overflow-x-hidden")}>
                 {step === 'phone' && (
-                    <section className="flex flex-col items-center text-center space-y-6 pt-10">
+                    <section className="flex flex-col items-center text-center space-y-6 pt-10 px-6">
                         <h2 className="text-5xl font-black italic uppercase tracking-tighter leading-none" style={{ color: textColor }}>Hola,</h2>
                         <p className="font-black italic tracking-widest text-[11px] uppercase opacity-60" style={{ color: textColor }}>Identifícate para gestionar tus citas</p>
 
@@ -427,30 +417,24 @@ export default function MisReservasPage() {
                                     <label className="text-[10px] font-black uppercase tracking-[0.2em] ml-2 opacity-50" style={{ color: textColor }}>Número Móvil</label>
                                     <div className="flex gap-2">
                                         <div className="relative flex-1">
-                                            <PhoneInput 
-                                                value={telefono} 
-                                                onChange={setTelefono}
-                                                className="w-full"
-                                            />
+                                            <PhoneInput value={telefono} onChange={setTelefono} className="w-full" />
                                         </div>
                                     </div>
                                 </div>
 
-                                 {error && (
+                                {error && (
                                     <div className="p-4 bg-rose-50 text-rose-500 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 border border-rose-100 animate-in fade-in slide-in-from-top-2">
                                         <AlertCircle size={16} /> {error}
                                     </div>
                                 )}
 
-                                <button 
+                                <button
                                     type="submit"
                                     disabled={loading || telefono.length < 8}
                                     className="w-full h-16 text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:grayscale"
                                     style={{ backgroundColor: primaryColor }}
                                 >
-                                    {loading ? <Loader2 className="animate-spin" size={24} /> : (
-                                        <>Continuar <ArrowRight size={20} /></>
-                                    )}
+                                    {loading ? <Loader2 className="animate-spin" size={24} /> : (<>Continuar <ArrowRight size={20} /></>)}
                                 </button>
                             </form>
                         </div>
@@ -458,11 +442,11 @@ export default function MisReservasPage() {
                 )}
 
                 {step === 'otp' && (
-                    <div className="relative z-10 flex flex-col items-center py-6 animate-in fade-in slide-in-from-right-4 duration-700">
+                    <div className="relative z-10 flex flex-col items-center py-6 px-6 animate-in fade-in slide-in-from-right-4 duration-700">
                         <div className="w-full max-w-[340px] space-y-10 text-center">
                             <div className="space-y-4">
                                 <div className="mx-auto w-16 h-16 rounded-2xl bg-white border border-gray-100 flex items-center justify-center shadow-xl">
-                                     <Key size={30} style={{ color: primaryColor }} />
+                                    <Key size={30} style={{ color: primaryColor }} />
                                 </div>
                                 <div className="space-y-1">
                                     <h1 className="text-4xl font-black text-slate-900 uppercase tracking-tighter leading-none">CÓDIGO</h1>
@@ -477,33 +461,17 @@ export default function MisReservasPage() {
                                             const char = code[idx] || "";
                                             const isActive = code.length === idx;
                                             return (
-                                                <div 
-                                                    key={idx} 
-                                                    className={cn(
-                                                        "flex-1 h-16 bg-white border-2 rounded-[1.2rem] flex items-center justify-center text-3xl font-black transition-all duration-300", 
-                                                        char ? "text-slate-900 shadow-lg shadow-gray-200" : "bg-gray-50 border-gray-100 text-slate-300", 
-                                                        isActive && "border-2"
-                                                    )}
-                                                    style={{ 
-                                                        borderColor: (isActive || char) ? primaryColor : 'transparent'
-                                                    }}
+                                                <div
+                                                    key={idx}
+                                                    className={cn("flex-1 h-16 bg-white border-2 rounded-[1.2rem] flex items-center justify-center text-3xl font-black transition-all duration-300", char ? "text-slate-900 shadow-lg shadow-gray-200" : "bg-gray-50 border-gray-100 text-slate-300", isActive && "border-2")}
+                                                    style={{ borderColor: (isActive || char) ? primaryColor : 'transparent' }}
                                                 >
                                                     {char}
                                                 </div>
                                             );
                                         })}
                                     </div>
-                                    <input 
-                                        ref={otpInputRef} 
-                                        type="text" 
-                                        inputMode="numeric" 
-                                        pattern="[0-9]*" 
-                                        autoFocus 
-                                        maxLength={6} 
-                                        className="absolute inset-0 opacity-0 cursor-default" 
-                                        value={code} 
-                                        onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} 
-                                    />
+                                    <input ref={otpInputRef} type="text" inputMode="numeric" pattern="[0-9]*" autoFocus maxLength={6} className="absolute inset-0 opacity-0 cursor-default" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />
                                 </div>
 
                                 {error && (
@@ -513,20 +481,19 @@ export default function MisReservasPage() {
                                 )}
 
                                 <div className="space-y-6">
-                                    <button 
-                                        type="submit" 
-                                        disabled={loading || code.length < 6} 
+                                    <button
+                                        type="submit"
+                                        disabled={loading || code.length < 6}
                                         className="w-full h-18 text-white rounded-[2rem] font-black text-[13px] uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all disabled:grayscale disabled:opacity-30"
                                         style={{ backgroundColor: primaryColor }}
                                     >
                                         {loading ? <Loader2 className="animate-spin mx-auto" /> : "VALIDAR ACCESO"}
                                     </button>
-                                    
                                     <div className="flex justify-between items-center px-4">
                                         <button type="button" onClick={() => setStep('phone')} className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-slate-900 transition-colors">VOLVER</button>
                                         <div className="flex items-baseline gap-1.5 grayscale">
                                             <span className="text-[10px] font-black uppercase italic" style={{ color: primaryColor }}>
-                                                {countdown > 0 ? `${Math.floor(countdown/60)}:${(countdown%60).toString().padStart(2, '0')}` : "AHORA"}
+                                                {countdown > 0 ? `${Math.floor(countdown / 60)}:${(countdown % 60).toString().padStart(2, '0')}` : "AHORA"}
                                             </span>
                                         </div>
                                     </div>
@@ -537,207 +504,267 @@ export default function MisReservasPage() {
                 )}
 
                 {step === 'history' && (
-                    <div className="space-y-8 animate-in fade-in duration-500">
-                        <div className="flex gap-1 p-1 bg-white rounded-2xl shadow-sm border border-slate-100 mb-8" style={{ backgroundColor: neutralColor }}>
-                            {(['reservas', 'cursos'] as any[]).map((tab) => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className={cn(
-                                        "flex-1 py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest italic transition-all",
-                                        activeTab === tab 
-                                            ? "text-white shadow-lg" 
-                                            : "text-slate-400 hover:text-slate-600"
-                                    )}
-                                    style={activeTab === tab ? { backgroundColor: primaryColor, boxShadow: `0 10px 15px -3px ${primaryColor}40` } : {}}
-                                >
-                                    {tab}
-                                </button>
-                            ))}
+                    <div className="animate-in fade-in duration-500">
+
+                        {/* TABS: Próximas / Pasadas */}
+                        <div className="px-5 pt-4">
+                            <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl">
+                                {[
+                                    { key: 'proximas', label: 'Próximas', icon: <Calendar size={13} /> },
+                                    { key: 'pasadas', label: 'Pasadas', icon: <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg> },
+                                ].map((tab) => (
+                                    <button
+                                        key={tab.key}
+                                        onClick={() => setFilter(tab.key as FilterType)}
+                                        className={cn(
+                                            "flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all",
+                                            filter === tab.key ? "bg-white text-slate-900 shadow-sm" : "text-slate-400"
+                                        )}
+                                        style={filter === tab.key ? { color: primaryColor } : {}}
+                                    >
+                                        {tab.icon}
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
-                        {activeTab === 'reservas' && (
-                            <div className="space-y-8">
-                                <div className="flex gap-6 mb-8 justify-center">
-                                    {(['proximas', 'pasadas'] as any[]).map((f) => (
-                                        <button
-                                            key={f}
-                                            onClick={() => setFilter(f)}
-                                            className={cn(
-                                                "text-[10px] font-black uppercase tracking-widest italic transition-all relative pb-2",
-                                                filter === f ? "text-[var(--primary-color)]" : "text-slate-400"
-                                            )}
-                                            style={filter === f ? { color: primaryColor } : {}}
-                                        >
-                                            {f}
-                                            {filter === f && (
-                                                <div className="absolute bottom-0 left-0 right-0 h-1 rounded-full" style={{ backgroundColor: primaryColor }} />
-                                            )}
-                                        </button>
-                                    ))}
+                        {/* CARRUSEL DE DÍAS */}
+                        <div className="px-5 mt-4">
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => {
+                                        const d = new Date();
+                                        d.setDate(d.getDate() - 7);
+                                    }}
+                                    className="size-8 flex items-center justify-center text-slate-400 shrink-0"
+                                >
+                                    <ChevronLeft size={18} />
+                                </button>
+
+                                <div className="flex-1 flex justify-between overflow-x-auto no-scrollbar gap-1">
+                                    {Array.from({ length: 5 }).map((_, i) => {
+                                        const today = new Date();
+                                        const d = new Date(today);
+                                        d.setDate(today.getDate() - 2 + i);
+                                        const isToday = d.toDateString() === today.toDateString();
+                                        const dayStr = d.toLocaleDateString('es', { weekday: 'short' }).toUpperCase().slice(0, 3);
+                                        const dateNum = d.getDate();
+
+                                        // Ver si hay citas en ese día
+                                        const hasCitas = (filter === 'proximas' ? proximas : pasadas).some(r => {
+                                            const rd = new Date(r.fecha);
+                                            return rd.toDateString() === d.toDateString();
+                                        });
+
+                                        return (
+                                            <div key={i} className="flex flex-col items-center gap-1 flex-1">
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase">{dayStr}</span>
+                                                <div
+                                                    className={cn(
+                                                        "size-9 rounded-full flex items-center justify-center text-sm font-black transition-all",
+                                                        isToday ? "text-white shadow-md" : "text-slate-700"
+                                                    )}
+                                                    style={isToday ? { backgroundColor: primaryColor } : {}}
+                                                >
+                                                    {dateNum}
+                                                </div>
+                                                {hasCitas && (
+                                                    <div className="size-1.5 rounded-full" style={{ backgroundColor: isToday ? primaryColor : '#cbd5e1' }} />
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
 
-                                {filter === 'proximas' ? (
-                                    <div className="space-y-8">
-                                        {resMasCercana ? (
-                                            <>
-                                                <div className="space-y-4 mb-10 animate-in slide-in-from-top-4 duration-700">
-                                                    <div className="flex items-center gap-2 pl-1">
-                                                        <div className="size-2 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" style={{ backgroundColor: primaryColor }} />
-                                                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] italic" style={{ color: primaryColor }}>Cita Próxima</h3>
-                                                    </div>
-                                                    <CheckInCard appointment={{
-                                                        ...resMasCercana,
-                                                        servicio: resMasCercana.service?.nombre,
-                                                        especialista: resMasCercana.staff?.name,
-                                                        primaryColor: primaryColor,
-                                                        whatsapp: negocio?.whatsapp
-                                                    }} />
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div className="py-20 text-center bg-[#11141d]/50 rounded-[2.5rem] border border-dashed border-white/10 opacity-70">
-                                                <Trophy size={36} className="mx-auto mb-4 text-slate-800" />
-                                                <p className="text-[10px] font-black text-slate-500 uppercase italic tracking-widest">Sin compromisos programados</p>
-                                            </div>
-                                        )}
-
-                                        <div className="space-y-3">
-                                            {otrasProximas.map(res => (
-                                                <div key={res.id} onClick={() => handleManageReserva(res)} className="bg-white border border-slate-100 rounded-[1.5rem] p-4 flex items-center gap-4 group active:bg-slate-50 transition-colors shadow-sm cursor-pointer">
-                                                    <div className="size-12 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center shrink-0">
-                                                        {(() => {
-                                                            const d = res.fecha.split('T')[0].split('-');
-                                                            const dObj = new Date(Number(d[0]), Number(d[1]) - 1, Number(d[2]));
-                                                            return (
-                                                                <>
-                                                                    <span className="text-[7px] font-black text-slate-400 uppercase italic leading-none mb-0.5" style={{ color: primaryColor }}>{dObj.toLocaleDateString('es', { month: 'short' }).toUpperCase()}</span>
-                                                                    <span className="text-lg font-black text-slate-900 italic leading-none">{dObj.getDate()}</span>
-                                                                </>
-                                                            );
-                                                        })()}
-                                                    </div>
-                                                    <div className="flex-1 min-w-0 space-y-1.5">
-                                                        <div className="flex justify-between items-center">
-                                                            <h5 className="font-black text-slate-900 uppercase italic text-[15px] leading-none truncate pr-2">{res.service?.nombre || res.servicio?.nombre || 'Mi cita'}</h5>
-                                                            <div className={cn("px-1.5 py-0.5 rounded text-[7px] font-black uppercase italic tracking-widest text-center min-w-[50px]", getStatusStyles(res.estado))}>
-                                                                {res.estado === 'confirmada' || res.estado === 'confirmed' ? '✓ CONF.' : 
-                                                                 res.estado === 'completed' || res.estado === 'finalizada' ? '✓ FIN.' :
-                                                                 res.estado?.substring(0,6).toUpperCase()}
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex justify-between items-end">
-                                                            <div className="flex items-center gap-3 text-slate-400 font-bold text-[9px] uppercase italic leading-none">
-                                                                <span className="flex items-center gap-1.5"><Clock size={11} /> {res.horaInicio}</span>
-                                                                <span className="opacity-30">#{res.id.slice(-4).toUpperCase()}</span>
-                                                            </div>
-                                                                 {showPrices && <span className="text-[13px] font-black italic leading-none" style={{ color: primaryColor }}>${res.total}</span>}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-3.5 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                        {pasadas.map(res => (
-                                            <div key={res.id} onClick={() => handleManageReserva(res)} className="bg-white border border-slate-100 rounded-[1.2rem] p-4 flex items-center gap-4.5 hover:bg-slate-50 transition-all active:scale-[0.98] cursor-pointer shadow-sm opacity-90">
-                                                <div className="size-12 rounded-xl bg-slate-50 flex flex-col items-center justify-center shrink-0 border border-slate-100">
-                                                    {(() => {
-                                                        const d = res.fecha.split('T')[0].split('-');
-                                                        const dObj = new Date(Number(d[0]), Number(d[1]) - 1, Number(d[2]));
-                                                        return (
-                                                            <>
-                                                                <span className="text-[7px] font-black text-slate-400 uppercase italic" style={{ color: primaryColor }}>{dObj.toLocaleDateString('es', { month: 'short' }).toUpperCase()}</span>
-                                                                <span className="text-lg font-black text-slate-900 italic leading-none">{dObj.getDate()}</span>
-                                                            </>
-                                                        );
-                                                    })()}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <h5 className="font-black text-slate-900 uppercase italic text-[14px] leading-tight truncate">{res.service?.nombre || res.servicio?.nombre || 'Mi cita'}</h5>
-                                                    <p className="text-[10px] font-black text-slate-400 uppercase italic tracking-widest mt-1">
-                                                        {res.horaInicio} {showPrices && <>• <span className="text-slate-500">${res.total}</span></>}
-                                                    </p>
-                                                </div>
-                                                <ArrowRight size={14} className="text-slate-600" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                <button className="size-8 flex items-center justify-center text-slate-400 shrink-0">
+                                    <ChevronRight size={18} />
+                                </button>
                             </div>
-                        )}
+                        </div>
 
-                        {activeTab === 'cursos' && (
-                            <div className="space-y-8 animate-in fade-in duration-500">
-                                <h3 className="text-[8px] font-black uppercase tracking-[0.3em] italic pl-1" style={{ color: primaryColor }}>ACADEMIA ACTIVA</h3>
-                                {cliente?.enrollments?.length > 0 ? cliente.enrollments.map((en: any) => (
-                                    <div key={en.id} className="bg-white border rounded-[2.5rem] p-7 space-y-6 shadow-sm relative group overflow-hidden active:scale-[0.99] transition-all" style={{ borderColor: `${primaryColor}20` }}>
-                                        <div className="absolute top-0 right-0 size-32 blur-[50px] rounded-full pointer-events-none" style={{ backgroundColor: `${primaryColor}10` }} />
-                                        
-                                        <div className="flex items-center justify-between relative z-10">
-                                            <div className="flex items-center gap-4">
-                                                <div className="size-12 rounded-xl flex items-center justify-center border" style={{ backgroundColor: `${primaryColor}10`, color: primaryColor, borderColor: `${primaryColor}20` }}>
-                                                    <Trophy size={20} />
-                                                </div>
-                                                <div className="space-y-1">
-                                                     <span className="text-[10px] font-black uppercase tracking-widest italic" style={{ color: primaryColor }}>{en.student_name}</span>
-                                                    <h4 className="text-xl font-black text-slate-900 uppercase italic leading-none">{en.Course?.name || 'Curso'}</h4>
-                                                </div>
-                                            </div>
-                                            <div className="px-3 py-1 text-white rounded-lg text-[8px] font-black uppercase tracking-widest italic shadow-lg" style={{ backgroundColor: primaryColor, boxShadow: `0 10px 15px -3px ${primaryColor}40` }}>
-                                                {String(en.status).toUpperCase()}
-                                            </div>
-                                        </div>
+                        {/* FECHA ACTUAL + FILTRO */}
+                        <div className="px-5 mt-5 flex items-center justify-between">
+                            <h2 className="font-black text-slate-900 text-[15px]">
+                                {new Date().toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' }).replace(/^\w/, c => c.toUpperCase())}
+                            </h2>
+                            <button className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full">
+                                <SlidersHorizontal size={12} />
+                                Filtrar
+                            </button>
+                        </div>
 
-                                        <div className="grid grid-cols-2 gap-4 relative z-10">
-                                            <div className="space-y-1">
-                                                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
-                                                    <Calendar size={10} style={{ color: primaryColor }} /> Inicia
-                                                </p>
-                                                <p className="text-[11px] font-bold text-slate-700">
-                                                    {en.Course?.start_date ? new Date(en.Course.start_date).toLocaleDateString('es', { day: 'numeric', month: 'short' }) : 'Pronto'}
-                                                </p>
-                                            </div>
-                                            <div className="space-y-1 text-right">
-                                                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1 justify-end">
-                                                    <Clock size={10} style={{ color: primaryColor }} /> Horario
-                                                </p>
-                                                <p className="text-[11px] font-bold text-slate-700">
-                                                    {en.Course?.CourseSchedule?.[0]?.start_time || 'Ver detalles'}
-                                                </p>
-                                            </div>
-                                        </div>
+                        {/* LISTADO DE CITAS */}
+                        <div className="px-5 mt-4 space-y-3">
+                            {(filter === 'proximas' ? proximas : pasadas).length === 0 ? (
+                                <div className="py-16 text-center">
+                                    <Calendar size={40} className="mx-auto mb-3 text-slate-200" />
+                                    <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest">
+                                        {filter === 'proximas' ? 'Sin citas próximas' : 'Sin citas pasadas'}
+                                    </p>
+                                    <p className="text-[10px] text-slate-300 mt-1">
+                                        {filter === 'proximas' ? 'Agenda tu primera cita 💆‍♀️' : 'Aquí aparecerán tus citas anteriores'}
+                                    </p>
+                                </div>
+                            ) : (
+                                (filter === 'proximas' ? proximas : pasadas).map((res) => {
+                                    const lowerEstado = res.estado?.toLowerCase();
+                                    const isConfirmed = lowerEstado === 'confirmed' || lowerEstado === 'confirmada' || lowerEstado === 'approved';
+                                    const isPending = lowerEstado === 'pending' || lowerEstado === 'pendiente';
+                                    const isCancelled = lowerEstado === 'cancelled' || lowerEstado === 'cancelada' || lowerEstado === 'expired';
+                                    const isCompleted = lowerEstado === 'completed' || lowerEstado === 'finalizada';
 
-                                        <Link 
-                                            href={`/${slug}/cursos/inscripcion/${en.id}`} 
-                                            className="w-full h-12 bg-slate-50 hover:bg-slate-100 text-slate-900 rounded-xl flex items-center justify-center font-black text-[9px] uppercase tracking-widest border border-slate-200 italic transition-all relative z-10"
+                                    const statusLabel = isConfirmed ? 'Confirmada' : isPending ? 'Pendiente' : isCancelled ? 'Cancelada' : isCompleted ? 'Finalizada' : res.estado;
+                                    const statusStyle = isConfirmed
+                                        ? { color: '#10b981', borderColor: '#d1fae5', backgroundColor: '#f0fdf4' }
+                                        : isPending
+                                            ? { color: '#f59e0b', borderColor: '#fef3c7', backgroundColor: '#fffbeb' }
+                                            : { color: '#ef4444', borderColor: '#fee2e2', backgroundColor: '#fef2f2' };
+
+                                    const serviceImg = (res.service?.imagenes && res.service.imagenes.length > 0)
+                                        ? (typeof res.service.imagenes === 'string' ? JSON.parse(res.service.imagenes)[0]?.url : res.service.imagenes[0]?.url)
+                                        : (res.service?.extraInfo?.imagenUrl || 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&q=80&w=150');
+
+                                    return (
+                                        <div
+                                            key={res.id}
+                                            onClick={() => handleManageReserva(res)}
+                                            className="bg-white border border-slate-100 rounded-3xl p-4 flex gap-4 shadow-sm active:scale-[0.99] transition-all cursor-pointer"
                                         >
-                                            VER DETALLES DE MI CURSO <ArrowRight size={14} className="ml-2 group-hover:translate-x-1 transition-transform" />
-                                        </Link>
+                                            {/* Foto */}
+                                            <div className="w-20 h-20 rounded-2xl overflow-hidden shrink-0">
+                                                <img src={serviceImg} alt={res.service?.nombre} className="w-full h-full object-cover" />
+                                            </div>
+
+                                            {/* Info */}
+                                            <div className="flex-1 min-w-0">
+                                                {/* Hora + Duración */}
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full" style={{ color: primaryColor, backgroundColor: `${primaryColor}15` }}>
+                                                        {res.horaInicio || '—'}
+                                                    </span>
+                                                    <span className="flex items-center gap-1 text-[10px] text-slate-400 font-semibold">
+                                                        <Clock size={10} />
+                                                        {res.service?.duracion || 60} min
+                                                    </span>
+                                                </div>
+
+                                                {/* Nombre del servicio */}
+                                                <h3 className="font-black text-slate-900 text-[14px] leading-tight truncate">
+                                                    {res.service?.nombre || 'Servicio'}
+                                                </h3>
+
+                                                {/* Negocio */}
+                                                <div className="flex items-center gap-1 mt-0.5">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400"><rect width="16" height="10" x="4" y="10" rx="2"/><path d="M2 10h20"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/></svg>
+                                                    <span className="text-[10px] font-semibold text-slate-400 truncate">{negocio?.nombre || 'Negocio'}</span>
+                                                </div>
+
+                                                {/* Especialista */}
+                                                {res.staff?.name && (
+                                                    <div className="flex items-center gap-1 mt-0.5">
+                                                        <div className="size-4 rounded-full bg-slate-100 overflow-hidden border border-slate-200 shrink-0 flex items-center justify-center">
+                                                            {res.staff?.imageMedia || res.staff?.avatar
+                                                                ? <img src={res.staff.imageMedia || res.staff.avatar} className="w-full h-full object-cover" />
+                                                                : <UserIcon size={8} className="text-slate-400" />
+                                                            }
+                                                        </div>
+                                                        <span className="text-[10px] font-semibold text-slate-400 truncate">{res.staff.name}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Badge estado */}
+                                            <div className="shrink-0 flex flex-col items-end justify-between">
+                                                <MoreVertical size={16} className="text-slate-300" />
+                                                <span
+                                                    className="text-[9px] font-black px-2.5 py-1 rounded-full border"
+                                                    style={statusStyle}
+                                                >
+                                                    {statusLabel}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        {/* CARD: Recordatorio */}
+                        <div className="px-5 mt-5">
+                            <div className="bg-pink-50 border border-pink-100 rounded-3xl p-4 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                                        <Calendar size={18} />
                                     </div>
-                                )) : (
-                                    <div className="py-20 text-center bg-white rounded-[2.5rem] border border-dashed border-slate-200 opacity-70">
-                                        <Trophy size={36} className="mx-auto mb-4 text-slate-300" />
-                                        <p className="text-[10px] font-black text-slate-400 uppercase italic tracking-widest">Sin cursos activos</p>
+                                    <div>
+                                        <p className="font-black text-slate-800 text-[12px]">¡No olvides tu cita!</p>
+                                        <p className="text-[10px] text-slate-500 font-medium">Te enviaremos un recordatorio<br />24 horas antes</p>
                                     </div>
-                                )}
+                                </div>
+                                {/* Toggle visual */}
+                                <div className="relative w-11 h-6 shrink-0">
+                                    <div className="w-11 h-6 rounded-full" style={{ backgroundColor: primaryColor }} />
+                                    <div className="absolute right-1 top-1 size-4 bg-white rounded-full shadow-sm" />
+                                </div>
                             </div>
-                        )}
+                        </div>
+
+                        {/* CARD: ¿Necesitas ayuda? */}
+                        <div className="px-5 mt-3 mb-6">
+                            <div className="bg-white border border-slate-100 rounded-3xl p-4 flex items-center justify-between shadow-sm">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-10 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500">
+                                        <Phone size={16} />
+                                    </div>
+                                    <div>
+                                        <p className="font-black text-slate-800 text-[12px]">¿Necesitas ayuda?</p>
+                                        <p className="text-[10px] text-slate-400 font-medium">Contáctanos por WhatsApp<br />o llámanos directamente</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    {negocio?.whatsapp && (
+                                        <a
+                                            href={`https://wa.me/${negocio.whatsapp.replace(/\D/g, '')}`}
+                                            target="_blank"
+                                            className="size-10 rounded-full bg-[#25D366]/10 flex items-center justify-center"
+                                            onClick={e => e.stopPropagation()}
+                                        >
+                                            <svg viewBox="0 0 24 24" fill="#25D366" width="20" height="20"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.82 9.82 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+                                        </a>
+                                    )}
+                                    {negocio?.telefono && (
+                                        <a
+                                            href={`tel:${negocio.telefono}`}
+                                            className="size-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center"
+                                            onClick={e => e.stopPropagation()}
+                                        >
+                                            <Phone size={16} className="text-slate-500" />
+                                        </a>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
             </main>
 
-            {/* FAB - NATIVE STYLE COMPACTO */}
+            {/* FAB: Nueva Cita */}
             {step === 'history' && (
-                <div className="fixed bottom-0 left-0 right-0 h-24 pointer-events-none bg-gradient-to-t from-[#07090f] to-transparent z-[140]">
-                    <div className="max-w-xl mx-auto w-full h-full px-7 pb-7 flex justify-end items-center relative">
-                        <Link href={`/${slug}`} className="pointer-events-auto size-14 bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white rounded-2xl flex items-center justify-center shadow-2xl shadow-emerald-500/20 active:scale-95 transition-all border-4 border-[#07090f]">
-                            <Plus size={28} strokeWidth={4} />
+                <div className="fixed bottom-0 left-0 right-0 pb-6 pointer-events-none z-[140]">
+                    <div className="max-w-xl mx-auto w-full px-5 flex justify-center">
+                        <Link
+                            href={`/${slug}`}
+                            className="pointer-events-auto flex items-center gap-2 px-6 py-3.5 text-white font-black text-[11px] uppercase tracking-widest rounded-full shadow-xl active:scale-95 transition-all border border-white/10"
+                            style={{ background: `linear-gradient(135deg, ${primaryColor}, #ec4899)` }}
+                        >
+                            <Plus size={16} strokeWidth={3} />
+                            Nueva Cita
                         </Link>
                     </div>
                 </div>
             )}
+
 
             <style jsx global>{`
                 input::placeholder { color: #334155 !important; font-style: italic; font-weight: 800; text-transform: uppercase; font-size: 10px; letter-spacing: 0.1em; }
