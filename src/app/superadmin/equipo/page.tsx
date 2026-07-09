@@ -104,28 +104,45 @@ export default function EquipoPage() {
     const [selectedUsuario, setSelectedUsuario] = useState<Usuario | null>(null);
     const [selectedRol, setSelectedRol] = useState<Rol | null>(null);
 
+    const [apiError, setApiError] = useState<string | null>(null);
+
     const fetchAll = useCallback(async () => {
         setLoading(true);
+        setApiError(null);
         try {
             const [usersRes, rolesRes, permisosRes] = await Promise.all([
                 fetch('/api/superadmin/equipo/usuarios'),
                 fetch('/api/superadmin/equipo/roles'),
                 fetch('/api/superadmin/equipo/permisos'),
             ]);
-            if (usersRes.ok) setUsuarios(await usersRes.json());
+
+            if (usersRes.ok) {
+                setUsuarios(await usersRes.json());
+            } else {
+                const errData = await usersRes.json().catch(() => ({}));
+                console.error('Error API usuarios:', usersRes.status, errData);
+                setApiError(`Error ${usersRes.status}: ${errData.error || 'No autorizado'}`);
+            }
+
             if (rolesRes.ok) setRoles(await rolesRes.json());
+            else console.error('Error API roles:', rolesRes.status, await rolesRes.json().catch(() => ({})));
+
             if (permisosRes.ok) {
                 const data = await permisosRes.json();
                 setPermisosPorModulo(data.porModulo || {});
+            } else {
+                console.error('Error API permisos:', permisosRes.status, await permisosRes.json().catch(() => ({})));
             }
         } catch (e) {
             console.error("Error cargando datos del equipo:", e);
+            setApiError('Error de conexión al cargar datos');
         } finally {
             setLoading(false);
         }
     }, []);
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
+
 
     const filteredUsuarios = usuarios.filter(u =>
         `${u.nombre} ${u.apellido} ${u.email} ${u.cargo}`.toLowerCase().includes(searchUsuarios.toLowerCase())

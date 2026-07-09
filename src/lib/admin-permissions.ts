@@ -42,7 +42,12 @@ export type AdminSession = {
  * El Propietario (jerarquía 1) siempre tiene todos los permisos.
  */
 export function hasPermission(session: AdminSession | null, permiso: string): boolean {
-    if (!session?.user?.isAdminUser) return false;
+    if (!session?.user) return false;
+
+    // Compatibilidad backward: rol SUPERADMIN legacy tiene acceso total
+    if ((session.user as any).role === 'SUPERADMIN' && !session.user.isAdminUser) return true;
+
+    if (!session.user.isAdminUser) return false;
 
     // Propietario tiene acceso a todo
     if (session.user.adminRolJerarquia === 1) return true;
@@ -141,7 +146,10 @@ export async function requirePermission(permiso: string): Promise<{
 }> {
     const session = await getServerSession(authOptions) as AdminSession | null;
 
-    if (!session?.user?.isAdminUser) {
+    // Compatibilidad backward: usuarios SUPERADMIN del sistema anterior tienen acceso total
+    const isLegacySuperAdmin = (session?.user as any)?.role === 'SUPERADMIN' && !session?.user?.isAdminUser;
+
+    if (!session?.user?.isAdminUser && !isLegacySuperAdmin) {
         return {
             session: null,
             error: NextResponse.json({ error: "No autorizado. Se requiere cuenta de equipo." }, { status: 401 }),
@@ -154,7 +162,7 @@ export async function requirePermission(permiso: string): Promise<{
             error: NextResponse.json({
                 error: "Permiso insuficiente.",
                 permiso,
-                mensaje: `Tu rol (${session.user.adminRolNombre}) no tiene el permiso: ${permiso}`
+                mensaje: `Tu rol (${session!.user.adminRolNombre}) no tiene el permiso: ${permiso}`
             }, { status: 403 }),
         };
     }
