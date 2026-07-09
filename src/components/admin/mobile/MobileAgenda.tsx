@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { cn, getImageUrl } from '@/lib/utils';
 import Link from 'next/link';
+import AIAssistantDrawer from './AIAssistantDrawer';
 
 interface MobileAgendaProps {
     citas: any[];
@@ -277,6 +278,7 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [view, setView] = useState<'day' | 'week' | 'staff'>('week');
     const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'pending' | 'cancelled' | 'completed'>('all');
+    const [showAI, setShowAI] = useState(false);
 
     // Generar carrusel de días (7 días centrados en la fecha seleccionada)
     const weekDays = useMemo(() => {
@@ -570,17 +572,29 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
                 </div>
             </div>
 
-            {/* 7. Botón flotante Asistente IA (Captura de pantalla) */}
+            {/* 7. Botón flotante Asistente IA */}
             <div className="fixed bottom-24 right-6 z-40">
                 <button 
-                    className="relative px-5 py-3.5 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-full shadow-lg hover:brightness-105 active:scale-95 transition-all flex items-center gap-2 font-black text-[9px] uppercase tracking-widest border border-white/20 animate-bounce"
+                    onClick={() => setShowAI(true)}
+                    className="relative px-5 py-3.5 text-white rounded-full shadow-xl hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 font-black text-[9px] uppercase tracking-widest border border-white/20 hover:shadow-2xl"
                     style={{ background: `linear-gradient(135deg, ${primaryColor}, #ec4899)` }}
                 >
                     <Sparkles size={12} className="animate-pulse" />
                     Asistente IA
-                    <span className="absolute -top-1 -right-1 size-3 bg-pink-500 rounded-full border border-white" />
+                    <span className="absolute -top-1 -right-1 size-3 bg-emerald-400 rounded-full border-2 border-white" />
                 </button>
             </div>
+
+            {/* Drawer de Asistente IA */}
+            <AIAssistantDrawer
+                open={showAI}
+                onClose={() => setShowAI(false)}
+                primaryColor={primaryColor}
+                citas={citas}
+                selectedDate={selectedDate}
+                stats={stats}
+                negocio={slug}
+            />
         </div>
     );
 }
