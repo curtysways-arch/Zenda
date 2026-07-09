@@ -14,6 +14,13 @@ export default function PushNotificationManager() {
     // EFECTO 1: Listener de mensajes
     useEffect(() => {
         if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+        
+        // Verificar si las notificaciones nativas están soportadas en este navegador/dispositivo
+        if (!('Notification' in window)) {
+            setPermissionStatus('denied');
+            return;
+        }
+
         setPermissionStatus(Notification.permission);
         
         onMessageListener((payload) => {
@@ -30,7 +37,7 @@ export default function PushNotificationManager() {
 
     // EFECTO 2: Registro automático si ya tiene permiso
     useEffect(() => {
-        if (!session || typeof window === 'undefined') return;
+        if (!session || typeof window === 'undefined' || !('Notification' in window)) return;
         if (Notification.permission === 'granted') {
             setupFCM(false);
         }

@@ -337,6 +337,7 @@ model Negocio {
   Coupon                 Coupon[]
   AutomationRule         AutomationRule[]
   Notification           Notification[]
+  AdminUserNegocio       AdminUserNegocio[]
 }
 
 model OtpCode {
@@ -1044,3 +1045,132 @@ model Notification {
   @@index([leida])
   @@index([archived])
 }
+
+// ==========================================
+// SISTEMA DE ROLES Y PERMISOS ENTERPRISE (SaaS)
+// ==========================================
+
+model AdminRole {
+  id          String                 @id @default(uuid())
+  nombre      String                 @unique
+  descripcion String?
+  color       String                 @default("#ec4899")
+  icono       String                 @default("Shield")
+  activo      Boolean                @default(true)
+  jerarquia   Int                    @default(100)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  usuarios    AdminUser[]
+  permisos    AdminRolePermission[]
+  apiKeys     AdminApiKey[]
+}
+
+model AdminPermission {
+  id          String                 @id @default(uuid())
+  modulo      String
+  accion      String
+  codigo      String                 @unique
+  nombre      String
+  descripcion String?
+  critico     Boolean                @default(false)
+  roles       AdminRolePermission[]
+}
+
+model AdminRolePermission {
+  rolId        String
+  permisoId    String
+  rol          AdminRole             @relation(fields: [rolId], references: [id], onDelete: Cascade)
+  permiso      AdminPermission       @relation(fields: [permisoId], references: [id], onDelete: Cascade)
+
+  @@id([rolId, permisoId])
+}
+
+model AdminTeam {
+  id          String      @id @default(uuid())
+  nombre      String      @unique
+  descripcion String?
+  color       String      @default("#6366f1")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  miembros    AdminUser[]
+}
+
+model AdminUser {
+  id           String               @id @default(uuid())
+  nombre       String
+  apellido     String?
+  email        String               @unique
+  password     String
+  activo       Boolean              @default(true)
+  estado       String               @default("ACTIVO") // ACTIVO, SUSPENDIDO, VACACIONES, LICENCIA, PENDIENTE, BLOQUEADO, INVITADO
+  avatar       String?
+  scope        String               @default("GLOBAL") // GLOBAL, REGIONAL, NEGOCIOS_ASIGNADOS, PERSONAL
+  cargo        String?
+  telefono     String?
+  rolId        String
+  rol          AdminRole            @relation(fields: [rolId], references: [id])
+  equipoId     String?
+  equipo       AdminTeam?           @relation(fields: [equipoId], references: [id])
+  ultimaAccion DateTime?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  negociosAsignados AdminUserNegocio[]
+  loginHistory      AdminLoginHistory[]
+  auditLogs         AdminAuditLog[]
+}
+
+model AdminUserNegocio {
+  adminUserId  String
+  negocioId    String
+  adminUser    AdminUser             @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  negocio      Negocio               @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  @@id([adminUserId, negocioId])
+}
+
+model AdminLoginHistory {
+  id               String    @id @default(uuid())
+  adminUserId      String
+  adminUser        AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  fecha            DateTime  @default(now())
+  ip               String?
+  pais             String?
+  ciudad           String?
+  navegador        String?
+  sistemaOperativo String?
+  dispositivo      String?
+  resultado        String
+  duracionMinutos  Int?
+  logoutAt         DateTime?
+}
+
+model AdminAuditLog {
+  id          String    @id @default(uuid())
+  adminUserId String
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  fecha       DateTime  @default(now())
+  accion      String
+  modulo      String
+  descripcion String?
+  targetId    String?
+  targetType  String?
+  datosAntes  String?   // JSON serializado
+  datosDespues String?  // JSON serializado
+  ipAddress   String?
+  resultado   String    @default("EXITOSO")
+}
+
+model AdminApiKey {
+  id          String    @id @default(uuid())
+  nombre      String
+  keyHash     String    @unique
+  activo      Boolean   @default(true)
+  rolId       String
+  rol         AdminRole @relation(fields: [rolId], references: [id])
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
+}
+
+
+
+

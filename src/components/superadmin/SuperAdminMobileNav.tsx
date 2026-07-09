@@ -16,7 +16,9 @@ import {
     BarChart3,
     ShieldCheck,
     Smartphone,
-    LogOut
+    LogOut,
+    UserCog,
+    Gift
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
@@ -78,6 +80,7 @@ export default function SuperAdminMobileNav() {
             badge: pendingPaymentsCount > 0 ? pendingPaymentsCount : null 
         },
         { name: 'Métricas', href: '/superadmin/metricas', icon: BarChart3 },
+        { name: 'Equipo', href: '/superadmin/equipo', icon: UserCog },
         { name: 'Administradores', href: '/superadmin/administradores', icon: ShieldCheck },
         { name: 'PWA Preview', href: '/superadmin/pwa', icon: Smartphone },
         { name: 'Configuración', href: '/superadmin/configuracion', icon: Settings },

@@ -18,7 +18,8 @@ import {
     Bell,
     Smartphone,
     Banknote,
-    Gift
+    Gift,
+    UserCog
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -80,6 +81,7 @@ export default function SuperAdminSidebar() {
         },
         { name: 'Métricas', href: '/superadmin/metricas', icon: BarChart3 },
         { name: 'Referidos', href: '/superadmin/referidos', icon: Gift },
+        { name: 'Equipo', href: '/superadmin/equipo', icon: UserCog },
         { name: 'Administradores', href: '/superadmin/administradores', icon: ShieldCheck },
         { name: 'PWA Preview', href: '/superadmin/pwa', icon: Smartphone },
         { name: 'Configuración', href: '/superadmin/configuracion', icon: Settings },

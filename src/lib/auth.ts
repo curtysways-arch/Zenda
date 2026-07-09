@@ -3,6 +3,16 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { AuthOptions } from "next-auth";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// auth.ts — NextAuth con soporte dual: AdminUser (RBAC) y Usuario (negocio)
+//
+// Flujo de autenticación:
+//   1. Buscar primero en AdminUser (equipo interno del SaaS)
+//   2. Si no existe, buscar en Usuario (administradores de negocios)
+//
+// Compatibilidad total con el sistema existente.
+// ─────────────────────────────────────────────────────────────────────────────
+
 export const authOptions: AuthOptions = {
     providers: [
         CredentialsProvider({
@@ -17,6 +27,73 @@ export const authOptions: AuthOptions = {
                         return null;
                     }
 
+                    // ── Paso 1: Verificar si es un AdminUser (equipo interno del SaaS) ──
+                    try {
+                        const adminUser = await prisma.adminUser.findUnique({
+                            where: { email: credentials.email },
+                            include: {
+                                rol: {
+                                    include: {
+                                        permisos: {
+                                            include: { permiso: true }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+
+                        if (adminUser && adminUser.activo && adminUser.password) {
+                            const isPasswordCorrect = await bcrypt.compare(credentials.password, adminUser.password);
+                            if (isPasswordCorrect) {
+                                // Verificar que no esté bloqueado/suspendido
+                                if (['BLOQUEADO', 'SUSPENDIDO'].includes(adminUser.estado)) {
+                                    console.error("Auth AdminUser: cuenta bloqueada/suspendida:", credentials.email);
+                                    return null;
+                                }
+
+                                // Extraer lista de permisos del rol
+                                const permisos = adminUser.rol?.permisos.map(rp => rp.permiso.codigo) || [];
+
+                                // Registrar último acceso
+                                await prisma.adminUser.update({
+                                    where: { id: adminUser.id },
+                                    data: { ultimaAccion: new Date() }
+                                }).catch(() => {}); // no bloquear el login si falla
+
+                                console.log("✅ Auth AdminUser OK:", credentials.email, "rol:", adminUser.rol?.nombre);
+
+                                return {
+                                    id: adminUser.id,
+                                    email: adminUser.email,
+                                    name: `${adminUser.nombre} ${adminUser.apellido || ''}`.trim(),
+                                    // Compatibilidad: rol "SUPERADMIN" para el sistema existente
+                                    role: 'SUPERADMIN',
+                                    roles: ['SUPERADMIN'],
+                                    // Campos propios del AdminUser
+                                    isAdminUser: true,
+                                    adminRolNombre: adminUser.rol?.nombre || null,
+                                    adminRolColor: adminUser.rol?.color || null,
+                                    adminRolIcono: adminUser.rol?.icono || null,
+                                    adminRolJerarquia: adminUser.rol?.jerarquia || 999,
+                                    permisos,
+                                    scope: adminUser.scope || 'GLOBAL',
+                                    estado: adminUser.estado,
+                                    // Campos de compatibilidad con el sistema anterior
+                                    negocioId: null,
+                                    slug: null,
+                                    isDemo: false,
+                                    staffId: null,
+                                } as any;
+                            }
+                        }
+                    } catch (adminErr) {
+                        // Si la tabla AdminUser no existe aún (primer deploy), ignorar y continuar
+                        if (!(adminErr as any)?.message?.includes('does not exist')) {
+                            console.error("Auth AdminUser error:", adminErr);
+                        }
+                    }
+
+                    // ── Paso 2: Verificar en Usuario (sistema original de negocios) ──
                     const user = await prisma.usuario.findUnique({
                         where: { email: credentials.email },
                     });
@@ -57,7 +134,9 @@ export const authOptions: AuthOptions = {
                         slug,
                         isDemo,
                         staffId: null,
-                    };
+                        isAdminUser: false,
+                    } as any;
+
                 } catch (error) {
                     console.error("Auth error:", error);
                     return null;
@@ -75,6 +154,15 @@ export const authOptions: AuthOptions = {
                 token.slug = user.slug;
                 token.isDemo = user.isDemo;
                 token.staffId = user.staffId;
+                // Campos AdminUser
+                token.isAdminUser = user.isAdminUser || false;
+                token.adminRolNombre = user.adminRolNombre || null;
+                token.adminRolColor = user.adminRolColor || null;
+                token.adminRolIcono = user.adminRolIcono || null;
+                token.adminRolJerarquia = user.adminRolJerarquia || null;
+                token.permisos = user.permisos || [];
+                token.scope = user.scope || null;
+                token.estado = user.estado || null;
             }
             return token;
         },
@@ -87,10 +175,19 @@ export const authOptions: AuthOptions = {
                 session.user.slug = token.slug;
                 session.user.isDemo = token.isDemo;
                 session.user.staffId = token.staffId;
+                // Campos AdminUser en sesión
+                session.user.isAdminUser = token.isAdminUser || false;
+                session.user.adminRolNombre = token.adminRolNombre || null;
+                session.user.adminRolColor = token.adminRolColor || null;
+                session.user.adminRolIcono = token.adminRolIcono || null;
+                session.user.adminRolJerarquia = token.adminRolJerarquia || null;
+                session.user.permisos = token.permisos || [];
+                session.user.scope = token.scope || null;
+                session.user.estado = token.estado || null;
 
                 // AUTO-REPARACIÓN: Si la sesión no tiene negocioId (token viejo),
                 // lo recuperamos directamente de la BD con el id del usuario
-                if (!token.negocioId && token.id) {
+                if (!token.negocioId && token.id && !token.isAdminUser) {
                     try {
                         const freshUser = await prisma.usuario.findUnique({
                             where: { id: token.id },

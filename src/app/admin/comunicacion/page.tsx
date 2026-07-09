@@ -212,6 +212,13 @@ export default function ComunicacionAdminPage() {
 
     const handleRequestPermission = async () => {
         if (typeof window === 'undefined') return;
+        if (!('Notification' in window)) {
+            setTestPushState(prev => ({
+                ...prev,
+                statusMessage: { text: "Las notificaciones push no están soportadas en este navegador o dispositivo.", type: 'error' }
+            }));
+            return;
+        }
         try {
             const perm = await Notification.requestPermission();
             setTestPushState(prev => ({ ...prev, permission: perm }));
@@ -275,7 +282,7 @@ export default function ComunicacionAdminPage() {
     };
 
     useEffect(() => {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && 'Notification' in window) {
             const perm = Notification.permission;
             setTestPushState(prev => ({ ...prev, permission: perm }));
             if (perm === 'granted') {
