@@ -8,10 +8,17 @@
  *   - Los equipos base del SaaS
  */
 
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
+// Prisma 7 requiere un driver adapter explícito
+const pool = new Pool({ connectionString: process.env['DATABASE_URL']! });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
+
 
 // ─── Definición de Permisos por Módulo ───────────────────────────────────────
 
@@ -273,4 +280,6 @@ main()
     })
     .finally(async () => {
         await prisma.$disconnect();
+        await pool.end();
     });
+
