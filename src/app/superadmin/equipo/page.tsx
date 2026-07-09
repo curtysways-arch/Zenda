@@ -236,6 +236,18 @@ export default function EquipoPage() {
 
             {/* Contenido */}
             <div className="p-6">
+                {apiError && (
+                    <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-sm flex flex-col gap-2">
+                        <div className="font-semibold flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                            Error de API Detectado:
+                        </div>
+                        <p>{apiError}</p>
+                        <p className="text-xs text-slate-400">
+                            Puedes intentar cerrar sesión y volver a iniciarla. También puedes verificar el estado de tu sesión en <a href="/api/test-session" target="_blank" className="underline text-violet-400">/api/test-session</a>.
+                        </p>
+                    </div>
+                )}
                 {loading ? (
                     <div className="flex items-center justify-center py-32">
                         <div className="flex flex-col items-center gap-4">
