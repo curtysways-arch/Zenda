@@ -44,8 +44,9 @@ export type AdminSession = {
 export function hasPermission(session: AdminSession | null, permiso: string): boolean {
     if (!session?.user) return false;
 
-    // Compatibilidad backward: rol SUPERADMIN legacy tiene acceso total
-    if ((session.user as any).role === 'SUPERADMIN' && !session.user.isAdminUser) return true;
+    // Compatibilidad backward: roles admin legacy tienen acceso total
+    const legacyAdminRoles = ['SUPERADMIN', 'SUPER_ADMIN'];
+    if (legacyAdminRoles.includes((session.user as any).role) && !session.user.isAdminUser) return true;
 
     if (!session.user.isAdminUser) return false;
 
@@ -146,8 +147,9 @@ export async function requirePermission(permiso: string): Promise<{
 }> {
     const session = await getServerSession(authOptions) as AdminSession | null;
 
-    // Compatibilidad backward: usuarios SUPERADMIN del sistema anterior tienen acceso total
-    const isLegacySuperAdmin = (session?.user as any)?.role === 'SUPERADMIN' && !session?.user?.isAdminUser;
+    // Compatibilidad backward: roles admin legacy tienen acceso total
+    const legacyAdminRoles = ['SUPERADMIN', 'SUPER_ADMIN'];
+    const isLegacySuperAdmin = legacyAdminRoles.includes((session?.user as any)?.role) && !session?.user?.isAdminUser;
 
     if (!session?.user?.isAdminUser && !isLegacySuperAdmin) {
         return {
