@@ -1033,7 +1033,8 @@ function ModalCrearRol({ permisosPorModulo, onClose, onSuccess }: {
                             {COLORES.map(c => (
                                 <button type="button" key={c} onClick={() => setForm(f => ({ ...f, color: c }))}
                                     className={`w-7 h-7 rounded-lg transition-all ${form.color === c ? 'ring-2 ring-offset-2 ring-offset-slate-900 scale-110' : 'hover:scale-105'}`}
-                                    style={{ background: c, ringColor: c }} />
+                                    style={{ background: c }} />
+
                             ))}
                         </div>
                     </div>
