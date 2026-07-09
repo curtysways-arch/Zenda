@@ -65,6 +65,11 @@ export default function MiPerfilPage() {
     const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
     const [ratingTarget, setRatingTarget] = useState<any>(null);
 
+    const [editNombre, setEditNombre] = useState("");
+    const [editEmail, setEditEmail] = useState("");
+    const [editFechaNacimiento, setEditFechaNacimiento] = useState("");
+    const [saving, setSaving] = useState(false);
+
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -131,6 +136,13 @@ export default function MiPerfilPage() {
             if (res.ok) {
                 const data = await res.json();
                 setCliente(data);
+                setEditNombre(data.nombre || "");
+                setEditEmail(data.email || "");
+                if (data.fechaNacimiento) {
+                    setEditFechaNacimiento(new Date(data.fechaNacimiento).toISOString().split('T')[0]);
+                } else {
+                    setEditFechaNacimiento("");
+                }
                 setStep('profile');
                 fetchReservas();
             } else {
@@ -143,6 +155,39 @@ export default function MiPerfilPage() {
             setStep('phone');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSaveProfile = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editNombre.trim()) {
+            setError("El nombre es requerido");
+            return;
+        }
+        setSaving(true);
+        setError("");
+        try {
+            const res = await fetch(`/api/${slug}/perfil`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre: editNombre,
+                    email: editEmail || null,
+                    fechaNacimiento: editFechaNacimiento ? new Date(editFechaNacimiento).toISOString() : null
+                })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setCliente(data.cliente || data);
+                alert("Perfil actualizado correctamente");
+            } else {
+                const data = await res.json();
+                setError(data.error || "No se pudo actualizar el perfil");
+            }
+        } catch (e) {
+            setError("Error al conectar con el servidor");
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -228,28 +273,10 @@ export default function MiPerfilPage() {
             <div className="min-h-screen bg-[#07090f] flex items-center justify-center">
                 <Loader2 className="animate-spin text-emerald-500" size={48} />
             </div>
-        );
-    }
-
-    const primaryColor = negocio?.colorPrimario || '#ec4899';
+        );    const primaryColor = negocio?.colorPrimario || '#ec4899';
     const secondaryColor = negocio?.colorSecundario || '#be185d';
     const neutralColor = negocio?.colorNeutral || '#f8fafc';
     const textColor = negocio?.colorTexto || '#0f172a';
-
-    /* ---- quick actions for the grid ---- */
-    const quickActions = [
-        { label: 'Mis Reservas', sublabel: 'Ver y gestionar', icon: <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>, href: `/${slug}/mis-reservas` },
-        { label: 'Favoritos', sublabel: 'Servicios guardados', icon: <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>, href: `/${slug}/favoritos` },
-        { label: 'Mis Promociones', sublabel: 'Cupones y ofertas', icon: <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H2v7l6.29 6.29c.94.94 2.48.94 3.42 0l3.58-3.58c.94-.94.94-2.48 0-3.42L9 5Z"/><path d="M6 9.01V9"/><path d="m15 5 6.3 6.3a2.4 2.4 0 0 1 0 3.4L17 19"/></svg>, href: `/${slug}/promo` },
-        { label: 'Métodos de Pago', sublabel: 'Tarjetas guardadas', icon: <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>, href: `#` },
-    ];
-
-    const settingsList = [
-        { label: 'Información Personal', sublabel: 'Edita tus datos personales', icon: <User size={20} />, action: () => {} },
-        { label: 'Notificaciones', sublabel: 'Configura tus preferencias', icon: <Bell size={20} />, action: () => {} },
-        { label: 'Seguridad', sublabel: 'Cambia tu contraseña y más', icon: <ShieldCheck size={20} />, action: () => {} },
-        { label: 'Ayuda y Soporte', sublabel: 'Preguntas frecuentes y contacto', icon: <MessageCircle size={20} />, action: () => {} },
-    ];
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans overflow-x-hidden pb-32">
@@ -265,15 +292,6 @@ export default function MiPerfilPage() {
                             <h1 className="text-[16px] font-black text-slate-900 leading-none">Mi Perfil</h1>
                             <p className="text-[10px] text-slate-400 font-medium mt-0.5">Gestiona tu cuenta y preferencias</p>
                         </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button className="size-9 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center">
-                            <Settings size={16} className="text-slate-500" />
-                        </button>
-                        <button className="relative size-9 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center">
-                            <Bell size={16} className="text-slate-500" />
-                            <span className="absolute top-1.5 right-1.5 size-2 bg-rose-500 rounded-full border border-white" />
-                        </button>
                     </div>
                 </div>
             </header>
@@ -498,40 +516,88 @@ export default function MiPerfilPage() {
                             );
                         })()}
 
-                        {/* Quick Actions Grid */}
+                        {/* Formulario de Información Personal */}
                         <div className="px-5 mt-5">
-                            <div className="grid grid-cols-4 gap-3">
-                                {quickActions.map((action, i) => (
-                                    <Link key={i} href={action.href}
-                                        className="flex flex-col items-center gap-2 bg-white rounded-2xl p-3 border border-slate-100 shadow-sm active:scale-95 transition-all">
-                                        <div className="size-11 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${primaryColor}12`, color: primaryColor }}>
-                                            {action.icon}
-                                        </div>
-                                        <span className="text-[9px] font-black text-slate-700 text-center leading-tight">{action.label}</span>
-                                        <span className="text-[8px] text-slate-400 font-medium text-center leading-tight hidden sm:block">{action.sublabel}</span>
-                                    </Link>
-                                ))}
-                            </div>
-                        </div>
+                            <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+                                <h3 className="text-[14px] font-black text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                    <User size={18} style={{ color: primaryColor }} />
+                                    Información Personal
+                                </h3>
+                                
+                                <form onSubmit={handleSaveProfile} className="space-y-4">
+                                    {/* Campo Nombre */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Nombre Completo</label>
+                                        <input
+                                            type="text"
+                                            value={editNombre}
+                                            onChange={(e) => setEditNombre(e.target.value)}
+                                            placeholder="Ingresa tu nombre"
+                                            className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-200"
+                                            required
+                                        />
+                                    </div>
 
-                        {/* Settings List */}
-                        <div className="px-5 mt-5">
-                            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden divide-y divide-slate-50">
-                                {settingsList.map((item, i) => (
-                                    <button key={i} onClick={item.action}
-                                        className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 active:bg-slate-100 transition-colors">
-                                        <div className="flex items-center gap-3">
-                                            <div className="size-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${primaryColor}10`, color: primaryColor }}>
-                                                {item.icon}
-                                            </div>
-                                            <div className="text-left">
-                                                <p className="font-black text-slate-800 text-[13px]">{item.label}</p>
-                                                <p className="text-[10px] text-slate-400 font-medium">{item.sublabel}</p>
-                                            </div>
+                                    {/* Campo Correo */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Correo Electrónico</label>
+                                        <input
+                                            type="email"
+                                            value={editEmail}
+                                            onChange={(e) => setEditEmail(e.target.value)}
+                                            placeholder="correo@ejemplo.com"
+                                            className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-200"
+                                        />
+                                    </div>
+
+                                    {/* Campo Fecha de Nacimiento */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Fecha de Nacimiento</label>
+                                        <input
+                                            type="date"
+                                            value={editFechaNacimiento}
+                                            onChange={(e) => setEditFechaNacimiento(e.target.value)}
+                                            className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-bold text-slate-800 focus:outline-none focus:border-slate-200"
+                                        />
+                                    </div>
+
+                                    {/* Campo Teléfono (No editable) */}
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center justify-between ml-1">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Teléfono Móvil</label>
+                                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                                No editable
+                                            </span>
                                         </div>
-                                        <ChevronRight size={16} className="text-slate-300 shrink-0" />
+                                        <input
+                                            type="text"
+                                            value={cliente.telefono?.startsWith('+') ? cliente.telefono : `+${cliente.telefono || '—'}`}
+                                            disabled
+                                            className="w-full h-12 bg-slate-100/80 border border-slate-100 rounded-xl px-4 text-xs font-bold text-slate-400 cursor-not-allowed select-none"
+                                        />
+                                    </div>
+
+                                    {error && (
+                                        <div className="p-3.5 bg-rose-50 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2.5 border border-rose-100">
+                                            <AlertCircle size={14} /> {error}
+                                        </div>
+                                    )}
+
+                                    {/* Botón Guardar Cambios */}
+                                    <button
+                                        type="submit"
+                                        disabled={saving}
+                                        className="w-full h-12 text-white font-black text-[11px] uppercase tracking-widest rounded-xl shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 mt-2"
+                                        style={{ background: `linear-gradient(135deg, ${primaryColor}, #ec4899)` }}
+                                    >
+                                        {saving ? (
+                                            <Loader2 className="animate-spin" size={16} />
+                                        ) : (
+                                            <>Guardar Cambios</>
+                                        )}
                                     </button>
-                                ))}
+                                </form>
                             </div>
                         </div>
 
@@ -549,7 +615,6 @@ export default function MiPerfilPage() {
                                             <p className="text-[10px] text-slate-400 font-medium">Gestión de academia</p>
                                         </div>
                                     </div>
-                                    <ChevronRight size={16} className="text-slate-300" />
                                 </Link>
                             </div>
                         )}
@@ -587,7 +652,7 @@ export default function MiPerfilPage() {
             <style jsx global>{`
                 .scroll-hide::-webkit-scrollbar { display: none; }
                 .scroll-hide { -ms-overflow-style: none; scrollbar-width: none; }
-                input::placeholder { color: #334155 !important; font-style: italic; font-weight: 800; text-transform: uppercase; font-size: 10px; letter-spaciflow-style: none; scrollbar-width: none; }
+                input::placeholder { color: #334155 !important; font-style: italic; font-weight: 800; text-transform: uppercase; font-size: 10px; letter-spacing: 0.1em; }
             `}</style>
         </div>
     );

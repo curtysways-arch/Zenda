@@ -150,7 +150,7 @@ export async function PATCH(
         }
 
         const body = await req.json();
-        const { nombre, email, imagenUrl } = body;
+        const { nombre, email, imagenUrl, fechaNacimiento } = body;
 
         // Buscar al cliente usando las mismas variaciones para evitar "Cliente no encontrado"
         const localTelefono = telefono.replace(/^\+(\d{1,4})/, ''); 
@@ -178,6 +178,7 @@ export async function PATCH(
                     telefono: telefono,
                     email: email || null,
                     imagenUrl: imagenUrl || null,
+                    fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : null,
                     updatedAt: new Date(),
                     Negocio: { connect: { id: negocioId } }
                 }
@@ -187,9 +188,10 @@ export async function PATCH(
             cliente = await prisma.cliente.update({
                 where: { id: cliente.id },
                 data: {
-                    nombre: nombre || cliente.nombre,
+                    nombre: nombre !== undefined ? nombre : cliente.nombre,
                     email: email !== undefined ? email : cliente.email,
-                    imagenUrl: imagenUrl !== undefined ? imagenUrl : cliente.imagenUrl
+                    imagenUrl: imagenUrl !== undefined ? imagenUrl : cliente.imagenUrl,
+                    fechaNacimiento: fechaNacimiento !== undefined ? (fechaNacimiento ? new Date(fechaNacimiento) : null) : cliente.fechaNacimiento
                 }
             });
         }
