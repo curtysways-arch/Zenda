@@ -1117,6 +1117,7 @@ model AdminUser {
   negociosAsignados AdminUserNegocio[]
   loginHistory      AdminLoginHistory[]
   auditLogs         AdminAuditLog[]
+  comunicaciones    GlobalCommunication[]
 }
 
 model AdminUserNegocio {
@@ -1169,6 +1170,130 @@ model AdminApiKey {
   rol         AdminRole @relation(fields: [rolId], references: [id])
   createdAt   DateTime  @default(now())
   expiresAt   DateTime?
+}
+
+// ─── COMMUNICATIONS HUB MODELS ───
+
+model GlobalCommunication {
+  id              String                         @id @default(uuid())
+  titulo          String
+  subtitulo       String?
+  contenido       String                         // HTML/Markdown enriquecido
+  imagenUrl       String?
+  videoUrl        String?
+  icono           String?                        // Icono de Lucide
+  color           String?                        // Color hexadecimal acento
+  prioridad       String                         @default("INFO") // INFO | SUCCESS | WARNING | ERROR
+  tipo            String                         // SISTEMA | NOTICIA | PROMO | MANTENIMIENTO | SEGURIDAD | CONSEJOS | RECORDATORIO | etc.
+  estado          String                         @default("BORRADOR") // BORRADOR | PROGRAMADO | ENVIANDO | ENVIADO | CANCELADO
+  destinatarios   String                         // Filtros JSON: { type: "ALL", planId: "...", city: "..." }
+  canales         String                         // Array JSON: ["APP", "PUSH", "WHATSAPP", "EMAIL", "SMS", "BANNER", "POPUP"]
+  popupConfig     String?                        // Configuración JSON para emergentes (rango fechas, mostrar una vez, versión, etc.)
+  scheduledFor    DateTime?                      // Fecha programada
+  sentAt          DateTime?                      // Fecha real de envío
+  repeatType      String                         @default("NONE") // NONE | DAILY | WEEKLY | MONTHLY | YEARLY
+  timeZone        String                         @default("America/Bogota")
+  createdAt       DateTime                       @default(now())
+  updatedAt       DateTime                       @updatedAt
+  autorId         String
+  autor           AdminUser                      @relation(fields: [autorId], references: [id])
+  destinatariosLog GlobalCommunicationRecipient[]
+  analiticas      GlobalCommunicationAnalytics?
+  
+  @@index([estado])
+  @@index([tipo])
+}
+
+model GlobalCommunicationRecipient {
+  id              String              @id @default(uuid())
+  communicationId String
+  communication   GlobalCommunication @relation(fields: [communicationId], references: [id], onDelete: Cascade)
+  negocioId       String?
+  userId          String?             // Usuario.id o AdminUser.id
+  canal           String              // APP | PUSH | WHATSAPP | EMAIL | SMS | BANNER | POPUP
+  estado          String              @default("ENVIADO") // ENVIADO | ENTREGADO | LEIDO | CLIC | CONVERTIDO | ERROR
+  errorDetail     String?
+  fechaEntrega    DateTime?
+  fechaLectura    DateTime?
+  fechaClic       DateTime?
+  fechaConversion DateTime?
+  createdAt       DateTime            @default(now())
+  
+  @@index([communicationId])
+  @@index([negocioId])
+  @@index([userId])
+  @@index([estado])
+}
+
+model GlobalCommunicationAnalytics {
+  id              String              @id @default(uuid())
+  communicationId String              @unique
+  communication   GlobalCommunication @relation(fields: [communicationId], references: [id], onDelete: Cascade)
+  enviados        Int                 @default(0)
+  entregados      Int                 @default(0)
+  abiertos        Int                 @default(0)
+  clicks          Int                 @default(0)
+  conversiones    Int                 @default(0)
+  ctr             Float               @default(0.0)
+  conversionRate  Float               @default(0.0)
+  errores         Int                 @default(0)
+  cancelados      Int                 @default(0)
+  tiempoAperturaPromedio Float       @default(0.0)
+  negociosAlcanzados     Int         @default(0)
+  clientesAlcanzados     Int         @default(0)
+  updatedAt       DateTime            @updatedAt
+}
+
+model HelpCenterItem {
+  id          String   @id @default(uuid())
+  titulo      String
+  descripcion String?
+  contenido   String
+  tipo        String   // TUTORIAL | MANUAL | VIDEO | FAQ | DOC | GUIA | RECURSO
+  categoria   String   // Categoría de ayuda
+  urlRecurso  String?  // Link externo (ej: youtube, pdf, etc.)
+  activo      Boolean  @default(true)
+  vistas      Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ChangelogItem {
+  id          String   @id @default(uuid())
+  version     String   // Ej: "v2.5"
+  titulo      String
+  descripcion String?
+  cambios     String   // Array JSON serializado
+  activo      Boolean  @default(true)
+  fecha       DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SharedMedia {
+  id          String   @id @default(uuid())
+  nombre      String
+  url         String
+  tipo        String   // IMAGE | VIDEO | PDF | LOGO | ICON | BANNER | FILE
+  sizeBytes   Int?
+  createdAt   DateTime @default(now())
+}
+
+model CommunicationTemplate {
+  id          String   @id @default(uuid())
+  nombre      String
+  descripcion String?
+  titulo      String
+  subtitulo   String?
+  contenido   String
+  imagenUrl   String?
+  videoUrl    String?
+  icono       String?
+  color       String?
+  tipo        String
+  canales     String   // Array JSON serializado
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 
