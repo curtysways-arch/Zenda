@@ -273,7 +273,10 @@ export default function MiPerfilPage() {
             <div className="min-h-screen bg-[#07090f] flex items-center justify-center">
                 <Loader2 className="animate-spin text-emerald-500" size={48} />
             </div>
-        );    const primaryColor = negocio?.colorPrimario || '#ec4899';
+        );
+    }
+
+    const primaryColor = negocio?.colorPrimario || '#ec4899';
     const secondaryColor = negocio?.colorSecundario || '#be185d';
     const neutralColor = negocio?.colorNeutral || '#f8fafc';
     const textColor = negocio?.colorTexto || '#0f172a';
