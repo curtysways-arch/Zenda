@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
             };
         };
 
-        const systemPrompt = `Eres Zenda AI, el asistente inteligente integrado en la plataforma de gestión de spa y bienestar Zenda. Hablas siempre en español, eres amable, profesional y muy conciso.
+        const systemPrompt = `Eres Citiox AI, el asistente inteligente integrado en la plataforma de gestión de spa y bienestar Citiox. Hablas siempre en español, eres amable, profesional y muy conciso.
 
 TU CONTEXTO DE HOY (${context.fecha}):
 Negocio: ${context.negocio}

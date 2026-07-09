@@ -64,7 +64,7 @@ export default function AIAssistantDrawer({
                 const welcomeMsg: Message = {
                     id: 'welcome',
                     role: 'model',
-                    text: `¡Hola! 👋 Soy **Zenda AI**, tu asistente de gestión.\n\nHoy es **${format(selectedDate, "EEEE d 'de' MMMM", { locale: es })}** y tienes **${stats.programadas} citas** programadas (${stats.pendientes} pendientes de confirmar).\n\n¿En qué te puedo ayudar?`
+                    text: `¡Hola! 👋 Soy **Citiox AI**, tu asistente de gestión.\n\nHoy es **${format(selectedDate, "EEEE d 'de' MMMM", { locale: es })}** y tienes **${stats.programadas} citas** programadas (${stats.pendientes} pendientes de confirmar).\n\n¿En qué te puedo ayudar?`
                 };
                 setMessages([welcomeMsg]);
             }
@@ -181,7 +181,7 @@ export default function AIAssistantDrawer({
                             <Sparkles size={20} className="animate-pulse" />
                         </div>
                         <div>
-                            <h3 className="font-black text-slate-900 text-sm uppercase tracking-tight">Zenda AI</h3>
+                            <h3 className="font-black text-slate-900 text-sm uppercase tracking-tight">Citiox AI</h3>
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Asistente de Agenda</p>
                         </div>
                         <span className="ml-1 flex items-center gap-1 px-2 py-0.5 bg-emerald-50 border border-emerald-100 rounded-full">
