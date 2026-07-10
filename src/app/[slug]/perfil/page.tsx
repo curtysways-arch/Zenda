@@ -95,7 +95,7 @@ export default function MiPerfilPage() {
             });
 
             if (updateRes.ok) {
-                setCliente({ ...cliente, imagenUrl: url });
+                setCliente({ ...cliente, imagenUrl: `${url}?v=${Date.now()}` });
             }
         } catch (error) {
             console.error("Error upload:", error);
@@ -136,6 +136,12 @@ export default function MiPerfilPage() {
             const res = await fetch(`/api/${slug}/perfil`);
             if (res.ok) {
                 const data = await res.json();
+                
+                // Forzar refresco de caché de la imagen al cargar el perfil
+                if (data.imagenUrl) {
+                    data.imagenUrl = `${data.imagenUrl.split('?')[0]}?v=${Date.now()}`;
+                }
+                
                 setCliente(data);
                 setEditNombre(data.nombre || "");
                 setEditEmail(data.email || "");
