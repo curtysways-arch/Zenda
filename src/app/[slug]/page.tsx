@@ -1214,12 +1214,15 @@ export default async function PublicNegocioPage({
                             Por cada cita completada con nosotros acumulas puntos automáticamente. Canjea tus puntos acumulados por masajes, tratamientos faciales o servicios gratis.
                         </p>
                     </div>
-                    <div className="flex gap-2 pt-2">
-                        <button id="btn-close-fidelizacion-footer" className="flex-1 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 active:scale-95 transition-transform border-0 cursor-pointer">
+                    <div className="grid grid-cols-3 gap-1.5 pt-2">
+                        <button id="btn-close-fidelizacion-footer" className="py-3 bg-slate-50 border border-slate-100 rounded-2xl text-[8px] font-black uppercase tracking-widest text-slate-500 active:scale-95 transition-transform border-0 cursor-pointer">
                             Cerrar
                         </button>
-                        <a href={`/${slug}/premios`} className="flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white text-center active:scale-95 transition-transform shadow-md no-underline flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
-                            Ver Premios
+                        <a href={`/${slug}/premios`} className="py-3 rounded-2xl text-[8px] font-black uppercase tracking-widest text-white text-center active:scale-95 transition-transform shadow-md no-underline flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
+                            Premios
+                        </a>
+                        <a href={`/${slug}/misiones`} className="py-3 rounded-2xl text-[8px] font-black uppercase tracking-widest text-white text-center active:scale-95 transition-transform shadow-md no-underline flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
+                            Misiones
                         </a>
                     </div>
                 </div>

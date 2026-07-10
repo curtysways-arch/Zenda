@@ -20,7 +20,8 @@ import {
     Banknote,
     Gift,
     UserCog,
-    Megaphone
+    Megaphone,
+    Trophy
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';

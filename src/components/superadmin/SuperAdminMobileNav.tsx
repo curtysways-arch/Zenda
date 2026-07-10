@@ -19,7 +19,8 @@ import {
     LogOut,
     UserCog,
     Gift,
-    Megaphone
+    Megaphone,
+    Trophy
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
