@@ -338,6 +338,12 @@ model Negocio {
   AutomationRule         AutomationRule[]
   Notification           Notification[]
   AdminUserNegocio       AdminUserNegocio[]
+  Season                 Season[]
+  Campaign               Campaign[]
+  Quest                  Quest[]
+  LevelTier              LevelTier[]
+  Badge                  Badge[]
+  UserStreak             UserStreak[]
 }
 
 model OtpCode {
@@ -742,6 +748,11 @@ model Usuario {
   LoyaltyRedemption      LoyaltyRedemption[]
   CouponUsage            CouponUsage[]
   Notification           Notification[]
+  QuestProgress          QuestProgress[]
+  QuestParticipant      QuestParticipant[]
+  UserLevel              UserLevel?
+  UserBadge              UserBadge[]
+  UserStreak             UserStreak[]
 }
 
 model PromotionToService {
@@ -1294,6 +1305,218 @@ model CommunicationTemplate {
   canales     String   // Array JSON serializado
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// ==========================================
+// 6. MOTOR DE CRECIMIENTO SAAS (GROWTH ENGINE)
+// ==========================================
+
+model Season {
+  id          String     @id @default(cuid())
+  negocioId   String
+  nombre      String     // Ej: "Temporada Navideña 2026"
+  descripcion String?
+  fechaInicio DateTime
+  fechaFin    DateTime
+  activa      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  Negocio     Negocio    @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Campaigns   Campaign[]
+
+  @@index([negocioId])
+}
+
+model Campaign {
+  id              String      @id @default(cuid())
+  negocioId       String?     // Null para Campañas Globales Citiox (SuperAdmin)
+  nombre          String
+  descripcion     String?
+  activa          Boolean     @default(true)
+  
+  // Metadatos del Marketplace
+  isMarketplace   Boolean     @default(false)
+  downloads       Int         @default(0)
+  rating          Float       @default(5.0)
+  benefits        String?     // Beneficios destacados
+  difficulty      String      @default("MEDIA") // FACIL | MEDIA | DIFICIL
+  estImprovement  Float       @default(0.0) // Porcentaje estimado de mejora (ej: 28.5)
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  Negocio         Negocio?    @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Season          Season?     @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  seasonId        String?
+  Quests          Quest[]
+
+  @@index([negocioId])
+  @@index([seasonId])
+}
+
+model Quest {
+  id              String             @id @default(cuid())
+  negocioId       String?            // Null si es plantilla global Citiox
+  campaignId      String
+  nombre          String
+  descripcion     String
+  imagenUrl       String?
+  icono             String             @default("Award")
+  color           String             @default("#ec4899")
+  visible         Boolean            @default(true)    // false = Misión Secreta
+  repetible       Boolean            @default(false)
+  limiteUsuario   Int                @default(1)
+  limiteGlobal    Int?
+  fechaInicio     DateTime?
+  fechaFin        DateTime?
+  activa          Boolean            @default(true)
+  
+  // Quest Chain (Prerrequisitos)
+  parentQuestId   String?
+  
+  // Segmentación Flexible
+  segmentacion    Json?              // { gender: ["M"], tags: ["VIP"], level: ["Oro"] }
+  
+  // Validación: AUTOMATICO | USUARIO | ADMIN | QR | CODIGO | STAFF | API | MIXTO
+  validacionTipo  String             @default("AUTOMATICO")
+  
+  // Columnas indexadas para Rule Engine (Optimización de rendimiento)
+  triggerEvent    String             // BOOKING_COMPLETED | USER_REGISTERED | etc.
+  servicioId      String?            // ID del servicio asociado al trigger
+  montoMinimo     Float?             // Monto mínimo evaluable en transacciones
+  cantidadMeta    Int                @default(1) // Cantidad de repeticiones requeridas para completar
+  
+  // JSON para condiciones extras
+  condicionesExtra Json?
+  
+  // Recompensas Múltiples Desacopladas
+  // Estructura: [{ action: "ADD_POINTS", value: 100 }, { action: "CREATE_COUPON", value: "c1" }]
+  acciones        Json
+  
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  
+  Negocio         Negocio?           @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Campaign        Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  Progress        QuestProgress[]
+  Participants    QuestParticipant[]
+
+  @@index([negocioId])
+  @@index([campaignId])
+  @@index([triggerEvent])
+  @@index([servicioId])
+}
+
+model QuestProgress {
+  id                String             @id @default(cuid())
+  questId           String
+  userId            String
+  progresoActual    Int                @default(0)
+  progresoRequerido Int                @default(1)
+  estado            String             @default("EN_PROGRESO") // EN_PROGRESO | PENDIENTE_APROBACION | COMPLETADA | RECLAMADA
+  fechaCompletada   DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  
+  Quest             Quest              @relation(fields: [questId], references: [id], onDelete: Cascade)
+  Usuario           Usuario            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([questId, userId])
+}
+
+model QuestParticipant {
+  id        String   @id @default(cuid())
+  questId   String
+  userId    String
+  action    String   // AVANCE | COMPLETADO | RECLAMADO | APROBADO_ADMIN
+  detalles  String?
+  createdAt DateTime @default(now())
+  Quest     Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+  Usuario   Usuario  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([questId])
+  @@index([userId])
+}
+
+model LevelTier {
+  id               String            @id @default(cuid())
+  negocioId        String
+  nombre           String            // Bronce, Plata, Oro, Platino, Diamante
+  puntosRequeridos Int               @default(0)
+  icono            String?
+  beneficios       String?           // JSON o texto de beneficios exclusivos
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  Negocio          Negocio           @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  UserLevel        UserLevel[]
+
+  @@unique([negocioId, puntosRequeridos])
+}
+
+model UserLevel {
+  id          String     @id @default(cuid())
+  userId      String     @unique
+  negocioId   String
+  levelId     String
+  puntosTier  Int        @default(0)
+  xpTotal     Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  Usuario     Usuario    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  LevelTier   LevelTier  @relation(fields: [levelId], references: [id])
+}
+
+model Badge {
+  id          String      @id @default(cuid())
+  negocioId   String
+  nombre      String      // Ej: "Primer Cliente", "Top Referidor"
+  descripcion String
+  icono       String      @default("Award")
+  color       String      @default("#f59e0b")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  Negocio     Negocio     @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  UserBadges  UserBadge[]
+
+  @@index([negocioId])
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  createdAt DateTime @default(now())
+  Usuario   Usuario  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+}
+
+model UserStreak {
+  id              String    @id @default(cuid())
+  negocioId       String
+  userId          String
+  rachaActual     Int       @default(0)
+  rachaMaxima     Int       @default(0)
+  fechaUltimaCita DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  Usuario         Usuario   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Negocio         Negocio   @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, negocioId])
+}
+
+model QuestEventLog {
+  id          String   @id @default(cuid())
+  negocioId   String
+  userId      String
+  eventType   String   // BOOKING_COMPLETED | USER_LOGIN | REVIEW_CREATED | etc.
+  payload     Json
+  procesado   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([procesado, createdAt])
 }
 
 

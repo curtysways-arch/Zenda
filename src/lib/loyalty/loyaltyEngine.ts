@@ -1,6 +1,7 @@
 import prisma from '../prisma';
 import { whatsappService } from '../whatsapp';
 import { NotificationService } from '../notifications/notificationService';
+import { publishGrowthEvent } from '../growth/eventBus';
 
 // ─── TIPOS ────────────────────────────────────────────────────────────────────
 
@@ -70,6 +71,14 @@ export async function processAppointmentCompleted(appointmentId: string): Promis
 
         // 4. Ejecutar automatizaciones activas
         await runAutomations(usuarioId, negocioId, 'RESERVAS_COMPLETADAS', { appointmentId });
+
+        // 5. Publicar evento en el Event Bus del Growth Engine de forma asíncrona no bloqueante
+        publishGrowthEvent(negocioId, usuarioId, 'BOOKING_COMPLETED', {
+            appointmentId,
+            servicioId: appointment.serviceId,
+            monto: appointment.total,
+            fecha: appointment.fecha
+        }).catch(err => console.error('[Loyalty] Error publicando BOOKING_COMPLETED:', err.message));
 
         console.log(`[Loyalty] ✅ Procesamiento completado para cita: ${appointmentId}`);
     } catch (err: any) {
