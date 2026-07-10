@@ -6,11 +6,12 @@ import { executeRewardActions } from '@/lib/growth/rewardEngine';
 
 export async function POST(
     request: Request,
-    { params }: { params: { slug: string; id: string } }
+    { params }: { params: Promise<{ slug: string; id: string }> }
 ) {
     try {
-        const questId = params.id;
-        const slug = params.slug;
+        const resolvedParams = await params;
+        const questId = resolvedParams.id;
+        const slug = resolvedParams.slug;
 
         // 1. Verificar autenticación del cliente
         const session = await getServerSession(authOptions);

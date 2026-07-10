@@ -5,10 +5,11 @@ import { authOptions } from '@/lib/auth';
 
 export async function GET(
     request: Request,
-    { params }: { params: { slug: string } }
+    { params }: { params: Promise<{ slug: string }> }
 ) {
     try {
-        const slug = params.slug;
+        const resolvedParams = await params;
+        const slug = resolvedParams.slug;
 
         // 1. Buscar el negocio
         const negocio = await prisma.negocio.findUnique({
