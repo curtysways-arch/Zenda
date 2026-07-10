@@ -192,13 +192,15 @@ export default async function NegocioLayout({
                 }
 
                 /* Textos de Color Secundario o Neutrales */
-                .text-slate-900, .text-slate-950, .text-slate-800, .text-slate-850, .text-slate-700 {
+                .text-slate-900, .text-slate-950, .text-slate-800, .text-slate-850, .text-slate-700,
+                .text-gray-900, .text-gray-950, .text-gray-800, .text-gray-850, .text-gray-700 {
                     color: var(--text-primary) !important;
                 }
-                .text-slate-400, .text-slate-500, .text-slate-650, .text-slate-600 {
+                .text-slate-400, .text-slate-500, .text-slate-650, .text-slate-600,
+                .text-gray-400, .text-gray-500, .text-gray-650, .text-gray-600 {
                     color: var(--text-secondary) !important;
                 }
-                .text-slate-300 {
+                .text-slate-300, .text-gray-300 {
                     color: var(--text-disabled) !important;
                 }
 
@@ -213,28 +215,47 @@ export default async function NegocioLayout({
                     background-color: var(--surface) !important;
                 }
 
-                /* Forzar contraste en textos slate cuando están dentro de tarjetas o superficies con fondo claro */
+                /* Forzar contraste en textos slate/gray cuando están dentro de tarjetas o superficies con fondo claro */
                 .bg-white .text-slate-900, .bg-white .text-slate-950, .bg-white .text-slate-800, .bg-white .text-slate-850, .bg-white .text-slate-700,
+                .bg-white .text-gray-900, .bg-white .text-gray-950, .bg-white .text-gray-800, .bg-white .text-gray-850, .bg-white .text-gray-700,
+                .bg-white .text-header-dynamic,
                 .bg-card .text-slate-900, .bg-card .text-slate-950, .bg-card .text-slate-800, .bg-card .text-slate-850, .bg-card .text-slate-700,
+                .bg-card .text-gray-900, .bg-card .text-gray-950, .bg-card .text-gray-800, .bg-card .text-gray-850, .bg-card .text-gray-700,
+                .bg-card .text-header-dynamic,
                 .bg-slate-50 .text-slate-900, .bg-slate-50 .text-slate-950, .bg-slate-50 .text-slate-800, .bg-slate-50 .text-slate-850, .bg-slate-50 .text-slate-700,
+                .bg-slate-50 .text-gray-900, .bg-slate-50 .text-gray-950, .bg-slate-50 .text-gray-800, .bg-slate-50 .text-gray-850, .bg-slate-50 .text-gray-700,
+                .bg-slate-50 .text-header-dynamic,
                 .bg-pink-50 .text-slate-900, .bg-emerald-50 .text-slate-900, .bg-indigo-50 .text-slate-900, .bg-blue-50 .text-slate-900,
                 .bg-surface .text-slate-900, .bg-surface .text-slate-950, .bg-surface .text-slate-800, .bg-surface .text-slate-850, .bg-surface .text-slate-700,
+                .bg-surface .text-gray-900, .bg-surface .text-gray-950, .bg-surface .text-gray-800, .bg-surface .text-gray-850, .bg-surface .text-gray-700,
+                .bg-surface .text-header-dynamic,
                 .bg-card-dynamic .text-slate-900, .bg-card-dynamic .text-slate-950, .bg-card-dynamic .text-slate-800, .bg-card-dynamic .text-slate-850, .bg-card-dynamic .text-slate-700,
-                [class*="bg-[#FFF"] .text-slate-900, [class*="bg-[#FFF"] .text-slate-950, [class*="bg-[#FFF"] .text-slate-800, [class*="bg-[#FFF"] .text-slate-850, [class*="bg-[#FFF"] .text-slate-700 {
+                .bg-card-dynamic .text-gray-900, .bg-card-dynamic .text-gray-950, .bg-card-dynamic .text-gray-800, .bg-card-dynamic .text-gray-850, .bg-card-dynamic .text-gray-700,
+                .bg-card-dynamic .text-header-dynamic,
+                [class*="bg-[#FFF"] .text-slate-900, [class*="bg-[#FFF"] .text-slate-950, [class*="bg-[#FFF"] .text-slate-800, [class*="bg-[#FFF"] .text-slate-850, [class*="bg-[#FFF"] .text-slate-700,
+                [class*="bg-[#FFF"] .text-gray-900, [class*="bg-[#FFF"] .text-gray-950, [class*="bg-[#FFF"] .text-gray-800, [class*="bg-[#FFF"] .text-gray-850, [class*="bg-[#FFF"] .text-gray-700,
+                [class*="bg-[#FFF"] .text-header-dynamic {
                     color: var(--text-on-surface) !important;
                 }
 
                 .bg-white .text-slate-400, .bg-white .text-slate-500, .bg-white .text-slate-600,
+                .bg-white .text-gray-400, .bg-white .text-gray-500, .bg-white .text-gray-650, .bg-white .text-gray-600,
                 .bg-card .text-slate-400, .bg-card .text-slate-500, .bg-card .text-slate-600,
+                .bg-card .text-gray-400, .bg-card .text-gray-500, .bg-card .text-gray-650, .bg-card .text-gray-600,
                 .bg-slate-50 .text-slate-400, .bg-slate-50 .text-slate-500, .bg-slate-50 .text-slate-600,
+                .bg-slate-50 .text-gray-400, .bg-slate-50 .text-gray-500, .bg-slate-50 .text-gray-650, .bg-slate-50 .text-gray-600,
                 .bg-pink-50 .text-slate-400, .bg-emerald-50 .text-slate-400, .bg-indigo-50 .text-slate-400, .bg-blue-50 .text-slate-400,
                 .bg-surface .text-slate-400, .bg-surface .text-slate-500, .bg-surface .text-slate-600,
+                .bg-surface .text-gray-400, .bg-surface .text-gray-500, .bg-surface .text-gray-650, .bg-surface .text-gray-600,
                 .bg-card-dynamic .text-slate-400, .bg-card-dynamic .text-slate-500, .bg-card-dynamic .text-slate-600,
-                [class*="bg-[#FFF"] .text-slate-400, [class*="bg-[#FFF"] .text-slate-500, [class*="bg-[#FFF"] .text-slate-600 {
+                .bg-card-dynamic .text-gray-400, .bg-card-dynamic .text-gray-500, .bg-card-dynamic .text-gray-650, .bg-card-dynamic .text-gray-600,
+                [class*="bg-[#FFF"] .text-slate-400, [class*="bg-[#FFF"] .text-slate-500, [class*="bg-[#FFF"] .text-slate-600,
+                [class*="bg-[#FFF"] .text-gray-400, [class*="bg-[#FFF"] .text-gray-500, [class*="bg-[#FFF"] .text-gray-650, [class*="bg-[#FFF"] .text-gray-600 {
                     color: var(--text-on-surface-secondary) !important;
                 }
 
-                .bg-white .text-slate-300, .bg-slate-50 .text-slate-300, .bg-surface .text-slate-300, .bg-card .text-slate-300, .bg-card-dynamic .text-slate-300, [class*="bg-[#FFF"] .text-slate-300 {
+                .bg-white .text-slate-300, .bg-slate-50 .text-slate-300, .bg-surface .text-slate-300, .bg-card .text-slate-300, .bg-card-dynamic .text-slate-300, [class*="bg-[#FFF"] .text-slate-300,
+                .bg-white .text-gray-300, .bg-slate-50 .text-gray-300, .bg-surface .text-gray-300, .bg-card .text-gray-300, .bg-card-dynamic .text-gray-300 {
                     color: var(--text-on-surface-secondary) !important;
                 }
 

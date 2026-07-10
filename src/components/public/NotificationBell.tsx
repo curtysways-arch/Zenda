@@ -21,7 +21,7 @@ export default function NotificationBell({ slug, initialUnreadCount }: Notificat
             className="w-10 h-10 rounded-full flex items-center justify-center relative active:scale-95 transition-all"
             style={{ backgroundColor: 'var(--surface, #ffffff)', border: '1px solid var(--border, #e2e8f0)', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
         >
-            <Bell size={18} style={{ color: 'var(--text-primary, #0f172a)' }} />
+            <Bell size={18} style={{ color: 'var(--text-on-surface, #0f172a)' }} />
             {activeUnreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 text-white text-[9px] font-black rounded-full flex items-center justify-center border border-white animate-in zoom-in duration-200"
                     style={{ backgroundColor: 'var(--primary, #ec4899)' }}>
