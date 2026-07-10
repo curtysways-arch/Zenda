@@ -311,7 +311,7 @@ export default async function NegocioLayout({
                     background-image: none !important;
                     border-color: var(--header-border) !important;
                 }
-                header h1, header h2, header h3, header h5, header h6, header span, header button, header svg, header a {
+                header h1, header h2, header h3, header h5, header h6, header span {
                     color: var(--header-text) !important;
                 }
                 header p, header span.text-gray-400, header span.text-slate-400, header .text-slate-400, header .text-gray-400 {
