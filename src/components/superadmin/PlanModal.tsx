@@ -362,9 +362,9 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-black flex items-center gap-2 ml-1" style={{ color: '#000' }}>
+                                    <label className="text-sm font-black flex items-center gap-1.5 ml-1" style={{ color: '#000' }}>
                                         <Users size={14} className="text-indigo-800" />
                                         Máx. Especialistas
                                     </label>
@@ -377,7 +377,7 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-black flex items-center gap-2 ml-1" style={{ color: '#000' }}>
+                                    <label className="text-sm font-black flex items-center gap-1.5 ml-1" style={{ color: '#000' }}>
                                         <MapPin size={14} className="text-emerald-800" />
                                         Máx. Sucursales
                                     </label>
@@ -387,6 +387,19 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                         className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-black"
                                         value={formData.max_locations}
                                         onChange={(e) => setFormData({ ...formData, max_locations: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-black flex items-center gap-1.5 ml-1" style={{ color: '#000' }}>
+                                        <Package size={14} className="text-pink-800" />
+                                        Máx. Servicios
+                                    </label>
+                                    <input
+                                        type="number"
+                                        style={{ color: '#000', backgroundColor: '#fff' }}
+                                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-black"
+                                        value={formData.max_fields}
+                                        onChange={(e) => setFormData({ ...formData, max_fields: e.target.value })}
                                     />
                                 </div>
                             </div>
