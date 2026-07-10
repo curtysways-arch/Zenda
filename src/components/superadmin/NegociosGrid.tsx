@@ -127,11 +127,11 @@ export default function NegociosGrid({ initialNegocios }: { initialNegocios: any
                         <div className="mt-6 flex items-center justify-between pt-6 border-t border-slate-50 dark:border-white/5">
                             <div className="flex gap-4">
                                 <div className="text-center">
-                                    <div className="text-base font-black text-slate-900 dark:text-white">{negocio._count.services}</div>
+                                    <div className="text-base font-black text-slate-900 dark:text-white">{negocio._count?.Service ?? 0}</div>
                                     <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Servicios</div>
                                 </div>
                                 <div className="text-center">
-                                    <div className="text-base font-black text-slate-900 dark:text-white">{negocio._count.appointments}</div>
+                                    <div className="text-base font-black text-slate-900 dark:text-white">{negocio._count?.Appointment ?? 0}</div>
                                     <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Citas</div>
                                 </div>
                             </div>
@@ -180,11 +180,11 @@ export default function NegociosGrid({ initialNegocios }: { initialNegocios: any
                                     <td className="px-8 py-8">
                                         <div className="flex items-center justify-center gap-6">
                                             <div className="text-center">
-                                                <div className="text-xl font-black text-slate-900 dark:text-white italic">{negocio._count.services}</div>
+                                                <div className="text-xl font-black text-slate-900 dark:text-white italic">{negocio._count?.Service ?? 0}</div>
                                                 <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Servicios</div>
                                             </div>
                                             <div className="text-center">
-                                                <div className="text-xl font-black text-slate-900 dark:text-white italic">{negocio._count.appointments}</div>
+                                                <div className="text-xl font-black text-slate-900 dark:text-white italic">{negocio._count?.Appointment ?? 0}</div>
                                                 <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Citas</div>
                                             </div>
                                         </div>
