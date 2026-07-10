@@ -1,5 +1,5 @@
 import { getNegocioBySlug } from '@/lib/services';
-import { generateTheme } from '@/lib/themeGenerator';
+import { generateTheme, hexToRgb } from '@/lib/themeGenerator';
 import { notFound } from 'next/navigation';
 import PublicMobileNav from '@/components/public/PublicMobileNav';
 import PublicDesktopNav from '@/components/public/PublicDesktopNav';
@@ -98,10 +98,21 @@ export default async function NegocioLayout({
         (negocio as any).colorNeutral || undefined
     );
 
+    // Calcular colores para la barra superior (Header)
+    // Fallback: Si no tiene colorHeader personalizado en config, usamos el colorNeutral del negocio o el de surface del tema
+    const headerBgInput = config?.colorHeader || (negocio as any).colorNeutral || theme.surfaceColor || '#ffffff';
+    const headerBgRgb = hexToRgb(headerBgInput) || { r: 255, g: 255, b: 255 };
+    const headerBgLuma = (0.2126 * headerBgRgb.r + 0.7152 * headerBgRgb.g + 0.0722 * headerBgRgb.b) / 255;
+    
+    // Contraste para textos en la barra superior
+    const headerTextInput = headerBgLuma < 0.5 ? '#ffffff' : '#0f172a';
+    const headerTextSecondaryInput = headerBgLuma < 0.5 ? '#cbd5e1' : '#475569';
+    const headerBorderInput = headerBgLuma < 0.5 ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+
     return (
         <>
             <style dangerouslySetInnerHTML={{
-                __html: `                :root {
+                __html: `                :root {
                     --primary: ${theme.primaryColor};
                     --primary-light: ${theme.primaryLight};
                     --primary-dark: ${theme.primaryDark};
@@ -117,6 +128,12 @@ export default async function NegocioLayout({
                     --text-on-primary: ${theme.textOnPrimary};
                     --text-on-surface: ${theme.textOnSurface};
                     --text-on-surface-secondary: ${theme.textOnSurfaceSecondary};
+                    
+                    /* Variables de Barra Superior (Header) */
+                    --header-bg: ${headerBgInput};
+                    --header-text: ${headerTextInput};
+                    --header-text-secondary: ${headerTextSecondaryInput};
+                    --header-border: ${headerBorderInput};
                     
                     /* Estados fijos */
                     --success: ${theme.successColor};
@@ -286,6 +303,26 @@ export default async function NegocioLayout({
                 ::selection {
                     background-color: var(--primary);
                     color: var(--text-on-primary);
+                }
+
+                /* Estilos globales dinámicos de Barra Superior (Header) */
+                header {
+                    background-color: var(--header-bg) !important;
+                    background-image: none !important;
+                    border-color: var(--header-border) !important;
+                }
+                header h1, header h2, header h3, header h5, header h6, header span, header button, header svg, header a {
+                    color: var(--header-text) !important;
+                }
+                header p, header span.text-gray-400, header span.text-slate-400, header .text-slate-400, header .text-gray-400 {
+                    color: var(--header-text-secondary) !important;
+                }
+                header .text-gray-700, header .text-slate-700, header .text-slate-900, header .text-gray-900 {
+                    color: var(--header-text) !important;
+                }
+                header .bg-white, header .bg-gray-50, header .bg-slate-50, header .bg-slate-50\/50, header .bg-slate-100 {
+                    background-color: var(--header-bg) !important;
+                    border-color: var(--header-border) !important;
                 }
 
                 /* Transiciones de Color */

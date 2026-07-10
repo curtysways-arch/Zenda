@@ -9,6 +9,7 @@ export interface NegocioColors {
     colorTerciario?: string;
     colorNeutral?: string;
     colorSubTexto?: string;
+    colorHeader?: string;
 }
 
 interface ColorFieldProps {
@@ -215,6 +216,16 @@ export default function ColorPaletteEditor({
                         presets={['#475569', '#64748b', '#94a3b8', '#ffffff', '#f1f5f9', '#1e293b']}
                         onChange={update('colorSubTexto')}
                     />
+
+                    <ColorField
+                        label="7. Color de Barra Superior"
+                        sublabel="Header / Navegación alta"
+                        description="Afecta: El fondo de la cabecera superior donde aparece tu logo. Por defecto adopta el color neutral."
+                        value={colors.colorHeader || ''}
+                        defaultValue="#ffffff"
+                        presets={['#ffffff', '#f8fafc', '#0f172a', '#1e293b', '#111827', '#ec4899']}
+                        onChange={update('colorHeader')}
+                    />
                 </div>
             )}
 
@@ -227,6 +238,7 @@ export default function ColorPaletteEditor({
                     colorTerciario: isModoMarca ? undefined : colors.colorTerciario,
                     colorNeutral: isModoMarca ? undefined : colors.colorNeutral,
                     colorSubTexto: isModoMarca ? undefined : colors.colorSubTexto,
+                    colorHeader: isModoMarca ? undefined : colors.colorHeader,
                 })}
                 disabled={isSaving}
                 className="w-full py-4 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 transition-opacity"

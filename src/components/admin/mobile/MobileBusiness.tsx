@@ -153,24 +153,42 @@ export default function MobileBusiness({
                     <div className="space-y-6">
                         {/* Colores unificados con ColorPaletteEditor */}
                         <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
-                            <ColorPaletteEditor
-                                colors={{
-                                    colorPrimario: localNegocio.colorPrimario,
-                                    colorSecundario: localNegocio.colorSecundario,
-                                    colorTexto: localNegocio.colorTexto,
-                                    colorTerciario: localNegocio.colorTerciario,
-                                    colorNeutral: localNegocio.colorNeutral,
-                                    colorSubTexto: localNegocio.colorSubTexto,
-                                }}
-                                onChange={(updatedColors) =>
-                                    setLocalNegocio((prev: any) => ({ ...prev, ...updatedColors }))
-                                }
-                                onSave={(colorData) =>
-                                    onSaveNegocio(colorData)
-                                }
-                                isSaving={saving === 'NEGOCIO'}
-                                showHeader={true}
-                            />
+                            {(() => {
+                                const configObj = localNegocio.configuracion 
+                                    ? (typeof localNegocio.configuracion === 'string' ? JSON.parse(localNegocio.configuracion) : localNegocio.configuracion) 
+                                    : {};
+                                return (
+                                    <ColorPaletteEditor
+                                        colors={{
+                                            colorPrimario: localNegocio.colorPrimario,
+                                            colorSecundario: localNegocio.colorSecundario,
+                                            colorTexto: localNegocio.colorTexto,
+                                            colorTerciario: localNegocio.colorTerciario,
+                                            colorNeutral: localNegocio.colorNeutral,
+                                            colorSubTexto: localNegocio.colorSubTexto,
+                                            colorHeader: configObj?.colorHeader || '',
+                                        }}
+                                        onChange={(updatedColors) => {
+                                            const newConfig = { ...configObj, colorHeader: updatedColors.colorHeader };
+                                            setLocalNegocio((prev: any) => ({
+                                                ...prev,
+                                                ...updatedColors,
+                                                configuracion: newConfig
+                                            }));
+                                        }}
+                                        onSave={(colorData) => {
+                                            const { colorHeader, ...restColors } = colorData;
+                                            const newConfig = { ...configObj, colorHeader };
+                                            onSaveNegocio({
+                                                ...restColors,
+                                                configuracion: newConfig
+                                            });
+                                        }}
+                                        isSaving={saving === 'NEGOCIO'}
+                                        showHeader={true}
+                                    />
+                                );
+                            })()}
                         </div>
 
                         {/* Textos y Títulos */}
