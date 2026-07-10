@@ -24,10 +24,75 @@ export default function QuestDashboard() {
     const [loading, setLoading] = useState(true);
     const [installing, setInstalling] = useState<string | null>(null);
     const [toastMsg, setToastMsg] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [formData, setFormData] = useState({
+        nombre: '',
+        descripcion: '',
+        triggerEvent: 'BOOKING_COMPLETED',
+        cantidadMeta: 1,
+        puntosRecompensa: 100,
+        color: '#ec4899',
+        icono: 'Award'
+    });
 
     const showToast = (text: string, type: 'success' | 'error' = 'success') => {
         setToastMsg({ text, type });
         setTimeout(() => setToastMsg(null), 4000);
+    };
+
+    const handleCreateCustomQuest = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!formData.nombre.trim()) {
+            showToast('El nombre de la misión es requerido', 'error');
+            return;
+        }
+
+        try {
+            setSubmitting(true);
+            const res = await fetch('/api/admin/misiones', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    customQuest: {
+                        nombre: formData.nombre,
+                        descripcion: formData.descripcion,
+                        icono: formData.icono,
+                        color: formData.color,
+                        triggerEvent: formData.triggerEvent,
+                        cantidadMeta: Number(formData.cantidadMeta),
+                        validacionTipo: 'AUTOMATICO',
+                        acciones: [
+                            { action: 'ADD_POINTS', value: Number(formData.puntosRecompensa) }
+                        ],
+                        campaignName: 'Misiones del Negocio'
+                    }
+                })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                showToast('Misión creada con éxito', 'success');
+                setIsModalOpen(false);
+                setFormData({
+                    nombre: '',
+                    descripcion: '',
+                    triggerEvent: 'BOOKING_COMPLETED',
+                    cantidadMeta: 1,
+                    puntosRecompensa: 100,
+                    color: '#ec4899',
+                    icono: 'Award'
+                });
+                fetchData();
+            } else {
+                showToast(data.error || 'Error al crear la misión', 'error');
+            }
+        } catch (error) {
+            console.error('Error creating custom quest:', error);
+            showToast('Error de conexión', 'error');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const fetchData = async () => {
@@ -204,7 +269,10 @@ export default function QuestDashboard() {
             <div>
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-black text-slate-800">Mis Campañas Activas</h2>
-                    <button className="px-4 py-2 bg-fuchsia-500 hover:bg-fuchsia-600 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-colors">
+                    <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className="px-4 py-2 bg-fuchsia-500 hover:bg-fuchsia-600 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-colors"
+                    >
                         <Plus size={16} /> Crear Personalizada
                     </button>
                 </div>
@@ -252,6 +320,117 @@ export default function QuestDashboard() {
                     </div>
                 )}
             </div>
+
+            {/* Modal: Crear Misión Personalizada */}
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-[2rem] p-6 md:p-8 w-full max-w-lg shadow-2xl border border-slate-100 flex flex-col gap-6 animate-in zoom-in-95 duration-200">
+                        <div>
+                            <h3 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+                                <Plus className="text-fuchsia-500 animate-pulse" /> Crear Misión
+                            </h3>
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">Personalizada desde Cero</p>
+                        </div>
+
+                        <form onSubmit={handleCreateCustomQuest} className="space-y-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Nombre de la Misión</label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Ej: Invita un Amigo a Masaje"
+                                    value={formData.nombre}
+                                    onChange={e => setFormData({ ...formData, nombre: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-fuchsia-400 transition-colors"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Descripción</label>
+                                <textarea
+                                    placeholder="Ej: Tus amigos deben agendar su primera cita usando tu código."
+                                    value={formData.descripcion}
+                                    onChange={e => setFormData({ ...formData, descripcion: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-fuchsia-400 transition-colors h-20 resize-none"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Evento Detonador (Trigger)</label>
+                                    <select
+                                        value={formData.triggerEvent}
+                                        onChange={e => setFormData({ ...formData, triggerEvent: e.target.value })}
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:border-fuchsia-400 transition-colors"
+                                    >
+                                        <option value="BOOKING_COMPLETED">Cita Completada</option>
+                                        <option value="USER_REGISTERED">Registro de Usuario</option>
+                                        <option value="REFERRAL_COMPLETED">Referido Exitoso</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Meta (Repeticiones)</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        required
+                                        value={formData.cantidadMeta}
+                                        onChange={e => setFormData({ ...formData, cantidadMeta: Math.max(1, Number(e.target.value)) })}
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-fuchsia-400 transition-colors"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Recompensa (Puntos)</label>
+                                    <input
+                                        type="number"
+                                        min="10"
+                                        required
+                                        value={formData.puntosRecompensa}
+                                        onChange={e => setFormData({ ...formData, puntosRecompensa: Math.max(10, Number(e.target.value)) })}
+                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-fuchsia-400 transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Color Temático</label>
+                                    <div className="flex gap-2 items-center h-[46px]">
+                                        {['#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'].map(c => (
+                                            <button
+                                                key={c}
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, color: c })}
+                                                className={`size-6 rounded-full border-2 transition-all ${
+                                                    formData.color === c ? 'border-slate-850 scale-110 shadow-md' : 'border-transparent opacity-60'
+                                                }`}
+                                                style={{ backgroundColor: c }}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 pt-4 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="flex-1 py-3 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-xl text-xs font-black uppercase tracking-widest border-0 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={submitting}
+                                    className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black uppercase tracking-widest border-0 transition-all flex items-center justify-center gap-2"
+                                >
+                                    {submitting ? <RefreshCw size={14} className="animate-spin" /> : 'Crear Misión'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* Toast Component */}
             {toastMsg && (
