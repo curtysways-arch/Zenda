@@ -1111,6 +1111,37 @@ export default async function PublicNegocioPage({
                                         if (modal) modal.showModal();
                                     });
                                 }
+
+                                // Botones de Cierre de Modales
+                                var closeOpiniones = document.getElementById('btn-close-opiniones');
+                                if (closeOpiniones && !closeOpiniones.getAttribute('data-listener-attached')) {
+                                    closeOpiniones.setAttribute('data-listener-attached', 'true');
+                                    closeOpiniones.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        var modal = document.getElementById('modal-opiniones');
+                                        if (modal) modal.close();
+                                    });
+                                }
+
+                                var closeFidelizacion = document.getElementById('btn-close-fidelizacion');
+                                if (closeFidelizacion && !closeFidelizacion.getAttribute('data-listener-attached')) {
+                                    closeFidelizacion.setAttribute('data-listener-attached', 'true');
+                                    closeFidelizacion.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        var modal = document.getElementById('modal-fidelizacion');
+                                        if (modal) modal.close();
+                                    });
+                                }
+
+                                var closeFidelizacionFooter = document.getElementById('btn-close-fidelizacion-footer');
+                                if (closeFidelizacionFooter && !closeFidelizacionFooter.getAttribute('data-listener-attached')) {
+                                    closeFidelizacionFooter.setAttribute('data-listener-attached', 'true');
+                                    closeFidelizacionFooter.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        var modal = document.getElementById('modal-fidelizacion');
+                                        if (modal) modal.close();
+                                    });
+                                }
                             }
                             
                             setupSmoothScroll();
@@ -1131,7 +1162,7 @@ export default async function PublicNegocioPage({
                 <div className="space-y-4">
                     <div className="flex justify-between items-center">
                         <h4 className="font-black text-slate-900 text-base uppercase tracking-tight">Opiniones de Clientes</h4>
-                        <button onClick={() => {}} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 font-bold active:scale-95 transition-transform border-0 cursor-pointer" dangerouslySetInnerHTML={{ __html: '✕' }} onClickCapture={(e: any) => { e.currentTarget.closest('dialog').close(); }} />
+                        <button id="btn-close-opiniones" className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 font-bold active:scale-95 transition-transform border-0 cursor-pointer">✕</button>
                     </div>
                     <div className="flex flex-col items-center py-3 bg-slate-50 rounded-2xl border border-slate-100">
                         <span className="text-3xl font-black text-slate-900 leading-none">4.9</span>
@@ -1172,7 +1203,7 @@ export default async function PublicNegocioPage({
                         <h4 className="font-black text-slate-900 text-base uppercase tracking-tight flex items-center gap-1.5">
                             👑 Club de Fidelización
                         </h4>
-                        <button onClick={() => {}} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 font-bold active:scale-95 transition-transform border-0 cursor-pointer" dangerouslySetInnerHTML={{ __html: '✕' }} onClickCapture={(e: any) => { e.currentTarget.closest('dialog').close(); }} />
+                        <button id="btn-close-fidelizacion" className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 font-bold active:scale-95 transition-transform border-0 cursor-pointer">✕</button>
                     </div>
                     <div className="text-center py-4 px-2 space-y-3">
                         <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto text-xl font-bold" style={{ color: primaryColor, backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 95%)`, borderColor: `color-mix(in srgb, ${primaryColor}, transparent 90%)`, borderStyle: 'solid', borderWidth: '1px' }}>
@@ -1184,7 +1215,7 @@ export default async function PublicNegocioPage({
                         </p>
                     </div>
                     <div className="flex gap-2 pt-2">
-                        <button onClick={() => {}} className="flex-1 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 active:scale-95 transition-transform border-0 cursor-pointer" onClickCapture={(e: any) => { e.currentTarget.closest('dialog').close(); }}>
+                        <button id="btn-close-fidelizacion-footer" className="flex-1 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 active:scale-95 transition-transform border-0 cursor-pointer">
                             Cerrar
                         </button>
                         <a href={`/${slug}/premios`} className="flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white text-center active:scale-95 transition-transform shadow-md no-underline flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
