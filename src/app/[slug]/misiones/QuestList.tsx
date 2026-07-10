@@ -76,7 +76,7 @@ const IconMapper: Record<string, any> = {
 export default function QuestList({ slug, primaryColor, textColor }: QuestListProps) {
     const [quests, setQuests] = useState<Quest[]>([]);
     const [gamification, setGamification] = useState<GamificationData | null>(null);
-    const [activeTab, setActiveTab] = useState<'todas' | 'enProgreso' | 'completadas'>('enProgreso');
+    const [activeTab, setActiveTab] = useState<'todas' | 'enProgreso' | 'completadas'>('todas');
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [celebrateQuest, setCelebrateQuest] = useState<string | null>(null);

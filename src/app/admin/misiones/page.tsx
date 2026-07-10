@@ -632,9 +632,9 @@ export default function QuestDashboard() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-slate-800 flex items-center gap-2">
-                        <Trophy className="text-pink-500 animate-pulse" /> Growth Engine
+                        <Trophy className="text-pink-500 animate-pulse" /> Misiones
                     </h1>
-                    <p className="text-slate-500 font-medium mt-1">El centro de crecimiento, referidos, misiones y fidelización unificado de Citiox.</p>
+                    <p className="text-slate-500 font-medium mt-1">Centro de misiones, referidos y fidelización unificado de Citiox.</p>
                 </div>
                 <div className="flex gap-3">
                     <button
