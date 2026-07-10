@@ -214,3 +214,112 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }
+
+export async function PUT(request: Request) {
+    try {
+        const session = await getServerSession(authOptions);
+        const userId = (session?.user as any)?.id;
+
+        if (!userId) {
+            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        }
+
+        const user = await prisma.usuario.findUnique({
+            where: { id: userId },
+            select: { negocioId: true }
+        });
+
+        const negocioId = user?.negocioId;
+        if (!negocioId) {
+            return NextResponse.json({ error: 'Negocio no configurado' }, { status: 400 });
+        }
+
+        const body = await request.json();
+        const { questId, campaignId, data } = body;
+
+        if (questId) {
+            // Actualizar Misión
+            const updatedQuest = await prisma.quest.updateMany({
+                where: { id: questId, negocioId },
+                data: {
+                    nombre: data.nombre,
+                    descripcion: data.descripcion,
+                    icono: data.icono,
+                    color: data.color,
+                    triggerEvent: data.triggerEvent,
+                    cantidadMeta: Number(data.cantidadMeta),
+                    activa: data.activa !== undefined ? Boolean(data.activa) : undefined,
+                    acciones: data.acciones ? JSON.stringify(data.acciones) : undefined
+                }
+            });
+            return NextResponse.json({ success: true, message: 'Misión actualizada con éxito' });
+        }
+
+        if (campaignId) {
+            // Actualizar Campaña
+            const updatedCampaign = await prisma.campaign.updateMany({
+                where: { id: campaignId, negocioId },
+                data: {
+                    nombre: data.nombre,
+                    descripcion: data.descripcion,
+                    activa: data.activa !== undefined ? Boolean(data.activa) : undefined
+                }
+            });
+            return NextResponse.json({ success: true, message: 'Campaña actualizada con éxito' });
+        }
+
+        return NextResponse.json({ error: 'Parámetros inválidos' }, { status: 400 });
+
+    } catch (err: any) {
+        console.error('[Admin-MisionesAPI-PUT] Error:', err.message);
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}
+
+export async function DELETE(request: Request) {
+    try {
+        const session = await getServerSession(authOptions);
+        const userId = (session?.user as any)?.id;
+
+        if (!userId) {
+            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        }
+
+        const user = await prisma.usuario.findUnique({
+            where: { id: userId },
+            select: { negocioId: true }
+        });
+
+        const negocioId = user?.negocioId;
+        if (!negocioId) {
+            return NextResponse.json({ error: 'Negocio no configurado' }, { status: 400 });
+        }
+
+        const { searchParams } = new URL(request.url);
+        const questId = searchParams.get('questId');
+        const campaignId = searchParams.get('campaignId');
+
+        if (questId) {
+            // Borrar Misión
+            await prisma.quest.deleteMany({
+                where: { id: questId, negocioId }
+            });
+            return NextResponse.json({ success: true, message: 'Misión eliminada con éxito' });
+        }
+
+        if (campaignId) {
+            // Borrar Campaña (borra en cascada por configuración de schema.prisma)
+            await prisma.campaign.deleteMany({
+                where: { id: campaignId, negocioId }
+            });
+            return NextResponse.json({ success: true, message: 'Campaña eliminada con éxito' });
+        }
+
+        return NextResponse.json({ error: 'Parámetros inválidos' }, { status: 400 });
+
+    } catch (err: any) {
+        console.error('[Admin-MisionesAPI-DELETE] Error:', err.message);
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}
+
