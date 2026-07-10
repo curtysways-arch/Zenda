@@ -603,7 +603,7 @@ export default async function PublicNegocioPage({
             </header>
 
             {/* Espaciado superior */}
-            <div className={nextAppointment ? "pt-[110px]" : "pt-20"}></div>
+            <div className={nextAppointment ? "h-[128px]" : "h-[92px]"}></div>
 
             {/* PRÓXIMA CITA ALERT BANNER */}
             {nextAppointment && (
