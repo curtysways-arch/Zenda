@@ -674,33 +674,33 @@ export default async function PublicNegocioPage({
                 </div>
             </section>
 
-            {/* 3. TARJETAS DE CONFIANZA */}
+            {/* 3. TARJETAS DE CONFIANZA (INTERACTIVAS) */}
             <section className="px-6 mb-6">
                 <div className="grid grid-cols-4 gap-2 bg-white rounded-3xl p-3 border border-slate-100/50 shadow-sm">
                     {/* Calificación */}
-                    <div className="flex flex-col items-center text-center">
-                        <Star size={16} className="text-pink-500" fill="currentColor" />
+                    <button id="btn-opiniones" className="flex flex-col items-center text-center cursor-pointer active:scale-95 transition-transform outline-none bg-transparent border-0 p-0 w-full">
+                        <Star size={16} fill="currentColor" style={{ color: primaryColor }} />
                         <span className="text-[11px] font-black text-slate-800 mt-1">4.9/5</span>
                         <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Opiniones</span>
-                    </div>
+                    </button>
                     {/* Clientes */}
-                    <div className="flex flex-col items-center text-center border-l border-slate-100">
-                        <Users size={16} className="text-pink-500" />
+                    <button id="btn-fidelizacion" className="flex flex-col items-center text-center border-l border-slate-100 cursor-pointer active:scale-95 transition-transform outline-none bg-transparent border-0 p-0 w-full">
+                        <Users size={16} style={{ color: primaryColor }} />
                         <span className="text-[11px] font-black text-slate-800 mt-1">2.3k+</span>
                         <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Felices</span>
-                    </div>
+                    </button>
                     {/* Servicios */}
-                    <div className="flex flex-col items-center text-center border-l border-slate-100">
-                        <Sparkles size={16} className="text-pink-500" />
+                    <a href="#servicios-seccion" className="flex flex-col items-center text-center border-l border-slate-100 cursor-pointer active:scale-95 transition-transform outline-none no-underline">
+                        <Sparkles size={16} style={{ color: primaryColor }} />
                         <span className="text-[11px] font-black text-slate-800 mt-1">{filteredCanchas.length}+</span>
                         <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Servicios</span>
-                    </div>
+                    </a>
                     {/* Ubicación */}
-                    <div className="flex flex-col items-center text-center border-l border-slate-100">
-                        <MapPin size={16} className="text-pink-500" />
+                    <a href="#ubicacion" className="flex flex-col items-center text-center border-l border-slate-100 cursor-pointer active:scale-95 transition-transform outline-none no-underline">
+                        <MapPin size={16} style={{ color: primaryColor }} />
                         <span className="text-[11px] font-black text-slate-800 mt-1 truncate max-w-[64px]">{negocio.ciudad || 'Quito'}</span>
                         <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Ubicación</span>
-                    </div>
+                    </a>
                 </div>
             </section>
 
@@ -728,12 +728,14 @@ export default async function PublicNegocioPage({
             )}
 
             {/* 5. NUEVOS SERVICIOS (Rediseñados con tags dinámicos y Ver detalles + Favoritos Reactivos) */}
-            <HomeServicesClient 
-                filteredCanchas={filteredCanchas}
-                slug={slug}
-                primaryColor={primaryColor}
-                textColor={textColor}
-            />
+            <section id="servicios-seccion">
+                <HomeServicesClient 
+                    filteredCanchas={filteredCanchas}
+                    slug={slug}
+                    primaryColor={primaryColor}
+                    textColor={textColor}
+                />
+            </section>
 
             {/* CURSOS Y TALLERES */}
             {coursesModuleEnabled && cursosActivos.length > 0 && (
@@ -1089,13 +1091,108 @@ export default async function PublicNegocioPage({
                                 });
                             }
                             
+                            function setupModals() {
+                                var btnOpiniones = document.getElementById('btn-opiniones');
+                                if (btnOpiniones && !btnOpiniones.getAttribute('data-listener-attached')) {
+                                    btnOpiniones.setAttribute('data-listener-attached', 'true');
+                                    btnOpiniones.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        var modal = document.getElementById('modal-opiniones');
+                                        if (modal) modal.showModal();
+                                    });
+                                }
+                                
+                                var btnFidelizacion = document.getElementById('btn-fidelizacion');
+                                if (btnFidelizacion && !btnFidelizacion.getAttribute('data-listener-attached')) {
+                                    btnFidelizacion.setAttribute('data-listener-attached', 'true');
+                                    btnFidelizacion.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        var modal = document.getElementById('modal-fidelizacion');
+                                        if (modal) modal.showModal();
+                                    });
+                                }
+                            }
+                            
                             setupSmoothScroll();
-                            var timer = setInterval(setupSmoothScroll, 1000);
+                            setupModals();
+                            
+                            var timer = setInterval(function() {
+                                setupSmoothScroll();
+                                setupModals();
+                            }, 1000);
                             setTimeout(function() { clearInterval(timer); }, 10000);
                         })();
                     `
                 }} 
             />
+
+            {/* Dialog de Opiniones */}
+            <dialog id="modal-opiniones" className="rounded-[2rem] p-6 max-w-md w-[90%] backdrop:bg-black/60 backdrop:backdrop-blur-sm border border-slate-100 shadow-2xl outline-none select-none text-slate-800 bg-white">
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                        <h4 className="font-black text-slate-900 text-base uppercase tracking-tight">Opiniones de Clientes</h4>
+                        <button onClick={() => {}} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 font-bold active:scale-95 transition-transform border-0 cursor-pointer" dangerouslySetInnerHTML={{ __html: '✕' }} onClickCapture={(e: any) => { e.currentTarget.closest('dialog').close(); }} />
+                    </div>
+                    <div className="flex flex-col items-center py-3 bg-slate-50 rounded-2xl border border-slate-100">
+                        <span className="text-3xl font-black text-slate-900 leading-none">4.9</span>
+                        <div className="flex gap-0.5 mt-1">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <span key={i} className="text-amber-400 text-sm">★</span>
+                            ))}
+                        </div>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Calificación promedio</span>
+                    </div>
+                    <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1">
+                        {[
+                            { nombre: "María F.", rating: 5, comentario: "¡El masaje descontracturante fue una maravilla! Definitivamente el mejor lugar para relajarse.", fecha: "Hace 2 días" },
+                            { nombre: "Juan P.", rating: 5, comentario: "Atención de primera. Los terapeutas son muy profesionales y el ambiente es de pura paz.", fecha: "Hace 1 semana" },
+                            { nombre: "Sofía M.", rating: 5, comentario: "Me encanta el facial de hidratación profunda, mi piel quedó radiante. 100% recomendado.", fecha: "Hace 3 días" }
+                        ].map((t, idx) => (
+                            <div key={idx} className="p-3.5 bg-white border border-slate-100 rounded-2xl space-y-1">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs font-black text-slate-800">{t.nombre}</span>
+                                    <span className="text-[8px] font-bold text-slate-400 uppercase">{t.fecha}</span>
+                                </div>
+                                <div className="flex gap-0.5">
+                                    {Array.from({ length: t.rating }).map((_, i) => (
+                                        <span key={i} className="text-amber-400 text-[10px]">★</span>
+                                    ))}
+                                </div>
+                                <p className="text-[10px] text-slate-600 leading-relaxed font-medium">{t.comentario}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </dialog>
+
+            {/* Dialog de Fidelización */}
+            <dialog id="modal-fidelizacion" className="rounded-[2rem] p-6 max-w-md w-[90%] backdrop:bg-black/60 backdrop:backdrop-blur-sm border border-slate-100 shadow-2xl outline-none select-none text-slate-800 bg-white">
+                <div className="space-y-5">
+                    <div className="flex justify-between items-center">
+                        <h4 className="font-black text-slate-900 text-base uppercase tracking-tight flex items-center gap-1.5">
+                            👑 Club de Fidelización
+                        </h4>
+                        <button onClick={() => {}} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 font-bold active:scale-95 transition-transform border-0 cursor-pointer" dangerouslySetInnerHTML={{ __html: '✕' }} onClickCapture={(e: any) => { e.currentTarget.closest('dialog').close(); }} />
+                    </div>
+                    <div className="text-center py-4 px-2 space-y-3">
+                        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto text-xl font-bold" style={{ color: primaryColor, backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 95%)`, borderColor: `color-mix(in srgb, ${primaryColor}, transparent 90%)`, borderStyle: 'solid', borderWidth: '1px' }}>
+                            👑
+                        </div>
+                        <h5 className="font-black text-slate-900 uppercase tracking-wide text-xs">¡Acumula puntos y gana!</h5>
+                        <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
+                            Por cada cita completada con nosotros acumulas puntos automáticamente. Canjea tus puntos acumulados por masajes, tratamientos faciales o servicios gratis.
+                        </p>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                        <button onClick={() => {}} className="flex-1 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 active:scale-95 transition-transform border-0 cursor-pointer" onClickCapture={(e: any) => { e.currentTarget.closest('dialog').close(); }}>
+                            Cerrar
+                        </button>
+                        <a href={`/${slug}/premios`} className="flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white text-center active:scale-95 transition-transform shadow-md no-underline flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
+                            Ver Premios
+                        </a>
+                    </div>
+                </div>
+            </dialog>
 
             {/* Banner de referido */}
             {referralCode && (
