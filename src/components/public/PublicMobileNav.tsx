@@ -44,6 +44,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
         pathname.includes('/mis-reservas') ||
         pathname.includes('/perfil') ||
         pathname.includes('/referidos') ||
+        pathname.includes('/misiones') ||
         pathname.includes('/cancha/') ||
         pathname.includes('/servicio/') ||
         pathname.includes('/promo/') ||
@@ -78,8 +79,8 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
         {
             label: 'Premios',
             icon: Gift,
-            href: `/${slug}/referidos`,
-            active: pathname.includes('/referidos'),
+            href: `/${slug}/misiones`,
+            active: pathname.includes('/referidos') || pathname.includes('/misiones'),
         },
         {
             label: 'Perfil',
