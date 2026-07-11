@@ -263,6 +263,7 @@ export default function QuestDashboard() {
     const [isIaGamificationAnimating, setIsIaGamificationAnimating] = useState(false);
     const [servicesList, setServicesList] = useState<any[]>([]);
     const [newCondition, setNewCondition] = useState({ field: 'servicioId', operator: 'equals', value: '' });
+    const [editingQuestId, setEditingQuestId] = useState<string | null>(null);
 
     // Formulario de Cupones Directos
     const [couponFormData, setCouponFormData] = useState({
@@ -1190,21 +1191,55 @@ export default function QuestDashboard() {
                 }
             };
 
-            const res = await fetch('/api/admin/misiones', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            let res;
+            if (editingQuestId) {
+                res = await fetch('/api/admin/misiones', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        questId: editingQuestId,
+                        data: {
+                            nombre: wizardData.nombre,
+                            descripcion: wizardData.descripcion,
+                            icono: wizardData.icono,
+                            color: wizardData.color,
+                            triggerEvent: wizardData.triggerEvent,
+                            cantidadMeta: Number(wizardData.cantidadMeta),
+                            validacionTipo: wizardData.validacionTipo,
+                            acciones,
+                            servicioId: wizardData.servicioId || null,
+                            montoMinimo: wizardData.montoMinimo ? Number(wizardData.montoMinimo) : null,
+                            segmentacion: wizardData.segmentacion || null,
+                            condicionesExtra,
+                            fechaInicio: wizardData.fechaInicio || null,
+                            fechaFin: wizardData.fechaFin || null,
+                            visible,
+                            repetible: wizardData.repetible,
+                            limiteUsuario: Number(wizardData.limiteUsuario),
+                            limiteGlobal: wizardData.limiteGlobal ? Number(wizardData.limiteGlobal) : null,
+                            parentQuestId: wizardData.parentQuestId || null,
+                            activa
+                        }
+                    })
+                });
+            } else {
+                res = await fetch('/api/admin/misiones', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            }
 
             const data = await res.json();
 
             if (data.success) {
-                showToast('Misión creada con éxito desde el asistente', 'success');
+                showToast(editingQuestId ? 'Desafío editado con éxito' : 'Misión creada con éxito desde el asistente', 'success');
                 setIsWizardOpen(false);
                 setWizardStep(1);
+                setEditingQuestId(null);
                 fetchData();
             } else {
-                showToast(data.error || 'Error al crear misión', 'error');
+                showToast(data.error || 'Error al crear/editar misión', 'error');
             }
         } catch (error) {
             console.error('Error en wizard:', error);
@@ -1531,6 +1566,122 @@ export default function QuestDashboard() {
         setWizardStep(1);
     };
 
+    const handleOpenEditWizard = (quest: any) => {
+        setEditingQuestId(quest.id);
+        
+        const accionesRaw = typeof quest.acciones === 'string' ? JSON.parse(quest.acciones) : quest.acciones || [];
+        const recompensasSeleccionadas = {
+            puntos: false,
+            cupon: false,
+            productoGratis: false,
+            servicioGratis: false,
+            cashback: false,
+            badge: false,
+            whatsapp: false,
+            push: false,
+            email: false
+        };
+        let puntosRecompensa = 100;
+        let cuponNombre = '';
+        let cuponValor = 20;
+        let cuponTipo = 'PORCENTAJE';
+        let cuponVencimiento = 30;
+        let productoGratisNombre = '';
+        let servicioGratisNombre = '';
+        let cashbackMonto = 10;
+        let badgeId = '';
+        let whatsappMensaje = '¡Hola {{nombre}}! Has completado tu reto y ganaste una recompensa. 🎁';
+        let pushTitulo = '🏆 Misión Completada';
+        let pushCuerpo = '¡Felicidades! Completaste la misión y obtuviste tus premios.';
+        let emailAsunto = '🎁 Recompensa ganada';
+        let emailCuerpo = 'Hola {{nombre}}, completaste la misión y obtuviste tus premios.';
+
+        accionesRaw.forEach((a: any) => {
+            if (a.action === 'ADD_POINTS') {
+                recompensasSeleccionadas.puntos = true;
+                puntosRecompensa = Number(a.value.puntos || a.value);
+            } else if (a.action === 'CREATE_COUPON') {
+                recompensasSeleccionadas.cupon = true;
+                cuponNombre = a.value.nombre || '';
+                cuponValor = Number(a.value.valor || a.value);
+                cuponTipo = a.value.tipo || 'PORCENTAJE';
+                cuponVencimiento = Number(a.value.vencimientoDias || 30);
+            } else if (a.action === 'PRODUCT_GIFT') {
+                recompensasSeleccionadas.productoGratis = true;
+                productoGratisNombre = a.value.name || a.value;
+            } else if (a.action === 'SERVICE_GIFT') {
+                recompensasSeleccionadas.servicioGratis = true;
+                servicioGratisNombre = a.value.name || a.value;
+            } else if (a.action === 'ADD_WALLET_BALANCE') {
+                recompensasSeleccionadas.cashback = true;
+                cashbackMonto = Number(a.value);
+            } else if (a.action === 'AWARD_BADGE') {
+                recompensasSeleccionadas.badge = true;
+                badgeId = a.value.badgeId || a.value;
+            } else if (a.action === 'SEND_WHATSAPP') {
+                recompensasSeleccionadas.whatsapp = true;
+                whatsappMensaje = a.value.message || a.value;
+            } else if (a.action === 'SEND_PUSH') {
+                recompensasSeleccionadas.push = true;
+                pushTitulo = a.value.title || '';
+                pushCuerpo = a.value.body || '';
+            } else if (a.action === 'SEND_EMAIL') {
+                recompensasSeleccionadas.email = true;
+                emailAsunto = a.value.subject || '';
+                emailCuerpo = a.value.body || '';
+            }
+        });
+
+        const cExtra = typeof quest.condicionesExtra === 'string' ? JSON.parse(quest.condicionesExtra) : quest.condicionesExtra || {};
+        const categoria = cExtra.categoria || quest.categoria || 'RESERVAS';
+        const dificultad = cExtra.dificultad || 'NORMAL';
+        const prioridad = cExtra.prioridad || 'NORMAL';
+        const estado = cExtra.estado || (quest.activa ? 'ACTIVA' : 'PAUSADA');
+        const condiciones = cExtra.condiciones || [];
+        const limiteGlobal = cExtra.limiteGlobal !== undefined && cExtra.limiteGlobal !== null ? cExtra.limiteGlobal : (quest.limiteGlobal || '');
+
+        setWizardData({
+            categoria,
+            triggerEvent: quest.triggerEvent || 'BOOKING_COMPLETED',
+            nombre: quest.nombre || '',
+            descripcion: quest.descripcion || '',
+            color: quest.color || '#ec4899',
+            icono: quest.icono || 'Award',
+            progresoTipo: quest.cantidadMeta > 1 ? 'ACUMULATIVO' : 'SIMPLE',
+            cantidadMeta: quest.cantidadMeta || 1,
+            condiciones,
+            recompensasSeleccionadas,
+            puntosRecompensa,
+            cuponNombre,
+            cuponValor,
+            cuponTipo,
+            cuponVencimiento,
+            productoGratisNombre,
+            servicioGratisNombre,
+            cashbackMonto,
+            badgeId,
+            whatsappMensaje,
+            pushTitulo,
+            pushCuerpo,
+            emailAsunto,
+            emailCuerpo,
+            validacionTipo: quest.validacionTipo || 'AUTOMATICO',
+            dificultad,
+            prioridad,
+            estado,
+            fechaInicio: quest.fechaInicio ? new Date(quest.fechaInicio).toISOString().split('T')[0] : '',
+            fechaFin: quest.fechaFin ? new Date(quest.fechaFin).toISOString().split('T')[0] : '',
+            visible: quest.visible !== undefined ? quest.visible : true,
+            repetible: quest.repetible !== undefined ? quest.repetible : false,
+            limiteUsuario: quest.limiteUsuario !== undefined ? quest.limiteUsuario : 1,
+            limiteGlobal,
+            parentQuestId: quest.parentQuestId || ''
+        });
+
+        setWizardStep(1); // Entrar directo al paso 1
+        setIsWizardOpen(true);
+    };
+
     return (
         <div className="p-6 space-y-8 max-w-7xl mx-auto">
             {/* TOAST SYSTEM */}
@@ -1750,6 +1901,13 @@ export default function QuestDashboard() {
                                                         </div>
                                                         <div className="flex gap-2">
                                                             <button 
+                                                                onClick={() => handleOpenEditWizard(quest)}
+                                                                className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-colors cursor-pointer"
+                                                                title="Editar misión"
+                                                            >
+                                                                <Edit2 size={14} />
+                                                            </button>
+                                                            <button 
                                                                 onClick={() => handleToggleQuestActive(quest.id, quest.activa)}
                                                                 className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
                                                                     quest.activa ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-slate-100 border-slate-200 text-slate-400'
@@ -1783,6 +1941,54 @@ export default function QuestDashboard() {
                                 <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Misiones de lealtad configuradas en el Growth Engine</span>
                                 <button 
                                     onClick={() => {
+                                        setEditingQuestId(null);
+                                        setWizardData({
+                                            categoria: 'RESERVAS',
+                                            triggerEvent: 'BOOKING_COMPLETED',
+                                            nombre: '',
+                                            descripcion: '',
+                                            color: '#ec4899',
+                                            icono: 'Calendar',
+                                            progresoTipo: 'SIMPLE',
+                                            cantidadMeta: 1,
+                                            condiciones: [],
+                                            recompensasSeleccionadas: {
+                                                puntos: false,
+                                                cupon: false,
+                                                productoGratis: false,
+                                                servicioGratis: false,
+                                                cashback: false,
+                                                badge: false,
+                                                whatsapp: false,
+                                                push: false,
+                                                email: false
+                                            },
+                                            puntosRecompensa: 100,
+                                            cuponNombre: '',
+                                            cuponValor: 20,
+                                            cuponTipo: 'PORCENTAJE',
+                                            cuponVencimiento: 30,
+                                            productoGratisNombre: '',
+                                            servicioGratisNombre: '',
+                                            cashbackMonto: 10,
+                                            badgeId: '',
+                                            whatsappMensaje: '¡Hola {{nombre}}! Has completado tu reto y ganaste una recompensa. 🎁',
+                                            pushTitulo: '🏆 Misión Completada',
+                                            pushCuerpo: '¡Felicidades! Completaste la misión y obtuviste tus premios.',
+                                            emailAsunto: '🎁 Recompensa ganada',
+                                            emailCuerpo: 'Hola {{nombre}}, completaste la misión y obtuviste tus premios.',
+                                            validacionTipo: 'AUTOMATICO',
+                                            dificultad: 'NORMAL',
+                                            prioridad: 'NORMAL',
+                                            estado: 'ACTIVA',
+                                            fechaInicio: '',
+                                            fechaFin: '',
+                                            visible: true,
+                                            repetible: false,
+                                            limiteUsuario: 1,
+                                            limiteGlobal: '',
+                                            parentQuestId: ''
+                                        });
                                         setWizardStep(0);
                                         setIsWizardOpen(true);
                                     }}
@@ -1824,6 +2030,13 @@ export default function QuestDashboard() {
                                             </div>
                                         </div>
                                         <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+                                            <button 
+                                                onClick={() => handleOpenEditWizard(quest)}
+                                                className="p-2 border border-slate-150 rounded-xl text-slate-400 hover:text-blue-500 hover:bg-blue-50 cursor-pointer"
+                                                title="Editar desafío"
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
                                             <button 
                                                 onClick={() => handleToggleQuestActive(quest.id, quest.activa)}
                                                 className="px-3.5 py-2 border border-slate-150 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 cursor-pointer"
@@ -2257,14 +2470,14 @@ export default function QuestDashboard() {
                             <div>
                                 <div className="flex items-center gap-2">
                                     <h3 className="text-base font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                                        Asistente de Misiones <span className="text-pink-500 font-extrabold text-[10px] bg-pink-50 px-2 py-0.5 rounded-full">Growth Engine v2</span>
+                                        {editingQuestId ? 'Editar Desafío / Misión' : 'Asistente de Misiones'} <span className="text-pink-500 font-extrabold text-[10px] bg-pink-50 px-2 py-0.5 rounded-full">Growth Engine v2</span>
                                     </h3>
                                 </div>
                                 <p className="text-slate-400 text-[10px] font-bold mt-0.5">
                                     Paso {wizardStep} de 7 {wizardStep === 0 ? "(Configuración Inicial)" : ""}
                                 </p>
                             </div>
-                            <button onClick={() => setIsWizardOpen(false)} className="text-slate-400 hover:text-slate-600 text-xl font-bold cursor-pointer">×</button>
+                            <button onClick={() => { setIsWizardOpen(false); setEditingQuestId(null); }} className="text-slate-400 hover:text-slate-600 text-xl font-bold cursor-pointer">×</button>
                         </div>
 
                         {/* BARRA DE PROGRESO DE PASOS */}
