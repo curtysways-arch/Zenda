@@ -111,7 +111,6 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [celebrateQuest, setCelebrateQuest] = useState<string | null>(null);
-    const [selectedQuest, setSelectedQuest] = useState<Quest | null>(null);
 
     // Referidos y Premios
     const [referralData, setReferralData] = useState<ReferralData | null>(null);
@@ -460,7 +459,7 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                                 return (
                                     <div 
                                         key={q.id}
-                                        onClick={() => setSelectedQuest(q)}
+                                        onClick={() => router.push(`/${slug}/misiones/estado`)}
                                         className={`bg-white rounded-[2rem] border p-5 shadow-[0_4px_25px_rgba(0,0,0,0.015)] space-y-3 relative overflow-hidden transition-all duration-300 cursor-pointer hover:scale-[1.01] active:scale-[0.99] ${
                                             isCelebrating ? 'border-green-500 bg-green-50/10' : 'border-slate-100/80'
                                         }`}
@@ -549,105 +548,6 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                     )}
                 </section>
             </div>
-
-            {/* Modal de Detalles del Desafío */}
-            {selectedQuest && (
-                <div 
-                    className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center z-50 p-4"
-                    onClick={() => setSelectedQuest(null)}
-                >
-                    <div 
-                        className="bg-white rounded-t-[2.5rem] rounded-b-[1.5rem] w-full max-w-md p-6 space-y-6 shadow-2xl relative translate-y-0 transition-transform duration-300"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {/* Cabecera del modal */}
-                        <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-3">
-                                <div 
-                                    className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-inner"
-                                    style={{ backgroundColor: `${selectedQuest.color}15`, color: selectedQuest.color }}
-                                >
-                                    {(() => {
-                                        const IconComponent = IconMapper[selectedQuest.icono] || Award;
-                                        return <IconComponent size={22} />;
-                                    })()}
-                                </div>
-                                <div>
-                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Desafío</span>
-                                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight leading-none mt-1">
-                                        {selectedQuest.nombre}
-                                    </h3>
-                                </div>
-                            </div>
-                            <span 
-                                className="text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full text-pink-650 bg-pink-50"
-                                style={{ color: primaryColor, backgroundColor: `${primaryColor}08` }}
-                            >
-                                +{selectedQuest.recompensas.join(' + ')}
-                            </span>
-                        </div>
-
-                        {/* Descripción completa */}
-                        <div className="space-y-2">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Instrucciones</span>
-                            <p className="text-xs text-slate-600 leading-relaxed font-semibold">
-                                {selectedQuest.descripcion}
-                            </p>
-                        </div>
-
-                        {/* Progreso del desafío */}
-                        <div className="space-y-2 pt-2 border-t border-slate-100/80">
-                            <div className="flex justify-between items-center text-[9px] font-black text-slate-400 uppercase tracking-wider">
-                                <span>Progreso del desafío</span>
-                                <span>{selectedQuest.progresoActual} / {selectedQuest.progresoRequerido}</span>
-                            </div>
-                            <div className="w-full h-3 bg-slate-50 border border-slate-100/50 rounded-full overflow-hidden p-0.5">
-                                <div 
-                                    className="h-full rounded-full transition-all duration-500"
-                                    style={{ 
-                                        width: `${Math.min(100, (selectedQuest.progresoActual / selectedQuest.progresoRequerido) * 100)}%`, 
-                                        backgroundColor: selectedQuest.color 
-                                    }}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Información adicional */}
-                        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100/80 text-[9px] font-black text-slate-450 uppercase tracking-wider">
-                            <div className="bg-slate-50 p-2.5 rounded-xl space-y-0.5">
-                                <span className="text-[7px] text-slate-400 block">Tipo Validación</span>
-                                <span>{selectedQuest.validacionTipo === 'USUARIO' ? 'Acción de Usuario' : 'Validación Automática'}</span>
-                            </div>
-                            <div className="bg-slate-50 p-2.5 rounded-xl space-y-0.5">
-                                <span className="text-[7px] text-slate-400 block">Campaña</span>
-                                <span className="truncate block">{selectedQuest.campañaNombre}</span>
-                            </div>
-                        </div>
-
-                        {/* Botones de acción */}
-                        <div className="pt-2 flex gap-3">
-                            <button
-                                onClick={() => setSelectedQuest(null)}
-                                className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest bg-slate-100 hover:bg-slate-150 text-slate-600 rounded-2xl cursor-pointer border-0 active:scale-95 transition-transform"
-                            >
-                                Cerrar
-                            </button>
-                            {selectedQuest.estado === 'EN_PROGRESO' && selectedQuest.validacionTipo === 'USUARIO' && (
-                                <button
-                                    onClick={() => {
-                                        handleConfirmQuest(selectedQuest.id);
-                                        setSelectedQuest(null);
-                                    }}
-                                    className="flex-1 py-3 text-[10px] font-black uppercase tracking-widest text-white rounded-2xl cursor-pointer border-0 active:scale-95 transition-transform"
-                                    style={{ backgroundColor: primaryColor }}
-                                >
-                                    Hacer Desafío
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
