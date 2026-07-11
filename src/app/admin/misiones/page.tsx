@@ -1496,6 +1496,69 @@ export default function QuestDashboard() {
     };
 
     const handleInstallTemplate = async (templateId: string) => {
+        const option = window.confirm(
+            "¿Deseas instalar esta plantilla con 1-Clic ahora mismo?\n\n[Aceptar] - Se creará e instalará inmediatamente.\n[Cancelar] - Abrir el asistente para personalizarla antes de crearla."
+        );
+
+        if (!option) {
+            // El usuario quiere personalizar la plantilla
+            const template = templates.find((t: any) => t.id === templateId);
+            if (template) {
+                // Mapeamos los datos de la plantilla de marketplace al wizard
+                const mapped = {
+                    categoria: template.triggerEvent === 'REFERRAL_COMPLETED' ? 'REFERIDOS' : 'RESERVAS',
+                    triggerEvent: template.triggerEvent,
+                    nombre: template.nombre,
+                    descripcion: template.descripcion,
+                    color: template.color || '#ec4899',
+                    icono: template.icono || 'Award',
+                    progresoTipo: 'ACUMULATIVO',
+                    cantidadMeta: template.cantidadMeta || 1,
+                    condiciones: [],
+                    recompensasSeleccionadas: {
+                        puntos: template.acciones?.some((a: any) => a.action === 'ADD_POINTS') || false,
+                        cupon: template.acciones?.some((a: any) => a.action === 'CREATE_COUPON') || false,
+                        productoGratis: template.acciones?.some((a: any) => a.action === 'PRODUCT_GIFT') || false,
+                        servicioGratis: template.acciones?.some((a: any) => a.action === 'SERVICE_GIFT') || false,
+                        cashback: template.acciones?.some((a: any) => a.action === 'ADD_WALLET_BALANCE') || false,
+                        badge: template.acciones?.some((a: any) => a.action === 'AWARD_BADGE') || false,
+                        whatsapp: template.acciones?.some((a: any) => a.action === 'SEND_WHATSAPP') || false,
+                        push: template.acciones?.some((a: any) => a.action === 'SEND_PUSH') || false,
+                        email: template.acciones?.some((a: any) => a.action === 'SEND_EMAIL') || false
+                    },
+                    puntosRecompensa: template.acciones?.find((a: any) => a.action === 'ADD_POINTS')?.value || 100,
+                    cuponNombre: '',
+                    cuponValor: template.acciones?.find((a: any) => a.action === 'CREATE_COUPON')?.value?.valor || 20,
+                    cuponTipo: template.acciones?.find((a: any) => a.action === 'CREATE_COUPON')?.value?.tipo || 'PORCENTAJE',
+                    cuponVencimiento: 30,
+                    productoGratisNombre: template.acciones?.find((a: any) => a.action === 'PRODUCT_GIFT')?.value?.name || '',
+                    servicioGratisNombre: template.acciones?.find((a: any) => a.action === 'SERVICE_GIFT')?.value?.name || '',
+                    cashbackMonto: template.acciones?.find((a: any) => a.action === 'ADD_WALLET_BALANCE')?.value || 10,
+                    badgeId: template.acciones?.find((a: any) => a.action === 'AWARD_BADGE')?.value?.badgeId || '',
+                    whatsappMensaje: template.acciones?.find((a: any) => a.action === 'SEND_WHATSAPP')?.value?.message || '¡Hola! Completaste la misión y obtuviste tus premios.',
+                    pushTitulo: template.acciones?.find((a: any) => a.action === 'SEND_PUSH')?.value?.title || '🏆 Misión Completada',
+                    pushCuerpo: template.acciones?.find((a: any) => a.action === 'SEND_PUSH')?.value?.body || '¡Felicidades! Completaste la misión.',
+                    emailAsunto: template.acciones?.find((a: any) => a.action === 'SEND_EMAIL')?.value?.subject || '🎁 Recompensa ganada',
+                    emailCuerpo: template.acciones?.find((a: any) => a.action === 'SEND_EMAIL')?.value?.body || 'Hola, completaste la misión y obtuviste tus premios.',
+                    validacionTipo: template.validacionTipo || 'AUTOMATICO',
+                    dificultad: template.difficulty || 'NORMAL',
+                    prioridad: 'NORMAL',
+                    estado: 'ACTIVA',
+                    fechaInicio: '',
+                    fechaFin: '',
+                    visible: true,
+                    repetible: false,
+                    limiteUsuario: 1,
+                    limiteGlobal: '',
+                    parentQuestId: ''
+                };
+                setWizardData(mapped);
+                setIsWizardOpen(true);
+                setWizardStep(1);
+            }
+            return;
+        }
+
         try {
             setSubmitting(true);
             const res = await fetch('/api/admin/misiones', {
