@@ -163,7 +163,7 @@ const QUEST_ACTIONS_CATALOG: ActionConfig[] = [
 
 export default function QuestDashboard() {
     const { data: session } = useSession();
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'campaigns' | 'quests' | 'templates' | 'participants' | 'rewards' | 'points' | 'coupons' | 'stats' | 'history'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'campaigns' | 'templates' | 'participants' | 'rewards' | 'points' | 'coupons' | 'stats' | 'history'>('dashboard');
     const [primaryColor, setPrimaryColor] = useState('#ec4899');
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -1786,12 +1786,11 @@ export default function QuestDashboard() {
                 </div>
             </div>
 
-            {/* NAVIGATION TABS (10 Pestañas) */}
+            {/* NAVIGATION TABS (9 Pestañas) */}
             <div className="flex border-b border-slate-200 gap-6 overflow-x-auto scrollbar-none pb-0.5">
                 {[
                     { id: 'dashboard', label: 'Dashboard' },
-                    { id: 'campaigns', label: 'Campañas' },
-                    { id: 'quests', label: 'Misiones' },
+                    { id: 'campaigns', label: 'Retos y Misiones' },
                     { id: 'templates', label: 'Plantillas Citiox' },
                     { id: 'participants', label: 'Participantes' },
                     { id: 'rewards', label: 'Premios y Canjes' },
@@ -1999,128 +1998,7 @@ export default function QuestDashboard() {
                         </div>
                     )}
 
-                    {/* 3. MISIONES INDIVIDUALES */}
-                    {activeTab === 'quests' && (
-                        <div className="space-y-6">
-                            <div className="flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-150">
-                                <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Misiones de lealtad configuradas en el Growth Engine</span>
-                                <button 
-                                    onClick={() => {
-                                        setEditingQuestId(null);
-                                        setWizardData({
-                                            categoria: 'RESERVAS',
-                                            triggerEvent: 'BOOKING_COMPLETED',
-                                            nombre: '',
-                                            descripcion: '',
-                                            color: '#ec4899',
-                                            icono: 'Calendar',
-                                            progresoTipo: 'SIMPLE',
-                                            cantidadMeta: 1,
-                                            condiciones: [],
-                                            recompensasSeleccionadas: {
-                                                puntos: false,
-                                                cupon: false,
-                                                productoGratis: false,
-                                                servicioGratis: false,
-                                                cashback: false,
-                                                badge: false,
-                                                whatsapp: false,
-                                                push: false,
-                                                email: false
-                                            },
-                                            puntosRecompensa: 100,
-                                            cuponNombre: '',
-                                            cuponValor: 20,
-                                            cuponTipo: 'PORCENTAJE',
-                                            cuponVencimiento: 30,
-                                            productoGratisNombre: '',
-                                            servicioGratisNombre: '',
-                                            cashbackMonto: 10,
-                                            badgeId: '',
-                                            whatsappMensaje: '¡Hola {{nombre}}! Has completado tu reto y ganaste una recompensa. 🎁',
-                                            pushTitulo: '🏆 Misión Completada',
-                                            pushCuerpo: '¡Felicidades! Completaste la misión y obtuviste tus premios.',
-                                            emailAsunto: '🎁 Recompensa ganada',
-                                            emailCuerpo: 'Hola {{nombre}}, completaste la misión y obtuviste tus premios.',
-                                            validacionTipo: 'AUTOMATICO',
-                                            dificultad: 'NORMAL',
-                                            prioridad: 'NORMAL',
-                                            estado: 'ACTIVA',
-                                            fechaInicio: '',
-                                            fechaFin: '',
-                                            visible: true,
-                                            repetible: false,
-                                            limiteUsuario: 1,
-                                            limiteGlobal: '',
-                                            parentQuestId: ''
-                                        });
-                                        setWizardStep(0);
-                                        setIsWizardOpen(true);
-                                    }}
-                                    className="px-4 py-2 bg-slate-800 text-white rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-slate-900 cursor-pointer"
-                                >
-                                    + Crear con Asistente
-                                </button>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                {campaigns.flatMap((c: any) => c.Quests.map((quest: any) => (
-                                    <div key={quest.id} className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm hover:shadow-md transition-shadow relative">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <span 
-                                                className="text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-md text-white" 
-                                                style={{ backgroundColor: quest.color || primaryColor }}
-                                            >
-                                                {quest.triggerEvent}
-                                            </span>
-                                            <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
-                                                quest.activa ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-500 border border-slate-200'
-                                            }`}>
-                                                {quest.activa ? 'ACTIVA' : 'INACTIVA'}
-                                            </span>
-                                        </div>
-                                        <h3 className="text-xs font-black text-slate-850 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                                            <Award size={16} style={{ color: quest.color || primaryColor }} /> {quest.nombre}
-                                        </h3>
-                                        <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mb-6">
-                                            {quest.descripcion}
-                                        </p>
-                                        <div className="space-y-2 bg-slate-50 rounded-2xl p-4 border border-slate-100 mb-4">
-                                            <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
-                                                <span className="text-slate-400">Meta:</span>
-                                                <span className="text-slate-800">{quest.cantidadMeta} visitas/completados</span>
-                                            </div>
-                                            <div className="flex justify-between text-[9px] font-black uppercase tracking-wider">
-                                                <span className="text-slate-400">Validación:</span>
-                                                <span className="text-slate-800">{quest.validacionTipo}</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-                                            <button 
-                                                onClick={() => handleOpenEditWizard(quest)}
-                                                className="p-2 border border-slate-150 rounded-xl text-slate-400 hover:text-blue-500 hover:bg-blue-50 cursor-pointer"
-                                                title="Editar desafío"
-                                            >
-                                                <Edit2 size={16} />
-                                            </button>
-                                            <button 
-                                                onClick={() => handleToggleQuestActive(quest.id, quest.activa)}
-                                                className="px-3.5 py-2 border border-slate-150 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 cursor-pointer"
-                                            >
-                                                {quest.activa ? 'Pausar' : 'Activar'}
-                                            </button>
-                                            <button 
-                                                onClick={() => handleDeleteQuest(quest.id)}
-                                                className="p-2 border border-slate-150 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 cursor-pointer"
-                                                title="Eliminar misión"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                )))}
-                            </div>
-                        </div>
-                    )}
+                    {/* 3. RETOS Y MISIONES UNIFICADAS - Se muestran agrupadas bajo campañas en la pestaña campaigns */}
 
                     {/* 4. TEMPLANTES MARKETPLACE */}
                     {activeTab === 'templates' && (
