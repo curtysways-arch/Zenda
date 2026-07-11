@@ -25,7 +25,9 @@ import {
     ChevronLeft,
     HelpCircle,
     ArrowRight,
-    Percent
+    Percent,
+    Zap,
+    Target
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import Link from 'next/link';
@@ -73,6 +75,7 @@ interface ReferralData {
     nombre?: string;
     puntos: number;
     codigo: string;
+    avatarUrl?: string;
     progresoCampañas: any[];
     recompensasGanadas: any[];
 }
@@ -100,7 +103,14 @@ const IconMapper: Record<string, any> = {
     Users: Users,
     Cake: Cake,
     Crown: Crown,
-    Award: Award
+    Award: Award,
+    Gift: Gift,
+    Star: Star,
+    Target: Target,
+    Zap: Zap,
+    Flame: Flame,
+    Trophy: Trophy,
+    Calendar: CalendarRange,
 };
 
 export default function QuestList({ slug, primaryColor, textColor, negocioNombre = 'CitiOx' }: QuestListProps) {
@@ -126,7 +136,6 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
             const res = await fetch(`/api/public/${slug}/misiones`);
             const data = await res.json();
             if (data.success) {
-                // Tomamos todas las misiones y luego filtramos
                 setQuests(data.todas || []);
                 setGamification(data.gamification || null);
             }
@@ -145,7 +154,6 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                 const data = await res.json();
                 setReferralData(data);
                 
-                // Cargar premios canjeables
                 const rRes = await fetch(`/api/public/${slug}/loyalty/rewards`);
                 if (rRes.ok) {
                     const rData = await rRes.json();
@@ -229,7 +237,6 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
         }
     };
 
-    // Filtrar por tab localmente
     const getTabFilteredQuests = () => {
         if (activeTab === 'todas') return quests;
         if (activeTab === 'enProgreso') {
@@ -238,7 +245,6 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
         return quests.filter(q => q.estado === 'COMPLETADA' || q.estado === 'RECLAMADA');
     };
 
-    // Filtrar por buscador
     const filteredQuests = getTabFilteredQuests().filter(q => 
         q.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
         q.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
@@ -249,14 +255,25 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
         return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
     };
 
+    // Status badge color
+    const getStatusStyle = (estado: string) => {
+        if (estado === 'COMPLETADA' || estado === 'RECLAMADA') return { bg: '#dcfce7', text: '#16a34a', label: '✓ Completado' };
+        if (estado === 'PENDIENTE_APROBACION') return { bg: '#fef9c3', text: '#ca8a04', label: '⏳ En revisión' };
+        return { bg: `${primaryColor}15`, text: primaryColor, label: 'En progreso' };
+    };
+
     return (
         <div className="w-full">
-            {/* ===== HEADER DEGRADADO CON DISEÑO PREMIUM ===== */}
+            {/* ===== HEADER CON DISEÑO PREMIUM ===== */}
             <div 
-                className="relative overflow-hidden text-white rounded-b-[2.5rem] px-6 pt-5 pb-12 shadow-[0_10px_20px_-5px_rgba(0,0,0,0.1)]"
-                style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, color-mix(in srgb, ${primaryColor}, black 20%) 100%)` }}
+                className="relative overflow-hidden text-white rounded-b-[2.5rem] px-4 pt-5 pb-14 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.18)]"
+                style={{ background: `linear-gradient(145deg, ${primaryColor} 0%, color-mix(in srgb, ${primaryColor}, #000 30%) 100%)` }}
             >
-                {/* Botones de navegación de cabecera */}
+                {/* Círculos decorativos de fondo */}
+                <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/5 pointer-events-none" />
+                <div className="absolute top-16 -right-6 w-24 h-24 rounded-full bg-white/5 pointer-events-none" />
+
+                {/* Navegación */}
                 <div className="flex items-center justify-between mb-5">
                     <button 
                         onClick={() => router.push(`/${slug}`)}
@@ -264,68 +281,95 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                     >
                         <ChevronLeft size={18} />
                     </button>
-                    <h2 className="text-xs font-black uppercase tracking-widest text-white/90">
-                        Club de Recompensas de {negocioNombre}
+                    <h2 className="text-[10px] font-black uppercase tracking-widest text-white/90">
+                        Club de Recompensas · {negocioNombre}
                     </h2>
                     <button 
-                        onClick={() => alert(`Bienvenido al Club de Recompensas de {negocioNombre}. Completa desafíos creados para ganar puntos y canjearlos por premios únicos.`)}
+                        onClick={() => alert(`Bienvenido al Club de Recompensas de ${negocioNombre}. Completa desafíos para ganar puntos y canjearlos por premios únicos.`)}
                         className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center text-white active:scale-95 transition-transform border-0 cursor-pointer"
                     >
                         <HelpCircle size={18} />
                     </button>
                 </div>
 
-                {/* Textos de la cabecera */}
-                <div className="relative z-10 max-w-[70%] space-y-1">
-                    <h1 className="text-xl font-black uppercase leading-tight tracking-tight">
-                        Club de Recompensas
+                {/* Texto principal */}
+                <div className="relative z-10 max-w-[65%] space-y-1">
+                    <h1 className="text-[22px] font-black uppercase leading-tight tracking-tight">
+                        Club de<br/>Recompensas
                     </h1>
-                    <p className="text-[10px] text-white/80 font-bold uppercase tracking-wider leading-snug">
-                        Completa desafíos y obtén premios exclusivos al instante.
+                    <p className="text-[9px] text-white/75 font-bold uppercase tracking-wider leading-snug">
+                        Completa desafíos y obtén premios<br/>exclusivos al instante.
                     </p>
                 </div>
 
-                {/* Imagen 3D del regalo flotando en el lado derecho */}
+                {/* Imagen 3D del regalo — PNG sin fondo */}
                 <img 
                     src="/images/3d_gift_box.png" 
-                    alt="Regalo 3D" 
-                    className="absolute right-2 bottom-2 w-28 h-28 object-contain pointer-events-none z-10 drop-shadow-lg animate-[float_4s_ease-in-out_infinite]"
+                    alt="Premio 3D" 
+                    className="absolute right-0 bottom-0 w-36 h-36 object-contain pointer-events-none z-10 drop-shadow-2xl animate-[float_4s_ease-in-out_infinite]"
+                    style={{ filter: 'drop-shadow(0 12px 20px rgba(0,0,0,0.25))' }}
                 />
 
-                {/* Animación flotante personalizada con CSS integrado */}
                 <style dangerouslySetInnerHTML={{__html: `
                     @keyframes float {
-                        0% { transform: translateY(0px) rotate(0deg); }
-                        50% { transform: translateY(-6px) rotate(1.5deg); }
-                        100% { transform: translateY(0px) rotate(0deg); }
+                        0%   { transform: translateY(0px) rotate(0deg) scale(1); }
+                        50%  { transform: translateY(-8px) rotate(2deg) scale(1.02); }
+                        100% { transform: translateY(0px) rotate(0deg) scale(1); }
+                    }
+                    @keyframes shimmer {
+                        0%   { background-position: -200% center; }
+                        100% { background-position: 200% center; }
+                    }
+                    .progress-shimmer {
+                        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+                        background-size: 200% 100%;
+                        animation: shimmer 2s infinite;
                     }
                 `}} />
             </div>
 
-            <div className="max-w-md mx-auto px-6 -mt-10 space-y-6 relative z-20">
-                {/* ===== TARJETA DE PERFIL (Hola, Carlos) ===== */}
+            {/* ===== CONTENIDO PRINCIPAL — padding reducido ===== */}
+            <div className="max-w-md mx-auto px-3 -mt-10 space-y-5 relative z-20">
+
+                {/* ===== TARJETA DE PERFIL ===== */}
                 {referralData && (
-                    <section className="bg-white rounded-[2rem] border border-slate-100/80 p-5 shadow-[0_10px_30px_rgba(0,0,0,0.03)] space-y-4">
-                        {/* Fila superior de perfil */}
+                    <section className="bg-white rounded-[2rem] border border-slate-100/80 p-4 shadow-[0_12px_40px_rgba(0,0,0,0.06)] space-y-3.5">
+                        {/* Fila superior */}
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                {/* Avatar */}
-                                <div 
-                                    className="w-12 h-12 rounded-full flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white"
-                                    style={{ backgroundColor: primaryColor }}
-                                >
-                                    {getInitials(referralData.nombreCliente || referralData.nombre || 'C')}
+                                {/* Avatar con foto si existe, sino iniciales */}
+                                <div className="relative">
+                                    {referralData.avatarUrl ? (
+                                        <img 
+                                            src={referralData.avatarUrl} 
+                                            alt={referralData.nombreCliente || 'Cliente'} 
+                                            className="w-12 h-12 rounded-full object-cover border-2 shadow-md"
+                                            style={{ borderColor: primaryColor }}
+                                        />
+                                    ) : (
+                                        <div 
+                                            className="w-12 h-12 rounded-full flex items-center justify-center text-white font-black text-sm shadow-md border-2 border-white"
+                                            style={{ background: `linear-gradient(135deg, ${primaryColor}, color-mix(in srgb, ${primaryColor}, #000 20%))` }}
+                                        >
+                                            {getInitials(referralData.nombreCliente || referralData.nombre || 'C')}
+                                        </div>
+                                    )}
+                                    {/* Indicador online */}
+                                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-white" />
                                 </div>
+
                                 <div>
-                                    <h4 className="text-xs font-bold text-slate-400 leading-none">Hola, {referralData.nombreCliente || referralData.nombre || 'Cliente'} 👋</h4>
-                                    <div className="flex items-center gap-1.5 mt-1">
-                                        <span className="text-lg font-black text-slate-800 leading-none">{referralData.puntos}</span>
-                                        <span className="text-[10px] text-slate-400 font-black uppercase tracking-wider">pts</span>
+                                    <p className="text-[10px] font-bold text-slate-400 leading-none">
+                                        Hola, {referralData.nombreCliente || referralData.nombre || 'Cliente'} 👋
+                                    </p>
+                                    <div className="flex items-baseline gap-1 mt-1">
+                                        <span className="text-2xl font-black leading-none" style={{ color: primaryColor }}>{referralData.puntos}</span>
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">pts</span>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Botón QR */}
+                            {/* QR */}
                             <button
                                 onClick={() => setShowQr(v => !v)}
                                 className="w-10 h-10 rounded-2xl border border-slate-100 text-slate-500 active:scale-95 transition-transform cursor-pointer bg-slate-50 flex items-center justify-center hover:bg-slate-100"
@@ -334,35 +378,35 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                             </button>
                         </div>
 
-                        {/* Modal Inline QR */}
+                        {/* QR inline */}
                         {showQr && referralData.codigo && (
                             <div className="flex flex-col items-center gap-3 py-4 border-t border-slate-100/80">
-                                <QRCodeSVG value={getReferralUrl()} size={140} fgColor={primaryColor} />
-                                <span className="text-[9px] font-black text-slate-450 uppercase tracking-widest">Código de Cliente: {referralData.codigo}</span>
+                                <QRCodeSVG value={getReferralUrl()} size={130} fgColor={primaryColor} />
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Código: {referralData.codigo}</span>
                             </div>
                         )}
 
-                        {/* Caja del Enlace de Referidos */}
+                        {/* Enlace de referidos */}
                         {referralData.codigo && (
-                            <div className="bg-slate-50/70 border border-slate-100 rounded-2xl p-3 flex items-center justify-between gap-3">
+                            <div className="bg-slate-50/80 border border-slate-100 rounded-2xl p-3 flex items-center justify-between gap-2">
                                 <div className="min-w-0">
                                     <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block leading-none mb-1">Tu enlace de referidos</span>
                                     <span className="text-xs font-black text-slate-700 truncate block">r/{referralData.codigo}</span>
                                 </div>
-                                <div className="flex gap-2 shrink-0">
+                                <div className="flex gap-1.5 shrink-0">
                                     <button
                                         onClick={handleCopy}
-                                        className="px-3 py-2.5 rounded-xl border border-slate-200 text-slate-600 active:scale-95 transition-transform cursor-pointer bg-white flex items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-widest"
+                                        className="px-2.5 py-2 rounded-xl border border-slate-200 text-slate-600 active:scale-95 transition-transform cursor-pointer bg-white flex items-center gap-1 text-[8px] font-black uppercase tracking-widest"
                                     >
-                                        {copied ? <CheckCircle2 size={13} className="text-green-500" /> : <Copy size={13} />}
+                                        {copied ? <CheckCircle2 size={12} className="text-green-500" /> : <Copy size={12} />}
                                         Copiar
                                     </button>
                                     <button
                                         onClick={handleShare}
-                                        className="px-3 py-2.5 rounded-xl text-white active:scale-95 transition-transform cursor-pointer shadow-sm flex items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-widest"
+                                        className="px-2.5 py-2 rounded-xl text-white active:scale-95 transition-transform cursor-pointer shadow-sm flex items-center gap-1 text-[8px] font-black uppercase tracking-widest"
                                         style={{ backgroundColor: primaryColor }}
                                     >
-                                        <Share2 size={13} />
+                                        <Share2 size={12} />
                                         Compartir
                                     </button>
                                 </div>
@@ -371,60 +415,65 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                     </section>
                 )}
 
-                {/* ===== SECCIÓN 2: CANJEA TUS PUNTOS (CARRUSEL HORIZONTAL) ===== */}
+                {/* ===== SECCIÓN PREMIOS CANJEABLES ===== */}
                 {loyaltyRewards.length > 0 && (
                     <section className="space-y-3">
-                        <div className="flex justify-between items-center px-1">
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                                <Gift size={14} className="text-pink-500" /> Canjea tus puntos
+                        {/* Header — "Ver catálogo completo" alineado a la derecha */}
+                        <div className="flex justify-between items-center px-0.5">
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
+                                <Gift size={13} style={{ color: primaryColor }} /> Canjea tus puntos
                             </h3>
                             <Link 
                                 href={`/${slug}/misiones/premios`}
-                                className="text-[10px] font-black uppercase tracking-widest text-pink-600 hover:opacity-80 transition-opacity no-underline"
+                                className="text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-opacity no-underline ml-auto"
                                 style={{ color: primaryColor }}
                             >
-                                Ver catálogo completo &gt;
+                                Ver catálogo completo &rsaquo;
                             </Link>
                         </div>
 
-                        {/* Listado Horizontal */}
-                        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
+                        {/* Carrusel horizontal de premios — tarjetas más compactas */}
+                        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory -mx-1 px-1">
                             {loyaltyRewards.map(reward => {
                                 const tienePuntos = (referralData?.puntos || 0) >= reward.costoPuntos;
                                 return (
                                     <div 
                                         key={reward.id} 
-                                        className="w-[150px] shrink-0 bg-white border border-slate-100 rounded-3xl p-3 shadow-sm flex flex-col justify-between gap-3 snap-start"
+                                        className="w-[148px] shrink-0 bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.04)] flex flex-col snap-start"
                                     >
-                                        <div className="space-y-2 relative">
-                                            {/* Imagen del Premio */}
-                                            <div className="w-full h-24 rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center border border-slate-100">
-                                                {reward.imagenUrl ? (
-                                                    <img src={reward.imagenUrl} alt={reward.nombre} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <Gift size={28} className="text-pink-300" />
-                                                )}
-                                            </div>
-                                            {/* Badge costo */}
+                                        {/* Imagen del premio */}
+                                        <div className="relative w-full h-28 bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center overflow-hidden">
+                                            {reward.imagenUrl ? (
+                                                <img 
+                                                    src={reward.imagenUrl} 
+                                                    alt={reward.nombre} 
+                                                    className="w-full h-full object-cover" 
+                                                />
+                                            ) : (
+                                                <Gift size={32} style={{ color: primaryColor, opacity: 0.4 }} />
+                                            )}
+                                            {/* Badge de puntos */}
                                             <span 
-                                                className="absolute top-1 left-1 text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md text-white shadow-sm"
+                                                className="absolute top-2 left-2 text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg text-white shadow-sm"
                                                 style={{ backgroundColor: primaryColor }}
                                             >
                                                 {reward.costoPuntos} pts
                                             </span>
-                                            <h5 className="text-[11px] font-black text-slate-800 leading-tight line-clamp-2 uppercase tracking-tight">
-                                                {reward.nombre}
-                                            </h5>
                                         </div>
 
-                                        <button
-                                            onClick={() => handleRedeemReward(reward)}
-                                            disabled={!tienePuntos || redeemLoading === reward.id}
-                                            className="w-full py-2.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer disabled:opacity-40 text-white shadow-sm shrink-0 border-0"
-                                            style={{ backgroundColor: tienePuntos ? primaryColor : '#94a3b8' }}
-                                        >
-                                            {redeemLoading === reward.id ? '...' : 'Canjear'}
-                                        </button>
+                                        <div className="p-3 flex flex-col gap-2 flex-1">
+                                            <h5 className="text-[10px] font-black text-slate-800 leading-tight line-clamp-2 uppercase tracking-tight">
+                                                {reward.nombre}
+                                            </h5>
+                                            <button
+                                                onClick={() => handleRedeemReward(reward)}
+                                                disabled={!tienePuntos || redeemLoading === reward.id}
+                                                className="w-full py-2 text-[8px] font-black uppercase tracking-widest rounded-xl transition-all cursor-pointer disabled:opacity-40 text-white shadow-sm shrink-0 border-0 mt-auto"
+                                                style={{ backgroundColor: tienePuntos ? primaryColor : '#94a3b8' }}
+                                            >
+                                                {redeemLoading === reward.id ? '...' : 'Canjear'}
+                                            </button>
+                                        </div>
                                     </div>
                                 );
                             })}
@@ -432,116 +481,173 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                     </section>
                 )}
 
-                {/* ===== SECCIÓN 3: DESAFÍOS ACTUALES (Bajo Premios Canjeables) ===== */}
-                <section className="space-y-4">
-                    <div className="flex justify-between items-center px-1">
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                            <Trophy size={14} className="text-pink-500" style={{ color: primaryColor }} /> Desafíos del Club
+                {/* ===== SECCIÓN DESAFÍOS DEL CLUB ===== */}
+                <section className="space-y-3 pb-4">
+                    <div className="flex items-center px-0.5">
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
+                            <Trophy size={13} style={{ color: primaryColor }} /> Desafíos del Club
                         </h3>
                     </div>
 
                     {loading ? (
-                        <div className="py-8 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">Cargando desafíos...</div>
+                        <div className="space-y-3">
+                            {[1,2].map(i => (
+                                <div key={i} className="bg-white rounded-[1.5rem] border border-slate-100 p-4 space-y-3 animate-pulse">
+                                    <div className="flex gap-3">
+                                        <div className="w-12 h-12 rounded-2xl bg-slate-100" />
+                                        <div className="flex-1 space-y-2">
+                                            <div className="h-3 bg-slate-100 rounded-full w-3/4" />
+                                            <div className="h-2.5 bg-slate-100 rounded-full w-1/2" />
+                                        </div>
+                                    </div>
+                                    <div className="h-2 bg-slate-100 rounded-full" />
+                                </div>
+                            ))}
+                        </div>
                     ) : quests.length === 0 ? (
-                        <div className="bg-white border border-slate-100 rounded-3xl p-6 text-center shadow-sm">
-                            <p className="text-slate-450 text-xs font-bold uppercase tracking-wider">
+                        <div className="bg-white border border-slate-100 rounded-3xl p-8 text-center shadow-sm space-y-3">
+                            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: `${primaryColor}12` }}>
+                                <Trophy size={24} style={{ color: primaryColor }} />
+                            </div>
+                            <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
                                 No hay desafíos disponibles por ahora.
                             </p>
                         </div>
                     ) : (
-                        <div className="space-y-3.5">
-                            {/* Mostrar solo los primeros 3 desafíos destacados */}
+                        <div className="space-y-3">
                             {quests.slice(0, 3).map(q => {
                                 const IconComponent = IconMapper[q.icono] || Award;
                                 const pct = Math.min(100, (q.progresoActual / q.progresoRequerido) * 100);
                                 const isCelebrating = celebrateQuest === q.id;
+                                const statusStyle = getStatusStyle(q.estado);
+                                const isComplete = q.estado === 'COMPLETADA' || q.estado === 'RECLAMADA';
 
                                 return (
                                     <div 
                                         key={q.id}
                                         onClick={() => router.push(`/${slug}/misiones/estado`)}
-                                        className={`bg-white rounded-[2rem] border p-5 shadow-[0_4px_25px_rgba(0,0,0,0.015)] space-y-3 relative overflow-hidden transition-all duration-300 cursor-pointer hover:scale-[1.01] active:scale-[0.99] ${
-                                            isCelebrating ? 'border-green-500 bg-green-50/10' : 'border-slate-100/80'
+                                        className={`relative rounded-[1.75rem] overflow-hidden cursor-pointer transition-all duration-200 active:scale-[0.98] hover:shadow-xl ${
+                                            isCelebrating 
+                                                ? 'shadow-[0_0_0_2px_#22c55e]' 
+                                                : 'shadow-[0_4px_24px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.1)]'
                                         }`}
                                     >
-                                        <div className="flex items-center justify-between gap-3">
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <div 
-                                                    className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-inner"
-                                                    style={{ backgroundColor: `${q.color}15`, color: q.color }}
-                                                >
-                                                    <IconComponent size={18} />
+                                        {/* Fondo degradado sutil */}
+                                        <div 
+                                            className="absolute inset-0 opacity-[0.04]"
+                                            style={{ background: `linear-gradient(135deg, ${q.color} 0%, transparent 60%)` }}
+                                        />
+
+                                        <div className="relative bg-white p-4 space-y-3">
+                                            {/* Celebration overlay */}
+                                            {isCelebrating && (
+                                                <div className="absolute inset-0 bg-green-50/90 backdrop-blur-[1px] flex items-center justify-center z-20 rounded-[1.75rem]">
+                                                    <div className="text-center animate-bounce">
+                                                        <span className="text-3xl">🎉</span>
+                                                        <p className="font-black text-green-600 text-[10px] uppercase tracking-widest mt-1">¡Desafío Completado!</p>
+                                                    </div>
                                                 </div>
-                                                <div className="min-w-0 space-y-0.5">
-                                                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight truncate">
-                                                        {q.nombre}
-                                                    </h4>
-                                                    <p className="text-[9px] text-slate-400 font-bold leading-normal truncate">
+                                            )}
+
+                                            {/* Row principal */}
+                                            <div className="flex items-start gap-3">
+                                                {/* Icono */}
+                                                <div 
+                                                    className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm"
+                                                    style={{ 
+                                                        background: `linear-gradient(135deg, ${q.color}22 0%, ${q.color}10 100%)`,
+                                                        color: q.color 
+                                                    }}
+                                                >
+                                                    <IconComponent size={20} />
+                                                </div>
+
+                                                {/* Info */}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-tight leading-tight line-clamp-1">
+                                                            {q.nombre}
+                                                        </h4>
+                                                        {/* Status badge */}
+                                                        <span 
+                                                            className="text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap border"
+                                                            style={{ 
+                                                                color: statusStyle.text, 
+                                                                backgroundColor: statusStyle.bg,
+                                                                borderColor: `${statusStyle.text}20`
+                                                            }}
+                                                        >
+                                                            {statusStyle.label}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[9px] text-slate-400 font-semibold leading-snug mt-0.5 line-clamp-2">
                                                         {q.descripcion}
                                                     </p>
                                                 </div>
                                             </div>
 
-                                            <span 
-                                                className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shrink-0"
-                                                style={{ color: primaryColor, backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}15` }}
-                                            >
-                                                +{q.recompensas.join(' + ')}
-                                            </span>
-                                        </div>
+                                            {/* Recompensas */}
+                                            {q.recompensas.length > 0 && (
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {q.recompensas.slice(0, 3).map((r, i) => (
+                                                        <span 
+                                                            key={i}
+                                                            className="inline-flex items-center gap-1 text-[7.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full"
+                                                            style={{ backgroundColor: `${q.color}12`, color: q.color }}
+                                                        >
+                                                            <Gift size={8} />
+                                                            {r}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
 
-                                        {/* Barra de progreso con estilo único */}
-                                        <div className="space-y-1">
-                                            <div className="w-full h-2 bg-slate-50 border border-slate-100/50 rounded-full overflow-hidden p-0.5">
-                                                <div 
-                                                    className="h-full rounded-full transition-all duration-500"
-                                                    style={{ 
-                                                        width: `${pct}%`, 
-                                                        backgroundColor: q.color 
-                                                    }}
-                                                />
+                                            {/* Barra de progreso */}
+                                            <div className="space-y-1.5">
+                                                <div className="relative w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                                    <div 
+                                                        className="h-full rounded-full transition-all duration-700 relative overflow-hidden"
+                                                        style={{ width: `${pct}%`, backgroundColor: q.color }}
+                                                    >
+                                                        {pct > 15 && <div className="progress-shimmer absolute inset-0 rounded-full" />}
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                                                        {isComplete ? '¡Completado!' : 'Progreso'}
+                                                    </span>
+                                                    <span className="text-[8px] font-black" style={{ color: q.color }}>
+                                                        {q.progresoActual} / {q.progresoRequerido}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-wider">
-                                                <span>Progreso</span>
-                                                <span>{q.progresoActual} / {q.progresoRequerido}</span>
-                                            </div>
-                                        </div>
 
-                                        {/* Acción rápida si es manual */}
-                                        {q.estado === 'EN_PROGRESO' && q.validacionTipo === 'USUARIO' && (
-                                            <div className="pt-1 flex justify-end">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleConfirmQuest(q.id);
-                                                    }}
-                                                    className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-white rounded-xl shadow-sm border-0 cursor-pointer"
-                                                    style={{ backgroundColor: primaryColor }}
-                                                >
-                                                    Hacer Desafío
-                                                </button>
-                                            </div>
-                                        )}
-                                        {q.estado === 'COMPLETADA' && (
-                                            <div className="text-green-500 text-[8px] font-black uppercase tracking-wider flex items-center justify-end gap-1">
-                                                <CheckCircle2 size={10} fill="currentColor" className="text-white" /> Completado
-                                            </div>
-                                        )}
-                                        {q.estado === 'PENDIENTE_APROBACION' && (
-                                            <div className="text-amber-500 text-[8px] font-black uppercase tracking-wider flex items-center justify-end gap-1">
-                                                <Clock size={10} /> En revisión
-                                            </div>
-                                        )}
+                                            {/* Acción si es manual */}
+                                            {q.estado === 'EN_PROGRESO' && q.validacionTipo === 'USUARIO' && (
+                                                <div className="flex justify-end pt-0.5">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleConfirmQuest(q.id);
+                                                        }}
+                                                        className="px-4 py-2 text-[9px] font-black uppercase tracking-widest text-white rounded-xl shadow-sm border-0 cursor-pointer active:scale-95 transition-transform"
+                                                        style={{ backgroundColor: primaryColor }}
+                                                    >
+                                                        ✓ Hacer Desafío
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 );
                             })}
 
-                            {/* Botón Ver Todos */}
+                            {/* Botón "Ver todos" */}
                             <Link
                                 href={`/${slug}/misiones/estado`}
-                                className="w-full py-4 bg-white border border-slate-100 hover:bg-slate-50 text-slate-700 active:scale-95 transition-transform rounded-[1.5rem] flex items-center justify-center gap-1.5 shadow-sm no-underline cursor-pointer"
+                                className="w-full py-3.5 bg-white border border-slate-100 hover:bg-slate-50 active:scale-[0.98] transition-all rounded-[1.5rem] flex items-center justify-center gap-2 shadow-sm no-underline cursor-pointer"
                             >
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-650">Ver todos los desafíos</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Ver todos los desafíos</span>
                                 <ArrowRight size={13} style={{ color: primaryColor }} />
                             </Link>
                         </div>
