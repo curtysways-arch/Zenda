@@ -38,6 +38,7 @@ interface Quest {
     recompensas: string[];
     fechaInicio?: string;
     fechaFin?: string;
+    imagenUrl?: string;
 }
 
 interface QuestDetalleClientProps {
