@@ -56,18 +56,23 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
         return null;
     }
 
+    // Verificar si el cliente tiene una sesión activa mediante cookies de cliente
+    const hasSession = typeof document !== 'undefined' && document.cookie.includes('customer_token');
+
     const tabs = [
         {
             label: 'Inicio',
             icon: Home,
             href: `/${slug}`,
             active: pathname === `/${slug}` && !pathname.includes('/servicios'),
+            visible: true
         },
         {
             label: 'Agenda',
             icon: Calendar,
             href: `/${slug}/mis-reservas`,
             active: pathname.includes('/mis-reservas') && activeTabParam !== 'academia',
+            visible: hasSession
         },
         {
             label: 'Servicios',
@@ -75,20 +80,23 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
             href: `/${slug}/servicios`,
             active: pathname.includes('/servicios'),
             isCentral: true,
+            visible: true
         },
         {
             label: 'Premios',
             icon: Gift,
             href: `/${slug}/misiones`,
             active: pathname.includes('/referidos') || pathname.includes('/misiones'),
+            visible: true
         },
         {
             label: 'Perfil',
             icon: User,
             href: `/${slug}/perfil`,
             active: pathname.includes('/perfil'),
+            visible: hasSession
         },
-    ];
+    ].filter(t => t.visible);
 
     return (
         <nav

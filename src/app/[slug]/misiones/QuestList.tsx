@@ -364,9 +364,30 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
             {/* ===== CONTENIDO PRINCIPAL — padding reducido ===== */}
             <div className="max-w-md mx-auto px-3 -mt-10 space-y-5 relative z-20">
 
-                {/* ===== TARJETA DE PERFIL ===== */}
-                {referralData && (
-                    <section className="bg-white rounded-[2rem] border border-slate-100/80 p-4 shadow-[0_12px_40px_rgba(0,0,0,0.06)] space-y-3.5">
+                {/* ===== REQUERIR INICIO DE SESIÓN SI NO ESTÁ AUTENTICADO ===== */}
+                {!referralData ? (
+                    <section className="bg-white rounded-[2rem] border border-slate-100/80 p-6 shadow-[0_12px_40px_rgba(0,0,0,0.06)] text-center space-y-4">
+                        <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center mx-auto" style={{ color: primaryColor }}>
+                            <Lock size={28} />
+                        </div>
+                        <div className="space-y-1">
+                            <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Inicio de Sesión Requerido</h3>
+                            <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                                Inicia sesión con tu número de teléfono para ver tus puntos acumulados, canjear premios y acceder a tus cupones de descuento.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => router.push(`/${slug}/perfil`)}
+                            className="w-full py-3.5 text-[10px] font-black uppercase tracking-widest rounded-2xl text-white shadow-md active:scale-95 transition-transform cursor-pointer border-0"
+                            style={{ backgroundColor: primaryColor }}
+                        >
+                            Acceder al Club de Recompensas
+                        </button>
+                    </section>
+                ) : (
+                    <>
+                        {/* ===== TARJETA DE PERFIL ===== */}
+                        <section className="bg-white rounded-[2rem] border border-slate-100/80 p-4 shadow-[0_12px_40px_rgba(0,0,0,0.06)] space-y-3.5">
                         {/* Fila superior */}
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -766,7 +787,8 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                             </Link>
                         </div>
                     )}
-                </section>
+                    </>
+                )}
             </div>
 
             {/* MODAL: REGISTRAR CÓDIGO DE REFERIDO MANUAL */}
