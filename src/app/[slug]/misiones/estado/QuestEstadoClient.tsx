@@ -149,10 +149,10 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                     </div>
                     <div>
                         <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight leading-snug">Completa desafíos y sube de nivel</h4>
-                        <p className="text-[10px] text-slate-450 font-bold leading-normal">Acumula puntos y desbloquea recompensas exclusivas</p>
+                        <p className="text-[10px] text-slate-500 font-bold leading-normal">Acumula puntos y desbloquea recompensas exclusivas</p>
                     </div>
                 </div>
-                <ChevronRight size={18} className="text-slate-350" />
+                <ChevronRight size={18} className="text-slate-400" />
             </div>
 
             {/* Pestañas / Filtros */}
@@ -161,13 +161,13 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                     onClick={() => setActiveTab('enProgreso')}
                     className={`flex-1 py-2 px-1 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer border-0 flex items-center justify-center gap-1.5 ${
                         activeTab === 'enProgreso' 
-                            ? 'bg-white text-slate-800 shadow-sm' 
-                            : 'text-slate-450 hover:text-slate-600 bg-transparent'
+                            ? 'bg-white text-slate-850 shadow-sm' 
+                            : 'text-slate-500 hover:text-slate-700 bg-transparent'
                     }`}
                 >
                     <Clock size={12} style={{ color: activeTab === 'enProgreso' ? primaryColor : undefined }} />
                     En progreso
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-200/50 text-slate-600 font-bold">
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-200/50 text-slate-700 font-bold">
                         {getCount('enProgreso')}
                     </span>
                 </button>
@@ -176,13 +176,13 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                     onClick={() => setActiveTab('completados')}
                     className={`flex-1 py-2 px-1 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer border-0 flex items-center justify-center gap-1.5 ${
                         activeTab === 'completados' 
-                            ? 'bg-white text-slate-800 shadow-sm' 
-                            : 'text-slate-450 hover:text-slate-600 bg-transparent'
+                            ? 'bg-white text-slate-850 shadow-sm' 
+                            : 'text-slate-500 hover:text-slate-700 bg-transparent'
                     }`}
                 >
                     <CheckCircle2 size={12} style={{ color: activeTab === 'completados' ? primaryColor : undefined }} />
                     Completados
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-200/50 text-slate-600 font-bold">
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-200/50 text-slate-700 font-bold">
                         {getCount('completados')}
                     </span>
                 </button>
@@ -191,12 +191,12 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                     onClick={() => setActiveTab('todos')}
                     className={`flex-1 py-2 px-1 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer border-0 flex items-center justify-center gap-1.5 ${
                         activeTab === 'todos' 
-                            ? 'bg-white text-slate-800 shadow-sm' 
-                            : 'text-slate-450 hover:text-slate-600 bg-transparent'
+                            ? 'bg-white text-slate-850 shadow-sm' 
+                            : 'text-slate-500 hover:text-slate-700 bg-transparent'
                     }`}
                 >
                     Todos
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-200/50 text-slate-600 font-bold">
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-200/50 text-slate-700 font-bold">
                         {getCount('todos')}
                     </span>
                 </button>
@@ -205,7 +205,7 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
             {/* Listado de Tarjetas */}
             {filtered.length === 0 ? (
                 <div className="bg-white border border-slate-100 rounded-3xl p-8 text-center shadow-sm">
-                    <p className="text-slate-450 text-xs font-bold uppercase tracking-wider">
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
                         No hay desafíos para mostrar en esta pestaña.
                     </p>
                 </div>
@@ -270,7 +270,7 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                                         <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight leading-tight pt-1">
                                             Campaña: {q.nombre}
                                         </h3>
-                                        <p className="text-[10px] text-slate-400 font-semibold leading-normal">
+                                        <p className="text-[10px] text-slate-600 font-semibold leading-normal">
                                             {q.descripcion}
                                         </p>
                                     </div>
@@ -289,7 +289,7 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
 
                                 {/* Barra de Progreso Actual */}
                                 <div className="space-y-1">
-                                    <div className="flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                                    <div className="flex justify-between items-center text-[8px] font-black text-slate-500 uppercase tracking-widest">
                                         <span>PROGRESO ACTUAL</span>
                                         <span className="text-[9px] font-black text-slate-700">{q.progresoActual} / {q.progresoRequerido}</span>
                                     </div>
@@ -307,7 +307,7 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                                 <div className="bg-slate-50/80 border border-slate-100 rounded-2xl px-3 py-2.5 flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-1.5 text-slate-500">
                                         <Award size={13} style={{ color: q.color }} />
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Estado del desafío</span>
+                                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Estado del desafío</span>
                                     </div>
 
                                     {isComplete ? (
