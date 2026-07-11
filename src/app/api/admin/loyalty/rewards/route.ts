@@ -35,7 +35,7 @@ export async function POST(req: Request) {
         if (!negocioId) return NextResponse.json({ error: "Negocio no especificado" }, { status: 400 });
 
         const body = await req.json();
-        const { nombre, descripcion, costoPuntos, tipo, valor, cantidadTotal } = body;
+        const { nombre, descripcion, costoPuntos, tipo, valor, cantidadTotal, imagenUrl } = body;
 
         if (!nombre || costoPuntos === undefined || !tipo) {
             return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
@@ -47,6 +47,7 @@ export async function POST(req: Request) {
                 negocioId,
                 nombre,
                 descripcion: descripcion || null,
+                imagenUrl: imagenUrl || null,
                 costoPuntos: parseInt(String(costoPuntos)),
                 tipo,
                 valor: valor ? String(valor) : null,

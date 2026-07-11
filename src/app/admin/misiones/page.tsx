@@ -43,8 +43,8 @@ import {
     Sliders,
     X,
     MessageSquare,
-    AlertTriangle
 } from 'lucide-react';
+import ImageUploader from '@/components/ui/ImageUploader';
 
 interface ActionConfig {
     id: string;
@@ -275,14 +275,14 @@ export default function QuestDashboard() {
         fechaFin: ''
     });
 
-    // Formulario de Catálogo de Premios
     const [catalogRewardFormData, setCatalogRewardFormData] = useState({
         nombre: '',
         descripcion: '',
         costoPuntos: 500,
         tipo: 'SERVICIO_GRATIS',
         valor: '',
-        cantidadTotal: ''
+        cantidadTotal: '',
+        imagenUrl: ''
     });
 
     // Formulario de Ajuste Manual de Puntos
@@ -1427,7 +1427,8 @@ export default function QuestDashboard() {
                     costoPuntos: Number(catalogRewardFormData.costoPuntos),
                     tipo: catalogRewardFormData.tipo,
                     valor: catalogRewardFormData.valor,
-                    cantidadTotal: catalogRewardFormData.cantidadTotal ? Number(catalogRewardFormData.cantidadTotal) : null
+                    cantidadTotal: catalogRewardFormData.cantidadTotal ? Number(catalogRewardFormData.cantidadTotal) : null,
+                    imagenUrl: catalogRewardFormData.imagenUrl || null
                 })
             });
             const data = await res.json();
@@ -1440,7 +1441,8 @@ export default function QuestDashboard() {
                     costoPuntos: 500,
                     tipo: 'SERVICIO_GRATIS',
                     valor: '',
-                    cantidadTotal: ''
+                    cantidadTotal: '',
+                    imagenUrl: ''
                 });
                 fetchData();
             } else {
@@ -3812,6 +3814,17 @@ export default function QuestDashboard() {
                                         placeholder="Ej. ID del servicio o 20%"
                                     />
                                 </div>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Imagen del Premio</label>
+                                <ImageUploader
+                                    category="loyalty"
+                                    aspect="square"
+                                    currentUrl={catalogRewardFormData.imagenUrl}
+                                    onUploadSuccess={(media) => setCatalogRewardFormData(prev => ({ ...prev, imagenUrl: media.url }))}
+                                    onRemove={() => setCatalogRewardFormData(prev => ({ ...prev, imagenUrl: '' }))}
+                                    label="Sube una foto del premio"
+                                />
                             </div>
                             <div>
                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Descripción</label>
