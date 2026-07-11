@@ -103,6 +103,17 @@ export async function GET(
             where: { referrerId: user.id, negocioId, estado: "VALIDO" }
         });
 
+        // 6b. Verificar si este usuario fue referido por alguien (quién es su patrocinador/referrer)
+        const referredEvent = await prisma.referralEvent.findFirst({
+            where: { referredId: user.id, negocioId },
+            include: {
+                Usuario: {
+                    select: { nombre: true }
+                }
+            }
+        });
+        const referidoPorNombre = referredEvent?.Usuario?.nombre || null;
+
         // 7. Balance de puntos
         const pointsRecord = await (prisma as any).userPoints.findUnique({
             where: { userId_negocioId: { userId: user.id, negocioId } }
@@ -173,6 +184,8 @@ export async function GET(
             premios: rewards,
             totalReferidosValidos,
             nombreCliente: user.nombre,
+            avatarUrl: (user as any).imagenUrl || (user as any).avatarUrl || null,
+            referidoPorNombre,
             puntos,
             puntosActivos,
             cupones,

@@ -123,11 +123,14 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
     const [celebrateQuest, setCelebrateQuest] = useState<string | null>(null);
 
     // Referidos y Premios
-    const [referralData, setReferralData] = useState<ReferralData | null>(null);
+    const [referralData, setReferralData] = useState<any | null>(null);
     const [loyaltyRewards, setLoyaltyRewards] = useState<LoyaltyReward[]>([]);
     const [copied, setCopied] = useState(false);
     const [showQr, setShowQr] = useState(false);
     const [redeemLoading, setRedeemLoading] = useState<string | null>(null);
+    const [isReferralModalOpen, setIsReferralModalOpen] = useState(false);
+    const [manualReferralCode, setManualReferralCode] = useState('');
+    const [manualReferralSubmitLoading, setManualReferralSubmitLoading] = useState(false);
 
     // Cargar misiones
     const fetchQuests = async () => {
@@ -209,6 +212,30 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
             alert('Error de conexión.');
         } finally {
             setRedeemLoading(null);
+        }
+    const handleRegisterReferralCode = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!manualReferralCode.trim()) return;
+        setManualReferralSubmitLoading(true);
+        try {
+            const res = await fetch(`/api/${slug}/referrals/code`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ codigoReferido: manualReferralCode })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert(`¡Código registrado! Fuiste referido por ${data.referidoPor || 'tu amigo'}.`);
+                setIsReferralModalOpen(false);
+                setManualReferralCode('');
+                fetchReferralData();
+            } else {
+                alert(data.error || 'Error al registrar código.');
+            }
+        } catch {
+            alert('Error de conexión.');
+        } finally {
+            setManualReferralSubmitLoading(false);
         }
     };
 
@@ -386,6 +413,26 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                             </div>
                         )}
 
+                        {/* Indicador de referido o botón para registrar referido */}
+                        <div className="border-t border-slate-100/60 pt-3">
+                            {referralData.referidoPorNombre ? (
+                                <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-3 flex items-center gap-2">
+                                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                                    <span className="text-[10px] font-black text-emerald-700 uppercase tracking-wider">
+                                        Te recomendó: <span className="font-extrabold text-slate-800">{referralData.referidoPorNombre}</span>
+                                    </span>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setIsReferralModalOpen(true)}
+                                    className="w-full py-3 bg-slate-50 border border-dashed border-slate-300 hover:bg-slate-100 text-slate-700 rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95 text-[9px] font-black uppercase tracking-wider"
+                                >
+                                    <Sparkles size={14} className="text-amber-500" />
+                                    ¿Te recomendó un amigo? Ingresa su código
+                                </button>
+                            )}
+                        </div>
+
                         {/* Enlace de referidos */}
                         {referralData.codigo && (
                             <div className="bg-slate-50/80 border border-slate-100 rounded-2xl p-3 flex items-center justify-between gap-2">
@@ -412,6 +459,63 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                                 </div>
                             </div>
                         )}
+                    </section>
+                )}
+
+                {/* ===== SECCIÓN CUPONES ACTIVOS ===== */}
+                {referralData?.cupones && referralData.cupones.length > 0 && (
+                    <section className="space-y-3">
+                        <div className="flex justify-between items-center px-0.5">
+                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
+                                <Percent size={13} style={{ color: primaryColor }} /> Cupones y Descuentos
+                            </h3>
+                        </div>
+                        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory -mx-1 px-1">
+                            {referralData.cupones.map((coupon: any) => {
+                                const handleShareCoupon = async () => {
+                                    const shareText = `¡Usa mi cupón descuento "${coupon.codigo}" en ${negocioNombre || 'CitiOx'} para obtener un beneficio increíble! 🎁✨`;
+                                    if (navigator.share) {
+                                        await navigator.share({
+                                            title: 'Cupón de Regalo',
+                                            text: shareText,
+                                            url: window.location.origin + `/${slug}`
+                                        }).catch(() => {});
+                                    } else {
+                                        navigator.clipboard.writeText(`${shareText}\n${window.location.origin}/${slug}`);
+                                        alert('¡Texto del cupón copiado al portapapeles!');
+                                    }
+                                };
+
+                                return (
+                                    <div 
+                                        key={coupon.id} 
+                                        className="w-[180px] shrink-0 bg-white border border-slate-100 rounded-3xl p-3.5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between snap-start"
+                                    >
+                                        <div>
+                                            <span 
+                                                className="text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg text-white shadow-sm inline-block mb-2"
+                                                style={{ backgroundColor: primaryColor }}
+                                            >
+                                                {coupon.tipo === 'PORCENTAJE' ? `${coupon.valor}% OFF` : `$${coupon.valor} OFF`}
+                                            </span>
+                                            <h5 className="text-[11px] font-black text-slate-800 uppercase tracking-tight line-clamp-1">
+                                                {coupon.codigo}
+                                            </h5>
+                                            <p className="text-[8px] text-slate-400 font-semibold mt-1 leading-snug line-clamp-2">
+                                                {coupon.descripcion || `Obtén descuento ingresando este código en tu próxima reserva.`}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={handleShareCoupon}
+                                            className="w-full mt-3 py-2 text-[8px] font-black uppercase tracking-widest rounded-xl text-white shadow-sm border-0 cursor-pointer flex items-center justify-center gap-1"
+                                            style={{ backgroundColor: primaryColor }}
+                                        >
+                                            <Share2 size={10} /> Compartir
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </section>
                 )}
 
@@ -658,6 +762,61 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                     )}
                 </section>
             </div>
+
+            {/* MODAL: REGISTRAR CÓDIGO DE REFERIDO MANUAL */}
+            {isReferralModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                    <form onSubmit={handleRegisterReferralCode} className="bg-white border border-slate-150 rounded-[2rem] w-full max-w-sm shadow-2xl p-6 relative">
+                        <button 
+                            type="button" 
+                            onClick={() => setIsReferralModalOpen(false)} 
+                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-650 font-bold cursor-pointer text-lg bg-transparent border-0"
+                        >
+                            ×
+                        </button>
+                        <div className="text-center space-y-2 mb-5">
+                            <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mx-auto text-amber-500">
+                                <Sparkles size={24} />
+                            </div>
+                            <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Ingresar Código de Referido</h3>
+                            <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                                Ingresa el código único del amigo que te recomendó {negocioNombre} para participar en las campañas de referidos.
+                            </p>
+                        </div>
+                        <div className="space-y-4 mb-5">
+                            <div>
+                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Código de Referido</label>
+                                <input
+                                    type="text"
+                                    value={manualReferralCode}
+                                    onChange={e => setManualReferralCode(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-2xl border border-slate-150 text-xs font-black uppercase text-center text-slate-800 bg-slate-50 focus:outline-none focus:border-slate-300 placeholder:normal-case"
+                                    placeholder="Ej. CARLO707"
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button 
+                                type="button" 
+                                onClick={() => setIsReferralModalOpen(false)} 
+                                className="flex-1 py-3 border border-slate-150 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-500 cursor-pointer bg-white"
+                                disabled={manualReferralSubmitLoading}
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                type="submit" 
+                                className="flex-1 py-3 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 cursor-pointer border-0"
+                                style={{ backgroundColor: primaryColor }}
+                                disabled={manualReferralSubmitLoading}
+                            >
+                                {manualReferralSubmitLoading ? 'Procesando...' : 'Validar Código'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
         </div>
     );
 }
