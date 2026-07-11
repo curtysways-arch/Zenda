@@ -485,6 +485,7 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                                     </button>
                                 </div>
                             </div>
+                        )}
                     </section>
 
                 {/* ===== SECCIÓN CUPONES ACTIVOS ===== */}
