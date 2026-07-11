@@ -356,7 +356,7 @@ export default function QuestDashboard() {
             setLoyaltyRewards(loyaltyRewardsRes || []);
             setPointsRankings(pointsRes || []);
             setCoupons(couponsRes || []);
-            setUsersList(usuariosRes || []);
+            setUsersList(Array.isArray(usuariosRes) ? usuariosRes : []);
             setStaffList(staffRes.staff || staffRes || []);
             setServicesList(servicesRes || []);
 
@@ -3812,7 +3812,7 @@ export default function QuestDashboard() {
                                     required
                                 >
                                     <option value="">-- Elige un cliente --</option>
-                                    {usersList.map(u => (
+                                    {Array.isArray(usersList) && usersList.map(u => (
                                         <option key={u.id} value={u.id}>{u.nombre} ({u.email || u.phone})</option>
                                     ))}
                                 </select>
