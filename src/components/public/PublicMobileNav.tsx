@@ -42,12 +42,24 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
     const [hasSession, setHasSession] = useState(false);
 
     useEffect(() => {
-        const checkSession = () => {
-            setHasSession(document.cookie.includes('cs=1'));
+        const checkSession = async () => {
+            // Primero intentar leer la cookie cs=1 directamente (más rápido)
+            if (document.cookie.includes('cs=1')) {
+                setHasSession(true);
+                return;
+            }
+            // Si no hay cs=1, consultar el servidor para sincronizar
+            // (usuarios con sesión anterior que no tienen cs aún)
+            try {
+                const res = await fetch(`/api/${slug}/auth/session`, { credentials: 'include' });
+                const data = await res.json();
+                setHasSession(data.active === true);
+            } catch {
+                setHasSession(false);
+            }
         };
         checkSession();
-        // Re-verificar cada vez que el pathname cambia (ej: después de login)
-    }, [pathname]);
+    }, [pathname, slug]);
 
     // Visibilidad ampliada: Mostrar en la landing, cursos, reservas y servicios
     const isVisible =
