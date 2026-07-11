@@ -30,7 +30,7 @@ export const GLOBAL_QUEST_TEMPLATES: QuestTemplate[] = [
     cantidadMeta: 1,
     validacionTipo: 'AUTOMATICO',
     acciones: [
-      { action: 'ADD_POINTS', value: { puntos: 50 } },
+      { action: 'ADD_POINTS', value: 50 },
       { action: 'SEND_PUSH', value: { title: '🎉 ¡Bienvenido a Citiox!', body: 'Has ganado tus primeros 50 puntos por completar tu primera cita.' } }
     ]
   },
@@ -47,7 +47,7 @@ export const GLOBAL_QUEST_TEMPLATES: QuestTemplate[] = [
     cantidadMeta: 3,
     validacionTipo: 'AUTOMATICO',
     acciones: [
-      { action: 'ADD_POINTS', value: { puntos: 150 } },
+      { action: 'ADD_POINTS', value: 150 },
       { action: 'CREATE_COUPON', value: { tipo: 'PORCENTAJE', valor: 15 } }
     ]
   },
@@ -64,9 +64,9 @@ export const GLOBAL_QUEST_TEMPLATES: QuestTemplate[] = [
     cantidadMeta: 10,
     validacionTipo: 'AUTOMATICO',
     acciones: [
-      { action: 'ADD_POINTS', value: { puntos: 500 } },
+      { action: 'ADD_POINTS', value: 500 },
       { action: 'CREATE_COUPON', value: { tipo: 'FIJO', valor: 20 } },
-      { action: 'UP_LEVEL', value: { xp: 200 } }
+      { action: 'UP_LEVEL', value: 200 }
     ]
   },
   {
@@ -89,7 +89,7 @@ export const GLOBAL_QUEST_TEMPLATES: QuestTemplate[] = [
         ]
     },
     acciones: [
-      { action: 'ADD_POINTS', value: { puntos: 100 } }
+      { action: 'ADD_POINTS', value: 100 }
     ]
   },
   {
@@ -105,7 +105,7 @@ export const GLOBAL_QUEST_TEMPLATES: QuestTemplate[] = [
     cantidadMeta: 1,
     validacionTipo: 'USUARIO',
     acciones: [
-      { action: 'ADD_POINTS', value: { puntos: 30 } },
+      { action: 'ADD_POINTS', value: 30 },
       { action: 'SEND_PUSH', value: { title: '📸 ¡Gracias por seguirnos!', body: 'Has recibido 30 puntos por seguir nuestro perfil en Instagram.' } }
     ]
   },
@@ -123,7 +123,7 @@ export const GLOBAL_QUEST_TEMPLATES: QuestTemplate[] = [
     validacionTipo: 'AUTOMATICO',
     acciones: [
       { action: 'CREATE_COUPON', value: { tipo: 'PORCENTAJE', valor: 25 } },
-      { action: 'ADD_POINTS', value: { puntos: 200 } }
+      { action: 'ADD_POINTS', value: 200 }
     ]
   },
   {
