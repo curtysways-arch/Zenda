@@ -3763,7 +3763,7 @@ export default function QuestDashboard() {
             {/* MODAL: CREAR PREMIO DE CATÁLOGO */}
             {isCatalogRewardModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <form onSubmit={handleCreateCatalogReward} className="bg-white border border-slate-150 rounded-[2.5rem] w-full max-w-md shadow-2xl p-8">
+                    <form onSubmit={handleCreateCatalogReward} className="bg-white border border-slate-150 rounded-[2.5rem] w-full max-w-md max-h-[90vh] overflow-y-auto scrollbar-thin shadow-2xl p-8">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
                             <h3 className="text-base font-black text-slate-800 uppercase tracking-wider">Crear Premio de Catálogo</h3>
                             <button type="button" onClick={() => setIsCatalogRewardModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold cursor-pointer">×</button>
