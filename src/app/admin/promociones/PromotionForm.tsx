@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { X, Save, Image as ImageIcon } from 'lucide-react';
 import { createPromotion, updatePromotion } from '@/app/actions/promotionActions';
 import ImageUploader from '@/components/ui/ImageUploader';
@@ -18,6 +18,7 @@ export default function PromotionForm({
 }) {
     const isEdit = !!initialData;
     const [loading, setLoading] = useState(false);
+    const servicesRef = useRef<HTMLDivElement>(null);
 
     // Convertir fechas a YYYY-MM-DDThh:mm (formato input datetime-local)
     const formatDate = (d?: string) => {
@@ -82,6 +83,18 @@ export default function PromotionForm({
         e.preventDefault();
         setError('');
 
+        if (form.serviceIds.length === 0) {
+            setError('Debes seleccionar al menos un servicio para aplicar la promoción.');
+            setTimeout(() => {
+                servicesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const firstCheckbox = servicesRef.current?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+                if (firstCheckbox) {
+                    firstCheckbox.focus();
+                }
+            }, 100);
+            return;
+        }
+
         if (new Date(form.fechaFin) <= new Date(form.fechaInicio)) {
             return setError('La fecha de fin debe ser mayor a la fecha de inicio');
         }
@@ -108,10 +121,6 @@ export default function PromotionForm({
             horaFinValida: form.horaFinValida || null,
             tipoPromo: form.tipoPromo
         };
-
-        if (form.serviceIds.length === 0) {
-            return setError('Debes seleccionar al menos un servicio para aplicar la promoción.');
-        }
 
         const res = isEdit
             ? await updatePromotion(initialData.id, payload)
@@ -153,6 +162,32 @@ export default function PromotionForm({
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-4">
+                            {/* Servicios Participantes (Arriba con ref de error/foco) */}
+                            <div 
+                                ref={servicesRef}
+                                className={`p-5 rounded-3xl border transition-all duration-300 ${error.includes('servicio') ? 'border-red-500 bg-red-50/20 ring-4 ring-red-500/10' : 'border-gray-100 bg-gray-50/30'}`}
+                            >
+                                <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-3">Servicios Participantes</label>
+                                {services.length === 0 ? (
+                                    <p className="text-sm text-gray-500">No tienes servicios activos registrados.</p>
+                                ) : (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-40 overflow-y-auto pr-2">
+                                        {services.map(service => (
+                                            <label key={service.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-white hover:bg-gray-50 cursor-pointer transition-colors">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={form.serviceIds.includes(service.id)}
+                                                    onChange={() => toggleService(service.id)}
+                                                    className="w-5 h-5 rounded-md border-gray-300"
+                                                    style={{ accentColor: 'var(--primary-color)' }}
+                                                />
+                                                <span className="text-sm font-bold text-gray-800">{service.nombre}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
                             <div>
                                 <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Título</label>
                                 <input
@@ -356,29 +391,7 @@ export default function PromotionForm({
                                     ))}
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Servicios Participantes</label>
-                                {services.length === 0 ? (
-                                    <p className="text-sm text-gray-500">No tienes servicios activos registrados.</p>
-                                ) : (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-40 overflow-y-auto pr-2">
-                                        {services.map(service => (
-                                            <label key={service.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={form.serviceIds.includes(service.id)}
-                                                    onChange={() => toggleService(service.id)}
-                                                    className="w-5 h-5 rounded-md border-gray-300"
-                                                    style={{ accentColor: 'var(--primary-color)' }}
-                                                />
-                                                <span className="text-sm font-bold text-gray-800">{service.nombre}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                )}
                             </div>
-
-                        </div>
 
                         <div className="pt-6">
                             <button
