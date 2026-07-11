@@ -1461,6 +1461,8 @@ export default function QuestDashboard() {
         } finally {
             setSubmitting(false);
         }
+    };
+
     const handleOpenEditCatalogReward = (reward: any) => {
         setEditingCatalogRewardId(reward.id);
         setCatalogRewardFormData({
