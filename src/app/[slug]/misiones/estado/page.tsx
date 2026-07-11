@@ -32,7 +32,7 @@ export default async function QuestEstadoPage({
                     <ChevronLeft size={20} />
                 </Link>
                 <h2 className="text-sm font-black uppercase tracking-widest text-slate-800">
-                    Mis Misiones
+                    Mis Desafíos
                 </h2>
                 <div className="w-10 h-10" />
             </header>

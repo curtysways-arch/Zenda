@@ -253,38 +253,35 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
         <div className="w-full">
             {/* ===== HEADER DEGRADADO CON DISEÑO PREMIUM ===== */}
             <div 
-                className="relative overflow-hidden text-white rounded-b-[3.5rem] px-6 pt-8 pb-20 shadow-[0_15px_30px_-5px_rgba(236,72,153,0.2)]"
+                className="relative overflow-hidden text-white rounded-b-[2.5rem] px-6 pt-5 pb-12 shadow-[0_10px_20px_-5px_rgba(0,0,0,0.1)]"
                 style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, color-mix(in srgb, ${primaryColor}, black 20%) 100%)` }}
             >
                 {/* Botones de navegación de cabecera */}
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center justify-between mb-5">
                     <button 
                         onClick={() => router.push(`/${slug}`)}
-                        className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white active:scale-95 transition-transform border-0 cursor-pointer"
+                        className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center text-white active:scale-95 transition-transform border-0 cursor-pointer"
                     >
-                        <ChevronLeft size={20} />
+                        <ChevronLeft size={18} />
                     </button>
-                    <h2 className="text-sm font-black uppercase tracking-widest text-white/90">
-                        Aventuras y Misiones
+                    <h2 className="text-xs font-black uppercase tracking-widest text-white/90">
+                        Club de Recompensas de {negocioNombre}
                     </h2>
                     <button 
-                        onClick={() => alert(`Bienvenido a Aventuras y Misiones de ${negocioNombre}. Completa tareas diarias para subir de nivel y obtener fabulosos premios.`)}
-                        className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white active:scale-95 transition-transform border-0 cursor-pointer"
+                        onClick={() => alert(`Bienvenido al Club de Recompensas de {negocioNombre}. Completa desafíos creados para ganar puntos y canjearlos por premios únicos.`)}
+                        className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center text-white active:scale-95 transition-transform border-0 cursor-pointer"
                     >
-                        <HelpCircle size={20} />
+                        <HelpCircle size={18} />
                     </button>
                 </div>
 
                 {/* Textos de la cabecera */}
-                <div className="relative z-10 max-w-[65%]">
-                    <span className="text-[9px] font-black tracking-widest uppercase bg-white/20 px-2.5 py-1 rounded-md inline-block mb-2">
-                        GROWTH QUESTS
-                    </span>
-                    <h1 className="text-xl md:text-2xl font-black uppercase leading-tight tracking-tight">
-                        Completa misiones y obtén recompensas exclusivas
+                <div className="relative z-10 max-w-[70%] space-y-1">
+                    <h1 className="text-xl font-black uppercase leading-tight tracking-tight">
+                        Club de Recompensas
                     </h1>
-                    <p className="text-[10px] text-white/80 font-bold uppercase tracking-wider leading-relaxed mt-2">
-                        Cada acción te acerca a nuevas experiencias en {negocioNombre}.
+                    <p className="text-[10px] text-white/80 font-bold uppercase tracking-wider leading-snug">
+                        Completa desafíos y obtén premios exclusivos al instante.
                     </p>
                 </div>
 
@@ -292,17 +289,14 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                 <img 
                     src="/images/3d_gift_box.png" 
                     alt="Regalo 3D" 
-                    className="absolute right-0 bottom-4 w-44 h-44 object-contain pointer-events-none z-10 drop-shadow-2xl animate-[float_4s_ease-in-out_infinite]"
-                    style={{
-                        transform: 'translateY(10px)'
-                    }}
+                    className="absolute right-2 bottom-2 w-28 h-28 object-contain pointer-events-none z-10 drop-shadow-lg animate-[float_4s_ease-in-out_infinite]"
                 />
 
                 {/* Animación flotante personalizada con CSS integrado */}
                 <style dangerouslySetInnerHTML={{__html: `
                     @keyframes float {
                         0% { transform: translateY(0px) rotate(0deg); }
-                        50% { transform: translateY(-10px) rotate(2deg); }
+                        50% { transform: translateY(-6px) rotate(1.5deg); }
                         100% { transform: translateY(0px) rotate(0deg); }
                     }
                 `}} />
@@ -497,7 +491,7 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                     </section>
                 )}
 
-                {/* ===== SECCIÓN 4: PESTAÑAS, BUSCADOR Y LISTA DE MISIONES ===== */}
+                {/* ===== SECCIÓN 4: PESTAÑAS, BUSCADOR Y LISTA DE DESAFÍOS ===== */}
                 <div className="space-y-4">
                     {/* Filtros Píldora */}
                     <div className="flex gap-1 bg-slate-100/80 border border-slate-200/20 p-1 rounded-full select-none">
@@ -523,7 +517,7 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                             <Search className="text-slate-400 ml-3" size={16} />
                             <input 
                                 type="text" 
-                                placeholder="Buscar misiones..." 
+                                placeholder="Buscar desafíos..." 
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full bg-transparent border-0 py-2 px-2 text-xs outline-none text-slate-800 placeholder-slate-400 font-bold"
@@ -539,12 +533,12 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                         </Link>
                     </div>
 
-                    {/* Listado de Tarjetas de Misiones */}
+                    {/* Listado de Tarjetas de Desafíos */}
                     {loading ? (
-                        <div className="py-12 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">Cargando misiones...</div>
+                        <div className="py-12 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">Cargando desafíos...</div>
                     ) : filteredQuests.length === 0 ? (
                         <div className="py-12 text-center text-slate-400 text-xs font-bold bg-white rounded-3xl border border-slate-100 shadow-sm uppercase tracking-wider">
-                            No hay misiones en esta sección por ahora.
+                            No hay desafíos en esta sección por ahora.
                         </div>
                     ) : (
                         <div className="space-y-3">

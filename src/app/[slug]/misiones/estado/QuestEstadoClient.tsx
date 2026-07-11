@@ -95,7 +95,7 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
         return (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
                 <Loader2 className="animate-spin text-pink-600" size={24} style={{ color: primaryColor }} />
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Cargando misiones...</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Cargando desafíos...</span>
             </div>
         );
     }
@@ -105,7 +105,7 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
             {quests.length === 0 ? (
                 <div className="bg-white border border-slate-100 rounded-3xl p-8 text-center shadow-sm">
                     <p className="text-slate-450 text-xs font-bold uppercase tracking-wider">
-                        No hay misiones activas en este negocio.
+                        No hay desafíos activos en este negocio.
                     </p>
                 </div>
             ) : (
@@ -125,7 +125,7 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                                 <div className="absolute inset-0 bg-green-50/20 backdrop-blur-[0.5px] flex items-center justify-center z-20">
                                     <div className="text-center animate-bounce">
                                         <span className="text-3xl">🎉</span>
-                                        <h5 className="font-black text-green-600 text-xs uppercase tracking-widest mt-1">¡Misión Completada!</h5>
+                                        <h5 className="font-black text-green-600 text-xs uppercase tracking-widest mt-1">¡Desafío Completado!</h5>
                                     </div>
                                 </div>
                             )}
@@ -162,7 +162,7 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                                 {q.descripcion}
                             </p>
 
-                            {/* Barra de progreso de la misión */}
+                            {/* Barra de progreso del desafío */}
                             <div className="space-y-1.5 pt-1">
                                 <div className="flex justify-between items-center text-[9px] font-black text-slate-400 uppercase tracking-wider">
                                     <span>Progreso actual</span>
@@ -183,8 +183,8 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
 
                             {/* Estado y botón de acción */}
                             <div className="pt-2 border-t border-slate-50 flex items-center justify-between">
-                                <span className="text-[9px] font-black text-slate-450 uppercase tracking-widest">
-                                    Estado de misión
+                                <span className="text-[9px] font-black text-slate-455 uppercase tracking-widest">
+                                    Estado de desafío
                                 </span>
 
                                 {q.estado === 'COMPLETADA' && (
@@ -207,7 +207,7 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                                                 className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-white rounded-xl shadow-md border-0 active:scale-95 transition-transform cursor-pointer"
                                                 style={{ backgroundColor: primaryColor }}
                                             >
-                                                Hacer Misión
+                                                Hacer Desafío
                                             </button>
                                         ) : (
                                             <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-slate-100 text-slate-500 rounded-full border border-slate-200">
