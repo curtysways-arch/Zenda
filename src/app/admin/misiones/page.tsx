@@ -200,6 +200,7 @@ export default function QuestDashboard() {
     const [canjeStaffId, setCanjeStaffId] = useState('');
     const [canjeNotas, setCanjeNotas] = useState('');
     const [selectedRewardToCanje, setSelectedRewardToCanje] = useState<any>(null);
+    const [editingCatalogRewardId, setEditingCatalogRewardId] = useState<string | null>(null);
 
     // Asistente Wizard Form Data
     const [wizardData, setWizardData] = useState<any>({
@@ -1418,8 +1419,14 @@ export default function QuestDashboard() {
         }
         try {
             setSubmitting(true);
-            const res = await fetch('/api/admin/loyalty/rewards', {
-                method: 'POST',
+            const isEditing = Boolean(editingCatalogRewardId);
+            const url = isEditing 
+                ? `/api/admin/loyalty/rewards/${editingCatalogRewardId}`
+                : '/api/admin/loyalty/rewards';
+            const method = isEditing ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     nombre: catalogRewardFormData.nombre,
@@ -1433,8 +1440,9 @@ export default function QuestDashboard() {
             });
             const data = await res.json();
             if (res.ok) {
-                showToast('Premio del catálogo de puntos creado con éxito', 'success');
+                showToast(isEditing ? 'Premio actualizado con éxito' : 'Premio del catálogo de puntos creado con éxito', 'success');
                 setIsCatalogRewardModalOpen(false);
+                setEditingCatalogRewardId(null);
                 setCatalogRewardFormData({
                     nombre: '',
                     descripcion: '',
@@ -1446,12 +1454,59 @@ export default function QuestDashboard() {
                 });
                 fetchData();
             } else {
-                showToast(data.error || 'Error al crear premio', 'error');
+                showToast(data.error || 'Error al guardar premio', 'error');
             }
         } catch {
             showToast('Error de conexión', 'error');
         } finally {
             setSubmitting(false);
+        }
+    const handleOpenEditCatalogReward = (reward: any) => {
+        setEditingCatalogRewardId(reward.id);
+        setCatalogRewardFormData({
+            nombre: reward.nombre || '',
+            descripcion: reward.descripcion || '',
+            costoPuntos: reward.costoPuntos || 500,
+            tipo: reward.tipo || 'SERVICIO_GRATIS',
+            valor: reward.valor || '',
+            cantidadTotal: reward.cantidadTotal !== null ? String(reward.cantidadTotal) : '',
+            imagenUrl: reward.imagenUrl || ''
+        });
+        setIsCatalogRewardModalOpen(true);
+    };
+
+    const handleToggleCatalogRewardActive = async (rewardId: string, currentActive: boolean) => {
+        try {
+            const res = await fetch(`/api/admin/loyalty/rewards/${rewardId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ activa: !currentActive })
+            });
+            if (res.ok) {
+                showToast('Estado del premio actualizado', 'success');
+                fetchData();
+            } else {
+                showToast('Error al actualizar estado', 'error');
+            }
+        } catch {
+            showToast('Error de red', 'error');
+        }
+    };
+
+    const handleDeleteCatalogReward = async (rewardId: string) => {
+        if (!window.confirm('¿Estás seguro de que deseas eliminar este premio del catálogo?')) return;
+        try {
+            const res = await fetch(`/api/admin/loyalty/rewards/${rewardId}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                showToast('Premio eliminado con éxito', 'success');
+                fetchData();
+            } else {
+                showToast('Error al eliminar premio', 'error');
+            }
+        } catch {
+            showToast('Error de red', 'error');
         }
     };
 
@@ -2235,11 +2290,31 @@ export default function QuestDashboard() {
                                                     <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">{item.nombre}</h4>
                                                     <p className="text-[10px] text-pink-600 font-bold uppercase mt-1">{item.costoPuntos} Puntos requeridos</p>
                                                 </div>
-                                                <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
-                                                    item.activa ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'
-                                                }`}>
-                                                    {item.activa ? 'ACTIVO' : 'INACTIVO'}
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <button 
+                                                        onClick={() => handleOpenEditCatalogReward(item)}
+                                                        className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-colors cursor-pointer bg-white"
+                                                        title="Editar premio"
+                                                    >
+                                                        <Edit2 size={13} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleToggleCatalogRewardActive(item.id, item.activa)}
+                                                        className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                                                            item.activa ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-slate-100 border-slate-200 text-slate-400'
+                                                        }`}
+                                                        title={item.activa ? 'Desactivar premio' : 'Activar premio'}
+                                                    >
+                                                        <CheckCircle2 size={13} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDeleteCatalogReward(item.id)}
+                                                        className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer bg-white"
+                                                        title="Eliminar premio"
+                                                    >
+                                                        <Trash2 size={13} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         ))}
                                         {loyaltyRewards.length === 0 && (
@@ -3702,12 +3777,15 @@ export default function QuestDashboard() {
             )}
 
             {/* MODAL: CREAR PREMIO DE CATÁLOGO */}
+            {/* MODAL: CREAR O EDITAR PREMIO DE CATÁLOGO */}
             {isCatalogRewardModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
                     <form onSubmit={handleCreateCatalogReward} className="bg-white border border-slate-150 rounded-[2.5rem] w-full max-w-md max-h-[90vh] overflow-y-auto scrollbar-thin shadow-2xl p-8">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
-                            <h3 className="text-base font-black text-slate-800 uppercase tracking-wider">Crear Premio de Catálogo</h3>
-                            <button type="button" onClick={() => setIsCatalogRewardModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold cursor-pointer">×</button>
+                            <h3 className="text-base font-black text-slate-800 uppercase tracking-wider">
+                                {editingCatalogRewardId ? 'Editar Premio de Catálogo' : 'Crear Premio de Catálogo'}
+                            </h3>
+                            <button type="button" onClick={() => { setIsCatalogRewardModalOpen(false); setEditingCatalogRewardId(null); }} className="text-slate-400 hover:text-slate-600 font-bold cursor-pointer">×</button>
                         </div>
                         <div className="space-y-4 mb-6">
                             <div>
@@ -3779,7 +3857,7 @@ export default function QuestDashboard() {
                             </div>
                         </div>
                         <div className="flex justify-end gap-3 border-t border-slate-100 pt-6">
-                            <button type="button" onClick={() => setIsCatalogRewardModalOpen(false)} className="px-5 py-3 border border-slate-150 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 cursor-pointer" disabled={submitting}>Cancelar</button>
+                            <button type="button" onClick={() => { setIsCatalogRewardModalOpen(false); setEditingCatalogRewardId(null); }} className="px-5 py-3 border border-slate-150 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 cursor-pointer" disabled={submitting}>Cancelar</button>
                             <button 
                                 type="submit" 
                                 className="px-5 py-3 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:opacity-90 cursor-pointer flex items-center gap-2"
@@ -3787,7 +3865,7 @@ export default function QuestDashboard() {
                                 disabled={submitting}
                             >
                                 {submitting ? <Loader2 className="animate-spin" size={14} /> : null}
-                                Crear Premio
+                                {editingCatalogRewardId ? 'Guardar Cambios' : 'Crear Premio'}
                             </button>
                         </div>
                     </form>
