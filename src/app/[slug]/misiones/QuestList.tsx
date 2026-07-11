@@ -515,29 +515,65 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                                         return (
                                             <div
                                                 key={coupon.id}
-                                                className="w-[180px] shrink-0 bg-white border border-slate-100 rounded-3xl p-3.5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between snap-start"
+                                                className="w-[200px] shrink-0 snap-start"
+                                                style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.10))' }}
                                             >
-                                                <div>
-                                                    <span
-                                                        className="text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg text-white shadow-sm inline-block mb-2"
-                                                        style={{ backgroundColor: primaryColor }}
-                                                    >
-                                                        {coupon.tipo === 'PORCENTAJE' ? `${coupon.valor}% OFF` : `$${coupon.valor} OFF`}
-                                                    </span>
-                                                    <h5 className="text-[11px] font-black text-slate-800 uppercase tracking-tight line-clamp-1">
-                                                        {coupon.codigo}
-                                                    </h5>
-                                                    <p className="text-[8px] text-slate-400 font-semibold mt-1 leading-snug line-clamp-2">
-                                                        {coupon.descripcion || `Obtén descuento ingresando este código en tu próxima reserva.`}
-                                                    </p>
-                                                </div>
-                                                <button
-                                                    onClick={handleShareCoupon}
-                                                    className="w-full mt-3 py-2 text-[8px] font-black uppercase tracking-widest rounded-xl text-white shadow-sm border-0 cursor-pointer flex items-center justify-center gap-1"
+                                                {/* Parte superior del ticket */}
+                                                <div
+                                                    className="rounded-t-2xl px-4 pt-4 pb-3 text-white relative overflow-hidden"
                                                     style={{ backgroundColor: primaryColor }}
                                                 >
-                                                    <Share2 size={10} /> Compartir
-                                                </button>
+                                                    {/* Patrón de fondo decorativo */}
+                                                    <div className="absolute inset-0 opacity-10" style={{
+                                                        backgroundImage: `radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)`,
+                                                        backgroundSize: '24px 24px'
+                                                    }} />
+                                                    <div className="relative z-10">
+                                                        <span className="text-[8px] font-black uppercase tracking-widest opacity-80 block mb-1">
+                                                            {negocioNombre}
+                                                        </span>
+                                                        <div className="text-[28px] font-black leading-none tracking-tight">
+                                                            {coupon.tipo === 'PORCENTAJE' ? `${coupon.valor}%` : `$${coupon.valor}`}
+                                                        </div>
+                                                        <div className="text-[10px] font-black uppercase tracking-widest opacity-90">
+                                                            OFF
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Separador dentado */}
+                                                <div className="relative h-4 bg-white">
+                                                    <div
+                                                        className="absolute inset-0"
+                                                        style={{
+                                                            backgroundImage: `radial-gradient(circle at 50% 0%, ${primaryColor} 6px, transparent 6px)`,
+                                                            backgroundSize: '16px 12px',
+                                                            backgroundPosition: '0 0',
+                                                        }}
+                                                    />
+                                                    {/* Círculos laterales */}
+                                                    <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-slate-100" />
+                                                    <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-slate-100" />
+                                                </div>
+
+                                                {/* Parte inferior del ticket */}
+                                                <div className="rounded-b-2xl bg-white px-4 pt-2 pb-3.5 border border-t-0 border-slate-100">
+                                                    <div className="border border-dashed rounded-lg px-3 py-1.5 mb-2.5 text-center" style={{ borderColor: `${primaryColor}60` }}>
+                                                        <span className="text-[13px] font-black uppercase tracking-wider" style={{ color: primaryColor }}>
+                                                            {coupon.codigo}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[8px] text-slate-400 font-semibold leading-snug line-clamp-2 mb-2.5 text-center">
+                                                        {coupon.descripcion || `Preséntalo en tu próxima visita`}
+                                                    </p>
+                                                    <button
+                                                        onClick={handleShareCoupon}
+                                                        className="w-full py-2 text-[8px] font-black uppercase tracking-widest rounded-xl text-white shadow-sm border-0 cursor-pointer flex items-center justify-center gap-1"
+                                                        style={{ backgroundColor: primaryColor }}
+                                                    >
+                                                        <Share2 size={10} /> Compartir
+                                                    </button>
+                                                </div>
                                             </div>
                                         );
                                     })}
@@ -579,7 +615,11 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                                                             className="w-full h-full object-cover"
                                                         />
                                                     ) : (
-                                                        <Gift size={32} style={{ color: primaryColor, opacity: 0.4 }} />
+                                                        <img
+                                                            src="/gift-icon.png"
+                                                            alt="Premio"
+                                                            className="w-16 h-16 object-contain drop-shadow-md"
+                                                        />
                                                     )}
                                                     {/* Badge de puntos */}
                                                     <span
