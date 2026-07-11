@@ -385,7 +385,7 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                         </button>
                     </section>
                 ) : (
-                    <>
+                    <div className="space-y-5">
                         {/* ===== TARJETA DE PERFIL ===== */}
                         <section className="bg-white rounded-[2rem] border border-slate-100/80 p-4 shadow-[0_12px_40px_rgba(0,0,0,0.06)] space-y-3.5">
                         {/* Fila superior */}
@@ -785,8 +785,7 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                                 <ArrowRight size={13} style={{ color: primaryColor }} />
                             </Link>
                         </div>
-                    )}
-                    </>
+                    </div>
                 )}
             </div>
 
