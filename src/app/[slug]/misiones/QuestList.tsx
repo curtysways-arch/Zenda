@@ -213,6 +213,7 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
         } finally {
             setRedeemLoading(null);
         }
+    };
     const handleRegisterReferralCode = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!manualReferralCode.trim()) return;
