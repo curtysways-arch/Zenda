@@ -220,7 +220,8 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                         return (
                             <div 
                                 key={q.id}
-                                className={`relative bg-white rounded-[2rem] border border-slate-100 p-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-4 overflow-hidden transition-all duration-300 ${
+                                onClick={() => router.push(`/${slug}/misiones/detalle/${q.id}`)}
+                                className={`relative bg-white rounded-[2rem] border border-slate-100 p-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-4 overflow-hidden transition-all duration-300 cursor-pointer hover:scale-[1.01] active:scale-[0.99] ${
                                     isCelebrating ? 'shadow-[0_0_0_2px_#22c55e]' : ''
                                 }`}
                             >

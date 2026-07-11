@@ -525,7 +525,7 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                                 return (
                                     <div 
                                         key={q.id}
-                                        onClick={() => router.push(`/${slug}/misiones/estado`)}
+                                        onClick={() => router.push(`/${slug}/misiones/detalle/${q.id}`)}
                                         className={`relative rounded-[1.75rem] overflow-hidden cursor-pointer transition-all duration-200 active:scale-[0.98] hover:shadow-xl ${
                                             isCelebrating 
                                                 ? 'shadow-[0_0_0_2px_#22c55e]' 
