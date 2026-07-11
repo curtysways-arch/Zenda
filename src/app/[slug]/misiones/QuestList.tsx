@@ -588,15 +588,19 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
 
                                             {/* Recompensas */}
                                             {q.recompensas.length > 0 && (
-                                                <div className="flex flex-wrap gap-1.5">
+                                                <div className="flex flex-wrap gap-2 pt-1">
                                                     {q.recompensas.slice(0, 3).map((r, i) => (
                                                         <span 
                                                             key={i}
-                                                            className="inline-flex items-center gap-1 text-[7.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full"
-                                                            style={{ backgroundColor: `${q.color}12`, color: q.color }}
+                                                            className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-xl shadow-sm border"
+                                                            style={{ 
+                                                                backgroundColor: `${primaryColor}10`, 
+                                                                color: primaryColor,
+                                                                borderColor: `${primaryColor}20` 
+                                                            }}
                                                         >
-                                                            <Gift size={8} />
-                                                            {r}
+                                                            <Gift size={11} className="text-pink-500" style={{ color: primaryColor }} />
+                                                            Ganarás: {r}
                                                         </span>
                                                     ))}
                                                 </div>
