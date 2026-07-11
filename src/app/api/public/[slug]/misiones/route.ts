@@ -172,13 +172,31 @@ export async function GET(
             
             // Parsear acciones/recompensas para el cliente
             const accionesRaw = typeof q.acciones === 'string' ? JSON.parse(q.acciones) : q.acciones;
-            const recompensas = Array.isArray(accionesRaw) ? accionesRaw.map((a: any) => {
-                if (a.action === 'ADD_POINTS') return `${a.value.puntos || a.value} Puntos`;
-                if (a.action === 'CREATE_COUPON') return `Cupón Descuento`;
-                if (a.action === 'GIVE_BADGE') return `Insignia Exclusiva`;
-                if (a.action === 'UP_LEVEL') return `+${a.value.xp || a.value} XP`;
-                return 'Recompensa especial';
-            }) : ['Premio de fidelidad'];
+            const recompensas = Array.isArray(accionesRaw)
+                ? accionesRaw
+                    .filter((a: any) => !['SEND_WHATSAPP', 'SEND_PUSH', 'SEND_EMAIL'].includes(a.action))
+                    .map((a: any) => {
+                        if (a.action === 'ADD_POINTS') {
+                            const pts = a.value?.puntos ?? a.value;
+                            return `+${pts} puntos`;
+                        }
+                        if (a.action === 'CREATE_COUPON') {
+                            const desc = a.value?.descuento || a.value?.porcentaje;
+                            return desc ? `${desc}% descuento` : 'Cupón descuento';
+                        }
+                        if (a.action === 'GIVE_BADGE' || a.action === 'AWARD_BADGE') return 'Insignia exclusiva';
+                        if (a.action === 'UP_LEVEL') return `+${a.value?.xp ?? a.value} XP`;
+                        if (a.action === 'PRODUCT_GIFT') return a.value?.name ? `🎁 ${a.value.name}` : 'Producto gratis';
+                        if (a.action === 'SERVICE_GIFT') return a.value?.name ? `✨ ${a.value.name}` : 'Servicio gratis';
+                        if (a.action === 'ADD_WALLET_BALANCE') {
+                            const amt = a.value?.monto ?? a.value;
+                            return `$${amt} saldo`;
+                        }
+                        return null;
+                    })
+                    .filter(Boolean)
+                : [];
+            const recompensasFinal = recompensas.length > 0 ? recompensas : ['Premio de fidelidad'];
 
             return {
                 id: q.id,
@@ -196,7 +214,7 @@ export async function GET(
                 progresoRequerido: q.cantidadMeta,
                 estado: progress ? progress.estado : 'EN_PROGRESO',
                 fechaCompletada: progress?.fechaCompletada || null,
-                recompensas
+                recompensas: recompensasFinal
             };
         });
 
