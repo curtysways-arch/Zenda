@@ -156,15 +156,20 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
             if (res.ok) {
                 const data = await res.json();
                 setReferralData(data);
-                
-                const rRes = await fetch(`/api/public/${slug}/loyalty/rewards`);
-                if (rRes.ok) {
-                    const rData = await rRes.json();
-                    setLoyaltyRewards(rData || []);
-                }
             }
         } catch (e) {
             console.error('No referral session active.');
+        }
+
+        // Siempre intentar cargar los premios públicos disponibles
+        try {
+            const rRes = await fetch(`/api/public/${slug}/loyalty/rewards`);
+            if (rRes.ok) {
+                const rData = await rRes.json();
+                setLoyaltyRewards(rData || []);
+            }
+        } catch (e) {
+            console.error('Error fetching loyalty rewards:', e);
         }
     };
 
