@@ -321,11 +321,6 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                                     <div className="flex items-center gap-1.5 mt-1">
                                         <span className="text-lg font-black text-slate-800 leading-none">{referralData.puntos}</span>
                                         <span className="text-[10px] text-slate-400 font-black uppercase tracking-wider">pts</span>
-                                        
-                                        {/* Insignia de Nivel */}
-                                        <span className="text-[8px] font-black uppercase tracking-widest bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-100 ml-1.5 flex items-center gap-0.5">
-                                            <Crown size={8} /> Nivel {gamification?.level.nombre || 'Bronce'}
-                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -437,188 +432,117 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                     </section>
                 )}
 
-                {/* ===== SECCIÓN 3: EXP / NIVEL ACTUAL ===== */}
-                {gamification && (
-                    <section className="bg-white rounded-[2rem] border border-slate-100 p-5 shadow-sm space-y-4">
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-3">
-                                <div 
-                                    className="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-sm"
-                                    style={{ backgroundColor: primaryColor }}
-                                >
-                                    <Star size={18} fill="currentColor" />
-                                </div>
-                                <div>
-                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block leading-none">Nivel Actual</span>
-                                    <h4 className="text-base font-black text-slate-800 leading-tight mt-0.5">{gamification.level.nombre}</h4>
-                                </div>
-                            </div>
-
-                            {/* Racha */}
-                            {gamification.streak > 0 && (
-                                <div className="flex items-center gap-1 px-3 py-1.5 bg-orange-50 border border-orange-100 rounded-full text-orange-600">
-                                    <Flame size={12} fill="currentColor" />
-                                    <span className="text-[9px] font-black uppercase tracking-wider">{gamification.streak} Días</span>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Barra de progreso */}
-                        <div className="space-y-1.5">
-                            <div className="w-full h-3 bg-slate-50 border border-slate-100/50 rounded-full overflow-hidden p-0.5">
-                                <div 
-                                    className="h-full rounded-full transition-all duration-1000"
-                                    style={{ width: `${gamification.level.progresoXP}%`, backgroundColor: primaryColor }}
-                                />
-                            </div>
-                            <div className="flex justify-between items-center text-[9px] font-black text-slate-400 uppercase tracking-wider">
-                                <span>{gamification.level.xpTotal} XP</span>
-                                <span>Llegar a Plata</span>
-                            </div>
-                        </div>
-
-                        {/* Beneficios */}
-                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
-                            <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl">
-                                <Percent size={14} className="text-pink-500" />
-                                <span className="text-[9px] font-black uppercase tracking-wider text-slate-600">Descuentos</span>
-                            </div>
-                            <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl">
-                                <Gift size={14} className="text-pink-500" />
-                                <span className="text-[9px] font-black uppercase tracking-wider text-slate-600">Regalos</span>
-                            </div>
-                        </div>
-                    </section>
-                )}
-
-                {/* ===== SECCIÓN 4: PESTAÑAS, BUSCADOR Y LISTA DE DESAFÍOS ===== */}
-                <div className="space-y-4">
-                    {/* Filtros Píldora */}
-                    <div className="flex gap-1 bg-slate-100/80 border border-slate-200/20 p-1 rounded-full select-none">
-                        {(['enProgreso', 'todas', 'completadas'] as const).map(tab => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className="flex-1 py-3 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-300 outline-none cursor-pointer border-0"
-                                style={{
-                                    backgroundColor: activeTab === tab ? '#ffffff' : 'transparent',
-                                    color: activeTab === tab ? '#000000' : '#64748b',
-                                    boxShadow: activeTab === tab ? '0 4px 10px rgba(0, 0, 0, 0.04)' : 'none'
-                                }}
-                            >
-                                {tab === 'enProgreso' ? 'En progreso' : tab === 'todas' ? 'Todas' : 'Completadas'}
-                            </button>
-                        ))}
+                {/* ===== SECCIÓN 3: DESAFÍOS ACTUALES (Bajo Premios Canjeables) ===== */}
+                <section className="space-y-4">
+                    <div className="flex justify-between items-center px-1">
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                            <Trophy size={14} className="text-pink-500" style={{ color: primaryColor }} /> Desafíos del Club
+                        </h3>
                     </div>
 
-                    {/* Buscador */}
-                    <div className="flex gap-2">
-                        <div className="relative flex-1 bg-white rounded-2xl border border-slate-100 p-1 flex items-center shadow-sm">
-                            <Search className="text-slate-400 ml-3" size={16} />
-                            <input 
-                                type="text" 
-                                placeholder="Buscar desafíos..." 
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full bg-transparent border-0 py-2 px-2 text-xs outline-none text-slate-800 placeholder-slate-400 font-bold"
-                            />
-                        </div>
-                        {/* Enlace a listado completo de estados */}
-                        <Link
-                            href={`/${slug}/misiones/estado`}
-                            className="px-4 rounded-2xl border border-slate-100 text-slate-500 bg-white hover:bg-slate-50 flex items-center justify-center gap-1 shadow-sm active:scale-95 transition-transform no-underline"
-                        >
-                            <span className="text-[10px] font-black uppercase tracking-widest">Estados</span>
-                            <ArrowRight size={13} />
-                        </Link>
-                    </div>
-
-                    {/* Listado de Tarjetas de Desafíos */}
                     {loading ? (
-                        <div className="py-12 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">Cargando desafíos...</div>
-                    ) : filteredQuests.length === 0 ? (
-                        <div className="py-12 text-center text-slate-400 text-xs font-bold bg-white rounded-3xl border border-slate-100 shadow-sm uppercase tracking-wider">
-                            No hay desafíos en esta sección por ahora.
+                        <div className="py-8 text-center text-slate-400 text-xs font-bold uppercase tracking-wider">Cargando desafíos...</div>
+                    ) : quests.length === 0 ? (
+                        <div className="bg-white border border-slate-100 rounded-3xl p-6 text-center shadow-sm">
+                            <p className="text-slate-450 text-xs font-bold uppercase tracking-wider">
+                                No hay desafíos disponibles por ahora.
+                            </p>
                         </div>
                     ) : (
-                        <div className="space-y-3">
-                            {filteredQuests.map(q => {
+                        <div className="space-y-3.5">
+                            {/* Mostrar solo los primeros 3 desafíos destacados */}
+                            {quests.slice(0, 3).map(q => {
                                 const IconComponent = IconMapper[q.icono] || Award;
+                                const pct = Math.min(100, (q.progresoActual / q.progresoRequerido) * 100);
                                 const isCelebrating = celebrateQuest === q.id;
 
                                 return (
                                     <div 
                                         key={q.id}
-                                        className={`bg-white rounded-3xl border p-4 shadow-sm flex items-center justify-between gap-4 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 relative overflow-hidden ${
-                                            isCelebrating ? 'border-green-500 bg-green-50/10' : 'border-slate-100'
+                                        className={`bg-white rounded-[2rem] border p-5 shadow-[0_4px_25px_rgba(0,0,0,0.015)] space-y-3 relative overflow-hidden transition-all duration-300 ${
+                                            isCelebrating ? 'border-green-500 bg-green-50/10' : 'border-slate-100/80'
                                         }`}
                                     >
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            {/* Icono de la misión */}
-                                            <div 
-                                                className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-inner"
-                                                style={{ backgroundColor: `${q.color}15`, color: q.color }}
-                                            >
-                                                <IconComponent size={18} />
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div 
+                                                    className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-inner"
+                                                    style={{ backgroundColor: `${q.color}15`, color: q.color }}
+                                                >
+                                                    <IconComponent size={18} />
+                                                </div>
+                                                <div className="min-w-0 space-y-0.5">
+                                                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight truncate">
+                                                        {q.nombre}
+                                                    </h4>
+                                                    <p className="text-[9px] text-slate-400 font-bold leading-normal truncate">
+                                                        {q.descripcion}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            
-                                            {/* Título y descripción */}
-                                            <div className="min-w-0 space-y-0.5">
-                                                <h5 className="font-black text-slate-800 text-[11px] truncate uppercase tracking-tight">
-                                                    {q.nombre}
-                                                </h5>
-                                                <p className="text-[9px] text-slate-450 font-bold leading-normal line-clamp-1">
-                                                    {q.descripcion}
-                                                </p>
-                                            </div>
-                                        </div>
 
-                                        {/* Acciones y Recompensas a la derecha */}
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            {/* Recompensa */}
                                             <span 
-                                                className="text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full bg-pink-50 text-pink-600 border border-pink-100"
+                                                className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shrink-0"
                                                 style={{ color: primaryColor, backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}15` }}
                                             >
                                                 +{q.recompensas.join(' + ')}
                                             </span>
-
-                                            {/* Estado / Botón */}
-                                            {q.estado === 'COMPLETADA' && (
-                                                <div className="text-green-500 p-1">
-                                                    <CheckCircle2 size={16} fill="currentColor" className="text-white" />
-                                                </div>
-                                            )}
-                                            {q.estado === 'PENDIENTE_APROBACION' && (
-                                                <div className="text-amber-500 p-1">
-                                                    <Clock size={16} />
-                                                </div>
-                                            )}
-                                            {q.estado === 'EN_PROGRESO' && (
-                                                <>
-                                                    {q.validacionTipo === 'USUARIO' ? (
-                                                        <button 
-                                                            onClick={() => handleConfirmQuest(q.id)}
-                                                            className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-pink-600 bg-white border border-pink-200 rounded-xl hover:bg-pink-50 active:scale-95 transition-transform cursor-pointer shrink-0"
-                                                            style={{ color: primaryColor, borderColor: `${primaryColor}50` }}
-                                                        >
-                                                            Hacer
-                                                        </button>
-                                                    ) : (
-                                                        <div className="text-slate-300 flex items-center gap-0.5 pl-1">
-                                                            <span className="text-[9px] font-black uppercase tracking-widest">{q.progresoActual}/{q.progresoRequerido}</span>
-                                                            <ChevronRight size={13} />
-                                                        </div>
-                                                    )}
-                                                </>
-                                            )}
                                         </div>
+
+                                        {/* Barra de progreso con estilo único */}
+                                        <div className="space-y-1">
+                                            <div className="w-full h-2 bg-slate-50 border border-slate-100/50 rounded-full overflow-hidden p-0.5">
+                                                <div 
+                                                    className="h-full rounded-full transition-all duration-500"
+                                                    style={{ 
+                                                        width: `${pct}%`, 
+                                                        backgroundColor: q.color 
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-wider">
+                                                <span>Progreso</span>
+                                                <span>{q.progresoActual} / {q.progresoRequerido}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Acción rápida si es manual */}
+                                        {q.estado === 'EN_PROGRESO' && q.validacionTipo === 'USUARIO' && (
+                                            <div className="pt-1 flex justify-end">
+                                                <button
+                                                    onClick={() => handleConfirmQuest(q.id)}
+                                                    className="px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-white rounded-xl shadow-sm border-0 cursor-pointer"
+                                                    style={{ backgroundColor: primaryColor }}
+                                                >
+                                                    Hacer Desafío
+                                                </button>
+                                            </div>
+                                        )}
+                                        {q.estado === 'COMPLETADA' && (
+                                            <div className="text-green-500 text-[8px] font-black uppercase tracking-wider flex items-center justify-end gap-1">
+                                                <CheckCircle2 size={10} fill="currentColor" className="text-white" /> Completado
+                                            </div>
+                                        )}
+                                        {q.estado === 'PENDIENTE_APROBACION' && (
+                                            <div className="text-amber-500 text-[8px] font-black uppercase tracking-wider flex items-center justify-end gap-1">
+                                                <Clock size={10} /> En revisión
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
+
+                            {/* Botón Ver Todos */}
+                            <Link
+                                href={`/${slug}/misiones/estado`}
+                                className="w-full py-4 bg-white border border-slate-100 hover:bg-slate-50 text-slate-700 active:scale-95 transition-transform rounded-[1.5rem] flex items-center justify-center gap-1.5 shadow-sm no-underline cursor-pointer"
+                            >
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-650">Ver todos los desafíos</span>
+                                <ArrowRight size={13} style={{ color: primaryColor }} />
+                            </Link>
                         </div>
                     )}
-                </div>
+                </section>
             </div>
         </div>
     );
