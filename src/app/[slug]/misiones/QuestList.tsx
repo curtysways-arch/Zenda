@@ -365,7 +365,7 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
             <div className="max-w-md mx-auto px-3 -mt-10 space-y-5 relative z-20">
 
                 {/* ===== REQUERIR INICIO DE SESIÓN SI NO ESTÁ AUTENTICADO ===== */}
-                {!referralData ? (
+                {!referralData && (
                     <section className="bg-white rounded-[2rem] border border-slate-100/80 p-6 shadow-[0_12px_40px_rgba(0,0,0,0.06)] text-center space-y-4">
                         <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center mx-auto" style={{ color: primaryColor }}>
                             <Lock size={28} />
@@ -384,8 +384,9 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                             Acceder al Club de Recompensas
                         </button>
                     </section>
-                ) : (
-                    <>
+                )}
+                {referralData && (
+                    <div className="space-y-5">
                         {/* ===== TARJETA DE PERFIL ===== */}
                         <section className="bg-white rounded-[2rem] border border-slate-100/80 p-4 shadow-[0_12px_40px_rgba(0,0,0,0.06)] space-y-3.5">
                         {/* Fila superior */}
@@ -785,7 +786,7 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                                 <ArrowRight size={13} style={{ color: primaryColor }} />
                             </Link>
                         </div>
-                    </>
+                    </div>
                 )}
             </div>
 
