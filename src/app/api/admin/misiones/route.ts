@@ -158,7 +158,29 @@ export async function POST(request: Request) {
 
         // --- CASO B: CREAR MISIÓN PERSONALIZADA DESDE CERO ---
         if (customQuest) {
-            const { nombre, descripcion, icono, color, triggerEvent, cantidadMeta, validacionTipo, acciones, campaignName } = customQuest;
+            const { 
+                nombre, 
+                descripcion, 
+                icono, 
+                color, 
+                triggerEvent, 
+                cantidadMeta, 
+                validacionTipo, 
+                acciones, 
+                campaignName,
+                servicioId,
+                montoMinimo,
+                segmentacion,
+                condicionesExtra,
+                fechaInicio,
+                fechaFin,
+                visible,
+                repetible,
+                limiteUsuario,
+                limiteGlobal,
+                parentQuestId,
+                activa
+            } = customQuest;
 
             if (!nombre || !triggerEvent || !acciones) {
                 return NextResponse.json({ error: 'Faltan parámetros requeridos para la misión' }, { status: 400 });
@@ -180,6 +202,18 @@ export async function POST(request: Request) {
                 });
             }
 
+            // Inyectar auditoría en condicionesExtra
+            let parsedCondiciones = condicionesExtra ? (typeof condicionesExtra === 'string' ? JSON.parse(condicionesExtra) : condicionesExtra) : {};
+            if (!parsedCondiciones.auditLog) {
+                parsedCondiciones.auditLog = [];
+            }
+            parsedCondiciones.auditLog.push({
+                action: 'CREADA',
+                fecha: new Date().toISOString(),
+                adminName: (session?.user as any)?.name || 'Administrador',
+                detalles: 'Misión creada desde el asistente inteligente'
+            });
+
             // 2. Crear misión
             const quest = await prisma.quest.create({
                 data: {
@@ -189,13 +223,22 @@ export async function POST(request: Request) {
                     descripcion: descripcion || 'Completa esta acción para ganar recompensas.',
                     icono: icono || 'Award',
                     color: color || '#ec4899',
-                    visible: true,
-                    repetible: false,
-                    limiteUsuario: 1,
+                    visible: visible !== undefined ? Boolean(visible) : true,
+                    repetible: repetible !== undefined ? Boolean(repetible) : false,
+                    limiteUsuario: limiteUsuario !== undefined ? Number(limiteUsuario) : 1,
+                    limiteGlobal: limiteGlobal !== undefined && limiteGlobal !== null ? Number(limiteGlobal) : null,
                     triggerEvent,
                     cantidadMeta: cantidadMeta || 1,
                     validacionTipo: validacionTipo || 'AUTOMATICO',
-                    acciones: JSON.stringify(acciones)
+                    acciones: typeof acciones === 'string' ? acciones : JSON.stringify(acciones),
+                    servicioId: servicioId || null,
+                    montoMinimo: montoMinimo ? Number(montoMinimo) : null,
+                    segmentacion: segmentacion ? (typeof segmentacion === 'string' ? JSON.parse(segmentacion) : segmentacion) : null,
+                    condicionesExtra: parsedCondiciones,
+                    fechaInicio: fechaInicio ? new Date(fechaInicio) : null,
+                    fechaFin: fechaFin ? new Date(fechaFin) : null,
+                    parentQuestId: parentQuestId || null,
+                    activa: activa !== undefined ? Boolean(activa) : true
                 }
             });
 
@@ -238,6 +281,41 @@ export async function PUT(request: Request) {
         const { questId, campaignId, data } = body;
 
         if (questId) {
+            // Buscamos la misión existente para obtener su historial y no perderlo
+            const currentQuest = await prisma.quest.findFirst({
+                where: { id: questId, negocioId },
+                select: { condicionesExtra: true, activa: true }
+            });
+            let currentCondiciones: any = {};
+            if (currentQuest?.condicionesExtra) {
+                currentCondiciones = typeof currentQuest.condicionesExtra === 'string' 
+                    ? JSON.parse(currentQuest.condicionesExtra) 
+                    : currentQuest.condicionesExtra;
+            }
+            
+            let newCondiciones = data.condicionesExtra ? (typeof data.condicionesExtra === 'string' ? JSON.parse(data.condicionesExtra) : data.condicionesExtra) : {};
+            let auditLog = currentCondiciones.auditLog || [];
+            
+            // Detectar qué acción se está realizando
+            let actionType = 'EDITADA';
+            let detallesMsg = 'Misión actualizada';
+            if (data.activa !== undefined && currentQuest) {
+                const wasActive = currentQuest.activa;
+                if (wasActive !== Boolean(data.activa)) {
+                    actionType = data.activa ? 'ACTIVADA' : 'PAUSADA';
+                    detallesMsg = data.activa ? 'Misión activada por administrador' : 'Misión pausada por administrador';
+                }
+            }
+            
+            auditLog.push({
+                action: actionType,
+                fecha: new Date().toISOString(),
+                adminName: (session?.user as any)?.name || 'Administrador',
+                detalles: detallesMsg
+            });
+            
+            newCondiciones.auditLog = auditLog;
+
             // Actualizar Misión
             const updatedQuest = await prisma.quest.updateMany({
                 where: { id: questId, negocioId },
@@ -247,9 +325,20 @@ export async function PUT(request: Request) {
                     icono: data.icono,
                     color: data.color,
                     triggerEvent: data.triggerEvent,
-                    cantidadMeta: Number(data.cantidadMeta),
+                    cantidadMeta: data.cantidadMeta !== undefined ? Number(data.cantidadMeta) : undefined,
                     activa: data.activa !== undefined ? Boolean(data.activa) : undefined,
-                    acciones: data.acciones ? JSON.stringify(data.acciones) : undefined
+                    acciones: data.acciones ? (typeof data.acciones === 'string' ? data.acciones : JSON.stringify(data.acciones)) : undefined,
+                    servicioId: data.servicioId !== undefined ? data.servicioId : undefined,
+                    montoMinimo: data.montoMinimo !== undefined ? (data.montoMinimo ? Number(data.montoMinimo) : null) : undefined,
+                    segmentacion: data.segmentacion !== undefined ? (data.segmentacion ? (typeof data.segmentacion === 'string' ? JSON.parse(data.segmentacion) : data.segmentacion) : null) : undefined,
+                    condicionesExtra: newCondiciones,
+                    fechaInicio: data.fechaInicio !== undefined ? (data.fechaInicio ? new Date(data.fechaInicio) : null) : undefined,
+                    fechaFin: data.fechaFin !== undefined ? (data.fechaFin ? new Date(data.fechaFin) : null) : undefined,
+                    parentQuestId: data.parentQuestId !== undefined ? data.parentQuestId : undefined,
+                    visible: data.visible !== undefined ? Boolean(data.visible) : undefined,
+                    repetible: data.repetible !== undefined ? Boolean(data.repetible) : undefined,
+                    limiteUsuario: data.limiteUsuario !== undefined ? Number(data.limiteUsuario) : undefined,
+                    limiteGlobal: data.limiteGlobal !== undefined ? (data.limiteGlobal ? Number(data.limiteGlobal) : null) : undefined
                 }
             });
             return NextResponse.json({ success: true, message: 'Misión actualizada con éxito' });
