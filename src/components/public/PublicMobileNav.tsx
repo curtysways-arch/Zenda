@@ -43,7 +43,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
 
     useEffect(() => {
         const checkSession = () => {
-            setHasSession(document.cookie.includes('customer_token'));
+            setHasSession(document.cookie.includes('cs=1'));
         };
         checkSession();
         // Re-verificar cada vez que el pathname cambia (ej: después de login)

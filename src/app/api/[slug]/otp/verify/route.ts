@@ -109,7 +109,15 @@ export async function POST(
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
             maxAge: 60 * 60 * 24, // 24 horas
-            path: "/", // Permitir en todo el sitio para el slug correspondiente
+            path: "/",
+        });
+        // Cookie de señal para el cliente JS (no httpOnly) — indica que hay sesión activa
+        response.cookies.set("cs", "1", {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 60 * 60 * 24,
+            path: "/",
         });
 
         return response;

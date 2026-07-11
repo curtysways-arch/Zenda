@@ -375,6 +375,13 @@ export async function POST(req: Request) {
                 sameSite: 'lax',
                 maxAge: 30 * 24 * 60 * 60 // 30 días
             });
+            response.cookies.set('cs', '1', {
+                httpOnly: false,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                maxAge: 30 * 24 * 60 * 60,
+                path: '/'
+            });
         }
 
         return response;

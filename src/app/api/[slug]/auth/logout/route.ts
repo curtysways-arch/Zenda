@@ -12,7 +12,15 @@ export async function POST(
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
-            maxAge: 0, // Expira inmediatamente
+            maxAge: 0,
+            path: "/",
+        });
+        // Borrar cookie de señal de sesión para JS cliente
+        response.cookies.set("cs", "", {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 0,
             path: "/",
         });
 
