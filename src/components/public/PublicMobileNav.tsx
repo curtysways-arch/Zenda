@@ -4,6 +4,7 @@ import { Home, Calendar, User, Gift, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { clsx } from 'clsx';
+import { useState, useEffect } from 'react';
 
 interface PublicMobileNavProps {
     slug: string;
@@ -37,6 +38,17 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
     const searchParams = useSearchParams();
     const activeTabParam = searchParams.get('tab');
 
+    // Detectar sesión de forma reactiva en el cliente
+    const [hasSession, setHasSession] = useState(false);
+
+    useEffect(() => {
+        const checkSession = () => {
+            setHasSession(document.cookie.includes('customer_token'));
+        };
+        checkSession();
+        // Re-verificar cada vez que el pathname cambia (ej: después de login)
+    }, [pathname]);
+
     // Visibilidad ampliada: Mostrar en la landing, cursos, reservas y servicios
     const isVisible =
         pathname === `/${slug}` ||
@@ -55,9 +67,6 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
     if (!isVisible || isEnrolmentDetail || pathname.includes('/admin') || pathname.includes('/superadmin')) {
         return null;
     }
-
-    // Verificar si el cliente tiene una sesión activa mediante cookies de cliente
-    const hasSession = typeof document !== 'undefined' && document.cookie.includes('customer_token');
 
     const tabs = [
         {
