@@ -23,8 +23,48 @@ export async function GET(
         }
 
         // 2. Obtener sesión de usuario (opcional)
-        const session = await getServerSession(authOptions);
-        const userId = (session?.user as any)?.id;
+        let userId: string | undefined = undefined;
+
+        // Intentar primero con la cookie de cliente customer_token (OTP)
+        const { cookies } = await import('next/headers');
+        const cookieStore = await cookies();
+        const token = cookieStore.get("customer_token")?.value;
+
+        if (token) {
+            try {
+                const { jwtVerify } = await import('jose');
+                const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "default_otp_secret_key_change_me");
+                const verification = await jwtVerify(token, secret);
+                const payload = verification.payload;
+                const phone = payload.telefono as string;
+
+                const localTelefono = phone.replace(/^\+(\d{1,4})/, ''); 
+                const digitsOnly = phone.replace(/\D/g, ''); 
+                const localNoZero = localTelefono.replace(/^0+/, '');
+
+                const user = await prisma.usuario.findFirst({
+                    where: {
+                        OR: [
+                            { phone: phone },
+                            { phone: localTelefono },
+                            { phone: digitsOnly },
+                            { phone: { endsWith: localNoZero } }
+                        ]
+                    }
+                });
+                if (user) {
+                    userId = user.id;
+                }
+            } catch (e) {
+                console.error("Error validando customer_token en API pública misiones:", e);
+            }
+        }
+
+        // Si no se obtuvo de la cookie de cliente, intentar con la sesión next-auth
+        if (!userId) {
+            const session = await getServerSession(authOptions);
+            userId = (session?.user as any)?.id;
+        }
 
         // 3. Obtener todas las campañas activas de este negocio (o globales de Citiox)
         const campaigns = await prisma.campaign.findMany({
