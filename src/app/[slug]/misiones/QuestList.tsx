@@ -64,7 +64,8 @@ interface GamificationData {
 }
 
 interface ReferralData {
-    nombre: string;
+    nombreCliente: string;
+    nombre?: string;
     puntos: number;
     codigo: string;
     progresoCampañas: any[];
@@ -242,7 +243,7 @@ export default function QuestList({ slug, primaryColor, textColor }: QuestListPr
                                 <Trophy size={20} />
                             </div>
                             <div>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none block">Hola, {referralData.nombre.split(' ')[0]}</span>
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none block">Hola, {(referralData.nombreCliente || referralData.nombre || 'Cliente').split(' ')[0]}</span>
                                 <h4 className="text-xl font-black text-slate-800 leading-tight flex items-center gap-1.5">
                                     <Coins size={16} style={{ color: primaryColor }} />
                                     {referralData.puntos} <span className="text-base text-slate-500 font-bold">pts</span>
