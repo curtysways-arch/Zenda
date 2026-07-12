@@ -114,7 +114,7 @@ export async function addPoints(
 
         console.log(`[Puntos] +${puntos} pts para ${userId} (${concepto})`);
 
-        // 1. Notificación al Centro de Actividad
+        // 1. Notificación al Centro de Actividad + Push FCM
         const esBono = puntos > 0;
         await NotificationService.createNotification({
             negocioId,
@@ -129,7 +129,8 @@ export async function addPoints(
             prioridad: esBono ? 'SUCCESS' : 'INFO',
             recipientType: 'USER',
             actionType: 'VER_PERFIL',
-            actionPayload: { screen: 'profile' }
+            actionPayload: { screen: 'profile' },
+            channels: ['APP', 'PUSH']
         });
 
         // 2. Transmitir actualización de puntos por SSE en tiempo real
@@ -628,7 +629,7 @@ async function notifyRewardEarned(userId: string, negocioId: string, campaign: a
             await whatsappService.sendWhatsApp(user.phone, msg).catch(() => {});
         }
 
-        // Crear notificación interna en el Centro de Actividad
+        // Crear notificación interna en el Centro de Actividad + Push FCM
         await NotificationService.createNotification({
             negocioId,
             userId,
@@ -640,7 +641,8 @@ async function notifyRewardEarned(userId: string, negocioId: string, campaign: a
             prioridad: 'SUCCESS',
             recipientType: 'USER',
             actionType: 'VER_PREMIO',
-            actionPayload: { screen: 'reward', rewardId: reward.id }
+            actionPayload: { screen: 'reward', rewardId: reward.id },
+            channels: ['APP', 'PUSH']
         });
     } catch {}
 }
@@ -655,7 +657,7 @@ async function notifyOneAway(userId: string, negocioId: string, campaign: any): 
             await whatsappService.sendWhatsApp(user.phone, msg).catch(() => {});
         }
 
-        // Crear notificación interna en el Centro de Actividad
+        // Crear notificación interna en el Centro de Actividad + Push FCM
         await NotificationService.createNotification({
             negocioId,
             userId,
@@ -667,7 +669,8 @@ async function notifyOneAway(userId: string, negocioId: string, campaign: any): 
             prioridad: 'INFO',
             recipientType: 'USER',
             actionType: 'VER_CAMPANA',
-            actionPayload: { screen: 'campaign', campaignId: campaign.id }
+            actionPayload: { screen: 'campaign', campaignId: campaign.id },
+            channels: ['APP', 'PUSH']
         });
     } catch {}
 }
