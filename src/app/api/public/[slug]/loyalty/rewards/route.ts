@@ -98,12 +98,17 @@ export async function POST(
         // 4. Iniciar transacción para el canje
         const result = await prisma.$transaction(async (tx) => {
             // Descontar puntos
-            const updatedPoints = await (tx as any).userPoints.update({
+            const updatedPoints = await (tx as any).userPoints.upsert({
                 where: { userId_negocioId: { userId: user.id, negocioId } },
-                data: {
+                update: {
                     puntos: {
                         decrement: reward.costoPuntos
                     }
+                },
+                create: {
+                    userId: user.id,
+                    negocioId,
+                    puntos: -reward.costoPuntos
                 }
             });
 
