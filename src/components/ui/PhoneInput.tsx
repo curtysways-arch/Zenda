@@ -31,6 +31,7 @@ interface PhoneInputProps {
     label?: string;
     disabled?: boolean;
     required?: boolean;
+    id?: string;
 }
 
 export default function PhoneInput({
@@ -40,7 +41,8 @@ export default function PhoneInput({
     className = "",
     label,
     disabled = false,
-    required = false
+    required = false,
+    id
 }: PhoneInputProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedCountry, setSelectedCountry] = useState(countries[0]);
@@ -131,6 +133,7 @@ export default function PhoneInput({
                 {/* Input de Número */}
                 <label className="flex-1 min-w-0 group/input flex items-center pr-4 bg-gray-50 border border-gray-100 rounded-3xl focus-within:bg-white focus-within:border-pink-500/20 outline-none transition-all cursor-text overflow-hidden">
                     <input
+                        id={id}
                         type="tel"
                         disabled={disabled}
                         required={required}

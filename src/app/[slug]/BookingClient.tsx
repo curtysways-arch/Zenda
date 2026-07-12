@@ -55,15 +55,21 @@ export default function BookingClient({
     const [couponData, setCouponData] = useState<any>(null);
     const [couponError, setCouponError] = useState('');
 
-    const handleValidateCoupon = async () => {
-        if (!couponCode.trim()) return;
+    // Cupones de cliente
+    const [clientCoupons, setClientCoupons] = useState<any[]>([]);
+    const [isCustomCouponCode, setIsCustomCouponCode] = useState(false);
+    const [showValidationErrors, setShowValidationErrors] = useState(false);
+
+    const handleValidateCoupon = async (codeToUse?: string) => {
+        const activeCode = codeToUse || couponCode;
+        if (!activeCode.trim()) return;
         setCouponStatus('checking');
         setCouponData(null);
         setCouponError('');
         try {
             const total = selectedBooking?.precio || 0;
             const serviceId = selectedBooking?.canchaId;
-            const res = await fetch(`/api/public/${slug}/coupons/validate?code=${couponCode.trim().toUpperCase()}&serviceId=${serviceId}&total=${total}`);
+            const res = await fetch(`/api/public/${slug}/coupons/validate?code=${activeCode.trim().toUpperCase()}&serviceId=${serviceId}&total=${total}`);
             const data = await res.json();
             if (data.valid) {
                 setCouponStatus('valid');
@@ -75,6 +81,24 @@ export default function BookingClient({
         } catch {
             setCouponStatus('invalid');
             setCouponError('Error al validar el cupón');
+        }
+    };
+
+    const handleSelectClientCoupon = (code: string) => {
+        if (code === 'custom') {
+            setIsCustomCouponCode(true);
+            setCouponCode('');
+            setCouponStatus('idle');
+            setCouponData(null);
+        } else {
+            setIsCustomCouponCode(false);
+            setCouponCode(code);
+            if (code) {
+                handleValidateCoupon(code);
+            } else {
+                setCouponStatus('idle');
+                setCouponData(null);
+            }
         }
     };
 
@@ -106,6 +130,25 @@ export default function BookingClient({
             } catch (e) {}
         }
     }, []);
+
+    useEffect(() => {
+        if (view === 'checkout') {
+            const fetchClientCoupons = async () => {
+                try {
+                    const res = await fetch(`/api/public/${slug}/client-coupons?estado=DISPONIBLE`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        setClientCoupons(Array.isArray(data) ? data : []);
+                        // Reiniciar selección
+                        setIsCustomCouponCode(false);
+                    }
+                } catch (e) {
+                    console.error("Error fetching customer coupons:", e);
+                }
+            };
+            fetchClientCoupons();
+        }
+    }, [view, slug]);
 
 /**
  * MOTOR DE RESOLUCIÓN (ARQUITECTURA LIMPIA) - UNIFICADO CON CALENDARIO
@@ -301,6 +344,24 @@ const resolveSlotPromotion = (
     };
 
     const handleFinalConfirm = async () => {
+        setShowValidationErrors(false);
+
+        if (!formData.nombre || !formData.nombre.trim()) {
+            setShowValidationErrors(true);
+            const el = document.getElementById('checkout-nombre-input');
+            el?.focus();
+            el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        if (!formData.telefono || !formData.telefono.trim()) {
+            setShowValidationErrors(true);
+            const el = document.getElementById('checkout-phone-input');
+            el?.focus();
+            el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
         if (!selectedBooking || selectedServiceIds.length === 0) {
             alert("Debe seleccionar al menos un servicio.");
             return;
@@ -461,8 +522,11 @@ const resolveSlotPromotion = (
                         
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Nombre Completo</label>
-                            <div className="rounded-2xl overflow-hidden border border-gray-100 bg-white shadow-sm h-16">
+                            <div className={`rounded-2xl overflow-hidden border bg-white shadow-sm h-16 transition-all ${
+                                showValidationErrors && (!formData.nombre || !formData.nombre.trim()) ? 'border-red-500 ring-2 ring-red-500/20' : 'border-gray-100'
+                            }`}>
                                 <input
+                                    id="checkout-nombre-input"
                                     required
                                     value={formData.nombre}
                                     onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
@@ -475,14 +539,84 @@ const resolveSlotPromotion = (
 
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Celular de Contacto</label>
-                            <div className="rounded-2xl overflow-hidden border border-gray-100 bg-white shadow-sm min-h-20">
+                            <div className={`rounded-2xl overflow-hidden border bg-white shadow-sm min-h-20 transition-all ${
+                                showValidationErrors && (!formData.telefono || !formData.telefono.trim()) ? 'border-red-500 ring-2 ring-red-500/20' : 'border-gray-100'
+                            }`}>
                                 <PhoneInput 
+                                    id="checkout-phone-input"
                                     value={formData.telefono} 
                                     onChange={(val) => { console.log("Updating tel:", val); setFormData({ ...formData, telefono: val }); }} 
                                     className="h-full" 
                                 />
                             </div>
                         </div>
+
+                        {/* ===== SECCIÓN DE CUPONES DEL CLIENTE / CATÁLOGO ===== */}
+                        {clientCoupons.length > 0 && (
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">🎟️ Tus Cupones Disponibles</label>
+                                <div className="rounded-2xl overflow-hidden border border-gray-100 bg-white shadow-sm h-14 relative flex items-center px-4">
+                                    <select
+                                        value={isCustomCouponCode ? "custom" : (couponStatus === 'valid' || couponStatus === 'checking' ? couponCode : "")}
+                                        onChange={(e) => handleSelectClientCoupon(e.target.value)}
+                                        className="w-full h-full bg-transparent font-black text-slate-800 text-xs uppercase tracking-wider outline-none cursor-pointer"
+                                        style={{ color: '#1e293b' }}
+                                    >
+                                        <option value="">Selecciona uno de tus cupones...</option>
+                                        {clientCoupons.map((coupon) => (
+                                            <option key={coupon.id} value={coupon.codigo}>
+                                                {coupon.nombre} ({coupon.codigo}) — Desc: {coupon.tipo === 'PORCENTAJE' ? `${coupon.descuento}%` : `$${coupon.descuento}`}
+                                            </option>
+                                        ))}
+                                        <option value="custom">✏️ Ingresar otro código manualmente...</option>
+                                    </select>
+                                </div>
+                                {clientCoupons.length > 0 && !isCustomCouponCode && couponStatus === 'valid' && couponData && (
+                                    <p className="text-[10px] font-black text-green-600 ml-4 mt-2">
+                                        ✅ {couponData.tipo === 'PORCENTAJE' ? `${couponData.valor}% OFF aplicado` : `$${couponData.valor} OFF aplicado`} — Ahorras ${couponData.descuento.toFixed(2)}
+                                    </p>
+                                )}
+                                {clientCoupons.length > 0 && !isCustomCouponCode && couponStatus === 'invalid' && (
+                                    <p className="text-[10px] font-black text-red-500 ml-4 mt-2">❌ {couponError}</p>
+                                )}
+                            </div>
+                        )}
+
+                        {(clientCoupons.length === 0 || isCustomCouponCode) && (
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">🎟️ Escribe tu Cupón</label>
+                                <div className={`rounded-2xl overflow-hidden border bg-white shadow-sm flex h-14 transition-all ${
+                                    couponStatus === 'valid' ? 'border-green-400' :
+                                    couponStatus === 'invalid' ? 'border-red-300' :
+                                    'border-gray-100'
+                                }`}>
+                                    <input
+                                        value={couponCode}
+                                        onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponStatus('idle'); setCouponData(null); }}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleValidateCoupon()}
+                                        placeholder="Código de cupón..."
+                                        className="flex-1 h-full bg-transparent px-5 font-black text-slate-900 placeholder:text-gray-300 outline-none uppercase tracking-widest text-[13px]"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => handleValidateCoupon()}
+                                        disabled={!couponCode.trim() || couponStatus === 'checking'}
+                                        className="px-4 text-[10px] font-black uppercase tracking-widest text-white rounded-r-2xl disabled:opacity-40 border-0 cursor-pointer transition-all"
+                                        style={{ backgroundColor: primaryColor }}
+                                    >
+                                        {couponStatus === 'checking' ? '...' : 'Aplicar'}
+                                    </button>
+                                </div>
+                                {couponStatus === 'valid' && couponData && (
+                                    <p className="text-[10px] font-black text-green-600 ml-4">
+                                        ✅ {couponData.tipo === 'PORCENTAJE' ? `${couponData.valor}% OFF aplicado` : `$${couponData.valor} OFF applied`} — Ahorras ${couponData.descuento.toFixed(2)}
+                                    </p>
+                                )}
+                                {couponStatus === 'invalid' && (
+                                    <p className="text-[10px] font-black text-red-500 ml-4">❌ {couponError}</p>
+                                )}
+                            </div>
+                        )}
 
                         <div className="space-y-2 text-left">
                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Notas adicionales</label>
@@ -496,41 +630,6 @@ const resolveSlotPromotion = (
                                     style={{ color: '#030712', '--tw-ring-color': `color-mix(in srgb, ${primaryColor}, transparent 95%)` } as any} 
                                 />
                             </div>
-                        </div>
-
-                        {/* ===== CAMPO DE CUPÓN ===== */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">🎟️ Cupón de Descuento</label>
-                            <div className={`rounded-2xl overflow-hidden border bg-white shadow-sm flex h-14 transition-all ${
-                                couponStatus === 'valid' ? 'border-green-400' :
-                                couponStatus === 'invalid' ? 'border-red-300' :
-                                'border-gray-100'
-                            }`}>
-                                <input
-                                    value={couponCode}
-                                    onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponStatus('idle'); setCouponData(null); }}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleValidateCoupon()}
-                                    placeholder="Código de cupón..."
-                                    className="flex-1 h-full bg-transparent px-5 font-black text-slate-900 placeholder:text-gray-300 outline-none uppercase tracking-widest text-[13px]"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleValidateCoupon}
-                                    disabled={!couponCode.trim() || couponStatus === 'checking'}
-                                    className="px-4 text-[10px] font-black uppercase tracking-widest text-white rounded-r-2xl disabled:opacity-40 border-0 cursor-pointer transition-all"
-                                    style={{ backgroundColor: primaryColor }}
-                                >
-                                    {couponStatus === 'checking' ? '...' : 'Aplicar'}
-                                </button>
-                            </div>
-                            {couponStatus === 'valid' && couponData && (
-                                <p className="text-[10px] font-black text-green-600 ml-4">
-                                    ✅ {couponData.tipo === 'PORCENTAJE' ? `${couponData.valor}% OFF aplicado` : `$${couponData.valor} OFF aplicado`} — Ahorras ${couponData.descuento.toFixed(2)}
-                                </p>
-                            )}
-                            {couponStatus === 'invalid' && (
-                                <p className="text-[10px] font-black text-red-500 ml-4">❌ {couponError}</p>
-                            )}
                         </div>
                     </div>
 
@@ -566,7 +665,7 @@ const resolveSlotPromotion = (
                             <button 
                                 type="button"
                                 onClick={(e) => { e.preventDefault(); console.log("Clicked confirm"); handleFinalConfirm(); }} 
-                                disabled={loading || !formData.telefono || !formData.nombre} 
+                                disabled={loading} 
                                 className="w-full h-18 text-white rounded-[2rem] font-black text-[14px] tracking-[0.2em] transition-all flex items-center justify-center gap-4 uppercase disabled:opacity-50 disabled:cursor-not-allowed" 
                                 style={{ backgroundColor: primaryColor }}
                             >
