@@ -28,6 +28,7 @@ export async function POST(
         const staffId = body.staffId;
         const comentarios = body.comentarios || '';
         const duracionBody = body.duracion; // puede ser en horas (1, 1.5) o indefinido
+        const couponCode = body.couponCode?.trim().toUpperCase() || null;
 
         if (!clienteTelefono || !horaInicio || !fecha || !serviceId) {
             return NextResponse.json({ error: 'Faltan datos obligatorios' }, { status: 400 });
@@ -191,13 +192,48 @@ export async function POST(
                 comentariosFinales += `\nServicios extra: ${nombresExtra}`;
             }
 
+            // Validar y aplicar cupón si se envió
+            let totalFinal = parseFloat(String(body.precioTotal || 0));
+            let couponApplied: any = null;
+
+            if (couponCode) {
+                const coupon = await tx.Coupon.findUnique({
+                    where: { negocioId_codigo: { negocioId: negocio.id, codigo: couponCode } },
+                });
+
+                if (coupon && coupon.activa) {
+                    const now = new Date();
+                    const vigente = (!coupon.fechaInicio || now >= coupon.fechaInicio) &&
+                                   (!coupon.fechaFin || now <= coupon.fechaFin);
+                    const sinLimite = coupon.maxUsos === null || coupon.usosActuales < coupon.maxUsos;
+                    const aplicaServicio = !coupon.servicioId || coupon.servicioId === serviceId;
+
+                    if (vigente && sinLimite && aplicaServicio) {
+                        let descuento = 0;
+                        if (coupon.tipo === 'PORCENTAJE') {
+                            descuento = (totalFinal * coupon.valor) / 100;
+                        } else if (coupon.tipo === 'FIJO') {
+                            descuento = Math.min(coupon.valor, totalFinal);
+                        }
+                        totalFinal = Math.max(0, totalFinal - descuento);
+                        couponApplied = coupon;
+
+                        // Incrementar contador de usos
+                        await tx.Coupon.update({
+                            where: { id: coupon.id },
+                            data: { usosActuales: { increment: 1 } },
+                        });
+                    }
+                }
+            }
+
             const dataToCreate: any = {
                 fecha: reservationDate,
                 horaInicio: String(horaInicio),
                 horaFin: String(horaFin),
                 duracion: Math.ceil(totalDuracionMinutos),
-                total: parseFloat(String(body.precioTotal || 0)),
-                comentarios: comentariosFinales,
+                total: totalFinal,
+                comentarios: comentariosFinales + (couponApplied ? `\n🎟️ Cupón aplicado: ${couponApplied.codigo}` : ''),
                 estado: estadoInicial,
                 expiresAt: expiresAt,
                 cliente: { connect: { id: cliente.id } },

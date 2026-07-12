@@ -49,6 +49,35 @@ export default function BookingClient({
     const [formData, setFormData] = useState({ nombre: '', telefono: '', comentarios: '' });
     const [loading, setLoading] = useState(false);
 
+    // Estado de cupón de descuento
+    const [couponCode, setCouponCode] = useState('');
+    const [couponStatus, setCouponStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
+    const [couponData, setCouponData] = useState<any>(null);
+    const [couponError, setCouponError] = useState('');
+
+    const handleValidateCoupon = async () => {
+        if (!couponCode.trim()) return;
+        setCouponStatus('checking');
+        setCouponData(null);
+        setCouponError('');
+        try {
+            const total = selectedBooking?.precio || 0;
+            const serviceId = selectedBooking?.canchaId;
+            const res = await fetch(`/api/public/${slug}/coupons/validate?code=${couponCode.trim().toUpperCase()}&serviceId=${serviceId}&total=${total}`);
+            const data = await res.json();
+            if (data.valid) {
+                setCouponStatus('valid');
+                setCouponData(data);
+            } else {
+                setCouponStatus('invalid');
+                setCouponError(data.error || 'Cupón no válido');
+            }
+        } catch {
+            setCouponStatus('invalid');
+            setCouponError('Error al validar el cupón');
+        }
+    };
+
     // Leer el color desde la variable CSS inyectada por el layout (evita flash de color)
     const primaryColor = negocio?.colorPrimario || 'var(--primary)';
     const showPrices = negocio?.mostrarPrecios !== false;
@@ -289,7 +318,8 @@ const resolveSlotPromotion = (
                 duracion: totalDuracionMin / 60,
                 serviceId: selectedBooking.canchaId,
                 staffId: selectedBooking.staffId,
-                precioTotal: selectedBooking.precio,
+                precioTotal: couponData ? couponData.totalConDescuento : selectedBooking.precio,
+                couponCode: couponStatus === 'valid' ? couponCode.trim().toUpperCase() : undefined,
                 extraServices: selectedServiceIds.slice(1).map(id => {
                     const s = allServices.find(ser => ser.id === id);
                     return { id: s?.id, nombre: s?.nombre, precio: s?.precio, duracion: s?.duracion };
@@ -467,6 +497,41 @@ const resolveSlotPromotion = (
                                 />
                             </div>
                         </div>
+
+                        {/* ===== CAMPO DE CUPÓN ===== */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">🎟️ Cupón de Descuento</label>
+                            <div className={`rounded-2xl overflow-hidden border bg-white shadow-sm flex h-14 transition-all ${
+                                couponStatus === 'valid' ? 'border-green-400' :
+                                couponStatus === 'invalid' ? 'border-red-300' :
+                                'border-gray-100'
+                            }`}>
+                                <input
+                                    value={couponCode}
+                                    onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponStatus('idle'); setCouponData(null); }}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleValidateCoupon()}
+                                    placeholder="Código de cupón..."
+                                    className="flex-1 h-full bg-transparent px-5 font-black text-slate-900 placeholder:text-gray-300 outline-none uppercase tracking-widest text-[13px]"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleValidateCoupon}
+                                    disabled={!couponCode.trim() || couponStatus === 'checking'}
+                                    className="px-4 text-[10px] font-black uppercase tracking-widest text-white rounded-r-2xl disabled:opacity-40 border-0 cursor-pointer transition-all"
+                                    style={{ backgroundColor: primaryColor }}
+                                >
+                                    {couponStatus === 'checking' ? '...' : 'Aplicar'}
+                                </button>
+                            </div>
+                            {couponStatus === 'valid' && couponData && (
+                                <p className="text-[10px] font-black text-green-600 ml-4">
+                                    ✅ {couponData.tipo === 'PORCENTAJE' ? `${couponData.valor}% OFF aplicado` : `$${couponData.valor} OFF aplicado`} — Ahorras ${couponData.descuento.toFixed(2)}
+                                </p>
+                            )}
+                            {couponStatus === 'invalid' && (
+                                <p className="text-[10px] font-black text-red-500 ml-4">❌ {couponError}</p>
+                            )}
+                        </div>
                     </div>
 
                     <div className="fixed bottom-2 left-2 right-2 z-[720] max-w-lg mx-auto">
@@ -487,9 +552,14 @@ const resolveSlotPromotion = (
                                 {showPrices && (
                                     <div className="text-right flex flex-col">
                                         <span className="text-[10px] font-black text-gray-400 uppercase mb-1.5">Total a Pagar</span>
-                                        <span className="text-4xl font-black text-gray-950 tracking-tighter leading-none">
-                                            ${selectedBooking?.precio.toFixed(2)}
-                                        </span>
+                                        {couponStatus === 'valid' && couponData ? (
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-[12px] font-black text-gray-400 line-through leading-none">${selectedBooking?.precio.toFixed(2)}</span>
+                                                <span className="text-4xl font-black tracking-tighter leading-none" style={{ color: primaryColor }}>${couponData.totalConDescuento.toFixed(2)}</span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-4xl font-black text-gray-950 tracking-tighter leading-none">${selectedBooking?.precio.toFixed(2)}</span>
+                                        )}
                                     </div>
                                 )}
                             </div>
