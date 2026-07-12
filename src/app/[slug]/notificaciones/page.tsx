@@ -27,8 +27,6 @@ export default function CentroActividadPage() {
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     
-    // Banner de activar push
-    const [showPushBanner, setShowPushBanner] = useState(true);
 
     // Diseño HSL
     const [primaryColor, setPrimaryColor] = useState('#db2777');
@@ -586,47 +584,7 @@ export default function CentroActividadPage() {
                             </button>
                         )}
                     </div>
-                )}
             </main>
-
-            {/* Banner de Activar Notificaciones Push */}
-            {showPushBanner && (
-                <div className="fixed bottom-20 left-4 right-4 z-40 max-w-md mx-auto">
-                    <div className="bg-pink-50/90 backdrop-blur-md border border-pink-100 rounded-3xl p-4 shadow-xl flex items-center justify-between gap-3 relative">
-                        <div className="flex items-center gap-3">
-                            <div className="size-10 rounded-full bg-pink-100 flex items-center justify-center shrink-0">
-                                <Sparkles size={16} className="text-pink-600" />
-                            </div>
-                            <div className="flex flex-col">
-                                <h5 className="text-[11px] font-black text-pink-700 uppercase tracking-wide">Activa las notificaciones</h5>
-                                <p className="text-[9px] text-pink-600/90 font-medium leading-tight mt-0.5 max-w-[200px]">
-                                    No te pierdas de promociones, recordatorios y beneficios exclusivos.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <button 
-                                onClick={() => {
-                                    if ('Notification' in window) {
-                                        Notification.requestPermission();
-                                    }
-                                }}
-                                className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white text-[9px] font-black uppercase tracking-wider rounded-xl shadow-sm transition-all active:scale-95"
-                                style={{ backgroundColor: primaryColor }}
-                            >
-                                Activar
-                            </button>
-                            <button 
-                                onClick={() => setShowPushBanner(false)}
-                                className="p-1 text-pink-400 hover:text-pink-600 transition-colors"
-                            >
-                                <X size={14} />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
