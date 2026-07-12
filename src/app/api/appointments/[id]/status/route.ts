@@ -70,6 +70,43 @@ export async function PATCH(
             data: updateData
         });
 
+        // Sincronizar estado de cupones de cliente asociados
+        try {
+            const { clientCouponService } = await import('@/lib/services/couponService');
+            await clientCouponService.syncCouponWithAppointmentStatus(appointment.id, estado);
+        } catch (e) {
+            console.error("Error al sincronizar cupón con el estado de la reserva:", e);
+        }
+
+        // Sincronizar premios de servicio gratis asociados
+        try {
+            if (estado === 'completed') {
+                // Confirmar canje de premios por puntos
+                await (prisma as any).loyaltyRedemption.updateMany({
+                    where: { appointmentId: appointment.id, estado: 'RESERVADO' },
+                    data: { estado: 'CANJEADO', fechaEntrega: new Date(), updatedAt: new Date() }
+                });
+                // Confirmar canje de premios por campañas
+                await prisma.referralReward.updateMany({
+                    where: { appointmentId: appointment.id, estado: 'RESERVADO' },
+                    data: { estado: 'CANJEADO', fechaEntrega: new Date(), updatedAt: new Date() }
+                });
+            } else if (estado === 'cancelled' || estado === 'no_show') {
+                // Liberar premios por puntos
+                await (prisma as any).loyaltyRedemption.updateMany({
+                    where: { appointmentId: appointment.id, estado: 'RESERVADO' },
+                    data: { estado: 'DISPONIBLE', appointmentId: null, updatedAt: new Date() }
+                });
+                // Liberar premios por campañas
+                await prisma.referralReward.updateMany({
+                    where: { appointmentId: appointment.id, estado: 'RESERVADO' },
+                    data: { estado: 'DISPONIBLE', appointmentId: null, updatedAt: new Date() }
+                });
+            }
+        } catch (e) {
+            console.error("Error al sincronizar premios de servicio gratis:", e);
+        }
+
         // Registrar/actualizar pago de la reserva si se finaliza y se pasa el monto
         if (estado === 'completed' && typeof montoCobrado === 'number' && montoCobrado > 0) {
             const pagoExistente = await prisma.pagoReserva.findFirst({

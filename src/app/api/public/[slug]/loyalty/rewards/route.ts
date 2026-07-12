@@ -124,20 +124,55 @@ export async function POST(
                 }
             });
 
-            // Registrar canje en estado DISPONIBLE (pendiente de entrega física por staff)
+            // Determinar tipo de entrega y tipo de premio
+            const deliveryType = reward.deliveryType || 'AUTOMATICO';
+            const rewardType = reward.tipo || 'PERSONALIZADO';
+
+            let estadoInicial = 'DISPONIBLE';
+            let claimCode = null;
+
+            if (deliveryType === 'MANUAL') {
+                estadoInicial = 'PENDIENTE_ENTREGA';
+                
+                // Generar claimCode único PX-XXXXXX dentro de la tx
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let isUnique = false;
+                for (let attempt = 0; attempt < 10; attempt++) {
+                    let tempCode = 'PX-';
+                    for (let i = 0; i < 6; i++) {
+                        tempCode += chars.charAt(Math.floor(Math.random() * chars.length));
+                    }
+                    const checkRef = await tx.referralReward.findFirst({ where: { claimCode: tempCode } });
+                    const checkLoy = await tx.loyaltyRedemption.findFirst({ where: { claimCode: tempCode } });
+                    if (!checkRef && !checkLoy) {
+                        claimCode = tempCode;
+                        isUnique = true;
+                        break;
+                    }
+                }
+                if (!isUnique) {
+                    claimCode = `PX-${Date.now().toString().slice(-6)}`;
+                }
+            } else if (rewardType === 'CUPON') {
+                // Si es un cupón automático, lo marcaremos como CANJEADO/ENTREGADO ya que se le asigna de inmediato el recurso
+                estadoInicial = 'CANJEADO';
+            }
+
+            // Registrar canje
             const redemption = await (tx as any).loyaltyRedemption.create({
                 data: {
                     id: crypto.randomUUID(),
                     negocioId,
                     userId: user.id,
                     rewardId,
-                    estado: 'DISPONIBLE'
+                    estado: estadoInicial as any,
+                    claimCode
                 }
             });
 
             // Si el premio es de tipo cupón, crear el ClientCoupon para el usuario
             let clientCouponCreated = null;
-            if (reward.tipo === 'CUPON' && reward.Coupon) {
+            if (rewardType === 'CUPON' && reward.Coupon) {
                 const parentCoupon = reward.Coupon;
                 
                 // Generar código único CTX-XXXXX
@@ -168,7 +203,6 @@ export async function POST(
                 // Calcular fecha de expiración
                 let expirationDate = parentCoupon.fechaFin;
                 if (!expirationDate) {
-                    // Si no tiene fecha de fin del catálogo, vence por defecto en 30 días
                     expirationDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
                 }
 
@@ -202,7 +236,14 @@ export async function POST(
             return { updatedPoints, redemption, clientCouponCreated };
         });
 
-        return NextResponse.json({ success: true, balance: result.updatedPoints.puntos });
+        // Retornar éxito, balance y los detalles del reclamo para la UI
+        return NextResponse.json({ 
+            success: true, 
+            balance: result.updatedPoints.puntos,
+            redemptionId: result.redemption.id,
+            claimCode: result.redemption.claimCode,
+            estado: result.redemption.estado
+        });
     } catch (error: any) {
         console.error("Error in public reward redemption:", error);
         return NextResponse.json({ error: "Internal Error", details: error.message }, { status: 500 });

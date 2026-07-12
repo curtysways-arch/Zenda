@@ -2,6 +2,34 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// ─── ENUMS DE SISTEMA DE PREMIOS ──────────────────────────────────────────────
+
+enum RewardDeliveryType {
+  AUTOMATICO
+  MANUAL
+}
+
+enum RewardType {
+  CUPON
+  SERVICIO_GRATIS
+  PRODUCTO
+  REGALO
+  PUNTOS
+  CASHBACK
+  BADGE
+  PERSONALIZADO
+}
+
+enum RewardStatus {
+  DISPONIBLE
+  RESERVADO
+  CANJEADO
+  PENDIENTE_ENTREGA
+  ENTREGADO
+  CANCELADO
+  VENCIDO
+}
+
 datasource db {
   provider = "postgresql"
 }
@@ -81,6 +109,8 @@ model Service {
   Resultado          Resultado[]
   PromotionToService PromotionToService[]
   Staff              Staff[]              @relation("StaffServices")
+  LoyaltyReward      LoyaltyReward[]     // Premios de tipo SERVICIO_GRATIS vinculados a este servicio
+  ReferralCampaign   ReferralCampaign[]  // Campañas de tipo SERVICIO_GRATIS vinculadas a este servicio
 
   @@map("Cancha")
 }
@@ -821,37 +851,44 @@ model PaymentAccount {
 // ─── SISTEMA DE REFERIDOS ───────────────────────────────────────────────────
 
 model ReferralCampaign {
-  id                  String           @id @default(cuid())
+  id                  String              @id @default(cuid())
   negocioId           String
   nombre              String
   descripcion         String?
   imagenUrl           String?
-  activa              Boolean          @default(true)
-  tipoRecompensa      String           // DINERO | DESCUENTO | SERVICIO_GRATIS | PRODUCTO | REGALO | PUNTOS | OTRO
+  activa              Boolean             @default(true)
+  tipoRecompensa      String              // Descripción libre (ej. "Masaje gratis", "Camiseta") — compatibilidad histórica
   valorRecompensa     String
   referidosRequeridos Int
-  fechaInicio         DateTime         @default(now())
+  fechaInicio         DateTime            @default(now())
   fechaFin            DateTime?
-  limitePremios       Int?             // null = ilimitado
-  premiosEntregados   Int              @default(0)
-  rankingActivo       Boolean          @default(false)
-  tipoIncentivo       String?          // incentivo para el referido: DESCUENTO | SERVICIO | REGALO | null
-  valorIncentivo      String?          // ej: "10% descuento", "Bebida gratis"
-  
-  // Nuevos campos de configuración para Fidelización
-  estado              String?          @default("ACTIVA") // ACTIVA | PAUSADA | FINALIZADA
-  tipoCampana         String?          @default("CLIENTES_NUEVOS") // CLIENTES_NUEVOS, CLIENTES_EXISTENTES, CLIENTES_INACTIVOS, CUMPLEANOS, PRIMERA_RESERVA_MES, CUALQUIER_RESERVA, COMPLETAR_RESERVAS, GASTAR_DOLARES, COMPRAR_SERVICIO, COMPRAR_CATEGORIA, RESERVAR_DIAS, RESERVAR_HORARIOS, FLASH, RANKING, TEMPORADA, RESENA, COMPARTIR, PERSONALIZADA
-  diasInactividad     Int?             // Para CLIENTES_INACTIVOS (30, 60, 90, 180)
-  maxPremiosPorCliente Int?            // Cantidad máxima por cliente
-  permitirRepetir     Boolean?         @default(false)   // Si puede repetirse el premio
-  prioridad           Int?             @default(0)       // Prioridad de campaña
-  combinable          Boolean?         @default(false)   // Combinable con otras
-  color               String?          // Color en UI
-  icono               String?          // Icono en UI
-  
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
-  Negocio             Negocio          @relation(fields: [negocioId], references: [id])
+  limitePremios       Int?                // null = ilimitado
+  premiosEntregados   Int                 @default(0)
+  rankingActivo       Boolean             @default(false)
+  tipoIncentivo       String?             // incentivo para el referido
+  valorIncentivo      String?             // ej: "10% descuento", "Bebida gratis"
+
+  // Tipo de entrega y tipo de premio estructurado
+  deliveryType        RewardDeliveryType  @default(AUTOMATICO)
+  rewardType          RewardType          @default(PERSONALIZADO)
+  serviceId           String?             // Para rewardType = SERVICIO_GRATIS: servicio específico
+  recompensaImagenUrl String?             // Imagen del premio (premios manuales)
+
+  // Configuración para Fidelización
+  estado              String?             @default("ACTIVA") // ACTIVA | PAUSADA | FINALIZADA
+  tipoCampana         String?             @default("CLIENTES_NUEVOS")
+  diasInactividad     Int?
+  maxPremiosPorCliente Int?
+  permitirRepetir     Boolean?            @default(false)
+  prioridad           Int?                @default(0)
+  combinable          Boolean?            @default(false)
+  color               String?
+  icono               String?
+
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  Negocio             Negocio             @relation(fields: [negocioId], references: [id])
+  Service             Service?            @relation(fields: [serviceId], references: [id])
   ReferralEvent       ReferralEvent[]
   ReferralReward      ReferralReward[]
 }
@@ -891,21 +928,27 @@ model ReferralEvent {
 }
 
 model ReferralReward {
-  id            String           @id @default(cuid())
-  campaignId    String
-  negocioId     String
-  userId        String
-  estado        String           @default("DISPONIBLE") // DISPONIBLE | CANJEADO | CADUCADO
-  fechaEntrega  DateTime?
-  staffId       String?
-  notas         String?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  Campaign      ReferralCampaign @relation(fields: [campaignId], references: [id])
-  Negocio       Negocio          @relation(fields: [negocioId], references: [id])
-  Usuario       Usuario          @relation(fields: [userId], references: [id])
-  Staff         Staff?           @relation(fields: [staffId], references: [id])
-  ReferralEvent ReferralEvent[]
+  id                     String             @id @default(cuid())
+  campaignId             String
+  negocioId              String
+  userId                 String
+  estado                 RewardStatus       @default(DISPONIBLE)
+  claimCode              String?            @unique // Código de reclamación para premios manuales (ej. PX-8FK29Q)
+  fechaEntrega           DateTime?
+  staffId                String?
+  notas                  String?
+  // Campos de auditoría de entrega física
+  entregadoPorId         String?            // userId o staffId que confirmó la entrega
+  fechaEntregaConfirmada DateTime?
+  observaciones          String?
+  appointmentId          String?            // Para SERVICIO_GRATIS: reserva donde se usó
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  Campaign               ReferralCampaign   @relation(fields: [campaignId], references: [id])
+  Negocio                Negocio            @relation(fields: [negocioId], references: [id])
+  Usuario                Usuario            @relation(fields: [userId], references: [id])
+  Staff                  Staff?             @relation(fields: [staffId], references: [id])
+  ReferralEvent          ReferralEvent[]
 }
 
 // ─── MOTOR DE FIDELIZACIÓN Y MARKETING ──────────────────────────────────────
@@ -937,40 +980,50 @@ model PointsHistory {
 }
 
 model LoyaltyReward {
-  id                 String              @id @default(cuid())
-  negocioId          String
-  nombre             String
-  descripcion        String?
-  imagenUrl          String?
-  costoPuntos        Int                 @default(0) // 0 = solo por campaña, >0 = canjeable por puntos
-  tipo               String              // DESCUENTO | PORCENTAJE | DINERO | SERVICIO_GRATIS | PRODUCTO | REGALO | CUPON | PERSONALIZADO
-  valor              String?             // monto, porcentaje, id del servicio, etc.
-  cantidadTotal      Int?                // null = ilimitado
-  cantidadDisponible Int?
-  couponId           String?
-  Coupon             Coupon?             @relation(fields: [couponId], references: [id])
-  activa             Boolean             @default(true)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  Negocio            Negocio             @relation(fields: [negocioId], references: [id])
-  LoyaltyRedemption  LoyaltyRedemption[]
+  id                  String              @id @default(cuid())
+  negocioId           String
+  nombre              String
+  descripcion         String?
+  imagenUrl           String?
+  recompensaImagenUrl String?             // Imagen específica del premio (premios manuales)
+  costoPuntos         Int                 @default(0) // 0 = gratis, >0 = canjeable por puntos
+  tipo                RewardType          @default(PERSONALIZADO)
+  deliveryType        RewardDeliveryType  @default(AUTOMATICO)
+  valor               String?             // Valor adicional: monto, porcentaje, etc.
+  serviceId           String?             // Para tipo = SERVICIO_GRATIS: servicio que se otorga
+  couponId            String?             // Para tipo = CUPON: cupón del catálogo
+  cantidadTotal       Int?                // null = ilimitado
+  cantidadDisponible  Int?
+  activa              Boolean             @default(true)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  Negocio             Negocio             @relation(fields: [negocioId], references: [id])
+  Coupon              Coupon?             @relation(fields: [couponId], references: [id])
+  Service             Service?            @relation(fields: [serviceId], references: [id])
+  LoyaltyRedemption   LoyaltyRedemption[]
 }
 
 model LoyaltyRedemption {
-  id           String        @id @default(cuid())
-  negocioId    String
-  userId       String
-  rewardId     String
-  estado       String        @default("DISPONIBLE") // DISPONIBLE | CANJEADO | CADUCADO
-  fechaEntrega DateTime?
-  staffId      String?
-  notas        String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  Negocio      Negocio       @relation(fields: [negocioId], references: [id])
-  Usuario      Usuario       @relation(fields: [userId], references: [id])
-  Reward       LoyaltyReward @relation(fields: [rewardId], references: [id])
-  Staff        Staff?        @relation(fields: [staffId], references: [id])
+  id                     String             @id @default(cuid())
+  negocioId              String
+  userId                 String
+  rewardId               String
+  estado                 RewardStatus       @default(DISPONIBLE)
+  claimCode              String?            @unique // Código de reclamación para premios manuales (ej. PX-8FK29Q)
+  fechaEntrega           DateTime?
+  staffId                String?
+  notas                  String?
+  // Campos de auditoría de entrega física
+  entregadoPorId         String?            // userId o staffId que confirmó la entrega
+  fechaEntregaConfirmada DateTime?
+  observaciones          String?
+  appointmentId          String?            // Para SERVICIO_GRATIS: reserva donde se usó
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  Negocio                Negocio            @relation(fields: [negocioId], references: [id])
+  Usuario                Usuario            @relation(fields: [userId], references: [id])
+  Reward                 LoyaltyReward      @relation(fields: [rewardId], references: [id])
+  Staff                  Staff?             @relation(fields: [staffId], references: [id])
 }
 
 model Coupon {

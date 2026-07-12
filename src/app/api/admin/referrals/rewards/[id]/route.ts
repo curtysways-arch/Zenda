@@ -18,7 +18,9 @@ export async function PATCH(
 
         const { id } = await params;
         const body = await req.json();
-        const { estado, staffId, notas } = body;
+        const { estado, staffId, notas, observaciones } = body;
+
+        const businessUserStaffId = user.id;
 
         // 1. Verificar primero si el id corresponde a un canje de puntos (LoyaltyRedemption)
         const loyaltyRedemption = await (prisma as any).loyaltyRedemption.findFirst({
@@ -31,14 +33,20 @@ export async function PATCH(
         });
 
         if (loyaltyRedemption) {
+            const isDelivered = estado === "CANJEADO" || estado === "ENTREGADO";
+            const finalState = estado ? (estado === "CANJEADO" ? "CANJEADO" : estado) : undefined;
+
             const dataToUpdate: any = {
-                estado: estado || undefined,
+                estado: finalState || undefined,
                 notas: notas !== undefined ? notas : undefined,
+                observaciones: observaciones !== undefined ? observaciones : undefined,
                 updatedAt: new Date()
             };
 
-            if (estado === "CANJEADO") {
+            if (isDelivered) {
                 dataToUpdate.fechaEntrega = new Date();
+                dataToUpdate.fechaEntregaConfirmada = new Date();
+                dataToUpdate.entregadoPorId = businessUserStaffId;
                 if (staffId) {
                     dataToUpdate.staffId = staffId;
                 }
@@ -55,7 +63,7 @@ export async function PATCH(
             });
 
             // Enviar WhatsApp de confirmación de entrega de premio por puntos
-            if (estado === "CANJEADO" && updatedRed.Usuario?.phone) {
+            if (isDelivered && updatedRed.Usuario?.phone) {
                 try {
                     const staffName = updatedRed.Staff?.name ? ` por *${updatedRed.Staff.name}*` : "";
                     const msg = `🎁 *¡Premio de Lealtad Entregado!* 🎁\n\nHola *${updatedRed.Usuario.nombre}*,\n\nConfirmamos la entrega física de tu premio:\n🏆 *"${updatedRed.Reward.nombre}"* (Canjeado por ${updatedRed.Reward.costoPuntos} pts)\n🏢 En: *${loyaltyRedemption.Negocio.nombre}*${staffName}.\n\n¡Gracias por tu preferencia! Sigue acumulando puntos en cada cita. 🚀`;
@@ -88,14 +96,20 @@ export async function PATCH(
             return NextResponse.json({ error: "Recompensa no encontrada" }, { status: 404 });
         }
 
+        const isDelivered = estado === "CANJEADO" || estado === "ENTREGADO";
+        const finalState = estado ? (estado === "CANJEADO" ? "CANJEADO" : estado) : undefined;
+
         const dataToUpdate: any = {
-            estado: estado || undefined,
+            estado: finalState || undefined,
             notas: notas !== undefined ? notas : undefined,
+            observaciones: observaciones !== undefined ? observaciones : undefined,
             updatedAt: new Date()
         };
 
-        if (estado === "CANJEADO") {
+        if (isDelivered) {
             dataToUpdate.fechaEntrega = new Date();
+            dataToUpdate.fechaEntregaConfirmada = new Date();
+            dataToUpdate.entregadoPorId = businessUserStaffId;
             if (staffId) {
                 dataToUpdate.Staff = { connect: { id: staffId } };
             }
@@ -112,7 +126,7 @@ export async function PATCH(
         });
 
         // Enviar notificación al cliente de que se entregó su premio de referido
-        if (estado === "CANJEADO" && updated.Usuario?.phone) {
+        if (isDelivered && updated.Usuario?.phone) {
             try {
                 const staffName = updated.Staff?.name ? ` por *${updated.Staff.name}*` : "";
                 const msg = `🎁 *¡Premio Canjeado con Éxito!* 🎁\n\nHola *${updated.Usuario.nombre}*,\n\nConfirmamos la entrega de tu premio:\n🏆 *"${updated.Campaign.valorRecompensa}"*\n🏢 En: *${reward.Negocio.nombre}*${staffName}.\n\n¡Gracias por seguir recomendándonos! Sigue compartiendo tu enlace para ganar más premios. 🚀`;

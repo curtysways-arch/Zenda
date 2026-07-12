@@ -342,16 +342,54 @@ async function evaluateSingleCampaign(
 
 // ─── GENERACIÓN DE RECOMPENSAS ────────────────────────────────────────────────
 
+// Generar claimCode único para canjes manuales
+async function generateUniqueClaimCode(tx: any): Promise<string> {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    let isUnique = false;
+    for (let attempt = 0; attempt < 10; attempt++) {
+        let tempCode = 'PX-';
+        for (let i = 0; i < 6; i++) {
+            tempCode += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        const checkRef = await tx.referralReward.findFirst({ where: { claimCode: tempCode } });
+        const checkLoy = await tx.loyaltyRedemption.findFirst({ where: { claimCode: tempCode } });
+        if (!checkRef && !checkLoy) {
+            code = tempCode;
+            isUnique = true;
+            break;
+        }
+    }
+    if (!isUnique) {
+        code = `PX-${Date.now().toString().slice(-6)}`;
+    }
+    return code;
+}
+
 /**
  * Crea una recompensa cuando el usuario completa la meta de la campaña.
  */
 async function generateReward(campaign: any, userId: string, negocioId: string, validCount: number): Promise<void> {
+    const crypto = require('crypto');
+    const deliveryType = campaign.deliveryType || 'AUTOMATICO';
+    const rewardType = campaign.rewardType || 'PERSONALIZADO';
+
+    let estadoInicial = 'DISPONIBLE';
+    let claimCode: string | null = null;
+
+    if (deliveryType === 'MANUAL') {
+        estadoInicial = 'PENDIENTE_ENTREGA';
+        claimCode = await generateUniqueClaimCode(prisma);
+    }
+
     const reward = await (prisma as any).referralReward.create({
         data: {
+            id: crypto.randomUUID(),
             campaignId: campaign.id,
             negocioId,
             userId,
-            estado: 'DISPONIBLE'
+            estado: estadoInicial as any,
+            claimCode
         }
     });
 
@@ -373,6 +411,107 @@ async function generateReward(campaign: any, userId: string, negocioId: string, 
         where: { id: campaign.id },
         data: { premiosEntregados: { increment: 1 } }
     });
+
+    // Procesar acciones automáticas si corresponde
+    if (deliveryType === 'AUTOMATICO') {
+        if (rewardType === 'CUPON') {
+            const couponVal = campaign.valorRecompensa;
+            const parentCoupon = await prisma.coupon.findFirst({
+                where: {
+                    negocioId,
+                    OR: [
+                        { id: couponVal },
+                        { codigo: couponVal }
+                    ]
+                }
+            });
+
+            if (parentCoupon) {
+                // Generar código ClientCoupon único CTX-XXXXX
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let uniqueCouponCode = '';
+                let isUnique = false;
+                for (let attempt = 0; attempt < 5; attempt++) {
+                    let tempCode = 'CTX-';
+                    for (let i = 0; i < 5; i++) {
+                        tempCode += chars.charAt(Math.floor(Math.random() * chars.length));
+                    }
+                    const check = await prisma.clientCoupon.findUnique({
+                        where: { codigo: tempCode }
+                    });
+                    if (!check) {
+                        uniqueCouponCode = tempCode;
+                        isUnique = true;
+                        break;
+                    }
+                }
+                if (!isUnique) {
+                    uniqueCouponCode = `CTX-${Date.now().toString().slice(-5)}`;
+                }
+
+                let expirationDate = parentCoupon.fechaFin;
+                if (!expirationDate) {
+                    expirationDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+                }
+
+                await prisma.clientCoupon.create({
+                    data: {
+                        id: crypto.randomUUID(),
+                        negocioId,
+                        clienteId: userId,
+                        couponId: parentCoupon.id,
+                        sourceType: 'REFERRAL',
+                        sourceId: reward.id,
+                        estado: 'DISPONIBLE',
+                        codigo: uniqueCouponCode,
+                        codigoOriginal: parentCoupon.codigo,
+                        nombre: campaign.nombre,
+                        descripcion: parentCoupon.descripcion || `Cupón obtenido en la campaña: ${campaign.nombre}`,
+                        descuento: parentCoupon.valor,
+                        tipo: parentCoupon.tipo,
+                        fechaAsignacion: new Date(),
+                        fechaExpiracion: expirationDate
+                    }
+                });
+
+                await prisma.coupon.update({
+                    where: { id: parentCoupon.id },
+                    data: { usosActuales: { increment: 1 } }
+                });
+
+                // Marcar la recompensa de campaña como canjeada
+                await (prisma as any).referralReward.update({
+                    where: { id: reward.id },
+                    data: { estado: 'CANJEADO' }
+                });
+            }
+        } else if (rewardType === 'PUNTOS') {
+            const puntosSuma = parseInt(campaign.valorRecompensa) || 0;
+            if (puntosSuma > 0) {
+                await addPoints(userId, negocioId, puntosSuma, 'CAMPANA', reward.id);
+                await (prisma as any).referralReward.update({
+                    where: { id: reward.id },
+                    data: { estado: 'CANJEADO' }
+                });
+            }
+        } else if (rewardType === 'CASHBACK') {
+            await (prisma as any).referralReward.update({
+                where: { id: reward.id },
+                data: {
+                    estado: 'CANJEADO',
+                    notas: `Acreditado automáticamente cashback de: ${campaign.valorRecompensa}`
+                }
+            });
+        } else if (rewardType === 'BADGE') {
+            await (prisma as any).referralReward.update({
+                where: { id: reward.id },
+                data: {
+                    estado: 'CANJEADO',
+                    notas: `Desbloqueado badge automáticamente: ${campaign.valorRecompensa}`
+                }
+            });
+        }
+    }
 
     // Notificar al usuario
     await notifyRewardEarned(userId, negocioId, campaign, reward);

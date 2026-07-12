@@ -89,6 +89,10 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
     const [rewardType, setRewardType] = useState('SERVICIO_GRATIS');
     const [rewardValue, setRewardValue] = useState('');
     const [rewardStock, setRewardStock] = useState('');
+    const [rewardDeliveryType, setRewardDeliveryType] = useState('AUTOMATICO');
+    const [rewardServiceId, setRewardServiceId] = useState('');
+    const [rewardRecompensaImagenUrl, setRewardRecompensaImagenUrl] = useState('');
+    const [servicesList, setServicesList] = useState<any[]>([]);
 
     useEffect(() => {
         const color = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
@@ -100,7 +104,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [statsRes, campaignsRes, rewardsRes, historyRes, couponsRes, automationsRes, pointsRes, loyaltyStatsRes, loyaltyRewardsRes] = await Promise.all([
+            const [statsRes, campaignsRes, rewardsRes, historyRes, couponsRes, automationsRes, pointsRes, loyaltyStatsRes, loyaltyRewardsRes, servicesRes] = await Promise.all([
                 fetch('/api/admin/referrals/stats').then(res => res.json()),
                 fetch('/api/admin/referrals/campaigns').then(res => res.json()),
                 fetch('/api/admin/referrals/rewards').then(res => res.json()),
@@ -109,7 +113,8 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                 fetch('/api/admin/loyalty/automations').then(res => res.json()).catch(() => []),
                 fetch('/api/admin/loyalty/points').then(res => res.json()).catch(() => []),
                 fetch('/api/admin/loyalty/stats').then(res => res.json()).catch(() => null),
-                fetch('/api/admin/loyalty/rewards').then(res => res.json()).catch(() => [])
+                fetch('/api/admin/loyalty/rewards').then(res => res.json()).catch(() => []),
+                fetch('/api/services').then(res => res.json()).catch(() => [])
             ]);
 
             if (statsRes.stats) {
@@ -123,6 +128,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
             setAutomations(automationsRes || []);
             setPointsRankings(pointsRes || []);
             setLoyaltyRewards(loyaltyRewardsRes || []);
+            setServicesList(servicesRes || []);
             if (loyaltyStatsRes && loyaltyStatsRes.summary) {
                 setLoyaltyStats(loyaltyStatsRes);
             }
@@ -311,7 +317,10 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                     descripcion: rewardDesc || null,
                     costoPuntos: parseInt(rewardPoints),
                     tipo: rewardType,
+                    deliveryType: rewardDeliveryType,
                     valor: rewardValue || null,
+                    serviceId: rewardServiceId || null,
+                    recompensaImagenUrl: rewardRecompensaImagenUrl || null,
                     cantidadTotal: rewardStock ? parseInt(rewardStock) : null
                 })
             });
@@ -324,6 +333,9 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                 setRewardType('SERVICIO_GRATIS');
                 setRewardValue('');
                 setRewardStock('');
+                setRewardDeliveryType('AUTOMATICO');
+                setRewardServiceId('');
+                setRewardRecompensaImagenUrl('');
                 fetchData();
             } else {
                 const data = await res.json();
@@ -772,6 +784,18 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                             />
                         </div>
                         <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Método de Entrega</label>
+                            <select
+                                value={rewardDeliveryType}
+                                onChange={(e) => setRewardDeliveryType(e.target.value)}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                            >
+                                <option value="AUTOMATICO">⚡ Automático (Digital)</option>
+                                <option value="MANUAL">🎁 Manual (Entrega Física)</option>
+                            </select>
+                        </div>
+
+                        <div>
                             <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Tipo de Premio</label>
                             <select
                                 value={rewardType}
@@ -779,11 +803,65 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
                             >
                                 <option value="SERVICIO_GRATIS">Servicio Gratis</option>
+                                <option value="CUPON">Cupón de Descuento</option>
                                 <option value="PRODUCTO">Producto de Regalo</option>
-                                <option value="DESCUENTO">Descuento Promocional</option>
-                                <option value="PERSONALIZADO">Otro Premio</option>
+                                <option value="REGALO">Regalo Físico / Sorpresa</option>
+                                <option value="PUNTOS">Bono de Puntos</option>
+                                <option value="CASHBACK">Cashback / Saldo</option>
+                                <option value="BADGE">Insignia / Badge</option>
+                                <option value="PERSONALIZADO">Otro / Personalizado</option>
                             </select>
                         </div>
+
+                        {rewardType === 'SERVICIO_GRATIS' && (
+                            <div>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Asociar Servicio *</label>
+                                <select
+                                    required
+                                    value={rewardServiceId}
+                                    onChange={(e) => setRewardServiceId(e.target.value)}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                                >
+                                    <option value="">Selecciona un servicio...</option>
+                                    {servicesList.map((service) => (
+                                        <option key={service.id} value={service.id}>
+                                            {service.nombre} (${service.precio || 0})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        {rewardType === 'CUPON' && (
+                            <div>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Asociar Cupón del Catálogo</label>
+                                <select
+                                    value={rewardValue}
+                                    onChange={(e) => setRewardValue(e.target.value)}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                                >
+                                    <option value="">Selecciona un cupón...</option>
+                                    {coupons.map((coupon) => (
+                                        <option key={coupon.id} value={coupon.id}>
+                                            {coupon.codigo} ({coupon.tipo === 'PORCENTAJE' ? `${coupon.valor}%` : `$${coupon.valor}`} DTO)
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        {rewardDeliveryType === 'MANUAL' && (
+                            <div className="md:col-span-2">
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">URL de la Imagen del Premio Físico (Opcional)</label>
+                                <input
+                                    type="text"
+                                    value={rewardRecompensaImagenUrl}
+                                    onChange={(e) => setRewardRecompensaImagenUrl(e.target.value)}
+                                    placeholder="Ej: https://tudominio.com/imagenes/peluche.png"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                                />
+                            </div>
+                        )}
 
                         <div className="md:col-span-2">
                             <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Descripción</label>
@@ -796,16 +874,18 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Valor Asociado (Opcional)</label>
-                            <input
-                                type="text"
-                                value={rewardValue}
-                                onChange={(e) => setRewardValue(e.target.value)}
-                                placeholder="Ej: Monto del descuento o ID"
-                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
-                            />
-                        </div>
+                        {rewardType !== 'CUPON' && rewardType !== 'SERVICIO_GRATIS' && (
+                            <div>
+                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Valor Asociado (Opcional)</label>
+                                <input
+                                    type="text"
+                                    value={rewardValue}
+                                    onChange={(e) => setRewardValue(e.target.value)}
+                                    placeholder="Ej: Valor del descuento, monto, etc."
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
+                                />
+                            </div>
+                        )}
                         <div>
                             <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Límite de Stock (Opcional)</label>
                             <input

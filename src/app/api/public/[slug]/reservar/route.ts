@@ -29,6 +29,7 @@ export async function POST(
         const comentarios = body.comentarios || '';
         const duracionBody = body.duracion; // puede ser en horas (1, 1.5) o indefinido
         const couponCode = body.couponCode?.trim().toUpperCase() || null;
+        const rewardId = body.rewardId || null;
 
         if (!clienteTelefono || !horaInicio || !fecha || !serviceId) {
             return NextResponse.json({ error: 'Faltan datos obligatorios' }, { status: 400 });
@@ -255,13 +256,45 @@ export async function POST(
                 }
             }
 
+            // Validar y aplicar premio de servicio gratis (gratuidad) si se envió
+            let appliedRewardRecord: any = null;
+            let appliedRewardType: 'PUNTOS' | 'REFERIDO' | null = null;
+
+            if (rewardId) {
+                // 1. Buscar en LoyaltyRedemption (canje por puntos)
+                const loyaltyRewardRedemption = await (tx as any).loyaltyRedemption.findFirst({
+                    where: { id: rewardId, userId: usuario.id, negocioId: negocio.id, estado: 'DISPONIBLE' },
+                    include: { Reward: true }
+                });
+
+                if (loyaltyRewardRedemption && loyaltyRewardRedemption.Reward.tipo === 'SERVICIO_GRATIS' && loyaltyRewardRedemption.Reward.serviceId === serviceId) {
+                    appliedRewardRecord = loyaltyRewardRedemption;
+                    appliedRewardType = 'PUNTOS';
+                    totalFinal = 0;
+                } else {
+                    // 2. Buscar en ReferralReward (premio de campaña/referidos)
+                    const referralCampaignReward = await tx.referralReward.findFirst({
+                        where: { id: rewardId, userId: usuario.id, negocioId: negocio.id, estado: 'DISPONIBLE' },
+                        include: { Campaign: true }
+                    });
+
+                    if (referralCampaignReward && referralCampaignReward.Campaign.rewardType === 'SERVICIO_GRATIS' && referralCampaignReward.Campaign.serviceId === serviceId) {
+                        appliedRewardRecord = referralCampaignReward;
+                        appliedRewardType = 'REFERIDO';
+                        totalFinal = 0;
+                    }
+                }
+            }
+
             const dataToCreate: any = {
                 fecha: reservationDate,
                 horaInicio: String(horaInicio),
                 horaFin: String(horaFin),
                 duracion: Math.ceil(totalDuracionMinutos),
                 total: totalFinal,
-                comentarios: comentariosFinales + (couponApplied ? `\n🎟️ Cupón aplicado: ${couponApplied.codigo}` : ''),
+                comentarios: comentariosFinales + 
+                    (couponApplied ? `\n🎟️ Cupón aplicado: ${couponApplied.codigo}` : '') +
+                    (appliedRewardRecord ? `\n🏆 Premio aplicado: Servicio Gratis` : ''),
                 estado: estadoInicial,
                 expiresAt: expiresAt,
                 cliente: { connect: { id: cliente.id } },
@@ -281,6 +314,29 @@ export async function POST(
                     updatedAt: new Date()
                 }
             });
+
+            // Si se aplicó una recompensa de servicio gratis, actualizar su estado a RESERVADO y vincular la reserva
+            if (appliedRewardRecord && appliedRewardType) {
+                if (appliedRewardType === 'PUNTOS') {
+                    await (tx as any).loyaltyRedemption.update({
+                        where: { id: appliedRewardRecord.id },
+                        data: {
+                            estado: 'RESERVADO',
+                            appointmentId: reserva.id,
+                            updatedAt: new Date()
+                        }
+                    });
+                } else if (appliedRewardType === 'REFERIDO') {
+                    await tx.referralReward.update({
+                        where: { id: appliedRewardRecord.id },
+                        data: {
+                            estado: 'RESERVADO',
+                            appointmentId: reserva.id,
+                            updatedAt: new Date()
+                        }
+                    });
+                }
+            }
 
             // Si se aplicó un cupón individual de cliente, actualizar su estado en base a la reserva
             if (couponApplied && isClientCoupon) {

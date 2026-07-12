@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 
-export async function DELETE(
+export async function GET(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
@@ -11,62 +11,16 @@ export async function DELETE(
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-        const user = session.user as any;
-        const negocioId = user.negocioId;
-        if (!negocioId) return NextResponse.json({ error: "Negocio no especificado" }, { status: 400 });
-
         const { id } = await params;
-
-        // Eliminar recompensa del catálogo
-        await (prisma as any).loyaltyReward.delete({
-            where: { id, negocioId }
+        const reward = await (prisma as any).loyaltyReward.findUnique({
+            where: { id }
         });
 
-        return NextResponse.json({ success: true });
+        if (!reward) return NextResponse.json({ error: "Premio no encontrado" }, { status: 404 });
+
+        return NextResponse.json(reward);
     } catch (error: any) {
-        console.error("Error deleting loyalty reward:", error);
-        return NextResponse.json({ error: "Internal Error", details: error.message }, { status: 500 });
-    }
-}
-
-export async function PUT(
-    req: Request,
-    { params }: { params: Promise<{ id: string }> }
-) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-
-        const user = session.user as any;
-        const negocioId = user.negocioId;
-        if (!negocioId) return NextResponse.json({ error: "Negocio no especificado" }, { status: 400 });
-
-        const { id } = await params;
-        const body = await req.json();
-        const { nombre, descripcion, costoPuntos, tipo, valor, cantidadTotal, imagenUrl, activa, couponId } = body;
-
-        if (!nombre || costoPuntos === undefined || !tipo) {
-            return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
-        }
-
-        const updatedReward = await (prisma as any).loyaltyReward.update({
-            where: { id, negocioId },
-            data: {
-                nombre,
-                descripcion: descripcion || null,
-                imagenUrl: imagenUrl || null,
-                costoPuntos: parseInt(String(costoPuntos)),
-                tipo,
-                valor: valor ? String(valor) : null,
-                couponId: couponId ? String(couponId) : null,
-                cantidadTotal: cantidadTotal ? parseInt(String(cantidadTotal)) : null,
-                activa: activa !== undefined ? Boolean(activa) : true
-            }
-        });
-
-        return NextResponse.json({ success: true, reward: updatedReward });
-    } catch (error: any) {
-        console.error("Error updating loyalty reward:", error);
+        console.error("Error fetching loyalty reward:", error);
         return NextResponse.json({ error: "Internal Error", details: error.message }, { status: 500 });
     }
 }
@@ -79,28 +33,74 @@ export async function PATCH(
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-        const user = session.user as any;
-        const negocioId = user.negocioId;
-        if (!negocioId) return NextResponse.json({ error: "Negocio no especificado" }, { status: 400 });
-
         const { id } = await params;
         const body = await req.json();
-        const { activa } = body;
 
-        if (activa === undefined) {
-            return NextResponse.json({ error: "Falta campo activa" }, { status: 400 });
+        const {
+            nombre,
+            descripcion,
+            costoPuntos,
+            tipo,
+            valor,
+            cantidadTotal,
+            imagenUrl,
+            recompensaImagenUrl,
+            couponId,
+            deliveryType,
+            serviceId,
+            activa
+        } = body;
+
+        const updateData: any = {};
+        if (nombre !== undefined) updateData.nombre = nombre;
+        if (descripcion !== undefined) updateData.descripcion = descripcion || null;
+        if (costoPuntos !== undefined) updateData.costoPuntos = parseInt(String(costoPuntos));
+        if (tipo !== undefined) updateData.tipo = tipo;
+        if (valor !== undefined) updateData.valor = valor ? String(valor) : null;
+        if (cantidadTotal !== undefined) {
+            updateData.cantidadTotal = cantidadTotal ? parseInt(String(cantidadTotal)) : null;
+            // Si cambian el total, también reiniciamos el disponible a ese total por simplicidad
+            updateData.cantidadDisponible = cantidadTotal ? parseInt(String(cantidadTotal)) : null;
         }
+        if (imagenUrl !== undefined) updateData.imagenUrl = imagenUrl || null;
+        if (recompensaImagenUrl !== undefined) updateData.recompensaImagenUrl = recompensaImagenUrl || null;
+        if (couponId !== undefined) updateData.couponId = couponId || null;
+        if (deliveryType !== undefined) updateData.deliveryType = deliveryType;
+        if (serviceId !== undefined) updateData.serviceId = serviceId || null;
+        if (activa !== undefined) updateData.activa = !!activa;
 
-        const updatedReward = await (prisma as any).loyaltyReward.update({
-            where: { id, negocioId },
-            data: {
-                activa: Boolean(activa)
-            }
+        const updated = await (prisma as any).loyaltyReward.update({
+            where: { id },
+            data: updateData
         });
 
-        return NextResponse.json({ success: true, reward: updatedReward });
+        return NextResponse.json(updated);
     } catch (error: any) {
-        console.error("Error toggling loyalty reward:", error);
+        console.error("Error updating loyalty reward:", error);
+        return NextResponse.json({ error: "Internal Error", details: error.message }, { status: 500 });
+    }
+}
+
+export async function DELETE(
+    req: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
+        const { id } = await params;
+
+        // Para evitar problemas de integridad de referential keys si ya fue canjeado,
+        // simplemente lo desactivamos en lugar de borrarlo físicamente.
+        const deleted = await (prisma as any).loyaltyReward.update({
+            where: { id },
+            data: { activa: false }
+        });
+
+        return NextResponse.json({ success: true, reward: deleted });
+    } catch (error: any) {
+        console.error("Error deleting loyalty reward:", error);
         return NextResponse.json({ error: "Internal Error", details: error.message }, { status: 500 });
     }
 }

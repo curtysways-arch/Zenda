@@ -35,7 +35,7 @@ export async function POST(req: Request) {
         if (!negocioId) return NextResponse.json({ error: "Negocio no especificado" }, { status: 400 });
 
         const body = await req.json();
-        const { nombre, descripcion, costoPuntos, tipo, valor, cantidadTotal, imagenUrl, couponId } = body;
+        const { nombre, descripcion, costoPuntos, tipo, valor, cantidadTotal, imagenUrl, couponId, deliveryType, serviceId, recompensaImagenUrl } = body;
 
         if (!nombre || costoPuntos === undefined || !tipo) {
             return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
@@ -48,9 +48,12 @@ export async function POST(req: Request) {
                 nombre,
                 descripcion: descripcion || null,
                 imagenUrl: imagenUrl || null,
+                recompensaImagenUrl: recompensaImagenUrl || null,
                 costoPuntos: parseInt(String(costoPuntos)),
                 tipo,
+                deliveryType: deliveryType || 'AUTOMATICO',
                 valor: valor ? String(valor) : null,
+                serviceId: serviceId || null,
                 couponId: couponId ? String(couponId) : null,
                 cantidadTotal: cantidadTotal ? parseInt(String(cantidadTotal)) : null,
                 cantidadDisponible: cantidadTotal ? parseInt(String(cantidadTotal)) : null,
