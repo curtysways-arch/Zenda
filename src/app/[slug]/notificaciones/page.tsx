@@ -584,6 +584,7 @@ export default function CentroActividadPage() {
                             </button>
                         )}
                     </div>
+                )}
             </main>
         </div>
     );
