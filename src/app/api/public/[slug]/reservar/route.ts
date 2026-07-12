@@ -284,7 +284,7 @@ export async function POST(
 
             // Si se aplicó un cupón individual de cliente, actualizar su estado en base a la reserva
             if (couponApplied && isClientCoupon) {
-                const isConfirmed = estadoInicial === 'confirmed' || estadoInicial === 'confirmada';
+                const isConfirmed = estadoInicial === 'confirmed';
                 await tx.clientCoupon.update({
                     where: { id: couponApplied.id },
                     data: {
