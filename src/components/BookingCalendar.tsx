@@ -524,8 +524,8 @@ const resolveSlotPromotion = (
                                             : isPending
                                                 ? "bg-amber-50 border-amber-200 text-amber-500"
                                                 : available
-                                                    ? "bg-white border-gray-100 text-gray-600 hover:border-emerald-300 hover:bg-emerald-50/50 shadow-sm"
-                                                    : "bg-gray-50 border-transparent text-gray-300 cursor-not-allowed"
+                                                    ? "bg-white border-emerald-500/10 text-slate-700 hover:border-emerald-500/40 hover:bg-emerald-50/30 shadow-sm"
+                                                    : "bg-slate-100/70 border-transparent text-slate-350 line-through opacity-65 cursor-not-allowed"
                                 )}
                             >
                                 {promo.hasPromotion && available && (
@@ -534,7 +534,18 @@ const resolveSlotPromotion = (
                                     </div>
                                 )}
                                 
-                                <span className={cn(isPending ? "text-[11px]" : "")}>{hour}</span>
+                                <span className={cn(
+                                    isPending ? "text-[11px]" : "", 
+                                    !available ? "line-through opacity-70" : ""
+                                )}>
+                                    {hour}
+                                </span>
+
+                                {!available && (
+                                    <span className="text-[7px] font-bold text-slate-400/80 uppercase tracking-widest leading-none mt-0.5 scale-90">
+                                        Ocupado
+                                    </span>
+                                )}
                             </button>
                         );
                     })}
