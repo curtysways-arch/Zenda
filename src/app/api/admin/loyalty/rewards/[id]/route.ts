@@ -43,7 +43,7 @@ export async function PUT(
 
         const { id } = await params;
         const body = await req.json();
-        const { nombre, descripcion, costoPuntos, tipo, valor, cantidadTotal, imagenUrl, activa } = body;
+        const { nombre, descripcion, costoPuntos, tipo, valor, cantidadTotal, imagenUrl, activa, couponId } = body;
 
         if (!nombre || costoPuntos === undefined || !tipo) {
             return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
@@ -58,6 +58,7 @@ export async function PUT(
                 costoPuntos: parseInt(String(costoPuntos)),
                 tipo,
                 valor: valor ? String(valor) : null,
+                couponId: couponId ? String(couponId) : null,
                 cantidadTotal: cantidadTotal ? parseInt(String(cantidadTotal)) : null,
                 activa: activa !== undefined ? Boolean(activa) : true
             }

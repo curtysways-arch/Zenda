@@ -72,12 +72,17 @@ export async function POST(
 
         if (!rewardId) return NextResponse.json({ error: "ID de recompensa faltante" }, { status: 400 });
 
-        // 2. Obtener la recompensa del catálogo
+        // 2. Obtener la recompensa del catálogo con su relación al cupón original si aplica
         const reward = await (prisma as any).loyaltyReward.findFirst({
-            where: { id: rewardId, negocioId, activa: true }
+            where: { id: rewardId, negocioId, activa: true },
+            include: { Coupon: true }
         });
 
         if (!reward) return NextResponse.json({ error: "Premio no disponible en el catálogo" }, { status: 404 });
+
+        if (reward.tipo === 'CUPON' && (!reward.couponId || !reward.Coupon)) {
+            return NextResponse.json({ error: "Este premio de tipo cupón no tiene un cupón válido asociado en el catálogo." }, { status: 400 });
+        }
 
         // 3. Obtener balance de puntos actual del usuario
         const pointsRecord = await (prisma as any).userPoints.findUnique({
@@ -125,7 +130,71 @@ export async function POST(
                 }
             });
 
-            return { updatedPoints, redemption };
+            // Si el premio es de tipo cupón, crear el ClientCoupon para el usuario
+            let clientCouponCreated = null;
+            if (reward.tipo === 'CUPON' && reward.Coupon) {
+                const parentCoupon = reward.Coupon;
+                
+                // Generar código único CTX-XXXXX
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let uniqueCode = '';
+                let isUnique = false;
+                
+                // Asegurar unicidad del código generado
+                for (let attempt = 0; attempt < 5; attempt++) {
+                    let tempCode = 'CTX-';
+                    for (let i = 0; i < 5; i++) {
+                        tempCode += chars.charAt(Math.floor(Math.random() * chars.length));
+                    }
+                    const check = await tx.clientCoupon.findUnique({
+                        where: { codigo: tempCode }
+                    });
+                    if (!check) {
+                        uniqueCode = tempCode;
+                        isUnique = true;
+                        break;
+                    }
+                }
+                
+                if (!isUnique) {
+                    uniqueCode = `CTX-${Date.now().toString().slice(-5)}`;
+                }
+
+                // Calcular fecha de expiración
+                let expirationDate = parentCoupon.fechaFin;
+                if (!expirationDate) {
+                    // Si no tiene fecha de fin del catálogo, vence por defecto en 30 días
+                    expirationDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+                }
+
+                clientCouponCreated = await tx.clientCoupon.create({
+                    data: {
+                        id: crypto.randomUUID(),
+                        negocioId,
+                        clienteId: user.id,
+                        couponId: parentCoupon.id,
+                        sourceType: 'LOYALTY_REWARD',
+                        sourceId: reward.id,
+                        estado: 'DISPONIBLE',
+                        codigo: uniqueCode,
+                        codigoOriginal: parentCoupon.codigo,
+                        nombre: reward.nombre,
+                        descripcion: parentCoupon.descripcion || reward.descripcion || `Cupón obtenido canjeando ${reward.costoPuntos} puntos`,
+                        descuento: parentCoupon.valor,
+                        tipo: parentCoupon.tipo,
+                        fechaAsignacion: new Date(),
+                        fechaExpiracion: expirationDate
+                    }
+                });
+
+                // Incrementar usos globales del cupón del catálogo
+                await tx.coupon.update({
+                    where: { id: parentCoupon.id },
+                    data: { usosActuales: { increment: 1 } }
+                });
+            }
+
+            return { updatedPoints, redemption, clientCouponCreated };
         });
 
         return NextResponse.json({ success: true, balance: result.updatedPoints.puntos });

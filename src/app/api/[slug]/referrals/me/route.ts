@@ -130,10 +130,10 @@ export async function GET(
             : {};
         const puntosActivos = config?.puntosActivos !== undefined ? config.puntosActivos : true;
 
-        // 9. Obtener cupones del negocio
-        const cupones = await (prisma as any).coupon.findMany({
-            where: { negocioId, activa: true },
-            orderBy: { createdAt: "desc" }
+        // 9. Obtener cupones individuales del cliente
+        const cupones = await prisma.clientCoupon.findMany({
+            where: { negocioId, clienteId: user.id },
+            orderBy: { fechaAsignacion: "desc" }
         });
 
         // 10. Obtener ranking de puntos

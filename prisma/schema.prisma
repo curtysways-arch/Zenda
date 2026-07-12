@@ -335,6 +335,7 @@ model Negocio {
   LoyaltyReward          LoyaltyReward[]
   LoyaltyRedemption      LoyaltyRedemption[]
   Coupon                 Coupon[]
+  ClientCoupon           ClientCoupon[]
   AutomationRule         AutomationRule[]
   Notification           Notification[]
   AdminUserNegocio       AdminUserNegocio[]
@@ -747,6 +748,7 @@ model Usuario {
   PointsHistory          PointsHistory[]
   LoyaltyRedemption      LoyaltyRedemption[]
   CouponUsage            CouponUsage[]
+  ClientCoupon           ClientCoupon[]
   Notification           Notification[]
   QuestProgress          QuestProgress[]
   QuestParticipant      QuestParticipant[]
@@ -945,9 +947,8 @@ model LoyaltyReward {
   valor              String?             // monto, porcentaje, id del servicio, etc.
   cantidadTotal      Int?                // null = ilimitado
   cantidadDisponible Int?
-  activa             Boolean             @default(true)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  couponId           String?
+  Coupon             Coupon?             @relation(fields: [couponId], references: [id])
   Negocio            Negocio             @relation(fields: [negocioId], references: [id])
   LoyaltyRedemption  LoyaltyRedemption[]
 }
@@ -988,6 +989,8 @@ model Coupon {
   updatedAt         DateTime      @updatedAt
   Negocio           Negocio       @relation(fields: [negocioId], references: [id])
   CouponUsage       CouponUsage[]
+  LoyaltyReward     LoyaltyReward[]
+  ClientCoupon      ClientCoupon[]
 
   @@unique([negocioId, codigo])
 }
@@ -1000,6 +1003,32 @@ model CouponUsage {
   createdAt     DateTime @default(now())
   Coupon        Coupon   @relation(fields: [couponId], references: [id])
   Usuario       Usuario  @relation(fields: [userId], references: [id])
+}
+
+model ClientCoupon {
+  id              String    @id @default(cuid())
+  negocioId       String
+  clienteId       String
+  couponId        String
+  sourceType      String    // LOYALTY_REWARD | QUEST | REFERRAL | CUMPLEANOS | MANUAL | AUTOMATIZACION
+  sourceId        String?
+  estado          String    @default("DISPONIBLE") // DISPONIBLE | RESERVADO | USADO | VENCIDO | CANCELADO
+  codigo          String    @unique // Código único generado (ej. CTX-9A8X2)
+  codigoOriginal  String    // Código del cupón original (ej. VISITA)
+  nombre          String?
+  descripcion     String?
+  descuento       Float
+  tipo            String    // PORCENTAJE | FIJO
+  fechaAsignacion DateTime  @default(now())
+  fechaExpiracion DateTime?
+  fechaUso        DateTime?
+  appointmentId   String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  Negocio         Negocio   @relation(fields: [negocioId], references: [id])
+  Usuario         Usuario   @relation(fields: [clienteId], references: [id])
+  Coupon          Coupon    @relation(fields: [couponId], references: [id])
 }
 
 model AutomationRule {

@@ -30,7 +30,8 @@ import {
     UserCircle2,
     ArrowRight,
     AlertCircle,
-    Key
+    Key,
+    Tag
 } from "lucide-react";
 import Link from "next/link";
 import PhoneInput from "@/components/ui/PhoneInput";
@@ -526,8 +527,24 @@ export default function MiPerfilPage() {
                             );
                         })()}
 
+                        {/* Sección de Beneficios / Cupones */}
+                        <div className="px-5 mt-4">
+                            <Link href={`/${slug}/mis-cupones`} className="flex items-center justify-between px-5 py-4 bg-white rounded-[2rem] border border-slate-100 shadow-sm active:scale-[0.99] transition-all no-underline">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${primaryColor}10`, color: primaryColor }}>
+                                        <Tag size={18} />
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="font-black text-slate-800 text-[13px] leading-none">🎟️ Mis Cupones Ganados</p>
+                                        <p className="text-[9px] text-slate-400 font-semibold mt-1">Ver tus códigos de descuento activos</p>
+                                    </div>
+                                </div>
+                                <ChevronRight size={14} className="text-slate-400" />
+                            </Link>
+                        </div>
+
                         {/* Sección de Información Personal */}
-                        <div className="px-5 mt-5">
+                        <div className="px-5 mt-4">
                             <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-[14px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">

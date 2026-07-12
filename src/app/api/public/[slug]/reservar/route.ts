@@ -195,34 +195,62 @@ export async function POST(
             // Validar y aplicar cupón si se envió
             let totalFinal = parseFloat(String(body.precioTotal || 0));
             let couponApplied: any = null;
+            let isClientCoupon = false;
 
             if (couponCode) {
-                const coupon = await tx.Coupon.findUnique({
-                    where: { negocioId_codigo: { negocioId: negocio.id, codigo: couponCode } },
-                });
+                if (couponCode.startsWith('CTX-')) {
+                    // Buscar cupón individual del cliente
+                    const clientCoupon = await tx.clientCoupon.findFirst({
+                        where: { negocioId: negocio.id, codigo: couponCode, clienteId: cliente.id },
+                        include: { Coupon: true }
+                    });
 
-                if (coupon && coupon.activa) {
-                    const now = new Date();
-                    const vigente = (!coupon.fechaInicio || now >= coupon.fechaInicio) &&
-                                   (!coupon.fechaFin || now <= coupon.fechaFin);
-                    const sinLimite = coupon.maxUsos === null || coupon.usosActuales < coupon.maxUsos;
-                    const aplicaServicio = !coupon.servicioId || coupon.servicioId === serviceId;
+                    if (clientCoupon && clientCoupon.estado === 'DISPONIBLE') {
+                        const now = new Date();
+                        const vigente = !clientCoupon.fechaExpiracion || now <= clientCoupon.fechaExpiracion;
+                        const aplicaServicio = !clientCoupon.Coupon.servicioId || clientCoupon.Coupon.servicioId === serviceId;
 
-                    if (vigente && sinLimite && aplicaServicio) {
-                        let descuento = 0;
-                        if (coupon.tipo === 'PORCENTAJE') {
-                            descuento = (totalFinal * coupon.valor) / 100;
-                        } else if (coupon.tipo === 'FIJO') {
-                            descuento = Math.min(coupon.valor, totalFinal);
+                        if (vigente && aplicaServicio) {
+                            let descuento = 0;
+                            if (clientCoupon.tipo === 'PORCENTAJE') {
+                                descuento = (totalFinal * clientCoupon.descuento) / 100;
+                            } else if (clientCoupon.tipo === 'FIJO') {
+                                descuento = Math.min(clientCoupon.descuento, totalFinal);
+                            }
+                            totalFinal = Math.max(0, totalFinal - descuento);
+                            couponApplied = clientCoupon;
+                            isClientCoupon = true;
                         }
-                        totalFinal = Math.max(0, totalFinal - descuento);
-                        couponApplied = coupon;
+                    }
+                } else {
+                    // Buscar cupón genérico del catálogo
+                    const coupon = await tx.Coupon.findUnique({
+                        where: { negocioId_codigo: { negocioId: negocio.id, codigo: couponCode } },
+                    });
 
-                        // Incrementar contador de usos
-                        await tx.Coupon.update({
-                            where: { id: coupon.id },
-                            data: { usosActuales: { increment: 1 } },
-                        });
+                    if (coupon && coupon.activa) {
+                        const now = new Date();
+                        const vigente = (!coupon.fechaInicio || now >= coupon.fechaInicio) &&
+                                       (!coupon.fechaFin || now <= coupon.fechaFin);
+                        const sinLimite = coupon.maxUsos === null || coupon.usosActuales < coupon.maxUsos;
+                        const aplicaServicio = !coupon.servicioId || coupon.servicioId === serviceId;
+
+                        if (vigente && sinLimite && aplicaServicio) {
+                            let descuento = 0;
+                            if (coupon.tipo === 'PORCENTAJE') {
+                                descuento = (totalFinal * coupon.valor) / 100;
+                            } else if (coupon.tipo === 'FIJO') {
+                                descuento = Math.min(coupon.valor, totalFinal);
+                            }
+                            totalFinal = Math.max(0, totalFinal - descuento);
+                            couponApplied = coupon;
+
+                            // Incrementar contador de usos globales
+                            await tx.Coupon.update({
+                                where: { id: coupon.id },
+                                data: { usosActuales: { increment: 1 } },
+                            });
+                        }
                     }
                 }
             }
@@ -253,6 +281,19 @@ export async function POST(
                     updatedAt: new Date()
                 }
             });
+
+            // Si se aplicó un cupón individual de cliente, actualizar su estado en base a la reserva
+            if (couponApplied && isClientCoupon) {
+                const isConfirmed = estadoInicial === 'confirmed' || estadoInicial === 'confirmada';
+                await tx.clientCoupon.update({
+                    where: { id: couponApplied.id },
+                    data: {
+                        estado: isConfirmed ? 'USADO' : 'RESERVADO',
+                        appointmentId: reserva.id,
+                        fechaUso: isConfirmed ? new Date() : null
+                    }
+                });
+            }
 
             // 🔗 Procesar código de referido: prioridad cookie → body (localStorage fallback)
             let referralCode = null;

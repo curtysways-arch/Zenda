@@ -282,6 +282,7 @@ export default function QuestDashboard() {
         costoPuntos: 500,
         tipo: 'SERVICIO_GRATIS',
         valor: '',
+        couponId: '',
         cantidadTotal: '',
         imagenUrl: ''
     });
@@ -1433,7 +1434,8 @@ export default function QuestDashboard() {
                     descripcion: catalogRewardFormData.descripcion,
                     costoPuntos: Number(catalogRewardFormData.costoPuntos),
                     tipo: catalogRewardFormData.tipo,
-                    valor: catalogRewardFormData.valor,
+                    valor: catalogRewardFormData.tipo === 'CUPON' ? '' : catalogRewardFormData.valor,
+                    couponId: catalogRewardFormData.tipo === 'CUPON' ? catalogRewardFormData.couponId : null,
                     cantidadTotal: catalogRewardFormData.cantidadTotal ? Number(catalogRewardFormData.cantidadTotal) : null,
                     imagenUrl: catalogRewardFormData.imagenUrl || null
                 })
@@ -1449,6 +1451,7 @@ export default function QuestDashboard() {
                     costoPuntos: 500,
                     tipo: 'SERVICIO_GRATIS',
                     valor: '',
+                    couponId: '',
                     cantidadTotal: '',
                     imagenUrl: ''
                 });
@@ -1471,6 +1474,7 @@ export default function QuestDashboard() {
             costoPuntos: reward.costoPuntos || 500,
             tipo: reward.tipo || 'SERVICIO_GRATIS',
             valor: reward.valor || '',
+            couponId: reward.couponId || '',
             cantidadTotal: reward.cantidadTotal !== null ? String(reward.cantidadTotal) : '',
             imagenUrl: reward.imagenUrl || ''
         });
@@ -3823,19 +3827,68 @@ export default function QuestDashboard() {
                                         <option value="PRODUCTO">Producto</option>
                                         <option value="DESCUENTO">Descuento Especial</option>
                                         <option value="REGALO">Regalo Especial</option>
+                                        <option value="CUPON">🎟️ Cupón de Descuento</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Valor (opcional)</label>
-                                    <input
-                                        type="text"
-                                        value={catalogRewardFormData.valor}
-                                        onChange={e => setCatalogRewardFormData(prev => ({ ...prev, valor: e.target.value }))}
-                                        className="w-full px-4 py-3 rounded-2xl border border-slate-150 text-xs font-bold text-slate-800 bg-slate-50 focus:outline-none"
-                                        placeholder="Ej. ID del servicio o 20%"
-                                    />
-                                </div>
+                                {catalogRewardFormData.tipo !== 'CUPON' ? (
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Valor (opcional)</label>
+                                        <input
+                                            type="text"
+                                            value={catalogRewardFormData.valor}
+                                            onChange={e => setCatalogRewardFormData(prev => ({ ...prev, valor: e.target.value }))}
+                                            className="w-full px-4 py-3 rounded-2xl border border-slate-150 text-xs font-bold text-slate-800 bg-slate-50 focus:outline-none"
+                                            placeholder="Ej. ID del servicio o 20%"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Seleccionar Cupón</label>
+                                        <select
+                                            value={catalogRewardFormData.couponId}
+                                            onChange={e => {
+                                                const selected = coupons.find((c: any) => c.id === e.target.value);
+                                                setCatalogRewardFormData(prev => ({ 
+                                                    ...prev, 
+                                                    couponId: e.target.value,
+                                                    nombre: selected ? `Cupón ${selected.codigo}` : prev.nombre,
+                                                    descripcion: selected ? selected.descripcion || prev.descripcion : prev.descripcion
+                                                }));
+                                            }}
+                                            className="w-full px-4 py-3 rounded-2xl border border-slate-150 text-xs font-bold text-slate-800 bg-slate-50 focus:outline-none"
+                                            required
+                                        >
+                                            <option value="">Buscar cupón...</option>
+                                            {coupons.filter((c: any) => c.activa).map((c: any) => (
+                                                <option key={c.id} value={c.id}>
+                                                    {c.codigo} — {c.tipo === 'PORCENTAJE' ? `${c.valor}%` : `$${c.valor}`} OFF
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
                             </div>
+
+                            {/* Resumen del Cupón Seleccionado */}
+                            {catalogRewardFormData.tipo === 'CUPON' && catalogRewardFormData.couponId && (() => {
+                                const selected = coupons.find((c: any) => c.id === catalogRewardFormData.couponId);
+                                if (!selected) return null;
+                                return (
+                                    <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl space-y-1">
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-emerald-700">Cupón Seleccionado</p>
+                                        <p className="text-[12px] font-black text-slate-800">{selected.codigo}</p>
+                                        <p className="text-[10px] text-slate-500 font-semibold">
+                                            Valor: {selected.tipo === 'PORCENTAJE' ? `${selected.valor}% de descuento` : `$${selected.valor} de descuento`}
+                                        </p>
+                                        {selected.fechaFin && (
+                                            <p className="text-[9px] text-slate-400 font-medium">Vence el: {new Date(selected.fechaFin).toLocaleDateString()}</p>
+                                        )}
+                                        {selected.maxUsos && (
+                                            <p className="text-[9px] text-slate-400 font-medium">Límite global: {selected.maxUsos} usos</p>
+                                        )}
+                                    </div>
+                                );
+                            })()}
                             <div>
                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Imagen del Premio</label>
                                 <ImageUploader

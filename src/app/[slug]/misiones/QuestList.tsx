@@ -489,95 +489,40 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
                             )}
                         </section>
 
-                        {/* ===== SECCIÓN CUPONES ACTIVOS ===== */}
-                        {referralData?.cupones && referralData.cupones.length > 0 && (
-                            <section className="space-y-3">
-                                <div className="flex justify-between items-center px-0.5">
-                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5">
-                                        <Percent size={13} style={{ color: primaryColor }} /> Cupones y Descuentos
-                                    </h3>
-                                </div>
-                                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory -mx-1 px-1">
-                                    {referralData.cupones.map((coupon: any) => {
-                                        const handleShareCoupon = async () => {
-                                            const shareText = `¡Usa mi cupón descuento "${coupon.codigo}" en ${negocioNombre || 'CitiOx'} para obtener un beneficio increíble! 🎁✨`;
-                                            if (navigator.share) {
-                                                await navigator.share({
-                                                    title: 'Cupón de Regalo',
-                                                    text: shareText,
-                                                    url: window.location.origin + `/${slug}`
-                                                }).catch(() => {});
-                                            } else {
-                                                navigator.clipboard.writeText(`${shareText}\n${window.location.origin}/${slug}`);
-                                                alert('¡Texto del cupón copiado al portapapeles!');
-                                            }
-                                        };
-                                        return (
-                                            <div
-                                                key={coupon.id}
-                                                className="w-[200px] shrink-0 snap-start"
-                                                style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.10))' }}
+                        {/* ===== SECCIÓN ENLACE A MIS CUPONES ===== */}
+                        {referralData && (
+                            <section className="px-0.5">
+                                <Link 
+                                    href={`/${slug}/mis-cupones`}
+                                    className="block w-full p-5 bg-white border border-slate-100 rounded-[2rem] shadow-[0_4px_25px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:border-slate-200/80 transition-all active:scale-[0.99] no-underline group"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3.5">
+                                            <div 
+                                                className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
+                                                style={{ backgroundColor: `${primaryColor}10`, color: primaryColor }}
                                             >
-                                                {/* Parte superior del ticket */}
-                                                <div
-                                                    className="rounded-t-2xl px-4 pt-4 pb-3 text-white relative overflow-hidden"
-                                                    style={{ backgroundColor: primaryColor }}
-                                                >
-                                                    {/* Patrón de fondo decorativo */}
-                                                    <div className="absolute inset-0 opacity-10" style={{
-                                                        backgroundImage: `radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)`,
-                                                        backgroundSize: '24px 24px'
-                                                    }} />
-                                                    <div className="relative z-10">
-                                                        <span className="text-[8px] font-black uppercase tracking-widest opacity-80 block mb-1">
-                                                            {negocioNombre}
-                                                        </span>
-                                                        <div className="text-[28px] font-black leading-none tracking-tight">
-                                                            {coupon.tipo === 'PORCENTAJE' ? `${coupon.valor}%` : `$${coupon.valor}`}
-                                                        </div>
-                                                        <div className="text-[10px] font-black uppercase tracking-widest opacity-90">
-                                                            OFF
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Separador dentado */}
-                                                <div className="relative h-4 bg-white">
-                                                    <div
-                                                        className="absolute inset-0"
-                                                        style={{
-                                                            backgroundImage: `radial-gradient(circle at 50% 0%, ${primaryColor} 6px, transparent 6px)`,
-                                                            backgroundSize: '16px 12px',
-                                                            backgroundPosition: '0 0',
-                                                        }}
-                                                    />
-                                                    {/* Círculos laterales */}
-                                                    <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-slate-100" />
-                                                    <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-slate-100" />
-                                                </div>
-
-                                                {/* Parte inferior del ticket */}
-                                                <div className="rounded-b-2xl bg-white px-4 pt-2 pb-3.5 border border-t-0 border-slate-100">
-                                                    <div className="border border-dashed rounded-lg px-3 py-1.5 mb-2.5 text-center" style={{ borderColor: `${primaryColor}60` }}>
-                                                        <span className="text-[13px] font-black uppercase tracking-wider" style={{ color: primaryColor }}>
-                                                            {coupon.codigo}
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-[8px] text-slate-400 font-semibold leading-snug line-clamp-2 mb-2.5 text-center">
-                                                        {coupon.descripcion || `Preséntalo en tu próxima visita`}
-                                                    </p>
-                                                    <button
-                                                        onClick={handleShareCoupon}
-                                                        className="w-full py-2 text-[8px] font-black uppercase tracking-widest rounded-xl text-white shadow-sm border-0 cursor-pointer flex items-center justify-center gap-1"
-                                                        style={{ backgroundColor: primaryColor }}
-                                                    >
-                                                        <Share2 size={10} /> Compartir
-                                                    </button>
-                                                </div>
+                                                <Percent size={20} className="stroke-[2.5]" />
                                             </div>
-                                        );
-                                    })}
-                                </div>
+                                            <div className="text-left">
+                                                <h4 className="text-[13px] font-black text-slate-800 uppercase tracking-wider leading-none mb-1 flex items-center gap-1.5">
+                                                    🎟️ Mis Cupones Ganados
+                                                    {referralData.cupones && referralData.cupones.length > 0 && (
+                                                        <span className="text-[8px] font-black px-1.5 py-0.5 bg-emerald-500 text-white rounded-full leading-none">
+                                                            {referralData.cupones.length}
+                                                        </span>
+                                                    )}
+                                                </h4>
+                                                <p className="text-[9px] text-slate-400 font-semibold leading-relaxed">
+                                                    Ver tus códigos de descuento, vigencia y usarlos al reservar.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-slate-400 group-hover:text-slate-600 transition-colors pr-1">
+                                            &rsaquo;
+                                        </div>
+                                    </div>
+                                </Link>
                             </section>
                         )}
 

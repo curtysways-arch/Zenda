@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Calendar, User, FileText, Scissors, Menu, X, Gift } from 'lucide-react';
+import { Home, Calendar, User, FileText, Scissors, Menu, X, Gift, Tag } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
@@ -23,6 +23,7 @@ export default function PublicDesktopNav({
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
+    const [hasSession, setHasSession] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -31,6 +32,10 @@ export default function PublicDesktopNav({
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    useEffect(() => {
+        setHasSession(document.cookie.includes('cs=1'));
+    }, [pathname]);
 
     // Mostrar solo en rutas públicas del negocio
     const isNegocioRoute = pathname.startsWith(`/${slug}`);
@@ -69,8 +74,14 @@ export default function PublicDesktopNav({
             label: 'Premios',
             href: `/${slug}/referidos`,
             icon: Gift,
-            active: pathname.includes('/referidos')
+            active: pathname.includes('/referidos') || pathname.includes('/misiones')
         },
+        ...(hasSession ? [{
+            label: 'Mis Cupones',
+            href: `/${slug}/mis-cupones`,
+            icon: Tag,
+            active: pathname.includes('/mis-cupones')
+        }] : []),
         {
             label: 'Perfil',
             href: `/${slug}/perfil`,
