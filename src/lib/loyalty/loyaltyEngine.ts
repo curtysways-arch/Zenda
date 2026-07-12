@@ -343,7 +343,7 @@ async function evaluateSingleCampaign(
 // ─── GENERACIÓN DE RECOMPENSAS ────────────────────────────────────────────────
 
 // Generar claimCode único para canjes manuales
-async function generateUniqueClaimCode(tx: any): Promise<string> {
+export async function generateUniqueClaimCode(tx: any): Promise<string> {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';
     let isUnique = false;

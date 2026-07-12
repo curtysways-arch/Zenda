@@ -1,9 +1,9 @@
 import prisma from '../prisma';
-import { addPoints } from '../loyalty/loyaltyEngine';
+import { addPoints, generateUniqueClaimCode } from '../loyalty/loyaltyEngine';
 import { NotificationService } from '../notifications/notificationService';
 
 export interface RewardAction {
-  action: 'ADD_POINTS' | 'DECREASE_POINTS' | 'CREATE_COUPON' | 'SEND_PUSH' | 'SEND_WHATSAPP' | 'UNLOCK_QUEST' | 'UP_LEVEL' | 'GIVE_BADGE' | 'ADD_WALLET_BALANCE';
+  action: 'ADD_POINTS' | 'DECREASE_POINTS' | 'CREATE_COUPON' | 'SEND_PUSH' | 'SEND_WHATSAPP' | 'UNLOCK_QUEST' | 'UP_LEVEL' | 'GIVE_BADGE' | 'ADD_WALLET_BALANCE' | 'PRODUCT_GIFT' | 'SERVICE_GIFT';
   value: any;
 }
 
@@ -189,6 +189,168 @@ export async function executeRewardActions(
                             });
                         }
                     }
+                    break;
+                }
+
+                case 'PRODUCT_GIFT': {
+                    const name = String(a.value?.name || 'Producto de Regalo');
+                    const deliveryType = String(a.value?.deliveryType || 'MANUAL');
+                    const recompensaImagenUrl = a.value?.recompensaImagenUrl || null;
+
+                    // Buscar o crear un LoyaltyReward fantasma/de sistema para respaldar esta redención
+                    let reward = await prisma.loyaltyReward.findFirst({
+                        where: { negocioId, nombre: name, tipo: 'PRODUCTO' }
+                    });
+
+                    if (!reward) {
+                        reward = await prisma.loyaltyReward.create({
+                            data: {
+                                negocioId,
+                                nombre: name,
+                                costoPuntos: 0,
+                                tipo: 'PRODUCTO',
+                                deliveryType: deliveryType === 'MANUAL' ? 'MANUAL' : 'AUTOMATICO',
+                                recompensaImagenUrl,
+                                activa: false, // Oculto del catálogo público
+                                descripcion: `Premio ganado al completar una misión`
+                            }
+                        });
+                    }
+
+                    const claimCode = deliveryType === 'MANUAL' ? await generateUniqueClaimCode(prisma) : null;
+                    const estado = deliveryType === 'MANUAL' ? 'PENDIENTE_ENTREGA' : 'DISPONIBLE';
+
+                    // Crear la redención
+                    await prisma.loyaltyRedemption.create({
+                        data: {
+                            negocioId,
+                            userId,
+                            rewardId: reward.id,
+                            estado: estado as any,
+                            claimCode,
+                            notas: `Recompensa por completar misión: ${questName}`
+                        }
+                    });
+
+                    await NotificationService.createNotification({
+                        negocioId,
+                        userId,
+                        tipo: 'PREMIO',
+                        categoria: 'PREMIOS',
+                        titulo: '🎁 ¡Recompensa Física Ganada!',
+                        descripcion: deliveryType === 'MANUAL'
+                            ? `Completaste la misión "${questName}" y ganaste: ${name}. Código de reclamo: ${claimCode}`
+                            : `Completaste la misión "${questName}" y obtuviste: ${name}.`,
+                        icono: 'Gift',
+                        prioridad: 'SUCCESS',
+                        recipientType: 'USER'
+                    });
+                    break;
+                }
+
+                case 'SERVICE_GIFT': {
+                    const name = String(a.value?.name || 'Servicio Gratis');
+                    const serviceId = a.value?.serviceId || null;
+                    const deliveryType = String(a.value?.deliveryType || 'AUTOMATICO');
+                    const recompensaImagenUrl = a.value?.recompensaImagenUrl || null;
+
+                    // Buscar o crear el LoyaltyReward de respaldo
+                    let reward = await prisma.loyaltyReward.findFirst({
+                        where: { negocioId, nombre: name, tipo: 'SERVICIO_GRATIS', serviceId }
+                    });
+
+                    if (!reward) {
+                        reward = await prisma.loyaltyReward.create({
+                            data: {
+                                negocioId,
+                                nombre: name,
+                                costoPuntos: 0,
+                                tipo: 'SERVICIO_GRATIS',
+                                deliveryType: deliveryType === 'MANUAL' ? 'MANUAL' : 'AUTOMATICO',
+                                serviceId,
+                                recompensaImagenUrl,
+                                activa: false, // Oculto del catálogo público
+                                descripcion: `Servicio gratis ganado al completar una misión`
+                            }
+                        });
+                    }
+
+                    const claimCode = deliveryType === 'MANUAL' ? await generateUniqueClaimCode(prisma) : null;
+                    const estado = deliveryType === 'MANUAL' ? 'PENDIENTE_ENTREGA' : 'DISPONIBLE';
+
+                    // Crear la redención
+                    await prisma.loyaltyRedemption.create({
+                        data: {
+                            negocioId,
+                            userId,
+                            rewardId: reward.id,
+                            estado: estado as any,
+                            claimCode,
+                            notas: `Recompensa por completar misión: ${questName}`
+                        }
+                    });
+
+                    await NotificationService.createNotification({
+                        negocioId,
+                        userId,
+                        tipo: 'PREMIO',
+                        categoria: 'PREMIOS',
+                        titulo: '⚡ ¡Servicio Gratis Ganado!',
+                        descripcion: deliveryType === 'MANUAL'
+                            ? `Completaste la misión "${questName}" y ganaste: ${name}. Código de reclamo: ${claimCode}`
+                            : `Completaste la misión "${questName}" y tienes un servicio gratis listo para usar al reservar!`,
+                        icono: 'Sparkles',
+                        prioridad: 'SUCCESS',
+                        recipientType: 'USER'
+                    });
+                    break;
+                }
+
+                case 'ADD_WALLET_BALANCE': {
+                    const monto = parseFloat(String(a.value.monto || a.value || 10));
+                    
+                    // Al no haber monedero acumulable por base de datos directa en esta estructura, 
+                    // creamos una redención de tipo CASHBACK en el historial del cliente para que tenga constancia.
+                    let reward = await prisma.loyaltyReward.findFirst({
+                        where: { negocioId, tipo: 'CASHBACK', valor: String(monto) }
+                    });
+
+                    if (!reward) {
+                        reward = await prisma.loyaltyReward.create({
+                            data: {
+                                negocioId,
+                                nombre: `Cashback de $${monto}`,
+                                costoPuntos: 0,
+                                tipo: 'CASHBACK',
+                                deliveryType: 'AUTOMATICO',
+                                valor: String(monto),
+                                activa: false,
+                                descripcion: `Cashback ganado por misión`
+                            }
+                        });
+                    }
+
+                    await prisma.loyaltyRedemption.create({
+                        data: {
+                            negocioId,
+                            userId,
+                            rewardId: reward.id,
+                            estado: 'CANJEADO',
+                            notas: `Acreditado automáticamente $${monto} de cashback por la misión: ${questName}`
+                        }
+                    });
+
+                    await NotificationService.createNotification({
+                        negocioId,
+                        userId,
+                        tipo: 'PREMIO',
+                        categoria: 'SISTEMA',
+                        titulo: '💰 ¡Cashback Acreditado!',
+                        descripcion: `Se ha acreditado $${monto} a tu monedero por completar la misión "${questName}".`,
+                        icono: 'CreditCard',
+                        prioridad: 'SUCCESS',
+                        recipientType: 'USER'
+                    });
                     break;
                 }
 
