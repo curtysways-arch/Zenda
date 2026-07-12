@@ -50,7 +50,7 @@ export async function GET(
                     where: { id: clientCoupon.id },
                     data: { estado: "VENCIDO" }
                 });
-                return { valid: false, error: "El cupón ha expirado" };
+                return NextResponse.json({ valid: false, error: "El cupón ha expirado" });
             }
 
             // Verificar si aplica solo a un servicio específico

@@ -949,6 +949,9 @@ model LoyaltyReward {
   cantidadDisponible Int?
   couponId           String?
   Coupon             Coupon?             @relation(fields: [couponId], references: [id])
+  activa             Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
   Negocio            Negocio             @relation(fields: [negocioId], references: [id])
   LoyaltyRedemption  LoyaltyRedemption[]
 }
