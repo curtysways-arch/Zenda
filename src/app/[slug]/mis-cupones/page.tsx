@@ -173,7 +173,7 @@ export default function MisCuponesPage() {
                 }} />
                 
                 <div className="max-w-md mx-auto relative z-10 flex items-center justify-between">
-                    <button onClick={() => router.push(`/${slug}/perfil`)} className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition-all border-0 cursor-pointer">
+                    <button onClick={() => router.back()} className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition-all border-0 cursor-pointer">
                         <ArrowLeft size={18} style={{ color: textColor }} />
                     </button>
                     <span className="text-[11px] font-black uppercase tracking-[0.2em] opacity-80">MIS BENEFICIOS</span>
