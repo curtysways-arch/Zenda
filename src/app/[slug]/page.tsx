@@ -523,25 +523,28 @@ export default async function PublicNegocioPage({
             include: {
                 appointment: {
                     include: {
-                        cliente: true
+                        cliente: true,
+                        service: true
                     }
                 }
             },
             orderBy: {
                 createdAt: 'desc'
             },
-            take: 6
+            take: 20
         });
         
         reviews = dbReviews.map((r: any) => ({
             id: r.id,
             comment: r.comment,
             stars: r.stars,
+            createdAt: r.createdAt,
             appointment: {
                 cliente: r.appointment?.cliente ? {
                     nombre: r.appointment.cliente.nombre,
                     avatar: r.appointment.cliente.avatar
-                } : null
+                } : null,
+                servicio: r.appointment?.service?.nombre || null
             }
         }));
     } catch (e) {
@@ -1165,42 +1168,122 @@ export default async function PublicNegocioPage({
                 }} 
             />
 
-            {/* Dialog de Opiniones */}
-            <dialog id="modal-opiniones" className="m-auto rounded-[2rem] p-6 max-w-md w-[90%] backdrop:bg-black/60 backdrop:backdrop-blur-sm border border-slate-100 shadow-2xl outline-none select-none text-slate-800 bg-white">
-                <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                        <h4 className="font-black text-slate-900 text-base uppercase tracking-tight">Opiniones de Clientes</h4>
-                        <button id="btn-close-opiniones" className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 font-bold active:scale-95 transition-transform border-0 cursor-pointer">✕</button>
-                    </div>
-                    <div className="flex flex-col items-center py-3 bg-slate-50 rounded-2xl border border-slate-100">
-                        <span className="text-3xl font-black text-slate-900 leading-none">4.9</span>
-                        <div className="flex gap-0.5 mt-1">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                                <span key={i} className="text-amber-400 text-sm">★</span>
-                            ))}
-                        </div>
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Calificación promedio</span>
-                    </div>
-                    <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1">
-                        {[
-                            { nombre: "María F.", rating: 5, comentario: "¡El masaje descontracturante fue una maravilla! Definitivamente el mejor lugar para relajarse.", fecha: "Hace 2 días" },
-                            { nombre: "Juan P.", rating: 5, comentario: "Atención de primera. Los terapeutas son muy profesionales y el ambiente es de pura paz.", fecha: "Hace 1 semana" },
-                            { nombre: "Sofía M.", rating: 5, comentario: "Me encanta el facial de hidratación profunda, mi piel quedó radiante. 100% recomendado.", fecha: "Hace 3 días" }
-                        ].map((t, idx) => (
-                            <div key={idx} className="p-3.5 bg-white border border-slate-100 rounded-2xl space-y-1">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-xs font-black text-slate-800">{t.nombre}</span>
-                                    <span className="text-[8px] font-bold text-slate-400 uppercase">{t.fecha}</span>
-                                </div>
-                                <div className="flex gap-0.5">
-                                    {Array.from({ length: t.rating }).map((_, i) => (
-                                        <span key={i} className="text-amber-400 text-[10px]">★</span>
-                                    ))}
-                                </div>
-                                <p className="text-[10px] text-slate-600 leading-relaxed font-medium">{t.comentario}</p>
+            {/* Dialog de Opiniones - Diseño Premium */}
+            <dialog id="modal-opiniones" className="m-auto rounded-[2rem] p-0 max-w-md w-[92%] max-h-[88vh] backdrop:bg-black/60 backdrop:backdrop-blur-sm border border-slate-100 shadow-2xl outline-none select-none bg-white overflow-hidden flex flex-col">
+                {/* Header */}
+                <div className="px-5 pt-5 pb-4 border-b border-slate-100 shrink-0">
+                    <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${primaryColor}15` }}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: primaryColor }}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="m9 10 2 2 4-4"/></svg>
                             </div>
-                        ))}
+                            <div>
+                                <h4 className="font-black text-slate-900 text-[15px] leading-none">Opiniones de clientes</h4>
+                                <p className="text-[10px] font-medium text-slate-400 mt-0.5">Lo que dicen nuestros clientes sobre nosotros</p>
+                            </div>
+                        </div>
+                        <button id="btn-close-opiniones" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold active:scale-95 transition-transform border-0 cursor-pointer text-sm">×</button>
                     </div>
+                </div>
+
+                {/* Score Summary */}
+                <div className="mx-5 mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 shrink-0">
+                    <div className="flex items-center gap-4">
+                        <div className="flex flex-col shrink-0">
+                            <span className="text-5xl font-black leading-none" style={{ color: primaryColor }}>
+                                {reviews.length > 0 ? (reviews.reduce((acc: number, r: any) => acc + r.stars, 0) / reviews.length).toFixed(1) : '0.0'}
+                            </span>
+                            <div className="flex gap-0.5 mt-1.5">
+                                {Array.from({ length: 5 }).map((_: any, i: number) => (
+                                    <span key={i} className="text-amber-400 text-[14px]">&#9733;</span>
+                                ))}
+                            </div>
+                            <span className="text-[9px] font-bold text-slate-400 mt-1">Basado en {reviews.length} opiniones</span>
+                        </div>
+                        <div className="flex-1 space-y-1">
+                            {[5, 4, 3, 2, 1].map((star: number) => {
+                                const count = reviews.filter((r: any) => r.stars === star).length;
+                                const pct = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                                return (
+                                    <div key={star} className="flex items-center gap-1.5">
+                                        <span className="text-[9px] font-bold text-slate-500 w-2">{star}</span>
+                                        <span className="text-amber-400 text-[9px]">&#9733;</span>
+                                        <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                            <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: primaryColor }} />
+                                        </div>
+                                        <span className="text-[9px] font-bold text-slate-400 w-5 text-right">{count}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Reviews list */}
+                <div className="overflow-y-auto flex-1 px-5 pb-5 mt-3 space-y-3">
+                    {reviews.length === 0 ? (
+                        <div className="py-10 text-center">
+                            <p className="text-slate-400 text-xs font-semibold">Aún no hay opiniones registradas.</p>
+                        </div>
+                    ) : (
+                        reviews.map((r: any, idx: number) => {
+                            const nombre = r.appointment?.cliente?.nombre || 'Cliente';
+                            const inicial = nombre.charAt(0).toUpperCase();
+                            const apellidoInicial = nombre.split(' ')[1]?.charAt(0).toUpperCase() || '';
+                            const nombreCorto = `${nombre.split(' ')[0]} ${apellidoInicial ? apellidoInicial + '.' : ''}`.trim();
+                            const fecha = r.createdAt ? (() => {
+                                const d = new Date(r.createdAt);
+                                const diffMs = Date.now() - d.getTime();
+                                const diffDays = Math.floor(diffMs / 86400000);
+                                if (diffDays === 0) return 'Hoy';
+                                if (diffDays === 1) return 'Hace 1 día';
+                                if (diffDays < 7) return `Hace ${diffDays} días`;
+                                if (diffDays < 14) return 'Hace 1 semana';
+                                if (diffDays < 30) return `Hace ${Math.floor(diffDays / 7)} semanas`;
+                                if (diffDays < 60) return 'Hace 1 mes';
+                                return `Hace ${Math.floor(diffDays / 30)} meses`;
+                            })() : '';
+                            return (
+                                <div key={r.id || idx} className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm space-y-2">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white text-[13px] font-black" style={{ backgroundColor: primaryColor }}>
+                                                {inicial}
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-[12px] font-black text-slate-900">{nombreCorto}</span>
+                                                    <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                                                        <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+                                                        Cliente verificado
+                                                    </span>
+                                                </div>
+                                                <div className="flex gap-0.5 mt-0.5">
+                                                    {Array.from({ length: 5 }).map((_: any, i: number) => (
+                                                        <span key={i} className={`text-[11px] ${i < r.stars ? 'text-amber-400' : 'text-slate-200'}`}>&#9733;</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span className="text-[9px] font-semibold text-slate-400 shrink-0">{fecha}</span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-600 leading-relaxed font-medium">{r.comment}</p>
+                                    {r.appointment?.servicio && (
+                                        <div className="flex items-center gap-1">
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-300"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
+                                            <span className="text-[9px] font-semibold text-slate-400">{r.appointment.servicio}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="px-5 pb-4 pt-2 border-t border-slate-100 shrink-0 flex items-center justify-center gap-1.5">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: primaryColor }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                    <span className="text-[9px] font-bold text-slate-400">Opiniones verificadas y reales de nuestros clientes</span>
                 </div>
             </dialog>
 
