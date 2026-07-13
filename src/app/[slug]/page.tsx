@@ -1169,8 +1169,9 @@ export default async function PublicNegocioPage({
             />
 
             {/* Dialog de Opiniones - Diseño Premium */}
-            <dialog id="modal-opiniones" className="m-auto rounded-[2rem] p-0 max-w-md w-[92%] max-h-[88vh] backdrop:bg-black/60 backdrop:backdrop-blur-sm border border-slate-100 shadow-2xl outline-none select-none bg-white overflow-hidden flex flex-col">
-                {/* Header */}
+            <dialog id="modal-opiniones" className="m-auto rounded-[2rem] p-0 max-w-md w-[92%] backdrop:bg-black/60 backdrop:backdrop-blur-sm border border-slate-100 shadow-2xl outline-none select-none bg-white overflow-hidden">
+                <div className="flex flex-col max-h-[88vh] w-full overflow-hidden">
+                    {/* Header */}
                 <div className="px-5 pt-5 pb-4 border-b border-slate-100 shrink-0">
                     <div className="flex justify-between items-start">
                         <div className="flex items-center gap-3">
@@ -1284,6 +1285,7 @@ export default async function PublicNegocioPage({
                 <div className="px-5 pb-4 pt-2 border-t border-slate-100 shrink-0 flex items-center justify-center gap-1.5">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: primaryColor }}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
                     <span className="text-[9px] font-bold text-slate-400">Opiniones verificadas y reales de nuestros clientes</span>
+                </div>
                 </div>
             </dialog>
 
