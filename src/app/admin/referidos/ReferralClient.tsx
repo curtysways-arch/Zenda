@@ -771,7 +771,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                             />
                         </div>
 
-                        <div>
+                        <div className="md:col-span-2">
                             <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Costo en Puntos *</label>
                             <input
                                 type="number"
@@ -783,33 +783,26 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
                             />
                         </div>
-                        <div>
-                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Método de Entrega</label>
-                            <select
-                                value={rewardDeliveryType}
-                                onChange={(e) => setRewardDeliveryType(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
-                            >
-                                <option value="AUTOMATICO">⚡ Automático (Digital)</option>
-                                <option value="MANUAL">🎁 Manual (Entrega Física)</option>
-                            </select>
-                        </div>
 
-                        <div>
+                        <div className="md:col-span-2">
                             <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Tipo de Premio</label>
                             <select
                                 value={rewardType}
-                                onChange={(e) => setRewardType(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setRewardType(val);
+                                    setRewardDeliveryType(['PRODUCTO', 'REGALO', 'PERSONALIZADO'].includes(val) ? 'MANUAL' : 'AUTOMATICO');
+                                }}
                                 className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-bold text-slate-800 outline-none"
                             >
-                                <option value="SERVICIO_GRATIS">Servicio Gratis</option>
-                                <option value="CUPON">Cupón de Descuento</option>
-                                <option value="PRODUCTO">Producto de Regalo</option>
-                                <option value="REGALO">Regalo Físico / Sorpresa</option>
-                                <option value="PUNTOS">Bono de Puntos</option>
-                                <option value="CASHBACK">Cashback / Saldo</option>
-                                <option value="BADGE">Insignia / Badge</option>
-                                <option value="PERSONALIZADO">Otro / Personalizado</option>
+                                <option value="SERVICIO_GRATIS">⚡ Servicio Gratis (Automático)</option>
+                                <option value="CUPON">🎟️ Cupón de Descuento (Automático)</option>
+                                <option value="PUNTOS">🪙 Bono de Puntos (Automático)</option>
+                                <option value="CASHBACK">💵 Cashback / Saldo (Automático)</option>
+                                <option value="BADGE">🏅 Insignia / Badge (Automático)</option>
+                                <option value="PRODUCTO">🎁 Producto Físico (Manual)</option>
+                                <option value="REGALO">🎁 Regalo Sorpresa (Manual)</option>
+                                <option value="PERSONALIZADO">✨ Otro / Personalizado (Manual)</option>
                             </select>
                         </div>
 
@@ -850,7 +843,7 @@ export default function ReferralClient({ staffList }: { staffList: Staff[] }) {
                             </div>
                         )}
 
-                        {rewardDeliveryType === 'MANUAL' && (
+                        {['PRODUCTO', 'REGALO', 'PERSONALIZADO'].includes(rewardType) && (
                             <div className="md:col-span-2">
                                 <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">URL de la Imagen del Premio Físico (Opcional)</label>
                                 <input
