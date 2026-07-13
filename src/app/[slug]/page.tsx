@@ -623,13 +623,13 @@ export default async function PublicNegocioPage({
             <section className="px-6 mb-6">
                 <div className="relative w-full aspect-[16/11] sm:aspect-[16/10] max-h-[380px] rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-100/50">
                     <HeroCarousel images={displayImages} baseClass="absolute inset-0 w-full h-full object-cover" opacityActive="opacity-100" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-black/10" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/30" />
                     
                     {/* Contenido integrado en la imagen */}
                     <div className="absolute inset-x-0 bottom-6 px-6 text-center space-y-3.5">
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md border border-white/10 rounded-full">
                             <span className="text-[7.5px] font-black text-white uppercase tracking-[0.2em]">
-                                BIENVENIDO A {negocio.nombre.toUpperCase()}
+                                BIENVENIDO A {negocio.nombre.split(' - ')[0].toUpperCase()}
                             </span>
                         </div>
 
