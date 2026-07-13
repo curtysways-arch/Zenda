@@ -843,10 +843,11 @@ export default function QuestDashboard() {
         const cat = QUEST_ACTIONS_CATALOG.find(c => c.id === catId);
         if (!cat) return;
 
-        // Tomar el primer evento por defecto
-        const defaultEvent = cat.eventos[0]?.id || 'CUSTOM_EVENT';
-        const defaultMeta = cat.eventos[0]?.defaultMeta || 1;
-        const defaultType = cat.eventos[0]?.type || 'SIMPLE';
+        // Tomar Cita completada si está disponible (predeterminado), si no el primero
+        const prefEvent = cat.eventos.find(ev => ev.id === 'BOOKING_COMPLETED') || cat.eventos[0];
+        const defaultEvent = prefEvent?.id || 'CUSTOM_EVENT';
+        const defaultMeta = prefEvent?.defaultMeta || 1;
+        const defaultType = prefEvent?.type || 'SIMPLE';
 
         setWizardData(prev => ({
             ...prev,
