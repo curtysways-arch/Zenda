@@ -888,11 +888,19 @@ const resolveSlotPromotion = (
                             if (!selectedStaffId && availableStaff.length > 0) {
                                 setShakeProfessional(true);
                                 setTimeout(() => setShakeProfessional(false), 800);
-                                document.getElementById('booking-professional')?.scrollIntoView({ behavior: 'smooth'});
+                                const element = document.getElementById('booking-professional');
+                                if (element) {
+                                    const y = element.getBoundingClientRect().top + window.scrollY - 100;
+                                    window.scrollTo({ top: y, behavior: 'smooth' });
+                                }
                             } else if (!selectedBooking) {
                                 setShakeCalendar(true);
                                 setTimeout(() => setShakeCalendar(false), 800);
-                                document.getElementById('booking-calendar')?.scrollIntoView({ behavior: 'smooth'});
+                                const element = document.getElementById('booking-calendar');
+                                if (element) {
+                                    const y = element.getBoundingClientRect().top + window.scrollY - 100;
+                                    window.scrollTo({ top: y, behavior: 'smooth' });
+                                }
                             } else {
                                 setView('checkout');
                                 window.scrollTo(0,0);
