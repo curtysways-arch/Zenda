@@ -59,6 +59,7 @@ export default function BookingClient({
     const [clientCoupons, setClientCoupons] = useState<any[]>([]);
     const [isCustomCouponCode, setIsCustomCouponCode] = useState(false);
     const [showValidationErrors, setShowValidationErrors] = useState(false);
+    const [shakeCalendar, setShakeCalendar] = useState(false);
 
     const handleValidateCoupon = async (codeToUse?: string) => {
         const activeCode = codeToUse || couponCode;
@@ -701,6 +702,16 @@ const resolveSlotPromotion = (
 
     return (
         <div className="space-y-12 pb-56 relative text-left">
+            <style dangerouslySetInnerHTML={{ __html: `
+                @keyframes shake-highlight {
+                    0%, 100% { transform: translateX(0); }
+                    15%, 45%, 75% { transform: translateX(-6px); }
+                    30%, 60%, 90% { transform: translateX(6px); }
+                }
+                .animate-calendar-shake {
+                    animation: shake-highlight 0.5s ease-in-out;
+                }
+            `}} />
             {/* --primary ya está definido por el layout server-side */}
             <div className="space-y-5 px-2">
                 <div className="flex items-center gap-2 px-1">
@@ -789,7 +800,7 @@ const resolveSlotPromotion = (
                     <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest leading-tight">No hay profesionales disponibles para este servicio hoy.</p>
                 </div>
             )}
-            <div id="booking-calendar" className="relative space-y-4 px-2 transition-all duration-500">
+            <div id="booking-calendar" className={`relative space-y-4 px-2 transition-all duration-500 rounded-3xl ${shakeCalendar ? 'animate-calendar-shake ring-4 ring-pink-500/50' : ''}`}>
                 {/* Overlay Bloqueador */}
                 {(!selectedStaffId) && (
                     <div 
@@ -877,6 +888,8 @@ const resolveSlotPromotion = (
                                 setView('checkout'); 
                                 window.scrollTo(0,0); 
                             } else { 
+                                setShakeCalendar(true);
+                                setTimeout(() => setShakeCalendar(false), 800);
                                 document.getElementById('booking-calendar')?.scrollIntoView({ behavior: 'smooth'}); 
                             } 
                         }} 
