@@ -1135,7 +1135,7 @@ export default function QuestDashboard() {
                     action: 'PRODUCT_GIFT', 
                     value: { 
                         name: wizardData.productoGratisNombre,
-                        deliveryType: wizardData.productoGratisDelivery || 'MANUAL',
+                        deliveryType: 'MANUAL',
                         recompensaImagenUrl: wizardData.productoGratisImagenUrl || null
                     } 
                 });
@@ -1146,8 +1146,8 @@ export default function QuestDashboard() {
                     value: { 
                         name: wizardData.servicioGratisNombre,
                         serviceId: wizardData.servicioGratisId || null,
-                        deliveryType: wizardData.servicioGratisDelivery || 'AUTOMATICO',
-                        recompensaImagenUrl: wizardData.servicioGratisImagenUrl || null
+                        deliveryType: 'AUTOMATICO',
+                        recompensaImagenUrl: null
                     } 
                 });
             }
@@ -3231,40 +3231,27 @@ export default function QuestDashboard() {
 
                                                 {wizardData.recompensasSeleccionadas.productoGratis && (
                                                     <div className="pl-7 space-y-3">
-                                                        <div>
-                                                            <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Nombre del producto de regalo</label>
-                                                            <input
-                                                                type="text"
-                                                                value={wizardData.productoGratisNombre}
-                                                                onChange={e => setWizardData(prev => ({ ...prev, productoGratisNombre: e.target.value }))}
-                                                                className="w-full px-3 py-2 rounded-xl border border-slate-150 text-[10px] font-bold text-slate-800 bg-white"
-                                                                placeholder="Ej. Crema hidratante corporal"
-                                                            />
-                                                        </div>
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                             <div>
-                                                                <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Método de Entrega</label>
-                                                                <select
-                                                                    value={wizardData.productoGratisDelivery}
-                                                                    onChange={e => setWizardData(prev => ({ ...prev, productoGratisDelivery: e.target.value }))}
+                                                                <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Nombre del producto de regalo</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={wizardData.productoGratisNombre}
+                                                                    onChange={e => setWizardData(prev => ({ ...prev, productoGratisNombre: e.target.value }))}
                                                                     className="w-full px-3 py-2 rounded-xl border border-slate-150 text-[10px] font-bold text-slate-800 bg-white"
-                                                                >
-                                                                    <option value="MANUAL">🎁 Manual (Físico / Local)</option>
-                                                                    <option value="AUTOMATICO">⚡ Automático (Digital)</option>
-                                                                </select>
+                                                                    placeholder="Ej. Crema hidratante corporal"
+                                                                />
                                                             </div>
-                                                            {wizardData.productoGratisDelivery === 'MANUAL' && (
-                                                                <div>
-                                                                    <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Imagen del Producto Físico (URL Opcional)</label>
-                                                                    <input
-                                                                        type="text"
-                                                                        value={wizardData.productoGratisImagenUrl}
-                                                                        onChange={e => setWizardData(prev => ({ ...prev, productoGratisImagenUrl: e.target.value }))}
-                                                                        className="w-full px-3 py-2 rounded-xl border border-slate-150 text-[10px] font-bold text-slate-800 bg-white"
-                                                                        placeholder="Ej. https://servidor.com/producto.png"
-                                                                    />
-                                                                </div>
-                                                            )}
+                                                            <div>
+                                                                <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Imagen del Producto Físico (URL Opcional)</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={wizardData.productoGratisImagenUrl}
+                                                                    onChange={e => setWizardData(prev => ({ ...prev, productoGratisImagenUrl: e.target.value }))}
+                                                                    className="w-full px-3 py-2 rounded-xl border border-slate-150 text-[10px] font-bold text-slate-800 bg-white"
+                                                                    placeholder="Ej. https://servidor.com/producto.png"
+                                                                />
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 )}
@@ -3302,45 +3289,15 @@ export default function QuestDashboard() {
                                                                     value={wizardData.servicioGratisNombre}
                                                                     onChange={e => setWizardData(prev => ({ ...prev, servicioGratisNombre: e.target.value }))}
                                                                     className="w-full px-3 py-2 rounded-xl border border-slate-150 text-[10px] font-bold text-slate-800 bg-white"
-                                                                    placeholder="Ej. Masaje Express facial gratis"
+                                                                    placeholder="Ej. Masaje Express gratis"
                                                                 />
                                                             </div>
-                                                        </div>
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                            <div>
-                                                                <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Método de Entrega</label>
-                                                                <select
-                                                                    value={wizardData.servicioGratisDelivery}
-                                                                    onChange={e => setWizardData(prev => ({ ...prev, servicioGratisDelivery: e.target.value }))}
-                                                                    className="w-full px-3 py-2 rounded-xl border border-slate-150 text-[10px] font-bold text-slate-800 bg-white"
-                                                                >
-                                                                    <option value="AUTOMATICO">⚡ Automático (Derecho de reserva gratis)</option>
-                                                                    <option value="MANUAL">🎁 Manual (Requiere cupón físico)</option>
-                                                                </select>
-                                                            </div>
-                                                            {wizardData.servicioGratisDelivery === 'MANUAL' && (
-                                                                <div>
-                                                                    <label className="block text-[8px] font-black text-slate-400 uppercase mb-1">Imagen de Cupón Físico (URL Opcional)</label>
-                                                                    <input
-                                                                        type="text"
-                                                                        value={wizardData.servicioGratisImagenUrl}
-                                                                        onChange={e => setWizardData(prev => ({ ...prev, servicioGratisImagenUrl: e.target.value }))}
-                                                                        className="w-full px-3 py-2 rounded-xl border border-slate-150 text-[10px] font-bold text-slate-800 bg-white"
-                                                                        placeholder="Ej. https://servidor.com/servicio.png"
-                                                                    />
-                                                                </div>
-                                                            )}
                                                         </div>
                                                     </div>
                                                 )}
                                             </div>
 
-                                            {/* Recompensa de Cashback */}
-                                            <div className="p-4 border border-slate-150 rounded-2xl bg-slate-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                                <label className="flex items-center gap-3 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={wizardData.recompensasSeleccionadas.cashback}
+                                            {/* Recompensa de recompensasSeleccionadas.cashback}
                                                         onChange={e => setWizardData(prev => ({
                                                             ...prev,
                                                             recompensasSeleccionadas: { ...prev.recompensasSeleccionadas, cashback: e.target.checked }
