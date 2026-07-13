@@ -605,8 +605,8 @@ export default async function PublicNegocioPage({
                 <NotificationBell slug={slug} initialUnreadCount={initialUnreadCount} />
             </header>
 
-            {/* Espaciado superior */}
-            <div className={nextAppointment ? "h-[128px]" : "h-[92px]"}></div>
+            {/* Espaciador superior */}
+            <div className={nextAppointment ? "h-[116px]" : "h-[80px]"}></div>
 
             {/* PRÓXIMA CITA ALERT BANNER */}
             {nextAppointment && (
@@ -623,10 +623,10 @@ export default async function PublicNegocioPage({
             <section className="px-6 mb-6">
                 <div className="relative w-full aspect-[16/13] xs:aspect-[16/11] sm:aspect-[16/10] max-h-[380px] rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-100/50">
                     <HeroCarousel images={displayImages} baseClass="absolute inset-0 w-full h-full object-cover" opacityActive="opacity-100" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-black/10" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/30 to-black/55" />
                     
                     {/* Contenido integrado en la imagen */}
-                    <div className="absolute inset-x-0 bottom-4 px-4 text-center space-y-2">
+                    <div className="absolute inset-0 p-4 flex flex-col items-center justify-center space-y-2">
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md border border-white/10 rounded-full">
                             <span className="text-[7px] xs:text-[7.5px] font-black text-white uppercase tracking-[0.2em]">
                                 BIENVENIDO A {negocio.nombre.split(' - ')[0].toUpperCase()}
