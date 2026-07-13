@@ -1464,7 +1464,7 @@ export default function QuestDashboard() {
                     valor: catalogRewardFormData.tipo === 'CUPON' ? '' : catalogRewardFormData.valor,
                     couponId: catalogRewardFormData.tipo === 'CUPON' ? catalogRewardFormData.couponId : null,
                     serviceId: catalogRewardFormData.tipo === 'SERVICIO_GRATIS' ? catalogRewardFormData.serviceId : null,
-                    recompensaImagenUrl: catalogRewardFormData.deliveryType === 'MANUAL' ? catalogRewardFormData.recompensaImagenUrl : null,
+                    recompensaImagenUrl: ['PRODUCTO', 'REGALO', 'PERSONALIZADO'].includes(catalogRewardFormData.tipo) ? catalogRewardFormData.recompensaImagenUrl : null,
                     cantidadTotal: catalogRewardFormData.cantidadTotal ? Number(catalogRewardFormData.cantidadTotal) : null,
                     imagenUrl: catalogRewardFormData.imagenUrl || null
                 })
@@ -3932,38 +3932,30 @@ export default function QuestDashboard() {
                                     required
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Tipo Recompensa</label>
-                                    <select
-                                        value={catalogRewardFormData.tipo}
-                                        onChange={e => setCatalogRewardFormData(prev => ({ ...prev, tipo: e.target.value }))}
-                                        className="w-full px-4 py-3 rounded-2xl border border-slate-150 text-xs font-bold text-slate-800 bg-slate-50 focus:outline-none"
-                                    >
-                                        <option value="SERVICIO_GRATIS">Servicio Gratis</option>
-                                        <option value="PRODUCTO">Producto</option>
-                                        <option value="DESCUENTO">Descuento Especial</option>
-                                        <option value="REGALO">Regalo Especial</option>
-                                        <option value="CUPON">🎟️ Cupón de Descuento</option>
-                                        <option value="PRODUCTO">Producto de Regalo</option>
-                                        <option value="REGALO">Regalo Físico / Sorpresa</option>
-                                        <option value="PUNTOS">Bono de Puntos</option>
-                                        <option value="CASHBACK">Cashback / Saldo</option>
-                                        <option value="BADGE">Insignia / Badge</option>
-                                        <option value="PERSONALIZADO">Otro / Personalizado</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Método de Entrega</label>
-                                    <select
-                                        value={catalogRewardFormData.deliveryType}
-                                        onChange={e => setCatalogRewardFormData(prev => ({ ...prev, deliveryType: e.target.value }))}
-                                        className="w-full px-4 py-3 rounded-2xl border border-slate-150 text-xs font-bold text-slate-800 bg-slate-50 focus:outline-none"
-                                    >
-                                        <option value="AUTOMATICO">⚡ Automático (Digital)</option>
-                                        <option value="MANUAL">🎁 Manual (Físico)</option>
-                                    </select>
-                                </div>
+
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Tipo Recompensa</label>
+                                <select
+                                    value={catalogRewardFormData.tipo}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        setCatalogRewardFormData(prev => ({ 
+                                            ...prev, 
+                                            tipo: val,
+                                            deliveryType: ['PRODUCTO', 'REGALO', 'PERSONALIZADO'].includes(val) ? 'MANUAL' : 'AUTOMATICO'
+                                        }));
+                                    }}
+                                    className="w-full px-4 py-3 rounded-2xl border border-slate-150 text-xs font-bold text-slate-800 bg-slate-50 focus:outline-none"
+                                >
+                                    <option value="SERVICIO_GRATIS">⚡ Servicio Gratis (Automático)</option>
+                                    <option value="CUPON">🎟️ Cupón de Descuento (Automático)</option>
+                                    <option value="PUNTOS">🪙 Bono de Puntos (Automático)</option>
+                                    <option value="CASHBACK">💵 Cashback / Saldo (Automático)</option>
+                                    <option value="BADGE">🏅 Insignia / Badge (Automático)</option>
+                                    <option value="PRODUCTO">🎁 Producto Físico (Manual)</option>
+                                    <option value="REGALO">🎁 Regalo Sorpresa (Manual)</option>
+                                    <option value="PERSONALIZADO">✨ Otro / Personalizado (Manual)</option>
+                                </select>
                             </div>
 
                             <div className="grid grid-cols-1 gap-4">
