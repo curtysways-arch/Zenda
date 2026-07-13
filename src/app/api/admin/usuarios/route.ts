@@ -32,9 +32,9 @@ export async function GET(req: Request) {
                 } : {})
             },
             include: {
-                roles: {
+                UserRole: {
                     include: {
-                        role: true
+                        Role: true
                     }
                 }
             },
@@ -45,7 +45,7 @@ export async function GET(req: Request) {
         const formatted = usuarios.map((u: any) => ({
             ...u,
             password: "", // No enviar password
-            roles: u.roles.map((ur: any) => ur.role.name)
+            roles: (u.UserRole || []).map((ur: any) => ur.Role?.name || "")
         }));
 
         return NextResponse.json(formatted);
