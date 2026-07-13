@@ -551,6 +551,38 @@ export default async function PublicNegocioPage({
         console.error("Error loading reviews:", e);
     }
 
+    // --- Estadísticas globales de calificaciones y clientes ---
+    let totalOpiniones = 0;
+    let promedioOpiniones = 5.0;
+    let totalClientes = 0;
+
+    try {
+        const stats = await prisma.rating.aggregate({
+            where: {
+                appointment: { negocioId: negocio.id },
+                raterRole: 'client'
+            },
+            _count: {
+                stars: true
+            },
+            _avg: {
+                stars: true
+            }
+        });
+        totalOpiniones = stats._count?.stars || 0;
+        promedioOpiniones = stats._avg?.stars !== null && stats._avg?.stars !== undefined ? Number(stats._avg.stars) : 5.0;
+    } catch (e) {
+        console.error("Error calculating rating stats:", e);
+    }
+
+    try {
+        totalClientes = await prisma.cliente.count({
+            where: { negocioId: negocio.id }
+        });
+    } catch (e) {
+        console.error("Error counting clientes:", e);
+    }
+
 
 
     // --- Datos del referido (si el usuario llegó por un enlace de referido) ---
@@ -594,10 +626,12 @@ export default async function PublicNegocioPage({
                         <div className="flex items-center gap-1 mt-1">
                             <div className="flex gap-0.5">
                                 {Array.from({ length: 5 }).map((_, i) => (
-                                    <Star key={i} size={8} className="text-amber-400" fill="currentColor" />
+                                    <Star key={i} size={8} className={i < Math.round(promedioOpiniones) ? "text-amber-400" : "text-slate-200"} fill="currentColor" />
                                 ))}
                             </div>
-                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">4.9 (2.3k+)</span>
+                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                                {promedioOpiniones.toFixed(1)} ({totalOpiniones === 0 ? '0' : totalOpiniones > 999 ? `${(totalOpiniones / 1000).toFixed(1)}k` : totalOpiniones})
+                            </span>
                         </div>
                     </div>
                 </Link>
@@ -683,13 +717,15 @@ export default async function PublicNegocioPage({
                     {/* Calificación */}
                     <button id="btn-opiniones" className="flex flex-col items-center text-center cursor-pointer active:scale-95 transition-transform outline-none bg-transparent border-0 p-0 w-full">
                         <Star size={16} fill="currentColor" style={{ color: primaryColor }} />
-                        <span className="text-[11px] font-black text-slate-800 mt-1">4.9/5</span>
+                        <span className="text-[11px] font-black text-slate-800 mt-1">{promedioOpiniones.toFixed(1)}/5</span>
                         <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Opiniones</span>
                     </button>
                     {/* Clientes */}
                     <button id="btn-fidelizacion" className="flex flex-col items-center text-center border-l border-slate-100 cursor-pointer active:scale-95 transition-transform outline-none bg-transparent border-0 p-0 w-full">
                         <Users size={16} style={{ color: primaryColor }} />
-                        <span className="text-[11px] font-black text-slate-800 mt-1">2.3k+</span>
+                        <span className="text-[11px] font-black text-slate-800 mt-1">
+                            {totalClientes === 0 ? '0' : totalClientes > 999 ? `${(totalClientes / 1000).toFixed(1)}k` : totalClientes}
+                        </span>
                         <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Felices</span>
                     </button>
                     {/* Servicios */}
