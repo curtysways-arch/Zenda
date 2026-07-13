@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Gift, Coins, Trophy, Loader2, Sparkles, ChevronRight, Lock, Clock, Info } from 'lucide-react';
+import { Gift, Coins, Trophy, Loader2, Sparkles, ChevronRight, Lock, Clock, Info, Ticket } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface LoyaltyReward {
@@ -299,8 +299,12 @@ export default function PremiosCatalogoClient({ slug, primaryColor, textColor, n
                                             >
                                                 {reward.imagenUrl ? (
                                                     <img src={reward.imagenUrl} alt={reward.nombre} className="w-full h-full object-cover" />
+                                                ) : reward.tipo === 'CUPON' ? (
+                                                    <Ticket size={22} style={{ color: primaryColor }} />
+                                                ) : reward.tipo === 'SERVICIO_GRATIS' ? (
+                                                    <Sparkles size={22} style={{ color: primaryColor }} />
                                                 ) : (
-                                                    <Gift size={20} style={{ color: primaryColor }} />
+                                                    <Gift size={22} style={{ color: primaryColor }} />
                                                 )}
                                             </div>
 
