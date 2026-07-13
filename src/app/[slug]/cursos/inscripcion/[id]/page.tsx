@@ -224,7 +224,7 @@ export default function DetalleInscripcionPage() {
                                     <ChevronLeft size={16} strokeWidth={3} className="relative right-[1px]" style={{ color: primaryColor }} />
                                 </div>
                             </button>
-                            <h1 className="text-xs font-black uppercase italic tracking-widest leading-none" style={{ color: textColor }}>Mi Academia</h1>
+                            <h1 className="text-xs font-black uppercase italic tracking-widest leading-none text-slate-900">Mi Academia</h1>
                         </div>
                     </div>
                 </header>

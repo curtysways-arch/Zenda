@@ -585,7 +585,7 @@ export default async function PublicNegocioPage({
                         </div>
                     )}
                     <div className="flex flex-col">
-                        <span className="font-black text-base uppercase tracking-wider leading-none" style={{ color: textColor }}>
+                        <span className="font-black text-base uppercase tracking-wider leading-none text-slate-900">
                             {negocio.nombre}
                         </span>
                         <div className="flex items-center gap-1 mt-1">
@@ -854,7 +854,7 @@ export default async function PublicNegocioPage({
                                         </div>
  
                                         <span className="text-[8px] font-black uppercase tracking-widest mb-2 block" style={{ color: primaryColor }}>Especial Spa</span>
-                                        <h4 className="text-xl font-black leading-tight mb-2 transition-colors" style={{ color: textColor }}>
+                                        <h4 className="text-xl font-black leading-tight mb-2 transition-colors text-slate-900">
                                             {page.title}
                                         </h4>
                                         <p className="text-xs font-semibold text-slate-400 leading-relaxed mb-4 max-w-md line-clamp-2">
@@ -863,7 +863,7 @@ export default async function PublicNegocioPage({
                                         
                                         <div className="flex items-center gap-3">
                                             <div className="h-px w-6 opacity-30" style={{ backgroundColor: primaryColor }} />
-                                            <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: textColor }}>
+                                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-700">
                                                 Leer artículo
                                             </span>
                                         </div>
@@ -1085,7 +1085,15 @@ export default async function PublicNegocioPage({
                                         var target = document.getElementById(targetId);
                                         if (target) {
                                             e.preventDefault();
-                                            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                            var header = document.querySelector('header');
+                                            var headerHeight = header ? header.offsetHeight : 80;
+                                            var elementPosition = target.getBoundingClientRect().top;
+                                            var offsetPosition = elementPosition + window.pageYOffset - headerHeight - 15;
+                                            
+                                            window.scrollTo({
+                                                top: offsetPosition,
+                                                behavior: 'smooth'
+                                            });
                                         }
                                     });
                                 });

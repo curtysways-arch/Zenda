@@ -403,8 +403,8 @@ export default function MisReservasPage() {
             <main className={cn("max-w-xl mx-auto w-full", step === 'history' ? "pb-28" : "px-6 pt-2 pb-12 overflow-x-hidden")}>
                 {step === 'phone' && (
                     <section className="flex flex-col items-center text-center space-y-6 pt-10 px-6">
-                        <h2 className="text-5xl font-black italic uppercase tracking-tighter leading-none" style={{ color: textColor }}>Hola,</h2>
-                        <p className="font-black italic tracking-widest text-[11px] uppercase opacity-60" style={{ color: textColor }}>Identifícate para gestionar tus citas</p>
+                        <h2 className="text-5xl font-black italic uppercase tracking-tighter leading-none text-slate-900">Hola,</h2>
+                        <p className="font-black italic tracking-widest text-[11px] uppercase text-slate-500">Identifícate para gestionar tus citas</p>
 
                         <div className="w-full bg-white rounded-[2.5rem] p-8 shadow-2xl border border-slate-100">
                             <div className="flex items-center gap-3 mb-10 justify-center">
@@ -416,7 +416,7 @@ export default function MisReservasPage() {
 
                             <form onSubmit={handleSendOtp} className="space-y-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] ml-2 opacity-50" style={{ color: textColor }}>Número Móvil</label>
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] ml-2 text-slate-500">Número Móvil</label>
                                     <div className="flex gap-2">
                                         <div className="relative flex-1">
                                             <PhoneInput value={telefono} onChange={setTelefono} className="w-full" />

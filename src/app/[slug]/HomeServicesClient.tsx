@@ -115,7 +115,7 @@ export default function HomeServicesClient({
                             {/* Contenido */}
                             <div className="flex-1 flex flex-col justify-between px-1">
                                 <div>
-                                    <h4 className="font-black text-[17px] leading-snug line-clamp-2" style={{ color: textColor }}>
+                                    <h4 className="font-black text-[17px] leading-snug line-clamp-2 text-slate-900">
                                         {service.nombre}
                                     </h4>
                                     

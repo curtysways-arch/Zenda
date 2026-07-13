@@ -313,8 +313,8 @@ export default function MiPerfilPage() {
                 {/* ── LOGIN / OTP ── */}
                 {step === 'phone' && (
                     <section className="flex flex-col items-center text-center space-y-6 pt-10 px-6">
-                        <h2 className="text-5xl font-black italic uppercase tracking-tighter leading-none" style={{ color: textColor }}>Hola,</h2>
-                        <p className="font-black italic tracking-widest text-[11px] uppercase opacity-60" style={{ color: textColor }}>Identifícate para ver tu perfil</p>
+                        <h2 className="text-5xl font-black italic uppercase tracking-tighter leading-none text-slate-900">Hola,</h2>
+                        <p className="font-black italic tracking-widest text-[11px] uppercase text-slate-500">Identifícate para ver tu perfil</p>
                         <div className="w-full bg-white rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 text-left">
                             <div className="flex items-center gap-3 mb-10 justify-center">
                                 <div className="size-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${primaryColor}10`, color: primaryColor }}>
@@ -324,7 +324,7 @@ export default function MiPerfilPage() {
                             </div>
                             <form onSubmit={handleSendOtp} className="space-y-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] ml-2 opacity-50" style={{ color: textColor }}>Número Móvil</label>
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] ml-2 text-slate-500">Número Móvil</label>
                                     <PhoneInput value={telefono} onChange={setTelefono} className="w-full" />
                                 </div>
                                 {error && (
@@ -386,8 +386,7 @@ export default function MiPerfilPage() {
                                         {loading ? <Loader2 className="animate-spin" size={24} /> : (<>Verificar Código <ArrowRight size={20} /></>)}
                                     </button>
                                     <button type="button" onClick={() => setStep('phone')}
-                                        className="text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity"
-                                        style={{ color: textColor }}>Atrás</button>
+                                        className="text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity text-slate-500">Atrás</button>
                                 </div>
                             </form>
                         </div>
