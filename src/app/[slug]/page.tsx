@@ -621,35 +621,35 @@ export default async function PublicNegocioPage({
 
             {/* 2. HERO IMAGE CON SUBTÍTULO INTEGRADO */}
             <section className="px-6 mb-6">
-                <div className="relative w-full aspect-[16/11] sm:aspect-[16/10] max-h-[380px] rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-100/50">
+                <div className="relative w-full aspect-[16/13] xs:aspect-[16/11] sm:aspect-[16/10] max-h-[380px] rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-100/50">
                     <HeroCarousel images={displayImages} baseClass="absolute inset-0 w-full h-full object-cover" opacityActive="opacity-100" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/30" />
                     
                     {/* Contenido integrado en la imagen */}
-                    <div className="absolute inset-x-0 bottom-6 px-6 text-center space-y-3.5">
+                    <div className="absolute inset-x-0 bottom-4 px-4 text-center space-y-2">
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md border border-white/10 rounded-full">
-                            <span className="text-[7.5px] font-black text-white uppercase tracking-[0.2em]">
+                            <span className="text-[7px] xs:text-[7.5px] font-black text-white uppercase tracking-[0.2em]">
                                 BIENVENIDO A {negocio.nombre.split(' - ')[0].toUpperCase()}
                             </span>
                         </div>
-
+ 
                         {negocio.heroTitulo && (
-                            <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter drop-shadow-md leading-none">
+                            <h2 className="text-2xl xs:text-3xl font-black text-white uppercase italic tracking-tighter drop-shadow-md leading-none">
                                 {negocio.heroTitulo}
                             </h2>
                         )}
                         {negocio.heroSubtitulo && (
-                            <p className="text-[10px] font-black text-white/70 uppercase tracking-[0.2em] leading-relaxed drop-shadow-md max-w-[280px] mx-auto">
+                            <p className="text-[9px] xs:text-[10px] font-black text-white/70 uppercase tracking-[0.15em] leading-normal drop-shadow-md max-w-[310px] mx-auto">
                                 {negocio.heroSubtitulo}
                             </p>
                         )}
                         {negocio.horarioApertura && negocio.horarioCierre && (
-                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-black/40 backdrop-blur-md border border-white/5 rounded-full mt-1">
+                            <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-black/40 backdrop-blur-md border border-white/5 rounded-full mt-0.5">
                                 <div className={cn(
                                     "w-1.5 h-1.5 rounded-full animate-pulse shrink-0",
                                     isCurrentlyOpen ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.5)]"
                                 )} />
-                                <span className="text-[8px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-1">
+                                <span className="text-[7.5px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-1">
                                     <span className={cn(isCurrentlyOpen ? "text-emerald-400" : "text-rose-400")}>
                                         {isCurrentlyOpen ? 'ABIERTO' : 'CERRADO'}
                                     </span>
@@ -658,11 +658,11 @@ export default async function PublicNegocioPage({
                                 </span>
                             </div>
                         )}
-
-                        <div className="flex flex-col items-center pt-1.5">
+ 
+                        <div className="flex flex-col items-center pt-1">
                             <Link
                                 href={`/${slug}/servicios`}
-                                className="inline-flex items-center gap-2 px-7 py-3 text-white rounded-full font-black text-[10px] uppercase tracking-widest shadow-md hover:brightness-110 active:scale-95 transition-all"
+                                className="inline-flex items-center gap-2 px-6 py-2.5 text-white rounded-full font-black text-[9px] xs:text-[10px] uppercase tracking-widest shadow-md hover:brightness-110 active:scale-95 transition-all"
                                 style={{ backgroundColor: primaryColor }}
                             >
                                 Elegir servicio
