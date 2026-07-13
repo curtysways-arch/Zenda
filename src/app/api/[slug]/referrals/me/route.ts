@@ -146,12 +146,11 @@ export async function GET(
             }
         });
 
-        // 11. Obtener puntos acumulados por reservas de forma reciente (últimos 3 días) para animaciones de celebración
+        // 11. Obtener puntos acumulados de forma reciente (últimos 3 días) para animaciones de celebración
         const recentPoints = await prisma.pointsHistory.findMany({
             where: {
                 userId: user.id,
                 negocioId,
-                concepto: 'RESERVA',
                 puntos: { gt: 0 },
                 createdAt: { gte: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) } // 3 días
             },
@@ -160,15 +159,27 @@ export async function GET(
 
         const citasPuntosRecientes = [];
         for (const pt of recentPoints) {
-            let servicioNombre = 'tu tratamiento';
-            if (pt.referenciaId) {
+            let servicioNombre = 'bono de lealtad';
+            if (pt.concepto === 'RESERVA' && pt.referenciaId) {
                 const appt = await prisma.appointment.findUnique({
                     where: { id: pt.referenciaId },
                     include: { service: { select: { nombre: true } } }
                 });
                 if (appt?.service?.nombre) {
                     servicioNombre = appt.service.nombre;
+                } else {
+                    servicioNombre = 'tu tratamiento';
                 }
+            } else if (pt.concepto === 'QUEST_COMPLETED') {
+                servicioNombre = 'completar una misión';
+            } else if (pt.concepto === 'REFERIDO') {
+                servicioNombre = 'recomendar a un amigo';
+            } else if (pt.concepto === 'CAMPANA') {
+                servicioNombre = 'participar en una campaña';
+            } else if (pt.concepto === 'CUMPLEANOS') {
+                servicioNombre = 'tu cumpleaños';
+            } else {
+                servicioNombre = pt.notas || 'bono de lealtad';
             }
             citasPuntosRecientes.push({
                 id: pt.id,

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Sparkles, X, Coins } from 'lucide-react';
+import { useNotifications } from '@/hooks/useNotifications';
 
 interface LoyaltyCelebrationProps {
     slug: string;
@@ -15,6 +16,9 @@ interface CelebrationData {
 }
 
 export default function LoyaltyCelebration({ slug, primaryColor }: LoyaltyCelebrationProps) {
+    // Mantener la conexión SSE activa de forma global
+    useNotifications(slug);
+
     const [celebrationData, setCelebrationData] = useState<CelebrationData | null>(null);
     const [show, setShow] = useState(false);
     const [confetti, setConfetti] = useState<any[]>([]);
