@@ -1166,7 +1166,7 @@ export default async function PublicNegocioPage({
             />
 
             {/* Dialog de Opiniones */}
-            <dialog id="modal-opiniones" className="rounded-[2rem] p-6 max-w-md w-[90%] backdrop:bg-black/60 backdrop:backdrop-blur-sm border border-slate-100 shadow-2xl outline-none select-none text-slate-800 bg-white">
+            <dialog id="modal-opiniones" className="m-auto rounded-[2rem] p-6 max-w-md w-[90%] backdrop:bg-black/60 backdrop:backdrop-blur-sm border border-slate-100 shadow-2xl outline-none select-none text-slate-800 bg-white">
                 <div className="space-y-4">
                     <div className="flex justify-between items-center">
                         <h4 className="font-black text-slate-900 text-base uppercase tracking-tight">Opiniones de Clientes</h4>
@@ -1205,7 +1205,7 @@ export default async function PublicNegocioPage({
             </dialog>
 
             {/* Dialog de Fidelización */}
-            <dialog id="modal-fidelizacion" className="rounded-[2rem] p-6 max-w-md w-[90%] backdrop:bg-black/60 backdrop:backdrop-blur-sm border border-slate-100 shadow-2xl outline-none select-none text-slate-800 bg-white">
+            <dialog id="modal-fidelizacion" className="m-auto rounded-[2rem] p-6 max-w-md w-[90%] backdrop:bg-black/60 backdrop:backdrop-blur-sm border border-slate-100 shadow-2xl outline-none select-none text-slate-800 bg-white">
                 <div className="space-y-5">
                     <div className="flex justify-between items-center">
                         <h4 className="font-black text-slate-900 text-base uppercase tracking-tight flex items-center gap-1.5">
@@ -1226,7 +1226,7 @@ export default async function PublicNegocioPage({
                         <button id="btn-close-fidelizacion-footer" className="py-3 bg-slate-50 border border-slate-100 rounded-2xl text-[8px] font-black uppercase tracking-widest text-slate-500 active:scale-95 transition-transform border-0 cursor-pointer">
                             Cerrar
                         </button>
-                        <a href={`/${slug}/premios`} className="py-3 rounded-2xl text-[8px] font-black uppercase tracking-widest text-white text-center active:scale-95 transition-transform shadow-md no-underline flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
+                        <a href={`/${slug}/misiones/premios`} className="py-3 rounded-2xl text-[8px] font-black uppercase tracking-widest text-white text-center active:scale-95 transition-transform shadow-md no-underline flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
                             Premios
                         </a>
                         <a href={`/${slug}/misiones`} className="py-3 rounded-2xl text-[8px] font-black uppercase tracking-widest text-white text-center active:scale-95 transition-transform shadow-md no-underline flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
