@@ -60,6 +60,7 @@ export default function BookingClient({
     const [isCustomCouponCode, setIsCustomCouponCode] = useState(false);
     const [showValidationErrors, setShowValidationErrors] = useState(false);
     const [shakeCalendar, setShakeCalendar] = useState(false);
+    const [shakeProfessional, setShakeProfessional] = useState(false);
 
     const handleValidateCoupon = async (codeToUse?: string) => {
         const activeCode = codeToUse || couponCode;
@@ -779,7 +780,7 @@ const resolveSlotPromotion = (
                 )}
             </div>
             {availableStaff.length > 0 ? (
-                <div className="space-y-5">
+                <div id="booking-professional" className={`space-y-5 transition-all duration-500 rounded-3xl ${shakeProfessional ? 'animate-calendar-shake ring-4 ring-pink-500/50' : ''}`}>
                     <div className="flex items-center gap-2 px-3"><User size={12} style={{ color: primaryColor }} /> <h3 className="text-[11px] font-black tracking-widest text-gray-900 uppercase italic">2. Profesional</h3></div>
                     <div className="flex gap-4 overflow-x-auto pt-2 pb-4 px-3 hide-scrollbar">
                         {availableStaff.map((member) => (
@@ -884,13 +885,17 @@ const resolveSlotPromotion = (
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                                 return;
                             }
-                            if (selectedBooking) { 
-                                setView('checkout'); 
-                                window.scrollTo(0,0); 
-                            } else { 
+                            if (!selectedStaffId && availableStaff.length > 0) {
+                                setShakeProfessional(true);
+                                setTimeout(() => setShakeProfessional(false), 800);
+                                document.getElementById('booking-professional')?.scrollIntoView({ behavior: 'smooth'});
+                            } else if (!selectedBooking) {
                                 setShakeCalendar(true);
                                 setTimeout(() => setShakeCalendar(false), 800);
-                                document.getElementById('booking-calendar')?.scrollIntoView({ behavior: 'smooth'}); 
+                                document.getElementById('booking-calendar')?.scrollIntoView({ behavior: 'smooth'});
+                            } else {
+                                setView('checkout');
+                                window.scrollTo(0,0);
                             } 
                         }} 
                         className={`w-full h-16 text-white rounded-[1.6rem] font-black text-[13px] tracking-widest flex items-center justify-center gap-3 transition-all ${selectedServiceIds.length === 0 ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`} 
