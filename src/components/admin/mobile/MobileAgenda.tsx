@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { format, addDays, startOfDay, eachHourOfInterval, setHours, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { 
@@ -21,7 +21,8 @@ import {
     Bell,
     CheckCircle2,
     AlertCircle,
-    Sparkles
+    Sparkles,
+    Eye
 } from 'lucide-react';
 import { cn, getImageUrl } from '@/lib/utils';
 import Link from 'next/link';
@@ -34,6 +35,7 @@ interface MobileAgendaProps {
     onCancel?: (id: string) => void;
     onUpdateStatus?: (id: string, nuevoEstado: string) => void;
     slug: string;
+    highlightedCitas?: Set<string>;
 }
 
 // Helper para obtener configuración por estado
@@ -109,26 +111,148 @@ function getStatusConfig(status: string, primaryColor: string) {
     }
 }
 
-// Sub-componente para la tarjeta de cita rediseñada de lujo
-function AppointmentCard({ 
+interface AppointmentCardProps {
+    cita: any;
+    primaryColor: string;
+    onUpdateStatus?: (id: string, nuevoEstado: string) => void;
+    onConfirm?: any;
+    onCancel?: any;
+    isHighlighted: boolean;
+}
+
+const AppointmentCard = memo(function AppointmentCard({ 
     cita, 
     primaryColor, 
     onUpdateStatus, 
     onConfirm, 
-    onCancel 
-}: { 
-    cita: any; 
-    primaryColor: string; 
-    onUpdateStatus?: (id: string, nuevoEstado: string) => void; 
-    onConfirm?: any; 
-    onCancel?: any; 
-}) {
+    onCancel,
+    isHighlighted
+}: AppointmentCardProps) {
     const status = getStatusConfig(cita.estado, primaryColor);
     
+    // Estados para controlar el deslizamiento horizontal
+    const [startX, setStartX] = useState(0);
+    const [translateX, setTranslateX] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+
+    // Determinar las acciones a la izquierda/derecha
+    const getSwipeActions = () => {
+        const est = cita.estado?.toLowerCase();
+        let rightAction = null; // Confirmar/Llegó/Finalizar
+        let leftAction = null;  // Cancelar/Rechazar
+
+        if (est === 'completed' || est === 'cancelled' || est === 'expired') {
+            return { rightAction, leftAction };
+        }
+
+        // Deslizar izquierda -> Cancelar
+        leftAction = {
+            estado: 'cancelled',
+            label: est === 'pending' ? 'Rechazar' : 'Cancelar',
+            bg: 'bg-rose-600',
+            icon: <X size={20} strokeWidth={3} className="text-white shrink-0" />
+        };
+
+        // Deslizar derecha -> Avance lógico
+        if (est === 'pending') {
+            rightAction = {
+                estado: 'confirmed',
+                label: 'Confirmar',
+                bg: 'bg-emerald-600',
+                icon: <Check size={20} strokeWidth={3} className="text-white shrink-0" />
+            };
+        } else if (est === 'confirmed' || est === 'approved') {
+            rightAction = {
+                estado: 'in_progress',
+                label: 'Llegó',
+                bg: 'bg-emerald-600',
+                icon: <Check size={20} strokeWidth={3} className="text-white shrink-0" />
+            };
+        } else if (est === 'client_checked_in') {
+            rightAction = {
+                estado: 'in_progress',
+                label: 'Confirmar Llegó',
+                bg: 'bg-purple-600',
+                icon: <Check size={20} strokeWidth={3} className="text-white shrink-0" />
+            };
+        } else if (est === 'in_progress') {
+            rightAction = {
+                estado: 'completed',
+                label: 'Finalizar',
+                bg: 'bg-slate-700',
+                icon: <Check size={20} strokeWidth={3} className="text-white shrink-0" />
+            };
+        }
+
+        return { rightAction, leftAction };
+    };
+
+    const { rightAction, leftAction } = getSwipeActions();
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (!rightAction && !leftAction) return;
+        setStartX(e.touches[0].clientX);
+        setIsDragging(true);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!isDragging) return;
+        const diffX = e.touches[0].clientX - startX;
+        
+        // Bloquear si no hay acción disponible en la dirección del arrastre
+        if (diffX > 0 && !rightAction) {
+            setTranslateX(0);
+            return;
+        }
+        if (diffX < 0 && !leftAction) {
+            setTranslateX(0);
+            return;
+        }
+
+        // Resistencia física
+        const maxDrag = 140;
+        let finalTranslate = diffX;
+        if (Math.abs(diffX) > maxDrag) {
+            const excess = Math.abs(diffX) - maxDrag;
+            finalTranslate = (diffX > 0 ? maxDrag : -maxDrag) + (diffX > 0 ? 1 : -1) * (excess * 0.25);
+        }
+
+        setTranslateX(finalTranslate);
+    };
+
+    const handleTouchEnd = () => {
+        if (!isDragging) return;
+        setIsDragging(false);
+
+        const threshold = 100;
+        if (translateX > threshold && rightAction) {
+            if (onUpdateStatus) {
+                onUpdateStatus(cita.id, rightAction.estado);
+            } else if (rightAction.estado === 'confirmed' && onConfirm) {
+                onConfirm(cita.id);
+            }
+        } else if (translateX < -threshold && leftAction) {
+            if (onUpdateStatus) {
+                onUpdateStatus(cita.id, leftAction.estado);
+            } else if (onCancel) {
+                onCancel(cita.id);
+            }
+        }
+
+        setTranslateX(0);
+    };
+
     // Obtener imagen del servicio
-    const serviceImage = (cita.service?.imagenes && cita.service.imagenes.length > 0)
-        ? (typeof cita.service.imagenes === 'string' ? JSON.parse(cita.service.imagenes)[0]?.url : cita.service.imagenes[0]?.url)
-        : (cita.service?.extraInfo?.imagenUrl || 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&q=80&w=150');
+    let serviceImage = 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&q=80&w=150';
+    if (cita.service) {
+        if (cita.service.imageMedia?.key) {
+            serviceImage = `/api/media/${cita.service.imageMedia.key}`;
+        } else if (cita.service.imageMedia?.url) {
+            serviceImage = cita.service.imageMedia.url;
+        } else if (cita.service.Imagen && cita.service.Imagen.length > 0) {
+            serviceImage = cita.service.Imagen[0].url;
+        }
+    }
 
     // Teléfono de contacto del cliente
     const clientPhone = cita.cliente?.telefono || cita.Usuario?.telefono || "";
@@ -141,140 +265,198 @@ function AppointmentCard({
     const whatsappUrl = `https://wa.me/${formattedPhone}`;
 
     return (
-        <div className="relative overflow-hidden rounded-[2.5rem] w-full bg-white border border-slate-100 shadow-sm flex items-stretch hover:shadow-md transition-shadow duration-300">
-            {/* Indicador de estado lateral */}
-            <div 
-                className="w-2.5 shrink-0"
-                style={{ backgroundColor: status.accent }}
-            />
-
-            <div className="flex-1 p-5 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
-                
-                {/* Contenido Izquierda: Foto del servicio y Detalles */}
-                <div className="flex items-start gap-4">
-                    {/* Foto del servicio */}
-                    <div className="size-20 rounded-2xl overflow-hidden shrink-0 border border-slate-100 bg-slate-50 relative">
-                        <img 
-                            src={serviceImage} 
-                            alt={cita.service?.nombre || "Tratamiento"}
-                            className="w-full h-full object-cover"
-                        />
-                    </div>
-
-                    {/* Textos y metadata */}
-                    <div className="space-y-1.5 min-w-0">
-                        {/* Fila superior: Hora y Duración */}
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span 
-                                className="px-3 py-1 rounded-full text-[9px] font-black tracking-wider text-pink-500 bg-pink-50 uppercase"
-                                style={{ color: primaryColor, backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 93%)` }}
-                            >
-                                {cita.horaInicio || "10:00 AM"}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
-                                <Clock size={10} /> {cita.service?.duracion || 60} min
-                            </span>
-                        </div>
-
-                        {/* Nombre del servicio */}
-                        <h4 className="text-sm font-black text-slate-900 leading-tight uppercase tracking-tight line-clamp-1">
-                            {cita.service?.nombre || "Tratamiento Facial"}
-                        </h4>
-
-                        {/* Nombre del cliente */}
-                        <div className="flex items-center gap-1.5 text-slate-500">
-                            <UserIcon size={12} className="text-slate-400 shrink-0" />
-                            <span className="text-xs font-semibold truncate uppercase">
-                                {cita.cliente?.nombre || cita.Usuario?.nombre || "Cliente Registrado"}
-                            </span>
-                        </div>
-
-                        {/* Especialista/Staff asignado */}
-                        <div className="flex items-center gap-2">
-                            <div className="size-5 rounded-full bg-slate-100 overflow-hidden border border-slate-200 shrink-0 flex items-center justify-center">
-                                {(cita.staff?.imageMedia || cita.staff?.avatar) ? (
-                                    <img 
-                                        src={getImageUrl(cita.staff.imageMedia || cita.staff.avatar, 'thumb')} 
-                                        className="w-full h-full object-cover" 
-                                    />
-                                ) : (
-                                    <UserIcon size={10} className="text-slate-400" />
-                                )}
-                            </div>
-                            <span className="text-[10px] text-slate-500 font-bold uppercase truncate max-w-[100px]">
-                                {cita.staff?.name?.split(' ')[0] || "Especialista"}
-                            </span>
-                            <span 
-                                className="px-2 py-0.5 rounded text-[7px] font-black uppercase text-pink-500 bg-pink-50 border shrink-0"
-                                style={{ 
-                                    color: primaryColor, 
-                                    backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 93%)`,
-                                    borderColor: `color-mix(in srgb, ${primaryColor}, transparent 88%)` 
-                                }}
-                            >
-                                Especialista
-                            </span>
-                        </div>
-                    </div>
+        <div className={cn(
+            "relative overflow-hidden rounded-[2.5rem] w-full max-w-full transition-all duration-300",
+            isHighlighted 
+                ? "bg-cyan-50 border-2 border-cyan-400 shadow-md animate-pulse scale-[0.99]" 
+                : "bg-slate-100 border border-slate-200/50"
+        )}>
+            {/* Fondo de acción a la derecha (Confirmar / Avanzar) */}
+            {rightAction && translateX > 0 && (
+                <div 
+                    className={cn("absolute inset-y-0 left-0 flex items-center pl-6 gap-3 transition-opacity", rightAction.bg)}
+                    style={{ right: '50%', opacity: Math.min(1, translateX / 80) }}
+                >
+                    {rightAction.icon}
+                    <span className="text-[10px] font-black text-white uppercase tracking-widest leading-none">{rightAction.label}</span>
                 </div>
+            )}
 
-                {/* Acciones y Estado Derecha */}
-                <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-50 shrink-0">
-                    
-                    {/* Chip de estado */}
+            {/* Fondo de acción a la izquierda (Rechazar / Cancelar) */}
+            {leftAction && translateX < 0 && (
+                <div 
+                    className={cn("absolute inset-y-0 right-0 flex items-center justify-end pr-6 gap-3 transition-opacity", leftAction.bg)}
+                    style={{ left: '50%', opacity: Math.min(1, Math.abs(translateX) / 80) }}
+                >
+                    <span className="text-[10px] font-black text-white uppercase tracking-widest leading-none">{leftAction.label}</span>
+                    {leftAction.icon}
+                </div>
+            )}
+
+            {/* Tarjeta deslizable */}
+            <div
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                style={{ 
+                    transform: `translateX(${translateX}px)`,
+                    transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                    width: '100%',
+                    position: 'relative',
+                    zIndex: 10,
+                    touchAction: 'pan-y'
+                }}
+            >
+                <div className="bg-white border border-slate-100 shadow-sm flex items-stretch hover:shadow-md transition-shadow duration-300 rounded-[2.5rem]">
+                    {/* Indicador de estado lateral */}
                     <div 
-                        className={cn(
-                            "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border flex items-center gap-1.5",
-                            status.text, status.border, status.badgeBg
-                        )}
-                    >
-                        {cita.estado === 'confirmed' || cita.estado === 'approved' ? (
-                            <CheckCircle2 size={10} className="stroke-[3]" />
-                        ) : cita.estado === 'pending' ? (
-                            <AlertCircle size={10} className="stroke-[3]" />
-                        ) : null}
-                        {status.label}
-                    </div>
+                        className="w-2.5 shrink-0"
+                        style={{ backgroundColor: status.accent }}
+                    />
 
-                    {/* Botones de acción directos */}
-                    <div className="flex items-center gap-2">
-                        {/* Botón Chat/WhatsApp */}
-                        {clientPhone && (
-                            <a 
-                                href={whatsappUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="size-9 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-emerald-500 border border-slate-150 rounded-full flex items-center justify-center transition-colors shadow-sm"
+                    <div className="flex-1 p-5 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+                        
+                        {/* Contenido Izquierda: Foto del servicio y Detalles */}
+                        <div className="flex items-start gap-4">
+                            {/* Foto del servicio */}
+                            <div className="size-20 rounded-2xl overflow-hidden shrink-0 border border-slate-100 bg-slate-50 relative">
+                                <img 
+                                    src={serviceImage} 
+                                    alt={cita.service?.nombre || "Tratamiento"}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+
+                            {/* Textos y metadata */}
+                            <div className="space-y-1.5 min-w-0">
+                                {/* Fila superior: Hora y Duración */}
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span 
+                                        className="px-3 py-1 rounded-full text-[9px] font-black tracking-wider text-pink-500 bg-pink-50 uppercase"
+                                        style={{ color: primaryColor, backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 93%)` }}
+                                    >
+                                        {cita.horaInicio || "10:00 AM"}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+                                        <Clock size={10} /> {cita.service?.duracion || 60} min
+                                    </span>
+                                </div>
+
+                                {/* Nombre del servicio */}
+                                <h4 className="text-sm font-black text-slate-900 leading-tight uppercase tracking-tight line-clamp-1">
+                                    {cita.service?.nombre || "Tratamiento Facial"}
+                                </h4>
+
+                                {/* Nombre del cliente */}
+                                <div className="flex items-center gap-2 text-slate-700">
+                                    <div className="size-6 rounded-full overflow-hidden border border-slate-200 bg-indigo-50 text-indigo-750 flex items-center justify-center text-[10px] font-black uppercase shrink-0">
+                                        {cita.cliente?.imagenUrl || cita.Usuario?.imagenUrl || cita.Usuario?.avatar ? (
+                                            <img 
+                                                src={cita.cliente?.imagenUrl || cita.Usuario?.imagenUrl || cita.Usuario?.avatar} 
+                                                className="w-full h-full object-cover" 
+                                                alt="Cliente"
+                                            />
+                                        ) : (
+                                            <span>{(cita.cliente?.nombre || cita.Usuario?.nombre || "C")?.[0]}</span>
+                                        )}
+                                    </div>
+                                    <span className="text-xs font-black truncate uppercase text-slate-800">
+                                        {cita.cliente?.nombre || cita.Usuario?.nombre || "Cliente Registrado"}
+                                    </span>
+                                </div>
+
+                                {/* Especialista/Staff asignado */}
+                                <div className="flex items-center gap-2">
+                                    <div className="size-5 rounded-full bg-slate-100 overflow-hidden border border-slate-200 shrink-0 flex items-center justify-center">
+                                        {(cita.staff?.imageMedia || cita.staff?.avatar) ? (
+                                            <img 
+                                                src={getImageUrl(cita.staff.imageMedia || cita.staff.avatar, 'thumb')} 
+                                                className="w-full h-full object-cover" 
+                                            />
+                                        ) : (
+                                            <UserIcon size={10} className="text-slate-400" />
+                                        )}
+                                    </div>
+                                    <span className="text-[10px] text-slate-500 font-bold uppercase truncate max-w-[100px]">
+                                        {cita.staff?.name?.split(' ')[0] || "Especialista"}
+                                    </span>
+                                    <span 
+                                        className="px-2 py-0.5 rounded text-[7px] font-black uppercase text-pink-500 bg-pink-50 border shrink-0"
+                                        style={{ 
+                                            color: primaryColor, 
+                                            backgroundColor: `color-mix(in srgb, ${primaryColor}, transparent 93%)`,
+                                            borderColor: `color-mix(in srgb, ${primaryColor}, transparent 88%)` 
+                                        }}
+                                    >
+                                        Especialista
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Acciones y Estado Derecha */}
+                        <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-50 shrink-0">
+                            
+                            {/* Chip de estado */}
+                            <div 
+                                className={cn(
+                                    "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border flex items-center gap-1.5",
+                                    status.text, status.border, status.badgeBg
+                                )}
                             >
-                                <MessageCircle size={16} className="stroke-[2.5]" />
-                            </a>
-                        )}
+                                {cita.estado === 'confirmed' || cita.estado === 'approved' ? (
+                                    <CheckCircle2 size={10} className="stroke-[3]" />
+                                ) : cita.estado === 'pending' ? (
+                                    <AlertCircle size={10} className="stroke-[3]" />
+                                ) : null}
+                                {status.label}
+                            </div>
 
-                        {/* Botón Llamar */}
-                        {clientPhone && (
-                            <a 
-                                href={`tel:${clientPhone}`}
-                                className="size-9 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-800 border border-slate-150 rounded-full flex items-center justify-center transition-colors shadow-sm"
-                            >
-                                <Phone size={16} className="stroke-[2.5]" />
-                            </a>
-                        )}
+                            {/* Botones de acción directos */}
+                            <div className="flex items-center gap-2">
+                                {/* Botón Chat/WhatsApp */}
+                                {clientPhone && (
+                                    <a 
+                                        href={whatsappUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="size-9 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-emerald-500 border border-slate-150 rounded-full flex items-center justify-center transition-all shadow-sm active:scale-95 active:duration-75"
+                                    >
+                                        <MessageCircle size={16} className="stroke-[2.5]" />
+                                    </a>
+                                )}
 
-                        {/* Menú de Opciones */}
-                        <Link
-                            href={`/admin/citas/${cita.id}`}
-                            className="size-9 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-800 border border-slate-150 rounded-full flex items-center justify-center transition-colors shadow-sm"
-                        >
-                            <MoreVertical size={16} className="stroke-[2.5]" />
-                        </Link>
+                                {/* Botón Llamar */}
+                                {clientPhone && (
+                                    <a 
+                                        href={`tel:${clientPhone}`}
+                                        className="size-9 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-800 border border-slate-150 rounded-full flex items-center justify-center transition-all shadow-sm active:scale-95 active:duration-75"
+                                    >
+                                        <Phone size={16} className="stroke-[2.5]" />
+                                    </a>
+                                )}
+
+                                {/* Menú de Opciones */}
+                                <Link
+                                    href={`/admin/citas/${cita.id}`}
+                                    className="size-9 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-800 border border-slate-150 rounded-full flex items-center justify-center transition-all shadow-sm active:scale-95 active:duration-75"
+                                >
+                                    <Eye size={16} className="stroke-[2.5]" />
+                                </Link>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     );
-}
+}, (prevProps, nextProps) => {
+    return prevProps.cita === nextProps.cita &&
+           prevProps.isHighlighted === nextProps.isHighlighted &&
+           prevProps.primaryColor === nextProps.primaryColor;
+});
 
-export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel, onUpdateStatus, slug }: MobileAgendaProps) {
+export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel, onUpdateStatus, slug, highlightedCitas }: MobileAgendaProps) {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [view, setView] = useState<'day' | 'week' | 'staff'>('week');
     const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'pending' | 'cancelled' | 'completed'>('all');
@@ -342,7 +524,7 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
     }, [citas, selectedDate, filterStatus]);
 
     return (
-        <div className="flex flex-col min-h-screen bg-[#fafafc] animate-in fade-in duration-500 pb-24">
+        <div className="flex flex-col min-h-screen bg-[#fafafc] animate-in fade-in duration-500 pb-24 max-w-full overflow-x-hidden">
             
             {/* 2. Sección Título "Mi Agenda" con botón de creación */}
             <div className="px-6 py-6 flex items-center justify-between">
@@ -413,10 +595,6 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
                                 </button>
                             );
                         })}
-                        <div className="w-[1px] h-4 bg-slate-200 mx-2" />
-                        <button className="size-8 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-slate-800 flex items-center justify-center transition-colors">
-                            <SlidersHorizontal size={14} strokeWidth={2.5} />
-                        </button>
                     </div>
                 </div>
 
@@ -539,51 +717,171 @@ export default function MobileAgenda({ citas, primaryColor, onConfirm, onCancel,
                 </button>
             </div>
 
-            {/* 6. Listado de Citas del Día */}
-            <div className="px-6 pt-6 space-y-4">
-                <div className="flex items-center gap-2 px-1">
-                    <div className="size-2 rounded-full" style={{ backgroundColor: primaryColor }} />
-                    <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">
-                        {format(selectedDate, 'EEEE d MMMM', { locale: es })}
-                    </span>
-                </div>
-
-                <div className="space-y-4">
-                    {citasFiltradas.length > 0 ? (
-                        citasFiltradas.map((cita) => (
-                            <AppointmentCard 
-                                key={cita.id}
-                                cita={cita}
-                                primaryColor={primaryColor}
-                                onConfirm={onConfirm}
-                                onCancel={onCancel}
-                                onUpdateStatus={onUpdateStatus}
-                            />
-                        ))
-                    ) : (
-                        <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 text-center space-y-3 shadow-inner">
-                            <CalendarIcon size={32} className="text-slate-300 mx-auto" />
-                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">No hay servicios agendados</p>
-                            <p className="text-[10px] text-slate-400 font-semibold max-w-[200px] mx-auto leading-relaxed">
-                                Intenta seleccionar otro filtro o agenda una nueva cita para este día.
-                            </p>
+            {/* 6. Listado de Citas */}
+            <div className="px-6 pt-6 space-y-6">
+                {view === 'day' ? (
+                    // VISTA DIARIA: Citas del día seleccionado en orden cronológico
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 px-1">
+                            <div className="size-2 rounded-full" style={{ backgroundColor: primaryColor }} />
+                            <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">
+                                {format(selectedDate, 'EEEE d MMMM', { locale: es })}
+                            </span>
                         </div>
-                    )}
-                </div>
+
+                        <div className="space-y-4">
+                            {citasFiltradas.length > 0 ? (
+                                citasFiltradas.map((cita) => (
+                                    <AppointmentCard 
+                                        key={cita.id}
+                                        cita={cita}
+                                        primaryColor={primaryColor}
+                                        onConfirm={onConfirm}
+                                        onCancel={onCancel}
+                                        onUpdateStatus={onUpdateStatus}
+                                        isHighlighted={!!highlightedCitas?.has(cita.id)}
+                                    />
+                                ))
+                            ) : (
+                                <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 text-center space-y-3 shadow-inner">
+                                    <CalendarIcon size={32} className="text-slate-300 mx-auto" />
+                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">No hay servicios agendados</p>
+                                    <p className="text-[10px] text-slate-400 font-semibold max-w-[200px] mx-auto leading-relaxed">
+                                        Intenta seleccionar otro filtro o agenda una nueva cita para este día.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ) : view === 'week' ? (
+                    // VISTA SEMANAL: Lista agrupada de la semana seleccionada
+                    <div className="space-y-8">
+                        {weekDays.filter(date => {
+                            const today = startOfDay(new Date());
+                            const isPast = startOfDay(date) < today;
+                            const isSelected = isSameDay(date, selectedDate);
+                            return !isPast || isSelected;
+                        }).map(date => {
+                            const dateStr = format(date, 'yyyy-MM-dd');
+                            
+                            // Filtrar citas para este día de la semana
+                            const citasDia = citas.filter(c => {
+                                const d = new Date(c.fecha);
+                                const y = d.getUTCFullYear();
+                                const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+                                const day = String(d.getUTCDate()).padStart(2, '0');
+                                const fechaStr = `${y}-${m}-${day}`;
+                                if (fechaStr !== dateStr) return false;
+
+                                // Validar estado
+                                if (filterStatus === 'all') return true;
+                                if (filterStatus === 'confirmed') return c.estado === 'confirmed' || c.estado === 'approved';
+                                if (filterStatus === 'pending') return c.estado === 'pending' || c.estado === 'client_checked_in';
+                                if (filterStatus === 'cancelled') return c.estado === 'cancelled' || c.estado === 'no_show';
+                                if (filterStatus === 'completed') return c.estado === 'completed';
+                                return true;
+                            }).sort((a, b) => (a.horaInicio || '').localeCompare(b.horaInicio || ''));
+
+                            if (citasDia.length === 0) return null;
+
+                            return (
+                                <div key={dateStr} className="space-y-3">
+                                    <div className="flex items-center gap-2 px-1">
+                                        <div className="size-2 rounded-full" style={{ backgroundColor: primaryColor }} />
+                                        <span className="text-[10px] font-black text-slate-800 uppercase tracking-widest">
+                                            {format(date, 'EEEE d MMMM', { locale: es })}
+                                        </span>
+                                    </div>
+                                    <div className="space-y-4">
+                                        {citasDia.map(cita => (
+                                            <AppointmentCard 
+                                                key={cita.id} 
+                                                cita={cita} 
+                                                primaryColor={primaryColor} 
+                                                onConfirm={onConfirm} 
+                                                onCancel={onCancel} 
+                                                onUpdateStatus={onUpdateStatus}
+                                                isHighlighted={!!highlightedCitas?.has(cita.id)}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        {/* Si no hay citas en toda la semana */}
+                        {weekDays.every(date => {
+                            const dateStr = format(date, 'yyyy-MM-dd');
+                            const count = citas.filter(c => {
+                                const d = new Date(c.fecha);
+                                const y = d.getUTCFullYear();
+                                const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+                                const day = String(d.getUTCDate()).padStart(2, '0');
+                                return `${y}-${m}-${day}` === dateStr;
+                            }).length;
+                            return count === 0;
+                        }) && (
+                            <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 text-center space-y-3 shadow-inner">
+                                <CalendarIcon size={32} className="text-slate-300 mx-auto" />
+                                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Semana sin servicios</p>
+                                <p className="text-[10px] text-slate-400 font-semibold max-w-[200px] mx-auto leading-relaxed">
+                                    No hay citas registradas para los días de esta semana.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    // VISTA PROFESIONAL: Agrupada por Especialista/Staff del día seleccionado
+                    <div className="space-y-8">
+                        {Array.from(new Set(citasFiltradas.map(c => c.staff?.id || 'sin-asignar'))).map(staffId => {
+                            const citasStaff = citasFiltradas.filter(c => (c.staff?.id || 'sin-asignar') === staffId);
+                            const staffName = citasStaff[0]?.staff?.name || 'Sin Especialista Asignado';
+                            
+                            return (
+                                <div key={staffId} className="space-y-4">
+                                    <div className="flex items-center gap-3 px-2">
+                                        <div 
+                                            className="size-10 rounded-2xl flex items-center justify-center text-white"
+                                            style={{ backgroundColor: primaryColor }}
+                                        >
+                                            <span className="text-xs font-black uppercase">{staffName.slice(0, 2)}</span>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xs font-black uppercase text-slate-800 tracking-tight leading-none">{staffName}</h3>
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                                {citasStaff.length} {citasStaff.length === 1 ? 'servicio' : 'servicios'} hoy
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        {citasStaff.map(cita => (
+                                            <AppointmentCard 
+                                                key={cita.id} 
+                                                cita={cita} 
+                                                primaryColor={primaryColor} 
+                                                onConfirm={onConfirm} 
+                                                onCancel={onCancel} 
+                                                onUpdateStatus={onUpdateStatus}
+                                                isHighlighted={!!highlightedCitas?.has(cita.id)}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        {citasFiltradas.length === 0 && (
+                            <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 text-center space-y-3 shadow-inner">
+                                <CalendarIcon size={32} className="text-slate-300 mx-auto" />
+                                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Sin servicios hoy</p>
+                                <p className="text-[10px] text-slate-400 font-semibold max-w-[200px] mx-auto leading-relaxed">
+                                    No hay citas asignadas a profesionales en este día.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
-            {/* 7. Botón flotante Asistente IA */}
-            <div className="fixed bottom-24 right-6 z-40">
-                <button 
-                    onClick={() => setShowAI(true)}
-                    className="relative px-5 py-3.5 text-white rounded-full shadow-xl hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 font-black text-[9px] uppercase tracking-widest border border-white/20 hover:shadow-2xl"
-                    style={{ background: `linear-gradient(135deg, ${primaryColor}, #ec4899)` }}
-                >
-                    <Sparkles size={12} className="animate-pulse" />
-                    Asistente IA
-                    <span className="absolute -top-1 -right-1 size-3 bg-emerald-400 rounded-full border-2 border-white" />
-                </button>
-            </div>
+
 
             {/* Drawer de Asistente IA */}
             <AIAssistantDrawer

@@ -189,7 +189,7 @@ export default function MisCuponesPage() {
             </div>
 
             {/* Contenedor Principal */}
-            <div className="max-w-md mx-auto px-3 -mt-8 space-y-5 relative z-20">
+            <div className="max-w-md mx-auto px-1 -mt-8 space-y-5 relative z-20">
                 {/* Selector de Pestañas */}
                 <div className="bg-white rounded-3xl p-1.5 shadow-sm border border-slate-100 flex overflow-x-auto scrollbar-none snap-x">
                     {[
@@ -259,7 +259,7 @@ export default function MisCuponesPage() {
                                             <div className="relative z-10 flex justify-between items-start">
                                                 <div>
                                                     <span className="text-[8px] font-black uppercase tracking-widest opacity-80 block mb-1">
-                                                        🎟️ {coupon.sourceType === 'LOYALTY_REWARD' ? 'Canje de puntos' : 'Beneficio obtenido'}
+                                                        🎟️ {coupon.sourceType === 'LOYALTY_REWARD' ? 'Canje de diamantes' : 'Beneficio obtenido'}
                                                     </span>
                                                     <h3 className="text-xl font-black uppercase tracking-tight leading-tight">
                                                         {coupon.nombre || 'Cupón Descuento'}
@@ -269,7 +269,7 @@ export default function MisCuponesPage() {
                                                     <div className="text-3xl font-black leading-none tracking-tighter">
                                                         {coupon.tipo === 'PORCENTAJE' ? `${coupon.descuento}%` : `$${coupon.descuento}`}
                                                     </div>
-                                                    <span className="text-[9px] font-black uppercase tracking-widest opacity-80">OFF</span>
+                                                    <span className="text-[9px] font-black uppercase tracking-widest opacity-80">DCTO.</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -290,19 +290,18 @@ export default function MisCuponesPage() {
 
                                         {/* Parte inferior del ticket */}
                                         <div className="px-6 pb-5 pt-1 space-y-4">
-                                            <div className="text-center space-y-1">
-                                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Código Único de Cupón</p>
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <span className="text-lg font-black uppercase tracking-widest text-slate-800">
+                                            <div className="text-center space-y-2">
+                                                <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest leading-none">Código Único de Cupón</p>
+                                                <div 
+                                                    onClick={() => handleCopyCode(coupon.codigo)}
+                                                    className="inline-flex items-center justify-center gap-2.5 px-5 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-dashed border-slate-200 rounded-2xl cursor-pointer transition-all active:scale-95 group w-full max-w-[240px]"
+                                                    title="Copiar código"
+                                                >
+                                                    <span className="text-lg font-black uppercase tracking-widest text-slate-800 font-mono">
                                                         {coupon.codigo}
                                                     </span>
                                                     {coupon.estado === 'DISPONIBLE' && (
-                                                        <button 
-                                                            onClick={() => handleCopyCode(coupon.codigo)} 
-                                                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors border-0 cursor-pointer text-slate-600"
-                                                        >
-                                                            <Clipboard size={13} />
-                                                        </button>
+                                                        <Clipboard size={14} className="text-slate-400 group-hover:text-slate-600 transition-colors" />
                                                     )}
                                                 </div>
                                             </div>
@@ -313,33 +312,46 @@ export default function MisCuponesPage() {
 
                                             <div className="border-t border-dashed border-slate-100 pt-3 flex items-center justify-between text-[9px] font-black uppercase tracking-wider text-slate-400">
                                                 {coupon.estado === 'DISPONIBLE' && (
-                                                    <span className="flex items-center gap-1.5">
-                                                        <Clock size={11} style={{ color: primaryColor }} /> Vence: {expDateFormatted}
-                                                    </span>
+                                                    <>
+                                                        <span className="flex items-center gap-1.5">
+                                                            <Clock size={11} style={{ color: primaryColor }} /> Vence: {expDateFormatted}
+                                                        </span>
+                                                        <span className="px-2.5 py-1 rounded-full text-[8.5px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 flex items-center gap-1">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                            DISPONIBLE
+                                                        </span>
+                                                    </>
                                                 )}
                                                 {coupon.estado === 'RESERVADO' && (
-                                                    <span className="text-amber-500 flex items-center gap-1.5">
-                                                        <Clock size={11} /> RESERVA PENDIENTE
-                                                    </span>
+                                                    <>
+                                                        <span className="text-amber-500 flex items-center gap-1.5">
+                                                            <Clock size={11} /> RESERVA PENDIENTE
+                                                        </span>
+                                                        <span className="px-2.5 py-1 rounded-full text-[8.5px] font-black text-amber-600 bg-amber-50 border border-amber-100 flex items-center gap-1">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                                            EN RESERVA
+                                                        </span>
+                                                    </>
                                                 )}
                                                 {coupon.estado === 'USADO' && (
-                                                    <span className="text-emerald-600 flex items-center gap-1.5">
-                                                        <CheckCircle size={11} /> Usado: {usageDateFormatted}
-                                                    </span>
+                                                    <>
+                                                        <span className="text-emerald-600 flex items-center gap-1.5">
+                                                            <CheckCircle size={11} /> Usado: {usageDateFormatted}
+                                                        </span>
+                                                        <span className="px-2.5 py-1 rounded-full text-[8.5px] font-black text-slate-500 bg-slate-50 border border-slate-200">
+                                                            USADO
+                                                        </span>
+                                                    </>
                                                 )}
                                                 {coupon.estado === 'VENCIDO' && (
-                                                    <span className="text-red-500 flex items-center gap-1.5">
-                                                        <AlertTriangle size={11} /> VENCIDO
-                                                    </span>
-                                                )}
-
-                                                {coupon.estado === 'DISPONIBLE' && (
-                                                    <button
-                                                        onClick={() => handleShareCoupon(coupon)}
-                                                        className="px-3 py-1.5 rounded-xl border border-slate-150 hover:bg-slate-50 active:scale-95 transition-all text-[8px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1 cursor-pointer bg-transparent"
-                                                    >
-                                                        <Share2 size={9} /> Compartir
-                                                    </button>
+                                                    <>
+                                                        <span className="text-red-500 flex items-center gap-1.5">
+                                                            <AlertTriangle size={11} /> VENCIDO
+                                                        </span>
+                                                        <span className="px-2.5 py-1 rounded-full text-[8.5px] font-black text-red-600 bg-red-50 border border-red-100">
+                                                            VENCIDO
+                                                        </span>
+                                                    </>
                                                 )}
                                             </div>
                                         </div>

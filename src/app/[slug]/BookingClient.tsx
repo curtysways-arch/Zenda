@@ -62,6 +62,13 @@ export default function BookingClient({
     const [shakeCalendar, setShakeCalendar] = useState(false);
     const [shakeProfessional, setShakeProfessional] = useState(false);
 
+    // Servicios Gratis del usuario
+    const [freeServices, setFreeServices] = useState<any[]>([]);
+
+    // Cashback del usuario
+    const [userCashback, setUserCashback] = useState(0);
+    const [applyCashback, setApplyCashback] = useState(false);
+
     const handleValidateCoupon = async (codeToUse?: string) => {
         const activeCode = codeToUse || couponCode;
         if (!activeCode.trim()) return;
@@ -148,9 +155,44 @@ export default function BookingClient({
                     console.error("Error fetching customer coupons:", e);
                 }
             };
+            
+            const fetchUserProfile = async () => {
+                try {
+                    const res = await fetch(`/api/${slug}/referrals/me?t=${Date.now()}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        setUserCashback(Number(data.cashback) || 0.0);
+                    }
+                } catch (e) {
+                    console.error("Error fetching user profile for cashback:", e);
+                }
+            };
+
             fetchClientCoupons();
+            fetchUserProfile();
         }
     }, [view, slug]);
+
+    useEffect(() => {
+        const fetchFreeServices = async () => {
+            try {
+                const res = await fetch(`/api/public/${slug}/loyalty/my-rewards`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const disponibles = data.disponibles || [];
+                    const freeSrvs = disponibles.filter((r: any) => 
+                        (r.rewardType === 'SERVICIO_GRATIS' || r.rewardType === 'SERVICIO') && r.serviceId
+                    );
+                    setFreeServices(freeSrvs);
+                }
+            } catch (e) {
+                console.error("Error cargando servicios gratis:", e);
+            }
+        };
+        if (slug) {
+            fetchFreeServices();
+        }
+    }, [slug]);
 
 /**
  * MOTOR DE RESOLUCIÓN (ARQUITECTURA LIMPIA) - UNIFICADO CON CALENDARIO
@@ -163,6 +205,12 @@ const resolveSlotPromotion = (
     automaticDiscount: any
 ) => {
     if (!service) return { price: 0, hasPromotion: false, discountPercent: 0, labelText: '', source: null };
+
+    // Validar si el usuario tiene este servicio gratis disponible
+    const freeService = freeServices.find((fs: any) => fs.serviceId === service.id && fs.estado === 'DISPONIBLE');
+    if (freeService) {
+        return { price: 0, hasPromotion: true, discountPercent: 100, labelText: 'Gratis (Premio)', source: 'free_service' };
+    }
 
     // 1. Recolección de promociones (Soporte nombre/name)
     const manualPromos = [
@@ -303,6 +351,16 @@ const resolveSlotPromotion = (
         }
     }, [selectedServiceIds, allServices, selectedBooking?.date, selectedBooking?.hour, selectedBooking?.precio, selectedBooking?.discountPercentage]);
 
+    useEffect(() => {
+        if (selectedBooking && selectedBooking.precio === 0) {
+            setCouponCode('');
+            setCouponStatus('idle');
+            setCouponData(null);
+            setCouponError('');
+        }
+    }, [selectedBooking?.precio]);
+
+
     const handleSelectSlot = (date: Date, hour: string, canchaId: string, duracion: number, discountPercentage: number = 0) => {
         if (!selectedStaffId) return;
         const staffMember = staff.find(s => s.id === selectedStaffId);
@@ -372,6 +430,11 @@ const resolveSlotPromotion = (
         try {
             const [h, m] = selectedBooking.hour.split(':').map(Number);
             const totalMinutes = h * 60 + m + totalDuracionMin;
+            const matchingReward = freeServices.find((fs: any) => fs.serviceId === selectedBooking.canchaId && fs.estado === 'DISPONIBLE');
+            const subtotal = couponData ? couponData.totalConDescuento : selectedBooking.precio;
+            const cashbackADescontar = applyCashback ? Math.min(userCashback, subtotal) : 0;
+            const precioFinal = Math.max(0, subtotal - cashbackADescontar);
+
             const payload = {
                 clienteNombre: formData.nombre || 'Cliente',
                 clienteTelefono: formData.telefono,
@@ -381,8 +444,10 @@ const resolveSlotPromotion = (
                 duracion: totalDuracionMin / 60,
                 serviceId: selectedBooking.canchaId,
                 staffId: selectedBooking.staffId,
-                precioTotal: couponData ? couponData.totalConDescuento : selectedBooking.precio,
+                precioTotal: precioFinal,
                 couponCode: couponStatus === 'valid' ? couponCode.trim().toUpperCase() : undefined,
+                rewardId: matchingReward ? matchingReward.id : undefined, // Enviar rewardId de servicio gratis
+                cashbackApplied: cashbackADescontar,
                 extraServices: selectedServiceIds.slice(1).map(id => {
                     const s = allServices.find(ser => ser.id === id);
                     return { id: s?.id, nombre: s?.nombre, precio: s?.precio, duracion: s?.duracion };
@@ -473,11 +538,23 @@ const resolveSlotPromotion = (
                             </div>
                         </div>
 
+                        {/* Alerta de beneficio aplicado de Servicio Gratis (Premio) */}
+                        {selectedBooking && freeServices.some((fs: any) => fs.serviceId === selectedBooking.canchaId && fs.estado === 'DISPONIBLE') && (
+                            <div className="bg-emerald-50/70 border border-emerald-100 rounded-3xl p-4 text-left space-y-1">
+                                <span className="text-[10px] font-black uppercase text-emerald-700 tracking-wider flex items-center gap-1.5 leading-none">
+                                    🎁 Beneficio Aplicado: Servicio Gratis
+                                </span>
+                                <p className="text-[10px] text-emerald-600 font-bold leading-normal">
+                                    Estás utilizando tu beneficio de <span className="uppercase">{allServices.find(s => s.id === selectedBooking.canchaId)?.nombre || 'Servicio'} Gratis</span>. Esta promoción personal no es acumulable con el 2x1 o tarifas públicas de oferta.
+                                </p>
+                            </div>
+                        )}
+
                         {/* Fila del Descuento (si existe) */}
                         {selectedBooking && selectedBooking.discountPercentage > 0 && (
                             <div className="flex justify-between items-center pb-2">
                                 <span className="text-[10px] font-black uppercase text-emerald-500 tracking-wider">Descuento aplicado</span>
-                                <span className="text-xs font-black text-emerald-500">-{selectedBooking.discountPercentage}% OFF</span>
+                                <span className="text-xs font-black text-emerald-500">-{selectedBooking.discountPercentage}% DESCUENTO</span>
                             </div>
                         )}
 
@@ -554,68 +631,119 @@ const resolveSlotPromotion = (
                         </div>
 
                         {/* ===== SECCIÓN DE CUPONES DEL CLIENTE / CATÁLOGO ===== */}
-                        {clientCoupons.length > 0 && (
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">🎟️ Tus Cupones Disponibles</label>
-                                <div className="rounded-2xl overflow-hidden border border-gray-100 bg-white shadow-sm h-14 relative flex items-center px-4">
-                                    <select
-                                        value={isCustomCouponCode ? "custom" : (couponStatus === 'valid' || couponStatus === 'checking' ? couponCode : "")}
-                                        onChange={(e) => handleSelectClientCoupon(e.target.value)}
-                                        className="w-full h-full bg-transparent font-black text-slate-800 text-xs uppercase tracking-wider outline-none cursor-pointer"
-                                        style={{ color: '#1e293b' }}
-                                    >
-                                        <option value="">Selecciona uno de tus cupones...</option>
-                                        {clientCoupons.map((coupon) => (
-                                            <option key={coupon.id} value={coupon.codigo}>
-                                                {coupon.nombre} ({coupon.codigo}) — Desc: {coupon.tipo === 'PORCENTAJE' ? `${coupon.descuento}%` : `$${coupon.descuento}`}
-                                            </option>
-                                        ))}
-                                        <option value="custom">✏️ Ingresar otro código manualmente...</option>
-                                    </select>
+                        {selectedBooking && selectedBooking.precio === 0 ? (
+                            <div className="bg-slate-50 border border-slate-100 rounded-[2rem] p-5 flex items-start gap-3">
+                                <span className="text-lg">🎟️</span>
+                                <div className="text-left">
+                                    <p className="text-[10px] font-black text-slate-800 uppercase tracking-wider">Cupones no requeridos</p>
+                                    <p className="text-[9.5px] text-slate-400 font-bold mt-0.5">Esta cita ya es gratuita, no es necesario aplicar cupones de descuento.</p>
                                 </div>
-                                {clientCoupons.length > 0 && !isCustomCouponCode && couponStatus === 'valid' && couponData && (
-                                    <p className="text-[10px] font-black text-green-600 ml-4 mt-2">
-                                        ✅ {couponData.tipo === 'PORCENTAJE' ? `${couponData.valor}% OFF aplicado` : `$${couponData.valor} OFF aplicado`} — Ahorras ${couponData.descuento.toFixed(2)}
-                                    </p>
-                                )}
-                                {clientCoupons.length > 0 && !isCustomCouponCode && couponStatus === 'invalid' && (
-                                    <p className="text-[10px] font-black text-red-500 ml-4 mt-2">❌ {couponError}</p>
-                                )}
                             </div>
+                        ) : (
+                            <>
+                                {clientCoupons.length > 0 && (
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">🎟️ Tus Cupones Disponibles</label>
+                                        <div className="rounded-2xl overflow-hidden border border-gray-100 bg-white shadow-sm h-14 relative flex items-center px-4">
+                                            <select
+                                                value={isCustomCouponCode ? "custom" : (couponStatus === 'valid' || couponStatus === 'checking' ? couponCode : "")}
+                                                onChange={(e) => handleSelectClientCoupon(e.target.value)}
+                                                className="w-full h-full bg-transparent font-black text-slate-800 text-xs uppercase tracking-wider outline-none cursor-pointer"
+                                                style={{ color: '#1e293b' }}
+                                            >
+                                                <option value="">Selecciona uno de tus cupones...</option>
+                                                {clientCoupons.map((coupon) => (
+                                                    <option key={coupon.id} value={coupon.codigo}>
+                                                        {coupon.nombre} ({coupon.codigo}) — Desc: {coupon.tipo === 'PORCENTAJE' ? `${coupon.descuento}%` : `$${coupon.descuento}`}
+                                                    </option>
+                                                ))}
+                                                <option value="custom">✏️ Ingresar otro código manualmente...</option>
+                                            </select>
+                                        </div>
+                                        {clientCoupons.length > 0 && !isCustomCouponCode && couponStatus === 'valid' && couponData && (
+                                            <p className="text-[10px] font-black text-green-600 ml-4 mt-2">
+                                                ✅ {couponData.tipo === 'PORCENTAJE' ? `${couponData.valor}% DESCUENTO aplicado` : `$${couponData.valor} DESCUENTO aplicado`} — Ahorras ${couponData.descuento.toFixed(2)}
+                                            </p>
+                                        )}
+                                        {clientCoupons.length > 0 && !isCustomCouponCode && couponStatus === 'invalid' && (
+                                            <p className="text-[10px] font-black text-red-500 ml-4 mt-2">❌ {couponError}</p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {(clientCoupons.length === 0 || isCustomCouponCode) && (
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">🎟️ Escribe tu Cupón</label>
+                                        <div className={`rounded-2xl overflow-hidden border bg-white shadow-sm flex h-14 transition-all ${
+                                            couponStatus === 'valid' ? 'border-green-400' :
+                                            couponStatus === 'invalid' ? 'border-red-300' :
+                                            'border-gray-100'
+                                        }`}>
+                                            <input
+                                                value={couponCode}
+                                                onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponStatus('idle'); setCouponData(null); }}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleValidateCoupon()}
+                                                placeholder="Código de cupón..."
+                                                className="flex-1 h-full bg-transparent px-5 font-black text-slate-900 placeholder:text-gray-300 outline-none uppercase tracking-widest text-[13px]"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => handleValidateCoupon()}
+                                                disabled={!couponCode.trim() || couponStatus === 'checking'}
+                                                className="px-4 text-[10px] font-black uppercase tracking-widest text-white rounded-r-2xl disabled:opacity-40 border-0 cursor-pointer transition-all"
+                                                style={{ backgroundColor: primaryColor }}
+                                            >
+                                                {couponStatus === 'checking' ? '...' : 'Aplicar'}
+                                            </button>
+                                        </div>
+                                        {couponStatus === 'valid' && couponData && (
+                                            <p className="text-[10px] font-black text-green-600 ml-4">
+                                                ✅ {couponData.tipo === 'PORCENTAJE' ? `${couponData.valor}% DESCUENTO aplicado` : `$${couponData.valor} DESCUENTO aplicado`} — Ahorras ${couponData.descuento.toFixed(2)}
+                                            </p>
+                                        )}
+                                        {couponStatus === 'invalid' && (
+                                            <p className="text-[10px] font-black text-red-500 ml-4">❌ {couponError}</p>
+                                        )}
+                                    </div>
+                                )}
+                            </>
                         )}
 
-                        {(clientCoupons.length === 0 || isCustomCouponCode) && (
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">🎟️ Escribe tu Cupón</label>
-                                <div className={`rounded-2xl overflow-hidden border bg-white shadow-sm flex h-14 transition-all ${
-                                    couponStatus === 'valid' ? 'border-green-400' :
-                                    couponStatus === 'invalid' ? 'border-red-300' :
-                                    'border-gray-100'
-                                }`}>
-                                    <input
-                                        value={couponCode}
-                                        onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponStatus('idle'); setCouponData(null); }}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleValidateCoupon()}
-                                        placeholder="Código de cupón..."
-                                        className="flex-1 h-full bg-transparent px-5 font-black text-slate-900 placeholder:text-gray-300 outline-none uppercase tracking-widest text-[13px]"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => handleValidateCoupon()}
-                                        disabled={!couponCode.trim() || couponStatus === 'checking'}
-                                        className="px-4 text-[10px] font-black uppercase tracking-widest text-white rounded-r-2xl disabled:opacity-40 border-0 cursor-pointer transition-all"
-                                        style={{ backgroundColor: primaryColor }}
-                                    >
-                                        {couponStatus === 'checking' ? '...' : 'Aplicar'}
-                                    </button>
+
+                        {/* ===== SECCIÓN DE CASHBACK ===== */}
+                        {userCashback > 0 && (
+                            <div className="space-y-2 text-left">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">💵 Pagar con Saldo Cashback</label>
+                                <div 
+                                    onClick={() => setApplyCashback(!applyCashback)}
+                                    className={`rounded-2xl p-4 border transition-all cursor-pointer flex items-center justify-between shadow-sm ${
+                                        applyCashback 
+                                            ? 'border-emerald-400 bg-emerald-50/10' 
+                                            : 'border-gray-100 bg-white hover:border-gray-200'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`size-10 rounded-xl flex items-center justify-center transition-colors ${applyCashback ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="font-black text-slate-800 text-[13px] leading-none">Aplicar saldo disponible</p>
+                                            <p className="text-[9px] text-slate-400 font-semibold mt-1">
+                                                Tienes <strong className="text-emerald-600">${userCashback.toFixed(2)}</strong> de cashback acumulado.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center">
+                                        {/* Custom toggle switch */}
+                                        <div className={`w-10 h-6 rounded-full transition-colors relative ${applyCashback ? 'bg-emerald-500' : 'bg-gray-200'}`}>
+                                            <div className={`size-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm ${applyCashback ? 'translate-x-5' : 'translate-x-1'}`} />
+                                        </div>
+                                    </div>
                                 </div>
-                                {couponStatus === 'valid' && couponData && (
-                                    <p className="text-[10px] font-black text-green-600 ml-4">
-                                        ✅ {couponData.tipo === 'PORCENTAJE' ? `${couponData.valor}% OFF aplicado` : `$${couponData.valor} OFF applied`} — Ahorras ${couponData.descuento.toFixed(2)}
+                                {applyCashback && (
+                                    <p className="text-[10px] font-black text-emerald-600 ml-4 mt-2">
+                                        ✅ Descuento de <strong>${Math.min(userCashback, selectedBooking ? (couponData ? couponData.totalConDescuento : selectedBooking.precio) : 0).toFixed(2)}</strong> aplicado a tu cita.
                                     </p>
-                                )}
-                                {couponStatus === 'invalid' && (
-                                    <p className="text-[10px] font-black text-red-500 ml-4">❌ {couponError}</p>
                                 )}
                             </div>
                         )}
@@ -653,14 +781,34 @@ const resolveSlotPromotion = (
                                 {showPrices && (
                                     <div className="text-right flex flex-col">
                                         <span className="text-[10px] font-black text-gray-400 uppercase mb-1.5">Total a Pagar</span>
-                                        {couponStatus === 'valid' && couponData ? (
-                                            <div className="flex flex-col items-end">
-                                                <span className="text-[12px] font-black text-gray-400 line-through leading-none">${selectedBooking?.precio.toFixed(2)}</span>
-                                                <span className="text-4xl font-black tracking-tighter leading-none" style={{ color: primaryColor }}>${couponData.totalConDescuento.toFixed(2)}</span>
-                                            </div>
-                                        ) : (
-                                            <span className="text-4xl font-black text-gray-950 tracking-tighter leading-none">${selectedBooking?.precio.toFixed(2)}</span>
-                                        )}
+                                        {(() => {
+                                            const basePrecio = selectedBooking?.precio || 0;
+                                            const totalConDescuento = couponStatus === 'valid' && couponData ? couponData.totalConDescuento : basePrecio;
+                                            const cashbackDescuento = applyCashback ? Math.min(userCashback, totalConDescuento) : 0;
+                                            const precioFinal = Math.max(0, totalConDescuento - cashbackDescuento);
+
+                                            return (
+                                                <div className="flex flex-col items-end">
+                                                    {(totalConDescuento < basePrecio || cashbackDescuento > 0) && (
+                                                        <span className="text-[12px] font-black text-gray-400 line-through leading-none">
+                                                            ${basePrecio.toFixed(2)}
+                                                        </span>
+                                                    )}
+                                                    {precioFinal === 0 ? (
+                                                        <span className="text-4xl font-black text-emerald-500 tracking-tighter leading-none">GRATIS</span>
+                                                    ) : (
+                                                        <span className="text-4xl font-black tracking-tighter leading-none" style={{ color: primaryColor }}>
+                                                            ${precioFinal.toFixed(2)}
+                                                        </span>
+                                                    )}
+                                                    {cashbackDescuento > 0 && (
+                                                        <span className="text-[9px] font-black text-emerald-600 uppercase tracking-wider mt-1">
+                                                            Cashback: -${cashbackDescuento.toFixed(2)}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 )}
                             </div>
@@ -722,34 +870,64 @@ const resolveSlotPromotion = (
                 
                 <div className="space-y-3">
                     {/* Servicios Seleccionados */}
-                    {allServices.filter(s => isSelected(s.id)).map((service: any) => (
-                        <div key={service.id} className="flex items-center justify-between p-5 rounded-[2rem] border border-gray-100 bg-white shadow-sm ring-1 ring-gray-100 animate-in zoom-in-95 duration-300">
-                            <div className="flex items-center gap-4">
-                                <button 
-                                    onClick={() => toggleService(service.id)}
-                                    className="size-12 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform active:scale-90" 
-                                    style={{ backgroundColor: primaryColor }}
-                                >
-                                    <Check size={20} strokeWidth={3} />
-                                </button>
-                                <div>
-                                    <p className="text-base font-black text-gray-900 leading-none">{service.nombre}</p>
-                                    <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase">{service.duracion} min</p>
+                    {allServices.filter(s => isSelected(s.id)).map((service: any) => {
+                        const esGratis = freeServices.some((fs: any) => fs.serviceId === service.id && fs.estado === 'DISPONIBLE');
+                        return (
+                            <div key={service.id} className="flex items-center justify-between p-5 rounded-[2rem] border border-gray-100 bg-white shadow-sm ring-1 ring-gray-100 animate-in zoom-in-95 duration-300">
+                                <div className="flex items-center gap-4">
+                                    <button 
+                                        onClick={() => toggleService(service.id)}
+                                        className="size-12 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform active:scale-90" 
+                                        style={{ backgroundColor: primaryColor }}
+                                    >
+                                        <Check size={20} strokeWidth={3} />
+                                    </button>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-base font-black text-gray-900 leading-none">{service.nombre}</p>
+                                            {esGratis && (
+                                                <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 bg-emerald-550 text-white rounded-md shadow-sm">
+                                                    🎁 Gratis
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase">{service.duracion} min</p>
+                                    </div>
                                 </div>
-                            </div>
-                            {showPrices && (
-                                <span className="text-xl font-black text-gray-900">
-                                    ${resolveSlotPromotion(
+                                {showPrices && (() => {
+                                    const promo = resolveSlotPromotion(
                                         selectedBooking?.hour || "00:00", 
                                         selectedBooking?.date || new Date(), 
                                         service, 
                                         negocio.automaticDiscount
-                                    ).price.toFixed(2)}
-                                </span>
-                            )}
-                        </div>
-                    ))}
+                                    );
+                                    if (promo.source === 'free_service' || promo.price === 0) {
+                                        return (
+                                            <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100 uppercase tracking-widest font-mono shrink-0">
+                                                GRATIS
+                                            </span>
+                                        );
+                                    }
+                                    return (
+                                        <span className="text-xl font-black text-gray-900">
+                                            ${promo.price.toFixed(2)}
+                                        </span>
+                                    );
+                                })()}
+                            </div>
+                        );
+                    })}
                 </div>
+
+                {/* Aviso de Servicio Gratis */}
+                {allServices.filter(s => isSelected(s.id)).some(s => freeServices.some((fs: any) => fs.serviceId === s.id && fs.estado === 'DISPONIBLE')) && (
+                    <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-3xl flex items-center gap-3 animate-in fade-in duration-300 ml-1">
+                        <Sparkles className="text-emerald-600 size-4 shrink-0" />
+                        <p className="text-[10px] font-black text-emerald-800 uppercase tracking-wider leading-none">
+                            Tienes un servicio gratis disponible.
+                        </p>
+                    </div>
+                )}
 
                 {/* Recomendados para añadir */}
                 {otherServices.filter(s => !isSelected(s.id)).length > 0 && (
@@ -767,7 +945,15 @@ const resolveSlotPromotion = (
                                              style={{ color: isSelected(s.id) ? 'white' : undefined, backgroundColor: isSelected(s.id) ? primaryColor : undefined }}>
                                              <Plus size={16} strokeWidth={3} style={{ color: isSelected(s.id) ? 'white' : undefined }} />
                                          </div>
-                                        {showPrices && <span className="text-[11px] font-black text-gray-900">${s.precio}</span>}
+                                        {showPrices && (
+                                            freeServices.some((fs: any) => fs.serviceId === s.id && fs.estado === 'DISPONIBLE') ? (
+                                                <span className="text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 bg-emerald-500 text-white rounded-md">
+                                                    🎁 Gratis
+                                                </span>
+                                            ) : (
+                                                <span className="text-[11px] font-black text-gray-900">${s.precio}</span>
+                                            )
+                                        )}
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-black leading-tight uppercase text-gray-900 line-clamp-2">{s.nombre}</p>
@@ -872,9 +1058,15 @@ const resolveSlotPromotion = (
                                             ${((selectedBooking.precio || 0) * (selectedBooking.tipoPromo === '2x1' ? 2 : 3)).toFixed(2)}
                                         </span>
                                     )}
-                                    <span className="text-3xl font-black text-gray-900 leading-none">
-                                        ${selectedBooking.precio.toFixed(2)}
-                                    </span>
+                                    {selectedBooking.precio === 0 ? (
+                                        <span className="text-2xl font-black text-emerald-650 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-100 uppercase tracking-widest font-mono">
+                                            GRATIS
+                                        </span>
+                                    ) : (
+                                        <span className="text-3xl font-black text-gray-900 leading-none">
+                                            ${selectedBooking.precio.toFixed(2)}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         )}

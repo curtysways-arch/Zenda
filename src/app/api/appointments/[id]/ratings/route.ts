@@ -27,7 +27,9 @@ export async function POST(
                 id: true,
                 clienteId: true,
                 staffId: true,
-                estado: true
+                estado: true,
+                negocioId: true,
+                usuarioId: true
             }
         });
 
@@ -124,6 +126,26 @@ export async function POST(
 
             return newRating;
         });
+
+        // 4.5 PUBLICAR EVENTO DE CRECIMIENTO (REVIEW_CREATED)
+        if (raterRole === 'client' && appointment.negocioId && appointment.usuarioId) {
+            try {
+                const { publishGrowthEvent } = await import('@/lib/growth/eventBus');
+                await publishGrowthEvent(
+                    appointment.negocioId,
+                    appointment.usuarioId,
+                    'REVIEW_CREATED',
+                    {
+                        ratingId: result.id,
+                        appointmentId: id,
+                        stars: starInt,
+                        comment: comment || null
+                    }
+                );
+            } catch (err: any) {
+                console.error('[RatingsAPI] Error publicando evento REVIEW_CREATED:', err.message);
+            }
+        }
 
         return NextResponse.json({ success: true, ratingId: result.id });
     } catch (error: any) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Gift, Search, Sparkles, Check, X, Calendar, Clipboard, User, Phone, Loader2, Award, Clock } from 'lucide-react';
+import { Gift, Search, Sparkles, Check, X, Calendar, Clipboard, User, Phone, Loader2, Award, Clock, QrCode } from 'lucide-react';
 
 interface PendingDelivery {
     id: string;
@@ -29,6 +29,12 @@ export default function PremiosPendientesPage() {
     const [actionLoading, setActionLoading] = useState(false);
     const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
+    // Estado del buscador manual/QR
+    const [showManualModal, setShowManualModal] = useState(false);
+    const [manualCode, setManualCode] = useState('');
+    const [manualSearchLoading, setManualSearchLoading] = useState(false);
+    const [manualError, setManualError] = useState<string | null>(null);
+
     const fetchDeliveries = async (query = '') => {
         try {
             setLoading(true);
@@ -51,6 +57,30 @@ export default function PremiosPendientesPage() {
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         fetchDeliveries(search);
+    };
+
+    const handleManualSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!manualCode.trim()) return;
+
+        setManualSearchLoading(true);
+        setManualError(null);
+
+        try {
+            const res = await fetch(`/api/admin/loyalty/buscar-codigo?claimCode=${encodeURIComponent(manualCode.trim())}`);
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Código de reclamo inválido o no encontrado');
+            }
+
+            // Redirigir a la ficha de verificación del premio firmada
+            window.location.href = `/reward/${data.claimToken}?sig=${data.sig}`;
+        } catch (err: any) {
+            setManualError(err.message);
+        } finally {
+            setManualSearchLoading(false);
+        }
     };
 
     const handleConfirmDelivery = async () => {
@@ -100,11 +130,20 @@ export default function PremiosPendientesPage() {
                         Gestiona, busca y confirma la entrega de premios físicos y manuales reclamados por los clientes.
                     </p>
                 </div>
-                <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-2xl">
-                    <Clock size={16} className="text-slate-400" />
-                    <span className="text-xs font-bold text-slate-600">
-                        Pendientes: <strong className="text-pink-500 font-black">{deliveries.length}</strong>
-                    </span>
+                <div className="flex flex-wrap items-center gap-3">
+                    <button
+                        onClick={() => setShowManualModal(true)}
+                        className="px-5 py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-2xl text-xs font-black uppercase tracking-wider active:scale-[0.98] transition-all flex items-center gap-2 shadow-md border-0 cursor-pointer"
+                    >
+                        <QrCode size={16} />
+                        Escanear / Buscar Código
+                    </button>
+                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 px-4 py-2.5 rounded-2xl">
+                        <Clock size={16} className="text-slate-400" />
+                        <span className="text-xs font-bold text-slate-600">
+                            Pendientes: <strong className="text-pink-500 font-black">{deliveries.length}</strong>
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -280,6 +319,75 @@ export default function PremiosPendientesPage() {
                                     </>
                                 )}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Modal de Búsqueda Manual / QR */}
+            {showManualModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="relative w-full max-w-[400px] bg-white rounded-[2.5rem] p-6 shadow-2xl space-y-5 border border-slate-100 animate-in zoom-in-95 duration-300">
+                        {/* Cerrar */}
+                        <button 
+                            onClick={() => {
+                                setShowManualModal(false);
+                                setManualCode('');
+                                setManualError(null);
+                            }}
+                            className="absolute top-4 right-4 size-8 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full flex items-center justify-center text-slate-500 transition-colors"
+                        >
+                            <X size={14} strokeWidth={2.5} />
+                        </button>
+
+                        <div className="text-center pt-4">
+                            <div className="size-16 rounded-full bg-pink-50 flex items-center justify-center mx-auto text-pink-500 mb-4">
+                                <QrCode size={32} />
+                            </div>
+                            <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">
+                                Validar por Código
+                            </h3>
+                            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                                Escanea el QR del cliente con una cámara o escribe su código alfanumérico corto.
+                            </p>
+                        </div>
+
+                        {/* Formulario de Búsqueda Manual */}
+                        <form onSubmit={handleManualSearch} className="space-y-4">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                    Código de Reclamo Manual
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej: CTX-7H9K-42"
+                                    value={manualCode}
+                                    onChange={(e) => setManualCode(e.target.value)}
+                                    className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold uppercase text-slate-800 font-mono tracking-wider focus:outline-none focus:bg-white focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all text-center"
+                                    required
+                                />
+                            </div>
+
+                            {manualError && (
+                                <div className="bg-rose-50 border border-rose-100 text-rose-700 p-3 rounded-xl text-xs font-semibold text-center">
+                                    ⚠️ {manualError}
+                                </div>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={manualSearchLoading}
+                                className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all shadow-md"
+                            >
+                                {manualSearchLoading ? (
+                                    <Loader2 className="animate-spin" size={14} />
+                                ) : (
+                                    'Buscar Premio'
+                                )}
+                            </button>
+                        </form>
+                        
+                        <div className="bg-slate-50 p-4 rounded-2xl text-[10px] text-slate-400 font-medium text-center leading-relaxed">
+                            💡 Para escanear de forma inalámbrica, puedes usar la cámara de cualquier celular logueado en la administración de Citiox y el link abrirá directamente la entrega.
                         </div>
                     </div>
                 </div>

@@ -49,12 +49,13 @@ export default async function AdminLayout({
 
     let primaryColor = '#0ea5e9';
     let status = { active: true, reason: null };
+    let negocio: any = null;
 
     if (negocioId) {
         status = await checkSubscriptionStatus(negocioId);
-        const negocio = await prisma.negocio.findUnique({
+        negocio = await prisma.negocio.findUnique({
             where: { id: negocioId },
-            select: { colorPrimario: true, configuracion: true }
+            select: { colorPrimario: true, configuracion: true, nombre: true }
         });
         primaryColor = negocio?.colorPrimario || '#0ea5e9';
         
@@ -86,7 +87,7 @@ export default async function AdminLayout({
                         
                         {/* TopBar: solo en móvil */}
                         <div className="md:hidden">
-                            <MobileTopBar primaryColor={primaryColor} />
+                            <MobileTopBar primaryColor={primaryColor} negocioNombre={negocio?.nombre} />
                         </div>
 
                         {/* Banners de estado */}

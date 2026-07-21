@@ -42,7 +42,7 @@ export async function checkSubscriptionStatus(negocioId: string) {
     }
 
     // Si es trial pero no ha vencido, es OK (por ahora activo total)
-    if (estado === 'trial' || estado === 'TRIAL') {
+    if (estado === 'trial' || estado === 'TRIAL' || estado === 'trial_pending' || estado === 'TRIAL_PENDING') {
         return { active: true, reason: 'TRIAL' };
     }
 

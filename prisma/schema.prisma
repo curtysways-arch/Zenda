@@ -25,6 +25,8 @@ enum RewardStatus {
   RESERVADO
   CANJEADO
   PENDIENTE_ENTREGA
+  SOLICITADO
+  LISTO_PARA_RETIRAR
   ENTREGADO
   CANCELADO
   VENCIDO
@@ -375,6 +377,24 @@ model Negocio {
   LevelTier              LevelTier[]
   Badge                  Badge[]
   UserStreak             UserStreak[]
+  RewardAudit            RewardAudit[]
+  LoyaltyLevels              LoyaltyLevel[]
+  LoyaltySeasons             LoyaltySeason[]
+  BusinessGlobalMissions     BusinessGlobalMission[]
+  GlobalMissionRewardHistory GlobalMissionRewardHistory[]
+  Wallets                    Wallet[]
+  LeaderboardEntries         LeaderboardEntry[]
+  InstalledTemplates         InstalledTemplate[]
+  TemplateSnapshots          InstalledTemplateSnapshot[]
+  BusinessAchievements       BusinessAchievement[]
+  ClientGlobalCampaigns      ClientGlobalCampaignParticipation[]
+  ClientGlobalProgress       ClientGlobalQuestProgress[]
+  BusinessMissions           BusinessMission[]            // Nuevo sistema de misiones desacoplado
+  BusinessInheritances       BusinessInheritance[]        // Capa de herencia del Club Citiox
+  tipoNegocio                String                       @default("RESERVA")
+  categoriasProducto         CategoriaProducto[]
+  productos                  Producto[]
+  pedidos                    Pedido[]
 }
 
 model OtpCode {
@@ -785,6 +805,12 @@ model Usuario {
   UserLevel              UserLevel?
   UserBadge              UserBadge[]
   UserStreak             UserStreak[]
+  Wallets                Wallet[]
+  LeaderboardEntries     LeaderboardEntry[]
+  UserAchievements       UserAchievement[]
+  ClientGlobalProgress   ClientGlobalQuestProgress[]
+  GlobalLevelHistory     GlobalLevelHistory[]
+  BusinessMissionProgress BusinessMissionProgress[] // Nuevo sistema de misiones desacoplado
 }
 
 model PromotionToService {
@@ -937,7 +963,13 @@ model ReferralReward {
   fechaEntrega           DateTime?
   staffId                String?
   notas                  String?
-  // Campos de auditoría de entrega física
+  // Campos de auditoría de entrega física y QR seguro
+  claimToken             String?            @unique  // UUID interno y oculto para el código QR
+  claimTokenExpiresAt    DateTime?          // Fecha de expiración temporal del código QR
+  claimTokenRevokedAt    DateTime?          // Fecha en la que el QR fue revocado tras la entrega
+  fechaSolicitud         DateTime?
+  fechaRetiro            DateTime?
+  scanCount              Int                @default(0) // Contador de escaneos/aperturas del QR
   entregadoPorId         String?            // userId o staffId que confirmó la entrega
   fechaEntregaConfirmada DateTime?
   observaciones          String?
@@ -954,14 +986,23 @@ model ReferralReward {
 // ─── MOTOR DE FIDELIZACIÓN Y MARKETING ──────────────────────────────────────
 
 model UserPoints {
-  id        String   @id @default(cuid())
-  userId    String
-  negocioId String
-  puntos    Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  Usuario   Usuario  @relation(fields: [userId], references: [id])
-  Negocio   Negocio  @relation(fields: [negocioId], references: [id])
+  id                     String   @id @default(cuid())
+  userId                 String
+  negocioId              String
+  puntos                 Int      @default(0)
+  experiencia            Int      @default(0)
+  cashback               Float    @default(0.0)
+  nivelActualId          String?
+  ultimoNivelVistoId     String?
+  ultimaTemporadaVistaId String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  Usuario                Usuario  @relation(fields: [userId], references: [id])
+  Negocio                Negocio  @relation(fields: [negocioId], references: [id])
+  
+  NivelActual            LoyaltyLevel?  @relation("NivelActual", fields: [nivelActualId], references: [id])
+  UltimoNivelVisto       LoyaltyLevel?  @relation("UltimoNivelVisto", fields: [ultimoNivelVistoId], references: [id])
+  UltimaTemporadaVista   LoyaltySeason? @relation("UltimaTemporadaVista", fields: [ultimaTemporadaVistaId], references: [id])
 
   @@unique([userId, negocioId])
 }
@@ -1008,12 +1049,20 @@ model LoyaltyRedemption {
   negocioId              String
   userId                 String
   rewardId               String
+  questId                String?            // ID de la misión si es recompensa de misión
+  fechaExpiracion        DateTime?          // Fecha de expiración de la recompensa
   estado                 RewardStatus       @default(DISPONIBLE)
   claimCode              String?            @unique // Código de reclamación para premios manuales (ej. PX-8FK29Q)
   fechaEntrega           DateTime?
   staffId                String?
   notas                  String?
-  // Campos de auditoría de entrega física
+  // Campos de auditoría de entrega física y QR seguro
+  claimToken             String?            @unique  // UUID interno y oculto para el código QR
+  claimTokenExpiresAt    DateTime?          // Fecha de expiración temporal del código QR
+  claimTokenRevokedAt    DateTime?          // Fecha en la que el QR fue revocado tras la entrega
+  fechaSolicitud         DateTime?
+  fechaRetiro            DateTime?
+  scanCount              Int                @default(0) // Contador de escaneos/aperturas del QR
   entregadoPorId         String?            // userId o staffId que confirmó la entrega
   fechaEntregaConfirmada DateTime?
   observaciones          String?
@@ -1024,6 +1073,23 @@ model LoyaltyRedemption {
   Usuario                Usuario            @relation(fields: [userId], references: [id])
   Reward                 LoyaltyReward      @relation(fields: [rewardId], references: [id])
   Staff                  Staff?             @relation(fields: [staffId], references: [id])
+}
+
+model RewardAudit {
+  id             String   @id @default(cuid())
+  rewardType     String   // PUNTOS | REFERIDO
+  rewardId       String   // ID de la redención (LoyaltyRedemption o ReferralReward)
+  claimCode      String?  // Código corto visible (ej. CTX-9F4K-PL)
+  accion         String   // REQUESTED | SCANNED | READY | DELIVERED | TOKEN_EXPIRED | REGENERATED
+  estadoAnterior String?  // Estado antes del cambio
+  estadoNuevo    String?  // Estado después del cambio
+  empleadoId     String?  // ID del staff/usuario que realizó la acción
+  negocioId      String
+  ip             String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  Negocio        Negocio  @relation(fields: [negocioId], references: [id])
 }
 
 model Coupon {
@@ -1066,6 +1132,7 @@ model ClientCoupon {
   negocioId       String
   clienteId       String
   couponId        String
+  questId         String?   // ID de la misión si es recompensa de misión
   sourceType      String    // LOYALTY_REWARD | QUEST | REFERRAL | CUMPLEANOS | MANUAL | AUTOMATIZACION
   sourceId        String?
   estado          String    @default("DISPONIBLE") // DISPONIBLE | RESERVADO | USADO | VENCIDO | CANCELADO
@@ -1397,17 +1464,22 @@ model CommunicationTemplate {
 // ==========================================
 
 model Season {
-  id          String     @id @default(cuid())
-  negocioId   String
-  nombre      String     // Ej: "Temporada Navideña 2026"
-  descripcion String?
-  fechaInicio DateTime
-  fechaFin    DateTime
-  activa      Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  Negocio     Negocio    @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  Campaigns   Campaign[]
+  id              String      @id @default(cuid())
+  negocioId       String?     // Null para temporadas globales de Citiox (plataforma)
+  nombre          String      // Ej: "Temporada Navideña 2026"
+  descripcion     String?
+  icono           String      @default("Calendar")
+  color           String      @default("#4f46e5")
+  fechaInicio     DateTime
+  fechaFin        DateTime
+  activa          Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  Negocio         Negocio?    @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Campaigns       Campaign[]
+  GlobalCampaigns ClientGlobalCampaign[]
+  Leaderboards    Leaderboard[]
 
   @@index([negocioId])
 }
@@ -1440,51 +1512,62 @@ model Campaign {
 }
 
 model Quest {
-  id              String             @id @default(cuid())
-  negocioId       String?            // Null si es plantilla global Citiox
-  campaignId      String
-  nombre          String
-  descripcion     String
-  imagenUrl       String?
-  icono             String             @default("Award")
-  color           String             @default("#ec4899")
-  visible         Boolean            @default(true)    // false = Misión Secreta
-  repetible       Boolean            @default(false)
-  limiteUsuario   Int                @default(1)
-  limiteGlobal    Int?
-  fechaInicio     DateTime?
-  fechaFin        DateTime?
-  activa          Boolean            @default(true)
+  id                    String             @id @default(cuid())
+  negocioId             String?            // Null si es plantilla global Citiox
+  campaignId            String
+  nombre                String
+  descripcion           String
+  imagenUrl             String?
+  icono                 String             @default("Award")
+  color                 String             @default("#ec4899")
+  visible               Boolean            @default(true)    // false = Misión Secreta
+  repetible             Boolean            @default(false)
+  limiteUsuario         Int                @default(1)
+  limiteGlobal          Int?
+  fechaInicio           DateTime?
+  fechaFin              DateTime?
+  activa                Boolean            @default(true)
   
   // Quest Chain (Prerrequisitos)
-  parentQuestId   String?
+  parentQuestId         String?
   
   // Segmentación Flexible
-  segmentacion    Json?              // { gender: ["M"], tags: ["VIP"], level: ["Oro"] }
+  segmentacion          Json?              // { gender: ["M"], tags: ["VIP"], level: ["Oro"] }
   
   // Validación: AUTOMATICO | USUARIO | ADMIN | QR | CODIGO | STAFF | API | MIXTO
-  validacionTipo  String             @default("AUTOMATICO")
+  validacionTipo        String             @default("AUTOMATICO")
   
   // Columnas indexadas para Rule Engine (Optimización de rendimiento)
-  triggerEvent    String             // BOOKING_COMPLETED | USER_REGISTERED | etc.
-  servicioId      String?            // ID del servicio asociado al trigger
-  montoMinimo     Float?             // Monto mínimo evaluable en transacciones
-  cantidadMeta    Int                @default(1) // Cantidad de repeticiones requeridas para completar
+  triggerEvent          String             // BOOKING_COMPLETED | USER_REGISTERED | etc.
+  servicioId            String?            // ID del servicio asociado al trigger
+  montoMinimo           Float?             // Monto mínimo evaluable en transacciones
+  cantidadMeta          Int                @default(1) // Cantidad de repeticiones requeridas para completar
   
   // JSON para condiciones extras
-  condicionesExtra Json?
+  condicionesExtra      Json?
   
   // Recompensas Múltiples Desacopladas
   // Estructura: [{ action: "ADD_POINTS", value: 100 }, { action: "CREATE_COUPON", value: "c1" }]
-  acciones        Json
+  acciones              Json
   
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  // Campos de Origen y Gamificación Enterprise
+  origen                String             @default("NEGOCIO") // "NEGOCIO" | "PLANTILLA"
+  templateIdOrigen      String?
+  templateVersionOrigen String?            // Ej. "1.0.0"
+  modificadaLocalmente  Boolean            @default(false)
+  difficulty            QuestDifficulty    @default(MEDIUM)
+  xp                    Int                @default(0)
+  estimatedMinutes      Int                @default(0)
+  estimatedDays         Int                @default(0)
+
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
   
-  Negocio         Negocio?           @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  Campaign        Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  Progress        QuestProgress[]
-  Participants    QuestParticipant[]
+  Negocio               Negocio?           @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Campaign              Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  Progress              QuestProgress[]
+  Participants          QuestParticipant[]
+  Rules                 QuestRule[]
 
   @@index([negocioId])
   @@index([campaignId])
@@ -1604,6 +1687,952 @@ model QuestEventLog {
   @@index([procesado, createdAt])
 }
 
+model LoyaltyLevel {
+  id                  String   @id @default(cuid())
+  negocioId           String
+  nombre              String
+  diamantesRequeridos Int
+  color               String   // Hexadecimal (ej: #ec4899)
+  icono               String   // Icono de Lucide (ej: Award, Crown)
+  orden               Int
+  beneficios          Json?    // Opcional: lista de beneficios informativos
+  recompensaTipo      String?   // CUPON | PUNTOS | REGALO | SERVICIO | NULL
+  recompensaValor     Json?
+  multiplicador       Float    @default(1.0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  Negocio             Negocio  @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  
+  UserPointsNivelActual     UserPoints[] @relation("NivelActual")
+  UserPointsUltimoNivelVisto UserPoints[] @relation("UltimoNivelVisto")
 
+  @@index([negocioId])
+}
+
+model LoyaltySeason {
+  id                 String   @id @default(cuid())
+  negocioId          String
+  fechaInicio        DateTime
+  fechaFin           DateTime
+  duracionMeses      Int      // 1, 2, 3, 6, 12
+  descuentoDiamantes Int
+  activa             Boolean  @default(true)
+  procesada          Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  Negocio            Negocio  @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  UserPointsUltimaTemporada UserPoints[] @relation("UltimaTemporadaVista")
+
+  @@index([negocioId])
+}
+
+enum GlobalMissionType {
+  FIRST_RESERVATIONS
+  COMPLETED_RESERVATIONS
+  CLIENTS_REGISTERED
+  SERVICES_CREATED
+  STAFF_CREATED
+  PROFILE_COMPLETED
+  LOYALTY_ENABLED
+  REFERRALS
+  APP_DOWNLOAD
+  CONSECUTIVE_RESERVATIONS
+}
+
+enum GlobalRewardType {
+  FREE_DAYS
+  DISCOUNT
+  DIAMONDS
+  CREDITS
+  BADGE
+  UNLOCK_FEATURE
+  PROMOTION
+}
+
+model GlobalMission {
+  id               String                  @id @default(cuid())
+  titulo           String
+  descripcion      String
+  tipo             GlobalMissionType
+  objetivo         Int
+  recompensaTipo   GlobalRewardType
+  recompensaValor  Json?
+  fechaInicio      DateTime?
+  fechaFin         DateTime?
+  activa           Boolean                 @default(true)
+  prioridad        Int                     @default(0)
+  icono            String?
+  color            String?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  BusinessMissions BusinessGlobalMission[]
+  RewardHistory    GlobalMissionRewardHistory[]
+}
+
+model BusinessGlobalMission {
+  id              String        @id @default(cuid())
+  negocioId       String
+  missionId       String
+  progreso        Int           @default(0)
+  completada      Boolean       @default(false)
+  recompensaDada  Boolean       @default(false)
+  fechaCompletada DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  Negocio         Negocio       @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Mission         GlobalMission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+  @@unique([negocioId, missionId])
+}
+
+model GlobalMissionRewardHistory {
+  id          String           @id @default(cuid())
+  negocioId   String
+  missionId   String
+  tipo        GlobalRewardType
+  valor       Json?
+  detalles    String?          // Ej: "+15 días gratis por completar Tus primeras 20 reservas"
+  fecha       DateTime         @default(now())
+  Negocio     Negocio          @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Mission     GlobalMission    @relation(fields: [missionId], references: [id], onDelete: Cascade)
+}
+
+// ==========================================
+// ENUMS DE GAMIFICACIÓN Y MARKETPLACE ENTERPRISE
+// ==========================================
+
+enum QuestDifficulty {
+  EASY
+  MEDIUM
+  HARD
+  EPIC
+  LEGENDARY
+}
+
+enum WalletCurrencyType {
+  DIAMONDS
+  XP
+  SEASON_POINTS
+  CREDITS
+  TOKENS
+  CASHBACK
+}
+
+enum TemplatePublishStatus {
+  BORRADOR
+  PUBLICADA
+  ARCHIVADA
+}
+
+enum TemplateSourceType {
+  BIBLIOTECA_OFICIAL
+  MIS_PLANTILLAS
+  MARKETPLACE
+}
+
+enum TemplateUpdateStatus {
+  UP_TO_DATE
+  UPDATE_AVAILABLE
+  MODIFIED_LOCALLY
+}
+
+enum RewardCatalogType {
+  DIAMONDS
+  XP
+  COUPON
+  CASHBACK
+  FREE_DAYS
+  FEATURE_UNLOCK
+  LIMIT_BOOST
+  BOOST_VISIBILITY
+  SERVICE
+  GIFT
+}
+
+// ==========================================
+// MODELOS DEL ECOSISTEMA ENTERPRISE
+// ==========================================
+
+model Wallet {
+  id        String             @id @default(cuid())
+  negocioId String?            // Null si pertenece a un usuario/cliente final
+  usuarioId String?            // Null si pertenece a un negocio
+  saldo     Float              @default(0.0)
+  tipo      WalletCurrencyType
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  Transactions WalletTransaction[]
+  Negocio      Negocio?           @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Usuario      Usuario?           @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([negocioId, tipo])
+  @@unique([usuarioId, tipo])
+}
+
+model WalletTransaction {
+  id           String             @id @default(cuid())
+  walletId     String
+  tipo         String             // "INGRESO" | "EGRESO"
+  monto        Float
+  motivo       String             // Ej: "COMPLETAR_MISION_1", "COMPRA_PAQUETE"
+  referenciaId String?            // ID de la entidad relacionada
+  fecha        DateTime           @default(now())
+
+  Wallet       Wallet             @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([referenciaId])
+}
+
+model Leaderboard {
+  id             String             @id @default(cuid())
+  seasonId       String?
+  globalSeasonId String?
+  tipo           String             // "SEMANAL" | "MENSUAL" | "TEMPORADA" | "HISTORICO"
+  nombre         String
+  activa         Boolean            @default(true)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  Season         Season?            @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  GlobalSeason   GlobalSeason?      @relation(fields: [globalSeasonId], references: [id], onDelete: Cascade)
+  Entries        LeaderboardEntry[]
+
+  @@index([seasonId])
+  @@index([globalSeasonId])
+}
+
+model LeaderboardEntry {
+  id            String      @id @default(cuid())
+  leaderboardId String
+  negocioId     String?
+  usuarioId     String?
+  puntos        Int         @default(0)
+  rango         Int         @default(0)
+  updatedAt     DateTime    @updatedAt
+
+  Leaderboard   Leaderboard @relation(fields: [leaderboardId], references: [id], onDelete: Cascade)
+  Negocio       Negocio?    @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Usuario       Usuario?    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([leaderboardId, negocioId])
+  @@unique([leaderboardId, usuarioId])
+  @@index([puntos])
+}
+
+model RewardCatalog {
+  id          String            @id @default(cuid())
+  nombre      String
+  descripcion String?
+  tipo        RewardCatalogType
+  valor       Json?             // Metadata del premio
+  activa      Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Nuevos campos extendidos para el patrón Strategy de plataforma (Citiox)
+  provider    String?           // Ej: "SPOTIFY", "UBER_EATS", "SYSTEM"
+  handler     String            @default("wallet") // Ej: "wallet", "coupon", "webhook", "feature"
+  config      Json?             // Parámetros flexibles del handler
+  version     String            @default("1.0.0")
+  activo      Boolean           @default(true)
+
+  QuestActions             QuestAction[]
+  GlobalLevelRewards       GlobalLevelReward[]
+  MissionRewardDefinitions MissionRewardDefinition[] // Nuevo sistema de misiones desacoplado
+}
+
+enum GlobalSeasonStatus {
+  UPCOMING
+  ACTIVE
+  FINISHED
+  ARCHIVED
+}
+
+model GlobalLevel {
+  id              String                   @id @default(cuid())
+  nombre          String                   // Ej: "Nivel 1", "Nivel 2"
+  titulo          String                   // Ej: "Novato del Estilo", "Gran Maestro"
+  descripcion     String?                  // Descripción del rango o nivel
+  xpRequerida     Int                      @default(0) // Puntos de XP global necesarios para alcanzar el nivel
+  orden           Int                      @default(1) // Orden de la progresión para evitar ordenamientos costosos por XP
+  version         String                   @default("1.0.0") // Control de versiones para evitar romper lógica de usuarios antiguos
+  activo          Boolean                  @default(true) // Permite desactivar niveles sin eliminarlos de base de datos
+  beneficios      Json?                    // Metadatos únicamente para presentación en la UI (ej. [{ "icon": "crown", "text": "+5% XP" }])
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+  
+  Presentation    GlobalLevelPresentation?
+  Rewards         GlobalLevelReward[]
+  History         GlobalLevelHistory[]
+
+  @@unique([xpRequerida])
+  @@unique([orden])
+  @@index([activo, xpRequerida]) // Optimizado para la resolución dinámica de niveles activos
+}
+
+model GlobalLevelPresentation {
+  id            String      @id @default(cuid())
+  globalLevelId String      @unique
+  icono         String      @default("Award")
+  color         String      @default("#4f46e5")
+  imagen        String?     // URL de ilustración de fondo o Badge
+  tituloUi      String?     // Título formateado para la UI
+  descripcionUi String?     // Descripción formateada para la UI
+  metadatos     Json?       // Metadatos extras de presentación (ej. animaciones, efectos)
+
+  GlobalLevel   GlobalLevel @relation(fields: [globalLevelId], references: [id], onDelete: Cascade)
+}
+
+model GlobalLevelReward {
+  id            String         @id @default(cuid())
+  globalLevelId String
+  rewardId      String
+  orden         Int            @default(1) // Orden secuencial de ejecución de recompensas en este nivel
+
+  GlobalLevel   GlobalLevel    @relation(fields: [globalLevelId], references: [id], onDelete: Cascade)
+  Reward        RewardCatalog  @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+
+  @@unique([globalLevelId, rewardId])
+  @@index([globalLevelId])
+  @@index([rewardId])
+}
+
+model GlobalLevelHistory {
+  id                  String         @id @default(cuid())
+  userId              String
+  globalLevelId       String
+  seasonId            String?
+  xpAtUnlock          Int?           // XP exacta acumulada al momento de desbloquear el nivel
+  recompensasOtorgadas Json?          // Snapshot de las recompensas acreditadas al subir (ej. [{ action: "ADD_DIAMONDS", value: 200 }])
+  rewardVersion       String?        // Versión del catálogo de recompensas al momento del desbloqueo
+  eventType           String?        // Tipo de evento originario (ej. LEVEL_UP, QUEST_COMPLETED, ADMIN_GRANTED)
+  sourceEventId       String?        // ID del evento origen de auditoría (para trazabilidad completa)
+  walletTransactionId String?        // ID de la transacción Wallet de auditoría (para trazabilidad completa)
+  createdAt           DateTime       @default(now())
+
+  Usuario             Usuario        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  GlobalLevel         GlobalLevel    @relation(fields: [globalLevelId], references: [id], onDelete: Cascade)
+  Season              GlobalSeason?  @relation(fields: [seasonId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([globalLevelId])
+  @@index([seasonId])
+}
+
+model GlobalSeason {
+  id                 String             @id @default(cuid())
+  codigo             String             @unique // Código único de la temporada (ej. "S2026-01", "SUMMER-2027")
+  nombre             String             // Ej: "Temporada de la Furia"
+  descripcion        String?
+  fechaInicio        DateTime
+  fechaFin           DateTime
+  config             Json?              // Parámetros flexibles (multiplicadores de XP, bonos, descuentos, reglas estacionales)
+  version            String             @default("1.0.0") // Versión de reglas de la temporada
+  status             GlobalSeasonStatus @default(UPCOMING)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  
+  Leaderboards         Leaderboard[]
+  LevelHistory         GlobalLevelHistory[]
+  MissionPublications  MissionPublication[] // Nuevo sistema de misiones desacoplado
+}
+
+model DomainEvent {
+  id          String    @id @default(cuid())
+  aggregate   String    // Tipo de agregación, ej. "USER", "QUEST", "SEASON"
+  aggregateId String    // ID del agregado afectado
+  eventType   String    // Ej: "QUEST_COMPLETED", "XP_GRANTED"
+  payload     Json      // Datos completos del evento
+  status      String    @default("PENDING") // PENDING | PROCESSED | FAILED
+  errorLog    String?   // Detalle de errores si falló
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([aggregate, aggregateId])
+  @@index([eventType])
+}
+
+model QuestRule {
+  id           String      @id @default(cuid())
+  questId      String
+  triggerEvent String      // BOOKING_COMPLETED | CLIENT_REGISTERED | etc.
+  operador     String      // "GREATER_THAN" | "EQUALS" | etc.
+  campo        String      // "cantidad" | "monto"
+  valorMeta    String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  Quest        Quest       @relation(fields: [questId], references: [id], onDelete: Cascade)
+  Actions      QuestAction[]
+
+  @@index([questId])
+}
+
+model QuestAction {
+  id              String         @id @default(cuid())
+  ruleId          String
+  rewardCatalogId String?
+  actionType      String         // "ADD_DIAMONDS" | "SEND_WHATSAPP" | "ADD_XP"
+  parametros      Json?          // Parámetros dinámicos
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  Rule            QuestRule      @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  Reward          RewardCatalog? @relation(fields: [rewardCatalogId], references: [id], onDelete: SetNull)
+
+  @@index([ruleId])
+  @@index([rewardCatalogId])
+}
+
+model QuestTemplate {
+  id               String                 @id @default(cuid())
+  nombre           String
+  descripcion      String
+  icono            String                 @default("Award")
+  color            String                 @default("#ec4899")
+  
+  // Categorías y Etiquetas Múltiples (ej. ["BELLEZA", "SPA", "VETERINARIA"])
+  categorias       Json                   
+  tags             Json                   
+  
+  // Catálogo personalizado de cupones y premios para esta plantilla
+  coupons          Json?                  
+  rewards          Json?                  
+  
+  // Control de Versiones Semánticas (ej. "1.2.0")
+  versionSemantica String                 @default("1.0.0")
+  estado           TemplatePublishStatus  @default(BORRADOR)
+  origenTipo       TemplateSourceType     @default(BIBLIOTECA_OFICIAL)
+  esPredeterminada Boolean                @default(false)   // Recomendada en onboarding
+  featured         Boolean                @default(false)   // Destacado en Marketplace
+  
+  // Elementos Visuales y Monetización
+  coverImage       String?
+  thumbnail        String?
+  banner           String?
+  autor            String                 @default("Citiox")
+  empresa          String                 @default("Citiox")
+  licencia         String                 @default("Comercial")
+  gratuito         Boolean                @default(true)
+  precio           Float                  @default(0.0)
+  moneda           String                 @default("USD")
+
+  // Analytics Avanzados de Marketplace
+  installCount           Int              @default(0)
+  activeBusinesses       Int              @default(0)
+  usuariosActivos        Int              @default(0)       // Clientes finales participando
+  completionRate         Float            @default(0.0)     // Tasa de finalización
+  porcentajeAbandono     Float            @default(0.0)
+  averageCompletionDays  Float            @default(0.0)
+  rating                 Float            @default(5.0)
+  misionMasDificilId     String?
+  misionMasFacilId       String?
+  
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  Missions         QuestTemplateMission[]
+  InstalledBy      InstalledTemplate[]
+  Snapshots        InstalledTemplateSnapshot[]
+  Packs            QuestPackTemplate[]
+}
+
+model QuestTemplateMission {
+  id               String           @id @default(cuid())
+  templateId       String
+  nombre           String
+  descripcion      String
+  imagenUrl        String?
+  icono            String           @default("Award")
+  color            String           @default("#ec4899")
+  visible          Boolean          @default(true)
+  repetible        Boolean          @default(false)
+  limiteUsuario    Int              @default(1)
+  limiteGlobal     Int?
+  fechaInicio      DateTime?
+  fechaFin         DateTime?
+  activa           Boolean          @default(true)
+  parentQuestId    String?
+  segmentacion     Json?            
+  validacionTipo   String           @default("AUTOMATICO")
+  
+  // Gamificación y Estimación de Tiempo
+  difficulty       QuestDifficulty  @default(MEDIUM)
+  xp               Int              @default(0)       // Experiencia que otorga
+  estimatedMinutes Int              @default(0)       // Tiempo estimado de completado
+  estimatedDays    Int              @default(0)
+  
+  triggerEvent     String           
+  servicioId       String?
+  montoMinimo      Float?
+  cantidadMeta     Int              @default(1)
+  condicionesExtra Json?
+  acciones         Json
+
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  Template         QuestTemplate    @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@index([triggerEvent])
+}
+
+model InstalledTemplate {
+  id               String               @id @default(cuid())
+  negocioId        String
+  templateId       String
+  versionInstalada String               // Ej. "1.1.0"
+  estadoActualizacion TemplateUpdateStatus @default(UP_TO_DATE)
+  installedAt      DateTime             @default(now())
+  reinstalledAt    DateTime?
+
+  Negocio          Negocio              @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Template         QuestTemplate        @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([negocioId, templateId])
+}
+
+model InstalledTemplateSnapshot {
+  id           String        @id @default(cuid())
+  negocioId    String
+  templateId   String
+  versionCopy  String        // Versión guardada
+  
+  // Respaldo JSON completo de la plantilla y sus misiones al momento de la instalación.
+  snapshotData Json          
+  
+  installedAt  DateTime      @default(now())
+
+  Negocio      Negocio       @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Template     QuestTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([negocioId])
+}
+
+model QuestPack {
+  id          String   @id @default(cuid())
+  nombre      String
+  descripcion String
+  icono       String   @default("Briefcase")
+  color       String   @default("#10b981")
+  gratuito    Boolean  @default(true)
+  precio      Float    @default(0.0)
+  moneda      String   @default("USD")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  Templates   QuestPackTemplate[]
+}
+
+model QuestPackTemplate {
+  id         String        @id @default(cuid())
+  packId     String
+  templateId String
+
+  Pack       QuestPack     @relation(fields: [packId], references: [id], onDelete: Cascade)
+  Template   QuestTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([packId, templateId])
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  nombre      String   // Ej: "Primer Cliente", "100 Reservas"
+  descripcion String
+  icono       String   @default("Award")
+  color       String   @default("#f59e0b")
+  tipoTarget  String   // "NEGOCIO" | "USUARIO"
+  condiciones Json     // Reglas para desbloquear
+  puntosXP    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  UsersAchievements    UserAchievement[]
+  BusinessAchievements BusinessAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  achievementId String
+  userId        String
+  desbloqueadoAt DateTime   @default(now())
+
+  Achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  Usuario       Usuario     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([achievementId, userId])
+}
+
+model BusinessAchievement {
+  id            String      @id @default(cuid())
+  achievementId String
+  negocioId     String
+  desbloqueadoAt DateTime   @default(now())
+
+  Achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  Negocio       Negocio     @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  @@unique([achievementId, negocioId])
+}
+
+// ==========================================
+// SISTEMA DE HERENCIA DEL CLUB CITIOX
+// Capa de adopción unificada. Un único modelo para todos los recursos globales.
+// Nunca duplica datos. Solo registra cómo cada negocio usa cada recurso global.
+// ==========================================
+
+enum BusinessInheritanceMode {
+  INHERITED   // Usa el recurso global de Citiox sin modificaciones
+  CUSTOMIZED  // Usa una versión local personalizada (Copy-On-Write)
+  DISABLED    // El recurso global no aplica para este negocio
+}
+
+enum InheritanceResource {
+  GLOBAL_LEVEL    // Referencia a GlobalLevel
+  GLOBAL_SEASON   // Referencia a GlobalSeason
+  REWARD          // Referencia a RewardCatalog
+  COUPON_TEMPLATE // Referencia a CouponTemplate
+}
+
+// ─── COUPON TEMPLATE ──────────────────────────────────────────────────────────
+// Catálogo global de plantillas de cupones. Administrado por Superadmin.
+// NO modifica el modelo Coupon local. Usa BusinessInheritance para control.
+// ──────────────────────────────────────────────────────────────────────────────
+model CouponTemplate {
+  id          String   @id @default(cuid())
+  nombre      String
+  descripcion String
+  config      Json     // { tipo: "PORCENTAJE" | "FIJO", valor: number, descripcion: string }
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ─── BUSINESS INHERITANCE ─────────────────────────────────────────────────────
+// Tabla única de herencia configurable.
+// Registra cómo cada negocio adopta los recursos globales del Club Citiox.
+// Extensible: basta con agregar un valor al enum InheritanceResource.
+// ──────────────────────────────────────────────────────────────────────────────
+model BusinessInheritance {
+  id           String                  @id @default(cuid())
+  negocioId    String
+  resourceType InheritanceResource
+  resourceId   String                  // ID del recurso global (GlobalLevel.id, GlobalSeason.id, etc.)
+  mode         BusinessInheritanceMode @default(INHERITED)
+  customId     String?                 // ID del recurso local si mode=CUSTOMIZED (LoyaltyLevel.id, etc.)
+  config       Json?                   // Configuración adicional o overrides de presentación
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  Negocio        Negocio         @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  @@unique([negocioId, resourceType, resourceId])
+  @@index([negocioId])
+  @@index([resourceType, resourceId])
+}
+
+// ==========================================
+// Módulo 3: Eventos Citiox para Clientes
+// ==========================================
+
+model ClientGlobalCampaign {
+  id             String        @id @default(cuid())
+  nombre         String        // Ej: "Navidad Citiox", "San Valentín"
+  descripcion    String
+  bannerUrl      String?
+  bannerColor    String?       @default("#4f46e5")
+  fechaInicio    DateTime
+  fechaFin       DateTime
+  activa         Boolean       @default(true)
+  prioridad      Int           @default(0)
+  reglas         Json          
+  recompensas    Json          
+  seasonId       String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  Season         Season?       @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  Participantes  ClientGlobalCampaignParticipation[]
+  Progress       ClientGlobalQuestProgress[]
+
+  @@index([seasonId])
+}
+
+model ClientGlobalCampaignParticipation {
+  id          String               @id @default(cuid())
+  campaignId  String
+  negocioId   String
+  participa   Boolean              @default(true)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  Campaign    ClientGlobalCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  Negocio     Negocio              @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, negocioId])
+}
+
+model ClientGlobalQuestProgress {
+  id              String               @id @default(cuid())
+  campaignId      String
+  negocioId       String
+  userId          String
+  progresoActual  Int                  @default(0)
+  completada      Boolean              @default(false)
+  recompensaDada  Boolean              @default(false)
+  fechaCompletada DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  Campaign        ClientGlobalCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  Negocio         Negocio              @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Usuario         Usuario              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, negocioId, userId])
+}
+
+// ==========================================
+// SISTEMA DE MISIONES CITIOX — NUEVA ARQUITECTURA DESACOPLADA
+// ==========================================
+// MissionDefinition = SOLO la definición (trigger, reglas, metadata)
+// MissionRewardDefinition = Recompensas Citiox (vía RewardCatalog)
+// MissionPublication = Cuándo y en qué temporada es visible
+// BusinessMission = Instalación del negocio + su propio premio
+// ==========================================
+
+enum MissionDefStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum MissionPublicationStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ENDED
+}
+
+enum BusinessMissionStatus {
+  PENDING_REWARD   // requiresBusinessReward=true y sin configurar
+  ACTIVE
+  PAUSED
+  ENDED
+}
+
+enum MissionCategory {
+  RESERVAS
+  REFERIDOS
+  PERFIL
+  APP
+  PAGOS
+  REVIEWS
+  LEALTAD
+  ESPECIAL
+}
+
+// ─── MISSION DEFINITION ───────────────────────────────────────────────────────
+// Contiene únicamente la definición de la misión.
+// NO contiene cashback, diamantes, cupones, productos ni servicios.
+// ──────────────────────────────────────────────────────────────────────────────
+model MissionDefinition {
+  id                    String            @id @default(cuid())
+  nombre                String
+  descripcion           String
+  imagenUrl             String?
+  categoria             MissionCategory   @default(RESERVAS)
+  dificultad            QuestDifficulty   @default(MEDIUM) // Reutiliza el enum existente
+  triggerEvent          String            // BOOKING_COMPLETED | USER_REGISTERED | etc.
+  cantidadMeta          Int               @default(1)      // Número de veces que debe ocurrir el trigger
+  condicionesExtra      Json?             // Rule Engine JSON — mismo formato que Quest.condicionesExtra
+  config                Json?             // Configuración adicional flexible
+  metadata              Json?             // Tags, keywords, notas internas
+  version               String            @default("1.0.0")
+  status                MissionDefStatus  @default(DRAFT)
+  requiresBusinessReward Boolean          @default(false)  // Si TRUE el negocio debe configurar su propio premio
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  Rewards               MissionRewardDefinition[]
+  Publications          MissionPublication[]
+  BusinessMissions      BusinessMission[]
+
+  @@index([status])
+  @@index([categoria])
+  @@index([triggerEvent])
+}
+
+// ─── MISSION REWARD DEFINITION ────────────────────────────────────────────────
+// Referencia a RewardCatalog. Sin lógica interna.
+// La lógica de ejecución vive en RewardHandlers del RewardDispatcher.
+// ──────────────────────────────────────────────────────────────────────────────
+model MissionRewardDefinition {
+  id                  String            @id @default(cuid())
+  missionDefinitionId String
+  rewardCatalogId     String
+  orden               Int               @default(1) // Orden de ejecución
+  createdAt           DateTime          @default(now())
+
+  MissionDefinition   MissionDefinition @relation(fields: [missionDefinitionId], references: [id], onDelete: Cascade)
+  RewardCatalog       RewardCatalog     @relation(fields: [rewardCatalogId], references: [id], onDelete: Cascade)
+
+  @@unique([missionDefinitionId, rewardCatalogId])
+  @@index([missionDefinitionId])
+  @@index([rewardCatalogId])
+}
+
+// ─── MISSION PUBLICATION ──────────────────────────────────────────────────────
+// Controla cuándo y dónde es visible la misión.
+// NO modifica MissionDefinition.
+// ──────────────────────────────────────────────────────────────────────────────
+model MissionPublication {
+  id                  String                  @id @default(cuid())
+  missionDefinitionId String
+  globalSeasonId      String?                 // Asociación opcional a una temporada
+  fechaInicio         DateTime?
+  fechaFin            DateTime?
+  status              MissionPublicationStatus @default(DRAFT)
+  prioridad           Int                     @default(0)
+  segmentacion        Json?                   // { minLevel: 2, tags: ["VIP"] }
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+
+  MissionDefinition   MissionDefinition  @relation(fields: [missionDefinitionId], references: [id], onDelete: Cascade)
+  GlobalSeason        GlobalSeason?      @relation(fields: [globalSeasonId], references: [id], onDelete: SetNull)
+
+  @@index([missionDefinitionId])
+  @@index([globalSeasonId])
+  @@index([status])
+}
+
+// ─── BUSINESS MISSION ─────────────────────────────────────────────────────────
+// Instalación de una MissionDefinition por parte de un negocio.
+// NUNCA copia la definición. Solo mantiene la referencia.
+// rewardConfiguration: Premio exclusivo del negocio (JSON flexible).
+//   Ej: { rewardType: "CASHBACK", value: 200 }
+//   Ej: { rewardType: "FREE_SERVICE", serviceId: "..." }
+// ──────────────────────────────────────────────────────────────────────────────
+model BusinessMission {
+  id                  String                @id @default(cuid())
+  missionDefinitionId String
+  negocioId           String
+  rewardConfiguration Json?                 // Premio local del negocio
+  status              BusinessMissionStatus @default(ACTIVE)
+  publishedAt         DateTime?
+  metadata            Json?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  MissionDefinition   MissionDefinition @relation(fields: [missionDefinitionId], references: [id], onDelete: Cascade)
+  Negocio             Negocio           @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Progress            BusinessMissionProgress[]
+
+  @@unique([missionDefinitionId, negocioId])
+  @@index([negocioId])
+  @@index([missionDefinitionId])
+  @@index([status])
+}
+
+// ─── BUSINESS MISSION PROGRESS ────────────────────────────────────────────────
+// Progreso de un cliente (usuario) en una BusinessMission instalada.
+// ──────────────────────────────────────────────────────────────────────────────
+model BusinessMissionProgress {
+  id                String          @id @default(cuid())
+  businessMissionId String
+  userId            String
+  progresoActual    Int             @default(0)
+  progresoRequerido Int             @default(1)
+  estado            String          @default("EN_PROGRESO") // EN_PROGRESO | COMPLETADA | RECOMPENSADA
+  recompensaDada    Boolean         @default(false)
+  fechaCompletada   DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  BusinessMission   BusinessMission @relation(fields: [businessMissionId], references: [id], onDelete: Cascade)
+  Usuario           Usuario         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([businessMissionId, userId])
+  @@index([businessMissionId])
+  @@index([userId])
+}
+
+model CategoriaProducto {
+  id         String     @id @default(uuid())
+  nombre     String
+  activo     Boolean    @default(true)
+  orden      Int        @default(0)
+  negocioId  String
+  negocio    Negocio    @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  productos  Producto[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([negocioId])
+}
+
+model Producto {
+  id          String             @id @default(uuid())
+  nombre      String
+  descripcion String?
+  precio      Float
+  imagenUrl   String?
+  activo      Boolean            @default(true)
+  stock       Int?               // Opcional para control de stock
+  orden       Int                @default(0)
+  negocioId   String
+  categoriaId String?
+  negocio     Negocio            @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  categoria   CategoriaProducto? @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  items       PedidoItem[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([negocioId])
+  @@index([categoriaId])
+}
+
+model Pedido {
+  id                String       @id @default(uuid())
+  negocioId         String
+  numeroPedido      Int          // Número incremental por negocio
+  tipoEntrega       String       // "RETIRO" | "DOMICILIO"
+  nombreCliente     String
+  telefonoCliente   String
+  direccionCliente  String?
+  referenciaCliente String?
+  latitud           Float?
+  longitud          Float?
+  fechaEntrega      DateTime
+  franjaHoraria     String       // Ej: "9-11", "11-13", "14-16", "16-18"
+  subtotal          Float
+  costoEnvio        Float
+  total             Float
+  estado            String       @default("RECIBIDO") // "RECIBIDO" | "PREPARACION" | "LISTO" | "RUTA" | "ENTREGADO" | "CANCELADO"
+  notas             String?
+  negocio           Negocio      @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  items             PedidoItem[]
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([negocioId])
+}
+
+model PedidoItem {
+  id             String    @id @default(uuid())
+  pedidoId       String
+  productoId     String?
+  nombreProducto String
+  precioUnitario Float
+  cantidad       Int
+  pedido         Pedido    @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  producto       Producto? @relation(fields: [productoId], references: [id], onDelete: SetNull)
+
+  @@index([pedidoId])
+  @@index([productoId])
+}
 
 

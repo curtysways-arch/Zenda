@@ -37,7 +37,9 @@ export default function OnboardingWizard() {
         horarioApertura: '09:00',
         horarioCierre: '18:00',
         slug: '',
-        diasAtencion: [1, 2, 3, 4, 5, 6, 0] as number[]
+        diasAtencion: [1, 2, 3, 4, 5, 6, 0] as number[],
+        colorPrimario: '#ec4899',
+        colorSecundario: '#112117'
     });
 
     // Load initial data
@@ -65,7 +67,9 @@ export default function OnboardingWizard() {
                         horarioApertura: negocioData.horarioApertura || '09:00',
                         horarioCierre: negocioData.horarioCierre || '18:00',
                         slug: negocioData.slug || '',
-                        diasAtencion: negocioData.configuracion?.diasAtencion || [1, 2, 3, 4, 5, 6, 0]
+                        diasAtencion: negocioData.configuracion?.diasAtencion || [1, 2, 3, 4, 5, 6, 0],
+                        colorPrimario: negocioData.colorPrimario || '#ec4899',
+                        colorSecundario: negocioData.colorSecundario || '#112117'
                     }));
                 }
             } catch (e) {
@@ -277,36 +281,130 @@ function StepInfo({ data, setData, onNext }: any) {
 }
 
 function StepVisual({ data, setData, onNext, onPrev }: any) {
+    const PRESETS_COLOR_PRINCIPAL = [
+        { name: "Cian (CitiOx)", hex: "#06b6d4" },
+        { name: "Violeta Premium", hex: "#7C3AED" },
+        { name: "Azul Real", hex: "#2563EB" },
+        { name: "Rosa Cita", hex: "#EC4899" },
+        { name: "Terracota", hex: "#D97706" },
+        { name: "Dark Onyx", hex: "#1E293B" }
+    ];
+
+    const PRESETS_COLOR_SECUNDARIO = [
+        { name: "Hojas Oscuro", hex: "#112117" },
+        { name: "Berenjena Oscuro", hex: "#1a102f" },
+        { name: "Océano Profundo", hex: "#0b1528" },
+        { name: "Medianoche", hex: "#020617" },
+        { name: "Gris Carbón", hex: "#1e1e24" }
+    ];
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
                 <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter italic">Identidad Visual</h2>
-                <p className="text-slate-500 font-medium">Sube tu logo y un banner para que tu página luzca profesional. Si no tienes, generaremos unos geniales por defecto.</p>
+                <p className="text-slate-500 font-medium">Sube tu logo, banner y define tus colores de marca para personalizar la página de tus clientes.</p>
             </div>
 
             <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm space-y-8">
-                <div>
-                    <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-4">Logo del Negocio</label>
-                    <ImageUploader 
-                        category="logo"
-                        currentUrl={data.logoUrl}
-                        onUploadSuccess={(media) => setData({...data, logoUrl: media.url, logoMediaId: media.id})}
-                        onRemove={() => setData({...data, logoUrl: '', logoMediaId: ''})}
-                        label="Sube tu logo (1:1 recomendado)"
-                        aspect="square"
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-4">Logo del Negocio</label>
+                        <ImageUploader 
+                            category="logo"
+                            currentUrl={data.logoUrl}
+                            onUploadSuccess={(media) => setData({...data, logoUrl: media.url, logoMediaId: media.id})}
+                            onRemove={() => setData({...data, logoUrl: '', logoMediaId: ''})}
+                            label="Sube tu logo (1:1 recomendado)"
+                            aspect="square"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-4">Banner Principal</label>
+                        <ImageUploader 
+                            category="banner"
+                            currentUrl={data.bannerUrl}
+                            onUploadSuccess={(media) => setData({...data, bannerUrl: media.url, bannerMediaId: media.id})}
+                            onRemove={() => setData({...data, bannerUrl: '', bannerMediaId: ''})}
+                            label="Sube tu banner (16:9 recomendado)"
+                            aspect="landscape"
+                        />
+                    </div>
                 </div>
 
-                <div className="border-t border-slate-100 pt-8">
-                    <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-4">Banner Principal</label>
-                    <ImageUploader 
-                        category="banner"
-                        currentUrl={data.bannerUrl}
-                        onUploadSuccess={(media) => setData({...data, bannerUrl: media.url, bannerMediaId: media.id})}
-                        onRemove={() => setData({...data, bannerUrl: '', bannerMediaId: ''})}
-                        label="Sube tu banner (16:9 recomendado)"
-                        aspect="landscape"
-                    />
+                {/* Selección de colores corporativos */}
+                <div className="border-t border-slate-100 pt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Color Primario */}
+                    <div className="space-y-3 text-left">
+                        <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block">Color Principal (Marca/Botones)</label>
+                        <div className="flex gap-3">
+                            <input 
+                                type="color" 
+                                value={data.colorPrimario || '#ec4899'} 
+                                onChange={(e) => setData({ ...data, colorPrimario: e.target.value })} 
+                                className="w-16 h-12 bg-transparent border-0 outline-none rounded-xl cursor-pointer shrink-0"
+                            />
+                            <input 
+                                type="text" 
+                                value={data.colorPrimario || '#ec4899'} 
+                                onChange={(e) => setData({ ...data, colorPrimario: e.target.value })} 
+                                className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs uppercase font-bold text-slate-900"
+                            />
+                        </div>
+                        {/* Presets */}
+                        <div className="flex flex-wrap gap-2 pt-1">
+                            {PRESETS_COLOR_PRINCIPAL.map(p => (
+                                <button 
+                                    key={p.hex} 
+                                    type="button"
+                                    onClick={() => setData({ ...data, colorPrimario: p.hex })}
+                                    className="size-6 rounded-full border border-white/10 relative" 
+                                    style={{ backgroundColor: p.hex }}
+                                    title={p.name}
+                                >
+                                    {data.colorPrimario === p.hex && (
+                                        <div className="absolute inset-0 m-auto size-2 rounded-full bg-white shadow-sm" />
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Color Secundario */}
+                    <div className="space-y-3 text-left">
+                        <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block">Color Secundario (Barra inferior móvil)</label>
+                        <div className="flex gap-3">
+                            <input 
+                                type="color" 
+                                value={data.colorSecundario || '#112117'} 
+                                onChange={(e) => setData({ ...data, colorSecundario: e.target.value })} 
+                                className="w-16 h-12 bg-transparent border-0 outline-none rounded-xl cursor-pointer shrink-0"
+                            />
+                            <input 
+                                type="text" 
+                                value={data.colorSecundario || '#112117'} 
+                                onChange={(e) => setData({ ...data, colorSecundario: e.target.value })} 
+                                className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs uppercase font-bold text-slate-900"
+                            />
+                        </div>
+                        {/* Presets */}
+                        <div className="flex flex-wrap gap-2 pt-1">
+                            {PRESETS_COLOR_SECUNDARIO.map(p => (
+                                <button 
+                                    key={p.hex} 
+                                    type="button"
+                                    onClick={() => setData({ ...data, colorSecundario: p.hex })}
+                                    className="size-6 rounded-full border border-white/10 relative" 
+                                    style={{ backgroundColor: p.hex }}
+                                    title={p.name}
+                                >
+                                    {data.colorSecundario === p.hex && (
+                                        <div className="absolute inset-0 m-auto size-2 rounded-full bg-white shadow-sm" />
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -562,11 +660,13 @@ function StepHours({ data, setData, onPrev, onSubmit, saving }: any) {
 
 function StepSuccess({ data }: any) {
     const [publicUrl, setPublicUrl] = useState('');
+    const [adminUrl, setAdminUrl] = useState('');
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const slug = data.slug || data.nombre.toLowerCase().replace(/\s+/g, '-');
-            setPublicUrl(`https://href.li/?${window.location.origin}/${slug}`);
+            setPublicUrl(`${window.location.origin}/${slug}`);
+            setAdminUrl(`${window.location.origin}/login`);
         }
     }, [data]);
 
@@ -580,6 +680,8 @@ function StepSuccess({ data }: any) {
     if (data.telefono) completed++; // whatsapp
 
     const percentage = Math.round((completed / total) * 100);
+
+    const waMessageText = `🎉 *¡Felicitaciones!* Has completado con éxito la configuración inicial de *${data.nombre}* en *CitiOx*.\n\nAquí tienes tus accesos rápidos para consultarlos en cualquier momento:\n\n🌐 *Página Pública (Clientes):*\n${publicUrl}\n\n💻 *Panel de Control:* \n${adminUrl}\n\n¡Listo para recibir citas! ⚡`;
 
     return (
         <div className="space-y-8 animate-in zoom-in-95 duration-700 max-w-xl mx-auto text-center pt-10">
@@ -609,6 +711,19 @@ function StepSuccess({ data }: any) {
                     >
                         Ver mi página pública
                     </a>
+                    
+                    {data.telefono && (
+                        <a 
+                            href={`https://api.whatsapp.com/send?phone=${data.telefono.replace(/\D/g, "")}&text=${encodeURIComponent(waMessageText)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-95"
+                        >
+                            <svg className="size-4 fill-current shrink-0" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.968C16.69 1.97 14.221.945 11.602.945 6.166.945 1.742 5.315 1.738 10.745c-.002 1.706.452 3.374 1.312 4.844l-.995 3.635 3.725-.972zm12.39-7.234c-.33-.165-1.956-.965-2.256-1.074-.3-.11-.52-.165-.74.165-.22.33-.85 1.074-1.04 1.293-.19.22-.38.24-.71.075-.33-.165-1.393-.513-2.653-1.637-.98-.874-1.643-1.953-1.835-2.284-.19-.33-.02-.508.145-.672.15-.148.33-.385.495-.578.165-.19.22-.33.33-.55.11-.22.05-.412-.025-.577-.075-.165-.74-1.789-1.015-2.45-.27-.648-.54-.56-.74-.57l-.63-.01c-.22 0-.58.08-.88.412-.3.33-1.15 1.127-1.15 2.748 0 1.62 1.18 3.19 1.345 3.41.165.22 2.32 3.54 5.62 4.966.78.337 1.39.539 1.864.69.786.25 1.5.215 2.065.13.63-.095 1.956-.8 2.235-1.57.28-.77.28-1.43.195-1.57-.085-.14-.3-.22-.63-.385z"/></svg>
+                            Guardar datos por WhatsApp
+                        </a>
+                    )}
+
                     <Link href="/admin" className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2 shadow-lg">
                         Ir al Panel de Control <ChevronRight size={18} />
                     </Link>

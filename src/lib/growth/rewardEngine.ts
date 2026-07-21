@@ -29,30 +29,78 @@ export async function executeRewardActions(
                 }
                 
                 case 'CREATE_COUPON': {
-                    const couponCode = `QUEST-${questId.substring(0,4)}-${Math.random().toString(36).substring(2,7).toUpperCase()}`;
                     const valor = parseFloat(String(a.value.valor || 10));
                     const tipo = String(a.value.tipo || 'PORCENTAJE'); // PORCENTAJE | FIJO
+                    const vencimientoDias = parseInt(String(a.value.vencimientoDias || a.value.vencimiento || 30));
+                    const fechaExpiracion = vencimientoDias > 0 ? new Date(Date.now() + vencimientoDias * 24 * 60 * 60 * 1000) : null;
 
-                    // Crear cupón en BD
-                    const coupon = await prisma.coupon.create({
+                    // Generar código único de cupón individual para el cliente (ej. CTX-XXXXX)
+                    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                    let uniqueCode = '';
+                    let isUnique = false;
+                    for (let attempt = 0; attempt < 10; attempt++) {
+                        let tempCode = 'CTX-';
+                        for (let i = 0; i < 5; i++) {
+                            tempCode += chars.charAt(Math.floor(Math.random() * chars.length));
+                        }
+                        const check = await prisma.clientCoupon.findUnique({
+                            where: { codigo: tempCode }
+                        });
+                        if (!check) {
+                            uniqueCode = tempCode;
+                            isUnique = true;
+                            break;
+                        }
+                    }
+                    if (!isUnique) {
+                        uniqueCode = `CTX-${Date.now().toString().slice(-5)}`;
+                    }
+
+                    // Buscar o crear cupón maestro del negocio
+                    let couponId = a.value.couponId;
+                    let coupon = null;
+                    if (couponId) {
+                        coupon = await prisma.coupon.findUnique({ where: { id: couponId } });
+                    }
+                    if (!coupon) {
+                        // Buscar si ya existe un cupón maestro de misión para este negocio
+                        const masterCode = `MISION-${questId.substring(0,8)}`.toUpperCase();
+                        coupon = await prisma.coupon.findFirst({
+                            where: { negocioId, codigo: masterCode }
+                        });
+                        if (!coupon) {
+                            coupon = await prisma.coupon.create({
+                                data: {
+                                    negocioId,
+                                    codigo: masterCode,
+                                    tipo,
+                                    valor,
+                                    descripcion: `Cupón base para la misión: ${questName}`,
+                                    usosActuales: 0,
+                                    activa: true
+                                }
+                            });
+                        }
+                    }
+
+                    // Crear el ClientCoupon individual para el usuario
+                    const clientCoupon = await prisma.clientCoupon.create({
                         data: {
                             negocioId,
-                            codigo: couponCode,
-                            tipo,
-                            valor,
-                            descripcion: `Recompensa por completar la misión: ${questName}`,
-                            usosActuales: 0,
-                            maxUsos: 1,
-                            maxUsosPorCliente: 1,
-                            activa: true
-                        }
-                    });
-
-                    // Registrar uso del cupón asignado al usuario
-                    await prisma.couponUsage.create({
-                        data: {
+                            clienteId: userId,
                             couponId: coupon.id,
-                            userId
+                            questId: questId,
+                            sourceType: 'QUEST',
+                            sourceId: questId,
+                            estado: 'DISPONIBLE',
+                            codigo: uniqueCode,
+                            codigoOriginal: coupon.codigo,
+                            nombre: questName,
+                            descripcion: `Ganado en misión: ${questName}`,
+                            descuento: valor,
+                            tipo,
+                            fechaAsignacion: new Date(),
+                            fechaExpiracion
                         }
                     });
 
@@ -63,7 +111,7 @@ export async function executeRewardActions(
                         tipo: 'PREMIO',
                         categoria: 'CUPONES',
                         titulo: '🎁 ¡Cupón de Regalo Ganado!',
-                        descripcion: `Completaste la misión "${questName}" y ganaste un cupón de ${tipo === 'PORCENTAJE' ? `${valor}%` : `$${valor}`} de descuento. Código: ${couponCode}`,
+                        descripcion: `Completaste la misión "${questName}" y ganaste un cupón de ${tipo === 'PORCENTAJE' ? `${valor}%` : `$${valor}`} de descuento. Código: ${uniqueCode}`,
                         icono: 'Ticket',
                         prioridad: 'SUCCESS',
                         recipientType: 'USER',
@@ -207,7 +255,7 @@ export async function executeRewardActions(
                             data: {
                                 negocioId,
                                 nombre: name,
-                                costoPuntos: 0,
+                                costoPuntos: 200,
                                 tipo: 'PRODUCTO',
                                 deliveryType: deliveryType === 'MANUAL' ? 'MANUAL' : 'AUTOMATICO',
                                 recompensaImagenUrl,
@@ -219,6 +267,8 @@ export async function executeRewardActions(
 
                     const claimCode = deliveryType === 'MANUAL' ? await generateUniqueClaimCode(prisma) : null;
                     const estado = deliveryType === 'MANUAL' ? 'PENDIENTE_ENTREGA' : 'DISPONIBLE';
+                    const vencimientoDias = parseInt(String(a.value?.vencimientoDias || a.value?.vencimiento || 30));
+                    const fechaExpiracion = vencimientoDias > 0 ? new Date(Date.now() + vencimientoDias * 24 * 60 * 60 * 1000) : null;
 
                     // Crear la redención
                     await prisma.loyaltyRedemption.create({
@@ -226,6 +276,8 @@ export async function executeRewardActions(
                             negocioId,
                             userId,
                             rewardId: reward.id,
+                            questId,
+                            fechaExpiracion,
                             estado: estado as any,
                             claimCode,
                             notas: `Recompensa por completar misión: ${questName}`
@@ -264,7 +316,7 @@ export async function executeRewardActions(
                             data: {
                                 negocioId,
                                 nombre: name,
-                                costoPuntos: 0,
+                                costoPuntos: 500,
                                 tipo: 'SERVICIO_GRATIS',
                                 deliveryType: deliveryType === 'MANUAL' ? 'MANUAL' : 'AUTOMATICO',
                                 serviceId,
@@ -277,6 +329,8 @@ export async function executeRewardActions(
 
                     const claimCode = deliveryType === 'MANUAL' ? await generateUniqueClaimCode(prisma) : null;
                     const estado = deliveryType === 'MANUAL' ? 'PENDIENTE_ENTREGA' : 'DISPONIBLE';
+                    const vencimientoDias = parseInt(String(a.value?.vencimientoDias || a.value?.vencimiento || 30));
+                    const fechaExpiracion = vencimientoDias > 0 ? new Date(Date.now() + vencimientoDias * 24 * 60 * 60 * 1000) : null;
 
                     // Crear la redención
                     await prisma.loyaltyRedemption.create({
@@ -284,6 +338,8 @@ export async function executeRewardActions(
                             negocioId,
                             userId,
                             rewardId: reward.id,
+                            questId,
+                            fechaExpiracion,
                             estado: estado as any,
                             claimCode,
                             notas: `Recompensa por completar misión: ${questName}`
@@ -320,7 +376,7 @@ export async function executeRewardActions(
                             data: {
                                 negocioId,
                                 nombre: `Cashback de $${monto}`,
-                                costoPuntos: 0,
+                                costoPuntos: 150,
                                 tipo: 'CASHBACK',
                                 deliveryType: 'AUTOMATICO',
                                 valor: String(monto),
@@ -335,6 +391,7 @@ export async function executeRewardActions(
                             negocioId,
                             userId,
                             rewardId: reward.id,
+                            questId,
                             estado: 'CANJEADO',
                             notas: `Acreditado automáticamente $${monto} de cashback por la misión: ${questName}`
                         }

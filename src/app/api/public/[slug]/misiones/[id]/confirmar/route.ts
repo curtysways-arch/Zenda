@@ -64,15 +64,15 @@ export async function POST(
                 return;
             }
 
-            // Crear o actualizar a COMPLETADA
+            // Crear o actualizar (repetible vuelve a 0 y EN_PROGRESO)
             if (!progress) {
                 await tx.questProgress.create({
                     data: {
                         questId,
                         userId,
-                        progresoActual: quest.cantidadMeta,
+                        progresoActual: quest.repetible ? 0 : quest.cantidadMeta,
                         progresoRequerido: quest.cantidadMeta,
-                        estado: 'COMPLETADA',
+                        estado: quest.repetible ? 'EN_PROGRESO' : 'COMPLETADA',
                         fechaCompletada: new Date()
                     }
                 });
@@ -80,8 +80,8 @@ export async function POST(
                 await tx.questProgress.update({
                     where: { id: progress.id },
                     data: {
-                        progresoActual: quest.cantidadMeta,
-                        estado: 'COMPLETADA',
+                        progresoActual: quest.repetible ? 0 : quest.cantidadMeta,
+                        estado: quest.repetible ? 'EN_PROGRESO' : 'COMPLETADA',
                         fechaCompletada: new Date()
                     }
                 });

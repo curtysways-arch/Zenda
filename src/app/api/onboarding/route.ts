@@ -2,6 +2,8 @@ import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { whatsappService } from '@/lib/whatsapp';
+import { TemplateService } from '@/lib/services/templateService';
 
 export async function POST(req: Request) {
     try {
@@ -14,7 +16,7 @@ export async function POST(req: Request) {
         const body = await req.json();
         const {
             nombre, descripcion, telefono, direccion, ciudad, // Step 1
-            logoUrl, bannerUrl, // Step 2
+            logoUrl, bannerUrl, colorPrimario, colorSecundario, // Step 2
             tipoNegocio, // Step 3
             servicioNombre, servicioDuracion, servicioPrecio, servicioDescripcion, servicioImageUrl, servicioImageMediaId, // Step 4
             horarioApertura, horarioCierre, // Step 5
@@ -24,7 +26,7 @@ export async function POST(req: Request) {
         // Fetch current negocio to get current configuracion
         const currentNegocio = await prisma.negocio.findUnique({
             where: { id: negocioId },
-            select: { configuracion: true, logoUrl: true, nombre: true }
+            select: { configuracion: true, logoUrl: true, nombre: true, slug: true, whatsapp: true }
         });
 
         if (!currentNegocio) {
@@ -54,6 +56,8 @@ export async function POST(req: Request) {
             if (direccion) dataToUpdate.direccion = direccion;
             if (ciudad) dataToUpdate.ciudad = ciudad;
             if (logoUrl) dataToUpdate.logoUrl = logoUrl;
+            if (colorPrimario) dataToUpdate.colorPrimario = colorPrimario;
+            if (colorSecundario) dataToUpdate.colorSecundario = colorSecundario;
             if (horarioApertura) dataToUpdate.horarioApertura = horarioApertura;
             if (horarioCierre) dataToUpdate.horarioCierre = horarioCierre;
 
@@ -62,10 +66,35 @@ export async function POST(req: Request) {
                 data: dataToUpdate
             });
 
-            // Note: Since Prisma's update might not handle some fields directly if the schema cache is stale,
-            // but these fields (nombre, whatsapp, direccion, logoUrl, horarioApertura, horarioCierre, configuracion, ciudad) 
-            // are mostly standard or JSON. ciudad might need raw update if it's not in schema.
-            // Let's check if ciudad exists in schema. It does (line 284).
+            // 1.5. Instalar automáticamente la plantilla predeterminada del sector seleccionado
+            if (tipoNegocio) {
+                try {
+                    await TemplateService.installDefaultTemplateForBusiness(negocioId, tipoNegocio, tx);
+                } catch (templateErr: any) {
+                    console.error('[Onboarding] Error al instalar plantilla automática:', templateErr.message);
+                }
+            }
+
+            // 1.6. Sincronizar e instalar automáticamente todas las misiones globales centrales publicadas
+            try {
+                const publishedMissions = await tx.missionDefinition.findMany({
+                    where: { status: 'PUBLISHED' }
+                });
+                for (const m of publishedMissions) {
+                    const status = m.requiresBusinessReward ? 'PENDING_REWARD' : 'ACTIVE';
+                    await tx.businessMission.create({
+                        data: {
+                            missionDefinitionId: m.id,
+                            negocioId,
+                            status,
+                            publishedAt: status === 'ACTIVE' ? new Date() : null,
+                        }
+                    });
+                }
+                console.log(`[Onboarding] Auto-instaladas ${publishedMissions.length} misiones globales en el negocio.`);
+            } catch (err: any) {
+                console.error('[Onboarding] Error al auto-instalar misiones globales:', err.message);
+            }
 
             // 2. Create first service if provided
             if (servicioNombre) {
@@ -144,6 +173,23 @@ export async function POST(req: Request) {
                 }
             }
         });
+
+        // Enviar mensaje de WhatsApp automático con enlaces
+        try {
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://citiox.com';
+            const publicLink = `${appUrl}/${currentNegocio.slug || ''}`;
+            const adminLink = `${appUrl}/login`;
+            const targetPhone = telefono || currentNegocio.whatsapp;
+
+            if (targetPhone) {
+                const waMessage = `🎉 *¡Felicitaciones!* Has completado con éxito la configuración inicial de *${nombre || currentNegocio.nombre}* en *CitiOx*.\n\nAquí tienes tus accesos rápidos:\n\n🌐 *Página Pública (Clientes):*\n${publicLink}\n\n💻 *Panel de Control:* \n${adminLink}\n\n¡Listo para recibir citas! ⚡`;
+                await whatsappService.sendWhatsApp(targetPhone, waMessage, true, 'general').catch(e => {
+                    console.error('Error enviando WhatsApp de onboarding:', e);
+                });
+            }
+        } catch (waErr) {
+            console.error('Error en proceso de envío de WhatsApp onboarding:', waErr);
+        }
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

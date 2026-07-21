@@ -62,14 +62,19 @@ export async function PATCH(
                 }
             });
 
-            // Enviar WhatsApp de confirmación de entrega de premio por puntos
-            if (isDelivered && updatedRed.Usuario?.phone) {
+            // Enviar WhatsApp de notificación según estado
+            if (updatedRed.Usuario?.phone) {
                 try {
-                    const staffName = updatedRed.Staff?.name ? ` por *${updatedRed.Staff.name}*` : "";
-                    const msg = `🎁 *¡Premio de Lealtad Entregado!* 🎁\n\nHola *${updatedRed.Usuario.nombre}*,\n\nConfirmamos la entrega física de tu premio:\n🏆 *"${updatedRed.Reward.nombre}"* (Canjeado por ${updatedRed.Reward.costoPuntos} pts)\n🏢 En: *${loyaltyRedemption.Negocio.nombre}*${staffName}.\n\n¡Gracias por tu preferencia! Sigue acumulando puntos en cada cita. 🚀`;
-                    await whatsappService.sendWhatsApp(updatedRed.Usuario.phone, msg, true, 'recompensa_entregada');
+                    if (isDelivered) {
+                        const staffName = updatedRed.Staff?.name ? ` por *${updatedRed.Staff.name}*` : "";
+                        const msg = `🎁 *¡Premio de Lealtad Entregado!* 🎁\n\nHola *${updatedRed.Usuario.nombre}*,\n\nConfirmamos la entrega física de tu premio:\n🏆 *"${updatedRed.Reward.nombre}"* (Canjeado por ${updatedRed.Reward.costoPuntos} pts)\n🏢 En: *${loyaltyRedemption.Negocio.nombre}*${staffName}.\n\n¡Gracias por tu preferencia! Sigue acumulando puntos en cada cita. 🚀`;
+                        await whatsappService.sendWhatsApp(updatedRed.Usuario.phone, msg, true, 'recompensa_entregada');
+                    } else if (estado === 'LISTO_PARA_RETIRAR') {
+                        const msg = `🎁 *¡Tu Premio está Listo para Retirar!* 🎁\n\nHola *${updatedRed.Usuario.nombre}*,\n\nTe informamos que tu premio:\n🏆 *"${updatedRed.Reward.nombre}"*\nya está preparado y listo para retirar en la recepción de *${loyaltyRedemption.Negocio.nombre}*. ¡Te esperamos! 🚀`;
+                        await whatsappService.sendWhatsApp(updatedRed.Usuario.phone, msg, true, 'recompensa_lista');
+                    }
                 } catch (err) {
-                    console.error("[Puntos] Error al enviar WhatsApp de entrega:", err);
+                    console.error("[Puntos] Error al enviar WhatsApp:", err);
                 }
             }
 
@@ -125,14 +130,19 @@ export async function PATCH(
             }
         });
 
-        // Enviar notificación al cliente de que se entregó su premio de referido
-        if (isDelivered && updated.Usuario?.phone) {
+        // Enviar WhatsApp de notificación según estado
+        if (updated.Usuario?.phone) {
             try {
-                const staffName = updated.Staff?.name ? ` por *${updated.Staff.name}*` : "";
-                const msg = `🎁 *¡Premio Canjeado con Éxito!* 🎁\n\nHola *${updated.Usuario.nombre}*,\n\nConfirmamos la entrega de tu premio:\n🏆 *"${updated.Campaign.valorRecompensa}"*\n🏢 En: *${reward.Negocio.nombre}*${staffName}.\n\n¡Gracias por seguir recomendándonos! Sigue compartiendo tu enlace para ganar más premios. 🚀`;
-                await whatsappService.sendWhatsApp(updated.Usuario.phone, msg, true, 'recompensa_entregada');
+                if (isDelivered) {
+                    const staffName = updated.Staff?.name ? ` por *${updated.Staff.name}*` : "";
+                    const msg = `🎁 *¡Premio Canjeado con Éxito!* 🎁\n\nHola *${updated.Usuario.nombre}*,\n\nConfirmamos la entrega de tu premio:\n🏆 *"${updated.Campaign.valorRecompensa}"*\n🏢 En: *${reward.Negocio.nombre}*${staffName}.\n\n¡Gracias por seguir recomendándonos! Sigue compartiendo tu enlace para ganar más premios. 🚀`;
+                    await whatsappService.sendWhatsApp(updated.Usuario.phone, msg, true, 'recompensa_entregada');
+                } else if (estado === 'LISTO_PARA_RETIRAR') {
+                    const msg = `🎁 *¡Tu Premio está Listo para Retirar!* 🎁\n\nHola *${updated.Usuario.nombre}*,\n\nTe informamos que tu premio:\n🏆 *"${updated.Campaign.valorRecompensa}"*\nya está preparado y listo para retirar en la recepción de *${reward.Negocio.nombre}*. ¡Te esperamos! 🚀`;
+                    await whatsappService.sendWhatsApp(updated.Usuario.phone, msg, true, 'recompensa_lista');
+                }
             } catch (err) {
-                console.error("[Referidos] Error al enviar WhatsApp de entrega:", err);
+                console.error("[Referidos] Error al enviar WhatsApp:", err);
             }
         }
 

@@ -24,7 +24,7 @@ export default async function QuestEstadoPage({
     return (
         <main className="min-h-screen bg-slate-50/60 pb-24 select-none">
             {/* Header de navegación */}
-            <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-slate-100/50 px-6 py-4 flex items-center justify-between z-30">
+            <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-slate-100/50 px-[5px] py-4 flex items-center justify-between z-30">
                 <Link 
                     href={`/${slug}/misiones`}
                     className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 active:scale-95 transition-transform border-0 cursor-pointer"
@@ -38,7 +38,7 @@ export default async function QuestEstadoPage({
             </header>
 
             {/* Contenido interactivo */}
-            <div className="max-w-md mx-auto px-6 pt-6">
+            <div className="max-w-md mx-auto px-[5px] pt-4">
                 <QuestEstadoClient 
                     slug={slug} 
                     primaryColor={primaryColor} 

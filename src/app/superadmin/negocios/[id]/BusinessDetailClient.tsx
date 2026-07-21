@@ -29,7 +29,9 @@ import {
     X,
     FileText,
     Upload,
-    Eye
+    Eye,
+    Crown,
+    Calendar
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
@@ -43,7 +45,7 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
     const searchParams = useSearchParams();
     const tabParam = searchParams.get('tab');
 
-    const [activeTab, setActiveTab] = useState<'info' | 'subscription' | 'payments'>('info');
+    const [activeTab, setActiveTab] = useState<'info' | 'subscription' | 'payments' | 'loyalty'>('info');
 
     const [resetPasswordModal, setResetPasswordModal] = useState<{
         show: boolean;
@@ -129,6 +131,65 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
     });
 
     const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
+
+    // Loyalty Season states
+    const [loyaltySeason, setLoyaltySeason] = useState<any>(null);
+    const [loyaltyHistory, setLoyaltyHistory] = useState<any[]>([]);
+    const [loadingLoyalty, setLoadingLoyalty] = useState(false);
+    const [restartingLoyalty, setRestartingLoyalty] = useState(false);
+    const [loyaltyDuracionMeses, setLoyaltyDuracionMeses] = useState(3);
+    const [loyaltyDescuentoDiamantes, setLoyaltyDescuentoDiamantes] = useState(100);
+
+    const fetchLoyaltyData = async () => {
+        try {
+            setLoadingLoyalty(true);
+            const res = await fetch(`/api/admin/loyalty/seasons?negocioId=${negocio.id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setLoyaltySeason(data.season || null);
+                setLoyaltyHistory(data.history || []);
+                if (data.season) {
+                    setLoyaltyDuracionMeses(data.season.duracionMeses || 3);
+                    setLoyaltyDescuentoDiamantes(data.season.descuentoDiamantes || 100);
+                }
+            }
+        } catch (err) {
+            console.error("Error loading loyalty season details:", err);
+        } finally {
+            setLoadingLoyalty(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'loyalty') {
+            fetchLoyaltyData();
+        }
+    }, [activeTab]);
+
+    const handleSuperadminRestartSeason = async () => {
+        if (!confirm("⚠️ ¡CONFIRMACIÓN DE SUPERADMIN! ¿Estás seguro de reiniciar la temporada de fidelidad para este negocio de forma forzada?\n1. Se aplicará el descuento de diamantes a los clientes.\n2. Se actualizarán los niveles locales.\n3. Se dará inicio a una temporada nueva en el Spa.")) return;
+        try {
+            setRestartingLoyalty(true);
+            const res = await fetch(`/api/superadmin/negocios/${negocio.id}/reinicio-temporada`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    duracionMeses: loyaltyDuracionMeses, 
+                    descuentoDiamantes: loyaltyDescuentoDiamantes 
+                })
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error(data.error || "Error al reiniciar temporada");
+
+            setSuccess(data.message || "Temporada reiniciada con éxito.");
+            fetchLoyaltyData();
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setRestartingLoyalty(false);
+        }
+    };
 
     const router = useRouter();
 
@@ -352,6 +413,16 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                 >
                     <History size={16} />
                     Historial y Pagos
+                </button>
+                <button
+                    onClick={() => setActiveTab('loyalty')}
+                    className={`px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'loyalty'
+                        ? 'bg-white text-indigo-600 shadow-sm'
+                        : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+                        }`}
+                >
+                    <Crown size={16} />
+                    Fidelidad / Temporada
                 </button>
             </div>
 
@@ -905,6 +976,171 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                         </div>
                     </div>
                 )}
+
+                {activeTab === 'loyalty' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div className="lg:col-span-2 space-y-8">
+                            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8">
+                                <div className="flex items-center gap-4 border-b border-slate-50 pb-6 mb-8">
+                                    <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                                        <Crown size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-black text-slate-900 uppercase">Temporada de Lealtad</h3>
+                                        <p className="text-sm text-slate-400 font-bold uppercase tracking-widest italic">Estado y control de reinicios del Spa</p>
+                                    </div>
+                                </div>
+
+                                {loadingLoyalty ? (
+                                    <div className="text-center py-20">
+                                        <Loader2 className="animate-spin mx-auto text-indigo-600 mb-4" size={32} />
+                                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Cargando información de temporadas...</p>
+                                    </div>
+                                ) : !loyaltySeason ? (
+                                    <div className="text-center py-16 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200 p-8 space-y-6">
+                                        <Clock className="mx-auto text-slate-355" size={48} />
+                                        <div className="space-y-2">
+                                            <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Sin Temporada Activa</h4>
+                                            <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                                                Este negocio no tiene ninguna temporada de fidelización inicializada. Puedes iniciar la primera temporada de inmediato.
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-col sm:flex-row justify-center gap-4 max-w-sm mx-auto">
+                                            <div>
+                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest text-left mb-1.5 pl-1">Duración (Meses)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={loyaltyDuracionMeses} 
+                                                    onChange={e => setLoyaltyDuracionMeses(Number(e.target.value))}
+                                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-250 text-xs font-bold text-slate-800 focus:outline-none"
+                                                    min={1} 
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest text-left mb-1.5 pl-1">Resta de Diamantes</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={loyaltyDescuentoDiamantes} 
+                                                    onChange={e => setLoyaltyDescuentoDiamantes(Number(e.target.value))}
+                                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-250 text-xs font-bold text-slate-800 focus:outline-none"
+                                                    min={0} 
+                                                />
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={handleSuperadminRestartSeason}
+                                            disabled={restartingLoyalty}
+                                            className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-lg shadow-indigo-600/20 active:scale-95 transition-all cursor-pointer"
+                                        >
+                                            {restartingLoyalty ? <Loader2 size={12} className="animate-spin inline mr-1" /> : null}
+                                            Inicializar Primera Temporada
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-6">
+                                        <div className="p-6 bg-slate-50 border border-slate-100 rounded-3xl space-y-4">
+                                            <div className="flex justify-between items-center pb-3 border-b border-slate-200/60">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Estado de Temporada</span>
+                                                <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase tracking-widest rounded-full">Activa</span>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4 text-xs">
+                                                <div>
+                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-0.5">Fecha Inicio</span>
+                                                    <span className="font-bold text-slate-800">{new Date(loyaltySeason.fechaInicio).toLocaleDateString()}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-0.5">Fecha Cierre / Próx. Reinicio</span>
+                                                    <span className="font-bold text-slate-800">{new Date(loyaltySeason.fechaFin).toLocaleDateString()}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-rose-50/50 border border-rose-100 rounded-3xl p-6 space-y-4">
+                                            <h4 className="text-xs font-black text-rose-800 uppercase tracking-tight flex items-center gap-2">
+                                                ⚠️ Acciones de Reinicio Forzado (Superadmin)
+                                            </h4>
+                                            <p className="text-[11px] text-rose-600 leading-relaxed">
+                                                Al reiniciar la temporada actual, se cerrará de inmediato. A todos los clientes con saldo o experiencia se les restará la cantidad de diamantes definida abajo y se recalculará su nivel de lealtad. Luego, se abrirá la siguiente temporada.
+                                            </p>
+                                            
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md">
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1 mb-1.5">Nueva Duración (Meses)</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={loyaltyDuracionMeses} 
+                                                        onChange={e => setLoyaltyDuracionMeses(Number(e.target.value))}
+                                                        className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-xs font-bold text-slate-800 bg-white focus:outline-none"
+                                                        min={1} 
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1 mb-1.5">Descuento de Diamantes</label>
+                                                    <input 
+                                                        type="number" 
+                                                        value={loyaltyDescuentoDiamantes} 
+                                                        onChange={e => setLoyaltyDescuentoDiamantes(Number(e.target.value))}
+                                                        className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-xs font-bold text-slate-800 bg-white focus:outline-none"
+                                                        min={0} 
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                onClick={handleSuperadminRestartSeason}
+                                                disabled={restartingLoyalty}
+                                                className="w-full sm:w-auto px-6 py-3.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all shadow-md cursor-pointer"
+                                            >
+                                                {restartingLoyalty ? <Loader2 size={12} className="animate-spin inline mr-1" /> : null}
+                                                Forzar Reinicio de Temporada
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="space-y-8">
+                            {/* Historial de Temporadas */}
+                            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8">
+                                <div className="flex items-center gap-4 border-b border-slate-50 pb-6 mb-6">
+                                    <div className="p-3 bg-slate-50 text-slate-500 rounded-2xl">
+                                        <History size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-black text-slate-900 uppercase">Historial</h3>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Temporadas pasadas</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {loyaltyHistory.length > 0 ? loyaltyHistory.map((h: any) => (
+                                        <div key={h.id} className="p-4 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-between">
+                                            <div>
+                                                <div className="text-xs font-black text-slate-800">
+                                                    Temporada {new Date(h.fechaInicio).toLocaleDateString()}
+                                                </div>
+                                                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                                                    Duración: {h.duracionMeses} meses · Restó: {h.descuentoDiamantes} 💎
+                                                </div>
+                                            </div>
+                                            <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${
+                                                h.activa ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-505'
+                                            }`}>
+                                                {h.activa ? 'Activa' : 'Cerrada'}
+                                            </span>
+                                        </div>
+                                    )) : (
+                                        <div className="text-center py-10 opacity-40">
+                                            <Calendar className="mx-auto mb-3" size={32} />
+                                            <p className="text-[10px] font-black uppercase tracking-widest">Sin historial de <br /> temporadas</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Modal de Pago Manual */}
@@ -1202,4 +1438,5 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
             )}
         </div>
     );
+
 }

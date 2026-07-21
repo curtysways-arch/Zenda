@@ -21,7 +21,7 @@ export async function PATCH(
         }
 
         const body = await req.json();
-        const { nombre, categoryId, tipo, duracion, precio, estaActivo, ubicacionId, extraInfo, imageMediaId, coverImageUrl } = body;
+        const { nombre, categoryId, tipo, duracion, precio, estaActivo, ubicacionId, extraInfo, imageMediaId, coverImageUrl, staffIds } = body;
 
         let resolvedImageMediaId = imageMediaId;
         if (coverImageUrl) {
@@ -54,7 +54,10 @@ export async function PATCH(
                     ...(extraInfo || {}),
                     categoryId: categoryId !== undefined ? (categoryId || null) : existingExtra.categoryId,
                     tipo: tipo !== undefined ? (tipo || null) : existingExtra.tipo
-                }
+                },
+                Staff: staffIds && Array.isArray(staffIds) ? {
+                    set: staffIds.map((id: string) => ({ id }))
+                } : undefined
             },
         });
 

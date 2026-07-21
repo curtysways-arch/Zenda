@@ -10,6 +10,7 @@ import { checkDemoRestriction } from '@/lib/demo-protection';
 import { sendWhatsAppMessage } from '@/lib/whatsapp-client';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { planService } from '@/lib/services/planService';
 
 export async function POST(
     req: Request,
@@ -30,6 +31,7 @@ export async function POST(
         const duracionBody = body.duracion; // puede ser en horas (1, 1.5) o indefinido
         const couponCode = body.couponCode?.trim().toUpperCase() || null;
         const rewardId = body.rewardId || null;
+        const cashbackApplied = Number(body.cashbackApplied) || 0;
 
         if (!clienteTelefono || !horaInicio || !fecha || !serviceId) {
             return NextResponse.json({ error: 'Faltan datos obligatorios' }, { status: 400 });
@@ -278,11 +280,49 @@ export async function POST(
                         include: { Campaign: true }
                     });
 
-                    if (referralCampaignReward && referralCampaignReward.Campaign.rewardType === 'SERVICIO_GRATIS' && referralCampaignReward.Campaign.serviceId === serviceId) {
+                    if (referralCampaignReward && 
+                        (referralCampaignReward.Campaign.rewardType === 'SERVICIO_GRATIS' || referralCampaignReward.Campaign.rewardType === 'SERVICIO') && 
+                        referralCampaignReward.Campaign.serviceId === serviceId) {
                         appliedRewardRecord = referralCampaignReward;
                         appliedRewardType = 'REFERIDO';
                         totalFinal = 0;
                     }
+                }
+            }
+
+            // Validar y aplicar descuento por Cashback si se solicitó
+            let finalCashbackDescuento = 0;
+            if (cashbackApplied > 0) {
+                const pointsRecord = await tx.userPoints.findUnique({
+                    where: { userId_negocioId: { userId: usuario.id, negocioId: negocio.id } }
+                });
+                const cashbackDisponible = pointsRecord?.cashback || 0.0;
+                
+                // Limitar el cashback aplicado al saldo real disponible
+                finalCashbackDescuento = Math.min(cashbackApplied, cashbackDisponible);
+                
+                if (finalCashbackDescuento > 0) {
+                    // Descontar cashback del monedero del usuario
+                    await tx.userPoints.update({
+                        where: { userId_negocioId: { userId: usuario.id, negocioId: negocio.id } },
+                        data: {
+                            cashback: {
+                                decrement: finalCashbackDescuento
+                            }
+                        }
+                    });
+
+                    // Registrar movimiento en el historial
+                    await tx.pointsHistory.create({
+                        data: {
+                            id: crypto.randomUUID(),
+                            userId: usuario.id,
+                            negocioId: negocio.id,
+                            puntos: 0,
+                            concepto: 'CASHBACK_USADO',
+                            notas: `Descuento de $${finalCashbackDescuento.toFixed(2)} de saldo cashback aplicado a la cita.`
+                        }
+                    });
                 }
             }
 
@@ -292,9 +332,12 @@ export async function POST(
                 horaFin: String(horaFin),
                 duracion: Math.ceil(totalDuracionMinutos),
                 total: totalFinal,
+                precioOriginal: service.precio || 0,
+                descuentoAplicado: finalCashbackDescuento + (couponApplied ? (couponApplied.descuento || couponApplied.valor || 0) : 0),
                 comentarios: comentariosFinales + 
                     (couponApplied ? `\n🎟️ Cupón aplicado: ${couponApplied.codigo}` : '') +
-                    (appliedRewardRecord ? `\n🏆 Premio aplicado: Servicio Gratis` : ''),
+                    (appliedRewardRecord ? `\n🏆 Premio aplicado: Servicio Gratis` : '') +
+                    (finalCashbackDescuento > 0 ? `\n💵 Cashback aplicado: -$${finalCashbackDescuento.toFixed(2)}` : ''),
                 estado: estadoInicial,
                 expiresAt: expiresAt,
                 cliente: { connect: { id: cliente.id } },
@@ -447,6 +490,14 @@ export async function POST(
         }
 
         const reservaCreated = result.reserva;
+        
+        // Verificar si se debe activar la suscripción del negocio
+        try {
+            await planService.checkAndActivateSubscription(negocio.id);
+        } catch (actErr) {
+            console.error('Error al activar la suscripción en reservar:', actErr);
+        }
+
         console.log(`[PUSH-AUDIT][PASO 0A] Reserva creada exitosamente. ID=${reservaCreated.id} Estado=${reservaCreated.estado} negocioId=${negocio.id}`);
 
         // 3. Notificaciones (Segundo plano relativo)

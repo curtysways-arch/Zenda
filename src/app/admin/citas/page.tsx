@@ -29,6 +29,33 @@ import {
 import { clsx } from 'clsx';
 import MobileAgenda from '@/components/admin/mobile/MobileAgenda';
 import { useConfirm } from '@/components/admin/ConfirmContext';
+import { AgendaSyncService } from '@/lib/services/AgendaSyncService';
+
+function playNotificationSound() {
+    try {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.12); // A5
+        
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.start();
+        osc.stop(ctx.currentTime + 0.4);
+    } catch (e) {
+        console.warn('No se pudo reproducir el audio de notificación:', e);
+    }
+}
 
 function CitasAdminPageContent() {
     const { confirm } = useConfirm();
@@ -37,6 +64,8 @@ function CitasAdminPageContent() {
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState('active');
     const [searchQuery, setSearchQuery] = useState('');
+    const [highlightedCitas, setHighlightedCitas] = useState<Set<string>>(new Set());
+    const [toastMessage, setToastMessage] = useState<string | null>(null);
 
     const searchParams = useSearchParams();
     const querySearch = searchParams ? searchParams.get('search') : '';
@@ -94,24 +123,51 @@ function CitasAdminPageContent() {
         const color = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
         if (color) setPrimaryColor(color);
 
-        // 1. Escuchar actualizaciones en tiempo real (FCM push en foreground)
+        // Inicializar y conectar servicio de sincronización incremental (Polling 8s / FCM reactivo)
+        const syncService = new AgendaSyncService();
+        syncService.connect((updates) => {
+            setCitas((prevCitas) => {
+                const { merged, newAppointments, updatedAppointments } = AgendaSyncService.applyChanges(prevCitas, updates);
+                
+                // Si hay nuevas reservas
+                if (newAppointments.length > 0) {
+                    playNotificationSound();
+                    const clientNames = newAppointments.map(n => n.cliente?.nombre || 'Nuevo Cliente').join(', ');
+                    setToastMessage(clientNames);
+                    setTimeout(() => setToastMessage(null), 6000);
+                }
+
+                // Resaltar celdas/tarjetas que tuvieron cambios
+                const changedIds = [...newAppointments, ...updatedAppointments].map(c => c.id);
+                if (changedIds.length > 0) {
+                    setHighlightedCitas((prev) => {
+                        const next = new Set(prev);
+                        changedIds.forEach(id => next.add(id));
+                        return next;
+                    });
+                    setTimeout(() => {
+                        setHighlightedCitas((prev) => {
+                            const next = new Set(prev);
+                            changedIds.forEach(id => next.delete(id));
+                            return next;
+                        });
+                    }, 5000);
+                }
+
+                return merged;
+            });
+        });
+
+        // Escuchar notificaciones FCM y forzar sync incremental inmediato
         const handleFcmNotify = () => {
-            console.log('[REALTIME] Notificación push recibida en vivo, actualizando citas...');
-            fetchCitas();
+            console.log('[REALTIME] Notificación push recibida en vivo, sincronizando citas...');
+            syncService.sync();
         };
         window.addEventListener('fcm-notification-received', handleFcmNotify);
 
-        // 2. Polling inteligente de respaldo (cada 30 segundos, solo si la pestaña está activa)
-        const interval = setInterval(() => {
-            if (document.visibilityState === 'visible') {
-                console.log('[REALTIME] Polling de respaldo: actualizando citas...');
-                fetchCitas();
-            }
-        }, 30000);
-
         return () => {
+            syncService.disconnect();
             window.removeEventListener('fcm-notification-received', handleFcmNotify);
-            clearInterval(interval);
         };
     }, []);
 
@@ -148,7 +204,10 @@ function CitasAdminPageContent() {
                 method: 'PATCH',
                 body: JSON.stringify({ estado: 'confirmed' })
             });
-            if (res.ok) await fetchCitas();
+            if (res.ok) {
+                // Actualizar de forma reactiva e instantánea el estado local
+                setCitas(prev => prev.map(c => c.id === id ? { ...c, estado: 'confirmed', updatedAt: new Date().toISOString() } : c));
+            }
         } catch (e) {} finally {
             setIsUpdatingStatus(false);
         }
@@ -167,7 +226,10 @@ function CitasAdminPageContent() {
                 method: 'PATCH',
                 body: JSON.stringify({ estado: 'cancelled' })
             });
-            if (res.ok) await fetchCitas();
+            if (res.ok) {
+                // Actualizar de forma reactiva e instantánea el estado local
+                setCitas(prev => prev.map(c => c.id === id ? { ...c, estado: 'cancelled', updatedAt: new Date().toISOString() } : c));
+            }
         } catch (e) {} finally {
             setIsUpdatingStatus(false);
         }
@@ -185,7 +247,6 @@ function CitasAdminPageContent() {
         else if (nuevoEstado === 'completed') {
             confirmMsg = '¿Finalizar esta cita?';
             showMontoInput = true;
-            // Buscar la cita para pre-llenar con su total presupuestado
             const cita = citas.find((c: any) => c.id === id);
             precioSugerido = cita?.total || cita?.service?.precio || 0;
         }
@@ -199,9 +260,8 @@ function CitasAdminPageContent() {
             type: nuevoEstado === 'cancelled' ? 'danger' : 'warning'
         });
 
-        if (!res) return; // canceló o cerró el modal
+        if (!res) return;
 
-        // Extraer el monto cobrado si aplica
         const montoCobrado = typeof res === 'object' ? res.value : undefined;
 
         setIsUpdatingStatus(true);
@@ -213,7 +273,16 @@ function CitasAdminPageContent() {
                     montoCobrado: montoCobrado
                 })
             });
-            if (resFetch.ok) await fetchCitas();
+            if (resFetch.ok) {
+                // Actualizar de forma reactiva e instantánea el estado local
+                setCitas(prev => prev.map(c => c.id === id ? { 
+                    ...c, 
+                    estado: nuevoEstado, 
+                    pagoEstado: nuevoEstado === 'completed' ? 'PAGADO' : c.pagoEstado,
+                    total: montoCobrado !== undefined ? parseFloat(montoCobrado.toString()) : c.total,
+                    updatedAt: new Date().toISOString() 
+                } : c));
+            }
         } catch (e) {
             console.error('Error updating status:', e);
         } finally {
@@ -239,6 +308,7 @@ function CitasAdminPageContent() {
                     onCancel={handleCancel}
                     onUpdateStatus={handleUpdateStatus}
                     slug={slug}
+                    highlightedCitas={highlightedCitas}
                 />
             </div>
 
@@ -325,8 +395,17 @@ function CitasAdminPageContent() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
-                                            {filteredCitas.map((reserva) => (
-                                                <tr key={reserva.id} onClick={() => router.push(`/admin/citas/${reserva.id}`)} className="hover:bg-slate-50 transition-all group/row cursor-pointer">
+                                            {filteredCitas.map((reserva) => {
+                                                const isHighlighted = highlightedCitas.has(reserva.id);
+                                                return (
+                                                    <tr 
+                                                        key={reserva.id} 
+                                                        onClick={() => router.push(`/admin/citas/${reserva.id}`)} 
+                                                        className={clsx(
+                                                            "hover:bg-slate-50 transition-all group/row cursor-pointer",
+                                                            isHighlighted && "bg-cyan-50/50 border-y border-cyan-300 animate-pulse"
+                                                        )}
+                                                    >
                                                     <td className="px-10 py-10">
                                                         <div className="flex flex-col gap-1">
                                                             <div className="flex items-center gap-5">
@@ -417,8 +496,9 @@ function CitasAdminPageContent() {
                                                     <td className="px-10 py-10 text-right">
                                                         <ChevronRight size={24} className="text-slate-200 group-hover/row:text-slate-900 transition-all inline-block" />
                                                     </td>
-                                                </tr>
-                                            ))}
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>
@@ -427,9 +507,17 @@ function CitasAdminPageContent() {
 
                         {viewMode === 'cards' && (
                             <div className="animate-in fade-in slide-in-from-right-4 duration-500 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                                {filteredCitas.map((reserva) => (
-                                    <div key={reserva.id} onClick={() => router.push(`/admin/citas/${reserva.id}`)}
-                                        className="bg-white border border-slate-200 p-8 rounded-[3rem] space-y-8 hover:border-slate-400 transition-all group/card cursor-pointer relative overflow-hidden shadow-sm hover:shadow-2xl">
+                                {filteredCitas.map((reserva) => {
+                                    const isHighlighted = highlightedCitas.has(reserva.id);
+                                    return (
+                                        <div 
+                                            key={reserva.id} 
+                                            onClick={() => router.push(`/admin/citas/${reserva.id}`)}
+                                            className={clsx(
+                                                "bg-white border p-8 rounded-[3rem] space-y-8 hover:border-slate-400 transition-all group/card cursor-pointer relative overflow-hidden shadow-sm hover:shadow-2xl",
+                                                isHighlighted ? "border-cyan-400 ring-2 ring-cyan-200/50 animate-pulse" : "border-slate-200"
+                                            )}
+                                        >
                                         <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[60px] -mr-16 -mt-16" style={{ backgroundColor: 'var(--primary-color)', opacity: 0.05 }} />
                                         <div className="flex items-center justify-between relative z-10">
                                             <div className="flex items-center gap-4">
@@ -517,8 +605,9 @@ function CitasAdminPageContent() {
                                                 <p className={clsx("text-[10px] font-black uppercase italic leading-none")} style={reserva.pagoEstado === 'PAGADO' ? { color: 'var(--primary-color)' } : { color: '#d97706' }}>{reserva.pagoEstado || 'PENDIENTE'}</p>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -549,6 +638,22 @@ function CitasAdminPageContent() {
                             </p>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* TOAST DE NUEVA RESERVA REACTIVO */}
+            {toastMessage && (
+                <div className="fixed bottom-10 right-10 z-[1000] max-w-sm bg-slate-900 border border-slate-800 text-white p-6 rounded-[2rem] shadow-2xl flex items-center gap-4 animate-in slide-in-from-bottom-6 fade-in duration-500">
+                    <div className="size-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center shrink-0">
+                        <Sparkles size={20} className="animate-pulse" />
+                    </div>
+                    <div className="flex-1 text-left min-w-0">
+                        <p className="text-[10px] font-black uppercase text-cyan-400 tracking-widest leading-none mb-1">Nueva Reserva</p>
+                        <p className="text-xs font-black uppercase tracking-tight text-slate-100 truncate">{toastMessage}</p>
+                    </div>
+                    <button onClick={() => setToastMessage(null)} className="text-slate-400 hover:text-white transition-colors p-1">
+                        <X size={16} />
+                    </button>
                 </div>
             )}
         </>

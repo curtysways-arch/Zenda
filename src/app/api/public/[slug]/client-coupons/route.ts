@@ -36,13 +36,19 @@ export async function GET(
         const phone = payload.telefono as string;
         const negocioId = payload.negocioId as string;
 
-        // 1. Obtener usuario por teléfono
+        // Variaciones del teléfono para máxima compatibilidad
+        const localTelefono = phone.replace(/^\+(\d{1,4})/, ''); 
         const digitsOnly = phone.replace(/\D/g, ''); 
+        const localNoZero = localTelefono.replace(/^0+/, '');
+
+        // 1. Obtener usuario con soporte de múltiples formatos
         const user = await prisma.usuario.findFirst({
             where: {
                 OR: [
                     { phone: phone },
-                    { phone: digitsOnly }
+                    { phone: localTelefono },
+                    { phone: digitsOnly },
+                    { phone: { endsWith: localNoZero } }
                 ]
             }
         });

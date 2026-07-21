@@ -21,7 +21,12 @@ import {
     Gift,
     UserCog,
     Megaphone,
-    Trophy
+    Trophy,
+    Store,
+    Award,
+    Calendar,
+    Briefcase,
+    Tag
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -84,6 +89,11 @@ export default function SuperAdminSidebar() {
         },
         { name: 'Métricas', href: '/superadmin/metricas', icon: BarChart3 },
         { name: 'Referidos', href: '/superadmin/referidos', icon: Gift },
+        { name: 'Misiones', href: '/superadmin/misiones-globales', icon: Trophy },
+        { name: 'Niveles Citiox', href: '/superadmin/niveles', icon: Award },
+        { name: 'Temporadas Citiox', href: '/superadmin/temporadas', icon: Calendar },
+        { name: 'Cupones Citiox', href: '/superadmin/coupon-templates', icon: Tag },
+        { name: 'Marketplace', href: '/superadmin/plantillas', icon: Store },
         { name: 'Equipo', href: '/superadmin/equipo', icon: UserCog },
         { name: 'Administradores', href: '/superadmin/administradores', icon: ShieldCheck },
         { name: 'PWA Preview', href: '/superadmin/pwa', icon: Smartphone },

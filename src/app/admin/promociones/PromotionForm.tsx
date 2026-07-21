@@ -12,7 +12,7 @@ export default function PromotionForm({
     onSuccess,
 }: {
     initialData?: any;
-    services: { id: string; nombre: string }[];
+    services: { id: string; nombre: string; precio?: number | null }[];
     onClose: () => void;
     onSuccess: (data?: any) => void;
 }) {
@@ -68,12 +68,12 @@ export default function PromotionForm({
         }));
     };
 
-    const toggleService = (id: string) => {
+    const handleServiceChange = (serviceId: string) => {
+        const selectedSvc = services.find((s: any) => s.id === serviceId);
         setForm(prev => ({
             ...prev,
-            serviceIds: prev.serviceIds.includes(id)
-                ? prev.serviceIds.filter(s => s !== id)
-                : [...prev.serviceIds, id]
+            serviceIds: serviceId ? [serviceId] : [],
+            precioAnterior: selectedSvc?.precio !== undefined && selectedSvc?.precio !== null ? selectedSvc.precio.toString() : prev.precioAnterior
         }));
     };
 
@@ -84,12 +84,12 @@ export default function PromotionForm({
         setError('');
 
         if (form.serviceIds.length === 0) {
-            setError('Debes seleccionar al menos un servicio para aplicar la promoción.');
+            setError('Debes seleccionar un servicio para aplicar la promoción.');
             setTimeout(() => {
                 servicesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                const firstCheckbox = servicesRef.current?.querySelector('input[type="checkbox"]') as HTMLInputElement;
-                if (firstCheckbox) {
-                    firstCheckbox.focus();
+                const selectElement = servicesRef.current?.querySelector('select') as HTMLSelectElement;
+                if (selectElement) {
+                    selectElement.focus();
                 }
             }, 100);
             return;
@@ -135,58 +135,59 @@ export default function PromotionForm({
     };
 
     return (
-        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative">
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
+            <div className="bg-white rounded-[2.5rem] w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl relative scrollbar-none animate-in zoom-in-95 duration-350">
                 <button
                     onClick={onClose}
-                    className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"
+                    className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-950 bg-gray-50 hover:bg-gray-100 rounded-full transition-all border border-gray-200/40 cursor-pointer"
                 >
-                    <X size={20} />
+                    <X size={18} />
                 </button>
 
                 <div className="p-8 md:p-10 space-y-8">
                     <div>
-                        <h2 className="text-2xl font-black text-gray-900 tracking-tight">
+                        <h2 className="text-2xl font-black text-gray-900 tracking-tight uppercase">
                             {isEdit ? 'Editar Promoción' : 'Nueva Promoción'}
                         </h2>
-                        <p className="text-gray-500 font-medium text-sm">
-                            {isEdit ? 'Actualiza los datos de esta promoción' : 'Crea una nueva promoción para tus clientes'}
+                        <p className="text-gray-400 font-bold text-xs mt-1">
+                            {isEdit ? 'Actualiza los datos de esta promoción' : 'Crea una nueva promoción de servicio único para tus clientes'}
                         </p>
                     </div>
 
                     {error && (
-                        <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium">
-                            {error}
+                        <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-xs font-bold border border-red-100/50">
+                            ⚠️ {error}
                         </div>
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="space-y-4">
-                            {/* Servicios Participantes (Arriba con ref de error/foco) */}
+                        <div className="space-y-5">
+                            {/* Servicio Participante (1 solo servicio) */}
                             <div 
                                 ref={servicesRef}
                                 className={`p-5 rounded-3xl border transition-all duration-300 ${error.includes('servicio') ? 'border-red-500 bg-red-50/20 ring-4 ring-red-500/10' : 'border-gray-100 bg-gray-50/30'}`}
                             >
-                                <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-3">Servicios Participantes</label>
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Servicio Participante</label>
                                 {services.length === 0 ? (
-                                    <p className="text-sm text-gray-500">No tienes servicios activos registrados.</p>
+                                    <p className="text-xs text-gray-500 font-bold">No tienes servicios activos registrados.</p>
                                 ) : (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-40 overflow-y-auto pr-2">
-                                        {services.map(service => (
-                                            <label key={service.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-white hover:bg-gray-50 cursor-pointer transition-colors">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={form.serviceIds.includes(service.id)}
-                                                    onChange={() => toggleService(service.id)}
-                                                    className="w-5 h-5 rounded-md border-gray-300"
-                                                    style={{ accentColor: 'var(--primary-color)' }}
-                                                />
-                                                <span className="text-sm font-bold text-gray-800">{service.nombre}</span>
-                                            </label>
-                                        ))}
+                                    <div className="relative">
+                                        <select
+                                            value={form.serviceIds[0] || ''}
+                                            onChange={(e) => handleServiceChange(e.target.value)}
+                                            className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-4 text-gray-900 font-bold transition-all outline-none focus:border-gray-400 cursor-pointer text-xs uppercase tracking-wider"
+                                        >
+                                            <option value="">Selecciona el servicio...</option>
+                                            {services.map((service: any) => (
+                                                <option key={service.id} value={service.id}>
+                                                    {service.nombre} {service.precio !== undefined && service.precio !== null ? `($${service.precio})` : ''}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                 )}
                             </div>
+
 
                             <div>
                                 <label className="block text-xs font-black text-gray-900 uppercase tracking-widest mb-2">Título</label>

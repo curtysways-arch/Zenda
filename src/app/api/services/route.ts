@@ -21,7 +21,7 @@ export async function GET(req: Request) {
     try {
         const rawServices = await prisma.service.findMany({
             where: { negocioId },
-            include: { Imagen: true, imageMedia: true },
+            include: { Imagen: true, imageMedia: true, Staff: true },
             orderBy: { createdAt: 'desc' },
         });
 
@@ -50,7 +50,7 @@ import { checkDemoRestriction } from '@/lib/demo-protection';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { nombre, categoryId, tipo, duracion, precio, negocioId, ubicacionId, extraInfo, imageMediaId } = body;
+        const { nombre, categoryId, tipo, duracion, precio, negocioId, ubicacionId, extraInfo, imageMediaId, staffIds } = body;
 
         // PROTECCIÓN MODO DEMO
         const demoCheck = await checkDemoRestriction(negocioId);
@@ -78,7 +78,10 @@ export async function POST(req: Request) {
                     categoryId: categoryId || null,
                     tipo: tipo || null
                 },
-                updatedAt: new Date()
+                updatedAt: new Date(),
+                Staff: staffIds && Array.isArray(staffIds) && staffIds.length > 0 ? {
+                    connect: staffIds.map((id: string) => ({ id }))
+                } : undefined
             } as any,
         });
 

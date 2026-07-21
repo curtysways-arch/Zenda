@@ -8,10 +8,12 @@ import {
     Users, 
     Sparkles, 
     Settings,
-    PlusCircle
+    PlusCircle,
+    Package
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 
 interface BottomNavProps {
     primaryColor: string;
@@ -19,9 +21,17 @@ interface BottomNavProps {
 
 export default function MobileBottomNav({ primaryColor }: BottomNavProps) {
     const pathname = usePathname();
+    const { data: session } = useSession();
+    const tipoNegocio = (session?.user as any)?.tipoNegocio || 'RESERVA';
     const [pendingCitas, setPendingCitas] = useState(0);
 
-    const navItems = [
+    const navItems = tipoNegocio === 'PRODUCTOS' ? [
+        { name: 'Inicio', href: '/admin', icon: LayoutDashboard },
+        { name: 'Pedidos', href: '/admin/pedidos', icon: Package },
+        { name: 'Productos', href: '/admin/productos', icon: Sparkles },
+        { name: 'Clientes', href: '/admin/clientes', icon: Users },
+        { name: 'Negocio', href: '/admin/config', icon: Settings },
+    ] : [
         { name: 'Inicio', href: '/admin', icon: LayoutDashboard },
         { name: 'Agenda', href: '/admin/citas', icon: CalendarDays },
         { name: 'Clientes', href: '/admin/clientes', icon: Users },
@@ -32,7 +42,10 @@ export default function MobileBottomNav({ primaryColor }: BottomNavProps) {
     useEffect(() => {
         const fetchPending = async () => {
             try {
-                const res = await fetch('/api/appointments/pending-count');
+                const url = tipoNegocio === 'PRODUCTOS' 
+                    ? '/api/admin/pedidos/pending-count' 
+                    : '/api/appointments/pending-count';
+                const res = await fetch(url);
                 if (res.ok) {
                     const data = await res.json();
                     setPendingCitas(data.count || 0);
@@ -42,7 +55,7 @@ export default function MobileBottomNav({ primaryColor }: BottomNavProps) {
         fetchPending();
         const interval = setInterval(fetchPending, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [tipoNegocio]);
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-[100] bg-white/80 backdrop-blur-2xl border-t border-slate-100 pb-safe-area-inset-bottom">
@@ -76,6 +89,12 @@ export default function MobileBottomNav({ primaryColor }: BottomNavProps) {
                             </span>
                             
                             {item.name === 'Agenda' && pendingCitas > 0 && (
+                                <span className="absolute top-3 right-1/4 size-4 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-white animate-pulse">
+                                    {pendingCitas}
+                                </span>
+                            )}
+
+                            {item.name === 'Pedidos' && pendingCitas > 0 && (
                                 <span className="absolute top-3 right-1/4 size-4 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-white animate-pulse">
                                     {pendingCitas}
                                 </span>

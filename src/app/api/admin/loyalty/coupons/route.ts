@@ -4,7 +4,9 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import crypto from "crypto";
 
-// GET /api/admin/loyalty/coupons — Listar cupones del negocio
+// GET /api/admin/loyalty/coupons — Listar cupones del negocio (unificados con globales)
+import { ClubResolver } from "@/lib/growth/clubResolver";
+
 export async function GET(req: Request) {
     try {
         const session = await getServerSession(authOptions);
@@ -14,14 +16,36 @@ export async function GET(req: Request) {
         const negocioId = user.negocioId;
         if (!negocioId) return NextResponse.json({ error: "Negocio no especificado" }, { status: 400 });
 
-        const coupons = await (prisma as any).coupon.findMany({
-            where: { negocioId },
-            include: {
-                CouponUsage: {
-                    select: { id: true, createdAt: true }
-                }
-            },
-            orderBy: { createdAt: "desc" }
+        const resolved = await ClubResolver.resolveCoupons(negocioId);
+        const coupons = resolved.map(r => {
+            if (r.source === 'LOCAL') {
+                return {
+                    ...r.data,
+                    isGlobal: false,
+                    mode: r.mode
+                };
+            } else {
+                // Mapear CouponTemplate a estructura de Coupon esperado por el frontend
+                const config = r.data.config ?? {};
+                return {
+                    id: r.data.id,
+                    negocioId,
+                    codigo: config.codigo ?? `CITIOX-${r.data.id.substring(0, 5).toUpperCase()}`,
+                    tipo: config.tipo ?? 'PORCENTAJE',
+                    valor: config.valor ?? 0,
+                    descripcion: r.data.descripcion ?? '',
+                    fechaInicio: null,
+                    fechaFin: null,
+                    maxUsos: null,
+                    usosActuales: 0,
+                    maxUsosPorCliente: null,
+                    acumulable: false,
+                    activa: r.data.activo ?? true,
+                    isGlobal: true,
+                    mode: r.mode,
+                    resourceId: r.resourceId
+                };
+            }
         });
 
         return NextResponse.json(coupons);

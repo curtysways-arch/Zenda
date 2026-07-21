@@ -29,6 +29,9 @@ import {
     CreditCard,
     ShieldCheck,
     Gift,
+    Bell,
+    Zap,
+    Briefcase,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -77,10 +80,12 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
     const pathname = usePathname();
     const { data: session } = useSession();
     const role = (session?.user as any)?.role || 'STAFF';
+    const tipoNegocio = (session?.user as any)?.tipoNegocio || 'RESERVA';
 
     const [isOpen, setIsOpen] = useState(false);
     const [pendingReservations, setPendingReservations] = useState(0);
     const [pendingEnrollments, setPendingEnrollments] = useState(0);
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
     const [coursesEnabled, setCoursesEnabled] = useState(false);
     const [promotionsEnabled, setPromotionsEnabled] = useState(false);
 
@@ -103,7 +108,10 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
 
     const checkPendingReservations = async () => {
         try {
-            const res = await fetch('/api/appointments/pending-count');
+            const url = tipoNegocio === 'PRODUCTOS' 
+                ? '/api/admin/pedidos/pending-count' 
+                : '/api/appointments/pending-count';
+            const res = await fetch(url);
             if (res.ok) {
                 const data = await res.json();
                 setPendingReservations(data.count || 0);
@@ -125,28 +133,69 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
         }
     };
 
+    const checkNotifications = async () => {
+        try {
+            const res = await fetch('/api/admin/notificaciones?filter=unread');
+            if (res.ok) {
+                const data = await res.json();
+                setUnreadNotifications(Array.isArray(data) ? data.length : 0);
+            }
+        } catch (error) {
+            console.error("Error fetching unread notifications count", error);
+        }
+    };
+
     useEffect(() => {
         const handleToggle = () => setIsOpen(prev => !prev);
         window.addEventListener('toggle-admin-sidebar', handleToggle);
-        return () => window.removeEventListener('toggle-admin-sidebar', handleToggle);
+        
+        // Escuchar cuando una notificación es marcada como leída en la página de Inbox
+        window.addEventListener('notification-marked-read', checkNotifications);
+
+        return () => {
+            window.removeEventListener('toggle-admin-sidebar', handleToggle);
+            window.removeEventListener('notification-marked-read', checkNotifications);
+        };
     }, []);
 
     useEffect(() => {
         // Fetch initially
         checkPendingReservations();
         checkPendingEnrollments();
+        checkNotifications();
         checkFeatures();
 
         // Polling every 60 seconds
         const intervalId = setInterval(() => {
             checkPendingReservations();
             checkPendingEnrollments();
+            checkNotifications();
             checkFeatures();
         }, 60000);
         return () => clearInterval(intervalId);
     }, [pathname]); // Refresh when navigating to have fresh count
 
-    const menuItems = [
+    const menuItems = (tipoNegocio === 'PRODUCTOS' ? [
+        // --- CORE OPERATIVO ---
+        { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, section: 'GESTIÓN OPERATIVA' },
+        { name: 'Pedidos', href: '/admin/pedidos', icon: Package, section: 'GESTIÓN OPERATIVA' },
+        
+        // --- CATÁLOGO ---
+        { name: 'Productos', href: '/admin/productos', icon: Sparkles, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Categorías', href: '/admin/categorias', icon: Tags, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+
+        // --- ADMINISTRACIÓN ---
+        { name: 'Clientes', href: '/admin/clientes', icon: Contact, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Personal', href: '/admin/usuarios', icon: Users, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Reportes', href: '/admin/reportes', icon: BarChart3, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        
+        // --- CONFIGURACIÓN ---
+        { name: 'Anuncios', href: '/admin/notificaciones', icon: Bell, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Configuración', href: '/admin/config', icon: Settings, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Perfil', href: '/admin/perfil', icon: Building2, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Mi Plan', href: '/admin/plan', icon: Package, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Super Panel', href: '/superadmin', icon: ShieldCheck, section: 'CONFIGURACIÓN', roles: ['SUPERADMIN'] },
+    ] : [
         // --- CORE OPERATIVO ---
         { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, section: 'GESTIÓN OPERATIVA' },
         { name: 'Citas', href: '/admin/citas', icon: CalendarDays, section: 'GESTIÓN OPERATIVA' },
@@ -157,10 +206,11 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
         // --- ACADEMIA Y MARKETING ---
         { name: 'Academia', href: '/admin/cursos', icon: GraduationCap, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'STAFF', 'SUPERADMIN'], enabled: coursesEnabled },
         { name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'], enabled: promotionsEnabled },
-        { name: 'Misiones', href: '/admin/misiones', icon: Trophy, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Club de Beneficios', href: '/admin/misiones', icon: Trophy, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Misiones Citiox', href: '/admin/misiones-citiox', icon: Briefcase, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Comunicación', href: '/admin/comunicacion', icon: MessageSquare, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Newsletter', href: '/admin/newsletter', icon: Mail, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
-        {name: 'Páginas', href: '/admin/paginas', icon: Layout, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Páginas', href: '/admin/paginas', icon: Layout, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Mis Trabajos', href: '/admin/resultados', icon: Sparkles, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
 
         // --- ADMINISTRACIÓN ---
@@ -169,11 +219,12 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
         { name: 'Reportes', href: '/admin/reportes', icon: BarChart3, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         
         // --- CONFIGURACIÓN ---
+        { name: 'Anuncios', href: '/admin/notificaciones', icon: Bell, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Configuración', href: '/admin/config', icon: Settings, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Perfil', href: '/admin/perfil', icon: Building2, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Mi Plan', href: '/admin/plan', icon: Package, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Super Panel', href: '/superadmin', icon: ShieldCheck, section: 'CONFIGURACIÓN', roles: ['SUPERADMIN'] },
-    ].filter(item => (!item.roles || item.roles.some(r => r === role || (role === 'ADMIN_NEGOCIO' && r === 'ADMIN'))) && item.enabled !== false);
+    ]).filter(item => (!item.roles || item.roles.some(r => r === role || (role === 'ADMIN_NEGOCIO' && r === 'ADMIN'))) && item.enabled !== false);
 
     // Deslogueo
     const handleLogout = async () => {
@@ -257,9 +308,19 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
                                                 {pendingReservations}
                                             </span>
                                         )}
+                                        {item.name === 'Pedidos' && pendingReservations > 0 && (
+                                            <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-rose-600 text-white text-[9px] font-black rounded-full animate-pulse shadow-lg shadow-rose-500/30">
+                                                {pendingReservations}
+                                            </span>
+                                        )}
                                         {item.name === 'Academia' && pendingEnrollments > 0 && (
                                             <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-amber-500 text-white text-[9px] font-black rounded-full animate-pulse shadow-lg shadow-amber-500/30">
                                                 {pendingEnrollments}
+                                            </span>
+                                        )}
+                                        {item.name === 'Anuncios' && unreadNotifications > 0 && (
+                                            <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-cyan-500 text-white text-[9px] font-black rounded-full animate-pulse shadow-lg shadow-cyan-500/30 animate-bounce">
+                                                {unreadNotifications}
                                             </span>
                                         )}
                                         {isActive && (

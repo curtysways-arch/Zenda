@@ -11,14 +11,38 @@ export async function GET(req: Request) {
 
         const negocioId = (session.user as any).negocioId;
 
-        // Fetch all comments for results of this business
-        const comments = await prisma.$queryRawUnsafe(`
-            SELECT c.*, r.title as post_title, r.afterImage as post_image
-            FROM CommentResultado c
-            JOIN Resultado r ON c.resultadoId = r.id
-            WHERE r.businessId = ?
-            ORDER BY c.createdAt DESC
-        `, negocioId);
+        // Fetch all comments for results of this business using Prisma
+        const rawComments = await prisma.commentResultado.findMany({
+            where: {
+                Resultado: {
+                    businessId: negocioId
+                }
+            },
+            orderBy: {
+                createdAt: 'desc'
+            },
+            include: {
+                Resultado: {
+                    select: {
+                        title: true,
+                        afterImage: true
+                    }
+                }
+            }
+        });
+
+        const comments = rawComments.map(c => ({
+            id: c.id,
+            resultadoId: c.resultadoId,
+            userName: c.userName,
+            userAvatar: c.userAvatar,
+            content: c.content,
+            approved: c.approved,
+            createdAt: c.createdAt,
+            userId: c.userId,
+            post_title: c.Resultado.title,
+            post_image: c.Resultado.afterImage
+        }));
 
         return NextResponse.json(comments);
     } catch (error) {
@@ -34,9 +58,10 @@ export async function PATCH(req: Request) {
 
         const { id, approved } = await req.json();
 
-        await prisma.$executeRawUnsafe(`
-            UPDATE CommentResultado SET approved = ? WHERE id = ?
-        `, approved ? 1 : 0, id);
+        await prisma.commentResultado.update({
+            where: { id },
+            data: { approved: !!approved }
+        });
 
         return NextResponse.json({ success: true });
     } catch (error) {
@@ -52,9 +77,11 @@ export async function DELETE(req: Request) {
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
 
-        await prisma.$executeRawUnsafe(`
-            DELETE FROM CommentResultado WHERE id = ?
-        `, id);
+        if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
+
+        await prisma.commentResultado.delete({
+            where: { id }
+        });
 
         return NextResponse.json({ success: true });
     } catch (error) {

@@ -1,6 +1,7 @@
 import prisma from '../prisma';
 import { evaluateRules, RuleGroup } from './ruleEngine';
 import { executeRewardActions, RewardAction } from './rewardEngine';
+import { GlobalMissionEngine } from './globalMissionEngine';
 
 /**
  * Procesa un evento persistido en QuestEventLog.
@@ -31,17 +32,9 @@ export async function processGrowthEventLog(logId: string): Promise<void> {
             }
         });
 
-        if (activeQuests.length === 0) {
-            // Marcar log como procesado y salir
-            await prisma.questEventLog.update({
-                where: { id: logId },
-                data: { procesado: true }
-            });
-            return;
-        }
-
-        // 3. Evaluar cada misión para el cliente
-        for (const quest of activeQuests) {
+        // 3. Evaluar cada misión local para el cliente (si existen)
+        if (activeQuests.length > 0) {
+            for (const quest of activeQuests) {
             try {
                 // A. Verificar segmentación (si aplica)
                 if (quest.segmentacion) {
@@ -115,12 +108,12 @@ export async function processGrowthEventLog(logId: string): Promise<void> {
                     const nuevoProgreso = progress.progresoActual + 1;
                     const completada = nuevoProgreso >= progress.progresoRequerido;
 
-                    // Actualizar el progreso
+                    // Actualizar el progreso (si es repetible vuelve a 0 y EN_PROGRESO)
                     await tx.questProgress.update({
                         where: { id: progress.id },
                         data: {
-                            progresoActual: completada ? progress.progresoRequerido : nuevoProgreso,
-                            estado: completada ? 'COMPLETADA' : 'EN_PROGRESO',
+                            progresoActual: completada ? (quest.repetible ? 0 : progress.progresoRequerido) : nuevoProgreso,
+                            estado: completada ? (quest.repetible ? 'EN_PROGRESO' : 'COMPLETADA') : 'EN_PROGRESO',
                             fechaCompletada: completada ? new Date() : null
                         }
                     });
@@ -131,17 +124,29 @@ export async function processGrowthEventLog(logId: string): Promise<void> {
                             questId: quest.id,
                             userId,
                             action: completada ? 'COMPLETADA' : 'AVANCE',
-                            detalles: `Avance a ${nuevoProgreso}/${progress.progresoRequerido}`
+                            detalles: completada && quest.repetible 
+                                ? `Completada (repetible) y reiniciada. Recompensas entregadas.` 
+                                : `Avance a ${nuevoProgreso}/${progress.progresoRequerido}`
                         }
                     });
 
-                    // Si se completó, disparar ejecutor de recompensas (Reward Engine)
+                    // Si se completó, disparar ejecutor de recompensas (Reward Engine) y publicar evento de dominio
                     if (completada) {
                         const acciones = (typeof quest.acciones === 'string'
                             ? JSON.parse(quest.acciones)
                             : quest.acciones) as RewardAction[];
                         
                         await executeRewardActions(negocioId, userId, acciones, quest.id, quest.nombre);
+
+                        // Publicar evento de dominio QUEST_COMPLETED de forma asíncrona
+                        const { publishGrowthEvent } = require('./eventBus');
+                        publishGrowthEvent(negocioId, userId, 'QUEST_COMPLETED', {
+                          questId: quest.id,
+                          questName: quest.nombre,
+                          xp: quest.xp || 0
+                        }).catch((err: any) => {
+                          console.error('[QuestEngine] Error publicando evento QUEST_COMPLETED:', err.message);
+                        });
                     }
                 });
 
@@ -149,6 +154,41 @@ export async function processGrowthEventLog(logId: string): Promise<void> {
                 console.error(`[QuestEngine] Error evaluando misión ${quest.id} para usuario ${userId}:`, questErr.message);
             }
         }
+        }
+
+        // 3.5 Evaluar misiones de Citiox de tipo BusinessMission (Desacopladas)
+        try {
+            const { BusinessMissionService } = require('./businessMissionService');
+            await BusinessMissionService.processUserProgress(negocioId, userId, eventType, payload);
+        } catch (bmErr: any) {
+            console.error('[QuestEngine] Error evaluando misiones de Citiox (BusinessMissions):', bmErr.message);
+        }
+
+        // 3.6 Sincronizar Misiones de Citiox para Negocios y Clientes finales (asíncronamente)
+        const { AutomationEngine } = require('./automationEngine');
+        const { GlobalClientMissionEngine } = require('./globalClientMissionEngine');
+        
+        AutomationEngine.handleDomainEvent({
+          eventType,
+          negocioId,
+          userId,
+          payload
+        }).catch((err: any) => {
+          console.error('[QuestEngine] Error en segundo plano evaluando reglas en AutomationEngine:', err.message);
+        });
+
+        GlobalClientMissionEngine.processClientGlobalCampaigns(
+          negocioId,
+          userId,
+          eventType,
+          payload
+        ).catch((err: any) => {
+          console.error('[QuestEngine] Error en segundo plano procesando campañas en GlobalClientMissionEngine:', err.message);
+        });
+
+        GlobalMissionEngine.syncMission(negocioId, eventType).catch(err => {
+            console.error('[QuestEngine] Error en segundo plano sincronizando misiones globales para negocios:', err.message);
+        });
 
         // 4. Marcar log del evento como procesado con éxito
         await prisma.questEventLog.update({

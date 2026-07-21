@@ -122,6 +122,15 @@ export default function ConfirmacionReservaPage({
         );
     }
 
+    const estadoNormalizado = appointment?.estado?.toLowerCase();
+
+    const isConfirmed = estadoNormalizado === 'confirmed' || estadoNormalizado === 'confirmada' || estadoNormalizado === 'approved';
+    const isClientCheckedIn = estadoNormalizado === 'client_checked_in';
+    const isInProgress = estadoNormalizado === 'in_progress';
+    const isCompleted = estadoNormalizado === 'completed' || estadoNormalizado === 'finalizada';
+    const isCancelled = estadoNormalizado === 'cancelled' || estadoNormalizado === 'cancelada' || estadoNormalizado === 'no_show';
+    const isPending = !isConfirmed && !isClientCheckedIn && !isInProgress && !isCompleted && !isCancelled;
+
     return (
         <div className="min-h-screen bg-gray-50/50 flex flex-col items-center p-4 md:p-8">
             {/* No sobreescribimos --primary aquí: el layout ya lo inyectó correctamente */}
@@ -134,30 +143,48 @@ export default function ConfirmacionReservaPage({
                         {(appointment?.negocio?.logoUrl || appointment?.negocio?.logo) ? (
                             <img src={appointment.negocio.logoUrl || appointment.negocio.logo} alt={appointment.negocio.nombre} className="w-16 h-16 object-contain" />
                         ) : (
-                            (appointment?.estado === 'confirmed' || appointment?.estado === 'CONFIRMADA')
-                                ? <CheckCircle2 size={48} style={{ color: primaryColor }} strokeWidth={2.5} />
-                                : <ClipboardCheck size={48} className="text-amber-400" strokeWidth={2.5} />
+                            isConfirmed || isClientCheckedIn ? (
+                                <CheckCircle2 size={48} style={{ color: primaryColor }} strokeWidth={2.5} />
+                            ) : isInProgress || isCompleted ? (
+                                <Sparkles size={48} style={{ color: primaryColor }} strokeWidth={2.5} />
+                            ) : isCancelled ? (
+                                <AlertCircle size={48} className="text-red-500" strokeWidth={2.5} />
+                            ) : (
+                                <ClipboardCheck size={48} className="text-amber-400" strokeWidth={2.5} />
+                            )
                         )}
                     </div>
                     
                     <h1 className="text-4xl font-black text-gray-900 tracking-tighter leading-tight italic uppercase">
-                        {appointment?.estado === 'confirmed' || appointment?.estado === 'CONFIRMADA' ? (
+                        {isConfirmed ? (
                             <>¡Reserva <br /> <span style={{ color: primaryColor }}>Confirmada!</span></>
+                        ) : isClientCheckedIn ? (
+                            <>¡Llegada <br /> <span style={{ color: primaryColor }}>Confirmada!</span></>
+                        ) : isInProgress ? (
+                            <>¡Servicio <br /> <span style={{ color: primaryColor }}>En Curso!</span></>
+                        ) : isCompleted ? (
+                            <>¡Visita <br /> <span style={{ color: primaryColor }}>Finalizada!</span></>
+                        ) : isCancelled ? (
+                            <>¡Turno <br /> <span className="text-red-500">Cancelado!</span></>
                         ) : (
                             <>¡Solicitud <br /> <span style={{ color: primaryColor }}>Recibida!</span></>
                         )}
                     </h1>
                     <p className="text-gray-400 font-bold mt-4 text-sm leading-relaxed max-w-[280px] mx-auto uppercase tracking-wide">
-                        {error ? 'Hubo un problema al cargar los detalles.' : 
-                            (appointment?.estado === 'confirmed' || appointment?.estado === 'CONFIRMADA' 
-                                ? 'Todo listo. Nos vemos pronto.' 
-                                : 'Revisaremos tu solicitud y te notificaremos por WhatsApp.')}
+                        {error ? 'Hubo un problema al cargar los detalles.' : (
+                            isConfirmed ? 'Todo listo. Nos vemos pronto.' :
+                            isClientCheckedIn ? 'Has hecho check-in. Te llamaremos en breve.' :
+                            isInProgress ? 'Disfruta de tu sesión de bienestar.' :
+                            isCompleted ? '¡Muchas gracias por elegirnos!' :
+                            isCancelled ? 'Este turno no se encuentra activo.' :
+                            'Revisaremos tu solicitud y te notificaremos por WhatsApp.'
+                        )}
                     </p>
                 </div>
 
                 {/* Banner de estado PENDIENTE */}
-                {!error && appointment && appointment.estado !== 'confirmed' && appointment.estado !== 'CONFIRMADA' && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-[2rem] px-6 py-5 flex items-start gap-4 shadow-sm">
+                {!error && appointment && isPending && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-[2rem] px-6 py-5 flex items-start gap-4 shadow-sm animate-in fade-in duration-300">
                         <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
                             <Clock size={20} className="text-amber-500" />
                         </div>
@@ -173,8 +200,8 @@ export default function ConfirmacionReservaPage({
                 )}
 
                 {/* Banner de estado CONFIRMADO */}
-                {!error && appointment && (appointment.estado === 'confirmed' || appointment.estado === 'CONFIRMADA') && (
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-[2rem] px-6 py-5 flex items-start gap-4 shadow-sm">
+                {!error && appointment && isConfirmed && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-[2rem] px-6 py-5 flex items-start gap-4 shadow-sm animate-in fade-in duration-300">
                         <div className="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
                             <CheckCircle2 size={20} className="text-emerald-500" />
                         </div>
@@ -184,6 +211,74 @@ export default function ConfirmacionReservaPage({
                             </p>
                             <p className="text-xs font-bold text-emerald-700 leading-relaxed">
                                 Tu lugar está reservado con éxito. Te esperamos en la fecha y hora seleccionada.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Banner de estado CHECK-IN REALIZADO */}
+                {!error && appointment && isClientCheckedIn && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-[2rem] px-6 py-5 flex items-start gap-4 shadow-sm animate-in fade-in duration-300">
+                        <div className="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                            <CheckCircle2 size={20} className="text-emerald-500" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1.5">
+                                📍 Check-in Realizado
+                            </p>
+                            <p className="text-xs font-bold text-emerald-700 leading-relaxed">
+                                Has confirmado tu llegada al local. En breve el profesional te llamará para iniciar tu servicio.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Banner de estado EN CURSO */}
+                {!error && appointment && isInProgress && (
+                    <div className="bg-purple-50 border border-purple-200 rounded-[2rem] px-6 py-5 flex items-start gap-4 shadow-sm animate-in fade-in duration-300">
+                        <div className="w-10 h-10 rounded-2xl bg-purple-100 flex items-center justify-center shrink-0 mt-0.5">
+                            <Sparkles size={20} className="text-purple-500" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest leading-none mb-1.5">
+                                ⚡ Servicio en Curso
+                            </p>
+                            <p className="text-xs font-bold text-purple-700 leading-relaxed">
+                                Tu servicio está siendo realizado en este momento. ¡Disfruta de tu experiencia!
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Banner de estado COMPLETADO */}
+                {!error && appointment && isCompleted && (
+                    <div className="bg-slate-50 border border-slate-200 rounded-[2rem] px-6 py-5 flex items-start gap-4 shadow-sm animate-in fade-in duration-300">
+                        <div className="w-10 h-10 rounded-2xl bg-slate-200 flex items-center justify-center shrink-0 mt-0.5">
+                            <CheckCircle2 size={20} className="text-slate-600" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest leading-none mb-1.5">
+                                ✨ Cita Completada
+                            </p>
+                            <p className="text-xs font-bold text-slate-700 leading-relaxed">
+                                Esta cita ha sido completada con éxito. ¡Gracias por confiar en nosotros!
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Banner de estado CANCELADO */}
+                {!error && appointment && isCancelled && (
+                    <div className="bg-red-50 border border-red-200 rounded-[2rem] px-6 py-5 flex items-start gap-4 shadow-sm animate-in fade-in duration-300">
+                        <div className="w-10 h-10 rounded-2xl bg-red-100 flex items-center justify-center shrink-0 mt-0.5">
+                            <AlertCircle size={20} className="text-red-500" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-red-600 uppercase tracking-widest leading-none mb-1.5">
+                                ❌ Cita Cancelada
+                            </p>
+                            <p className="text-xs font-bold text-red-700 leading-relaxed">
+                                Esta cita ha sido cancelada o marcada como inasistencia. Si crees que es un error, por favor contáctanos.
                             </p>
                         </div>
                     </div>

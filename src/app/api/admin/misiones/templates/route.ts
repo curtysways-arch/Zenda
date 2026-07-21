@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { GLOBAL_QUEST_TEMPLATES } from '@/lib/growth/globalTemplates';
+import prisma from '@/lib/prisma';
 
 /**
  * Retorna la biblioteca global de plantillas de misiones del SuperAdmin (Marketplace).
@@ -15,10 +15,20 @@ export async function GET() {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
+        // Obtener las plantillas reales de la base de datos de Prisma (incluyendo misiones)
+        const templates = await prisma.questTemplate.findMany({
+            include: {
+                Missions: true
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
         // Retornar las plantillas del Marketplace
         return NextResponse.json({
             success: true,
-            templates: GLOBAL_QUEST_TEMPLATES
+            templates
         });
 
     } catch (err: any) {

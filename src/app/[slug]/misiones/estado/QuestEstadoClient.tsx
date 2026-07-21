@@ -221,7 +221,7 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                             <div 
                                 key={q.id}
                                 onClick={() => router.push(`/${slug}/misiones/detalle/${q.id}`)}
-                                className={`relative bg-white rounded-[2rem] border border-slate-100 p-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)] space-y-4 overflow-hidden transition-all duration-300 cursor-pointer hover:scale-[1.01] active:scale-[0.99] ${
+                                className={`relative bg-white rounded-[2rem] border border-slate-100/60 p-4 shadow-[0_8px_24px_rgba(0,0,0,0.03)] space-y-3.5 overflow-hidden transition-all duration-300 cursor-pointer hover:scale-[1.01] active:scale-[0.99] ${
                                     isCelebrating ? 'shadow-[0_0_0_2px_#22c55e]' : ''
                                 }`}
                             >
@@ -234,28 +234,37 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                                     </div>
                                 )}
 
-                                {/* Contenido Superior: Icono, Título, Recompensas e Imagen Regalo */}
-                                <div className="flex gap-4 items-start relative z-10">
+                                {/* Contenido Superior: Icono, Títulos, Descripción, Premios e Imagen */}
+                                <div className="flex gap-3 items-start relative z-10">
                                     {/* Icono de Campaña */}
                                     <div 
-                                        className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-slate-100"
+                                        className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-slate-100/50"
                                         style={{ 
                                             background: `linear-gradient(135deg, ${q.color}15 0%, ${q.color}05 100%)`, 
                                             color: q.color 
                                         }}
                                     >
-                                        <IconComponent size={24} />
+                                        <IconComponent size={20} />
                                     </div>
 
-                                    {/* Títulos y Recompensas */}
-                                    <div className="flex-1 min-w-0 space-y-1">
-                                        {/* Recompensas (Chips arriba) */}
+                                    {/* Títulos, Descripción y Premios en orden */}
+                                    <div className="flex-1 min-w-0 space-y-2">
+                                        <div className="text-left">
+                                            <h3 className="text-[12px] font-black text-slate-800 uppercase tracking-tight leading-tight">
+                                                Campaña: {q.nombre}
+                                            </h3>
+                                            <p className="text-[10px] text-slate-500 font-semibold leading-relaxed mt-1">
+                                                {q.descripcion}
+                                            </p>
+                                        </div>
+
+                                        {/* Recompensas (Chips abajo) */}
                                         {q.recompensas.length > 0 && (
-                                            <div className="flex flex-wrap gap-1.5">
+                                            <div className="flex flex-wrap gap-1.5 pt-0.5">
                                                 {q.recompensas.map((r, i) => (
                                                     <span 
                                                         key={i}
-                                                        className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg border text-white"
+                                                        className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg border text-white shadow-xs"
                                                         style={{ backgroundColor: primaryColor, borderColor: `${primaryColor}20` }}
                                                     >
                                                         {r.startsWith('+') ? r : `+${r}`}
@@ -266,23 +275,16 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                                                 </span>
                                             </div>
                                         )}
-
-                                        <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight leading-tight pt-1">
-                                            Campaña: {q.nombre}
-                                        </h3>
-                                        <p className="text-[10px] text-slate-600 font-semibold leading-normal">
-                                            {q.descripcion}
-                                        </p>
                                     </div>
 
-                                    {/* Imagen ilustrativa en el lado derecho */}
-                                    <div className="w-14 h-14 shrink-0 relative flex items-center justify-center">
+                                    {/* Imagen ilustrativa en el lado derecho (con fallback transparente) */}
+                                    <div className="w-12 h-12 shrink-0 relative flex items-center justify-center bg-slate-50/50 rounded-2xl border border-slate-100/20 p-1">
                                         {q.nombre.toLowerCase().includes('instagram') ? (
-                                            <img src="/images/3d_instagram.png" alt="Instagram" className="w-12 h-12 object-contain" onError={(e) => { (e.target as any).src = "/images/3d_gift_box.png" }} />
+                                            <img src="/images/3d_instagram.png" alt="Instagram" className="w-10 h-10 object-contain" onError={(e) => { (e.target as any).src = "/gift-icon.png" }} />
                                         ) : q.nombre.toLowerCase().includes('fidelidad') || q.nombre.toLowerCase().includes('visita') ? (
-                                            <img src="/images/3d_trophy.png" alt="Trofeo" className="w-12 h-12 object-contain" onError={(e) => { (e.target as any).src = "/images/3d_gift_box.png" }} />
+                                            <img src="/images/3d_trophy.png" alt="Trofeo" className="w-10 h-10 object-contain" onError={(e) => { (e.target as any).src = "/gift-icon.png" }} />
                                         ) : (
-                                            <img src="/images/3d_gift_box.png" alt="Regalo" className="w-12 h-12 object-contain" />
+                                            <img src="/gift-icon.png" alt="Regalo" className="w-10 h-10 object-contain" />
                                         )}
                                     </div>
                                 </div>
@@ -311,9 +313,21 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                                     </div>
 
                                     {isComplete ? (
-                                        <span className="text-[8px] font-black uppercase tracking-widest px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg flex items-center gap-1 border border-emerald-100">
-                                            ✓ COMPLETADA
-                                        </span>
+                                        <div className="flex items-center justify-between w-full gap-2">
+                                            <span className="text-[8px] font-black uppercase tracking-widest px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg flex items-center gap-1 border border-emerald-100">
+                                                ✓ COMPLETADA
+                                            </span>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    router.push(`/${slug}/mis-premios?questId=${q.id}`);
+                                                }}
+                                                className="px-3 py-1.5 text-[8px] font-black uppercase tracking-widest text-white rounded-lg shadow-sm border-0 cursor-pointer active:scale-95 transition-transform flex items-center gap-1"
+                                                style={{ backgroundColor: primaryColor }}
+                                            >
+                                                🎁 Ver premio obtenido
+                                            </button>
+                                        </div>
                                     ) : q.estado === 'PENDIENTE_APROBACION' ? (
                                         <span className="text-[8px] font-black uppercase tracking-widest px-3 py-1 bg-amber-50 text-amber-600 rounded-lg flex items-center gap-1 border border-amber-100">
                                             ⏳ EN REVISIÓN

@@ -41,6 +41,19 @@ export default function LoyaltyCelebration({ slug, primaryColor }: LoyaltyCelebr
     // Muestra el siguiente de la cola
     const showNext = (item: CelebrationData) => {
         showingRef.current = true;
+
+        // Marcar de inmediato como celebrado en localStorage para evitar que reconexiones o refrescos del SSE lo vuelvan a encolar
+        const celebratedStr = localStorage.getItem(`celebrated_points_${slug}`);
+        let celebratedIds: string[] = [];
+        try {
+            if (celebratedStr) celebratedIds = JSON.parse(celebratedStr);
+        } catch {}
+
+        if (!celebratedIds.includes(item.id)) {
+            celebratedIds.push(item.id);
+            localStorage.setItem(`celebrated_points_${slug}`, JSON.stringify(celebratedIds));
+        }
+
         setConfetti(generateConfetti());
         setCelebrationData(item);
         setShow(true);
@@ -107,12 +120,15 @@ export default function LoyaltyCelebration({ slug, primaryColor }: LoyaltyCelebr
 
                 if (uncelebrated) {
                     if (showingRef.current) {
-                        // Encolar para mostrar después
-                        queueRef.current.push({
-                            id: uncelebrated.id,
-                            puntos: uncelebrated.puntos,
-                            servicioNombre: uncelebrated.servicioNombre
-                        });
+                        // Encolar para mostrar después (si no está ya en la cola o celebrado)
+                        const inQueue = queueRef.current.some(q => q.id === uncelebrated.id);
+                        if (!inQueue && !celebratedIds.includes(uncelebrated.id)) {
+                            queueRef.current.push({
+                                id: uncelebrated.id,
+                                puntos: uncelebrated.puntos,
+                                servicioNombre: uncelebrated.servicioNombre
+                            });
+                        }
                     } else {
                         showNext({
                             id: uncelebrated.id,
@@ -133,18 +149,6 @@ export default function LoyaltyCelebration({ slug, primaryColor }: LoyaltyCelebr
     // ─── Cerrar y marcar como celebrado ───────────────────────────────────────
     const handleDismiss = () => {
         if (!celebrationData) return;
-
-        // Marcar como celebrado en localStorage
-        const celebratedStr = localStorage.getItem(`celebrated_points_${slug}`);
-        let celebratedIds: string[] = [];
-        try {
-            if (celebratedStr) celebratedIds = JSON.parse(celebratedStr);
-        } catch {}
-
-        if (!celebratedIds.includes(celebrationData.id)) {
-            celebratedIds.push(celebrationData.id);
-            localStorage.setItem(`celebrated_points_${slug}`, JSON.stringify(celebratedIds));
-        }
 
         setShow(false);
         setTimeout(() => {
@@ -170,7 +174,7 @@ export default function LoyaltyCelebration({ slug, primaryColor }: LoyaltyCelebr
                 {confetti.map((c) => (
                     <div
                         key={c.id}
-                        className={`absolute animate-fall ${
+                        className={`absolute pointer-events-none animate-fall ${
                             c.shape === 'circle' ? 'rounded-full' : (c.shape === 'square' ? '' : 'clip-triangle')
                         }`}
                         style={{
@@ -182,7 +186,8 @@ export default function LoyaltyCelebration({ slug, primaryColor }: LoyaltyCelebr
                             animationDelay: `${c.delay}s`,
                             animationDuration: `${c.duration}s`,
                             animationIterationCount: 'infinite',
-                            transform: `rotate(${Math.random() * 360}deg)`
+                            transform: `rotate(${Math.random() * 360}deg)`,
+                            pointerEvents: 'none'
                         }}
                     />
                 ))}
@@ -233,7 +238,7 @@ export default function LoyaltyCelebration({ slug, primaryColor }: LoyaltyCelebr
                     <div className="py-2.5 px-4 bg-slate-50 rounded-2xl border border-slate-100 inline-block w-full">
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Has acumulado</p>
                         <p className="text-3xl font-black text-amber-500 tracking-tight">
-                            +{celebrationData.puntos} PTS
+                            +{celebrationData.puntos} 💎
                         </p>
                         <p className="text-[9px] text-slate-500 font-semibold mt-1">
                             por realizarte: <strong className="text-slate-700 uppercase">{celebrationData.servicioNombre}</strong>
@@ -242,7 +247,7 @@ export default function LoyaltyCelebration({ slug, primaryColor }: LoyaltyCelebr
                 </div>
 
                 <p className="text-[10px] text-slate-400 font-semibold leading-relaxed px-2">
-                    Tus puntos ya están sumados a tu balance y listos para canjearlos por espectaculares premios en la pestaña del Club.
+                    Tus diamantes ya están sumados a tu balance y listos para canjearlos por espectaculares premios en la pestaña del Club.
                 </p>
 
                 {/* Botón Aceptar */}

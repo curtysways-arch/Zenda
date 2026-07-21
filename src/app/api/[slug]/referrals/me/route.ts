@@ -5,6 +5,8 @@ import { cookies } from "next/headers";
 import { getReferralProgress, generateReferralCode } from "@/lib/referrals";
 import crypto from "crypto";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
     req: Request,
     { params }: { params: Promise<{ slug: string }> }
@@ -118,7 +120,12 @@ export async function GET(
         const pointsRecord = await (prisma as any).userPoints.findUnique({
             where: { userId_negocioId: { userId: user.id, negocioId } }
         });
+        
+        console.log(`[ME DIAGNOSTIC] Phone in payload: ${phone}, Resolved User ID: ${user.id}, Name: ${user.nombre}, Phone: ${user.phone}`);
+        console.log(`[ME DIAGNOSTIC] Points Record for Business: ${negocioId} (Slug: ${slug}) -> pointsRecord: ${JSON.stringify(pointsRecord)}`);
+
         const puntos = pointsRecord?.puntos || 0;
+        const cashback = pointsRecord?.cashback || 0.0;
 
         // 8. Verificar si el negocio tiene activos los puntos
         const negocio = await prisma.negocio.findUnique({
@@ -189,19 +196,47 @@ export async function GET(
             });
         }
 
-        return NextResponse.json({
+        // Buscar el cliente para obtener su foto de perfil
+        const localNoZeroCliente = localTelefono.replace(/^0+/, '');
+        const cliente = await prisma.cliente.findFirst({
+            where: {
+                negocioId: negocioId,
+                OR: [
+                    { telefono: user.phone || phone },
+                    { telefono: phone },
+                    { telefono: localTelefono },
+                    { telefono: digitsOnly },
+                    { telefono: { endsWith: localNoZeroCliente } },
+                    { telefono: { endsWith: digitsOnly.slice(-9) } }
+                ]
+            }
+        });
+
+        return new NextResponse(JSON.stringify({
             codigo: code,
             progresoCampañas: campaignsProgress,
             premios: rewards,
             totalReferidosValidos,
-            nombreCliente: user.nombre,
-            avatarUrl: (user as any).imagenUrl || (user as any).avatarUrl || null,
+            nombreCliente: user.nombre || cliente?.nombre || 'Cliente',
+            avatarUrl: (() => {
+                const url = cliente?.imagenUrl || (user as any).imagenUrl || (user as any).avatarUrl || null;
+                return url ? `${url.split('?')[0]}?v=${Date.now()}` : null;
+            })(),
             referidoPorNombre,
             puntos,
+            cashback,
             puntosActivos,
             cupones,
             ranking,
             citasPuntosRecientes
+        }), {
+            status: 200,
+            headers: {
+                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0',
+                'Content-Type': 'application/json'
+            }
         });
     } catch (error: any) {
         console.error("Error in referrals/me:", error);

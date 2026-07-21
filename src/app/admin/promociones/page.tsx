@@ -24,7 +24,7 @@ export default async function PromocionesPage() {
             slug: true,
             nombre: true,
             isDemo: true,
-            Service: { where: { estaActivo: true }, select: { id: true, nombre: true } },
+            Service: { where: { estaActivo: true }, select: { id: true, nombre: true, precio: true } },
             Suscripcion: {
                 select: {
                     estado: true,

@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import { planService } from "@/lib/services/planService";
 import crypto from "crypto";
+import { whatsappService } from "@/lib/whatsapp";
 
 async function isSuperAdmin() {
     const session = await getServerSession(authOptions);
@@ -334,6 +335,25 @@ export async function POST(req: Request) {
             }
         } catch (planError) {
             console.error("Error al asignar plan por defecto:", planError);
+        }
+
+        // I. Enviar mensaje de WhatsApp automático de bienvenida con accesos al cliente
+        try {
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://citiox.com';
+            const publicLink = `${appUrl}/${result.nuevoNegocio.slug}`;
+            const adminLink = `${appUrl}/login`;
+            const vencimientoTrial = new Date();
+            vencimientoTrial.setDate(vencimientoTrial.getDate() + 14);
+            const targetPhone = whatsapp || emailContacto;
+
+            if (targetPhone) {
+                const waMessage = `👋 *¡Hola!* Te compartimos los datos de tu nuevo sistema en *CitiOx* para *${result.nuevoNegocio.nombre}*:\n\n🌐 *Página pública para tus clientes:* \n${publicLink}\n\n💻 *Acceso a tu panel administrativo:* \n${adminLink}\n\n🔐 *Credenciales de acceso:*\n- *Usuario:* ${finalEmail}\n- *Contraseña:* ${adminPassword}\n\n⚡ *Plan asignado:* Plan PRO Trial (14 días gratis hasta el ${vencimientoTrial.toLocaleDateString()}).`;
+                await whatsappService.sendWhatsApp(targetPhone, waMessage, true, 'general').catch(e => {
+                    console.error('Error enviando WhatsApp de bienvenida superadmin:', e);
+                });
+            }
+        } catch (waErr) {
+            console.error('Error en proceso de envío de WhatsApp superadmin:', waErr);
         }
 
         return NextResponse.json(result.nuevoNegocio);

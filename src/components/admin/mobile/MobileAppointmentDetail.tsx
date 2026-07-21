@@ -198,7 +198,6 @@ export default function MobileAppointmentDetail({
                             <div className="size-1.5 bg-emerald-500 rounded-full animate-pulse" />
                         </div>
                         <p className="text-3xl font-black text-emerald-600 italic tracking-tighter">${totalPagado}</p>
-                        <button onClick={onAddPayment} className="text-[7px] font-black text-white uppercase tracking-widest bg-slate-900 px-3 py-1 rounded-full shadow-lg shadow-slate-200 active:scale-95">REGISTRAR PAGO</button>
                     </div>
                 </div>
 

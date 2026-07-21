@@ -9,6 +9,7 @@ import { SignJWT } from 'jose';
 import { planLimitValidator } from '@/lib/services/planLimitValidator';
 import { checkDemoRestriction } from '@/lib/demo-protection';
 import { sendWhatsAppMessage } from '@/lib/whatsapp-client';
+import { planService } from '@/lib/services/planService';
 
 
 export async function POST(req: Request) {
@@ -289,6 +290,13 @@ export async function POST(req: Request) {
 
         const reserva = result.reserva;
 
+        // Verificar si se debe activar la suscripción del negocio
+        try {
+            await planService.checkAndActivateSubscription(negocio.id);
+        } catch (actErr) {
+            console.error('Error al activar la suscripción en citas:', actErr);
+        }
+
         // 6. Notificaciones - Bloques INDEPENDIENTES para que un fallo no bloquee al otro
 
         // 6a. WhatsApp al negocio
@@ -323,7 +331,15 @@ export async function POST(req: Request) {
             const magicLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/${negocio.slug}/mis-reservas?otp=${code}&tel=${encodedTel}`;
             const fechaLegible = new Date(fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
             
-            const mensajeCliente = `👋 ¡Hola ${clienteNombre}!\n\nHemos recibido tu solicitud de reserva en *${negocio.nombre}*.\n\n🏟 *Servicio:* ${service.nombre}\n📅 *Fecha:* ${fechaLegible}\n⏰ *Hora:* ${horaInicio} - ${horaFin}\n\n⚠️ *Estado:* Pendiente de confirmación.\n\n🔗 ${magicLink}\n\nCódigo: *${code}*`;
+            const cabecera = reserva.estado === 'confirmed'
+                ? `¡Tu reserva en *${negocio.nombre}* ha sido confirmada con éxito! 🎉`
+                : `Hemos recibido tu solicitud de reserva en *${negocio.nombre}*.`;
+            
+            const estadoTexto = reserva.estado === 'confirmed'
+                ? `✅ *Estado:* Confirmada.`
+                : `⚠️ *Estado:* Pendiente de confirmación.`;
+
+            const mensajeCliente = `👋 ¡Hola ${clienteNombre}!\n\n${cabecera}\n\n🏟 *Servicio:* ${service.nombre}\n📅 *Fecha:* ${fechaLegible}\n⏰ *Hora:* ${horaInicio} - ${horaFin}\n\n${estadoTexto}\n\n🔗 ${magicLink}\n\nCódigo: *${code}*`;
             
             // Usar whatsappService que maneja la normalización internamente
             await whatsappService.sendWhatsApp(clienteTelefono, mensajeCliente, true, 'solicitud_cliente');

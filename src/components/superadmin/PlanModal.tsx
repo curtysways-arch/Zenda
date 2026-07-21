@@ -57,6 +57,7 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
         // Otros
         analytics: false,
         automation: false,
+        citas_activacion: "1" as any,
     });
 
     useEffect(() => {
@@ -96,6 +97,7 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                 // Otros
                 analytics: featuresMapped?.analytics ?? false,
                 automation: featuresMapped?.automation ?? false,
+                citas_activacion: featuresMapped?.citas_activacion ?? 1,
             });
         }
     }, [plan, isOpen]);
@@ -138,6 +140,7 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                     custom_phrases: formData.custom_phrases,
                     analytics: formData.analytics,
                     automation: formData.automation,
+                    citas_activacion: parseInt(formData.citas_activacion?.toString() || "1"),
                 }
             };
 
@@ -222,7 +225,7 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-3 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-sm font-black ml-1" style={{ color: '#000' }}>Precio ($)</label>
                                     <input
@@ -247,6 +250,21 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                         className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-black"
                                         value={formData.trial_days}
                                         onChange={(e) => setFormData({ ...formData, trial_days: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-black ml-1 flex items-center gap-2" style={{ color: '#000' }} title="Número de citas para empezar a correr la suscripción">
+                                        <Star size={14} className="text-indigo-600" />
+                                        Citas Inic.
+                                    </label>
+                                    <input
+                                        required
+                                        type="number"
+                                        min="1"
+                                        style={{ color: '#000', backgroundColor: '#fff' }}
+                                        className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none font-black"
+                                        value={formData.citas_activacion}
+                                        onChange={(e) => setFormData({ ...formData, citas_activacion: e.target.value })}
                                     />
                                 </div>
                             </div>

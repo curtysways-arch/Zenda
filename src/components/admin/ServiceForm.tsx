@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, Scissors, DollarSign, Activity, Loader2, Plus, MapPin, ShieldAlert, ArrowUpCircle, Clock, Image as ImageIcon, Trash2, GripVertical } from 'lucide-react';
+import { X, Scissors, DollarSign, Activity, Loader2, Plus, MapPin, ShieldAlert, ArrowUpCircle, Clock, Image as ImageIcon, Trash2, GripVertical, Users } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 
 import GalleryAdmin from './GalleryAdmin';
@@ -65,6 +65,17 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
             ? initialData.extraInfo.puntosOtorgados.toString() 
             : '10'
     );
+
+    // Estados para profesionales (Staff)
+    const [allStaff, setAllStaff] = useState<any[]>([]);
+    const [loadingStaff, setLoadingStaff] = useState(true);
+    const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>(
+        initialData?.Staff?.map((s: any) => s.id) || 
+        initialData?.staff?.map((s: any) => s.id) || 
+        []
+    );
+    const [quickStaffName, setQuickStaffName] = useState("");
+    const [isCreatingQuickStaff, setIsCreatingQuickStaff] = useState(false);
 
     // Imagen principal y su ID en el nuevo sistema
     const [imageMediaId, setImageMediaId] = useState<string | null>(initialData?.imageMediaId || null);
@@ -138,6 +149,14 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
             .then(r => r.ok ? r.json() : [])
             .then(data => setUbicaciones(data))
             .catch(() => { });
+
+        fetch('/api/staff')
+            .then(r => r.ok ? r.json() : [])
+            .then(data => {
+                setAllStaff(data);
+                setLoadingStaff(false);
+            })
+            .catch(() => setLoadingStaff(false));
     }, [initialData]);
 
     const handleTipoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -161,10 +180,50 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
         setFeatures(prev => prev.map((b, i) => i === idx ? { ...b, [field]: value } : b));
     };
 
+    const handleCreateQuickStaff = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!quickStaffName.trim()) return;
+        setIsCreatingQuickStaff(true);
+        setError(null);
+        try {
+            const realNegocioId = session?.user ? (session.user as any).negocioId : '';
+            const res = await fetch('/api/staff', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: quickStaffName.trim(),
+                    role: 'PROFESIONAL',
+                    businessId: realNegocioId,
+                    services: []
+                })
+            });
+            if (res.ok) {
+                const newStaff = await res.json();
+                setAllStaff(prev => [...prev, newStaff]);
+                setSelectedStaffIds(prev => [...prev, newStaff.id]);
+                setQuickStaffName("");
+            } else {
+                const data = await res.json();
+                setError(data.error || "No se pudo registrar el profesional.");
+            }
+        } catch (err) {
+            console.error("Error creating quick staff:", err);
+            setError("Error al crear profesional.");
+        } finally {
+            setIsCreatingQuickStaff(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+
+        if (selectedStaffIds.length === 0) {
+            setError("Debes asignar al menos un profesional (staff) a este servicio.");
+            setLoading(false);
+            return;
+        }
 
         try {
             const realNegocioId = session?.user ? (session.user as any).negocioId : '';
@@ -191,6 +250,7 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                     features: features.filter(f => f.title.trim() || f.content.trim()),
                     puntosOtorgados: parseInt(puntosOtorgados) || 0
                 },
+                staffIds: selectedStaffIds
             };
 
             if (!initialData) {
@@ -490,6 +550,100 @@ export default function ServiceForm({ onClose, onSuccess, initialData }: Service
                                         onChange={e => setPrecio(e.target.value)}
                                     />
                                 </div>
+
+                                {/* Profesionales / Staff Asignados */}
+                                <div className="space-y-4 p-5 bg-gray-50 rounded-3xl border border-gray-100">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
+                                            <Users size={14} className="text-slate-500" /> Profesionales Asignados
+                                        </label>
+                                        <span className="text-[9px] font-black uppercase text-pink-500 bg-pink-50 px-2.5 py-1 rounded-full">
+                                            Requerido
+                                        </span>
+                                    </div>
+
+                                    {loadingStaff ? (
+                                        <div className="flex items-center gap-2 py-4 justify-center">
+                                            <Loader2 className="animate-spin text-gray-400" size={16} />
+                                            <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Cargando profesionales...</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {/* Listado de profesionales existentes */}
+                                            {allStaff.length > 0 ? (
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    {allStaff.map((staff: any) => {
+                                                        const isSelected = selectedStaffIds.includes(staff.id);
+                                                        return (
+                                                            <button
+                                                                key={staff.id}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    if (isSelected) {
+                                                                        setSelectedStaffIds(prev => prev.filter(id => id !== staff.id));
+                                                                    } else {
+                                                                        setSelectedStaffIds(prev => [...prev, staff.id]);
+                                                                    }
+                                                                }}
+                                                                className={`p-3.5 rounded-2xl border transition-all text-left flex items-center gap-3 active:scale-95 duration-200 ${
+                                                                    isSelected 
+                                                                        ? 'bg-white border-slate-900 ring-2 ring-slate-900/10 shadow-sm' 
+                                                                        : 'bg-white border-gray-200/60 hover:border-gray-300'
+                                                                }`}
+                                                            >
+                                                                <div 
+                                                                    className="size-8 rounded-xl flex items-center justify-center text-xs font-black shrink-0 text-white"
+                                                                    style={{ backgroundColor: isSelected ? 'var(--primary-color)' : '#94a3b8' }}
+                                                                >
+                                                                    {staff.name.slice(0, 2).toUpperCase()}
+                                                                </div>
+                                                                <div className="min-w-0 flex-1">
+                                                                    <p className="text-xs font-black text-slate-800 truncate uppercase tracking-tight">{staff.name}</p>
+                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{staff.role || 'Profesional'}</p>
+                                                                </div>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-6 bg-white rounded-2xl border border-dashed border-gray-200 p-4 space-y-2">
+                                                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">No hay profesionales registrados</p>
+                                                    <p className="text-[10px] text-gray-400 max-w-[280px] mx-auto leading-relaxed">
+                                                        Registra a tu primer profesional a continuación para poder crear este servicio.
+                                                     </p>
+                                                </div>
+                                            )}
+
+                                            {/* Añadir nuevo profesional inline sin salir */}
+                                            <div className="pt-3 border-t border-gray-200/60 mt-3">
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Nombre del nuevo profesional..."
+                                                        className="flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none text-xs font-bold"
+                                                        onFocus={(e) => e.target.style.borderColor = 'var(--primary-color)'}
+                                                        onBlur={(e) => e.target.style.borderColor = 'rgb(229, 231, 235)'}
+                                                        value={quickStaffName}
+                                                        onChange={(e) => setQuickStaffName(e.target.value)}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        disabled={isCreatingQuickStaff || !quickStaffName.trim()}
+                                                        onClick={handleCreateQuickStaff}
+                                                        className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-1.5 shrink-0"
+                                                    >
+                                                        {isCreatingQuickStaff ? (
+                                                            <Loader2 className="animate-spin" size={12} />
+                                                        ) : (
+                                                             <Plus size={12} />
+                                                         )}
+                                                         Añadir
+                                                     </button>
+                                                 </div>
+                                             </div>
+                                         </>
+                                     )}
+                                 </div>
 
                                 <div>
                                     <label htmlFor="puntosOtorgados" className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">Puntos Otorgados por Cita</label>

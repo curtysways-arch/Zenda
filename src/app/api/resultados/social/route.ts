@@ -80,10 +80,18 @@ export async function POST(req: Request) {
 
             const id = Math.random().toString(36).substring(2, 15);
             
-            await prisma.$executeRawUnsafe(`
-                INSERT INTO CommentResultado (id, resultadoId, userId, userName, userAvatar, content, approved, createdAt)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            `, id, resultadoId, auth.userId, auth.userName, auth.userAvatar, content, 1, new Date().toISOString());
+            await prisma.commentResultado.create({
+                data: {
+                    id,
+                    resultadoId,
+                    userId: auth.userId,
+                    userName: auth.userName,
+                    userAvatar: auth.userAvatar,
+                    content,
+                    approved: true,
+                    createdAt: new Date()
+                }
+            });
 
             return NextResponse.json({ success: true, message: 'Comentario publicado' });
         }
@@ -106,26 +114,30 @@ export async function DELETE(req: Request) {
         if (!commentId) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
         // Obtener el comentario para verificar propiedad o si es admin del negocio
-        const comment: any = await prisma.$queryRawUnsafe(`
-            SELECT c.*, r.businessId 
-            FROM CommentResultado c
-            JOIN Resultado r ON c.resultadoId = r.id
-            WHERE c.id = ?
-        `, commentId);
+        const comment = await prisma.commentResultado.findUnique({
+            where: { id: commentId },
+            include: {
+                Resultado: {
+                    select: { businessId: true }
+                }
+            }
+        });
 
-        if (!comment || comment.length === 0) {
+        if (!comment) {
             return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
         }
 
-        const isOwner = comment[0].userId === auth.userId;
-        const isAdminOfBusiness = auth.isAdmin && auth.negocioId === comment[0].businessId;
+        const isOwner = comment.userId === auth.userId;
+        const isAdminOfBusiness = auth.isAdmin && auth.negocioId === comment.Resultado.businessId;
         const isSuperAdmin = (auth as any).role === 'SUPERADMIN'; // O verificar roles si es necesario
 
         if (!isOwner && !isAdminOfBusiness && !isSuperAdmin) {
             return NextResponse.json({ error: 'No permitido' }, { status: 403 });
         }
 
-        await prisma.$executeRawUnsafe(`DELETE FROM CommentResultado WHERE id = ?`, commentId);
+        await prisma.commentResultado.delete({
+            where: { id: commentId }
+        });
 
         return NextResponse.json({ success: true });
     } catch (error) {
@@ -145,21 +157,23 @@ export async function PATCH(req: Request) {
         }
 
         // Obtener el comentario para verificar propiedad
-        const comment: any = await prisma.$queryRawUnsafe(`
-            SELECT userId FROM CommentResultado WHERE id = ?
-        `, commentId);
+        const comment = await prisma.commentResultado.findUnique({
+            where: { id: commentId },
+            select: { userId: true }
+        });
 
-        if (!comment || comment.length === 0) {
+        if (!comment) {
             return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
         }
 
-        if (comment[0].userId !== auth.userId) {
+        if (comment.userId !== auth.userId) {
             return NextResponse.json({ error: 'No permitido' }, { status: 403 });
         }
 
-        await prisma.$executeRawUnsafe(`
-            UPDATE CommentResultado SET content = ?, updatedAt = ? WHERE id = ?
-        `, content, new Date().toISOString(), commentId);
+        await prisma.commentResultado.update({
+            where: { id: commentId },
+            data: { content }
+        });
 
         return NextResponse.json({ success: true });
     } catch (error) {
@@ -175,22 +189,26 @@ export async function GET(req: Request) {
     if (!resultadoId) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
     try {
-        const comments = await prisma.$queryRawUnsafe(`
-            SELECT * FROM CommentResultado 
-            WHERE resultadoId = ? AND approved = 1
-            ORDER BY createdAt DESC
-        `, resultadoId);
+        const comments = await prisma.commentResultado.findMany({
+            where: {
+                resultadoId: resultadoId,
+                approved: true
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
 
-        const likesCount: any[] = await prisma.$queryRawUnsafe(`
-            SELECT COUNT(*) as count FROM LikeResultado WHERE resultadoId = ?
-        `, resultadoId);
+        const likesCount = await prisma.likeResultado.count({
+            where: { resultadoId }
+        });
 
         let userHasLiked = false;
         if (auth) {
-            const userLike: any[] = await prisma.$queryRawUnsafe(`
-                SELECT id FROM LikeResultado WHERE resultadoId = ? AND userId = ?
-            `, resultadoId, auth.userId);
-            userHasLiked = userLike.length > 0;
+            const userLike = await prisma.likeResultado.findFirst({
+                where: { resultadoId, userId: auth.userId }
+            });
+            userHasLiked = !!userLike;
         }
 
         return NextResponse.json({ 

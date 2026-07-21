@@ -223,12 +223,16 @@ export const planService = {
         const trialDays = (basePlan as any).trial_days || 14;
         const { startDate, endDate } = getSubscriptionDates(timeZone, { durationDays: trialDays });
 
+        const features = basePlan.features ? (typeof basePlan.features === 'string' ? JSON.parse(basePlan.features) : basePlan.features) : {};
+        const citasActivacion = Number((features as any)?.citas_activacion ?? 1);
+        const estadoInicial = citasActivacion > 0 ? 'trial_pending' : 'trial';
+
         return await (prisma.suscripcion as any).create({
             data: {
                 id: crypto.randomUUID(),
                 negocioId: businessId,
                 planId: basePlan.id,
-                estado: 'trial',
+                estado: estadoInicial,
                 isFounder: false,
                 founderPosition: null,
                 lockedPrice: null,
@@ -240,6 +244,53 @@ export const planService = {
                 updatedAt: new Date()
             }
         });
+    },
+
+    /**
+     * Verifica si el negocio ha alcanzado las citas requeridas para activar su período de prueba
+     */
+    async checkAndActivateSubscription(businessId: string) {
+        try {
+            const sub = await (prisma.suscripcion as any).findUnique({
+                where: { negocioId: businessId },
+                include: { Plan: true }
+            });
+
+            if (!sub || sub.estado !== 'trial_pending') return;
+
+            const plan = sub.Plan;
+            const features = plan.features ? (typeof plan.features === 'string' ? JSON.parse(plan.features) : plan.features) : {};
+            const citasActivacion = Number((features as any)?.citas_activacion ?? 1);
+
+            // Contar citas históricas del negocio (excluyendo canceladas y rechazadas)
+            const count = await prisma.appointment.count({
+                where: {
+                    negocioId: businessId,
+                    estado: { notIn: ['rejected', 'RECHAZADA', 'cancelled', 'CANCELADA', 'expired', 'EXPIRADA'] }
+                }
+            });
+
+            if (count >= citasActivacion) {
+                const trialDays = plan.trial_days || 14;
+                const now = new Date();
+                const fechaFin = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000);
+
+                await (prisma.suscripcion as any).update({
+                    where: { id: sub.id },
+                    data: {
+                        estado: 'trial',
+                        fechaInicio: now,
+                        fechaFin: fechaFin,
+                        trial_inicio: now,
+                        trial_fin: fechaFin,
+                        updatedAt: new Date()
+                    }
+                });
+                console.log(`🚀 [SUSCRIPCION] Negocio ${businessId} activado tras alcanzar ${count} citas. Vence el ${fechaFin}`);
+            }
+        } catch (e) {
+            console.error('Error en checkAndActivateSubscription:', e);
+        }
     },
 
     /**

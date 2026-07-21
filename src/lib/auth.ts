@@ -112,6 +112,7 @@ export const authOptions: AuthOptions = {
                     // Obtener slug del negocio
                     let slug: string | null = null;
                     let isDemo = false;
+                    let tipoNegocio = 'RESERVA';
                     if (user.negocioId) {
                         try {
                             const negocio: any = await prisma.negocio.findUnique({
@@ -119,6 +120,7 @@ export const authOptions: AuthOptions = {
                             });
                             slug = negocio?.slug || null;
                             isDemo = negocio?.isDemo || false;
+                            tipoNegocio = negocio?.tipoNegocio || 'RESERVA';
                         } catch (e) {}
                     }
 
@@ -135,6 +137,7 @@ export const authOptions: AuthOptions = {
                         isDemo,
                         staffId: null,
                         isAdminUser: false,
+                        tipoNegocio,
                     } as any;
 
                 } catch (error) {
@@ -154,6 +157,7 @@ export const authOptions: AuthOptions = {
                 token.slug = user.slug;
                 token.isDemo = user.isDemo;
                 token.staffId = user.staffId;
+                token.tipoNegocio = user.tipoNegocio;
                 // Campos AdminUser
                 token.isAdminUser = user.isAdminUser || false;
                 token.adminRolNombre = user.adminRolNombre || null;
@@ -175,6 +179,7 @@ export const authOptions: AuthOptions = {
                 session.user.slug = token.slug;
                 session.user.isDemo = token.isDemo;
                 session.user.staffId = token.staffId;
+                session.user.tipoNegocio = token.tipoNegocio || 'RESERVA';
                 // Campos AdminUser en sesión
                 session.user.isAdminUser = token.isAdminUser || false;
                 session.user.adminRolNombre = token.adminRolNombre || null;
@@ -201,6 +206,7 @@ export const authOptions: AuthOptions = {
                                 where: { id: freshUser.negocioId },
                             });
                             session.user.slug = negocio?.slug || null;
+                            session.user.tipoNegocio = negocio?.tipoNegocio || 'RESERVA';
                         }
                     } catch (e) {
                         console.error("Session repair error:", e);

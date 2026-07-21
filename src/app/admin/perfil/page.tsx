@@ -176,79 +176,86 @@ export default function NegocioConfigPage() {
                                 </div>
                                 <p className="text-[10px] text-gray-400 px-2 font-medium">Ejemplo: "{negocio.saludoTitulo || 'Hola'}, {negocio.nombreFallback || 'Radiante'}"</p>
                             </FeatureGate>
-
-                            {/* PALETA DE COLORES - APP NATIVA */}
-                            <div className="space-y-4 pt-6 border-t border-gray-100">
-                                <div>
-                                    <h3 className="text-lg font-black text-gray-900 tracking-tight flex items-center gap-2">
-                                        <Sparkles size={18} className="text-pink-500" />
-                                        Diseño y Personalización Cromática
-                                    </h3>
-                                    <p className="text-xs font-medium text-gray-400 mt-1 uppercase tracking-widest">Controla cada elemento visual de tu página pública</p>
-                                </div>
-                            </div>
-
-                            <FeatureGate feature="custom_colors" fallbackMessage="Tu plan actual no permite personalizar la paleta de colores.">
-                                {(() => {
-                                    const configObj = negocio.configuracion 
-                                        ? (typeof negocio.configuracion === 'string' ? JSON.parse(negocio.configuracion) : negocio.configuracion) 
-                                        : {};
-                                    return (
-                                        <ColorPaletteEditor
-                                            colors={{
-                                                colorPrimario: negocio.colorPrimario,
-                                                colorSecundario: negocio.colorSecundario,
-                                                colorTexto: negocio.colorTexto,
-                                                colorTerciario: negocio.colorTerciario,
-                                                colorNeutral: negocio.colorNeutral,
-                                                colorSubTexto: negocio.colorSubTexto,
-                                                colorHeader: configObj?.colorHeader || '',
-                                            }}
-                                            onChange={(updatedColors) => {
-                                                const newConfig = { ...configObj, colorHeader: updatedColors.colorHeader };
-                                                setNegocio({ 
-                                                    ...negocio, 
-                                                    ...updatedColors,
-                                                    configuracion: newConfig
-                                                });
-                                            }}
-                                            onSave={async (colorData) => {
-                                                setSaving(true);
-                                                setMessage(null);
-                                                try {
-                                                    const { colorHeader, ...restColors } = colorData;
-                                                    const newConfig = { ...configObj, colorHeader };
-                                                    const res = await fetch('/api/negocio', {
-                                                        method: 'PATCH',
-                                                        headers: { 'Content-Type': 'application/json' },
-                                                        body: JSON.stringify({
-                                                            ...restColors,
-                                                            configuracion: newConfig
-                                                        }),
-                                                    });
-                                                    if (res.ok) {
-                                                        const updated = await res.json();
-                                                        setNegocio((prev: any) => ({ ...prev, ...updated }));
-                                                        setMessage({ type: 'success', text: 'Paleta de colores guardada correctamente' });
-                                                    } else {
-                                                        setMessage({ type: 'error', text: 'Error al guardar los colores' });
-                                                    }
-                                                } catch {
-                                                    setMessage({ type: 'error', text: 'Error de conexión' });
-                                                } finally {
-                                                    setSaving(false);
-                                                    setTimeout(() => setMessage(null), 3000);
-                                                }
-                                            }}
-                                            isSaving={saving}
-                                            showHeader={false}
-                                        />
-                                    );
-                                })()}
-                            </FeatureGate>
+                        </div>
                     </div>
                 </div>
-            </div>
+
+                {/* Tarjeta de Personalización Cromática Independiente */}
+                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 p-8 md:p-10">
+                    <div className="mb-6">
+                        <h3 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+                            <Sparkles size={20} className="text-pink-500" />
+                            Diseño y Personalización Cromática
+                        </h3>
+                        <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">
+                            Controla cada elemento visual de tu página pública en tiempo real
+                        </p>
+                    </div>
+
+                    <FeatureGate feature="custom_colors" fallbackMessage="Tu plan actual no permite personalizar la paleta de colores.">
+                        {(() => {
+                            const configObj = negocio.configuracion 
+                                ? (typeof negocio.configuracion === 'string' ? JSON.parse(negocio.configuracion) : negocio.configuracion) 
+                                : {};
+                            return (
+                                <ColorPaletteEditor
+                                    colors={{
+                                        colorPrimario: negocio.colorPrimario,
+                                        colorSecundario: negocio.colorSecundario,
+                                        colorTexto: negocio.colorTexto,
+                                        colorTerciario: negocio.colorTerciario,
+                                        colorNeutral: negocio.colorNeutral,
+                                        colorSubTexto: negocio.colorSubTexto,
+                                        colorHeader: configObj?.colorHeader || '',
+                                        modoAvanzadoColores: configObj?.modoAvanzadoColores,
+                                    }}
+                                    onChange={(updatedColors) => {
+                                        const newConfig = { 
+                                            ...configObj, 
+                                            colorHeader: updatedColors.colorHeader,
+                                            modoAvanzadoColores: updatedColors.modoAvanzadoColores
+                                        };
+                                        setNegocio({ 
+                                            ...negocio, 
+                                            ...updatedColors,
+                                            configuracion: newConfig
+                                        });
+                                    }}
+                                    onSave={async (colorData) => {
+                                        setSaving(true);
+                                        setMessage(null);
+                                        try {
+                                            const { colorHeader, modoAvanzadoColores, ...restColors } = colorData;
+                                            const newConfig = { ...configObj, colorHeader, modoAvanzadoColores };
+                                            const res = await fetch('/api/negocio', {
+                                                method: 'PATCH',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    ...restColors,
+                                                    configuracion: newConfig
+                                                }),
+                                            });
+                                            if (res.ok) {
+                                                const updated = await res.json();
+                                                setNegocio((prev: any) => ({ ...prev, ...updated }));
+                                                setMessage({ type: 'success', text: 'Paleta de colores guardada correctamente' });
+                                            } else {
+                                                setMessage({ type: 'error', text: 'Error al guardar los colores' });
+                                            }
+                                        } catch {
+                                            setMessage({ type: 'error', text: 'Error de conexión' });
+                                        } finally {
+                                            setSaving(false);
+                                            setTimeout(() => setMessage(null), 3000);
+                                        }
+                                    }}
+                                    isSaving={saving}
+                                    showHeader={false}
+                                />
+                            );
+                        })()}
+                    </FeatureGate>
+                </div>
 
                 {/* Datos de Contacto */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

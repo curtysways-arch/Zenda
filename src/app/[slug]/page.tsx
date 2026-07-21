@@ -18,6 +18,7 @@ import ReviewsCarousel from '@/components/public/ReviewsCarousel';
 import NotificationBell from '@/components/public/NotificationBell';
 import { NotificationService } from '@/lib/notifications/notificationService';
 import HomeServicesClient from './HomeServicesClient';
+import ProductsStoreClient from '@/components/public/ProductsStoreClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,6 +36,10 @@ export default async function PublicNegocioPage({
 
     if (!negocio) {
         notFound();
+    }
+
+    if (negocio.tipoNegocio === 'PRODUCTOS') {
+        return <ProductsStoreClient negocio={negocio} />;
     }
     
     negocio.canchas = negocio.services || [];
@@ -512,13 +517,13 @@ export default async function PublicNegocioPage({
     }
 
     // --- Comentarios y calificaciones reales de los clientes ---
-    let reviews: any[] = [];
+    let allReviews: any[] = [];
     try {
         const dbReviews = await prisma.rating.findMany({
             where: {
                 appointment: { negocioId: negocio.id },
                 raterRole: 'client',
-                comment: { not: null, notIn: [''] }
+                stars: { gt: 0 }
             },
             include: {
                 appointment: {
@@ -530,11 +535,10 @@ export default async function PublicNegocioPage({
             },
             orderBy: {
                 createdAt: 'desc'
-            },
-            take: 20
+            }
         });
         
-        reviews = dbReviews.map((r: any) => ({
+        allReviews = dbReviews.map((r: any) => ({
             id: r.id,
             comment: r.comment,
             stars: r.stars,
@@ -551,6 +555,8 @@ export default async function PublicNegocioPage({
         console.error("Error loading reviews:", e);
     }
 
+    const reviews = allReviews.filter((r: any) => r.comment && r.comment.trim() !== '');
+
     // --- Estadísticas globales de calificaciones y clientes ---
     let totalOpiniones = 0;
     let promedioOpiniones = 5.0;
@@ -560,7 +566,8 @@ export default async function PublicNegocioPage({
         const stats = await prisma.rating.aggregate({
             where: {
                 appointment: { negocioId: negocio.id },
-                raterRole: 'client'
+                raterRole: 'client',
+                stars: { gt: 0 }
             },
             _count: {
                 stars: true
@@ -660,52 +667,63 @@ export default async function PublicNegocioPage({
                     <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/30 to-black/55" />
                     
                     {/* Contenido integrado en la imagen */}
-                    <div className="absolute inset-0 p-4 flex flex-col items-center justify-center space-y-2">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md border border-white/10 rounded-full">
-                            <span className="text-[7px] xs:text-[7.5px] font-black text-white uppercase tracking-[0.2em]">
-                                BIENVENIDO A {negocio.nombre.split(' - ')[0].toUpperCase()}
-                            </span>
-                        </div>
- 
-                        {negocio.heroTitulo && (
-                            <h2 className="text-2xl xs:text-3xl font-black text-white uppercase italic tracking-tighter drop-shadow-md leading-none">
-                                {negocio.heroTitulo}
-                            </h2>
-                        )}
-                        {negocio.heroSubtitulo && (
-                            <p className="text-[9px] xs:text-[10px] font-black text-white/70 uppercase tracking-[0.15em] leading-normal drop-shadow-md max-w-[310px] mx-auto">
-                                {negocio.heroSubtitulo}
-                            </p>
-                        )}
-                        {negocio.horarioApertura && negocio.horarioCierre && (
-                            <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-black/40 backdrop-blur-md border border-white/5 rounded-full mt-0.5">
-                                <div className={cn(
-                                    "w-1.5 h-1.5 rounded-full animate-pulse shrink-0",
-                                    isCurrentlyOpen ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.5)]"
-                                )} />
-                                <span className="text-[7.5px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-1">
-                                    <span className={cn(isCurrentlyOpen ? "text-emerald-400" : "text-rose-400")}>
-                                        {isCurrentlyOpen ? 'ABIERTO' : 'CERRADO'}
-                                    </span>
-                                    <span className="text-white/30 font-normal">|</span>
-                                    <span>{negocio.horarioApertura} - {negocio.horarioCierre}</span>
+                    <div className="absolute inset-0 p-4 flex flex-col justify-between items-center text-center">
+                        
+                        {/* Bloque Medio: Centrado verticalmente */}
+                        <div className="flex-1 flex flex-col items-center justify-center space-y-2.5">
+                            <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md border border-white/10 rounded-full mx-auto">
+                                <span className="text-[7.5px] xs:text-[8px] font-black text-white uppercase tracking-[0.2em] text-center">
+                                    BIENVENIDO A {negocio.nombre.split(' - ')[0].toUpperCase()}
                                 </span>
                             </div>
-                        )}
- 
-                        <div className="flex flex-col items-center pt-1">
-                            <Link
-                                href={`/${slug}/servicios`}
-                                className="inline-flex items-center gap-2 px-6 py-2.5 text-white rounded-full font-black text-[9px] xs:text-[10px] uppercase tracking-widest shadow-md hover:brightness-110 active:scale-95 transition-all"
-                                style={{ backgroundColor: primaryColor }}
-                            >
-                                Elegir servicio
-                                <ChevronRight size={12} strokeWidth={3} />
-                            </Link>
-                            <p className="text-[8px] font-bold text-white/50 flex items-center justify-center gap-1 mt-2.5 tracking-wide">
-                                <Clock size={10} />
-                                Reserva en menos de un minuto.
-                            </p>
+     
+                            {negocio.heroTitulo && (
+                                <h2 className="text-2xl xs:text-3xl font-black text-white uppercase italic tracking-tighter drop-shadow-md leading-none text-center mx-auto max-w-[280px] xs:max-w-[340px]">
+                                    {negocio.heroTitulo}
+                                </h2>
+                            )}
+                            {negocio.heroSubtitulo && (
+                                <p className="text-[9px] xs:text-[10px] font-black text-white/70 uppercase tracking-[0.15em] leading-relaxed drop-shadow-md max-w-[300px] mx-auto text-center">
+                                    {negocio.heroSubtitulo}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Bloque Inferior: Al borde de la imagen */}
+                        <div className="w-full flex flex-col items-center space-y-2 pb-2">
+                            {negocio.horarioApertura && negocio.horarioCierre && (
+                                <div className="inline-flex items-center justify-center gap-2 px-3.5 py-1 bg-black/45 backdrop-blur-md border border-white/5 rounded-full mx-auto text-center">
+                                    <div className={cn(
+                                        "w-1.5 h-1.5 rounded-full animate-pulse shrink-0",
+                                        isCurrentlyOpen ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.5)]"
+                                    )} />
+                                    <span className="text-[7.5px] font-black text-white uppercase tracking-[0.2em] flex items-center justify-center gap-1 text-center">
+                                        <span className={cn(isCurrentlyOpen ? "text-emerald-400" : "text-rose-400")}>
+                                            {isCurrentlyOpen ? 'ABIERTO' : 'CERRADO'}
+                                        </span>
+                                        <span className="text-white/30 font-normal">|</span>
+                                        <span>{negocio.horarioApertura} - {negocio.horarioCierre}</span>
+                                    </span>
+                                </div>
+                            )}
+     
+                            <div className="flex flex-col items-center w-full">
+                                <Link
+                                    href={`/${slug}/servicios`}
+                                    className="inline-flex items-center justify-center gap-2 px-7 py-2.5 text-white rounded-full font-black text-[9px] xs:text-[10px] uppercase tracking-widest shadow-lg hover:brightness-110 active:scale-95 transition-all mx-auto"
+                                    style={{ 
+                                        backgroundColor: primaryColor,
+                                        boxShadow: `0 10px 20px ${primaryColor}30`
+                                    }}
+                                >
+                                    Elegir servicio
+                                    <ChevronRight size={12} strokeWidth={3} />
+                                </Link>
+                                <p className="text-[7.5px] font-bold text-white/40 flex items-center justify-center gap-1 mt-1.5 tracking-wide text-center mx-auto">
+                                    <Clock size={9} />
+                                    Reserva en menos de un minuto.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -762,6 +780,7 @@ export default async function PublicNegocioPage({
                         tertiaryColor={tertiaryColor}
                         textColor={textColor}
                         showPrices={negocio.mostrarPrecios !== false}
+                        totalServicesCount={canchasConDisponibilidad.length}
                     />
                 </section>
             )}
@@ -936,23 +955,12 @@ export default async function PublicNegocioPage({
                                     <iframe 
                                         width="100%" 
                                         height="100%" 
-                                        style={{ border: 0, filter: 'contrast(1.05) brightness(0.98)' }} 
+                                        style={{ border: 0, filter: 'contrast(1.03) brightness(0.98)' }} 
                                         loading="lazy" 
                                         allowFullScreen 
                                         src={sede.embedSrc}
                                     />
                                     
-                                    {/* Botón flotante: Mi ubicación (arriba derecha) */}
-                                    <a 
-                                        href="https://www.google.com/maps/search/?api=1&query=mi+ubicacion" 
-                                        target="_blank" 
-                                        rel="noopener noreferrer" 
-                                        className="absolute top-4 right-4 bg-white/95 hover:bg-white text-pink-500 border border-slate-100 rounded-full px-4 py-2 text-[9px] font-black uppercase tracking-widest shadow-md flex items-center gap-1.5 active:scale-95 transition-all z-10"
-                                    >
-                                        <Locate size={10} className="stroke-[3]" />
-                                        Mi ubicación
-                                    </a>
-
                                     {/* Botón flotante: Ver mapa (abajo derecha) */}
                                     <a 
                                         href={sede.navUrl} 
@@ -964,13 +972,13 @@ export default async function PublicNegocioPage({
                                         Ver mapa
                                     </a>
 
-                                    {/* Foto de la fachada (abajo izquierda) */}
+                                    {/* Foto de la fachada (abajo izquierda) - Agrandada y Cliqueable */}
                                     {sede.imagenUrl && (
-                                        <div className="absolute bottom-4 left-4 size-16 rounded-2xl overflow-hidden border-2 border-white shadow-lg z-10 bg-slate-200">
+                                        <div className="absolute bottom-4 left-4 w-28 h-20 rounded-2xl overflow-hidden border-2 border-white shadow-xl z-10 bg-slate-200 cursor-pointer active:scale-95 transition-transform hover:shadow-2xl">
                                             <img 
                                                 src={sede.imagenUrl} 
                                                 alt="Fachada del local" 
-                                                className="w-full h-full object-cover"
+                                                className="w-full h-full object-cover foto-fachada-click"
                                             />
                                         </div>
                                     )}
@@ -1102,6 +1110,88 @@ export default async function PublicNegocioPage({
                             </div>
                         ))}
                     </div>
+
+                    {/* Modal para ampliar foto de fachada */}
+                    <div 
+                        id="modal-foto" 
+                        className="fixed inset-0 z-[300] bg-black/85 items-center justify-center p-4 animate-in fade-in duration-200"
+                        style={{ display: 'none' }}
+                    >
+                        <button 
+                            id="modal-foto-close"
+                            className="absolute top-6 right-6 bg-white/10 hover:bg-white/20 text-white rounded-full p-3 transition-colors active:scale-95 border-none outline-none cursor-pointer"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                        <img 
+                            id="modal-foto-img" 
+                            src="" 
+                            alt="Foto ampliada del local" 
+                            className="max-w-full max-h-[85vh] rounded-[2rem] object-contain shadow-2xl border-[4px] border-white animate-in zoom-in-95 duration-200"
+                        />
+                    </div>
+
+                    <Script 
+                        id="facade-image-modal"
+                        strategy="afterInteractive"
+                        dangerouslySetInnerHTML={{
+                            __html: `
+                                (function() {
+                                    function setupFacadeModal() {
+                                        var images = document.querySelectorAll('.foto-fachada-click');
+                                        var modal = document.getElementById('modal-foto');
+                                        var modalImg = document.getElementById('modal-foto-img');
+                                        
+                                        images.forEach(function(img) {
+                                            if (img.getAttribute('data-modal-attached')) return;
+                                            img.setAttribute('data-modal-attached', 'true');
+                                            img.addEventListener('click', function() {
+                                                if (modal && modalImg) {
+                                                    modalImg.src = img.src;
+                                                    modal.style.display = 'flex';
+                                                    document.body.style.overflow = 'hidden';
+                                                }
+                                            });
+                                        });
+                                        
+                                        var closeBtn = document.getElementById('modal-foto-close');
+                                        if (closeBtn && modal) {
+                                            if (!closeBtn.getAttribute('data-modal-attached')) {
+                                                closeBtn.setAttribute('data-modal-attached', 'true');
+                                                closeBtn.addEventListener('click', function() {
+                                                    modal.style.display = 'none';
+                                                    document.body.style.overflow = '';
+                                                });
+                                            }
+                                        }
+                                        
+                                        if (modal) {
+                                            if (!modal.getAttribute('data-modal-attached')) {
+                                                modal.setAttribute('data-modal-attached', 'true');
+                                                modal.addEventListener('click', function(e) {
+                                                    if (e.target === modal) {
+                                                        modal.style.display = 'none';
+                                                        document.body.style.overflow = '';
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    }
+                                    
+                                    if (document.readyState === 'loading') {
+                                        document.addEventListener('DOMContentLoaded', setupFacadeModal);
+                                    } else {
+                                        setupFacadeModal();
+                                    }
+                                    
+                                    // Para soportar transiciones de Next.js PWA
+                                    window.addEventListener('popstate', setupFacadeModal);
+                                    var observer = new MutationObserver(setupFacadeModal);
+                                    observer.observe(document.body, { childList: true, subtree: true });
+                                })();
+                            `
+                        }}
+                    />
                 </section>
             )}
 
@@ -1228,19 +1318,19 @@ export default async function PublicNegocioPage({
                     <div className="flex items-center gap-4">
                         <div className="flex flex-col shrink-0">
                             <span className="text-5xl font-black leading-none" style={{ color: primaryColor }}>
-                                {reviews.length > 0 ? (reviews.reduce((acc: number, r: any) => acc + r.stars, 0) / reviews.length).toFixed(1) : '0.0'}
+                                {allReviews.length > 0 ? (allReviews.reduce((acc: number, r: any) => acc + r.stars, 0) / allReviews.length).toFixed(1) : '5.0'}
                             </span>
                             <div className="flex gap-0.5 mt-1.5">
                                 {Array.from({ length: 5 }).map((_: any, i: number) => (
                                     <span key={i} className="text-amber-400 text-[14px]">&#9733;</span>
                                 ))}
                             </div>
-                            <span className="text-[9px] font-bold text-slate-400 mt-1">Basado en {reviews.length} opiniones</span>
+                            <span className="text-[9px] font-bold text-slate-400 mt-1">Basado en {allReviews.length} opiniones</span>
                         </div>
                         <div className="flex-1 space-y-1">
                             {[5, 4, 3, 2, 1].map((star: number) => {
-                                const count = reviews.filter((r: any) => r.stars === star).length;
-                                const pct = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                                const count = allReviews.filter((r: any) => r.stars === star).length;
+                                const pct = allReviews.length > 0 ? (count / allReviews.length) * 100 : (star === 5 ? 100 : 0);
                                 return (
                                     <div key={star} className="flex items-center gap-1.5">
                                         <span className="text-[9px] font-bold text-slate-500 w-2">{star}</span>

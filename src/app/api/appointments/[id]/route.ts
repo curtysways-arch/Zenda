@@ -171,6 +171,14 @@ export async function PATCH(
             }
         });
 
+        // Sincronizar estado de cupones de cliente asociados
+        try {
+            const { clientCouponService } = await import('@/lib/services/couponService');
+            await clientCouponService.syncCouponWithAppointmentStatus(targetId, estado);
+        } catch (e) {
+            console.error("Error al sincronizar cupón con el estado de la reserva:", e);
+        }
+
         return NextResponse.json({ success: true, estado });
     } catch (error: any) {
         console.error("CRITICAL ERROR in PATCH appointment:", error);

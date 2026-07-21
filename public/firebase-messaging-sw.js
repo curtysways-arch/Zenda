@@ -23,8 +23,8 @@ function initFirebase(config) {
             const notificationTitle = payload.notification?.title || payload.data?.title || 'Nueva notificación';
             const notificationOptions = {
                 body: payload.notification?.body || payload.data?.body || '',
-                icon: payload.data?.icon || payload.notification?.image || '/icons/icon-192x192.png',
-                badge: '/icons/icon-72x72.png',
+                icon: payload.data?.icon || payload.notification?.image || '/logo-citiox.png',
+                badge: '/logo-citiox.png',
                 data: payload.data || {},
                 vibrate: [200, 100, 200],
                 requireInteraction: false
@@ -73,39 +73,7 @@ fetch('/api/config/firebase')
         });
     });
 
-// Listener push raw de diagnóstico (Prueba Directa con texto estático)
-self.addEventListener('push', (event) => {
-    console.log('[SW-DEBUG] Evento push raw detectado en el Service Worker.');
-    
-    // 1. Mostrar notificación estática de diagnóstico
-    const promise = self.registration.showNotification("PRUEBA DIRECTA", {
-        body: "Llegó evento push raw al Service Worker. Ignorando payload de Firebase para esta prueba.",
-        icon: "/icons/icon-192x192.png",
-        badge: "/icons/icon-72x72.png",
-        tag: "prueba-directa-" + Date.now(), // Tag único para evitar colapsos
-        requireInteraction: true
-    })
-    .then(() => {
-        console.log('[SW-DEBUG] ✅ showNotification (PRUEBA DIRECTA) ejecutada con éxito total.');
-    })
-    .catch((err) => {
-        console.error('[SW-DEBUG] ❌ showNotification (PRUEBA DIRECTA) falló con error:', err);
-    });
 
-    event.waitUntil(promise);
-
-    // 2. Extraer y mostrar en logs el payload de Firebase recibido
-    if (event.data) {
-        try {
-            const jsonPayload = event.data.json();
-            console.log('[SW-DEBUG] Payload de Firebase recibido (JSON):', JSON.stringify(jsonPayload));
-        } catch (e) {
-            console.log('[SW-DEBUG] Payload de Firebase recibido (Texto plano):', event.data.text());
-        }
-    } else {
-        console.warn('[SW-DEBUG] El evento push no contiene ningún dato.');
-    }
-});
 
 // Forzar la activación inmediata de este Service Worker al instalarse
 self.addEventListener('install', (event) => {

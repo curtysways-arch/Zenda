@@ -20,7 +20,11 @@ import {
     UserCog,
     Gift,
     Megaphone,
-    Trophy
+    Trophy,
+    Store,
+    Award,
+    Calendar,
+    Briefcase
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
@@ -84,6 +88,10 @@ export default function SuperAdminMobileNav() {
         },
         { name: 'Métricas', href: '/superadmin/metricas', icon: BarChart3 },
         { name: 'Referidos', href: '/superadmin/referidos', icon: Gift },
+        { name: 'Misiones', href: '/superadmin/misiones-globales', icon: Trophy },
+        { name: 'Niveles Citiox', href: '/superadmin/niveles', icon: Award },
+        { name: 'Temporadas Citiox', href: '/superadmin/temporadas', icon: Calendar },
+        { name: 'Marketplace', href: '/superadmin/plantillas', icon: Store },
         { name: 'Equipo', href: '/superadmin/equipo', icon: UserCog },
         { name: 'Administradores', href: '/superadmin/administradores', icon: ShieldCheck },
         { name: 'PWA Preview', href: '/superadmin/pwa', icon: Smartphone },

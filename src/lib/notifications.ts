@@ -372,8 +372,11 @@ export class NotificationService {
     }
 
     async sendOTP(negocioId: string, telefono: string, code: string, negocioName: string) {
-        const defaultMsg = `Tu código de verificación es: *{{code}}*. Válido por 5 minutos.`;
-        const template = await this.getTemplate(negocioId, 'OTP_MSG', defaultMsg);
+        const defaultMsg = `*{{code}}* es tu código de verificación. Válido por 5 minutos.`;
+        let template = await this.getTemplate(negocioId, 'OTP_MSG', defaultMsg);
+        if (template === 'Tu código de verificación es: *{{code}}*. Válido por 5 minutos.') {
+            template = defaultMsg;
+        }
         const message = this.replaceVariables(template, {
             negocio: negocioName,
             code

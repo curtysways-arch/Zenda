@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Share2, Clock, CheckCircle2, Copy, Calendar, Navigation2, ChevronLeft, ShieldCheck, Tag } from 'lucide-react';
+import { Share2, Clock, CheckCircle2, Copy, Calendar, Navigation2, ChevronLeft, ShieldCheck, Tag, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -30,14 +30,30 @@ export default function PromoShareClient({
 
     const handleShareWhatsApp = async () => {
         setIsSharing(true);
+        
+        const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        const diasStr = promotion.diasValidos 
+            ? promotion.diasValidos.split(',').map((d: string) => days[parseInt(d)]).join(', ') 
+            : 'Todos los días';
+            
+        const horarioStr = promotion.horaInicioValida && promotion.horaFinValida 
+            ? `${promotion.horaInicioValida} - ${promotion.horaFinValida}` 
+            : (negocio.horarioApertura && negocio.horarioCierre 
+                ? `${negocio.horarioApertura} - ${negocio.horarioCierre}` 
+                : 'Horario de atención');
+
+        const serviciosStr = promotion.services && promotion.services.length > 0
+            ? promotion.services.map((s: any) => `• ${s.nombre}`).join('\n')
+            : '';
+
+        const mensaje = `🔥 *PROMOCIÓN ESPECIAL* 🔥 ${negocio.nombre}\n\n*${promotion.titulo}*\n${promotion.precioAnterior ? `Antes: ~${promotion.precioAnterior}~ \n` : ''}Ahora: *$${promotion.precioPromo}*\n\n${serviciosStr ? `💆‍♂️ *Servicios incluidos:*\n${serviciosStr}\n\n` : ''}📅 *Días disponibles:* ${diasStr}\n⏰ *Horario:* ${horarioStr}\n\nReserva aquí: ${shareUrl}`;
+
         try {
             await fetch(`/api/promotions/${promotion.id}/share`, { method: 'POST' });
-            const mensaje = `🔥 *PROMOCIÓN ESPECIAL* 🔥 ${negocio.nombre}\n\n*${promotion.titulo}*\n${promotion.precioAnterior ? `Antes: ~${promotion.precioAnterior}~ \n` : ''}Ahora: *$${promotion.precioPromo}*\n\nReserva aquí: ${shareUrl}`;
             const waUrl = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
             window.open(waUrl, '_blank');
         } catch (error) {
             console.error('Error al compartir:', error);
-            const mensaje = `🔥 *PROMOCIÓN ESPECIAL* 🔥 ${negocio.nombre}\n\n*${promotion.titulo}*\n${promotion.precioAnterior ? `Antes: ~${promotion.precioAnterior}~ \n` : ''}Ahora: *$${promotion.precioPromo}*\n\nReserva aquí: ${shareUrl}`;
             const waUrl = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
             window.open(waUrl, '_blank');
         } finally {
@@ -79,20 +95,17 @@ export default function PromoShareClient({
                 </div>
             </header>
 
-            <main className="max-w-5xl mx-auto px-6 pt-32 pb-12">
+            <main className="max-w-5xl mx-auto px-6 pt-20 pb-12">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
                     
                     {/* Columna Izquierda: Imagen */}
                     <div className="lg:col-span-7 space-y-6">
-                        <div className="relative aspect-[4/3] sm:aspect-video lg:aspect-square rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white ring-1 ring-slate-100">
+                        <div className="relative w-[calc(100%+3rem)] -mx-6 sm:mx-0 sm:w-full bg-slate-100">
                             <img
                                 src={promotion.imagenUrl}
                                 alt={promotion.titulo}
-                                className={`w-full h-full object-cover ${isExpirada ? 'grayscale opacity-80' : ''}`}
+                                className={`w-full h-auto block object-contain ${isExpirada ? 'grayscale opacity-80' : ''}`}
                             />
-                            
-                            {/* Overlay informativo sobre la imagen */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
                             
                             <div className="absolute top-8 left-8 flex flex-col gap-3">
                                 {isExpirada ? (
@@ -110,8 +123,8 @@ export default function PromoShareClient({
 
                     {/* Columna Derecha: Detalles */}
                     <div className="lg:col-span-5 flex flex-col">
-                        <div className="sticky top-32 space-y-8">
-                            <div className="space-y-4">
+                        <div className="sticky top-32 space-y-6">
+                            <div className="space-y-3">
                                 <div className="flex items-center gap-2" style={{ color: negocio.colorSubTexto || '#475569' }}>
                                     <Tag size={20} />
                                     <span className="text-xs font-black uppercase tracking-[0.3em]">Oportunidad Única</span>
@@ -120,6 +133,51 @@ export default function PromoShareClient({
                                     {promotion.titulo}
                                 </h1>
                             </div>
+
+                            {/* DESCRIPCIÓN DE LA PROMO */}
+                            {promotion.descripcion && (
+                                <p className="text-sm font-semibold text-slate-600 leading-relaxed">
+                                    {promotion.descripcion}
+                                </p>
+                            )}
+
+                            {/* SERVICIO PRINCIPAL DE LA PROMOCIÓN */}
+
+                            {promotion.services && promotion.services.length > 0 && (
+                                <div className="space-y-3">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Servicio Principal a Aplicar</p>
+                                    <div className="space-y-3">
+                                        {promotion.services.map((service: any) => (
+                                            <Link 
+                                                key={service.id} 
+                                                href={`/${slug}/servicio/${service.id}`}
+                                                className="relative overflow-hidden p-6 rounded-[2rem] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-800 hover:border-pink-500/50 shadow-2xl flex items-center justify-between gap-4 group cursor-pointer transition-all duration-300 block hover:-translate-y-0.5 active:scale-95"
+                                            >
+                                                {/* Brillo dinámico de fondo */}
+                                                <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full -translate-y-12 translate-x-12 blur-2xl group-hover:scale-150 transition-all duration-1000" />
+                                                
+                                                <div className="flex items-start gap-4 relative z-10">
+                                                    <div className="p-3 bg-pink-500/10 text-pink-500 rounded-2xl border border-pink-500/20 shrink-0">
+                                                        <Sparkles size={20} className="animate-pulse" />
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-[9px] font-black text-pink-400 uppercase tracking-widest block mb-1">Servicio Incluido</span>
+                                                        <h4 className="text-base font-black text-white uppercase tracking-tight leading-snug">
+                                                            {service.nombre}
+                                                        </h4>
+                                                        <p className="text-[10px] font-bold text-slate-400 mt-1">Duración: {service.duracion || 60} minutos</p>
+                                                    </div>
+                                                </div>
+                                                <div className="shrink-0 relative z-10 flex flex-col items-end">
+                                                    <span className="px-3.5 py-1.5 bg-pink-500 text-white text-[8px] font-black uppercase rounded-lg shadow-lg tracking-widest">
+                                                        Activo
+                                                    </span>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Card de Precio */}
                             <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-2xl shadow-slate-200/50 space-y-8">
@@ -179,7 +237,8 @@ export default function PromoShareClient({
                                     </div>
                                 )}
 
-                                <div className="space-y-4 pt-8 border-t border-slate-50">
+
+                                 <div className="space-y-4 pt-6 border-t border-slate-50">
                                     {!isExpirada && (
                                         <Link
                                             href={promotion.services && promotion.services.length > 0
@@ -236,7 +295,7 @@ export default function PromoShareClient({
                     <div className="bg-white p-10 md:p-14 rounded-[4rem] border border-slate-100 text-slate-600 font-medium text-lg leading-relaxed shadow-inner italic">
                          {promotion.descripcion}
                          <br /><br />
-                         Esta oferta es por tiempo limitado y está sujeta a la disponibilidad de los servicios del centro {negocio.nombre}. No acumulable con otras promociones.
+                          Esta oferta es por tiempo limitado y está sujeta a la disponibilidad de los servicios del centro {negocio.nombre}. No acumulable con otras promociones ni con cupones de servicio gratis (se debe elegir solo un beneficio por reserva).
                     </div>
                 </div>
             </main>

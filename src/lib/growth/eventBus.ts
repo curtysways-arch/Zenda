@@ -21,7 +21,36 @@ export type GrowthEventType =
   | 'POINTS_EARNED'
   | 'LEVEL_UP'
   | 'BADGE_UNLOCKED'
-  | 'CUSTOM_EVENT';
+  | 'CLIENT_CREATED'
+  | 'SERVICE_CREATED'
+  | 'STAFF_CREATED'
+  | 'PROFILE_UPDATED'
+  | 'LOYALTY_ENABLED'
+  | 'APP_DOWNLOADED'
+  | 'RESERVATION_COMPLETED'
+  | 'QUEST_COMPLETED'
+  | 'CAMPAIGN_COMPLETED'
+  | 'XP_GAINED'
+  | 'DIAMONDS_EARNED'
+  | 'SEASON_POINTS_EARNED'
+  | 'CUSTOM_EVENT'
+  // Eventos del Motor Global de Gamificación Citiox
+  | 'LEVEL_REWARD_GRANTED'
+  | 'GLOBAL_LEVEL_REACHED'
+  | 'GLOBAL_SEASON_STARTED'
+  | 'GLOBAL_SEASON_FINISHED'
+  | 'GLOBAL_SEASON_ARCHIVED'
+  | 'GLOBAL_REWARD_FAILED'
+  | 'REWARD_ROLLBACK'
+  | 'WALLET_UPDATED'
+  // Eventos del nuevo sistema de misiones desacoplado Citiox
+  | 'MISSION_INSTALLED'
+  | 'MISSION_PUBLISHED'
+  | 'MISSION_ACTIVATED'
+  | 'MISSION_DEACTIVATED'
+  | 'MISSION_ARCHIVED'
+  | 'BUSINESS_REWARD_SELECTED'
+  | 'BUSINESS_REWARD_GRANTED';
 
 /**
  * Publica un evento de crecimiento de forma asíncrona no bloqueante.
@@ -59,7 +88,46 @@ export async function publishGrowthEvent(
             console.error('[EventBus] Error disparando el procesamiento en segundo plano:', err.message);
         });
 
+        // 3. Registrar también como Evento de Dominio si corresponde
+        await publishDomainEvent(
+            'USER_BUSINESS',
+            `${userId}_${negocioId}`,
+            eventType,
+            payload
+        );
+
     } catch (err: any) {
         console.error(`[EventBus] Error publicando evento ${eventType}:`, err.message);
     }
+}
+
+/**
+ * Publica y registra un Evento de Dominio de forma persistente (Event Store)
+ * aggregate: ej. "USER", "QUEST", "SEASON", "REWARD", "USER_BUSINESS"
+ * aggregateId: ID de la entidad afectada
+ * eventType: ej. "LEVEL_UP", "QUEST_COMPLETED", "XP_GRANTED"
+ */
+export async function publishDomainEvent(
+  aggregate: string,
+  aggregateId: string,
+  eventType: string,
+  payload: any
+): Promise<void> {
+  try {
+    console.log(`[EventBus] Registrando Evento de Dominio: ${eventType} para ${aggregate}:${aggregateId}`);
+    
+    // Registrar en el Event Store de forma persistente
+    await prisma.domainEvent.create({
+      data: {
+        aggregate,
+        aggregateId,
+        eventType,
+        payload: payload || {},
+        status: 'PROCESSED',
+        processedAt: new Date()
+      }
+    });
+  } catch (err: any) {
+    console.error(`[EventBus] Error persistiendo Evento de Dominio ${eventType}:`, err.message);
+  }
 }

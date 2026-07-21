@@ -35,7 +35,23 @@ export default function PromotionClient({
     const handleShare = (promo: any) => {
         const shareUrl = `${window.location.origin}/${negocio.slug}/promo/${promo.id}`;
         const ahoraTexto = promo.tipoPromo === '2x1' ? '*¡Oferta 2x1!*' : (promo.tipoPromo === '3x1' ? '*¡Oferta 3x1!*' : `*$${promo.precioPromo}*`);
-        const mensaje = `🔥 *PROMOCIÓN ESPECIAL* 🔥 ${negocio.nombre}\n\n*${promo.titulo}*\n${promo.precioAnterior ? `Antes: ~${promo.precioAnterior}~ \n` : ''}Ahora: ${ahoraTexto}\n\nReserva aquí: ${shareUrl}`;
+        
+        const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        const diasStr = promo.diasValidos 
+            ? promo.diasValidos.split(',').map((d: string) => days[parseInt(d)]).join(', ') 
+            : 'Todos los días';
+            
+        const horarioStr = promo.horaInicioValida && promo.horaFinValida 
+            ? `${promo.horaInicioValida} - ${promo.horaFinValida}` 
+            : (negocio.horarioApertura && negocio.horarioCierre 
+                ? `${negocio.horarioApertura} - ${negocio.horarioCierre}` 
+                : 'Horario de atención');
+
+        const serviciosStr = promo.services && promo.services.length > 0
+            ? promo.services.map((s: any) => `• ${s.nombre}`).join('\n')
+            : '';
+
+        const mensaje = `🔥 *PROMOCIÓN ESPECIAL* 🔥 ${negocio.nombre}\n\n*${promo.titulo}*\n${promo.precioAnterior ? `Antes: ~${promo.precioAnterior}~ \n` : ''}Ahora: ${ahoraTexto}\n\n${serviciosStr ? `💆‍♂️ *Servicios incluidos:*\n${serviciosStr}\n\n` : ''}📅 *Días disponibles:* ${diasStr}\n⏰ *Horario:* ${horarioStr}\n\nReserva aquí: ${shareUrl}`;
         const waUrl = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
         window.open(waUrl, '_blank');
     };

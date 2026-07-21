@@ -2,6 +2,30 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { getCurrentLevel, getNextLevel } from '@/lib/loyalty/levelEngine';
+import { BusinessMissionService } from '@/lib/growth/businessMissionService';
+
+const CATEGORY_COLORS: Record<string, string> = {
+    RESERVAS: '#ec4899',
+    REFERIDOS: '#3b82f6',
+    RESENAS: '#eab308',
+    COMPRAS: '#f43f5e',
+    PERFIL: '#06b6d4',
+    CUMPLEANOS: '#10b981',
+    SOCIAL: '#8b5cf6',
+    OTRO: '#64748b'
+};
+
+const CATEGORY_ICONS: Record<string, string> = {
+    RESERVAS: 'Calendar',
+    REFERIDOS: 'Users',
+    RESENAS: 'Star',
+    COMPRAS: 'ShoppingBag',
+    PERFIL: 'UserCheck',
+    CUMPLEANOS: 'Cake',
+    SOCIAL: 'Share2',
+    OTRO: 'Award'
+};
 
 export const dynamic = 'force-dynamic';
 
@@ -66,33 +90,31 @@ export async function GET(
             userId = (session?.user as any)?.id;
         }
 
-        // 3. Obtener todas las campañas activas de este negocio (o globales de Citiox)
-        const campaigns = await prisma.campaign.findMany({
+        // 3. Auto-instalar todas las misiones publicadas para el negocio
+        await BusinessMissionService.ensureAllMissionsInstalledForNegocio(negocio.id);
+
+        // 4. Obtener las BusinessMissions del negocio
+        const businessMissions = await prisma.businessMission.findMany({
             where: {
-                OR: [
-                    { negocioId: negocio.id },
-                    { negocioId: null } // Campañas globales de Citiox
-                ],
-                activa: true
+                negocioId: negocio.id,
+                status: 'ACTIVE',
+                MissionDefinition: {
+                    status: 'PUBLISHED'
+                }
             },
             include: {
-                Quests: {
-                    where: {
-                        activa: true,
-                        visible: true // Misiones no secretas por defecto
-                    },
-                    orderBy: {
-                        fechaInicio: 'asc'
+                MissionDefinition: {
+                    include: {
+                        Rewards: {
+                            include: {
+                                RewardCatalog: true
+                            },
+                            orderBy: { orden: 'asc' }
+                        }
                     }
                 }
             }
         });
-
-        // Aplanar todas las misiones activas
-        const quests = campaigns.flatMap(c => c.Quests.map(q => ({
-            ...q,
-            campañaNombre: c.nombre
-        })));
 
         let userProgressMap: Record<string, any> = {};
         let gamificationData = {
@@ -102,55 +124,121 @@ export async function GET(
         };
 
         if (userId) {
-            // 4. Cargar el progreso de misiones del usuario
-            const progressList = await prisma.questProgress.findMany({
+            // Cargar el progreso de misiones del usuario
+            const progressList = await prisma.businessMissionProgress.findMany({
                 where: {
                     userId,
-                    Quest: {
-                        OR: [
-                            { negocioId: negocio.id },
-                            { negocioId: null }
-                        ]
+                    BusinessMission: {
+                        negocioId: negocio.id
                     }
                 }
             });
 
             progressList.forEach(p => {
-                userProgressMap[p.questId] = p;
+                userProgressMap[p.businessMissionId] = p;
             });
 
-            // 5. Cargar datos de gamificación (Nivel, Experiencia)
-            const userLevel = await prisma.userLevel.findUnique({
-                where: { userId },
-                include: { LevelTier: true }
+            // 5. Cargar datos del Club de Beneficios (Niveles y Temporadas)
+            let userPoints = await prisma.userPoints.findUnique({
+                where: { userId_negocioId: { userId, negocioId: negocio.id } },
+                include: {
+                    NivelActual: true,
+                    UltimoNivelVisto: true,
+                    UltimaTemporadaVista: true
+                }
             });
 
-            if (userLevel) {
-                // Buscar si existe un siguiente tier de nivel
-                const nextTier = await prisma.levelTier.findFirst({
-                    where: {
+            if (!userPoints) {
+                // Crear balance inicial si no existe
+                userPoints = await prisma.userPoints.create({
+                    data: {
+                        userId,
                         negocioId: negocio.id,
-                        puntosRequeridos: {
-                            gt: userLevel.xpTotal
-                        }
+                        puntos: 0
                     },
-                    orderBy: { puntosRequeridos: 'asc' }
+                    include: {
+                        NivelActual: true,
+                        UltimoNivelVisto: true,
+                        UltimaTemporadaVista: true
+                    }
                 });
-
-                const siguienteNivelXP = nextTier ? nextTier.puntosRequeridos : userLevel.xpTotal + 100;
-                const puntosBase = userLevel.LevelTier.puntosRequeridos;
-                const xpParaSubir = siguienteNivelXP - puntosBase;
-                const xpActualRelativo = userLevel.xpTotal - puntosBase;
-                const progresoXP = xpParaSubir > 0 ? Math.min(100, Math.round((xpActualRelativo / xpParaSubir) * 100)) : 100;
-
-                gamificationData.level = {
-                    nombre: userLevel.LevelTier.nombre,
-                    xpTotal: userLevel.xpTotal,
-                    puntosTier: userLevel.puntosTier,
-                    siguienteNivelXP,
-                    progresoXP
-                };
             }
+
+            // Recalcular nivel de usuario basándose en su experiencia para mantener consistencia siempre
+            const { updateUserLevel } = await import('@/lib/loyalty/levelEngine');
+            await updateUserLevel(userId, negocio.id, userPoints.experiencia);
+
+            // Refrescar el registro de userPoints para reflejar cualquier cambio en el nivel
+            userPoints = await prisma.userPoints.findUnique({
+                where: { userId_negocioId: { userId, negocioId: negocio.id } },
+                include: {
+                    NivelActual: true,
+                    UltimoNivelVisto: true,
+                    UltimaTemporadaVista: true
+                }
+            }) || userPoints;
+
+            // Si no tiene nivel actual, asignárselo de inmediato
+            if (!userPoints.nivelActualId) {
+                const currentLvl = await getCurrentLevel(userPoints.experiencia, negocio.id);
+                if (currentLvl) {
+                    userPoints = await prisma.userPoints.update({
+                        where: { id: userPoints.id },
+                        data: { 
+                            nivelActualId: currentLvl.id,
+                            ultimoNivelVistoId: currentLvl.id // Inicializar sin animación
+                        },
+                        include: {
+                            NivelActual: true,
+                            UltimoNivelVisto: true,
+                            UltimaTemporadaVista: true
+                        }
+                    });
+                }
+            }
+
+            // Obtener el siguiente nivel y progreso
+            const nextLevelData = await getNextLevel(userPoints.experiencia, userPoints.nivelActualId, negocio.id);
+
+            // Obtener temporada activa
+            const activeSeason = await prisma.loyaltySeason.findFirst({
+                where: { negocioId: negocio.id, activa: true },
+                orderBy: { createdAt: 'desc' }
+            });
+
+            // Obtener todos los niveles del negocio para el mapa visual
+            const allLevels = await prisma.loyaltyLevel.findMany({
+                where: { negocioId: negocio.id },
+                orderBy: { orden: 'asc' }
+            });
+
+            // Determinar si mostramos animación de subida de nivel
+            const mostrarAnimacionNivel = userPoints.nivelActualId !== null && 
+                                           userPoints.nivelActualId !== userPoints.ultimoNivelVistoId;
+
+            // Determinar si mostramos modal de temporada nueva
+            const mostrarModalTemporada = activeSeason !== null && 
+                                           (!userPoints.ultimaTemporadaVistaId || userPoints.ultimaTemporadaVistaId !== activeSeason.id);
+
+            gamificationData.level = {
+                nombre: userPoints.NivelActual?.nombre || 'Inicial',
+                xpTotal: userPoints.experiencia, // Puntos de nivel acumulados
+                puntosTier: userPoints.experiencia,
+                siguienteNivelXP: nextLevelData ? nextLevelData.diamondsRequired : userPoints.experiencia,
+                progresoXP: nextLevelData ? Math.round(nextLevelData.progressPercent) : 100
+            } as any;
+
+            (gamificationData as any).loyaltyStatus = {
+                diamantes: userPoints.puntos, // Saldo gastable
+                experiencia: userPoints.experiencia, // Experiencia de nivel
+                cashback: userPoints.cashback || 0.0, // Cashback acumulado del cliente
+                nivelActual: userPoints.NivelActual,
+                siguienteNivel: nextLevelData,
+                mostrarAnimacionNivel,
+                mostrarModalTemporada,
+                temporadaActiva: activeSeason,
+                todosLosNiveles: allLevels
+            };
 
             // 6. Cargar insignias del usuario
             const userBadges = await prisma.userBadge.findMany({
@@ -166,54 +254,74 @@ export async function GET(
             gamificationData.streak = streak?.rachaActual || 0;
         }
 
-        // 8. Combinar misiones con el progreso del cliente
-        const mappedQuests = quests.map(q => {
-            const progress = userProgressMap[q.id];
+        // 8. Mapear las BusinessMissions a Quests compatibles con el frontend
+        const mappedQuests = businessMissions.map(bm => {
+            const def = bm.MissionDefinition;
+            const progress = userProgressMap[bm.id];
+
+            // Formatear recompensas como lista de strings
+            const recompensas: string[] = [];
             
-            // Parsear acciones/recompensas para el cliente
-            const accionesRaw = typeof q.acciones === 'string' ? JSON.parse(q.acciones) : q.acciones;
-            const recompensas = Array.isArray(accionesRaw)
-                ? accionesRaw
-                    .filter((a: any) => !['SEND_WHATSAPP', 'SEND_PUSH', 'SEND_EMAIL'].includes(a.action))
-                    .map((a: any) => {
-                        if (a.action === 'ADD_POINTS') {
-                            const pts = a.value?.puntos ?? a.value;
-                            return `+${pts} puntos`;
-                        }
-                        if (a.action === 'CREATE_COUPON') {
-                            const desc = a.value?.descuento || a.value?.porcentaje;
-                            return desc ? `${desc}% descuento` : 'Cupón descuento';
-                        }
-                        if (a.action === 'GIVE_BADGE' || a.action === 'AWARD_BADGE') return 'Insignia exclusiva';
-                        if (a.action === 'UP_LEVEL') return `+${a.value?.xp ?? a.value} XP`;
-                        if (a.action === 'PRODUCT_GIFT') return a.value?.name ? `🎁 ${a.value.name}` : 'Producto gratis';
-                        if (a.action === 'SERVICE_GIFT') return a.value?.name ? `✨ ${a.value.name}` : 'Servicio gratis';
-                        if (a.action === 'ADD_WALLET_BALANCE') {
-                            const amt = a.value?.monto ?? a.value;
-                            return `$${amt} saldo`;
-                        }
-                        return null;
-                    })
-                    .filter(Boolean)
-                : [];
+            // Recompensas de Citiox (definición)
+            def.Rewards.forEach(r => {
+                const catalog = r.RewardCatalog;
+                if (catalog.tipo === 'XP') {
+                    recompensas.push(`+${(catalog.valor as any)?.cantidad ?? 0} XP`);
+                } else if (catalog.tipo === 'DIAMONDS') {
+                    recompensas.push(`+${(catalog.valor as any)?.cantidad ?? 0} Diamantes`);
+                } else if (catalog.tipo === 'COUPON') {
+                    recompensas.push(`Cupón: ${catalog.nombre}`);
+                } else {
+                    recompensas.push(catalog.nombre);
+                }
+            });
+
+            // Recompensa local del negocio
+            if (bm.rewardConfiguration) {
+                const rc = bm.rewardConfiguration as any;
+                if (rc.rewardType === 'CASHBACK') {
+                    recompensas.push(`+${rc.value || 0}% Cashback`);
+                } else if (rc.rewardType === 'COUPON') {
+                    recompensas.push(`Cupón de Descuento`);
+                } else if (rc.rewardType === 'FREE_SERVICE' || rc.rewardType === 'SERVICE') {
+                    recompensas.push(`Servicio Gratis`);
+                } else if (rc.rewardType === 'PRODUCT') {
+                    recompensas.push(`Producto Gratis`);
+                } else {
+                    recompensas.push(rc.descripcion || 'Premio de fidelidad');
+                }
+            }
+
             const recompensasFinal = recompensas.length > 0 ? recompensas : ['Premio de fidelidad'];
 
+            // Determinar estado compatible
+            let estado: 'EN_PROGRESO' | 'PENDIENTE_APROBACION' | 'COMPLETADA' | 'RECLAMADA' = 'EN_PROGRESO';
+            if (progress) {
+                if (progress.estado === 'RECOMPENSADA') {
+                    estado = 'RECLAMADA';
+                } else if (progress.estado === 'COMPLETADA') {
+                    estado = 'COMPLETADA';
+                } else if (progress.estado === 'PENDIENTE_APROBACION') {
+                    estado = 'PENDIENTE_APROBACION';
+                }
+            }
+
             return {
-                id: q.id,
-                nombre: q.nombre,
-                descripcion: q.descripcion,
-                imagenUrl: q.imagenUrl,
-                icono: q.icono,
-                color: q.color,
-                campaignId: q.campaignId,
-                campañaNombre: q.campañaNombre,
-                fechaInicio: q.fechaInicio,
-                fechaFin: q.fechaFin,
-                validacionTipo: q.validacionTipo,
+                id: bm.id,
+                nombre: def.nombre,
+                descripcion: def.descripcion || '',
+                imagenUrl: def.imagenUrl || undefined,
+                icono: CATEGORY_ICONS[def.categoria] || 'Award',
+                color: CATEGORY_COLORS[def.categoria] || '#3b82f6',
+                campaignId: bm.id,
+                campañaNombre: def.categoria || 'Retos',
+                fechaInicio: bm.publishedAt?.toISOString(),
+                fechaFin: undefined,
+                validacionTipo: def.triggerEvent === 'MANUAL' ? 'MANUAL' : 'AUTOMATICO',
                 progresoActual: progress ? progress.progresoActual : 0,
-                progresoRequerido: q.cantidadMeta,
-                estado: progress ? progress.estado : 'EN_PROGRESO',
-                fechaCompletada: progress?.fechaCompletada || null,
+                progresoRequerido: def.cantidadMeta,
+                estado,
+                fechaCompletada: progress?.fechaCompletada?.toISOString() || null,
                 recompensas: recompensasFinal
             };
         });

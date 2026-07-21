@@ -9,6 +9,7 @@ import Link from 'next/link';
 interface TopBarProps {
     primaryColor: string;
     title?: string;
+    negocioNombre?: string;
 }
 
 const ZendaLogo = ({ size = 24, className = "", style = {} }: { size?: number; className?: string; style?: React.CSSProperties }) => (
@@ -46,13 +47,27 @@ const ZendaLogo = ({ size = 24, className = "", style = {} }: { size?: number; c
     </svg>
 );
 
-export default function MobileTopBar({ primaryColor, title = 'ADMIN' }: TopBarProps) {
+export default function MobileTopBar({ primaryColor, title = 'ADMIN', negocioNombre }: TopBarProps) {
     const { confirm } = useConfirm();
     const { data: session } = useSession();
     const [showMenu, setShowMenu] = useState(false);
     const [showShare, setShowShare] = useState(false);
     const [copied, setCopied] = useState(false);
     const [shareUrl, setShareUrl] = useState('');
+
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+    const checkNotifications = async () => {
+        try {
+            const res = await fetch('/api/admin/notificaciones?filter=unread');
+            if (res.ok) {
+                const data = await res.json();
+                setUnreadNotifications(Array.isArray(data) ? data.length : 0);
+            }
+        } catch (error) {
+            console.error("Error fetching unread notifications count in MobileTopBar", error);
+        }
+    };
 
     useEffect(() => {
         // Construir URL pública del negocio a partir de la sesión
@@ -61,6 +76,21 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN' }: TopBarPr
             setShareUrl(`${window.location.origin}/${slug}`);
         }
     }, [session]);
+
+    useEffect(() => {
+        checkNotifications();
+        
+        // Polling cada 60 segundos
+        const intervalId = setInterval(checkNotifications, 60000);
+
+        // Escuchar cambios de notificaciones leídas
+        window.addEventListener('notification-marked-read', checkNotifications);
+
+        return () => {
+            clearInterval(intervalId);
+            window.removeEventListener('notification-marked-read', checkNotifications);
+        };
+    }, []);
 
     const handleCopy = () => {
         if (!shareUrl) return;
@@ -85,55 +115,65 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN' }: TopBarPr
 
     return (
         <>
-            <div className="sticky top-0 left-0 right-0 z-[90] h-20 bg-white/95 backdrop-blur-2xl border-b border-slate-100/50 flex items-center justify-between px-5">
-                <div className="flex items-center gap-3">
+            <div className="sticky top-0 left-0 right-0 z-[90] h-20 bg-white/95 backdrop-blur-2xl border-b border-slate-100/50 flex items-center justify-between px-4">
+                <div className="flex items-center gap-2.5 min-w-0">
                     <button 
                         onClick={() => {
                             if (typeof window !== 'undefined') {
                                 window.dispatchEvent(new CustomEvent('toggle-admin-sidebar'));
                             }
                         }}
-                        className="size-11 flex items-center justify-center bg-pink-50 hover:bg-pink-100 rounded-2xl transition-all active:scale-95 border border-pink-100/30"
+                        className="size-10 flex items-center justify-center bg-pink-50 hover:bg-pink-100 rounded-2xl transition-all active:scale-95 border border-pink-100/30 shrink-0"
                     >
-                        <CalendarDays size={20} className="text-pink-500" />
+                        <CalendarDays size={18} className="text-pink-500" />
                     </button>
-                    <div>
-                        <h2 className="font-bold text-slate-800 text-sm tracking-widest leading-none uppercase">{title}</h2>
-                        <span className="text-[9px] font-black uppercase tracking-wider leading-none text-slate-400 mt-1 block">Spa Premium</span>
+                    <div className="min-w-0">
+                        <h2 className="font-bold text-slate-800 text-xs tracking-widest leading-none uppercase truncate max-w-[110px]">{title}</h2>
+                        <span className="text-[9px] font-black uppercase tracking-wider leading-none text-slate-400 mt-1 block truncate max-w-[110px]">
+                            {negocioNombre || "Spa Premium"}
+                        </span>
                     </div>
                 </div>
-
-                <div className="flex items-center gap-2">
+ 
+                <div className="flex items-center gap-1.5 shrink-0">
                     {/* Botón QR / Compartir */}
                     <button 
                         onClick={() => setShowShare(true)}
-                        className="size-10 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full text-slate-600 transition-all active:scale-90 relative"
+                        className="size-9 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full text-slate-600 transition-all active:scale-90 relative"
                         title="QR y Compartir"
                     >
-                        <QrCode size={18} />
+                        <QrCode size={16} />
                     </button>
-
+ 
                     <Link 
                         href="/admin/comunicacion"
-                        className="size-10 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full text-slate-600 transition-all active:scale-90 relative"
+                        className="size-9 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full text-slate-600 transition-all active:scale-90 relative"
                         title="Comunicación"
                     >
-                        <MessageSquare size={18} style={{ color: primaryColor }} />
+                        <MessageSquare size={16} style={{ color: primaryColor }} />
                     </Link>
-
-                    <button className="size-10 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full text-slate-600 transition-all active:scale-90 relative">
-                        <Bell size={18} />
-                        <span className="absolute top-2 right-2 size-2 bg-pink-500 rounded-full border border-white" />
-                    </button>
-
+ 
+                    <Link 
+                        href="/admin/notificaciones"
+                        className="size-9 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full text-slate-600 transition-all active:scale-90 relative"
+                        title="Notificaciones"
+                    >
+                        <Bell size={16} />
+                        {unreadNotifications > 0 && (
+                            <span className="absolute -top-1 -right-1 size-4 bg-pink-500 rounded-full border border-white text-[7px] font-black text-white flex items-center justify-center animate-pulse">
+                                {unreadNotifications}
+                            </span>
+                        )}
+                    </Link>
+ 
                     <button 
                         onClick={() => setShowMenu(!showMenu)}
-                        className="size-10 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full text-slate-600 transition-all overflow-hidden"
+                        className="size-9 flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full text-slate-600 transition-all overflow-hidden"
                     >
                         {session?.user?.image ? (
                             <img src={session.user.image} className="w-full h-full object-cover" alt="Perfil" />
                         ) : (
-                            <User size={18} />
+                            <User size={16} />
                         )}
                     </button>
                 </div>

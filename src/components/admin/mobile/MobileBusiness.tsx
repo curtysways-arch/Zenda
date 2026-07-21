@@ -22,7 +22,8 @@ import {
     Image,
     TrendingUp,
     Users,
-    Gift
+    Gift,
+    Briefcase
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -167,9 +168,14 @@ export default function MobileBusiness({
                                             colorNeutral: localNegocio.colorNeutral,
                                             colorSubTexto: localNegocio.colorSubTexto,
                                             colorHeader: configObj?.colorHeader || '',
+                                            modoAvanzadoColores: configObj?.modoAvanzadoColores,
                                         }}
                                         onChange={(updatedColors) => {
-                                            const newConfig = { ...configObj, colorHeader: updatedColors.colorHeader };
+                                            const newConfig = { 
+                                                ...configObj, 
+                                                colorHeader: updatedColors.colorHeader,
+                                                modoAvanzadoColores: updatedColors.modoAvanzadoColores
+                                            };
                                             setLocalNegocio((prev: any) => ({
                                                 ...prev,
                                                 ...updatedColors,
@@ -177,8 +183,8 @@ export default function MobileBusiness({
                                             }));
                                         }}
                                         onSave={(colorData) => {
-                                            const { colorHeader, ...restColors } = colorData;
-                                            const newConfig = { ...configObj, colorHeader };
+                                            const { colorHeader, modoAvanzadoColores, ...restColors } = colorData;
+                                            const newConfig = { ...configObj, colorHeader, modoAvanzadoColores };
                                             onSaveNegocio({
                                                 ...restColors,
                                                 configuracion: newConfig
@@ -480,11 +486,18 @@ export default function MobileBusiness({
                             color="#f59e0b" 
                         />
                         <CatalogLink 
-                            href="/admin/referidos" 
-                            label="Programa de Referidos" 
-                            desc="Recompensas y embajadores"
+                            href="/admin/misiones" 
+                            label="Club de Beneficios" 
+                            desc="Desafíos, referidos y fidelización"
                             icon={<Gift size={20} />} 
                             color="#ec4899" 
+                        />
+                        <CatalogLink 
+                            href="/admin/misiones-citiox" 
+                            label="Misiones Citiox" 
+                            desc="Retos y recompensas del negocio"
+                            icon={<Briefcase size={20} />} 
+                            color="#0ea5e9" 
                         />
                         <CatalogLink 
                             href="/admin/cursos" 

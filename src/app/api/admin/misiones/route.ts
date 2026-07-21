@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { GLOBAL_QUEST_TEMPLATES } from '@/lib/growth/globalTemplates';
+import { BusinessMissionService } from '@/lib/growth/businessMissionService';
+
 
 /**
  * Gestiona el listado y la creación de campañas y misiones locales del negocio.
@@ -28,24 +30,148 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'Negocio no configurado para este usuario' }, { status: 400 });
         }
 
-        // 1. Obtener todas las campañas de este negocio (excluyendo marketplace global Citiox)
-        const campaigns = await prisma.campaign.findMany({
-            where: { negocioId },
-            include: {
-                Quests: true
+        // 1. Auto-instalar todas las misiones publicadas para el negocio
+        await BusinessMissionService.ensureAllMissionsInstalledForNegocio(negocioId);
+
+        // 2. Obtener todas las BusinessMissions del negocio
+        const businessMissions = await prisma.businessMission.findMany({
+            where: {
+                negocioId,
+                MissionDefinition: {
+                    status: 'PUBLISHED'
+                }
             },
-            orderBy: {
-                createdAt: 'desc'
+            include: {
+                MissionDefinition: {
+                    include: {
+                        Rewards: {
+                            include: {
+                                RewardCatalog: true
+                            },
+                            orderBy: { orden: 'asc' }
+                        }
+                    }
+                }
             }
         });
 
-        // 2. Calcular analíticas generales simplificadas (Fase 1/2 Core)
-        const questIds = campaigns.flatMap(c => c.Quests.map(q => q.id));
+        // 3. Agrupar las BusinessMissions por categoria para simular campañas
+        const CATEGORY_NAMES: Record<string, string> = {
+            RESERVAS: 'Misiones de Reservas',
+            REFERIDOS: 'Misiones de Referidos',
+            RESENAS: 'Misiones de Reseñas',
+            COMPRAS: 'Misiones de Compras',
+            PERFIL: 'Misiones de Perfil',
+            CUMPLEANOS: 'Misiones de Cumpleaños',
+            SOCIAL: 'Misiones de Redes Sociales',
+            OTRO: 'Misiones Especiales'
+        };
 
-        const progressStats = await prisma.questProgress.groupBy({
+        const CATEGORY_DESCS: Record<string, string> = {
+            RESERVAS: 'Retos relacionados con reservas de citas y asistencia.',
+            REFERIDOS: 'Retos de recomendación y captación de nuevos amigos.',
+            RESENAS: 'Retos de opiniones y reseñas en la plataforma.',
+            COMPRAS: 'Retos de consumo y compra de servicios/productos.',
+            PERFIL: 'Retos para completar la información del perfil de usuario.',
+            CUMPLEANOS: 'Retos de celebración estacional de cumpleaños.',
+            SOCIAL: 'Retos de interacción social.',
+            OTRO: 'Retos y promociones especiales del club.'
+        };
+
+        const CATEGORY_COLORS: Record<string, string> = {
+            RESERVAS: '#ec4899',
+            REFERIDOS: '#3b82f6',
+            RESENAS: '#eab308',
+            COMPRAS: '#f43f5e',
+            PERFIL: '#06b6d4',
+            CUMPLEANOS: '#10b981',
+            SOCIAL: '#8b5cf6',
+            OTRO: '#64748b'
+        };
+
+        const CATEGORY_ICONS: Record<string, string> = {
+            RESERVAS: 'Calendar',
+            REFERIDOS: 'Users',
+            RESENAS: 'Star',
+            COMPRAS: 'ShoppingBag',
+            PERFIL: 'UserCheck',
+            CUMPLEANOS: 'Cake',
+            SOCIAL: 'Share2',
+            OTRO: 'Award'
+        };
+
+        // Agrupar por categoría
+        const groupedMap = new Map<string, any>();
+        businessMissions.forEach(bm => {
+            const def = bm.MissionDefinition;
+            const cat = def.categoria || 'OTRO';
+            if (!groupedMap.has(cat)) {
+                groupedMap.set(cat, {
+                    id: cat,
+                    nombre: CATEGORY_NAMES[cat] || 'Misiones Generales',
+                    descripcion: CATEGORY_DESCS[cat] || 'Misiones del club.',
+                    activa: true,
+                    Quests: []
+                });
+            }
+
+            // Construir recompensas textuales
+            const recompensas: string[] = [];
+            def.Rewards.forEach(r => {
+                const catalog = r.RewardCatalog;
+                if (catalog.tipo === 'XP') {
+                    recompensas.push(`+${(catalog.valor as any)?.cantidad ?? 0} XP`);
+                } else if (catalog.tipo === 'DIAMONDS') {
+                    recompensas.push(`+${(catalog.valor as any)?.cantidad ?? 0} Diamantes`);
+                } else if (catalog.tipo === 'COUPON') {
+                    recompensas.push(`Cupón: ${catalog.nombre}`);
+                } else {
+                    recompensas.push(catalog.nombre);
+                }
+            });
+
+            if (bm.rewardConfiguration) {
+                const rc = bm.rewardConfiguration as any;
+                if (rc.rewardType === 'CASHBACK') {
+                    recompensas.push(`+${rc.value || 0}% Cashback`);
+                } else if (rc.rewardType === 'COUPON') {
+                    recompensas.push(`Cupón de Descuento`);
+                } else if (rc.rewardType === 'FREE_SERVICE' || rc.rewardType === 'SERVICE') {
+                    recompensas.push(`Servicio Gratis`);
+                } else if (rc.rewardType === 'PRODUCT') {
+                    recompensas.push(`Producto Gratis`);
+                } else {
+                    recompensas.push(rc.descripcion || 'Recompensa local');
+                }
+            }
+
+            groupedMap.get(cat).Quests.push({
+                id: bm.id,
+                nombre: def.nombre,
+                descripcion: def.descripcion || '',
+                icono: CATEGORY_ICONS[cat] || 'Award',
+                color: CATEGORY_COLORS[cat] || '#ec4899',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                triggerEvent: def.triggerEvent,
+                cantidadMeta: def.cantidadMeta,
+                validacionTipo: def.triggerEvent === 'MANUAL' ? 'MANUAL' : 'AUTOMATICO',
+                condicionesExtra: def.condicionesExtra ? JSON.stringify(def.condicionesExtra) : null,
+                acciones: JSON.stringify(recompensas.map(r => ({ action: 'RECOMPENSA', value: r }))),
+                activa: bm.status === 'ACTIVE'
+            });
+        });
+
+        const campaigns = Array.from(groupedMap.values());
+
+        // 4. Calcular estadísticas basadas en BusinessMissionProgress
+        const bmIds = businessMissions.map(bm => bm.id);
+
+        const progressStats = await prisma.businessMissionProgress.groupBy({
             by: ['estado'],
             where: {
-                questId: { in: questIds }
+                businessMissionId: { in: bmIds }
             },
             _count: {
                 id: true
@@ -58,13 +184,13 @@ export async function GET(request: Request) {
         progressStats.forEach(stat => {
             if (stat.estado === 'EN_PROGRESO' || stat.estado === 'PENDIENTE_APROBACION') {
                 enProgreso += stat._count.id;
-            } else if (stat.estado === 'COMPLETADA' || stat.estado === 'RECLAMADA') {
+            } else if (stat.estado === 'COMPLETADA' || stat.estado === 'RECOMPENSADA') {
                 completadas += stat._count.id;
             }
         });
 
-        const totalParticipantes = await prisma.questProgress.count({
-            where: { questId: { in: questIds } }
+        const totalParticipantes = await prisma.businessMissionProgress.count({
+            where: { businessMissionId: { in: bmIds } }
         });
 
         return NextResponse.json({
@@ -74,8 +200,8 @@ export async function GET(request: Request) {
                 totalParticipantes,
                 enProgreso,
                 completadas,
-                roiEstimado: completadas > 0 ? 32.5 : 0.0, // Valor mockeado representativo para Fase 2
-                reservasGeneradas: completadas // Cada compleción de misiones automáticas representa reservas
+                roiEstimado: completadas > 0 ? 32.5 : 0.0,
+                reservasGeneradas: completadas
             }
         });
 
@@ -281,6 +407,23 @@ export async function PUT(request: Request) {
         const { questId, campaignId, data } = body;
 
         if (questId) {
+            // Buscamos si es una BusinessMission primero
+            const bm = await prisma.businessMission.findFirst({
+                where: { id: questId, negocioId }
+            });
+            if (bm) {
+                if (data.activa !== undefined) {
+                    await prisma.businessMission.update({
+                        where: { id: questId },
+                        data: {
+                            status: data.activa ? 'ACTIVE' : 'PAUSED'
+                        }
+                    });
+                    return NextResponse.json({ success: true, message: 'Estado de la misión actualizado con éxito' });
+                }
+                return NextResponse.json({ error: 'Operación no soportada para misiones globales' }, { status: 400 });
+            }
+
             // Buscamos la misión existente para obtener su historial y no perderlo
             const currentQuest = await prisma.quest.findFirst({
                 where: { id: questId, negocioId },
@@ -389,6 +532,17 @@ export async function DELETE(request: Request) {
         const campaignId = searchParams.get('campaignId');
 
         if (questId) {
+            // Buscamos si es una BusinessMission primero
+            const bm = await prisma.businessMission.findFirst({
+                where: { id: questId, negocioId }
+            });
+            if (bm) {
+                await prisma.businessMission.delete({
+                    where: { id: questId }
+                });
+                return NextResponse.json({ success: true, message: 'Misión eliminada con éxito' });
+            }
+
             // Borrar Misión
             await prisma.quest.deleteMany({
                 where: { id: questId, negocioId }

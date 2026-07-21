@@ -103,6 +103,59 @@ export async function GET(
 
         const roles = (payload.roles as string[]) || ['USER'];
 
+        // Buscar UserPoints y niveles de lealtad
+        let userPoints = null;
+        const usuario = await prisma.usuario.findFirst({
+            where: {
+                OR: [
+                    { phone: telefono },
+                    { phone: telefono.replace(/\D/g, '') },
+                    { phone: { endsWith: localNoZero } }
+                ]
+            }
+        });
+
+        let nivelActual = null;
+        let todosNiveles: any[] = [];
+        let siguienteNivel = null;
+
+        if (usuario) {
+            userPoints = await prisma.userPoints.findUnique({
+                where: { userId_negocioId: { userId: usuario.id, negocioId: negocioId } },
+                include: { NivelActual: true }
+            });
+
+            todosNiveles = await prisma.loyaltyLevel.findMany({
+                where: { negocioId },
+                orderBy: { orden: 'asc' }
+            });
+
+            if (userPoints) {
+                if (!userPoints.nivelActualId) {
+                    const exp = userPoints.experiencia;
+                    const levelMatch = await prisma.loyaltyLevel.findFirst({
+                        where: { negocioId, diamantesRequeridos: { lte: exp } },
+                        orderBy: { orden: 'desc' }
+                    });
+                    if (levelMatch) {
+                        nivelActual = levelMatch;
+                        await prisma.userPoints.update({
+                            where: { id: userPoints.id },
+                            data: { nivelActualId: levelMatch.id }
+                        });
+                    } else if (todosNiveles.length > 0) {
+                        nivelActual = todosNiveles[0];
+                    }
+                } else {
+                    nivelActual = userPoints.NivelActual;
+                }
+
+                if (nivelActual) {
+                    siguienteNivel = todosNiveles.find((l: any) => l.orden > nivelActual.orden);
+                }
+            }
+        }
+
         return NextResponse.json({
             ...cliente,
             telefono,
@@ -110,7 +163,28 @@ export async function GET(
             enrollments: mappedEnrollments,
             stats: {
                 reservasTotales: totalReservas
-            }
+            },
+            loyalty: userPoints ? {
+                puntos: userPoints.puntos,
+                experiencia: userPoints.experiencia,
+                nivelActual: nivelActual ? {
+                    id: nivelActual.id,
+                    nombre: nivelActual.nombre,
+                    diamantesRequeridos: nivelActual.diamantesRequeridos,
+                    color: nivelActual.color,
+                    icono: nivelActual.icono,
+                    orden: nivelActual.orden,
+                    multiplicador: nivelActual.multiplicador
+                } : null,
+                siguienteNivel: siguienteNivel ? {
+                    id: siguienteNivel.id,
+                    nombre: siguienteNivel.nombre,
+                    diamantesRequeridos: siguienteNivel.diamantesRequeridos,
+                    color: siguienteNivel.color,
+                    icono: siguienteNivel.icono,
+                    orden: siguienteNivel.orden
+                } : null
+            } : null
         });
     } catch (error) {
         console.error("Error fetching client profile:", error);

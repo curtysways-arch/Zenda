@@ -21,6 +21,10 @@ import {
     Loader2,
     Calendar,
     UserCheck,
+    Briefcase,
+    Crown,
+    Link,
+    Smartphone,
     AlertCircle,
     PlusCircle,
     Copy,
@@ -43,8 +47,13 @@ import {
     Sliders,
     X,
     MessageSquare,
+    QrCode,
+    Search,
+    BookOpen,
+    Printer
 } from 'lucide-react';
 import ImageUploader from '@/components/ui/ImageUploader';
+import LevelsAdminTab from '@/components/admin/loyalty/LevelsAdminTab';
 
 interface ActionConfig {
     id: string;
@@ -163,21 +172,33 @@ const QUEST_ACTIONS_CATALOG: ActionConfig[] = [
 
 export default function QuestDashboard() {
     const { data: session } = useSession();
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'campaigns' | 'templates' | 'participants' | 'rewards' | 'points' | 'coupons' | 'stats' | 'history'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'campaigns' | 'templates' | 'participants' | 'rewards' | 'points' | 'coupons' | 'stats' | 'history' | 'levels' | 'citiox_missions'>('dashboard');
     const [primaryColor, setPrimaryColor] = useState('#ec4899');
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [toastMsg, setToastMsg] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+    const [isGuideOpen, setIsGuideOpen] = useState(false);
 
     // Estados de Datos
     const [campaigns, setCampaigns] = useState<any[]>([]);
     const [templates, setTemplates] = useState<any[]>([]);
+    const [installedTemplates, setInstalledTemplates] = useState<any[]>([]);
+    const [installModalOpen, setInstallModalOpen] = useState(false);
+    const [installModalTemplate, setInstallModalTemplate] = useState<any>(null);
+    const [installAction, setInstallAction] = useState<'install' | 'merge' | 'replace' | 'update_rewards'>('install');
+    const [installingTemplate, setInstallingTemplate] = useState(false);
     const [participantsProgress, setParticipantsProgress] = useState<any[]>([]);
     const [participantsHistory, setParticipantsHistory] = useState<any[]>([]);
     const [rewardsList, setRewardsList] = useState<any[]>([]);
     const [loyaltyRewards, setLoyaltyRewards] = useState<any[]>([]);
     const [pointsRankings, setPointsRankings] = useState<any[]>([]);
     const [coupons, setCoupons] = useState<any[]>([]);
+    
+    // Misiones Globales de Citiox
+    const [globalMissions, setGlobalMissions] = useState<any[]>([]);
+    const [globalProgress, setGlobalProgress] = useState<any[]>([]);
+    const [globalHistory, setGlobalHistory] = useState<any[]>([]);
+    const [loadingGlobal, setLoadingGlobal] = useState(true);
     const [stats, setStats] = useState<any>({
         totalParticipantes: 0,
         enProgreso: 0,
@@ -194,6 +215,7 @@ export default function QuestDashboard() {
     // Modales y Control de Vistas
     const [isWizardOpen, setIsWizardOpen] = useState(false);
     const [wizardStep, setWizardStep] = useState(1);
+    const [wizardFromTemplate, setWizardFromTemplate] = useState(false);
     const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
     const [isCatalogRewardModalOpen, setIsCatalogRewardModalOpen] = useState(false);
     const [isPointsAdjustmentModalOpen, setIsPointsAdjustmentModalOpen] = useState(false);
@@ -201,6 +223,12 @@ export default function QuestDashboard() {
     const [canjeNotas, setCanjeNotas] = useState('');
     const [selectedRewardToCanje, setSelectedRewardToCanje] = useState<any>(null);
     const [editingCatalogRewardId, setEditingCatalogRewardId] = useState<string | null>(null);
+
+    // Estado del buscador manual/QR
+    const [showManualModal, setShowManualModal] = useState(false);
+    const [manualCode, setManualCode] = useState('');
+    const [manualSearchLoading, setManualSearchLoading] = useState(false);
+    const [manualError, setManualError] = useState<string | null>(null);
 
     // Asistente Wizard Form Data
     const [wizardData, setWizardData] = useState<any>({
@@ -281,6 +309,10 @@ export default function QuestDashboard() {
         maxUsos: '',
         fechaFin: ''
     });
+    const [couponClientSearch, setCouponClientSearch] = useState('');
+    const [couponClientResults, setCouponClientResults] = useState<any[]>([]);
+    const [couponClientSelected, setCouponClientSelected] = useState<any | null>(null);
+    const [couponClientSearching, setCouponClientSearching] = useState(false);
 
     const [catalogRewardFormData, setCatalogRewardFormData] = useState({
         nombre: '',
@@ -312,6 +344,7 @@ export default function QuestDashboard() {
     const fetchData = async () => {
         try {
             setLoading(true);
+            setLoadingGlobal(true);
             const [
                 misionesRes,
                 templatesRes,
@@ -322,7 +355,9 @@ export default function QuestDashboard() {
                 couponsRes,
                 usuariosRes,
                 staffRes,
-                servicesRes
+                servicesRes,
+                globalMissionsRes,
+                installedTemplatesRes
             ] = await Promise.all([
                 fetch('/api/admin/misiones').then(res => res.json()),
                 fetch('/api/admin/misiones/templates').then(res => res.json()),
@@ -333,8 +368,20 @@ export default function QuestDashboard() {
                 fetch('/api/admin/loyalty/coupons').then(res => res.json()).catch(() => []),
                 fetch('/api/admin/usuarios').then(res => res.json()).catch(() => []),
                 fetch('/api/admin/roles').then(res => res.json()).catch(() => ({ staff: [] })),
-                fetch('/api/services').then(res => res.json()).catch(() => [])
+                fetch('/api/services').then(res => res.json()).catch(() => []),
+                fetch('/api/admin/misiones-globales').then(res => res.json()).catch(() => ({ success: false, missions: [], progress: [], history: [] })),
+                fetch('/api/admin/plantillas/instaladas').then(res => res.json()).catch(() => ({ success: false, installed: [] }))
             ]);
+
+            // Consolidar Misiones Globales
+            if (globalMissionsRes.success) {
+                // Verificar si hay alguna misión que se acaba de completar comparando con el estado previo
+                // Para disparar la celebración de confeti.
+                setGlobalMissions(globalMissionsRes.missions || []);
+                setGlobalProgress(globalMissionsRes.progress || []);
+                setGlobalHistory(globalMissionsRes.history || []);
+            }
+            setLoadingGlobal(false);
 
             // Consolidar Campañas
             if (misionesRes.success) {
@@ -361,15 +408,19 @@ export default function QuestDashboard() {
                 setTemplates(templatesRes.templates || []);
             }
 
-            setParticipantsProgress(participantsRes.progress || []);
-            setParticipantsHistory(participantsRes.history || []);
-            setRewardsList(rewardsRes || []);
-            setLoyaltyRewards(loyaltyRewardsRes || []);
-            setPointsRankings(pointsRes || []);
-            setCoupons(couponsRes || []);
+            if (installedTemplatesRes.success) {
+                setInstalledTemplates(installedTemplatesRes.installed || []);
+            }
+
+            setParticipantsProgress(Array.isArray(participantsRes?.progress) ? participantsRes.progress : []);
+            setParticipantsHistory(Array.isArray(participantsRes?.history) ? participantsRes.history : []);
+            setRewardsList(Array.isArray(rewardsRes) ? rewardsRes : []);
+            setLoyaltyRewards(Array.isArray(loyaltyRewardsRes) ? loyaltyRewardsRes : []);
+            setPointsRankings(Array.isArray(pointsRes) ? pointsRes : []);
+            setCoupons(Array.isArray(couponsRes) ? couponsRes : []);
             setUsersList(Array.isArray(usuariosRes) ? usuariosRes : []);
-            setStaffList(staffRes.staff || staffRes || []);
-            setServicesList(servicesRes || []);
+            setStaffList(Array.isArray(staffRes) ? staffRes : (Array.isArray(staffRes?.staff) ? staffRes.staff : []));
+            setServicesList(Array.isArray(servicesRes) ? servicesRes : []);
 
         } catch (error) {
             console.error('Error al cargar datos del Growth Engine:', error);
@@ -383,7 +434,78 @@ export default function QuestDashboard() {
         const color = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
         if (color) setPrimaryColor(color);
         fetchData();
+
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const tabParam = params.get('tab');
+            const validTabs = ['dashboard', 'campaigns', 'templates', 'participants', 'rewards', 'points', 'coupons', 'stats', 'history', 'levels', 'citiox_missions'];
+            if (tabParam && validTabs.includes(tabParam)) {
+                setActiveTab(tabParam as any);
+            }
+        }
     }, []);
+
+    // Función de celebración con confeti cargado dinámicamente
+    const triggerConfetti = () => {
+        if (typeof window === 'undefined') return;
+        const loadConfetti = () => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js';
+            script.onload = () => {
+                const conf = (window as any).confetti;
+                if (conf) {
+                    conf({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 }
+                    });
+                }
+            };
+            document.body.appendChild(script);
+        };
+        loadConfetti();
+    };
+
+    // Lanzar confeti si hay alguna misión completada recientemente
+    useEffect(() => {
+        if (activeTab === 'citiox_missions' && globalMissions.length > 0) {
+            const hasUnclaimedRewards = globalMissions.some(m => {
+                const prog = globalProgress.find(p => p.missionId === m.id);
+                return prog && prog.completada && !prog.recompensaDada;
+            });
+            if (hasUnclaimedRewards) {
+                triggerConfetti();
+            }
+        }
+    }, [activeTab, globalMissions, globalProgress]);
+
+    // ─── INTERCEPT BROWSER BACK GESTURE INSIDE WIZARD ───────────────────────
+    useEffect(() => {
+        if (!isWizardOpen) return;
+
+        // Empujar un estado por cada paso del wizard para que el gesto "atrás" tenga algo que consumir
+        history.pushState({ wizardOpen: true, step: wizardStep }, '');
+
+        const handlePopState = (e: PopStateEvent) => {
+            // Si el wizard sigue abierto, interceptamos el gesto y navegamos internamente
+            if (isWizardOpen) {
+                e.preventDefault?.();
+                if (wizardStep === 0 || wizardStep === 1.5 || wizardStep === 1.6) {
+                    // En el paso inicial cerramos el wizard
+                    setIsWizardOpen(false);
+                    setEditingQuestId(null);
+                    setWizardFromTemplate(false);
+                } else {
+                    handleWizardBack();
+                }
+                // Re-empujar el estado para el siguiente gesto atrás
+                history.pushState({ wizardOpen: true, step: wizardStep }, '');
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [isWizardOpen, wizardStep]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // ─── LOCAL TEMPLATES (PLANTILLAS RECOMENDADAS) ───────────────────────────
     const LOCAL_TEMPLATES = [
@@ -836,7 +958,13 @@ export default function QuestDashboard() {
     };
 
     const handleWizardBack = () => {
-        setWizardStep(prev => prev - 1);
+        // Si vino de plantilla y está en paso 2, saltar directamente al paso 0 (inicio)
+        if (wizardFromTemplate && wizardStep === 2) {
+            setWizardStep(0);
+            setWizardFromTemplate(false);
+        } else {
+            setWizardStep(prev => prev - 1);
+        }
     };
 
     const handleSelectObjetivo = (catId: string) => {
@@ -1352,6 +1480,30 @@ export default function QuestDashboard() {
         }
     };
 
+    const handleManualSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!manualCode.trim()) return;
+
+        setManualSearchLoading(true);
+        setManualError(null);
+
+        try {
+            const res = await fetch(`/api/admin/loyalty/buscar-codigo?claimCode=${encodeURIComponent(manualCode.trim())}`);
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Código de reclamo inválido o no encontrado');
+            }
+
+            // Redirigir a la ficha de verificación del premio firmada
+            window.location.href = `/reward/${data.claimToken}?sig=${data.sig}`;
+        } catch (err: any) {
+            setManualError(err.message);
+        } finally {
+            setManualSearchLoading(false);
+        }
+    };
+
     // ─── ELIMINAR / ACTIVAR / DESACTIVAR ────────────────────────────────────────
     const handleToggleQuestActive = async (questId: string, currentActive: boolean) => {
         try {
@@ -1393,6 +1545,22 @@ export default function QuestDashboard() {
         }
     };
 
+    // ─── BUSCAR CLIENTE PARA CUPÓN ───────────────────────────────────────────────
+    const handleSearchCouponClient = async (query: string) => {
+        setCouponClientSearch(query);
+        if (query.trim().length < 2) { setCouponClientResults([]); return; }
+        setCouponClientSearching(true);
+        try {
+            const res = await fetch(`/api/clientes?q=${encodeURIComponent(query)}`);
+            if (res.ok) {
+                const data = await res.json();
+                const lista = Array.isArray(data) ? data : (data.clientes || []);
+                setCouponClientResults(lista.slice(0, 6));
+            }
+        } catch { /* silencioso */ }
+        finally { setCouponClientSearching(false); }
+    };
+
     // ─── CREAR CUPÓN INDEPENDIENTE ──────────────────────────────────────────────
     const handleCreateCoupon = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -1402,6 +1570,7 @@ export default function QuestDashboard() {
         }
         try {
             setSubmitting(true);
+            // 1. Crear el cupón base
             const res = await fetch('/api/admin/loyalty/coupons', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1415,27 +1584,46 @@ export default function QuestDashboard() {
                 })
             });
             const data = await res.json();
-            if (res.ok) {
-                showToast('Cupón promocional creado con éxito', 'success');
-                setIsCouponModalOpen(false);
-                setCouponFormData({
-                    codigo: '',
-                    tipo: 'PORCENTAJE',
-                    valor: 10,
-                    descripcion: '',
-                    maxUsos: '',
-                    fechaFin: ''
-                });
-                fetchData();
-            } else {
+            if (!res.ok) {
                 showToast(data.error || 'Error al crear cupón', 'error');
+                return;
             }
+
+            // 2. Si hay cliente seleccionado, asignar directamente
+            if (couponClientSelected?.id) {
+                const assignRes = await fetch('/api/admin/loyalty/client-coupons', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clienteId: couponClientSelected.id,
+                        couponId: data.id,
+                        nombre: couponFormData.descripcion || `Cupón ${couponFormData.codigo.toUpperCase()}`,
+                        descripcion: couponFormData.descripcion,
+                        fechaExpiracion: couponFormData.fechaFin || null
+                    })
+                });
+                if (assignRes.ok) {
+                    showToast(`Cupón creado y asignado a ${couponClientSelected.nombre || couponClientSelected.phone}`, 'success');
+                } else {
+                    showToast('Cupón creado, pero hubo un error al asignarlo al cliente', 'error');
+                }
+            } else {
+                showToast('Cupón promocional creado con éxito', 'success');
+            }
+
+            setIsCouponModalOpen(false);
+            setCouponFormData({ codigo: '', tipo: 'PORCENTAJE', valor: 10, descripcion: '', maxUsos: '', fechaFin: '' });
+            setCouponClientSelected(null);
+            setCouponClientSearch('');
+            setCouponClientResults([]);
+            fetchData();
         } catch {
             showToast('Error de conexión', 'error');
         } finally {
             setSubmitting(false);
         }
     };
+
 
     // ─── CREAR PREMIO DE CATÁLOGO ───────────────────────────────────────────────
     const handleCreateCatalogReward = async (e: React.FormEvent) => {
@@ -1503,7 +1691,7 @@ export default function QuestDashboard() {
         setCatalogRewardFormData({
             nombre: reward.nombre || '',
             descripcion: reward.descripcion || '',
-            costoPuntos: reward.costoPuntos || 500,
+            costoPuntos: reward.costoPuntos ?? 500,
             tipo: reward.tipo || 'SERVICIO_GRATIS',
             valor: reward.valor || '',
             couponId: reward.couponId || '',
@@ -1591,88 +1779,47 @@ export default function QuestDashboard() {
         }
     };
 
-    const handleInstallTemplate = async (templateId: string) => {
-        const option = window.confirm(
-            "¿Deseas instalar esta plantilla con 1-Clic ahora mismo?\n\n[Aceptar] - Se creará e instalará inmediatamente.\n[Cancelar] - Abrir el asistente para personalizarla antes de crearla."
-        );
-
-        if (!option) {
-            // El usuario quiere personalizar la plantilla
-            const template = templates.find((t: any) => t.id === templateId);
-            if (template) {
-                // Mapeamos los datos de la plantilla de marketplace al wizard
-                const mapped = {
-                    categoria: template.triggerEvent === 'REFERRAL_COMPLETED' ? 'REFERIDOS' : 'RESERVAS',
-                    triggerEvent: template.triggerEvent,
-                    nombre: template.nombre,
-                    descripcion: template.descripcion,
-                    color: template.color || '#ec4899',
-                    icono: template.icono || 'Award',
-                    progresoTipo: 'ACUMULATIVO',
-                    cantidadMeta: template.cantidadMeta || 1,
-                    condiciones: [],
-                    recompensasSeleccionadas: {
-                        puntos: template.acciones?.some((a: any) => a.action === 'ADD_POINTS') || false,
-                        cupon: template.acciones?.some((a: any) => a.action === 'CREATE_COUPON') || false,
-                        productoGratis: template.acciones?.some((a: any) => a.action === 'PRODUCT_GIFT') || false,
-                        servicioGratis: template.acciones?.some((a: any) => a.action === 'SERVICE_GIFT') || false,
-                        cashback: template.acciones?.some((a: any) => a.action === 'ADD_WALLET_BALANCE') || false,
-                        badge: template.acciones?.some((a: any) => a.action === 'AWARD_BADGE') || false,
-                        whatsapp: template.acciones?.some((a: any) => a.action === 'SEND_WHATSAPP') || false,
-                        push: template.acciones?.some((a: any) => a.action === 'SEND_PUSH') || false,
-                        email: template.acciones?.some((a: any) => a.action === 'SEND_EMAIL') || false
-                    },
-                    puntosRecompensa: template.acciones?.find((a: any) => a.action === 'ADD_POINTS')?.value || 100,
-                    cuponNombre: '',
-                    cuponValor: template.acciones?.find((a: any) => a.action === 'CREATE_COUPON')?.value?.valor || 20,
-                    cuponTipo: template.acciones?.find((a: any) => a.action === 'CREATE_COUPON')?.value?.tipo || 'PORCENTAJE',
-                    cuponVencimiento: 30,
-                    productoGratisNombre: template.acciones?.find((a: any) => a.action === 'PRODUCT_GIFT')?.value?.name || '',
-                    servicioGratisNombre: template.acciones?.find((a: any) => a.action === 'SERVICE_GIFT')?.value?.name || '',
-                    cashbackMonto: template.acciones?.find((a: any) => a.action === 'ADD_WALLET_BALANCE')?.value || 10,
-                    badgeId: template.acciones?.find((a: any) => a.action === 'AWARD_BADGE')?.value?.badgeId || '',
-                    whatsappMensaje: template.acciones?.find((a: any) => a.action === 'SEND_WHATSAPP')?.value?.message || '¡Hola! Completaste la misión y obtuviste tus premios.',
-                    pushTitulo: template.acciones?.find((a: any) => a.action === 'SEND_PUSH')?.value?.title || '🏆 Misión Completada',
-                    pushCuerpo: template.acciones?.find((a: any) => a.action === 'SEND_PUSH')?.value?.body || '¡Felicidades! Completaste la misión.',
-                    emailAsunto: template.acciones?.find((a: any) => a.action === 'SEND_EMAIL')?.value?.subject || '🎁 Recompensa ganada',
-                    emailCuerpo: template.acciones?.find((a: any) => a.action === 'SEND_EMAIL')?.value?.body || 'Hola, completaste la misión y obtuviste tus premios.',
-                    validacionTipo: template.validacionTipo || 'AUTOMATICO',
-                    dificultad: template.difficulty || 'NORMAL',
-                    prioridad: 'NORMAL',
-                    estado: 'ACTIVA',
-                    fechaInicio: '',
-                    fechaFin: '',
-                    visible: true,
-                    repetible: false,
-                    limiteUsuario: 1,
-                    limiteGlobal: '',
-                    parentQuestId: ''
-                };
-                setWizardData(mapped);
-                setIsWizardOpen(true);
-                setWizardStep(1);
-            }
-            return;
+    // Abre el modal de instalación inteligente para una plantilla
+    const handleInstallTemplate = (template: any) => {
+        const installed = installedTemplates.find((it: any) => it.templateId === template.id);
+        if (installed) {
+            // Ya instalada – preguntar acción
+            setInstallAction(installed.estadoActualizacion === 'UPDATE_AVAILABLE' ? 'replace' : 'merge');
+        } else {
+            setInstallAction('install');
         }
+        setInstallModalTemplate(template);
+        setInstallModalOpen(true);
+    };
 
+    // Ejecuta la instalación via el nuevo endpoint Enterprise
+    const handleConfirmInstall = async () => {
+        if (!installModalTemplate) return;
         try {
-            setSubmitting(true);
-            const res = await fetch('/api/admin/misiones', {
+            setInstallingTemplate(true);
+            const res = await fetch('/api/admin/plantillas/instalar', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ templateId })
+                body: JSON.stringify({ templateId: installModalTemplate.id, action: installAction })
             });
             const data = await res.json();
             if (data.success) {
-                showToast(data.message || 'Plantilla de crecimiento instalada con éxito', 'success');
+                const actionLabels: Record<string, string> = {
+                    install: 'instalada',
+                    replace: 'reinstalada',
+                    merge: 'fusionada',
+                    update_rewards: 'recompensas actualizadas'
+                };
+                showToast(`✅ Plantilla ${actionLabels[installAction] || 'procesada'} con éxito.`, 'success');
+                setInstallModalOpen(false);
                 fetchData();
             } else {
-                showToast(data.error || 'Error al instalar plantilla', 'error');
+                showToast(data.error || 'Error al procesar la plantilla', 'error');
             }
         } catch {
-            showToast('Error de red', 'error');
+            showToast('Error de red al instalar plantilla', 'error');
         } finally {
-            setSubmitting(false);
+            setInstallingTemplate(false);
         }
     };
 
@@ -1724,7 +1871,8 @@ export default function QuestDashboard() {
             limiteGlobal: tpl.limiteGlobal || '',
             parentQuestId: tpl.parentQuestId || ''
         });
-        setWizardStep(1);
+        setWizardFromTemplate(true);
+        setWizardStep(2);
     };
 
     const handleOpenEditWizard = (quest: any) => {
@@ -1861,11 +2009,17 @@ export default function QuestDashboard() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-slate-800 flex items-center gap-2">
-                        <Trophy className="text-pink-500 animate-pulse" /> Misiones
+                        <Trophy className="text-pink-500 animate-pulse" /> Club de Beneficios
                     </h1>
-                    <p className="text-slate-500 font-medium mt-1">Centro de misiones, referidos y fidelización unificado de Citiox.</p>
+                    <p className="text-slate-500 font-medium mt-1">Centro de retos, referidos y fidelización unificado de Citiox.</p>
                 </div>
                 <div className="flex gap-3">
+                    <button
+                        onClick={() => setIsGuideOpen(true)}
+                        className="inline-flex items-center gap-2 px-5 py-3 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-350 text-slate-700 hover:text-slate-900 font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-sm transition-all active:scale-95 cursor-pointer"
+                    >
+                        <BookOpen size={16} className="text-pink-500" /> Guía Club de Beneficios
+                    </button>
                     <button
                         onClick={() => {
                             setWizardStep(0);
@@ -1892,6 +2046,7 @@ export default function QuestDashboard() {
                     { id: 'rewards', label: 'Premios y Canjes' },
                     { id: 'points', label: 'Puntos' },
                     { id: 'coupons', label: 'Cupones' },
+                    { id: 'levels', label: 'Niveles y Temporada' },
                     { id: 'stats', label: 'Estadísticas' },
                     { id: 'history', label: 'Historial' }
                 ].map(tab => (
@@ -2098,36 +2253,167 @@ export default function QuestDashboard() {
 
                     {/* 4. TEMPLANTES MARKETPLACE */}
                     {activeTab === 'templates' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {templates.map((tpl: any) => (
-                                <div key={tpl.id} className="bg-white border border-slate-150 rounded-3xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden group">
-                                    <div>
-                                        <div className="flex justify-between items-start mb-4">
-                                            <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-100">
-                                                {tpl.triggerEvent}
-                                            </span>
-                                            <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-md bg-pink-50 text-pink-600 border border-pink-100">
-                                                1-CLIC INSTALL
-                                            </span>
+                        <div>
+                            {/* Encabezado Marketplace */}
+                            <div className="flex items-center justify-between mb-8">
+                                <div>
+                                    <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">🏪 Biblioteca Citiox</h2>
+                                    <p className="text-sm text-slate-500 mt-1">Plantillas oficiales verificadas por Citiox. Instala con un clic o fusiona con tus misiones actuales.</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full">{templates.length} plantillas</span>
+                                    <span className="text-xs font-bold text-green-600 bg-green-50 dark:bg-green-900/30 px-3 py-1.5 rounded-full">✓ Verificadas</span>
+                                </div>
+                            </div>
+
+                            {/* Grid de Plantillas */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                {templates.map((tpl: any) => {
+                                    const installed = installedTemplates.find((it: any) => it.templateId === tpl.id);
+                                    const hasUpdate = installed?.estadoActualizacion === 'UPDATE_AVAILABLE';
+                                    const isUpToDate = installed && !hasUpdate;
+
+                                    return (
+                                        <div key={tpl.id} className="bg-white dark:bg-slate-800 border border-slate-150 dark:border-slate-700 rounded-3xl p-6 shadow-sm flex flex-col justify-between hover:shadow-lg transition-all relative overflow-hidden group">
+                                            {/* Banda de color del negocio */}
+                                            <div className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl" style={{ background: tpl.color || '#ec4899' }} />
+
+                                            <div>
+                                                {/* Badges superiores */}
+                                                <div className="flex justify-between items-start mb-4 mt-1">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        {(tpl.categorias || []).slice(0, 2).map((cat: string, i: number) => (
+                                                            <span key={i} className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">{cat}</span>
+                                                        ))}
+                                                    </div>
+                                                    {hasUpdate ? (
+                                                        <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-600 border border-amber-200 animate-pulse">⬆ Actualizar</span>
+                                                    ) : isUpToDate ? (
+                                                        <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-md bg-green-50 text-green-600 border border-green-200">✓ Instalada</span>
+                                                    ) : (
+                                                        <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-md bg-pink-50 text-pink-600 border border-pink-100">1-CLIC</span>
+                                                    )}
+                                                </div>
+
+                                                {/* Nombre + Descripción */}
+                                                <h3 className="text-sm font-black text-slate-800 dark:text-white mb-1.5 flex items-center gap-2">
+                                                    <Award size={15} className="text-pink-500 group-hover:scale-110 transition-transform shrink-0" style={{ color: tpl.color || '#ec4899' }} />
+                                                    {tpl.nombre}
+                                                </h3>
+                                                <p className="text-[11px] text-slate-400 font-medium leading-relaxed mb-4">
+                                                    {tpl.descripcion}
+                                                </p>
+
+                                                {/* Stats de la plantilla */}
+                                                <div className="flex items-center gap-4 text-[10px] text-slate-400 font-semibold">
+                                                    <span>📥 {tpl.installCount || 0} instalaciones</span>
+                                                    <span>⭐ {tpl.rating || 5.0}</span>
+                                                    {tpl.Missions?.length > 0 && <span>🎯 {tpl.Missions.length} misiones</span>}
+                                                </div>
+                                            </div>
+
+                                            {/* Pie del card */}
+                                            <div className="border-t border-slate-100 dark:border-slate-700 pt-4 flex justify-between items-center mt-5">
+                                                <div className="text-[9px] font-bold text-slate-400">
+                                                    v{tpl.versionSemantica || '1.0.0'}
+                                                    {installed && <span className="ml-2 text-slate-300">· instalada v{installed.versionInstalada}</span>}
+                                                </div>
+                                                <button
+                                                    onClick={() => handleInstallTemplate(tpl)}
+                                                    className="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                                                    style={{
+                                                        background: hasUpdate ? '#f59e0b' : tpl.color || '#ec4899',
+                                                        color: '#fff'
+                                                    }}
+                                                >
+                                                    {hasUpdate ? '↑ Actualizar' : isUpToDate ? '⚙ Gestionar' : 'Instalar'}
+                                                </button>
+                                            </div>
                                         </div>
-                                        <h3 className="text-xs font-black text-slate-850 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                                            <Award size={16} className="text-pink-500 group-hover:scale-110 transition-transform" /> {tpl.nombre}
-                                        </h3>
-                                        <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mb-6">
-                                            {tpl.descripcion}
-                                        </p>
+                                    );
+                                })}
+                            </div>
+
+                            {templates.length === 0 && (
+                                <div className="text-center py-20">
+                                    <p className="text-5xl mb-4">🏪</p>
+                                    <p className="text-slate-500 font-semibold">El Marketplace no tiene plantillas publicadas todavía.</p>
+                                    <p className="text-slate-400 text-sm mt-1">El Superadmin puede crear y publicar plantillas desde el panel de administración.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Modal de Instalación Inteligente */}
+                    {installModalOpen && installModalTemplate && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
+                            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-lg w-full p-8">
+                                {/* Header */}
+                                <div className="flex items-start gap-4 mb-6">
+                                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: installModalTemplate.color || '#ec4899' }}>
+                                        <Award size={22} className="text-white" />
                                     </div>
-                                    <div className="border-t border-slate-100 pt-4 flex justify-between items-center mt-6">
-                                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Dificultad: {tpl.difficulty || 'MEDIA'}</span>
-                                        <button 
-                                            onClick={() => handleInstallTemplate(tpl.id)}
-                                            className="px-4 py-2.5 bg-slate-800 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-900 transition-colors cursor-pointer"
-                                        >
-                                            Instalar Reto
-                                        </button>
+                                    <div>
+                                        <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">{installModalTemplate.nombre}</h3>
+                                        <p className="text-sm text-slate-400">{installModalTemplate.descripcion}</p>
                                     </div>
                                 </div>
-                            ))}
+
+                                {/* Selección de acción */}
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">¿Cómo deseas instalar esta plantilla?</p>
+                                <div className="space-y-3">
+                                    {([
+                                        { id: 'install', label: '🚀 Instalar (1er vez)', desc: 'Crea todas las misiones de la plantilla en tu negocio.' },
+                                        { id: 'merge', label: '🔀 Fusionar misiones nuevas', desc: 'Agrega solo las misiones que no existen todavía. No toca las que ya tienes.' },
+                                        { id: 'replace', label: '♻️ Reinstalar completamente', desc: 'Borra las misiones instaladas previamente y vuelve a crearlas desde la plantilla.' },
+                                        { id: 'update_rewards', label: '🎁 Actualizar solo recompensas', desc: 'Actualiza los premios sin tocar el progreso actual de los clientes.' },
+                                    ] as const).map((opt) => (
+                                        <label key={opt.id} className={`flex items-start gap-3 p-4 rounded-2xl border-2 cursor-pointer transition-all ${
+                                            installAction === opt.id 
+                                                ? 'border-pink-500 bg-pink-50 dark:bg-pink-900/20' 
+                                                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                                        }`}>
+                                            <input
+                                                type="radio"
+                                                name="installAction"
+                                                value={opt.id}
+                                                checked={installAction === opt.id}
+                                                onChange={() => setInstallAction(opt.id)}
+                                                className="mt-1 shrink-0"
+                                            />
+                                            <div>
+                                                <p className="text-sm font-bold text-slate-800 dark:text-white">{opt.label}</p>
+                                                <p className="text-xs text-slate-400 mt-0.5">{opt.desc}</p>
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
+
+                                {/* Advertencia para replace */}
+                                {installAction === 'replace' && (
+                                    <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 rounded-xl">
+                                        <p className="text-xs font-bold text-amber-700 dark:text-amber-400">⚠️ Esta acción eliminará las misiones anteriores instaladas con esta plantilla. El progreso de los clientes en esas misiones se perderá.</p>
+                                    </div>
+                                )}
+
+                                {/* Botones */}
+                                <div className="flex gap-3 mt-6">
+                                    <button
+                                        onClick={() => setInstallModalOpen(false)}
+                                        className="flex-1 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleConfirmInstall}
+                                        disabled={installingTemplate}
+                                        className="flex-1 py-3 rounded-2xl text-sm font-black text-white transition-all disabled:opacity-50"
+                                        style={{ background: installModalTemplate.color || '#ec4899' }}
+                                    >
+                                        {installingTemplate ? '⏳ Procesando...' : '✓ Confirmar'}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     )}
 
@@ -2245,9 +2531,21 @@ export default function QuestDashboard() {
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             {/* Premios Pendientes / Entregados */}
                             <div className="lg:col-span-2 bg-white border border-slate-150 rounded-3xl p-6 shadow-sm">
-                                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-0">
                                     <Gift className="text-pink-500" size={18} /> Canje de Premios en Recepción
-                                </h3>
+                                    </h3>
+                                    <button
+                                        onClick={() => {
+                                            console.log("Abriendo buscador manual...");
+                                            setShowManualModal(true);
+                                        }}
+                                        className="px-4 py-2.5 bg-pink-500 hover:bg-pink-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all flex items-center gap-1.5 shadow-sm border-0 cursor-pointer"
+                                    >
+                                        <QrCode size={14} />
+                                        Escanear / Buscar Código
+                                    </button>
+                                </div>
                                 {rewardsList.length === 0 ? (
                                     <p className="text-slate-400 text-xs font-medium py-12 text-center">No hay premios generados listos para canje.</p>
                                 ) : (
@@ -2284,15 +2582,19 @@ export default function QuestDashboard() {
                                                         </td>
                                                         <td className="py-4">
                                                             <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
-                                                                rew.estado === 'DISPONIBLE' 
+                                                                rew.estado === 'DISPONIBLE' || rew.estado === 'PENDIENTE_ENTREGA'
                                                                     ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+                                                                    : rew.estado === 'SOLICITADO'
+                                                                    ? 'bg-amber-50 text-amber-600 border border-amber-100'
+                                                                    : rew.estado === 'LISTO_PARA_RETIRAR'
+                                                                    ? 'bg-blue-50 text-blue-600 border border-blue-100'
                                                                     : 'bg-slate-100 text-slate-500 border border-slate-200'
                                                             }`}>
                                                                 {rew.estado}
                                                             </span>
                                                         </td>
                                                         <td className="py-4 text-right">
-                                                            {rew.estado === 'DISPONIBLE' && (
+                                                            {rew.estado !== 'CANJEADO' && rew.estado !== 'ENTREGADO' && (
                                                                 <button
                                                                     onClick={() => handleOpenCanjeModal(rew)}
                                                                     className="px-3.5 py-2 bg-slate-800 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-900 cursor-pointer"
@@ -2312,18 +2614,22 @@ export default function QuestDashboard() {
                             {/* Catálogo de Premios por Puntos */}
                             <div className="bg-white border border-slate-150 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
                                 <div>
-                                    <div className="flex justify-between items-center mb-6">
-                                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2 mb-0">
                                             <Trophy className="text-amber-500" size={18} /> Catálogo de Puntos
                                         </h3>
                                         <button 
                                             onClick={() => setIsCatalogRewardModalOpen(true)}
-                                            className="p-1.5 bg-slate-100 hover:bg-slate-200 rounded-xl cursor-pointer"
+                                            className="px-3.5 py-2 bg-slate-800 text-white rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-slate-900 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5 shrink-0"
                                             title="Crear Premio de Catálogo"
                                         >
-                                            <Plus size={16} />
+                                            <Plus size={12} />
+                                            Crear Premio
                                         </button>
                                     </div>
+                                    <p className="text-[10px] text-slate-400 font-semibold mb-4 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                        💡 Aquí creas los premios físicos, servicios gratis o regalos que tus clientes podrán canjear usando sus puntos acumulados en su cuenta.
+                                    </p>
                                     <div className="space-y-4">
                                         {loyaltyRewards.map((item: any) => (
                                             <div key={item.id} className="p-4 border border-slate-150 rounded-2xl bg-slate-50 hover:bg-white transition-colors flex justify-between items-center">
@@ -2416,11 +2722,16 @@ export default function QuestDashboard() {
                     {/* 8. CUPONES */}
                     {activeTab === 'coupons' && (
                         <div className="space-y-6">
-                            <div className="flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-150">
-                                <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Módulo de Cupones Promocionales</span>
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-50 p-5 rounded-2xl border border-slate-150 gap-4">
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Módulo de Cupones Promocionales</span>
+                                    <span className="text-[9px] text-slate-400 font-semibold mt-1 leading-relaxed">
+                                        💡 Crea cupones independientes para asignar a tus clientes directamente, o enlázalos a tus premios de catálogo de puntos y misiones para que se entreguen solos.
+                                    </span>
+                                </div>
                                 <button 
                                     onClick={() => setIsCouponModalOpen(true)}
-                                    className="px-4 py-2 bg-slate-800 text-white rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-slate-900 cursor-pointer"
+                                    className="px-4 py-2 bg-slate-800 text-white rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-slate-900 cursor-pointer active:scale-95 transition-all shrink-0"
                                 >
                                     + Crear Cupón
                                 </button>
@@ -2465,6 +2776,10 @@ export default function QuestDashboard() {
                         </div>
                     )}
 
+                    {activeTab === 'levels' && (
+                        <LevelsAdminTab primaryColor={primaryColor} />
+                    )}
+
                     {/* 9. ESTADÍSTICAS */}
                     {activeTab === 'stats' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -2488,6 +2803,183 @@ export default function QuestDashboard() {
                                     <div className="flex justify-between pb-3">
                                         <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Retorno de Inversión Est. (ROI)</span>
                                         <span className="text-xs font-black text-emerald-600">+{stats.roiEstimado}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* MISIONES DE CITIOX */}
+                    {activeTab === 'citiox_missions' && (
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            {/* LISTADO DE MISIONES */}
+                            <div className="lg:col-span-2 space-y-6">
+                                <div className="bg-slate-900 text-white rounded-[2rem] p-6 shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                    <div className="absolute top-0 right-0 w-36 h-36 bg-emerald-500 rounded-full blur-[100px] opacity-25" />
+                                    <div>
+                                        <h3 className="text-base font-black uppercase tracking-wider flex items-center gap-2">
+                                            <Sparkles className="text-emerald-400" size={18} /> Retos Citiox Oficiales
+                                        </h3>
+                                        <p className="text-slate-400 text-xs mt-1">Completa estos retos de plataforma para desbloquear beneficios exclusivos, días gratis de plan y herramientas avanzadas para tu negocio.</p>
+                                    </div>
+                                    <button 
+                                        onClick={fetchData} 
+                                        className="px-4 py-2 bg-white/10 hover:bg-white/20 active:scale-95 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-1 cursor-pointer shrink-0"
+                                    >
+                                        <RefreshCw size={12} className={loadingGlobal ? "animate-spin" : ""} /> Sincronizar
+                                    </button>
+                                </div>
+
+                                {loadingGlobal ? (
+                                    <div className="py-16 text-center space-y-3 bg-white border border-slate-150 rounded-3xl">
+                                        <Loader2 size={32} className="animate-spin text-slate-400 mx-auto" />
+                                        <p className="text-[10px] font-black text-slate-450 uppercase tracking-wider">Cargando misiones de Citiox...</p>
+                                    </div>
+                                ) : globalMissions.length === 0 ? (
+                                    <div className="bg-white border border-slate-150 rounded-3xl p-16 text-center shadow-sm">
+                                        <Trophy className="mx-auto text-slate-300 mb-4" size={48} />
+                                        <h3 className="text-base font-black text-slate-800 uppercase tracking-tight mb-2">No hay campañas de Citiox activas</h3>
+                                        <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto">
+                                            Citiox lanza retos por temporadas. Vuelve más tarde para descubrir nuevas misiones oficiales.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {globalMissions.map((m: any) => {
+                                            const prog = globalProgress.find(p => p.missionId === m.id);
+                                            const actual = prog?.progreso || 0;
+                                            const meta = m.objetivo || 1;
+                                            const pct = Math.min(100, Math.floor((actual / meta) * 100));
+                                            const completada = prog?.completada || false;
+                                            const recompensaDada = prog?.recompensaDada || false;
+
+                                            // Render reward text
+                                            let rewardText = '';
+                                            if (m.recompensaTipo === 'FREE_DAYS') rewardText = `+${m.recompensaValor?.dias || 0} Días de Plan`;
+                                            else if (m.recompensaTipo === 'DIAMONDS') rewardText = `+${m.recompensaValor?.diamantes || 0} Diamantes`;
+                                            else if (m.recompensaTipo === 'CREDITS') rewardText = `+$${m.recompensaValor?.creditos || 0} de Saldo`;
+                                            else if (m.recompensaTipo === 'BADGE') rewardText = `Insignia: ${m.recompensaValor?.badge || ''}`;
+                                            else if (m.recompensaTipo === 'UNLOCK_FEATURE') rewardText = `Desbloquea: ${m.recompensaValor?.feature || ''}`;
+                                            else rewardText = 'Promoción Especial';
+
+                                            return (
+                                                <div 
+                                                    key={m.id} 
+                                                    className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm space-y-4 hover:border-slate-300 transition-all duration-300"
+                                                >
+                                                    <div className="flex justify-between items-start gap-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div 
+                                                                className="size-11 rounded-2xl flex items-center justify-center border shrink-0"
+                                                                style={{ 
+                                                                    backgroundColor: `${m.color || '#3b82f6'}12`,
+                                                                    borderColor: `${m.color || '#3b82f6'}30`
+                                                                }}
+                                                            >
+                                                                {m.icono === 'Zap' ? <Zap size={20} style={{ color: m.color || '#3b82f6' }} />
+                                                                : m.icono === 'Users' ? <Users size={20} style={{ color: m.color || '#3b82f6' }} />
+                                                                : m.icono === 'Calendar' ? <Calendar size={20} style={{ color: m.color || '#3b82f6' }} />
+                                                                : m.icono === 'Briefcase' ? <Briefcase size={20} style={{ color: m.color || '#3b82f6' }} />
+                                                                : m.icono === 'Crown' ? <Crown size={20} style={{ color: m.color || '#3b82f6' }} />
+                                                                : m.icono === 'Link' ? <Link size={20} style={{ color: m.color || '#3b82f6' }} />
+                                                                : m.icono === 'Smartphone' ? <Smartphone size={20} style={{ color: m.color || '#3b82f6' }} />
+                                                                : m.icono === 'UserCheck' ? <UserCheck size={20} style={{ color: m.color || '#3b82f6' }} />
+                                                                : m.icono === 'Coins' ? <Coins size={20} style={{ color: m.color || '#3b82f6' }} />
+                                                                : m.icono === 'Award' ? <Award size={20} style={{ color: m.color || '#3b82f6' }} />
+                                                                : <Trophy size={20} style={{ color: m.color || '#3b82f6' }} />}
+                                                            </div>
+                                                            <div>
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                    <h4 className="text-xs font-black text-slate-850 uppercase tracking-wider">{m.titulo}</h4>
+                                                                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-0.5">
+                                                                        ✨ Oficial Citiox
+                                                                    </span>
+                                                                </div>
+                                                                <p className="text-[10px] text-slate-400 font-medium mt-1">{m.descripcion}</p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="text-right shrink-0">
+                                                            {recompensaDada ? (
+                                                                <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[8px] font-black uppercase tracking-wider inline-block">
+                                                                    Premio Entregado
+                                                                </span>
+                                                            ) : completada ? (
+                                                                <span className="px-2.5 py-1 bg-amber-50 text-amber-600 border border-amber-100 rounded-full text-[8px] font-black uppercase tracking-wider inline-block animate-pulse">
+                                                                    Listo
+                                                                </span>
+                                                            ) : (
+                                                                <span className="px-2.5 py-1 bg-slate-50 text-slate-400 border border-slate-200 rounded-full text-[8px] font-black uppercase tracking-wider inline-block">
+                                                                    En Curso
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* PROGRES BAR */}
+                                                    <div className="space-y-1.5 pt-2">
+                                                        <div className="flex justify-between items-center text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                                            <span>Progreso de Misión</span>
+                                                            <span className="text-slate-700 font-bold">{Math.min(meta, actual)} / {meta} ({pct}%)</span>
+                                                        </div>
+                                                        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                                            <div 
+                                                                className="h-full rounded-full transition-all duration-700" 
+                                                                style={{ 
+                                                                    width: `${pct}%`,
+                                                                    backgroundColor: m.color || '#3b82f6'
+                                                                }} 
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* REWARD CARD DETAILED */}
+                                                    <div className="flex items-center justify-between p-3.5 bg-indigo-50/40 rounded-2xl border border-indigo-50/60 mt-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <Sparkles className="text-indigo-500 animate-pulse" size={14} />
+                                                            <span className="text-[10px] font-black text-indigo-700 uppercase tracking-wider">Recompensa:</span>
+                                                            <span className="text-xs font-black text-slate-800">{rewardText}</span>
+                                                        </div>
+                                                        <span className="text-[9px] font-bold text-slate-400">Entrega Automática</span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* HISTORIAL DE RECOMPENSAS */}
+                            <div className="space-y-6">
+                                <div className="bg-white border border-slate-150 rounded-3xl p-6 shadow-sm">
+                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+                                        <Trophy className="text-indigo-500" size={18} /> Historial de Recompensas
+                                    </h3>
+                                    <div className="space-y-4">
+                                        {globalHistory.length === 0 ? (
+                                            <div className="py-12 text-center text-slate-400 text-xs font-semibold">
+                                                <History className="mx-auto text-slate-200 mb-2" size={32} />
+                                                Ningún premio desbloqueado aún.
+                                            </div>
+                                        ) : (
+                                            globalHistory.map((h: any) => (
+                                                <div 
+                                                    key={h.id} 
+                                                    className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-2 hover:border-slate-250 transition-colors"
+                                                >
+                                                    <div className="flex justify-between items-start gap-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg">
+                                                                <CheckCircle2 size={14} />
+                                                            </div>
+                                                            <span className="text-[10px] font-black text-slate-700 uppercase tracking-wider">{h.Mission?.titulo || 'Reto Citiox'}</span>
+                                                        </div>
+                                                        <span className="text-[8px] text-slate-400 font-bold">{new Date(h.fecha).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <p className="text-[11px] font-bold text-indigo-600 leading-tight">{h.detalles}</p>
+                                                </div>
+                                            ))
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -2521,8 +3013,8 @@ export default function QuestDashboard() {
             )}
 
             {isWizardOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fadeIn">
-                    <div className="bg-white border border-slate-150 rounded-[2.5rem] w-full max-w-6xl shadow-2xl p-8 max-h-[92vh] overflow-y-auto flex flex-col">
+                <div className="fixed inset-0 z-[200] bg-white overflow-y-auto flex flex-col animate-fadeIn">
+                    <div className="w-full max-w-4xl mx-auto p-6 md:p-12 flex flex-col flex-1">
                         
                         {/* WIZARD HEADER */}
                         <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
@@ -2536,7 +3028,7 @@ export default function QuestDashboard() {
                                     Paso {wizardStep} de 7 {wizardStep === 0 ? "(Configuración Inicial)" : ""}
                                 </p>
                             </div>
-                            <button onClick={() => { setIsWizardOpen(false); setEditingQuestId(null); }} className="text-slate-400 hover:text-slate-600 text-xl font-bold cursor-pointer">×</button>
+                            <button onClick={() => { setIsWizardOpen(false); setEditingQuestId(null); setWizardFromTemplate(false); }} className="size-10 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors cursor-pointer text-lg font-bold">×</button>
                         </div>
 
                         {/* BARRA DE PROGRESO DE PASOS */}
@@ -2555,16 +3047,18 @@ export default function QuestDashboard() {
                                 ].map((s) => {
                                     const isCompleted = wizardStep > s.step;
                                     const isActive = wizardStep === s.step;
+                                    // Si estamos editando, permitimos navegar libremente por cualquier paso ya que todo está preconfigurado
+                                    const canNavigate = !!editingQuestId || s.step <= wizardStep || isCompleted;
                                     return (
                                         <button
                                             key={s.step}
                                             onClick={() => {
-                                                if (s.step <= wizardStep || isCompleted) {
+                                                if (canNavigate) {
                                                     setWizardStep(s.step);
                                                 }
                                             }}
                                             className="relative z-10 flex flex-col items-center group cursor-pointer focus:outline-none"
-                                            disabled={s.step > wizardStep && !isCompleted}
+                                            disabled={!canNavigate}
                                         >
                                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${
                                                 isCompleted 
@@ -2835,7 +3329,7 @@ export default function QuestDashboard() {
 
                                             {/* Validar disponibilidad de trigger en el motor backend */}
                                             <div className="p-3.5 border rounded-2xl bg-slate-50 flex items-center gap-3">
-                                                {['BOOKING_COMPLETED', 'REVIEW_CREATED'].includes(wizardData.triggerEvent) ? (
+                                                {['BOOKING_COMPLETED', 'REVIEW_CREATED', 'CUMPLEANOS', 'CUMPLEANOS_WEEK', 'CUMPLEANOS_MONTH'].includes(wizardData.triggerEvent) ? (
                                                     <>
                                                         <div className="size-2 rounded-full bg-emerald-500 animate-pulse" />
                                                         <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">✅ Disponible en el motor automático de Citiox</span>
@@ -3754,7 +4248,7 @@ export default function QuestDashboard() {
 
             {/* MODAL: ENTREGAR PREMIO FÍSICO */}
             {selectedRewardToCanje && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
                     <div className="bg-white border border-slate-150 rounded-[2.5rem] w-full max-w-md shadow-2xl p-8">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
                             <h3 className="text-base font-black text-slate-800 uppercase tracking-wider">Confirmar Entrega de Premio</h3>
@@ -3810,11 +4304,11 @@ export default function QuestDashboard() {
 
             {/* MODAL: CREAR CUPÓN PROMOCIONAL */}
             {isCouponModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <form onSubmit={handleCreateCoupon} className="bg-white border border-slate-150 rounded-[2.5rem] w-full max-w-md shadow-2xl p-8">
+                <div className="fixed inset-0 z-[200] bg-white overflow-y-auto flex flex-col animate-fadeIn">
+                    <form onSubmit={handleCreateCoupon} className="w-full max-w-2xl mx-auto p-6 md:p-12 flex flex-col flex-1">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
                             <h3 className="text-base font-black text-slate-800 uppercase tracking-wider">Crear Nuevo Cupón</h3>
-                            <button type="button" onClick={() => setIsCouponModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold cursor-pointer">×</button>
+                            <button type="button" onClick={() => setIsCouponModalOpen(false)} className="size-10 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors cursor-pointer text-lg font-bold">×</button>
                         </div>
                         <div className="space-y-4 mb-6">
                             <div>
@@ -3882,6 +4376,67 @@ export default function QuestDashboard() {
                                     />
                                 </div>
                             </div>
+                            {/* ─── ASIGNAR A CLIENTE (OPCIONAL) ─── */}
+                            <div className="bg-amber-50/60 border border-amber-100 rounded-2xl p-4 space-y-3">
+                                <label className="block text-[10px] font-black text-amber-600 uppercase tracking-wider">
+                                    👤 Asignar a cliente (opcional)
+                                </label>
+                                {couponClientSelected ? (
+                                    <div className="flex items-center justify-between bg-white border border-amber-200 rounded-xl px-4 py-2.5">
+                                        <div className="flex items-center gap-2">
+                                            <div className="size-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-black text-xs">
+                                                {(couponClientSelected.nombre || '?')[0].toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-black text-slate-800 leading-none">{couponClientSelected.nombre}</p>
+                                                <p className="text-[9px] text-slate-400 font-medium">{couponClientSelected.telefono || couponClientSelected.phone}</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setCouponClientSelected(null); setCouponClientSearch(''); setCouponClientResults([]); }}
+                                            className="text-slate-300 hover:text-rose-500 font-black text-sm cursor-pointer"
+                                        >×</button>
+                                    </div>
+                                ) : (
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={couponClientSearch}
+                                            onChange={e => handleSearchCouponClient(e.target.value)}
+                                            className="w-full px-4 py-3 rounded-2xl border border-amber-200 text-xs font-bold text-slate-800 bg-white focus:outline-none placeholder:font-normal"
+                                            placeholder="Buscar por nombre o teléfono..."
+                                        />
+                                        {couponClientSearching && (
+                                            <div className="absolute right-4 top-3 text-amber-500">
+                                                <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" strokeDasharray="30" strokeDashoffset="10"/></svg>
+                                            </div>
+                                        )}
+                                        {couponClientResults.length > 0 && (
+                                            <ul className="absolute z-10 mt-1 w-full bg-white border border-slate-150 rounded-2xl shadow-xl overflow-hidden">
+                                                {couponClientResults.map((c: any) => (
+                                                    <li
+                                                        key={c.id}
+                                                        onClick={() => { setCouponClientSelected(c); setCouponClientResults([]); setCouponClientSearch(''); }}
+                                                        className="px-4 py-2.5 hover:bg-amber-50 cursor-pointer flex items-center gap-2 border-b border-slate-50 last:border-0"
+                                                    >
+                                                        <div className="size-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-black text-[10px] shrink-0">
+                                                            {(c.nombre || '?')[0].toUpperCase()}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-black text-slate-800 leading-none">{c.nombre}</p>
+                                                            <p className="text-[9px] text-slate-400">{c.telefono || c.phone}</p>
+                                                        </div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+                                )}
+                                <p className="text-[9px] text-amber-600/70 font-medium">
+                                    Si seleccionas un cliente, el cupón se asignará directamente a su cuenta y aparecerá en su app.
+                                </p>
+                            </div>
                         </div>
                         <div className="flex justify-end gap-3 border-t border-slate-100 pt-6">
                             <button type="button" onClick={() => setIsCouponModalOpen(false)} className="px-5 py-3 border border-slate-150 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 cursor-pointer" disabled={submitting}>Cancelar</button>
@@ -3902,13 +4457,13 @@ export default function QuestDashboard() {
             {/* MODAL: CREAR PREMIO DE CATÁLOGO */}
             {/* MODAL: CREAR O EDITAR PREMIO DE CATÁLOGO */}
             {isCatalogRewardModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <form onSubmit={handleCreateCatalogReward} className="bg-white border border-slate-150 rounded-[2.5rem] w-full max-w-md max-h-[90vh] overflow-y-auto scrollbar-thin shadow-2xl p-8">
+                <div className="fixed inset-0 z-[200] bg-white overflow-y-auto flex flex-col animate-fadeIn">
+                    <form onSubmit={handleCreateCatalogReward} className="w-full max-w-2xl mx-auto p-6 md:p-12 flex flex-col flex-1">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
                             <h3 className="text-base font-black text-slate-800 uppercase tracking-wider">
                                 {editingCatalogRewardId ? 'Editar Premio de Catálogo' : 'Crear Premio de Catálogo'}
                             </h3>
-                            <button type="button" onClick={() => { setIsCatalogRewardModalOpen(false); setEditingCatalogRewardId(null); }} className="text-slate-400 hover:text-slate-600 font-bold cursor-pointer">×</button>
+                            <button type="button" onClick={() => { setIsCatalogRewardModalOpen(false); setEditingCatalogRewardId(null); }} className="size-10 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors cursor-pointer text-lg font-bold">×</button>
                         </div>
                         <div className="space-y-4 mb-6">
                             <div>
@@ -4090,11 +4645,11 @@ export default function QuestDashboard() {
 
             {/* MODAL: AJUSTE MANUAL DE PUNTOS */}
             {isPointsAdjustmentModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <form onSubmit={handlePointsAdjustment} className="bg-white border border-slate-150 rounded-[2.5rem] w-full max-w-md shadow-2xl p-8">
+                <div className="fixed inset-0 z-[200] bg-white overflow-y-auto flex flex-col animate-fadeIn">
+                    <form onSubmit={handlePointsAdjustment} className="w-full max-w-2xl mx-auto p-6 md:p-12 flex flex-col flex-1">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
                             <h3 className="text-base font-black text-slate-800 uppercase tracking-wider">Ajuste Manual de Puntos</h3>
-                            <button type="button" onClick={() => setIsPointsAdjustmentModalOpen(false)} className="text-slate-400 hover:text-slate-600 font-bold cursor-pointer">×</button>
+                            <button type="button" onClick={() => setIsPointsAdjustmentModalOpen(false)} className="size-10 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors cursor-pointer text-lg font-bold">×</button>
                         </div>
                         <div className="space-y-4 mb-6">
                             <div>
@@ -4161,6 +4716,204 @@ export default function QuestDashboard() {
                             </button>
                         </div>
                     </form>
+                </div>
+            )}
+
+            {/* Modal de Búsqueda Manual / QR */}
+            {showManualModal && (
+                <div 
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        zIndex: 99999,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '1.5rem',
+                        backgroundColor: 'rgba(2, 6, 23, 0.6)',
+                        backdropFilter: 'blur(4px)'
+                    }}
+                >
+                    <div 
+                        style={{
+                            position: 'relative',
+                            width: '100%',
+                            maxWidth: '400px',
+                            backgroundColor: '#ffffff',
+                            borderRadius: '2rem',
+                            padding: '1.5rem',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                            border: '1px solid #f1f5f9',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '1.25rem'
+                        }}
+                    >
+                        {/* Cerrar */}
+                        <button 
+                            type="button"
+                            onClick={() => {
+                                setShowManualModal(false);
+                                setManualCode('');
+                                setManualError(null);
+                            }}
+                            style={{
+                                position: 'absolute',
+                                top: '1rem',
+                                right: '1rem',
+                                width: '2rem',
+                                height: '2rem',
+                                backgroundColor: '#f8fafc',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '9999px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: '#64748b',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <X size={14} strokeWidth={2.5} />
+                        </button>
+
+                        <div className="text-center pt-4" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                            <div className="size-16 rounded-full bg-pink-50 flex items-center justify-center mx-auto text-pink-500 mb-2" style={{ width: '4rem', height: '4rem', borderRadius: '9999px', backgroundColor: '#fdf2f8', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ec4899' }}>
+                                <QrCode size={32} />
+                            </div>
+                            <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight" style={{ margin: 0 }}>
+                                Validar por Código
+                            </h3>
+                            <p className="text-xs text-slate-500 mt-1 leading-relaxed" style={{ margin: 0 }}>
+                                Escanea el QR del cliente con una cámara o escribe su código alfanumérico corto.
+                            </p>
+                        </div>
+
+                        {/* Formulario de Búsqueda Manual */}
+                        <form onSubmit={handleManualSearch} className="space-y-4">
+                            <div className="space-y-1.5" style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                    Código de Reclamo Manual
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej: CTX-7H9K-42"
+                                    value={manualCode}
+                                    onChange={(e) => setManualCode(e.target.value)}
+                                    className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold uppercase text-slate-800 font-mono tracking-wider focus:outline-none focus:bg-white focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all text-center"
+                                    required
+                                />
+                            </div>
+
+                            {manualError && (
+                                <div className="bg-rose-50 border border-rose-100 text-rose-700 p-3 rounded-xl text-xs font-semibold text-center" style={{ marginTop: '1rem' }}>
+                                    ⚠️ {manualError}
+                                </div>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={manualSearchLoading}
+                                className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
+                                style={{ marginTop: '1rem', width: '100%', border: '0', cursor: 'pointer' }}
+                            >
+                                {manualSearchLoading ? (
+                                    <Loader2 className="animate-spin" size={14} />
+                                ) : (
+                                    'Buscar Premio'
+                                )}
+                            </button>
+                        </form>
+                        
+                        <div className="bg-slate-50 p-4 rounded-2xl text-[10px] text-slate-400 font-medium text-center leading-relaxed" style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '1rem', color: '#94a3b8' }}>
+                            💡 Para escanear de forma inalámbrica, puedes usar la cámara de cualquier celular logueado en la administración de Citiox y el link abrirá directamente la entrega.
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL GUÍA RÁPIDA CLUB DE BENEFICIOS */}
+            {isGuideOpen && (
+                <div className="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-300">
+                    <div className="bg-white dark:bg-slate-950 rounded-[2.5rem] border border-slate-150 dark:border-white/5 shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+                        {/* Cabecera del Modal */}
+                        <div className="px-8 py-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between shrink-0 bg-slate-50 dark:bg-slate-900/50">
+                            <div>
+                                <h3 className="text-xl font-black text-slate-800 dark:text-white tracking-tighter uppercase italic leading-none">
+                                    Guía Rápida <span className="text-pink-500">Club de Beneficios</span>
+                                </h3>
+                                <p className="text-[10px] font-black text-slate-400 dark:text-white/40 uppercase tracking-widest mt-1.5">
+                                    Manual de fidelización para tu negocio y clientes
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => {
+                                        const iframe = document.createElement('iframe');
+                                        iframe.style.position = 'fixed';
+                                        iframe.style.right = '0';
+                                        iframe.style.bottom = '0';
+                                        iframe.style.width = '0';
+                                        iframe.style.height = '0';
+                                        iframe.style.border = '0';
+                                        document.body.appendChild(iframe);
+                                        const iframeDoc = iframe.contentWindow?.document;
+                                        if (iframeDoc) {
+                                            iframeDoc.write(`
+                                                <html>
+                                                    <head>
+                                                        <title>Guía Club de Beneficios Citiox</title>
+                                                        <style>
+                                                            body { margin: 0; display: flex; justify-content: center; align-items: center; }
+                                                            img { max-width: 100%; height: auto; display: block; page-break-inside: avoid; }
+                                                            @page { size: auto; margin: 0mm; }
+                                                        </style>
+                                                    </head>
+                                                    <body>
+                                                        <img src="/citiox_club_guia.jpg" onload="window.print();" />
+                                                    </body>
+                                                </html>
+                                            `);
+                                            iframeDoc.close();
+                                        }
+                                        setTimeout(() => {
+                                            document.body.removeChild(iframe);
+                                        }, 10000);
+                                    }}
+                                    className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer border-0"
+                                    title="Imprimir Guía"
+                                >
+                                    <Printer size={16} />
+                                </button>
+                                <a
+                                    href="/citiox_club_guia.jpg"
+                                    download="guia_club_beneficios_citiox.jpg"
+                                    className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer border-0"
+                                    title="Descargar Guía"
+                                >
+                                    <Download size={16} />
+                                </a>
+                                <button
+                                    onClick={() => setIsGuideOpen(false)}
+                                    className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer border-0"
+                                    title="Cerrar"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Contenido de la Guía */}
+                        <div className="flex-1 overflow-y-auto p-8 bg-slate-100 dark:bg-black/40 flex justify-center items-start">
+                            <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 shadow-xl max-w-2xl border border-slate-200/50 dark:border-white/5">
+                                <img
+                                    src="/citiox_club_guia.jpg"
+                                    alt="Guía Rápida Club de Beneficios Citiox"
+                                    className="w-full h-auto rounded-2xl block object-contain"
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

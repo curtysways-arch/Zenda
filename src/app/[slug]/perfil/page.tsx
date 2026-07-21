@@ -46,6 +46,22 @@ function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
+const formatFechaNacimientoUTC = (dateInput: Date | string | null) => {
+    if (!dateInput) return '—';
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    if (isNaN(date.getTime())) return '—';
+    
+    const dia = date.getUTCDate();
+    const meses = [
+        'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+    ];
+    const mes = meses[date.getUTCMonth()];
+    const anio = date.getUTCFullYear();
+    
+    return `${dia} de ${mes}, ${anio}`;
+};
+
 export default function MiPerfilPage() {
     const params = useParams();
     const slug = params.slug as string;
@@ -182,7 +198,7 @@ export default function MiPerfilPage() {
                 body: JSON.stringify({
                     nombre: editNombre,
                     email: editEmail || null,
-                    fechaNacimiento: editFechaNacimiento ? new Date(editFechaNacimiento).toISOString() : null
+                    fechaNacimiento: editFechaNacimiento ? new Date(`${editFechaNacimiento}T00:00:00.000Z`).toISOString() : null
                 })
             });
             if (res.ok) {
@@ -426,11 +442,18 @@ export default function MiPerfilPage() {
                             {/* Nombre + teléfono + rating */}
                             <div className="flex-1 min-w-0">
                                 {/* Badge */}
-                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full mb-1.5"
-                                    style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m2 4 3 12h14l3-12-6 5-4-7-4 7-6-5Z"/></svg>
-                                    <span className="text-[9px] font-black uppercase tracking-widest">USUARIO ELITE</span>
-                                </div>
+                                {(() => {
+                                    const levelColor = cliente.loyalty?.nivelActual?.color || primaryColor;
+                                    return (
+                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full mb-1.5"
+                                            style={{ backgroundColor: `${levelColor}15`, color: levelColor }}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m2 4 3 12h14l3-12-6 5-4-7-4 7-6-5Z"/></svg>
+                                            <span className="text-[9px] font-black uppercase tracking-widest">
+                                                USUARIO {cliente.loyalty?.nivelActual?.nombre || 'BRONCE'}
+                                            </span>
+                                        </div>
+                                    );
+                                })()}
                                 <h2 className="text-[22px] font-black text-slate-900 leading-tight">{cliente.nombre || 'Usuario'}</h2>
                                 <p className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-500 mt-0.5">
                                     <Phone size={12} style={{ color: primaryColor }} />
@@ -455,47 +478,76 @@ export default function MiPerfilPage() {
                         </div>
 
                         {/* Stats Card */}
-                        <div className="px-5 mt-5">
-                            <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
-                                <div className="grid grid-cols-3 divide-x divide-slate-100">
-                                    {[
-                                        { label: 'Sesiones', sublabel: 'Completadas', value: cliente.stats?.reservasTotales || 0, icon: <Sparkles size={20} /> },
-                                        { label: 'Cursos', sublabel: 'Inscritos', value: cliente.enrollments?.length || 0, icon: <Trophy size={20} /> },
-                                        { label: 'Nivel', sublabel: 'Cliente Elite', value: 'A+', icon: <Award size={20} /> },
-                                    ].map((stat, i) => (
-                                        <div key={i} className="flex flex-col items-center py-1 px-2">
-                                            <div className="size-10 rounded-2xl flex items-center justify-center mb-2" style={{ backgroundColor: `${primaryColor}12`, color: primaryColor }}>
-                                                {stat.icon}
-                                            </div>
-                                            <span className="text-[26px] font-black text-slate-900 leading-none">{stat.value}</span>
-                                            <span className="text-[11px] font-bold text-slate-700 mt-0.5">{stat.label}</span>
-                                            <span className="text-[9px] text-slate-400 font-medium">{stat.sublabel}</span>
+                        {(() => {
+                            const levelColor = cliente.loyalty?.nivelActual?.color || primaryColor;
+                            return (
+                                <div className="px-5 mt-5">
+                                    <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+                                        <div className="grid grid-cols-3 divide-x divide-slate-100">
+                                            {[
+                                                { label: 'Sesiones', sublabel: 'Completadas', value: cliente.stats?.reservasTotales || 0, icon: <Sparkles size={20} /> },
+                                                { label: 'Cursos', sublabel: 'Inscritos', value: cliente.enrollments?.length || 0, icon: <Trophy size={20} /> },
+                                                { 
+                                                    label: 'Nivel', 
+                                                    sublabel: `Club ${cliente.loyalty?.nivelActual?.nombre || 'Bronce'}`, 
+                                                    value: cliente.loyalty?.nivelActual?.nombre || 'Bronce', 
+                                                    icon: <Award size={20} /> 
+                                                },
+                                            ].map((stat, i) => (
+                                                <div key={i} className="flex flex-col items-center py-1 px-2">
+                                                    <div className="size-10 rounded-2xl flex items-center justify-center mb-2" style={{ backgroundColor: i === 2 ? `${levelColor}12` : `${primaryColor}12`, color: i === 2 ? levelColor : primaryColor }}>
+                                                        {stat.icon}
+                                                    </div>
+                                                    <span className={cn(
+                                                        "font-black text-slate-900 leading-none tracking-tight text-center",
+                                                        typeof stat.value === 'string' ? "text-[13px] uppercase mt-1.5" : "text-[26px]"
+                                                    )}>
+                                                        {stat.value}
+                                                    </span>
+                                                    <span className="text-[11px] font-bold text-slate-700 mt-1">{stat.label}</span>
+                                                    <span className="text-[9px] text-slate-400 font-medium">{stat.sublabel}</span>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
 
-                                {/* Banner motivacional */}
-                                <div className="mt-4 rounded-2xl px-4 py-3 flex items-center justify-between overflow-hidden relative"
-                                    style={{ background: `linear-gradient(135deg, ${primaryColor}15, ${primaryColor}08)` }}>
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M2.5 3.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm2-2a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7zM0 13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V6a1.5 1.5 0 0 0-1.5-1.5h-13A1.5 1.5 0 0 0 0 6v7zm6.258-9.007a.25.25 0 0 1 .372.274L5.808 8h2.46a.25.25 0 0 1 .184.415l-4.5 4.5a.25.25 0 0 1-.395-.296l1.298-3.573H2.25a.25.25 0 0 1-.184-.415l4.192-4.638z"/></svg>
-                                        </div>
-                                        <div>
-                                            <p className="font-black text-slate-800 text-[13px] leading-tight">
-                                                Sigue así, {(cliente.nombre || '').split(' ')[0]}
-                                            </p>
-                                            <p className="text-[10px] text-slate-500 font-medium">Estás en el nivel más alto</p>
-                                            <button className="text-[10px] font-black mt-0.5 flex items-center gap-1" style={{ color: primaryColor }}>
-                                                Ver beneficios Elite <ChevronRight size={11} />
-                                            </button>
-                                        </div>
+                                        {/* Banner motivacional */}
+                                        {cliente.loyalty && (
+                                            <div className="mt-4 rounded-2xl px-4 py-3 flex items-center justify-between overflow-hidden relative"
+                                                style={{ background: `linear-gradient(135deg, ${levelColor}15, ${levelColor}08)` }}>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="size-10 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: levelColor }}>
+                                                        <Award size={20} />
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <p className="font-black text-slate-800 text-[13px] leading-tight">
+                                                            Sigue así, {(cliente.nombre || '').split(' ')[0]}
+                                                        </p>
+                                                        {cliente.loyalty.siguienteNivel ? (
+                                                            <p className="text-[10px] text-slate-500 font-semibold mt-0.5">
+                                                                Te faltan <strong className="text-slate-800">{cliente.loyalty.siguienteNivel.diamantesRequeridos - cliente.loyalty.experiencia}</strong> exp para ser <span className="font-extrabold" style={{ color: cliente.loyalty.siguienteNivel.color }}>{cliente.loyalty.siguienteNivel.nombre}</span>
+                                                            </p>
+                                                        ) : (
+                                                            <p className="text-[10px] text-slate-500 font-medium">Estás en el nivel más alto del club</p>
+                                                        )}
+                                                        <Link 
+                                                            href={`/${slug}/misiones`}
+                                                            className="text-[10px] font-black mt-1 flex items-center gap-1 hover:underline cursor-pointer" 
+                                                            style={{ color: levelColor }}
+                                                        >
+                                                            Misiones del nivel <ChevronRight size={11} />
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                                {/* Corona decorativa */}
+                                                <div className="text-5xl opacity-80 shrink-0">
+                                                    {cliente.loyalty?.nivelActual?.orden >= 4 ? '👑' : '💎'}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                    {/* Corona decorativa */}
-                                    <div className="text-5xl opacity-80 shrink-0">👑</div>
                                 </div>
-                            </div>
-                        </div>
+                            );
+                        })()}
 
                         {/* Citas por calificar */}
                         {(() => {
@@ -603,9 +655,7 @@ export default function MiPerfilPage() {
                                             <div>
                                                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Fecha de Nacimiento</p>
                                                 <p className="text-[13px] font-black text-slate-800">
-                                                    {cliente.fechaNacimiento
-                                                        ? format(new Date(cliente.fechaNacimiento), "d 'de' MMMM, yyyy", { locale: es })
-                                                        : '—'}
+                                                    {formatFechaNacimientoUTC(cliente.fechaNacimiento)}
                                                 </p>
                                             </div>
                                         </div>

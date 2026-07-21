@@ -111,10 +111,18 @@ export async function POST(
 
         const commentId = Math.random().toString(36).substring(2, 15);
 
-        await prisma.$executeRawUnsafe(`
-            INSERT INTO CommentResultado (id, resultadoId, userName, userAvatar, content, approved, createdAt, userId)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `, commentId, resultadoId, userName, userAvatar, content, 1, new Date().toISOString(), userId);
+        await prisma.commentResultado.create({
+            data: {
+                id: commentId,
+                resultadoId,
+                userName,
+                userAvatar,
+                content,
+                approved: true,
+                createdAt: new Date(),
+                userId
+            }
+        });
 
         return NextResponse.json({
             id: commentId,

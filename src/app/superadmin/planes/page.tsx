@@ -45,7 +45,19 @@ export default async function PlanesPage() {
                                 <div className="p-3 bg-indigo-100 text-indigo-600 rounded-2xl group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
                                     <Package size={24} />
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 flex-wrap justify-end">
+                                    {(() => {
+                                        const feats = plan.features ? (typeof plan.features === 'string' ? JSON.parse(plan.features) : plan.features) : {};
+                                        const citas = Number((feats as any)?.citas_activacion ?? 1);
+                                        if (citas > 0) {
+                                            return (
+                                                <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                                                    Activa a la {citas}ª Cita
+                                                </span>
+                                            );
+                                        }
+                                        return null;
+                                    })()}
                                     {plan.trial_days > 0 && (
                                         <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-[10px] font-bold uppercase tracking-widest">
                                             {plan.trial_days} Días Trial

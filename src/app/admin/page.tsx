@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { Plus, Users, Target, Activity, Calendar, DollarSign, TrendingUp, Clock, Rocket, AlertTriangle, ChevronRight, Scissors } from 'lucide-react';
+import { Plus, Users, Target, Activity, Calendar, DollarSign, TrendingUp, Clock, Rocket, AlertTriangle, ChevronRight, Scissors, Gift } from 'lucide-react';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { startOfMonth, startOfToday, endOfToday, startOfWeek, endOfWeek, addDays } from 'date-fns';
@@ -17,6 +17,7 @@ import { calculateOnboardingProgress } from '@/lib/onboarding';
 import OnboardingChecklist from '@/components/admin/OnboardingChecklist';
 import { formatUTCDate } from '@/lib/utils';
 import RealtimeDashboardReloader from '@/components/admin/RealtimeDashboardReloader';
+import ProductsDashboard from '@/components/admin/ProductsDashboard';
 
 export default async function AdminDashboard() {
     const session = await getServerSession(authOptions);
@@ -25,9 +26,14 @@ export default async function AdminDashboard() {
     const negocioId = (session.user as any).negocioId;
     const role = (session.user as any).role;
     const staffId = (session.user as any).staffId;
+    const tipoNegocio = (session.user as any).tipoNegocio || 'RESERVA';
 
     if (!negocioId) {
         return null;
+    }
+
+    if (tipoNegocio === 'PRODUCTOS') {
+        return <ProductsDashboard negocioId={negocioId} role={role} />;
     }
 
     const isStaff = role === 'STAFF' || role === 'PROFESIONAL';
@@ -46,7 +52,7 @@ export default async function AdminDashboard() {
         ...(isStaff && staffId ? { staffId } : {})
     };
 
-    const [citasHoy, citasMes, ingresosMes, totalClientes, negocioData, servicesResult, planFeatures] = await Promise.all([
+    const [citasHoy, citasMes, ingresosMes, totalClientes, negocioData, servicesResult, planFeatures, loyaltyPendingCount, referralPendingCount] = await Promise.all([
         prisma.appointment.count({
             where: {
                 ...commonFilter,
@@ -95,9 +101,22 @@ export default async function AdminDashboard() {
             where: { negocioId },
             select: { id: true, nombre: true }
         }),
-        featureService.getAllFeatures(negocioId)
+        featureService.getAllFeatures(negocioId),
+        prisma.loyaltyRedemption.count({
+            where: {
+                negocioId,
+                estado: { in: ['PENDIENTE_ENTREGA', 'SOLICITADO', 'LISTO_PARA_RETIRAR'] }
+            }
+        }),
+        prisma.referralReward.count({
+            where: {
+                negocioId,
+                estado: { in: ['PENDIENTE_ENTREGA', 'SOLICITADO', 'LISTO_PARA_RETIRAR'] }
+            }
+        })
     ]);
 
+    const pendingDeliveriesCount = (loyaltyPendingCount || 0) + (referralPendingCount || 0);
     const servicesData = servicesResult.map(c => ({ id: c.id, nombre: c.nombre }));
 
     const citasSemana = await prisma.appointment.findMany({
@@ -213,6 +232,9 @@ export default async function AdminDashboard() {
                     daysLeft={daysLeft}
                     primaryColor={primaryColor}
                     slug={negocioData?.slug || ''}
+                    negocioNombre={negocioData?.nombre}
+                    usuarioNombre={session?.user?.name || 'Admin'}
+                    pendingDeliveriesCount={pendingDeliveriesCount}
                 />
             </div>
 
@@ -226,6 +248,28 @@ export default async function AdminDashboard() {
                 {/* Banner de Downgrade */}
                 {isDowngraded && !isStaff && (
                     <UpgradeBanner type="downgraded" />
+                )}
+
+                {/* Banner de Premios Pendientes */}
+                {pendingDeliveriesCount > 0 && (
+                    <div className="bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-[2rem] p-6 shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                        <div className="absolute top-0 right-0 w-36 h-36 bg-white rounded-full blur-[100px] opacity-15" />
+                        <div className="flex items-center gap-4 relative z-10">
+                            <div className="size-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10 shrink-0">
+                                <Gift size={24} className="text-white animate-bounce" />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-black uppercase tracking-wider leading-none">🎁 ¡Premios y Recompensas Pendientes de Entrega!</h4>
+                                <p className="text-white/90 text-xs mt-1.5">Tienes {pendingDeliveriesCount} entregas de premios o recompensas de misiones esperando en recepción.</p>
+                            </div>
+                        </div>
+                        <Link 
+                            href="/admin/misiones?tab=rewards" 
+                            className="px-6 py-3.5 bg-white text-rose-600 hover:bg-slate-50 font-black uppercase tracking-widest text-[10px] rounded-2xl transition-all shadow-md active:scale-95 shrink-0 z-10"
+                        >
+                            Entregar Premios
+                        </Link>
+                    </div>
                 )}
 
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-10 px-4">

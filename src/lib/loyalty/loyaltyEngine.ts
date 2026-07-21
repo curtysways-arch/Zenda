@@ -2,6 +2,7 @@ import prisma from '../prisma';
 import { whatsappService } from '../whatsapp';
 import { NotificationService } from '../notifications/notificationService';
 import { publishGrowthEvent } from '../growth/eventBus';
+import { updateUserLevel } from './levelEngine';
 
 // ─── TIPOS ────────────────────────────────────────────────────────────────────
 
@@ -43,9 +44,34 @@ export async function processAppointmentCompleted(appointmentId: string): Promis
         if (!appointment || appointment.estado !== 'completed') return;
 
         const negocioId = appointment.negocioId;
-        const usuarioId = appointment.usuarioId;
+        let usuarioId = appointment.usuarioId;
 
-        if (!usuarioId) return;
+        // Auto-enlace por teléfono si usuarioId es nulo (citas manuales agendadas por el negocio)
+        if (!usuarioId && appointment.cliente?.telefono) {
+            const cleanPhone = appointment.cliente.telefono.replace(/\D/g, '');
+            const user = await prisma.usuario.findFirst({
+                where: {
+                    OR: [
+                        { phone: appointment.cliente.telefono },
+                        { phone: cleanPhone }
+                    ]
+                }
+            });
+            if (user) {
+                usuarioId = user.id;
+                // Actualizar la reserva en la base de datos para registrar el vínculo
+                await prisma.appointment.update({
+                    where: { id: appointmentId },
+                    data: { usuarioId: user.id }
+                });
+                console.log(`[Loyalty] Auto-enlazada reserva ${appointmentId} al usuario ${user.id} por teléfono.`);
+            }
+        }
+
+        if (!usuarioId) {
+            console.log(`[Loyalty] Cancelando fidelización: la reserva ${appointmentId} no tiene usuarioId enlazado ni se encontró usuario por teléfono.`);
+            return;
+        }
 
         const config = (appointment as any).negocio.configuracion
             ? (typeof (appointment as any).negocio.configuracion === 'string'
@@ -54,13 +80,35 @@ export async function processAppointmentCompleted(appointmentId: string): Promis
             : {};
 
         // 1. Sumar puntos por reserva completada (si el módulo de puntos está activo)
-        if (config?.puntosActivos) {
+        const puntosActivos = config?.puntosActivos !== undefined ? config.puntosActivos : true;
+        if (puntosActivos) {
             const serviceExtra = (appointment.service?.extraInfo as any) || {};
             const puntosOtorgados = serviceExtra.puntosOtorgados !== undefined 
                 ? parseInt(String(serviceExtra.puntosOtorgados)) 
                 : (config?.puntosReserva ?? 10);
             
-            await addPoints(usuarioId, negocioId, puntosOtorgados, 'RESERVA', appointmentId);
+            // Obtener multiplicador según el nivel actual del cliente
+            let multiplicador = 1.0;
+            const userPointsRecord = await prisma.userPoints.findUnique({
+                where: { userId_negocioId: { userId: usuarioId, negocioId } },
+                include: { NivelActual: true }
+            });
+
+            if (userPointsRecord && userPointsRecord.NivelActual) {
+                multiplicador = userPointsRecord.NivelActual.multiplicador ?? 1.0;
+            }
+
+            const puntosFinales = Math.round(puntosOtorgados * multiplicador);
+            const nivelNombre = userPointsRecord?.NivelActual?.nombre || 'Bronce';
+
+            await addPoints(
+                usuarioId, 
+                negocioId, 
+                puntosFinales, 
+                'RESERVA', 
+                appointmentId, 
+                `Cita completada. Nivel ${nivelNombre} (Multiplicador ${multiplicador}x aplicado).`
+            );
         }
 
         // 2. Procesar referidos del sistema actual (compatibilidad total)
@@ -100,12 +148,30 @@ export async function addPoints(
     notas?: string
 ): Promise<void> {
     try {
-        // Upsert del balance de puntos
-        const userPoints = await (prisma as any).userPoints.upsert({
-            where: { userId_negocioId: { userId, negocioId } },
-            create: { userId, negocioId, puntos },
-            update: { puntos: { increment: puntos } }
-        });
+        const esCanje = concepto.toUpperCase().includes('CANJE') || concepto.toUpperCase().includes('REDEEM');
+
+        let userPoints;
+        if (esCanje) {
+            // Solo afectar saldo de puntos (diamantes gastables)
+            userPoints = await (prisma as any).userPoints.upsert({
+                where: { userId_negocioId: { userId, negocioId } },
+                create: { userId, negocioId, puntos, experiencia: 0 },
+                update: { puntos: { increment: puntos } }
+            });
+        } else {
+            // Ganancia o ajuste administrativo: Afectar puntos y experiencia de nivel
+            userPoints = await (prisma as any).userPoints.upsert({
+                where: { userId_negocioId: { userId, negocioId } },
+                create: { userId, negocioId, puntos, experiencia: puntos > 0 ? puntos : 0 },
+                update: { 
+                    puntos: { increment: puntos },
+                    experiencia: { increment: puntos }
+                }
+            });
+
+            // Recalcular nivel de usuario basándose en los puntos de nivel (experiencia)
+            await updateUserLevel(userId, negocioId, userPoints.experiencia);
+        }
 
         // Registrar en historial
         await (prisma as any).pointsHistory.create({
@@ -864,7 +930,7 @@ async function runBirthdayAutomations(): Promise<void> {
     for (const u of users) {
         if (!u.fechaNacimiento || !u.negocioId) continue;
         const bday = new Date(u.fechaNacimiento);
-        if (bday.getMonth() + 1 === month && bday.getDate() === day) {
+        if (bday.getUTCMonth() + 1 === month && bday.getUTCDate() === day) {
             await runAutomations(u.id, u.negocioId, 'CUMPLEANOS', {});
         }
     }

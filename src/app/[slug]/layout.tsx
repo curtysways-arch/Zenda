@@ -78,29 +78,46 @@ export default async function NegocioLayout({
 
     const canUseCustomColors = await featureService.canUseFeature(negocio.id, 'custom_colors');
 
-    let primaryInput = (negocio as any).colorPrimario && (negocio as any).colorPrimario !== '#1dc95c' ? (negocio as any).colorPrimario : '#db2777';
-
-    // Verificar si el Modo de Marca está activo (por config o por flag "logo" en colorPrimario)
     const config = negocio.configuracion ? (typeof negocio.configuracion === 'string' ? JSON.parse(negocio.configuracion) : negocio.configuracion) as any : null;
-    const modoMarca = config?.modoMarca || config?.autodetectarColorLogo || (negocio as any).colorPrimario === 'logo' || (negocio as any).colorPrimario === 'AUTO';
-
-    if (modoMarca && negocio.logoUrl) {
-        const { getLogoDominantColor } = await import('@/lib/logoColorExtractor');
-        const logoColor = await getLogoDominantColor(negocio.logoUrl);
-        if (logoColor) {
-            primaryInput = logoColor;
+    
+    // Autodetección de modo avanzado/simplificado para retrocompatibilidad
+    let modoAvanzado = false;
+    if (config?.modoAvanzadoColores !== undefined) {
+        modoAvanzado = !!config.modoAvanzadoColores;
+    } else {
+        const hasCustomNeutral = (negocio as any).colorNeutral && (negocio as any).colorNeutral !== '#FFF5F5' && (negocio as any).colorNeutral !== '#ffffff';
+        const hasCustomTerciario = (negocio as any).colorTerciario && (negocio as any).colorTerciario !== '#7B68EE';
+        const hasCustomTexto = (negocio as any).colorTexto && (negocio as any).colorTexto !== '#ffffff' && (negocio as any).colorTexto !== '#1e293b' && (negocio as any).colorTexto !== '#0f172a';
+        
+        if (hasCustomNeutral || hasCustomTerciario || hasCustomTexto) {
+            modoAvanzado = true;
         }
     }
 
-    const theme = generateTheme(
-        primaryInput,
-        (negocio as any).colorSecundario || undefined,
-        (negocio as any).colorNeutral || undefined
-    );
+    let primaryInput = (negocio as any).colorPrimario && (negocio as any).colorPrimario !== '#1dc95c' ? (negocio as any).colorPrimario : '#db2777';
+
+    let theme;
+    if (modoAvanzado) {
+        theme = generateTheme(
+            primaryInput,
+            (negocio as any).colorSecundario || undefined,
+            (negocio as any).colorNeutral || undefined
+        );
+        if ((negocio as any).colorTerciario) theme.accentColor = (negocio as any).colorTerciario;
+        if ((negocio as any).colorTexto) theme.textPrimary = (negocio as any).colorTexto;
+        if ((negocio as any).colorSubTexto) theme.textSecondary = (negocio as any).colorSubTexto;
+    } else {
+        theme = generateTheme(
+            primaryInput,
+            (negocio as any).colorSecundario || undefined
+        );
+    }
 
     // Calcular colores para la barra superior (Header)
-    // Fallback: Si no tiene colorHeader personalizado en config, usamos el colorNeutral del negocio o el de surface del tema
-    const headerBgInput = config?.colorHeader || (negocio as any).colorNeutral || theme.surfaceColor || '#ffffff';
+    const headerBgInput = modoAvanzado 
+        ? (config?.colorHeader || (negocio as any).colorNeutral || theme.surfaceColor || '#ffffff')
+        : (theme.surfaceColor || '#ffffff');
+        
     const headerBgRgb = hexToRgb(headerBgInput) || { r: 255, g: 255, b: 255 };
     const headerBgLuma = (0.2126 * headerBgRgb.r + 0.7152 * headerBgRgb.g + 0.0722 * headerBgRgb.b) / 255;
     
@@ -116,7 +133,10 @@ export default async function NegocioLayout({
                     --primary: ${theme.primaryColor};
                     --primary-light: ${theme.primaryLight};
                     --primary-dark: ${theme.primaryDark};
+                    --primary-hover: ${theme.primaryHover};
+                    --primary-bg: ${theme.primaryBg};
                     --secondary: ${theme.secondaryColor};
+                    --secondary-hover: ${theme.secondaryHover};
                     --accent: ${theme.accentColor};
                     --background: ${theme.backgroundColor};
                     --surface: ${theme.surfaceColor};
@@ -139,11 +159,10 @@ export default async function NegocioLayout({
                     --success: ${theme.successColor};
                     --warning: ${theme.warningColor};
                     --error: ${theme.errorColor};
+                    --info: ${theme.infoColor};
                     --shadow: ${theme.shadowColor};
                     
                     /* Navegación móvil dinámica */
-                    /* El fondo de la barra es --primary-dark para que contraste bien */
-                    /* Los íonos activos usan --text-on-primary (blanco/negro según luma) */
                     --nav-bg: ${theme.primaryDark};
                     --nav-active: ${theme.textOnPrimary};
                     --nav-inactive: ${theme.textOnPrimary}80;
@@ -179,10 +198,10 @@ export default async function NegocioLayout({
                     color: var(--text-on-primary) !important;
                 }
                 .bg-pink-500:hover, .bg-emerald-500:hover, .bg-indigo-500:hover, .bg-blue-500:hover, .bg-primary:hover {
-                    background-color: var(--primary-dark) !important;
+                    background-color: var(--primary-hover) !important;
                 }
                 .bg-pink-500:active, .bg-emerald-500:active, .bg-indigo-500:active, .bg-blue-500:active, .bg-primary:active {
-                    background-color: var(--primary-dark) !important;
+                    background-color: var(--primary-hover) !important;
                 }
                 .bg-pink-500:disabled, .bg-emerald-500:disabled, .bg-indigo-500:disabled, .bg-primary:disabled {
                     background-color: var(--surface-secondary) !important;
@@ -196,8 +215,8 @@ export default async function NegocioLayout({
                     color: var(--primary) !important;
                 }
                 .border-pink-500:hover, .border-emerald-500:hover, .border-indigo-500:hover {
-                    background-color: var(--primary-light) !important;
-                    color: var(--text-on-primary) !important;
+                    background-color: var(--primary-bg) !important;
+                    color: var(--primary) !important;
                 }
 
                 /* Textos de Color Primario / Marca */
@@ -331,6 +350,37 @@ export default async function NegocioLayout({
                     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
                     transition-duration: 300ms;
                 }
+
+                /* Ajuste de márgenes laterales de página a un máximo de 5px en pantallas móviles */
+                @media (max-w: 768px) {
+                    .max-w-md.mx-auto.px-2\\.5,
+                    .max-w-md.mx-auto.px-4,
+                    .max-w-md.mx-auto.px-5,
+                    .max-w-md.mx-auto.px-6,
+                    div.max-w-md.mx-auto.px-2\\.5,
+                    div.max-w-md.mx-auto.px-4,
+                    div.max-w-md.mx-auto.px-5 {
+                        padding-left: 5px !important;
+                        padding-right: 5px !important;
+                    }
+                    
+                    section.px-6, 
+                    section.px-5,
+                    section.px-4,
+                    div.px-6.mb-6,
+                    div.px-6.mt-6,
+                    div.px-6.mb-4,
+                    header.px-6, 
+                    header.px-5,
+                    header.px-4,
+                    header.px-2.5,
+                    div.sticky.px-2.5,
+                    div.px-2.5.sticky,
+                    div.px-2.5.pt-4.pb-3.sticky {
+                        padding-left: 5px !important;
+                        padding-right: 5px !important;
+                    }
+                }
                 `
             }} />
             <div className="flex flex-col min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
@@ -340,12 +390,17 @@ export default async function NegocioLayout({
                     pagesCount={publishedPagesCount} 
                     logoUrl={negocio.logoUrl} 
                     nombre={negocio.nombre} 
+                    tipoNegocio={negocio.tipoNegocio || 'RESERVA'}
                 />
                 <div className="flex-1">
                     {children}
                 </div>
                 <LoyaltyCelebration slug={slug} primaryColor={primaryInput} />
-                <PublicMobileNav slug={slug} hasActiveCourses={hasActiveCourses} />
+                <PublicMobileNav 
+                    slug={slug} 
+                    hasActiveCourses={hasActiveCourses} 
+                    tipoNegocio={negocio.tipoNegocio || 'RESERVA'}
+                />
             </div>
         </>
     );

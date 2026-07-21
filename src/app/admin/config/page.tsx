@@ -5,6 +5,8 @@ import { MessageSquare, Save, Info, Loader2, CheckCircle2, RotateCcw, Plus, Tras
 import MobileBusiness from '@/components/admin/mobile/MobileBusiness';
 import FeatureGate from '@/components/ui/FeatureGate';
 import ImageUploader from '@/components/ui/ImageUploader';
+import { useSession } from 'next-auth/react';
+import ProductsConfig from '@/components/admin/ProductsConfig';
 
 export const DEFAULT_CONFIGS = {
     CONFIRMATION_MSG: '✅ ¡Hola {{nombre}}! Tu cita en *{{negocio}}* ha sido *CONFIRMADA*. 💆\n\n✨ *Servicio:* {{servicio}}\n📅 *Fecha:* {{fecha}}\n⏰ *Hora:* {{hora}}\n\n📲 *Consulta los detalles aquí:*\n{{link_reserva}}\n\n¡Te esperamos!',
@@ -19,6 +21,8 @@ export const DEFAULT_CONFIGS = {
 };
 
 export default function ConfigMensajesPage() {
+    const { data: session } = useSession();
+    const tipoNegocio = (session?.user as any)?.tipoNegocio || 'RESERVA';
     const [configs, setConfigs] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState<string | null>(null);
@@ -136,6 +140,17 @@ export default function ConfigMensajesPage() {
                 <Loader2 className="animate-spin mb-4" size={32} style={{ color: 'var(--primary-color)' }} />
                 <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Cargando Configuración...</p>
             </div>
+        );
+    }
+
+    if (tipoNegocio === 'PRODUCTOS') {
+        return (
+            <ProductsConfig 
+                negocio={negocio} 
+                onSaveNegocio={handleSaveNegocio} 
+                saving={saving === 'NEGOCIO'} 
+                message={message} 
+            />
         );
     }
 

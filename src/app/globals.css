@@ -6,6 +6,19 @@ html {
     font-size: 12px !important;
 }
 
+/* Fix global: forzar popup de <select> siempre en modo claro para evitar texto blanco sobre fondo blanco */
+select {
+    color-scheme: light;
+    color: #1e293b !important;
+    background-color: #ffffff !important;
+}
+
+select option {
+    color: #1e293b;
+    background-color: #ffffff;
+}
+
+
 @theme {
 
     --color-emerald-50: #ecfdf5;

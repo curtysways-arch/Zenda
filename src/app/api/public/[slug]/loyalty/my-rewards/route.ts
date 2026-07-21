@@ -1,7 +1,9 @@
 import prisma from "@/lib/prisma";
+import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { RewardService } from "@/lib/loyalty/rewardService";
 
 export async function GET(
     req: Request,
@@ -63,7 +65,14 @@ export async function GET(
             where: { negocioId, userId: user.id },
             include: {
                 Reward: {
-                    select: { id: true, nombre: true, tipo: true, costoPuntos: true, recompensaImagenUrl: true, serviceId: true }
+                    include: {
+                        Service: {
+                            include: {
+                                imageMedia: true,
+                                Imagen: true
+                            }
+                        }
+                    }
                 }
             },
             orderBy: { createdAt: "desc" }
@@ -88,7 +97,8 @@ export async function GET(
                 tipoDescuento: coupon.tipo, // PORCENTAJE | FIJO
                 fechaAsignacion: coupon.fechaAsignacion,
                 fechaExpiracion: coupon.fechaExpiracion,
-                estado: coupon.estado
+                estado: coupon.estado,
+                questId: coupon.questId
             };
 
             if (coupon.estado === "DISPONIBLE" || coupon.estado === "RESERVADO") {
@@ -102,26 +112,48 @@ export async function GET(
 
         // Clasificar ReferralRewards (Premios por recomendados / campañas)
         for (const reward of referralRewards) {
+            let claimToken = reward.claimToken;
+            let claimCode = reward.claimCode;
+            let claimTokenExpiresAt = reward.claimTokenExpiresAt;
+
             const isManual = reward.Campaign.rewardType === 'REGALO' || reward.Campaign.rewardType === 'PERSONALIZADO' || reward.Campaign.rewardType === 'PRODUCTO';
+
+            // Auto-healing
+            if ((reward.estado === 'SOLICITADO' || reward.estado === 'LISTO_PARA_RETIRAR') && (!claimToken || !claimCode)) {
+                claimToken = claimToken || crypto.randomUUID();
+                claimCode = claimCode || `CTX-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+                claimTokenExpiresAt = claimTokenExpiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+                await prisma.referralReward.update({
+                    where: { id: reward.id },
+                    data: { claimToken, claimCode, claimTokenExpiresAt }
+                }).catch(e => console.error("Error auto-healing referral reward:", e));
+            }
+
+            const claimSignature = claimToken ? RewardService.generateHMAC(claimToken) : undefined;
             const formatted = {
                 id: reward.id,
                 tipoOrigen: "REFERIDO",
                 rewardType: reward.Campaign.rewardType,
                 nombre: reward.Campaign.nombre,
                 descripcion: reward.Campaign.valorRecompensa,
-                claimCode: reward.claimCode,
+                claimCode,
+                claimToken,
+                claimTokenExpiresAt,
+                claimSignature,
                 recompensaImagenUrl: reward.Campaign.recompensaImagenUrl,
                 fechaAsignacion: reward.createdAt,
                 fechaEntrega: reward.fechaEntregaConfirmada,
                 observaciones: reward.observaciones,
                 estado: reward.estado,
-                isManual
+                isManual,
+                questId: null
             };
 
-            if (reward.estado === "DISPONIBLE" || reward.estado === "RESERVADO") {
-                disponibles.push(formatted);
-            } else if (reward.estado === "PENDIENTE_ENTREGA") {
+            if (reward.estado === "PENDIENTE_ENTREGA" || reward.estado === "SOLICITADO" || reward.estado === "LISTO_PARA_RETIRAR" || (isManual && reward.estado === "DISPONIBLE")) {
                 pendientesEntrega.push(formatted);
+            } else if (reward.estado === "DISPONIBLE" || reward.estado === "RESERVADO") {
+                disponibles.push(formatted);
             } else if (reward.estado === "ENTREGADO" || reward.estado === "CANJEADO") {
                 entregados.push(formatted);
             } else {
@@ -129,29 +161,63 @@ export async function GET(
             }
         }
 
-        // Clasificar LoyaltyRedemptions (Canjes por puntos)
+        // Clasificar LoyaltyRedemptions (Canjes por puntos y misiones)
         for (const red of loyaltyRedemptions) {
-            const isManual = red.Reward.tipo === 'REGALO' || red.Reward.tipo === 'PERSONALIZADO' || red.Reward.tipo === 'PRODUCTO';
+            let claimToken = red.claimToken;
+            let claimCode = red.claimCode;
+            let claimTokenExpiresAt = red.claimTokenExpiresAt;
+
+            const isManual = red.Reward.tipo === 'REGALO' || red.Reward.tipo === 'PERSONALIZADO' || red.Reward.tipo === 'PRODUCTO' || red.Reward.tipo === 'REGALO_FISICO';
+
+            // Auto-healing
+            if ((red.estado === 'SOLICITADO' || red.estado === 'LISTO_PARA_RETIRAR') && (!claimToken || !claimCode)) {
+                claimToken = claimToken || crypto.randomUUID();
+                claimCode = claimCode || `CTX-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+                claimTokenExpiresAt = claimTokenExpiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+                await prisma.loyaltyRedemption.update({
+                    where: { id: red.id },
+                    data: { claimToken, claimCode, claimTokenExpiresAt }
+                }).catch(e => console.error("Error auto-healing loyalty redemption:", e));
+            }
+
+            let serviceImgUrl = null;
+            if (red.Reward.Service) {
+                const s = red.Reward.Service;
+                if (s.imageMedia?.key) {
+                    serviceImgUrl = `/api/media/${s.imageMedia.key}`;
+                } else if (s.imageMedia?.url) {
+                    serviceImgUrl = s.imageMedia.url;
+                } else if (s.Imagen && s.Imagen.length > 0) {
+                    serviceImgUrl = s.Imagen[0].url;
+                }
+            }
+
+            const claimSignature = claimToken ? RewardService.generateHMAC(claimToken) : undefined;
             const formatted = {
                 id: red.id,
                 tipoOrigen: "PUNTOS",
                 rewardType: red.Reward.tipo,
                 nombre: red.Reward.nombre,
-                descripcion: `Canjeado por ${red.Reward.costoPuntos} PTS`,
-                claimCode: red.claimCode,
-                recompensaImagenUrl: red.Reward.recompensaImagenUrl,
+                descripcion: red.notas || `Canjeado por ${red.Reward.costoPuntos} PTS`,
+                claimCode,
+                claimToken,
+                claimTokenExpiresAt,
+                claimSignature,
+                recompensaImagenUrl: red.Reward.recompensaImagenUrl || serviceImgUrl,
                 fechaAsignacion: red.createdAt,
                 fechaEntrega: red.fechaEntregaConfirmada,
                 observaciones: red.observaciones,
                 estado: red.estado,
                 isManual,
-                serviceId: red.Reward.serviceId
+                serviceId: red.Reward.serviceId,
+                questId: red.questId
             };
 
-            if (red.estado === "DISPONIBLE" || red.estado === "RESERVADO") {
-                disponibles.push(formatted);
-            } else if (red.estado === "PENDIENTE_ENTREGA") {
+            if (red.estado === "PENDIENTE_ENTREGA" || red.estado === "SOLICITADO" || red.estado === "LISTO_PARA_RETIRAR" || (isManual && red.estado === "DISPONIBLE")) {
                 pendientesEntrega.push(formatted);
+            } else if (red.estado === "DISPONIBLE" || red.estado === "RESERVADO") {
+                disponibles.push(formatted);
             } else if (red.estado === "ENTREGADO" || red.estado === "CANJEADO") {
                 entregados.push(formatted);
             } else {

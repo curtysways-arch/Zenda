@@ -11,6 +11,7 @@ interface PublicDesktopNavProps {
     pagesCount?: number;
     logoUrl?: string | null;
     nombre?: string;
+    tipoNegocio?: string;
 }
 
 export default function PublicDesktopNav({ 
@@ -18,7 +19,8 @@ export default function PublicDesktopNav({
     hasActiveCourses = false, 
     pagesCount = 0,
     logoUrl = null,
-    nombre = ''
+    nombre = '',
+    tipoNegocio = 'RESERVA'
 }: PublicDesktopNavProps) {
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
@@ -45,7 +47,22 @@ export default function PublicDesktopNav({
         return null;
     }
 
-    const navItems = [
+    const isProductos = tipoNegocio === 'PRODUCTOS';
+
+    const navItems = isProductos ? [
+        {
+            label: 'Inicio',
+            href: `/${slug}`,
+            icon: Home,
+            active: pathname === `/${slug}`
+        },
+        {
+            label: 'Perfil',
+            href: `/${slug}/perfil`,
+            icon: User,
+            active: pathname.includes('/perfil')
+        }
+    ] : [
         {
             label: 'Inicio',
             href: `/${slug}`,
@@ -150,11 +167,11 @@ export default function PublicDesktopNav({
 
                 {/* CTA Button */}
                 <Link
-                    href={`/${slug}#servicios`}
+                    href={isProductos ? `/${slug}` : `/${slug}#servicios`}
                     className="flex-shrink-0 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
                     style={{ backgroundColor: 'var(--primary)' }}
                 >
-                    Reservar Cita
+                    {isProductos ? 'Ver Catálogo' : 'Reservar Cita'}
                 </Link>
             </div>
         </nav>

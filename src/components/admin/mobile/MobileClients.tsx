@@ -110,7 +110,7 @@ export default function MobileClients({ clientes, primaryColor, onVerHistorial }
                                 className="flex items-center gap-1 text-[9px] font-black uppercase italic active:scale-95 transition-transform outline-none" 
                                 style={{ color: primaryColor }}
                             >
-                                Ver Historial <ChevronRight size={12} />
+                                Ver Ficha <ChevronRight size={12} />
                             </button>
                         </div>
                     </div>

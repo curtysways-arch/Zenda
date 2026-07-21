@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Calendar, User, Gift, Sparkles } from 'lucide-react';
+import { Home, Calendar, User, Gift, Sparkles, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { clsx } from 'clsx';
@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 interface PublicMobileNavProps {
     slug: string;
     hasActiveCourses?: boolean;
+    tipoNegocio?: string;
 }
 
 /** Convierte un color hex a luminancia (0-255) */
@@ -33,7 +34,7 @@ function contrastRatio(hex1: string, hex2: string): number {
     return (lighter + 0.05) / (darker + 0.05);
 }
 
-export default function PublicMobileNav({ slug, hasActiveCourses = false }: PublicMobileNavProps) {
+export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNegocio = 'RESERVA' }: PublicMobileNavProps) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const activeTabParam = searchParams.get('tab');
@@ -93,13 +94,15 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
             icon: Calendar,
             href: `/${slug}/mis-reservas`,
             active: pathname.includes('/mis-reservas') && activeTabParam !== 'academia',
-            visible: hasSession
+            visible: hasSession && tipoNegocio !== 'PRODUCTOS'
         },
         {
-            label: 'Servicios',
-            icon: Sparkles,
-            href: `/${slug}/servicios`,
-            active: pathname.includes('/servicios'),
+            label: tipoNegocio === 'PRODUCTOS' ? 'Tienda' : 'Servicios',
+            icon: tipoNegocio === 'PRODUCTOS' ? ShoppingBag : Sparkles,
+            href: tipoNegocio === 'PRODUCTOS' ? `/${slug}` : `/${slug}/servicios`,
+            active: tipoNegocio === 'PRODUCTOS' 
+                ? pathname === `/${slug}` 
+                : pathname.includes('/servicios'),
             isCentral: true,
             visible: true
         },
@@ -108,7 +111,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
             icon: Gift,
             href: `/${slug}/misiones`,
             active: pathname.includes('/referidos') || pathname.includes('/misiones'),
-            visible: true
+            visible: tipoNegocio !== 'PRODUCTOS'
         },
         {
             label: 'Perfil',
@@ -130,6 +133,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
             <div className="flex items-center justify-around h-full px-2">
                 {tabs.map((tab) => {
                     if (tab.isCentral) {
+                        const CentralIcon = tab.icon;
                         return (
                             <Link
                                 key={tab.label}
@@ -144,7 +148,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false }: Publ
                                         boxShadow: '0 4px 14px rgba(0, 0, 0, 0.3)'
                                     }}
                                 >
-                                    <Sparkles size={24} style={{ color: 'var(--nav-bg)' }} fill="currentColor" />
+                                    <CentralIcon size={24} style={{ color: 'var(--nav-bg)' }} fill={tab.label === 'Tienda' ? 'none' : 'currentColor'} />
                                 </div>
                                 <span 
                                     className="text-[9px] font-black uppercase tracking-widest leading-none mt-1.5"

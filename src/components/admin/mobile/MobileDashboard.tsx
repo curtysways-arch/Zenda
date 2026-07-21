@@ -17,7 +17,8 @@ import {
     Zap,
     CreditCard,
     Gift,
-    ArrowRight
+    ArrowRight,
+    Briefcase
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn, formatUTCDate } from '@/lib/utils';
@@ -35,6 +36,9 @@ interface MobileDashboardProps {
     slug: string;
     isTrial?: boolean;
     daysLeft?: number;
+    negocioNombre?: string;
+    usuarioNombre?: string;
+    pendingDeliveriesCount?: number;
 }
 
 export default function MobileDashboard({ 
@@ -43,7 +47,10 @@ export default function MobileDashboard({
     primaryColor, 
     slug,
     isTrial,
-    daysLeft
+    daysLeft,
+    negocioNombre,
+    usuarioNombre,
+    pendingDeliveriesCount = 0
 }: MobileDashboardProps) {
     return (
         <div className="space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -73,14 +80,14 @@ export default function MobileDashboard({
 
             {/* Cabecera / Banner de Bienvenida Premium */}
             <div className="bg-white border border-slate-100/80 rounded-[2.5rem] p-6 shadow-sm flex items-center justify-between relative overflow-hidden">
-                <div className="space-y-1 z-10">
-                    <span className="text-[9px] font-black uppercase tracking-[0.25em] text-pink-500 italic block">
-                        Centro Pro Dashboard
+                <div className="space-y-1 z-10 min-w-0 flex-1">
+                    <span className="text-[9px] font-black uppercase tracking-[0.25em] text-pink-500 italic block truncate max-w-[190px]">
+                        {negocioNombre || "Centro Pro"} Dashboard
                     </span>
-                    <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
-                        ¡BUEN DÍA, ADMIN!
+                    <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-none uppercase truncate max-w-[190px]">
+                        ¡BUEN DÍA, {usuarioNombre?.split(' ')[0] || "ADMIN"}!
                     </h1>
-                    <p className="text-slate-400 text-[11px] font-semibold block">
+                    <p className="text-slate-400 text-[10px] font-bold block">
                         Tu negocio en tiempo real.
                     </p>
                 </div>
@@ -92,6 +99,28 @@ export default function MobileDashboard({
                     />
                 </div>
             </div>
+
+            {/* Banner de Premios Pendientes (Móvil) */}
+            {pendingDeliveriesCount > 0 && (
+                <div className="bg-gradient-to-r from-pink-500 to-rose-600 text-white p-5 rounded-[2rem] shadow-md border-0 relative overflow-hidden flex items-center justify-between gap-4">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-white rounded-full blur-xl opacity-10" />
+                    <div className="flex items-center gap-3 relative z-10">
+                        <div className="size-9 bg-white/10 rounded-xl flex items-center justify-center border border-white/10 shrink-0">
+                            <Gift size={18} className="text-white animate-bounce" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-wider leading-none mb-1">🎁 Premios Pendientes</p>
+                            <p className="text-[9px] text-white/80 font-bold uppercase tracking-widest leading-none">Tienes {pendingDeliveriesCount} entregas por hacer</p>
+                        </div>
+                    </div>
+                    <Link 
+                        href="/admin/misiones?tab=rewards"
+                        className="text-[9px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl text-rose-600 bg-white transition-all shrink-0 hover:bg-slate-50 active:scale-95 shadow-sm z-10"
+                    >
+                        Entregar
+                    </Link>
+                </div>
+            )}
 
             {/* Quick Stats Grid de 3 Columnas */}
             <div className="grid grid-cols-3 gap-2.5">
@@ -268,9 +297,29 @@ export default function MobileDashboard({
                     </div>
                 </Link>
 
-                {/* Crecimiento - Referidos */}
+                {/* Misiones Citiox (Socio) */}
                 <Link 
-                    href="/admin/referidos"
+                    href="/admin/misiones-citiox"
+                    className="flex flex-col justify-between p-5 bg-gradient-to-br from-slate-900 to-slate-950 text-white border border-slate-800 rounded-[2rem] shadow-md hover:shadow-lg active:scale-95 transition-all min-h-[145px] group text-left relative overflow-hidden"
+                >
+                    <div className="size-10 rounded-full flex items-center justify-center bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                        <Briefcase size={18} />
+                    </div>
+                    <div className="mt-4 flex items-end justify-between">
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-cyan-400 mb-0.5">Socio Citiox</p>
+                            <p className="text-sm font-black tracking-tight leading-none text-white">Misiones Citiox</p>
+                            <p className="text-[9px] text-slate-300 font-medium mt-1 leading-tight">Retos y días gratis</p>
+                        </div>
+                        <div className="size-7 rounded-full bg-cyan-500 text-slate-950 flex items-center justify-center font-black shrink-0 ml-2 shadow-sm">
+                            <ArrowRight size={14} />
+                        </div>
+                    </div>
+                </Link>
+
+                {/* Crecimiento - Club de Beneficios */}
+                <Link 
+                    href="/admin/misiones"
                     className="flex flex-col justify-between p-5 bg-white border border-slate-100/80 rounded-[2rem] shadow-sm hover:shadow-md active:scale-95 transition-all min-h-[145px] group text-left"
                 >
                     <div className="size-10 rounded-full flex items-center justify-center bg-purple-50 text-purple-500 border border-purple-100/30">
@@ -279,8 +328,8 @@ export default function MobileDashboard({
                     <div className="mt-4 flex items-end justify-between">
                         <div>
                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Crecimiento</p>
-                            <p className="text-sm font-black tracking-tight leading-none text-slate-900">Referidos</p>
-                            <p className="text-[9px] text-slate-400 font-medium mt-1 leading-tight">Programa de recomendados</p>
+                            <p className="text-sm font-black tracking-tight leading-none text-slate-900">Club de Beneficios</p>
+                            <p className="text-[9px] text-slate-400 font-medium mt-1 leading-tight">Fidelización y misiones</p>
                         </div>
                         <div className="size-7 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-slate-800 shrink-0 ml-2 transition-colors">
                             <ArrowRight size={14} />

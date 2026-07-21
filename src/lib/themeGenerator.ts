@@ -1,8 +1,11 @@
 export interface GeneratedTheme {
     primaryColor: string;
     primaryLight: string;
-    primaryDark: string;
+    primaryDark: string; // Mantiene compatibilidad con clases antiguas
+    primaryHover: string;
+    primaryBg: string;
     secondaryColor: string;
+    secondaryHover: string;
     accentColor: string;
     backgroundColor: string;
     surfaceColor: string;
@@ -17,6 +20,7 @@ export interface GeneratedTheme {
     successColor: string;
     warningColor: string;
     errorColor: string;
+    infoColor: string;
     shadowColor: string;
 }
 
@@ -92,61 +96,74 @@ export function generateTheme(
     const rgb = hexToRgb(primary) || { r: 226, g: 29, b: 110 };
     const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
 
-    // 1. Primary Light (+20% luminosidad)
-    const lightL = Math.min(0.95, hsl.l + 0.20);
-    const primaryLightRgb = hslToRgb(hsl.h, hsl.s, lightL);
+    // 1. Primary Hover (-10% luminosidad)
+    const hoverL = Math.max(0.05, hsl.l - 0.10);
+    const primaryHoverRgb = hslToRgb(hsl.h, hsl.s, hoverL);
+    const primaryHover = rgbToHex(primaryHoverRgb.r, primaryHoverRgb.g, primaryHoverRgb.b);
+
+    // 2. Primary Light (luminosidad alta al 90%)
+    const lightL = 0.93;
+    const primaryLightRgb = hslToRgb(hsl.h, Math.min(0.3, hsl.s), lightL);
     const primaryLight = rgbToHex(primaryLightRgb.r, primaryLightRgb.g, primaryLightRgb.b);
 
-    // 2. Primary Dark (-20% luminosidad)
+    // 3. Primary Dark (-20% luminosidad para compatibilidad)
     const darkL = Math.max(0.05, hsl.l - 0.20);
     const primaryDarkRgb = hslToRgb(hsl.h, hsl.s, darkL);
     const primaryDark = rgbToHex(primaryDarkRgb.r, primaryDarkRgb.g, primaryDarkRgb.b);
 
-    // 3. Secondary Color
+    // 4. Primary Background (8% de opacidad)
+    const primaryBg = `rgba(${Math.round(rgb.r)}, ${Math.round(rgb.g)}, ${Math.round(rgb.b)}, 0.08)`;
+
+    // 5. Secondary Color
     let secondary = rawSecondary;
     if (!secondary) {
-        const secL = Math.max(0.12, hsl.l - 0.30);
+        const secL = Math.max(0.12, hsl.l - 0.25);
         const secRgb = hslToRgb(hsl.h, Math.max(0.15, hsl.s - 0.25), secL);
         secondary = rgbToHex(secRgb.r, secRgb.g, secRgb.b);
     } else if (!secondary.startsWith('#')) {
         secondary = `#${secondary}`;
     }
 
-    // 4. Accent Color (tono vibrante con 30 grados de rotación de matiz)
-    const accentH = (hsl.h + 0.083) % 1.0;
-    const accentRgb = hslToRgb(accentH, Math.max(0.8, hsl.s), Math.max(0.45, Math.min(0.65, hsl.l)));
+    const secRgbHex = hexToRgb(secondary) || { r: 15, g: 23, b: 42 };
+    const secHsl = rgbToHsl(secRgbHex.r, secRgbHex.g, secRgbHex.b);
+
+    // 6. Secondary Hover (-10% luminosidad del secundario)
+    const secHoverL = Math.max(0.05, secHsl.l - 0.10);
+    const secHoverRgb = hslToRgb(secHsl.h, secHsl.s, secHoverL);
+    const secondaryHover = rgbToHex(secHoverRgb.r, secHoverRgb.g, secHoverRgb.b);
+
+    // 7. Accent (Mezcla de matiz primario y secundario)
+    const accentH = ((hsl.h + secHsl.h) / 2) % 1.0;
+    const accentS = Math.max(0.6, (hsl.s + secHsl.s) / 2);
+    const accentL = Math.max(0.45, Math.min(0.65, (hsl.l + secHsl.l) / 2));
+    const accentRgb = hslToRgb(accentH, accentS, accentL);
     const accentColor = rgbToHex(accentRgb.r, accentRgb.g, accentRgb.b);
 
-    // 5. Surface (muy claro, 3-5% del primario)
-    const surfRgb = hslToRgb(hsl.h, Math.min(0.2, hsl.s), 0.98);
+    // 8. Surface (muy claro, basado en primario)
+    const surfRgb = hslToRgb(hsl.h, Math.min(0.1, hsl.s), 0.985);
     const surfaceColor = rgbToHex(surfRgb.r, surfRgb.g, surfRgb.b);
 
-    // 6. Surface Secondary (8% del primario)
-    const surfSecRgb = hslToRgb(hsl.h, Math.min(0.25, hsl.s), 0.94);
+    // 9. Surface Secondary (8% del primario)
+    const surfSecRgb = hslToRgb(hsl.h, Math.min(0.15, hsl.s), 0.95);
     const surfaceSecondary = rgbToHex(surfSecRgb.r, surfSecRgb.g, surfSecRgb.b);
 
-    // 7. Border (10% más oscuro que Surface Secondary)
-    const borderRgb = hslToRgb(hsl.h, Math.min(0.2, hsl.s), 0.88);
+    // 10. Border (mezcla desaturada de primario y gris claro)
+    const borderRgb = hslToRgb(hsl.h, Math.min(0.08, hsl.s), 0.89);
     const borderColor = rgbToHex(borderRgb.r, borderRgb.g, borderRgb.b);
 
-    // 8. Shadow (color principal con 10% opacidad)
+    // 11. Shadow
     const shadowColor = `rgba(${Math.round(rgb.r)}, ${Math.round(rgb.g)}, ${Math.round(rgb.b)}, 0.08)`;
 
-    // 9. Background
+    // 12. Background
     let backgroundColor = rawBg;
     if (!backgroundColor) {
-        if (hsl.l < 0.5) {
-            const bgRgb = hslToRgb(hsl.h, 0.06, 0.985);
-            backgroundColor = rgbToHex(bgRgb.r, bgRgb.g, bgRgb.b);
-        } else {
-            const bgRgb = hslToRgb(hsl.h, 0.10, 0.98);
-            backgroundColor = rgbToHex(bgRgb.r, bgRgb.g, bgRgb.b);
-        }
+        const bgRgb = hslToRgb(hsl.h, 0.05, 0.98);
+        backgroundColor = rgbToHex(bgRgb.r, bgRgb.g, bgRgb.b);
     } else if (!backgroundColor.startsWith('#')) {
         backgroundColor = `#${backgroundColor}`;
     }
 
-    // 10. Text Primary y Text Secondary con contraste garantizado (WCAG AA)
+    // 13. Text Contraste
     const bgRgbHex = hexToRgb(backgroundColor) || { r: 255, g: 255, b: 255 };
     const bgLuma = (0.2126 * bgRgbHex.r + 0.7152 * bgRgbHex.g + 0.0722 * bgRgbHex.b) / 255;
     
@@ -154,26 +171,28 @@ export function generateTheme(
     const textSecondary = bgLuma < 0.5 ? '#cbd5e1' : '#475569';
     const textDisabled = bgLuma < 0.5 ? '#64748b' : '#94a3b8';
 
-    // Contraste para texto sobre superficie (tarjetas) — siempre basado en luminosidad de surface
     const surfRgbHex = hexToRgb(surfaceColor) || { r: 255, g: 255, b: 255 };
     const surfLuma = (0.2126 * surfRgbHex.r + 0.7152 * surfRgbHex.g + 0.0722 * surfRgbHex.b) / 255;
     const textOnSurface = surfLuma < 0.5 ? '#ffffff' : '#0f172a';
     const textOnSurfaceSecondary = surfLuma < 0.5 ? '#cbd5e1' : '#475569';
 
-    // Contraste para texto sobre el color primario
     const primaryLuma = (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255;
     const textOnPrimary = primaryLuma < 0.5 ? '#ffffff' : '#0f172a';
 
-    // 11. Estados fijos del sistema
+    // 14. Estados fijos
     const successColor = '#10b981';
     const warningColor = '#f59e0b';
     const errorColor = '#ef4444';
+    const infoColor = '#3b82f6';
 
     return {
         primaryColor: primary,
         primaryLight,
         primaryDark,
+        primaryHover,
+        primaryBg,
         secondaryColor: secondary,
+        secondaryHover,
         accentColor,
         backgroundColor,
         surfaceColor,
@@ -188,6 +207,7 @@ export function generateTheme(
         successColor,
         warningColor,
         errorColor,
+        infoColor,
         shadowColor
     };
 }
