@@ -58,7 +58,7 @@ interface Props {
 export default function ProductsStoreClient({ negocio }: Props) {
     const primaryColor = negocio.colorPrimario || '#1dc95c';
     const secondaryColor = negocio.colorSecundario || '#112117';
-    const config: BusinessConfig = (negocio.configuracion as BusinessConfig) || {};
+    const config: any = negocio.configuracion || {};
 
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -75,7 +75,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const [clientAddress, setClientAddress] = useState('');
     const [clientReference, setClientReference] = useState('');
     const getInitialDate = () => {
-        const config = negocio?.configuracion || {};
+        const config: any = negocio?.configuracion || {};
         const isTodayAvailable = () => {
             if (!config.horaLimiteMismoDia) return true;
             const now = new Date();
