@@ -82,6 +82,11 @@ export class NotificationService {
     static async getUnreadCount(userId: string, negocioId: string): Promise<number> {
         return 0;
     }
+
+    static async createNotification(params: any): Promise<any> {
+        console.log('[NotificationService.createNotification]:', params);
+        return null;
+    }
 }
 
 // Exportaciones de compatibilidad para rutas SSE y notificaciones Push legacy
