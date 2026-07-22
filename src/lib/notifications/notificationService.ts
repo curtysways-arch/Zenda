@@ -78,6 +78,10 @@ export class NotificationService {
         // Integrable con Web Push / Firebase Tokens
         console.log(`[Push Notification Event -> ${payload.event}] Dispatch for client ${payload.nombreCliente}`);
     }
+
+    static async getUnreadCount(userId: string, negocioId: string): Promise<number> {
+        return 0;
+    }
 }
 
 // Exportaciones de compatibilidad para rutas SSE y notificaciones Push legacy
