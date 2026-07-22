@@ -55,128 +55,6 @@ interface Props {
     };
 }
 
-function SimpleLeafletMap({
-    defaultLat,
-    defaultLng,
-    onPositionChange
-}: {
-    defaultLat: number;
-    defaultLng: number;
-    onPositionChange: (lat: number, lng: number) => void;
-}) {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const mapInstanceRef = useRef<any>(null);
-    const markerRef = useRef<any>(null);
-
-    useEffect(() => {
-        if (!containerRef.current) return;
-        let isMounted = true;
-
-        const init = () => {
-            const L = (window as any).L;
-            if (!L || !containerRef.current || !isMounted) return;
-
-            if (mapInstanceRef.current) {
-                try { mapInstanceRef.current.remove(); } catch (e) {}
-                mapInstanceRef.current = null;
-            }
-            if ((containerRef.current as any)._leaflet_id) {
-                (containerRef.current as any)._leaflet_id = null;
-            }
-
-            containerRef.current.innerHTML = '';
-
-            const map = L.map(containerRef.current, {
-                tap: false,
-                zoomControl: true,
-                attributionControl: false
-            }).setView([defaultLat, defaultLng], 15);
-
-            mapInstanceRef.current = map;
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19
-            }).addTo(map);
-
-            const icon = L.icon({
-                iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-                shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-            });
-
-            const marker = L.marker([defaultLat, defaultLng], {
-                draggable: true,
-                icon
-            }).addTo(map);
-
-            markerRef.current = marker;
-
-            marker.on('dragend', () => {
-                const pos = marker.getLatLng();
-                onPositionChange(pos.lat, pos.lng);
-            });
-
-            map.on('click', (e: any) => {
-                const pos = e.latlng;
-                marker.setLatLng(pos);
-                onPositionChange(pos.lat, pos.lng);
-            });
-
-            setTimeout(() => {
-                try { map.invalidateSize(); } catch (e) {}
-            }, 300);
-        };
-
-        if ((window as any).L) {
-            init();
-        } else {
-            if (!document.getElementById('leaflet-css')) {
-                const link = document.createElement('link');
-                link.id = 'leaflet-css';
-                link.rel = 'stylesheet';
-                link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-                document.head.appendChild(link);
-            }
-
-            if (!document.getElementById('leaflet-js')) {
-                const script = document.createElement('script');
-                script.id = 'leaflet-js';
-                script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-                script.async = true;
-                script.onload = () => {
-                    if (isMounted) init();
-                };
-                document.head.appendChild(script);
-            } else {
-                const checkL = setInterval(() => {
-                    if ((window as any).L) {
-                        clearInterval(checkL);
-                        if (isMounted) init();
-                    }
-                }, 100);
-            }
-        }
-
-        return () => {
-            isMounted = false;
-            if (mapInstanceRef.current) {
-                try { mapInstanceRef.current.remove(); } catch (e) {}
-                mapInstanceRef.current = null;
-            }
-        };
-    }, []);
-
-    return (
-        <div 
-            ref={containerRef} 
-            className="w-full h-44 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden relative z-0"
-        />
-    );
-}
-
 export default function ProductsStoreClient({ negocio }: Props) {
     const primaryColor = negocio.colorPrimario || '#1dc95c';
     const secondaryColor = negocio.colorSecundario || '#112117';
@@ -289,37 +167,132 @@ export default function ProductsStoreClient({ negocio }: Props) {
         localStorage.setItem(`cart_${negocio.id}`, JSON.stringify(newCart));
     };
 
-    const [editingPersonalData, setEditingPersonalData] = useState(false);
-    const [editingAddress, setEditingAddress] = useState(false);
-
-    const handleGetMyLocation = () => {
-        if (navigator.geolocation && leafletMapRef.current && leafletMarkerRef.current) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const userLat = position.coords.latitude;
-                    const userLng = position.coords.longitude;
-                    try {
-                        leafletMapRef.current.setView([userLat, userLng], 16);
-                        leafletMarkerRef.current.setLatLng([userLat, userLng]);
-                        setLat(userLat);
-                        setLng(userLng);
-                    } catch (e) {}
-                },
-                () => {
-                    alert("No se pudo obtener tu ubicación automáticamente. Mueve el pin en el mapa.");
-                }
-            );
-        }
-    };
-
     // Leaflet Script & CSS Loader (OpenStreetMap - 100% Gratis sin API Key)
     const mapInitialized = useRef(false);
     const leafletMapRef = useRef<any>(null);
     const leafletMarkerRef = useRef<any>(null);
 
     useEffect(() => {
-        // Mapa desactivado temporalmente para pruebas de rendimiento
-    }, []);
+        if (step === 'checkout' && deliveryType === 'DOMICILIO' && !mapInitialized.current) {
+            
+            const loadLeaflet = () => {
+                if ((window as any).L) {
+                    initMap();
+                    return;
+                }
+
+                // Cargar CSS
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+                document.head.appendChild(link);
+
+                // Cargar JS
+                const script = document.createElement('script');
+                script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+                script.async = true;
+                script.onload = () => {
+                    initMap();
+                };
+                script.onerror = () => {
+                    setMapError("No se pudo cargar el servicio de mapas. Introduce tu dirección manualmente.");
+                };
+                document.head.appendChild(script);
+            };
+
+            const initMap = () => {
+                if (!mapRef.current) return;
+                mapInitialized.current = true;
+                
+                const L = (window as any).L;
+
+                // Coordenadas del negocio o por defecto (Quito)
+                const latNegocio = config.latitudNegocio !== undefined ? parseFloat(config.latitudNegocio) : -0.180653;
+                const lngNegocio = config.longitudNegocio !== undefined ? parseFloat(config.longitudNegocio) : -78.467838;
+
+                const defaultLat = latNegocio;
+                const defaultLng = lngNegocio;
+
+                // Crear el mapa de Leaflet
+                const map = L.map(mapRef.current, {
+                    zoomControl: true,
+                    attributionControl: false
+                }).setView([defaultLat, defaultLng], 15);
+
+                leafletMapRef.current = map;
+
+                // Cargar tiles de OpenStreetMap
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19
+                }).addTo(map);
+
+                // Icono personalizado oficial para evitar problemas de CORS en marcadores
+                const defaultIcon = L.icon({
+                    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
+
+                // Crear marcador
+                const marker = L.marker([defaultLat, defaultLng], {
+                    draggable: true,
+                    icon: defaultIcon
+                }).addTo(map);
+
+                leafletMarkerRef.current = marker;
+                setLat(defaultLat);
+                setLng(defaultLng);
+
+                // Geolocalizar cliente
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const userLat = position.coords.latitude;
+                            const userLng = position.coords.longitude;
+                            map.setView([userLat, userLng], 16);
+                            marker.setLatLng([userLat, userLng]);
+                            setLat(userLat);
+                            setLng(userLng);
+                        },
+                        () => {
+                            console.log("Geolocalización denegada.");
+                        }
+                    );
+                }
+
+                // Eventos del marcador
+                marker.on('dragend', () => {
+                    const position = marker.getLatLng();
+                    setLat(position.lat);
+                    setLng(position.lng);
+                });
+
+                // Evento al hacer click en el mapa
+                map.on('click', (e: any) => {
+                    const position = e.latlng;
+                    marker.setLatLng(position);
+                    setLat(position.lat);
+                    setLng(position.lng);
+                });
+            };
+
+            loadLeaflet();
+        }
+
+        // Limpieza de instancia al desmontar
+        return () => {
+            if (step !== 'checkout' || deliveryType !== 'DOMICILIO') {
+                if (leafletMapRef.current) {
+                    leafletMapRef.current.remove();
+                    leafletMapRef.current = null;
+                }
+                mapInitialized.current = false;
+            }
+        };
+    }, [step, deliveryType]);
 
     // Cart Operations
     const addToCart = (product: Product) => {
@@ -444,13 +417,12 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
     // Auto-seleccionar primer horario disponible al cambiar fecha
     useEffect(() => {
-        const slots = getTimeSlots();
-        if (slots.length > 0) {
-            setTimeSlot(prev => (prev && slots.includes(prev) ? prev : slots[0]));
+        if (slotsDisponibles.length > 0) {
+            setTimeSlot(slotsDisponibles[0]);
         } else {
             setTimeSlot('');
         }
-    }, [deliveryDate]);
+    }, [deliveryDate, slotsDisponibles.length]);
 
     // Cargar teléfono y nombre guardados de la sesión previa / OTP
     const [activeOrder, setActiveOrder] = useState<any>(null);
@@ -458,13 +430,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
     useEffect(() => {
         const savedPhone = localStorage.getItem('pinchos_client_phone');
         const savedName = localStorage.getItem('pinchos_client_name');
-        const savedAddr = localStorage.getItem('pinchos_client_address');
-        const savedRef = localStorage.getItem('pinchos_client_reference');
-
         if (savedPhone) setClientPhone(savedPhone);
         if (savedName) setClientName(savedName);
-        if (savedAddr) setClientAddress(savedAddr);
-        if (savedRef) setClientReference(savedRef);
 
         if (savedPhone) {
             fetch(`/api/public/${negocio.slug}/client-orders?phone=${encodeURIComponent(savedPhone)}`)
@@ -477,7 +444,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                 })
                 .catch(err => console.error("Error al consultar pedido activo:", err));
         }
-    }, [negocio.slug]);
+    }, [negocio.slug, step]);
 
     // Función auxiliar para crear pedido directamente sin repetir OTP si el cliente ya está autenticado
     const createOrderDirectly = async (phone: string, name: string) => {
@@ -505,11 +472,6 @@ export default function ProductsStoreClient({ negocio }: Props) {
             const data = await response.json();
             setCreatedOrder(data.pedido);
             setCreatedPayment(data.payment);
-
-            if (deliveryType === 'DOMICILIO' && clientAddress) {
-                localStorage.setItem('pinchos_client_address', clientAddress);
-                if (clientReference) localStorage.setItem('pinchos_client_reference', clientReference);
-            }
 
             // Cargar datos bancarios del negocio usando endpoint público
             try {
@@ -1152,15 +1114,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         </div>
 
                         {/* Datos del Cliente */}
-                        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4 text-left">
-                            <div className="flex justify-between items-center border-b border-slate-50 pb-2">
-                                <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Datos de Contacto</h3>
-                                {clientPhone && (
-                                    <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                                        ✓ Autenticado
-                                    </span>
-                                )}
-                            </div>
+                        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
+                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-slate-50 pb-2">Datos de Contacto</h3>
                             <div>
                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Nombre Completo</label>
                                 <input 
@@ -1190,10 +1145,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
                         {/* Dirección y Ubicación GPS (Solo para Domicilio) */}
                         {deliveryType === 'DOMICILIO' && (
-                            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4 text-left">
-                                <div className="border-b border-slate-50 pb-2">
-                                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Dirección de Entrega</h3>
-                                </div>
+                            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
+                                <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-slate-50 pb-2">Dirección de Entrega</h3>
                                 <div>
                                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Dirección Principal</label>
                                     <input 
@@ -1216,29 +1169,21 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     />
                                 </div>
 
-                                {/* Mapa de Google Maps / Leaflet para coordenadas GPS */}
+                                {/* Mapa de Google Maps para coordenadas GPS */}
                                 <div className="space-y-2">
-                                    <div className="flex justify-between items-center">
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Geolocalización GPS (Mueve el pin)</label>
-                                        <button
-                                            type="button"
-                                            onClick={handleGetMyLocation}
-                                            className="text-[10px] font-black text-orange-600 hover:underline flex items-center gap-1"
-                                        >
-                                            📍 Usar mi ubicación
-                                        </button>
-                                    </div>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Geolocalización GPS (Mueve el pin)</label>
                                     {mapError ? (
                                         <div className="text-[10px] text-rose-500 font-bold bg-rose-50 p-3 rounded-xl border border-rose-100">{mapError}</div>
                                     ) : (
-                                        <SimpleLeafletMap 
-                                             defaultLat={lat || (config.latitudNegocio ? parseFloat(config.latitudNegocio) : -0.180653)} 
-                                             defaultLng={lng || (config.longitudNegocio ? parseFloat(config.longitudNegocio) : -78.467838)} 
-                                             onPositionChange={(newLat, newLng) => {
-                                                 setLat(newLat);
-                                                 setLng(newLng);
-                                             }} 
-                                         />
+                                        <div 
+                                            ref={mapRef} 
+                                            className="w-full h-44 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden relative z-0 isolate"
+                                            style={{ isolation: 'isolate' }}
+                                        >
+                                            <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-xs font-bold bg-slate-100">
+                                                Cargando mapa...
+                                            </div>
+                                        </div>
                                     )}
                                     {lat && lng && (
                                         <div className="flex justify-between text-[9px] font-bold text-slate-400">
@@ -1404,16 +1349,6 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     Confirmar Pedido (${cartTotal.toFixed(2)})
                                 </>
                             )}
-                        </button>
-
-                        {/* Botón para añadir más productos */}
-                        <button
-                            type="button"
-                            onClick={() => setStep('catalog')}
-                            className="w-full py-3.5 bg-slate-100 hover:bg-slate-200 active:scale-98 text-slate-800 font-black rounded-2xl text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-slate-200/80 mt-3"
-                        >
-                            <Plus className="size-4 text-orange-600" />
-                            Añadir más productos al carrito
                         </button>
                     </form>
                 </main>

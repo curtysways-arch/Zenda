@@ -175,7 +175,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
                                         boxShadow: '0 4px 14px rgba(0, 0, 0, 0.3)'
                                     }}
                                 >
-                                    <CentralIcon size={24} style={{ color: 'var(--nav-bg)' }} fill="none" strokeWidth={2.2} />
+                                    <CentralIcon size={24} style={{ color: 'var(--nav-bg)' }} fill={tab.label === 'Tienda' ? 'none' : 'currentColor'} />
                                     
                                     {/* Globo / Badge de notificación si hay pedido en proceso */}
                                     {Boolean(tab.badge && tab.badge > 0) && (
