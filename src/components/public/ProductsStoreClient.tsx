@@ -55,6 +55,127 @@ interface Props {
     };
 }
 
+function SimpleLeafletMap({
+    defaultLat,
+    defaultLng,
+    onPositionChange
+}: {
+    defaultLat: number;
+    defaultLng: number;
+    onPositionChange: (lat: number, lng: number) => void;
+}) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const mapInstanceRef = useRef<any>(null);
+    const markerRef = useRef<any>(null);
+
+    useEffect(() => {
+        if (!containerRef.current) return;
+        let isMounted = true;
+
+        const init = () => {
+            const L = (window as any).L;
+            if (!L || !containerRef.current || !isMounted) return;
+
+            if (mapInstanceRef.current) {
+                try { mapInstanceRef.current.remove(); } catch (e) {}
+                mapInstanceRef.current = null;
+            }
+            if ((containerRef.current as any)._leaflet_id) {
+                (containerRef.current as any)._leaflet_id = null;
+            }
+
+            containerRef.current.innerHTML = '';
+
+            const map = L.map(containerRef.current, {
+                zoomControl: true,
+                attributionControl: false
+            }).setView([defaultLat, defaultLng], 15);
+
+            mapInstanceRef.current = map;
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(map);
+
+            const icon = L.icon({
+                iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+
+            const marker = L.marker([defaultLat, defaultLng], {
+                draggable: true,
+                icon
+            }).addTo(map);
+
+            markerRef.current = marker;
+
+            marker.on('dragend', () => {
+                const pos = marker.getLatLng();
+                onPositionChange(pos.lat, pos.lng);
+            });
+
+            map.on('click', (e: any) => {
+                const pos = e.latlng;
+                marker.setLatLng(pos);
+                onPositionChange(pos.lat, pos.lng);
+            });
+
+            setTimeout(() => {
+                try { map.invalidateSize(); } catch (e) {}
+            }, 300);
+        };
+
+        if ((window as any).L) {
+            init();
+        } else {
+            if (!document.getElementById('leaflet-css')) {
+                const link = document.createElement('link');
+                link.id = 'leaflet-css';
+                link.rel = 'stylesheet';
+                link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+                document.head.appendChild(link);
+            }
+
+            if (!document.getElementById('leaflet-js')) {
+                const script = document.createElement('script');
+                script.id = 'leaflet-js';
+                script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+                script.async = true;
+                script.onload = () => {
+                    if (isMounted) init();
+                };
+                document.head.appendChild(script);
+            } else {
+                const checkL = setInterval(() => {
+                    if ((window as any).L) {
+                        clearInterval(checkL);
+                        if (isMounted) init();
+                    }
+                }, 100);
+            }
+        }
+
+        return () => {
+            isMounted = false;
+            if (mapInstanceRef.current) {
+                try { mapInstanceRef.current.remove(); } catch (e) {}
+                mapInstanceRef.current = null;
+            }
+        };
+    }, []);
+
+    return (
+        <div 
+            ref={containerRef} 
+            className="w-full h-44 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden relative z-0"
+        />
+    );
+}
+
 export default function ProductsStoreClient({ negocio }: Props) {
     const primaryColor = negocio.colorPrimario || '#1dc95c';
     const secondaryColor = negocio.colorSecundario || '#112117';
@@ -1109,11 +1230,14 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     {mapError ? (
                                         <div className="text-[10px] text-rose-500 font-bold bg-rose-50 p-3 rounded-xl border border-rose-100">{mapError}</div>
                                     ) : (
-                                        <div 
-                                            ref={mapRef} 
-                                            className="w-full h-44 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden relative z-0 isolate"
-                                            style={{ isolation: 'isolate' }}
-                                        />
+                                        <SimpleLeafletMap 
+                                             defaultLat={lat || (config.latitudNegocio ? parseFloat(config.latitudNegocio) : -0.180653)} 
+                                             defaultLng={lng || (config.longitudNegocio ? parseFloat(config.longitudNegocio) : -78.467838)} 
+                                             onPositionChange={(newLat, newLng) => {
+                                                 setLat(newLat);
+                                                 setLng(newLng);
+                                             }} 
+                                         />
                                     )}
                                     {lat && lng && (
                                         <div className="flex justify-between text-[9px] font-bold text-slate-400">
