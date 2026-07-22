@@ -459,11 +459,15 @@ export default function ProductsStoreClient({ negocio }: Props) {
             setCreatedOrder(data.pedido);
             setCreatedPayment(data.payment);
 
-            // Cargar datos bancarios del negocio
-            const bankRes = await fetch(`/api/admin/payment-methods?businessId=${negocio.id}`);
-            const bankData = await bankRes.json();
-            if (bankData.success && bankData.method) {
-                setBankConfig(bankData.method.configuracion);
+            // Cargar datos bancarios del negocio usando endpoint público
+            try {
+                const bankRes = await fetch(`/api/public/${negocio.slug}/bank-details`);
+                const bankData = await bankRes.json();
+                if (bankData.success && bankData.method) {
+                    setBankConfig(bankData.method);
+                }
+            } catch (e) {
+                console.error("Error al cargar datos bancarios:", e);
             }
             setStep('payment');
             setCart([]);

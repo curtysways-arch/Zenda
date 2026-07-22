@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Calendar, User, Gift, Sparkles, ShoppingBag } from 'lucide-react';
+import { Home, Calendar, User, Gift, Sparkles, ShoppingBag, PackageCheck } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { clsx } from 'clsx';
@@ -67,6 +67,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
         pathname === `/${slug}` ||
         pathname.includes('/cursos') ||
         pathname.includes('/mis-reservas') ||
+        pathname.includes('/pedidos') ||
         pathname.includes('/perfil') ||
         pathname.includes('/referidos') ||
         pathname.includes('/misiones') ||
@@ -97,6 +98,13 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
             visible: hasSession && tipoNegocio !== 'PRODUCTOS'
         },
         {
+            label: 'Mis Pedidos',
+            icon: PackageCheck,
+            href: `/${slug}/pedidos`,
+            active: pathname.includes('/pedidos'),
+            visible: tipoNegocio === 'PRODUCTOS'
+        },
+        {
             label: tipoNegocio === 'PRODUCTOS' ? 'Tienda' : 'Servicios',
             icon: tipoNegocio === 'PRODUCTOS' ? ShoppingBag : Sparkles,
             href: tipoNegocio === 'PRODUCTOS' ? `/${slug}` : `/${slug}/servicios`,
@@ -118,7 +126,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
             icon: User,
             href: `/${slug}/perfil`,
             active: pathname.includes('/perfil'),
-            visible: hasSession
+            visible: true
         },
     ].filter(t => t.visible);
 
