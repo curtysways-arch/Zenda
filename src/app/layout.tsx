@@ -50,10 +50,6 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="es" suppressHydrationWarning>
-            <head>
-                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossOrigin="" />
-                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossOrigin="" async></script>
-            </head>
             <body className={inter.className}>
                 <Providers>
                     <BackButtonHandler />
