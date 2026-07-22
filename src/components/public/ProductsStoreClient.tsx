@@ -153,6 +153,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
     const [submitting, setSubmitting] = useState(false);
     const [isEditingPersonalData, setIsEditingPersonalData] = useState(false);
+    const [countryCode, setCountryCode] = useState('+593');
 
     // Modal de Mapa & Coordenadas GPS
     const [showMapModal, setShowMapModal] = useState(false);
@@ -299,12 +300,23 @@ export default function ProductsStoreClient({ negocio }: Props) {
     // Cargar datos del cliente guardados en localStorage (Teléfono, Nombre, Dirección, Referencia, Coordenadas)
     useEffect(() => {
         try {
-            const savedPhone = localStorage.getItem('pinchos_client_phone');
-            const savedName = localStorage.getItem('pinchos_client_name');
+            let savedPhone = localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone') || localStorage.getItem('customer_phone');
+            let savedName = localStorage.getItem('pinchos_client_name') || localStorage.getItem('user_name') || localStorage.getItem('customer_name');
             const savedAddr = localStorage.getItem('pinchos_client_address');
             const savedRef = localStorage.getItem('pinchos_client_reference');
             const savedLat = localStorage.getItem('pinchos_client_lat');
             const savedLng = localStorage.getItem('pinchos_client_lng');
+
+            if (!savedName || !savedPhone) {
+                const custInfo = localStorage.getItem('customerInfo');
+                if (custInfo) {
+                    try {
+                        const parsed = JSON.parse(custInfo);
+                        if (parsed.name && !savedName) savedName = parsed.name;
+                        if (parsed.phone && !savedPhone) savedPhone = parsed.phone;
+                    } catch (e) {}
+                }
+            }
 
             if (savedPhone) setClientPhone(savedPhone);
             if (savedName) setClientName(savedName);
@@ -318,6 +330,14 @@ export default function ProductsStoreClient({ negocio }: Props) {
                     setSelectedLat(pLat);
                     setSelectedLng(pLng);
                 }
+            } else {
+                // Auto-detectar GPS al entrar si no hay coordenadas guardadas
+                if (typeof window !== 'undefined' && navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition((pos) => {
+                        setSelectedLat(pos.coords.latitude);
+                        setSelectedLng(pos.coords.longitude);
+                    }, () => {}, { timeout: 6000, maximumAge: 60000 });
+                }
             }
         } catch (e) {
             console.error("Error al leer datos guardados del cliente:", e);
@@ -327,12 +347,19 @@ export default function ProductsStoreClient({ negocio }: Props) {
     // Guardar los datos del cliente en localStorage para futuros pedidos
     const saveClientDataToLocalStorage = (name: string, phone: string) => {
         try {
-            if (phone) localStorage.setItem('pinchos_client_phone', phone);
-            if (name) localStorage.setItem('pinchos_client_name', name);
+            if (phone) {
+                localStorage.setItem('pinchos_client_phone', phone);
+                localStorage.setItem('user_phone', phone);
+            }
+            if (name) {
+                localStorage.setItem('pinchos_client_name', name);
+                localStorage.setItem('user_name', name);
+            }
             if (clientAddress) localStorage.setItem('pinchos_client_address', clientAddress);
             if (clientReference) localStorage.setItem('pinchos_client_reference', clientReference);
             if (selectedLat !== null && selectedLat !== undefined) localStorage.setItem('pinchos_client_lat', selectedLat.toString());
             if (selectedLng !== null && selectedLng !== undefined) localStorage.setItem('pinchos_client_lng', selectedLng.toString());
+            localStorage.setItem('customerInfo', JSON.stringify({ name, phone, address: clientAddress }));
         } catch (e) {
             console.error("Error al guardar datos del cliente en localStorage:", e);
         }
@@ -1045,15 +1072,26 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 </div>
                                 <div>
                                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Teléfono Celular</label>
-                                    <div className="relative">
-                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                                    <div className="flex gap-2">
+                                        <select
+                                            value={countryCode}
+                                            onChange={(e) => setCountryCode(e.target.value)}
+                                            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-black text-slate-800 focus:outline-none focus:border-slate-400 shrink-0 cursor-pointer shadow-2xs"
+                                        >
+                                            <option value="+593">🇪🇨 +593</option>
+                                            <option value="+57">🇨🇴 +57</option>
+                                            <option value="+51">🇵🇪 +51</option>
+                                            <option value="+52">🇲🇽 +52</option>
+                                            <option value="+1">🇺🇸 +1</option>
+                                            <option value="+34">🇪🇸 +34</option>
+                                        </select>
                                         <input 
                                             type="tel"
                                             required
                                             placeholder="Ej: 0998877665"
                                             value={clientPhone}
                                             onChange={e => setClientPhone(e.target.value)}
-                                            className="w-full bg-slate-50 rounded-xl pl-11 pr-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300 text-slate-900"
+                                            className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold placeholder:text-slate-400 text-slate-900 focus:outline-none focus:border-slate-400 shadow-2xs"
                                         />
                                     </div>
                                 </div>

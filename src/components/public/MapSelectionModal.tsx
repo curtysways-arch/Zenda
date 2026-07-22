@@ -36,7 +36,7 @@ export default function MapSelectionModal({
     const [isSearching, setIsSearching] = useState<boolean>(false);
     const [mapLoading, setMapLoading] = useState<boolean>(true);
 
-    // Actualizar refs cuando el modal se abre
+    // Actualizar refs y auto-obtener GPS al abrir el modal
     useEffect(() => {
         if (isOpen) {
             const startLat = initialLat || businessLat;
@@ -46,6 +46,27 @@ export default function MapSelectionModal({
             setCurrentLat(startLat);
             setCurrentLng(startLng);
             setSearchQuery('');
+
+            // Auto-detectar GPS si no había ubicación guardada previa
+            if (!initialLat && typeof window !== 'undefined' && navigator.geolocation) {
+                setIsLocating(true);
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        setIsLocating(false);
+                        const uLat = pos.coords.latitude;
+                        const uLng = pos.coords.longitude;
+                        setCurrentLat(uLat);
+                        setCurrentLng(uLng);
+                        initLatRef.current = uLat;
+                        initLngRef.current = uLng;
+                        if (mapInstanceRef.current) {
+                            mapInstanceRef.current.setView([uLat, uLng], 16);
+                        }
+                    },
+                    () => { setIsLocating(false); },
+                    { timeout: 6000, maximumAge: 30000 }
+                );
+            }
         }
     }, [isOpen, initialLat, initialLng, businessLat, businessLng]);
 
