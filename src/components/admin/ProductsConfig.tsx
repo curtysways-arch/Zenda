@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Save, Loader2, CheckCircle2, AlertCircle, MapPin } from 'lucide-react';
 import ImageUploader from '@/components/ui/ImageUploader';
+import PaymentMethodsConfig from '@/components/admin/PaymentMethodsConfig';
 
 interface Props {
     negocio: any;
@@ -20,6 +21,7 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
     const [logoUrl, setLogoUrl] = useState(negocio?.logoUrl || '');
 
     // Parámetros de envío y tienda
+    const [montoMinimoPedido, setMontoMinimoPedido] = useState(config.montoMinimoPedido !== undefined ? config.montoMinimoPedido.toString() : '5.00');
     const [tiempoMaximoEntrega, setTiempoMaximoEntrega] = useState(config.tiempoMaximoEntrega || '30-45 min');
     const [costoEnvio, setCostoEnvio] = useState(config.costoEnvio !== undefined ? config.costoEnvio.toString() : '1.50');
     const [costoEnvioPorKm, setCostoEnvioPorKm] = useState(config.costoEnvioPorKm !== undefined ? config.costoEnvioPorKm.toString() : '0.25');
@@ -37,6 +39,7 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
             configuracion: {
                 ...config,
                 wizardCompleted: true,
+                montoMinimoPedido: parseFloat(montoMinimoPedido) || 0,
                 tiempoMaximoEntrega,
                 costoEnvio: parseFloat(costoEnvio) || 0,
                 costoEnvioPorKm: parseFloat(costoEnvioPorKm) || 0,
@@ -127,7 +130,19 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                     <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm space-y-4">
                         <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-3 mb-2">Parámetros de Entrega y Envíos</h3>
                         
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Monto Mínimo de Pedido ($)</label>
+                                <input
+                                    type="number"
+                                    required
+                                    step="0.50"
+                                    min="0"
+                                    value={montoMinimoPedido}
+                                    onChange={e => setMontoMinimoPedido(e.target.value)}
+                                    className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
+                                />
+                            </div>
                             <div>
                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Costo de Envío Base ($)</label>
                                 <input
@@ -141,7 +156,7 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Costo por Kilómetro Adicional ($)</label>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Costo por Km Adicional ($)</label>
                                 <input
                                     type="number"
                                     required
@@ -229,6 +244,11 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                     </button>
                 </div>
             </form>
+
+            {/* SECCIÓN DE DATOS BANCARIOS Y MÉTODOS DE PAGO */}
+            <div className="mt-8">
+                <PaymentMethodsConfig />
+            </div>
         </div>
     );
 }

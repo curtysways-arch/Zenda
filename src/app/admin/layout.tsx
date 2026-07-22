@@ -68,9 +68,13 @@ export default async function AdminLayout({
     }
 
     const isExpired = status.reason === 'EXPIRED';
+    const isNoPlan = status.reason === 'NO_PLAN';
+    const isSuspended = status.reason === 'SUSPENDED';
     const isDemo = (session.user as any).isDemo === true;
 
-    if (!status.active && !isExpired && !isDemo && !isSuperAdmin) {
+    // Solo bloquear si el negocio realmente no existe o tiene ID inválido
+    // Para NO_PLAN, SUSPENDED y EXPIRED: permitir acceso con banner visible
+    if (!status.active && !isExpired && !isNoPlan && !isSuspended && !isDemo && !isSuperAdmin) {
         redirect('/admin/vencido');
     }
 
@@ -98,9 +102,11 @@ export default async function AdminLayout({
                                     <Link href="/register" className="bg-white text-amber-600 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest">Crear mi Spa</Link>
                                 </div>
                             )}
-                            {isExpired && !isDemo && (
+                            {(isExpired || isNoPlan || isSuspended) && !isDemo && (
                                 <div className="bg-rose-600 text-white px-6 py-2 flex items-center justify-between shadow-lg">
-                                    <p className="text-[9px] font-black uppercase tracking-widest italic">Periodo Terminado</p>
+                                    <p className="text-[9px] font-black uppercase tracking-widest italic">
+                                        {isSuspended ? 'Negocio Suspendido' : isNoPlan ? 'Sin Plan Activo' : 'Periodo Terminado'}
+                                    </p>
                                     <Link href="/admin/plan" className="bg-white text-rose-600 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest">Activar Plan</Link>
                                 </div>
                             )}

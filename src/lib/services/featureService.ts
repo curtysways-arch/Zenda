@@ -34,40 +34,31 @@ export const featureService = {
      */
     async canUseFeature(businessId: string, feature: FeatureFlag): Promise<boolean> {
         const business = await loadBusinessWithPlan(businessId);
-        if (!business?.Suscripcion?.Plan) return false;
+        if (!business) return false;
 
-        // Si expiró, bloqueamos funcionalidades premium transaccionales
+        // Si no tiene suscripción o plan asignado en DB, asumir trial/plan por defecto
+        if (!business.Suscripcion?.Plan) {
+            return feature === 'custom_colors' || feature === 'custom_logo';
+        }
+
         const estado = (business.Suscripcion.estado || '').toLowerCase();
+
+        // Si el estado es de prueba (trial) o activo, evaluar overrides y plan
+        const customFeatures = parseJson(business.Suscripcion.customFeatures);
+        if (typeof customFeatures[feature] === 'boolean') {
+            return customFeatures[feature];
+        }
+
         if (estado === 'expired') {
             if (feature.startsWith('whatsapp') || feature === 'remove_zenda_branding') {
                 return false;
             }
         }
 
-        // Prioridad 1: customFeatures de la suscripción (overrides por negocio)
-        const customFeatures = parseJson(business.Suscripcion.customFeatures);
-        if (typeof customFeatures[feature] === 'boolean') {
-            return customFeatures[feature];
-        }
-
-        // Si está en trial (bajo plan PRO o superior), habilitar capacidades premium completas promocionales
         if (estado === 'trial') {
-            const planName = (business.Suscripcion.Plan.name || '').toUpperCase();
-            if (planName.includes('PRO') || planName.includes('BUSINESS')) {
-                const trialFeatures: FeatureFlag[] = [
-                    'whatsapp_notifications', 
-                    'whatsapp_otp', 
-                    'whatsapp_reminders', 
-                    'remove_zenda_branding', 
-                    'automation'
-                ];
-                if (trialFeatures.includes(feature)) {
-                    return true;
-                }
-            }
+            return true;
         }
 
-        // Prioridad 2: features del plan
         return this.hasFeature(business.Suscripcion.Plan, feature);
     },
 
@@ -146,7 +137,7 @@ export const featureService = {
      */
     async getAllFeatures(businessId: string): Promise<Record<string, boolean | number>> {
         const business = await loadBusinessWithPlan(businessId);
-        if (!business?.Suscripcion?.Plan) return {};
+        if (!business?.Suscripcion?.Plan) return { custom_colors: true, custom_logo: true };
 
         const plan = business.Suscripcion.Plan;
         const tier = resolvePlanTier(plan.name || '');
@@ -165,13 +156,15 @@ export const featureService = {
             'tournaments_module', 'courses_module', 'automatic_discounts'
         ];
 
-        for (const flag of allFlags) {
-            // customFeatures override
-            if (typeof customFeatures[flag] === 'boolean') {
-                result[flag] = customFeatures[flag];
-            } else {
-                result[flag] = this.hasFeature(plan, flag);
-            }
+            for (const flag of allFlags) {
+                // customFeatures override
+                if (typeof customFeatures[flag] === 'boolean') {
+                    result[flag] = customFeatures[flag];
+                } else if (estado === 'trial') {
+                    result[flag] = true;
+                } else {
+                    result[flag] = this.hasFeature(plan, flag);
+                }
 
             // Habilitar capabilities completas durante el trial para conversión
             if (estado === 'trial') {

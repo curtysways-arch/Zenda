@@ -391,6 +391,8 @@ model Negocio {
   ClientGlobalProgress       ClientGlobalQuestProgress[]
   BusinessMissions           BusinessMission[]            // Nuevo sistema de misiones desacoplado
   BusinessInheritances       BusinessInheritance[]        // Capa de herencia del Club Citiox
+  paymentMethods             PaymentMethod[]
+  orderPayments              OrderPayment[]
   tipoNegocio                String                       @default("RESERVA")
   categoriasProducto         CategoriaProducto[]
   productos                  Producto[]
@@ -2611,10 +2613,11 @@ model Pedido {
   subtotal          Float
   costoEnvio        Float
   total             Float
-  estado            String       @default("RECIBIDO") // "RECIBIDO" | "PREPARACION" | "LISTO" | "RUTA" | "ENTREGADO" | "CANCELADO"
+  estado            String       @default("PENDIENTE_PAGO") // "BORRADOR" | "PENDIENTE_PAGO" | "PAGO_EN_REVISION" | "PAGO_CONFIRMADO" | "EN_PREPARACION" | "LISTO" | "EN_RUTA" | "ENTREGADO" | "CANCELADO"
   notas             String?
   negocio           Negocio      @relation(fields: [negocioId], references: [id], onDelete: Cascade)
   items             PedidoItem[]
+  payment           OrderPayment?
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
@@ -2634,5 +2637,97 @@ model PedidoItem {
   @@index([pedidoId])
   @@index([productoId])
 }
+
+// ─── MÓDULO DE PAGOS DESACOPLADO & CLEAN ARCHITECTURE ───────────────────────────────
+
+model PaymentProvider {
+  id          String          @id @default(uuid())
+  code        String          @unique // "BANK_TRANSFER" | "PAYMENT_GATEWAY" | "CASH"
+  name        String // "Transferencia Bancaria", "Pasarela de Pago Online"
+  description String?
+  enabled     Boolean         @default(true)
+  isGateway   Boolean         @default(false)
+  methods     PaymentMethod[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model PaymentMethod {
+  id             String          @id @default(uuid())
+  negocioId      String
+  providerId     String
+  enabled        Boolean         @default(true)
+  customName     String?
+  instructions   String?
+  // Campos para Transferencia Bancaria
+  banco          String?
+  titular        String?
+  numeroCuenta   String?
+  tipoCuenta     String? // "Ahorros" | "Corriente"
+  identificacion String? // RUC o Cédula
+  qrImageUrl     String? // Imagen del código QR
+  extraConfig    Json? // Configuración dinámica para gateway futuro
+  negocio        Negocio         @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  provider       PaymentProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  payments       OrderPayment[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([negocioId])
+  @@index([providerId])
+}
+
+model OrderPayment {
+  id             String            @id @default(uuid())
+  pedidoId       String            @unique
+  negocioId      String
+  methodId       String?
+  monto          Float
+  moneda         String            @default("USD")
+  estado         String            @default("PENDIENTE") // "PENDIENTE" | "COMPROBANTE_ENVIADO" | "EN_REVISION" | "CONFIRMADO" | "RECHAZADO" | "EXPIRADO" | "REEMBOLSADO"
+  codigoPago     String?           // Código de referencia único de pago
+  motivoRechazo  String?
+  observaciones  String?
+  pedido         Pedido            @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  negocio        Negocio           @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  method         PaymentMethod?    @relation(fields: [methodId], references: [id], onDelete: SetNull)
+  evidences      PaymentEvidence[]
+  history        PaymentHistory[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([negocioId])
+  @@index([estado])
+}
+
+model PaymentEvidence {
+  id         String       @id @default(uuid())
+  paymentId  String
+  fileUrl    String
+  fileType   String // "IMAGE" | "PDF"
+  mimeType   String
+  fileSize   Int
+  uploadedBy String? // UserId o "CLIENT"
+  status     String       @default("ENVIADO") // "ENVIADO" | "VALIDO" | "RECHAZADO"
+  payment    OrderPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  createdAt  DateTime     @default(now())
+
+  @@index([paymentId])
+}
+
+model PaymentHistory {
+  id                String       @id @default(uuid())
+  paymentId         String
+  estadoAnterior    String?
+  estadoNuevo       String
+  observacion       String?
+  responsableId     String? // UserId, "SISTEMA" o "CLIENTE"
+  responsableNombre String?
+  payment           OrderPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  createdAt         DateTime     @default(now())
+
+  @@index([paymentId])
+}
+
 
 

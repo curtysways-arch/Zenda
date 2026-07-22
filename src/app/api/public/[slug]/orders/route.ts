@@ -78,8 +78,17 @@ export async function POST(
             return d;
         };
 
-        // Configuración de envío
+        // Configuración de envío y monto mínimo
         const config = (negocio.configuracion as any) || {};
+
+        // Validar monto mínimo en productos (sin incluir envío)
+        const minOrderAmount = config.montoMinimoPedido !== undefined ? parseFloat(config.montoMinimoPedido) : 0;
+        if (minOrderAmount > 0 && subtotal < minOrderAmount) {
+            return NextResponse.json({
+                error: `El pedido mínimo en productos es de $${minOrderAmount.toFixed(2)} (sin incluir costo de envío).`
+            }, { status: 400 });
+        }
+
         let costoEnvio = 0;
         if (deliveryType === 'DOMICILIO') {
             const baseCost = config.costoEnvio !== undefined ? parseFloat(config.costoEnvio) : 1.50;
@@ -132,7 +141,7 @@ export async function POST(
                     subtotal,
                     costoEnvio,
                     total,
-                    estado: 'RECIBIDO',
+                    estado: 'PENDIENTE_PAGO',
                     items: {
                         create: itemsToCreate
                     }
@@ -142,41 +151,33 @@ export async function POST(
                 }
             });
 
-            return newOrder;
+            // Importar dinámicamente PaymentService e inicializar entidad de pago
+            const { PaymentService } = require('@/lib/payments/PaymentService');
+            const initialPayment = await PaymentService.createInitialPayment({
+                pedidoId: newOrder.id,
+                negocioId: negocio.id,
+                monto: total
+            });
+
+            return { newOrder, initialPayment };
         });
+
+        const order = result.newOrder;
+        const payment = result.initialPayment;
 
         // Intentar notificar al administrador en segundo plano (sin bloquear la respuesta)
         try {
             // Notificar vía Push al negocio (Citiox original)
             await notificationService.sendPushToBusiness(
                 negocio.id,
-                `Nuevo Pedido #${order.numeroPedido}`,
+                `Nuevo Pedido #${order.numeroPedido} (Pendiente de Pago)`,
                 `De ${clientName} por un total de $${total.toFixed(2)}.`
             ).catch(() => {});
-
-            // Notificación WhatsApp al negocio si está configurada
-            if (negocio.whatsapp) {
-                const { whatsappService } = require('@/lib/whatsapp');
-                const productsList = order.items.map((i: any) => `- ${i.cantidad}x ${i.nombreProducto}`).join('\n');
-                const message = `🔔 *Nuevo Pedido Recibido #${order.numeroPedido}*\n\n` +
-                                `👤 *Cliente:* ${clientName}\n` +
-                                `📞 *Teléfono:* ${clientPhone}\n` +
-                                `🛵 *Tipo:* ${deliveryType}\n` +
-                                (deliveryType === 'DOMICILIO' ? `📍 *Dirección:* ${clientAddress}\n` : '') +
-                                `📅 *Entrega:* ${deliveryDate.includes('-') ? deliveryDate : (deliveryDate === 'HOY' ? 'Hoy' : 'Mañana')} (${timeSlot} hrs)\n\n` +
-                                `🍔 *Productos:*\n${productsList}\n\n` +
-                                `*Subtotal:* $${subtotal.toFixed(2)}\n` +
-                                `*Envío:* $${costoEnvio.toFixed(2)}\n` +
-                                `*Total:* $${total.toFixed(2)}\n\n` +
-                                `🔗 Gestionalo en tu panel: ${process.env.NEXTAUTH_URL}/admin/pedidos`;
-                
-                await whatsappService.sendWhatsApp(negocio.whatsapp, message).catch(() => {});
-            }
         } catch (notifErr) {
             console.error('[ORDER_NOTIF_ERROR] Failed to send notifications:', notifErr);
         }
 
-        return NextResponse.json({ pedido: order });
+        return NextResponse.json({ pedido: order, payment });
 
     } catch (error) {
         console.error('[ORDERS_POST_API] Error creating order:', error);

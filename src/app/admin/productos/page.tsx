@@ -255,10 +255,10 @@ export default function AdminProductos() {
                                             <div className="flex items-center gap-3">
                                                 <div className="relative size-12 rounded-xl bg-slate-50 overflow-hidden shrink-0 border border-slate-100 flex items-center justify-center">
                                                     {p.imagenUrl ? (
-                                                        <Image src={p.imagenUrl} alt={p.nombre} fill className="object-cover" />
+                                                        <img src={p.imagenUrl} alt={p.nombre} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <span className="text-[10px] font-black text-slate-400 uppercase">
-                                                            {p.nombre.substring(0, 1)}
+                                                            {p.nombre.substring(0, 2)}
                                                         </span>
                                                     )}
                                                 </div>

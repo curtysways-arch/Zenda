@@ -124,7 +124,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
 
     return (
         <nav
-            className="fixed bottom-0 left-0 right-0 z-[150] h-[72px] pb-safe border-t pointer-events-auto md:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.15)]"
+            className="fixed bottom-0 left-0 right-0 z-[500] h-[72px] pb-safe border-t pointer-events-auto md:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.15)]"
             style={{
                 backgroundColor: 'var(--nav-bg)',
                 borderColor: 'var(--nav-border)',
