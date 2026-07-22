@@ -119,7 +119,37 @@ export default function ProductsStoreClient({ negocio }: Props) {
     };
     const [deliveryDate, setDeliveryDate] = useState<string>(getInitialDate());
     const [timeSlot, setTimeSlot] = useState('');
-    
+
+    // Load Catalogue
+    useEffect(() => {
+        const fetchCatalogue = async () => {
+            try {
+                setLoading(true);
+                const res = await fetch(`/api/public/${negocio.slug}/catalogue`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setProducts(data.products || []);
+                    setCategories(data.categories || []);
+                }
+            } catch (err) {
+                console.error("Error loading catalogue:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCatalogue();
+    }, [negocio.slug]);
+
+    // Load Cart from localStorage
+    useEffect(() => {
+        const savedCart = localStorage.getItem(`cart_${negocio.id}`);
+        if (savedCart) {
+            try {
+                setCart(JSON.parse(savedCart));
+            } catch (e) {}
+        }
+    }, [negocio.id]);
+
     // GPS / Maps States
     const [lat, setLat] = useState<number | null>(null);
     const [lng, setLng] = useState<number | null>(null);
