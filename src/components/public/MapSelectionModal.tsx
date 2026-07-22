@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { X, Check } from 'lucide-react';
+import { X, MapPin, Check, ExternalLink, RefreshCw } from 'lucide-react';
 
 interface MapSelectionModalProps {
     isOpen: boolean;
@@ -27,31 +27,39 @@ export default function MapSelectionModal({
 
     const [currentLat, setCurrentLat] = useState<number>(startLat);
     const [currentLng, setCurrentLng] = useState<number>(startLng);
+    const [isLocating, setIsLocating] = useState<boolean>(false);
 
     useEffect(() => {
-        if (!isOpen) return;
-
-        // Resetear coordenadas al abrir
-        setCurrentLat(startLat);
-        setCurrentLng(startLng);
-
-        // Escuchar mensajes de geolocalización desde el iframe totalmente aislado
-        const handleMessage = (event: MessageEvent) => {
-            if (event.data && event.data.type === 'LOCATION_UPDATED') {
-                if (typeof event.data.lat === 'number' && typeof event.data.lng === 'number') {
-                    setCurrentLat(event.data.lat);
-                    setCurrentLng(event.data.lng);
-                }
-            }
-        };
-
-        window.addEventListener('message', handleMessage);
-        return () => window.removeEventListener('message', handleMessage);
-    }, [isOpen, startLat, startLng]);
+        if (isOpen) {
+            setCurrentLat(initialLat || businessLat);
+            setCurrentLng(initialLng || businessLng);
+        }
+    }, [isOpen, initialLat, initialLng, businessLat, businessLng]);
 
     if (!isOpen) return null;
 
-    const mapUrl = `/map-picker.html?lat=${startLat}&lng=${startLng}`;
+    const handleUseGPS = () => {
+        if (!navigator.geolocation) {
+            alert("Tu navegador no soporta geolocalización GPS.");
+            return;
+        }
+        setIsLocating(true);
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                setIsLocating(false);
+                setCurrentLat(pos.coords.latitude);
+                setCurrentLng(pos.coords.longitude);
+            },
+            (err) => {
+                setIsLocating(false);
+                alert("No se pudo obtener la ubicación automáticamente. Puedes ingresar las coordenadas o seleccionar tu dirección.");
+            },
+            { timeout: 8000, maximumAge: 30000 }
+        );
+    };
+
+    const googleMapsEmbedUrl = `https://maps.google.com/maps?q=${currentLat},${currentLng}&z=16&output=embed`;
+    const googleMapsExternalUrl = `https://www.google.com/maps?q=${currentLat},${currentLng}`;
 
     return (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
@@ -59,8 +67,8 @@ export default function MapSelectionModal({
                 {/* Header */}
                 <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                     <div>
-                        <h3 className="text-sm font-black text-slate-900 tracking-tight">Ubicación en el Mapa</h3>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Mueve el marcador o toca la ubicación exacta</p>
+                        <h3 className="text-sm font-black text-slate-900 tracking-tight">Ubicación GPS</h3>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Verifica y confirma tu punto de entrega</p>
                     </div>
                     <button
                         type="button"
@@ -71,20 +79,46 @@ export default function MapSelectionModal({
                     </button>
                 </div>
 
-                {/* Body - Mapa aislado en Iframe (Sandbox total, 0% riesgo de congelar la App) */}
-                <div className="relative w-full h-80 bg-slate-100">
+                {/* Body - Google Maps Embed Oficial (0% scripts locales JS, 100% Imposible de congelar la App) */}
+                <div className="relative w-full h-72 bg-slate-100">
                     <iframe
-                        src={mapUrl}
+                        key={`${currentLat}-${currentLng}`}
+                        src={googleMapsEmbedUrl}
                         className="w-full h-full border-0"
-                        title="Seleccionador de Ubicación Mapa"
+                        title="Mapa de Ubicación Google Maps"
                         loading="lazy"
+                        allowFullScreen
                     />
                 </div>
 
-                {/* Coordenadas de visualización */}
-                <div className="px-5 py-2.5 bg-slate-50 border-t border-slate-100 flex justify-between text-[10px] font-mono text-slate-500 font-bold">
-                    <span>Lat: {currentLat.toFixed(6)}</span>
-                    <span>Long: {currentLng.toFixed(6)}</span>
+                {/* Controles de Ubicación */}
+                <div className="p-4 bg-slate-50 border-t border-slate-100 space-y-3">
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={handleUseGPS}
+                            disabled={isLocating}
+                            className="flex-1 py-2.5 px-3 bg-white hover:bg-slate-100 text-slate-800 text-xs font-black rounded-xl border border-slate-200 shadow-xs flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
+                        >
+                            {isLocating ? <RefreshCw className="size-3.5 animate-spin text-emerald-600" /> : <MapPin className="size-3.5 text-emerald-600" />}
+                            <span>{isLocating ? "Obteniendo GPS..." : "📍 Usar mi GPS Actual"}</span>
+                        </button>
+
+                        <a
+                            href={googleMapsExternalUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="py-2.5 px-3 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 shadow-xs flex items-center gap-1.5 active:scale-95 transition-all"
+                        >
+                            <ExternalLink className="size-3.5 text-slate-500" />
+                            <span>Abrir App Mapa</span>
+                        </a>
+                    </div>
+
+                    <div className="flex justify-between text-[10px] font-mono text-slate-500 font-bold px-1">
+                        <span>Latitud: {currentLat.toFixed(6)}</span>
+                        <span>Longitud: {currentLng.toFixed(6)}</span>
+                    </div>
                 </div>
 
                 {/* Footer */}
