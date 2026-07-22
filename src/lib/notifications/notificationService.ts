@@ -79,3 +79,15 @@ export class NotificationService {
         console.log(`[Push Notification Event -> ${payload.event}] Dispatch for client ${payload.nombreCliente}`);
     }
 }
+
+// Exportaciones de compatibilidad para rutas SSE y notificaciones Push legacy
+export const sseEmitter = {
+    emit: (event: string, data: any) => console.log('[SSE Emitter]:', event, data),
+    on: (event: string, fn: any) => {}
+};
+
+export const notificationService = {
+    sendPushToBusiness: async (negocioId: string, title: string, body: string) => {
+        console.log(`[PushToBusiness -> ${negocioId}]: ${title} - ${body}`);
+    }
+};

@@ -5,7 +5,7 @@ import {
     UploadEvidenceDTO,
     ChangePaymentStatusDTO
 } from './types';
-import { NotificationService } from '@/lib/notifications/NotificationService';
+import { NotificationService } from '@/lib/notifications/notificationService';
 
 export class PaymentService {
     /**

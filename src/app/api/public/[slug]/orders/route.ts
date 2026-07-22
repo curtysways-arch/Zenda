@@ -115,7 +115,7 @@ export async function POST(
         dateToDeliver.setHours(0, 0, 0, 0);
 
         // Generar número de pedido secuencial por negocio (transacción segura)
-        const order = await prisma.$transaction(async (tx) => {
+        const txResult = await prisma.$transaction(async (tx) => {
             const lastOrder = await (tx as any).pedido.findFirst({
                 where: { negocioId: negocio.id },
                 orderBy: { numeroPedido: 'desc' },
@@ -162,8 +162,8 @@ export async function POST(
             return { newOrder, initialPayment };
         });
 
-        const order = result.newOrder;
-        const payment = result.initialPayment;
+        const order = txResult.newOrder;
+        const payment = txResult.initialPayment;
 
         // Intentar notificar al administrador en segundo plano (sin bloquear la respuesta)
         try {

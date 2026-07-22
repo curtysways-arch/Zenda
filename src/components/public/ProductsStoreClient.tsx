@@ -129,7 +129,6 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const markerRef = useRef<any>(null);
 
     // Order Success Info
-    const [createdOrder, setCreatedOrder] = useState<any>(null);
     const [submitting, setSubmitting] = useState(false);
 
     // Load Catalogue
