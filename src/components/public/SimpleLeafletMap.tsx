@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { MapPin, RefreshCw, AlertCircle } from 'lucide-react';
+import { MapPin, Navigation, CheckCircle2 } from 'lucide-react';
 
 interface SimpleLeafletMapProps {
     initialLat?: number;
@@ -16,48 +16,51 @@ export default function SimpleLeafletMap({
 }: SimpleLeafletMapProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<any>(null);
-    const markerInstanceRef = useRef<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [loadError, setLoadError] = useState(false);
     const [currentLat, setCurrentLat] = useState(initialLat);
     const [currentLng, setCurrentLng] = useState(initialLng);
+    const [leafletReady, setLeafletReady] = useState(false);
+    const [isLocating, setIsLocating] = useState(false);
 
-    // Temporizador de seguridad de 3 segundos para evitar bloqueos infinitos
+    // Intentar geolocalizar al usuario inmediatamente
     useEffect(() => {
-        const fallbackTimer = setTimeout(() => {
-            if (!(window as any).L) {
-                console.warn("Leaflet script load timed out, falling back to location coordinates UI.");
-                setLoadError(true);
-                setLoading(false);
-            }
-        }, 3000);
-        return () => clearTimeout(fallbackTimer);
+        if (navigator.geolocation) {
+            setIsLocating(true);
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const uLat = pos.coords.latitude;
+                    const uLng = pos.coords.longitude;
+                    setCurrentLat(uLat);
+                    setCurrentLng(uLng);
+                    onLocationSelect(uLat, uLng);
+                    setIsLocating(false);
+                },
+                () => {
+                    setIsLocating(false);
+                },
+                { timeout: 4000 }
+            );
+        }
     }, []);
 
+    // Cargar mapa Leaflet en segundo plano si esta disponible
     useEffect(() => {
         let isMounted = true;
 
-        const initLeafletMap = () => {
+        const initMap = () => {
             if (!containerRef.current || !isMounted) return;
-
             const L = (window as any).L;
-            if (!L) {
-                setLoadError(true);
-                setLoading(false);
-                return;
-            }
+            if (!L) return;
 
             try {
                 if (mapInstanceRef.current) {
                     mapInstanceRef.current.remove();
-                    mapInstanceRef.current = null;
                 }
 
                 const map = L.map(containerRef.current, {
-                    zoomControl: true,
+                    zoomControl: false,
                     attributionControl: false,
                     tap: false
-                }).setView([initialLat, initialLng], 15);
+                }).setView([currentLat, currentLng], 16);
 
                 mapInstanceRef.current = map;
 
@@ -74,12 +77,10 @@ export default function SimpleLeafletMap({
                     shadowSize: [41, 41]
                 });
 
-                const marker = L.marker([initialLat, initialLng], {
+                const marker = L.marker([currentLat, currentLng], {
                     draggable: true,
                     icon: markerIcon
                 }).addTo(map);
-
-                markerInstanceRef.current = marker;
 
                 marker.on('dragend', () => {
                     const pos = marker.getLatLng();
@@ -100,106 +101,114 @@ export default function SimpleLeafletMap({
                     }
                 });
 
-                // Auto geolocalización suave
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        (pos) => {
-                            if (!isMounted) return;
-                            const uLat = pos.coords.latitude;
-                            const uLng = pos.coords.longitude;
-                            map.setView([uLat, uLng], 16);
-                            marker.setLatLng([uLat, uLng]);
-                            setCurrentLat(uLat);
-                            setCurrentLng(uLng);
-                            onLocationSelect(uLat, uLng);
-                        },
-                        () => {},
-                        { timeout: 5000 }
-                    );
-                }
-
                 setTimeout(() => {
                     if (mapInstanceRef.current) {
                         mapInstanceRef.current.invalidateSize();
                     }
-                    if (isMounted) setLoading(false);
-                }, 200);
+                    if (isMounted) setLeafletReady(true);
+                }, 150);
 
-            } catch (err) {
-                console.error("Error iniciando Leaflet:", err);
-                if (isMounted) {
-                    setLoadError(true);
-                    setLoading(false);
-                }
+            } catch (e) {
+                console.log("Leaflet map init notice:", e);
             }
         };
 
-        // Cargar CSS y JS de Leaflet si no están presentes
         if ((window as any).L) {
-            initLeafletMap();
+            initMap();
         } else {
-            if (!document.getElementById('leaflet-css')) {
-                const link = document.createElement('link');
-                link.id = 'leaflet-css';
-                link.rel = 'stylesheet';
-                link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-                document.head.appendChild(link);
-            }
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+            document.head.appendChild(link);
 
-            if (!document.getElementById('leaflet-js')) {
-                const script = document.createElement('script');
-                script.id = 'leaflet-js';
-                script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-                script.async = true;
-                script.onload = () => initLeafletMap();
-                script.onerror = () => {
-                    if (isMounted) {
-                        setLoadError(true);
-                        setLoading(false);
-                    }
-                };
-                document.head.appendChild(script);
-            } else {
-                const checkL = setInterval(() => {
-                    if ((window as any).L) {
-                        clearInterval(checkL);
-                        initLeafletMap();
-                    }
-                }, 100);
-            }
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            script.async = true;
+            script.onload = () => initMap();
+            document.head.appendChild(script);
         }
 
         return () => {
             isMounted = false;
             if (mapInstanceRef.current) {
-                try {
-                    mapInstanceRef.current.remove();
-                } catch (e) {}
+                try { mapInstanceRef.current.remove(); } catch (err) {}
                 mapInstanceRef.current = null;
             }
         };
-    }, [initialLat, initialLng]);
+    }, []);
 
-    if (loadError) {
-        return (
-            <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center space-y-2">
-                <MapPin className="size-6 text-orange-600 mx-auto" />
-                <p className="text-xs font-black text-slate-800 uppercase tracking-wider">Ubicación GPS por Defecto</p>
-                <p className="text-[11px] text-slate-500 font-medium">Lat: {currentLat.toFixed(6)}, Lng: {currentLng.toFixed(6)}</p>
-                <p className="text-[10px] text-slate-400">Introduce la referencia detallada de tu domicilio en el campo de texto.</p>
-            </div>
-        );
-    }
+    const handleGetLocationManually = () => {
+        if (navigator.geolocation) {
+            setIsLocating(true);
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const uLat = pos.coords.latitude;
+                    const uLng = pos.coords.longitude;
+                    setCurrentLat(uLat);
+                    setCurrentLng(uLng);
+                    onLocationSelect(uLat, uLng);
+                    if (mapInstanceRef.current) {
+                        mapInstanceRef.current.setView([uLat, uLng], 16);
+                    }
+                    setIsLocating(false);
+                },
+                () => {
+                    alert("No se pudo obtener la ubicación automáticamente. Asegúrate de otorgar permisos GPS.");
+                    setIsLocating(false);
+                }
+            );
+        }
+    };
 
     return (
-        <div className="relative w-full h-44 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm">
-            {loading && (
-                <div className="absolute inset-0 bg-slate-100/90 z-20 flex flex-col items-center justify-center text-slate-500 text-xs font-bold gap-2">
-                    <RefreshCw className="size-5 animate-spin text-orange-600" />
-                    <span>Cargando Mapa GPS...</span>
-                </div>
+        <div className="space-y-2">
+            <div className="relative w-full h-44 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-sm">
+                {/* Contenedor del Mapa Leaflet */}
+                <div ref={containerRef} className="w-full h-full z-10" />
+
+                {/* Si Leaflet aun no se ha cargado visualmente, mostrar tarjeta interactiva de mapas */}
+                {!leafletReady && (
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 flex flex-col justify-between z-20">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <MapPin className="size-5 text-orange-500 animate-bounce" />
+                                <span className="text-xs font-black uppercase tracking-wider">Ubicación GPS Detectada</span>
+                            </div>
+                            <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full text-[9px] font-bold">
+                                GPS Activo
+                            </span>
+                        </div>
+
+                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/10 space-y-1">
+                            <p className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">Coordenadas de entrega:</p>
+                            <p className="text-xs font-mono font-black text-white">Lat: {currentLat.toFixed(6)}, Lng: {currentLng.toFixed(6)}</p>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={handleGetLocationManually}
+                            disabled={isLocating}
+                            className="w-full py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all"
+                        >
+                            <Navigation className={`size-3.5 ${isLocating ? 'animate-spin' : ''}`} />
+                            <span>{isLocating ? 'Obteniendo GPS...' : 'Actualizar Mi Ubicación GPS'}</span>
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* Botón flotante para refrescar GPS en el mapa */}
+            {leafletReady && (
+                <button
+                    type="button"
+                    onClick={handleGetLocationManually}
+                    disabled={isLocating}
+                    className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all"
+                >
+                    <Navigation className={`size-3.5 text-orange-600 ${isLocating ? 'animate-spin' : ''}`} />
+                    <span>{isLocating ? 'Detectando mi GPS...' : 'Centrar en mi ubicación actual'}</span>
+                </button>
             )}
-            <div ref={containerRef} className="w-full h-full z-10" />
         </div>
     );
 }
