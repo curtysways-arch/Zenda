@@ -87,6 +87,7 @@ function SimpleLeafletMap({
             containerRef.current.innerHTML = '';
 
             const map = L.map(containerRef.current, {
+                tap: false,
                 zoomControl: true,
                 attributionControl: false
             }).setView([defaultLat, defaultLng], 15);
