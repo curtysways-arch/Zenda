@@ -565,21 +565,6 @@ export default function ProductsStoreClient({ negocio }: Props) {
             setOtpLoading(false);
         }
     };
-                    setBankConfig(bankData.method);
-                }
-
-                setStep('payment');
-            } else {
-                const errorData = await response.json();
-                alert(errorData.error || "Ocurrió un error al procesar el pedido.");
-            }
-        } catch (err) {
-            console.error(err);
-            alert("Error al verificar OTP o crear el pedido.");
-        } finally {
-            setOtpLoading(false);
-        }
-    };
 
     // Paso 3: Subir Comprobante de Pago
     const handleUploadEvidenceSubmit = async (e: React.FormEvent) => {
