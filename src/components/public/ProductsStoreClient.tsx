@@ -217,7 +217,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
     // Enviar mensaje con detalles y ubicación GPS al WhatsApp del negocio
     const sendWhatsAppToBusiness = (pedido: any, name: string, phone: string) => {
         try {
-            const bizPhone = negocio.telefono || (config as any)?.whatsapp || '593998877665';
+            const bizPhone = (negocio as any).telefono || negocio.whatsapp || (config as any)?.whatsapp || '593998877665';
             let formattedBizPhone = bizPhone.replace(/[^0-9]/g, '');
             if (formattedBizPhone.startsWith('0')) {
                 formattedBizPhone = '593' + formattedBizPhone.slice(1);
