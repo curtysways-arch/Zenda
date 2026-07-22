@@ -178,7 +178,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
     useEffect(() => {
         let timer: any = null;
 
-        if (step === 'checkout' && deliveryType === 'DOMICILIO' && (!mapInitialized.current || !leafletMapRef.current)) {
+        if (step === 'checkout' && deliveryType === 'DOMICILIO' && mapRef.current && (!mapInitialized.current || !leafletMapRef.current)) {
             const loadLeaflet = () => {
                 if ((window as any).L) {
                     scheduleInit();
@@ -461,12 +461,13 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
     // Auto-seleccionar primer horario disponible al cambiar fecha
     useEffect(() => {
-        if (slotsDisponibles.length > 0) {
-            setTimeSlot(slotsDisponibles[0]);
+        const slots = getTimeSlots();
+        if (slots.length > 0) {
+            setTimeSlot(prev => (prev && slots.includes(prev) ? prev : slots[0]));
         } else {
             setTimeSlot('');
         }
-    }, [deliveryDate, slotsDisponibles.length]);
+    }, [deliveryDate]);
 
     // Cargar teléfono y nombre guardados de la sesión previa / OTP
     const [activeOrder, setActiveOrder] = useState<any>(null);
