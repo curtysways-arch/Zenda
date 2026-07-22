@@ -170,6 +170,12 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
 
 
+    // Stable location handler for SimpleLeafletMap
+    const handleLocationSelect = useCallback((selectedLat: number, selectedLng: number) => {
+        setLat(prev => (prev === selectedLat ? prev : selectedLat));
+        setLng(prev => (prev === selectedLng ? prev : selectedLng));
+    }, []);
+
     // Cart Operations
     const addToCart = (product: Product) => {
         const existing = cart.find(item => item.product.id === product.id);
@@ -1012,10 +1018,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     <SimpleLeafletMap 
                                         initialLat={config.latitudNegocio !== undefined ? parseFloat(config.latitudNegocio) : -0.180653}
                                         initialLng={config.longitudNegocio !== undefined ? parseFloat(config.longitudNegocio) : -78.467838}
-                                        onLocationSelect={useCallback((selectedLat: number, selectedLng: number) => {
-                                            setLat(prev => (prev === selectedLat ? prev : selectedLat));
-                                            setLng(prev => (prev === selectedLng ? prev : selectedLng));
-                                        }, [])}
+                                        onLocationSelect={handleLocationSelect}
                                     />
                                     {lat && lng && (
                                         <div className="flex justify-between text-[9px] font-bold text-slate-400">
