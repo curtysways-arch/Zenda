@@ -22,6 +22,18 @@ export default function SimpleLeafletMap({
     const [currentLat, setCurrentLat] = useState(initialLat);
     const [currentLng, setCurrentLng] = useState(initialLng);
 
+    // Temporizador de seguridad de 3 segundos para evitar bloqueos infinitos
+    useEffect(() => {
+        const fallbackTimer = setTimeout(() => {
+            if (!(window as any).L) {
+                console.warn("Leaflet script load timed out, falling back to location coordinates UI.");
+                setLoadError(true);
+                setLoading(false);
+            }
+        }, 3000);
+        return () => clearTimeout(fallbackTimer);
+    }, []);
+
     useEffect(() => {
         let isMounted = true;
 
