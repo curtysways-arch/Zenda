@@ -103,11 +103,10 @@ export class NotificationService {
     static publishRealtime(negocioId: string, userId: string, data: any): void {}
 }
 
+import { EventEmitter } from 'events';
+
 // Exportaciones de compatibilidad para rutas SSE y notificaciones Push legacy
-export const sseEmitter = {
-    emit: (event: string, data: any) => console.log('[SSE Emitter]:', event, data),
-    on: (event: string, fn: any) => {}
-};
+export const sseEmitter = new EventEmitter();
 
 export const notificationService = {
     sendPushToBusiness: async (negocioId: string, title: string, body: string) => {
