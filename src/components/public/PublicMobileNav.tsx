@@ -82,12 +82,37 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
         return null;
     }
 
+    // Estado para pedidos activos en tiendas de productos
+    const [activeOrderCount, setActiveOrderCount] = useState(0);
+
+    useEffect(() => {
+        if (tipoNegocio !== 'PRODUCTOS') return;
+        const phone = typeof window !== 'undefined' ? localStorage.getItem('pinchos_client_phone') : null;
+        if (!phone) return;
+
+        const checkActiveOrders = async () => {
+            try {
+                const res = await fetch(`/api/public/${slug}/client-orders?phone=${encodeURIComponent(phone)}`);
+                const data = await res.json();
+                if (data.success && Array.isArray(data.orders)) {
+                    const count = data.orders.filter((o: any) => o.estado !== 'ENTREGADO' && o.estado !== 'CANCELADO').length;
+                    setActiveOrderCount(count);
+                }
+            } catch (e) {
+                console.error('Error al consultar contador de pedidos activos:', e);
+            }
+        };
+        checkActiveOrders();
+        const interval = setInterval(checkActiveOrders, 15000);
+        return () => clearInterval(interval);
+    }, [slug, tipoNegocio]);
+
     const tabs = [
         {
             label: 'Inicio',
             icon: Home,
             href: `/${slug}`,
-            active: pathname === `/${slug}` && !pathname.includes('/servicios'),
+            active: pathname === `/${slug}` && !pathname.includes('/pedidos'),
             visible: true
         },
         {
@@ -98,20 +123,14 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
             visible: hasSession && tipoNegocio !== 'PRODUCTOS'
         },
         {
-            label: 'Mis Pedidos',
-            icon: PackageCheck,
-            href: `/${slug}/pedidos`,
-            active: pathname.includes('/pedidos'),
-            visible: tipoNegocio === 'PRODUCTOS'
-        },
-        {
-            label: tipoNegocio === 'PRODUCTOS' ? 'Tienda' : 'Servicios',
-            icon: tipoNegocio === 'PRODUCTOS' ? ShoppingBag : Sparkles,
-            href: tipoNegocio === 'PRODUCTOS' ? `/${slug}` : `/${slug}/servicios`,
+            label: tipoNegocio === 'PRODUCTOS' ? 'Pedidos' : 'Servicios',
+            icon: tipoNegocio === 'PRODUCTOS' ? PackageCheck : Sparkles,
+            href: tipoNegocio === 'PRODUCTOS' ? `/${slug}/pedidos` : `/${slug}/servicios`,
             active: tipoNegocio === 'PRODUCTOS' 
-                ? pathname === `/${slug}` 
+                ? pathname.includes('/pedidos') 
                 : pathname.includes('/servicios'),
             isCentral: true,
+            badge: tipoNegocio === 'PRODUCTOS' ? activeOrderCount : 0,
             visible: true
         },
         {
@@ -149,7 +168,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
                                 className="relative flex flex-col items-center justify-center flex-1 h-full -translate-y-4 pointer-events-auto"
                             >
                                 <div 
-                                    className="size-14 rounded-full flex items-center justify-center shadow-lg border-2 active:scale-95 transition-transform"
+                                    className="relative size-14 rounded-full flex items-center justify-center shadow-lg border-2 active:scale-95 transition-transform"
                                     style={{
                                         backgroundColor: 'var(--nav-active)',
                                         borderColor: 'rgba(255,255,255,0.25)',
@@ -157,9 +176,16 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
                                     }}
                                 >
                                     <CentralIcon size={24} style={{ color: 'var(--nav-bg)' }} fill={tab.label === 'Tienda' ? 'none' : 'currentColor'} />
+                                    
+                                    {/* Globo / Badge de notificación si hay pedido en proceso */}
+                                    {Boolean(tab.badge && tab.badge > 0) && (
+                                        <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black size-5 rounded-full flex items-center justify-center border-2 border-white shadow-md animate-bounce">
+                                            {tab.badge}
+                                        </span>
+                                    )}
                                 </div>
                                 <span 
-                                    className="text-[9px] font-black uppercase tracking-widest leading-none mt-1.5"
+                                    className="text-[9px] font-black uppercase tracking-widest leading-none mt-1.5 flex items-center gap-1"
                                     style={{ color: 'var(--nav-active)' }}
                                 >
                                     {tab.label}
