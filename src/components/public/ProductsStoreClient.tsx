@@ -175,152 +175,132 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const leafletMarkerRef = useRef<any>(null);
 
     useEffect(() => {
-        if (step === 'checkout' && deliveryType === 'DOMICILIO' && !mapInitialized.current) {
-            
-            const loadLeaflet = () => {
-                if ((window as any).L) {
-                    initMap();
-                    return;
-                }
-
-                // Cargar CSS si no existe
-                if (!document.getElementById('leaflet-css')) {
-                    const link = document.createElement('link');
-                    link.id = 'leaflet-css';
-                    link.rel = 'stylesheet';
-                    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-                    document.head.appendChild(link);
-                }
-
-                // Cargar JS si no existe
-                if (!document.getElementById('leaflet-js')) {
-                    const script = document.createElement('script');
-                    script.id = 'leaflet-js';
-                    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-                    script.async = true;
-                    script.onload = () => {
-                        initMap();
-                    };
-                    script.onerror = () => {
-                        setMapError("No se pudo cargar el servicio de mapas. Introduce tu dirección manualmente.");
-                    };
-                    document.head.appendChild(script);
-                } else {
-                    const checkInterval = setInterval(() => {
-                        if ((window as any).L) {
-                            clearInterval(checkInterval);
-                            initMap();
-                        }
-                    }, 100);
-                }
-            };
-
-            const initMap = () => {
-                if (!mapRef.current) {
-                    setTimeout(initMap, 100);
-                    return;
-                }
-                if (mapInitialized.current) return;
-                mapInitialized.current = true;
-                
-                const L = (window as any).L;
-                if (!L) return;
-
-                // Coordenadas del negocio o por defecto (Quito)
-                const latNegocio = config.latitudNegocio !== undefined ? parseFloat(config.latitudNegocio) : -0.180653;
-                const lngNegocio = config.longitudNegocio !== undefined ? parseFloat(config.longitudNegocio) : -78.467838;
-
-                const defaultLat = latNegocio;
-                const defaultLng = lngNegocio;
-
-                // Crear el mapa de Leaflet
+        if (step !== 'checkout' || deliveryType !== 'DOMICILIO') {
+            if (leafletMapRef.current) {
                 try {
-                    const map = L.map(mapRef.current, {
-                        zoomControl: true,
-                        attributionControl: false
-                    }).setView([defaultLat, defaultLng], 15);
-
-                    leafletMapRef.current = map;
-
-                    // Cargar tiles de OpenStreetMap
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        maxZoom: 19
-                    }).addTo(map);
-
-                    // Icono personalizado oficial
-                    const defaultIcon = L.icon({
-                        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-                        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-                        iconSize: [25, 41],
-                        iconAnchor: [12, 41],
-                        popupAnchor: [1, -34],
-                        shadowSize: [41, 41]
-                    });
-
-                    // Crear marcador
-                    const marker = L.marker([defaultLat, defaultLng], {
-                        draggable: true,
-                        icon: defaultIcon
-                    }).addTo(map);
-
-                    leafletMarkerRef.current = marker;
-                    setLat(defaultLat);
-                    setLng(defaultLng);
-
-                    // Geolocalizar cliente
-                    if (navigator.geolocation) {
-                        navigator.geolocation.getCurrentPosition(
-                            (position) => {
-                                const userLat = position.coords.latitude;
-                                const userLng = position.coords.longitude;
-                                map.setView([userLat, userLng], 16);
-                                marker.setLatLng([userLat, userLng]);
-                                setLat(userLat);
-                                setLng(userLng);
-                            },
-                            () => {
-                                console.log("Geolocalización denegada.");
-                            }
-                        );
-                    }
-
-                    // Eventos del marcador
-                    marker.on('dragend', () => {
-                        const position = marker.getLatLng();
-                        setLat(position.lat);
-                        setLng(position.lng);
-                    });
-
-                    // Evento al hacer click en el mapa
-                    map.on('click', (e: any) => {
-                        const position = e.latlng;
-                        marker.setLatLng(position);
-                        setLat(position.lat);
-                        setLng(position.lng);
-                    });
-
-                    setTimeout(() => {
-                        if (leafletMapRef.current) {
-                            leafletMapRef.current.invalidateSize();
-                        }
-                    }, 300);
-                } catch (err) {
-                    console.error("Error al inicializar Leaflet:", err);
-                }
-            };
-
-            loadLeaflet();
+                    leafletMapRef.current.remove();
+                } catch (e) {}
+                leafletMapRef.current = null;
+            }
+            mapInitialized.current = false;
+            return;
         }
 
-        // Limpieza de instancia al desmontar
-        return () => {
-            if (step !== 'checkout' || deliveryType !== 'DOMICILIO') {
-                if (leafletMapRef.current) {
-                    try { leafletMapRef.current.remove(); } catch(e){}
-                    leafletMapRef.current = null;
-                }
-                mapInitialized.current = false;
+        let isCancelled = false;
+
+        const initMap = () => {
+            if (isCancelled || !mapRef.current) return;
+            
+            const L = (window as any).L;
+            if (!L) {
+                setTimeout(initMap, 100);
+                return;
             }
+
+            // Si el mapa ya existe en el nodo DOM, solo recalcular tamaño
+            if ((mapRef.current as any)._leaflet_id) {
+                if (leafletMapRef.current) {
+                    leafletMapRef.current.invalidateSize();
+                }
+                return;
+            }
+
+            // Coordenadas del negocio o por defecto (Quito)
+            const latNegocio = config.latitudNegocio !== undefined ? parseFloat(config.latitudNegocio) : -0.180653;
+            const lngNegocio = config.longitudNegocio !== undefined ? parseFloat(config.longitudNegocio) : -78.467838;
+
+            const defaultLat = latNegocio;
+            const defaultLng = lngNegocio;
+
+            try {
+                const map = L.map(mapRef.current, {
+                    zoomControl: true,
+                    attributionControl: false
+                }).setView([defaultLat, defaultLng], 15);
+
+                leafletMapRef.current = map;
+                mapInitialized.current = true;
+
+                // Cargar tiles de OpenStreetMap
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19
+                }).addTo(map);
+
+                // Icono oficial
+                const defaultIcon = L.icon({
+                    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
+
+                // Crear marcador
+                const marker = L.marker([defaultLat, defaultLng], {
+                    draggable: true,
+                    icon: defaultIcon
+                }).addTo(map);
+
+                leafletMarkerRef.current = marker;
+                setLat(defaultLat);
+                setLng(defaultLng);
+
+                // Geolocalizar cliente
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            if (isCancelled) return;
+                            const userLat = position.coords.latitude;
+                            const userLng = position.coords.longitude;
+                            map.setView([userLat, userLng], 16);
+                            marker.setLatLng([userLat, userLng]);
+                            setLat(userLat);
+                            setLng(userLng);
+                        },
+                        () => {},
+                        { timeout: 5000, maximumAge: 60000 }
+                    );
+                }
+
+                // Eventos del marcador
+                marker.on('dragend', () => {
+                    const position = marker.getLatLng();
+                    setLat(position.lat);
+                    setLng(position.lng);
+                });
+
+                // Evento al hacer click en el mapa
+                map.on('click', (e: any) => {
+                    const position = e.latlng;
+                    marker.setLatLng(position);
+                    setLat(position.lat);
+                    setLng(position.lng);
+                });
+
+                [100, 300, 700].forEach(delay => {
+                    setTimeout(() => {
+                        if (!isCancelled && leafletMapRef.current) {
+                            leafletMapRef.current.invalidateSize();
+                        }
+                    }, delay);
+                });
+
+            } catch (err) {
+                console.error("Error al inicializar mapa Leaflet:", err);
+            }
+        };
+
+        // Iniciar montaje
+        setTimeout(initMap, 50);
+
+        return () => {
+            isCancelled = true;
+            if (leafletMapRef.current) {
+                try { leafletMapRef.current.remove(); } catch(e){}
+                leafletMapRef.current = null;
+            }
+            mapInitialized.current = false;
         };
     }, [step, deliveryType]);
 
@@ -1163,7 +1143,30 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
                                 {/* Mapa de OpenStreetMap para coordenadas GPS */}
                                 <div className="space-y-2">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Geolocalización GPS (Mueve el pin)</label>
+                                    <div className="flex justify-between items-center">
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Geolocalización GPS (Mueve el pin)</label>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (navigator.geolocation && leafletMapRef.current && leafletMarkerRef.current) {
+                                                    navigator.geolocation.getCurrentPosition(
+                                                        (pos) => {
+                                                            const uLat = pos.coords.latitude;
+                                                            const uLng = pos.coords.longitude;
+                                                            leafletMapRef.current.setView([uLat, uLng], 16);
+                                                            leafletMarkerRef.current.setLatLng([uLat, uLng]);
+                                                            setLat(uLat);
+                                                            setLng(uLng);
+                                                        },
+                                                        () => alert("No se pudo obtener tu ubicación automática. Puedes mover el pin manualmente.")
+                                                    );
+                                                }
+                                            }}
+                                            className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/80 active:scale-95 transition-all cursor-pointer"
+                                        >
+                                            <MapPin className="size-3" /> Usar mi ubicación
+                                        </button>
+                                    </div>
                                     <div className="relative w-full h-56 rounded-2xl overflow-hidden border border-slate-200 shadow-inner bg-slate-100">
                                         <div ref={mapRef} className="w-full h-full z-10" />
                                     </div>
