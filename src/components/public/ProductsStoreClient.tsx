@@ -427,6 +427,59 @@ export default function ProductsStoreClient({ negocio }: Props) {
     // Paso 1: Enviar OTP al hacer clic en "Confirmar Pedido"
     const handleStartCheckoutOTP = async (e: React.FormEvent) => {
         e.preventDefault();
+    // Cargar teléfono y nombre guardados de la sesión previa / OTP
+    useEffect(() => {
+        const savedPhone = localStorage.getItem('pinchos_client_phone');
+        const savedName = localStorage.getItem('pinchos_client_name');
+        if (savedPhone) setClientPhone(savedPhone);
+        if (savedName) setClientName(savedName);
+    }, []);
+
+    // Función auxiliar para crear pedido directamente sin repetir OTP si el cliente ya está autenticado
+    const createOrderDirectly = async (phone: string, name: string) => {
+        const response = await fetch(`/api/public/${negocio.slug}/orders`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                deliveryType,
+                clientName: name,
+                clientPhone: phone,
+                clientAddress: deliveryType === 'DOMICILIO' ? clientAddress : null,
+                clientReference: deliveryType === 'DOMICILIO' ? clientReference : null,
+                lat: deliveryType === 'DOMICILIO' ? lat : null,
+                lng: deliveryType === 'DOMICILIO' ? lng : null,
+                deliveryDate: deliveryDate,
+                timeSlot,
+                items: cart.map(item => ({
+                    productId: item.product.id,
+                    cantidad: item.quantity
+                }))
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            setCreatedOrder(data.pedido);
+            setCreatedPayment(data.payment);
+
+            // Cargar datos bancarios del negocio
+            const bankRes = await fetch(`/api/admin/payment-methods?businessId=${negocio.id}`);
+            const bankData = await bankRes.json();
+            if (bankData.success && bankData.method) {
+                setBankConfig(bankData.method.configuracion);
+            }
+            setStep('payment');
+            setCart([]);
+            localStorage.removeItem(`cart_${negocio.id}`);
+        } else {
+            const err = await response.json();
+            alert(err.error || "Ocurrió un error al procesar el pedido.");
+        }
+    };
+
+    // Paso 1: Iniciar proceso de confirmación de pedido
+    const handleStartCheckoutOTP = async (e: React.FormEvent) => {
+        e.preventDefault();
         if (cart.length === 0) return;
         if (!clientName || !clientPhone) {
             alert("Por favor ingresa tu nombre y teléfono.");
@@ -437,6 +490,21 @@ export default function ProductsStoreClient({ negocio }: Props) {
             return;
         }
 
+        // SI EL CLIENTE YA VERIFICÓ OTP PREVIAMENTE CON ESTE TELÉFONO EN ESTE NAVEGADOR
+        const savedPhone = localStorage.getItem('pinchos_client_phone');
+        if (savedPhone && savedPhone.trim() === clientPhone.trim()) {
+            try {
+                setSubmitting(true);
+                await createOrderDirectly(clientPhone, clientName);
+            } catch (err) {
+                alert("Error de conexión al procesar el pedido.");
+            } finally {
+                setSubmitting(false);
+            }
+            return;
+        }
+
+        // SI NO ESTÁ AUTENTICADO, SOLICITAR OTP
         try {
             setSubmitting(true);
             setOtpMessage(null);
@@ -485,39 +553,18 @@ export default function ProductsStoreClient({ negocio }: Props) {
                 return;
             }
 
-            // Guardar teléfono verificado en localStorage
+            // Guardar sesión del cliente autenticado
             localStorage.setItem('pinchos_client_phone', clientPhone);
+            localStorage.setItem('pinchos_client_name', clientName);
 
-            // Crear el Pedido en backend
-            const response = await fetch(`/api/public/${negocio.slug}/orders`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    deliveryType,
-                    clientName,
-                    clientPhone,
-                    clientAddress: deliveryType === 'DOMICILIO' ? clientAddress : null,
-                    clientReference: deliveryType === 'DOMICILIO' ? clientReference : null,
-                    lat: deliveryType === 'DOMICILIO' ? lat : null,
-                    lng: deliveryType === 'DOMICILIO' ? lng : null,
-                    deliveryDate: deliveryDate,
-                    timeSlot,
-                    items: cart.map(item => ({
-                        productId: item.product.id,
-                        cantidad: item.quantity
-                    }))
-                })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setCreatedOrder(data.pedido);
-                setCreatedPayment(data.payment);
-
-                // Cargar datos bancarios del negocio
-                const bankRes = await fetch(`/api/admin/payment-methods?businessId=${negocio.id}`);
-                const bankData = await bankRes.json();
-                if (bankData.success && bankData.method) {
+            // Crear el pedido
+            await createOrderDirectly(clientPhone, clientName);
+        } catch (err) {
+            setOtpMessage("Error al procesar el pedido.");
+        } finally {
+            setOtpLoading(false);
+        }
+    };
                     setBankConfig(bankData.method);
                 }
 
@@ -1025,7 +1072,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 type="button"
                                 onClick={() => setDeliveryType('DOMICILIO')}
                                 className={`flex-1 py-3 text-center rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                    deliveryType === 'DOMICILIO' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500'
+                                    deliveryType === 'DOMICILIO' ? 'bg-orange-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 font-bold'
                                 }`}
                             >
                                 Entrega a Domicilio
@@ -1034,7 +1081,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 type="button"
                                 onClick={() => setDeliveryType('RETIRO')}
                                 className={`flex-1 py-3 text-center rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                    deliveryType === 'RETIRO' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500'
+                                    deliveryType === 'RETIRO' ? 'bg-orange-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-800 font-bold'
                                 }`}
                             >
                                 Retiro en Local
@@ -1160,13 +1207,13 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                                 onClick={() => setDeliveryDate(day.dateStr)}
                                                 className={`px-4 py-2.5 text-center rounded-2xl text-[10px] font-black uppercase tracking-wider border transition-all shrink-0 snap-center flex flex-col items-center justify-center min-w-[70px] ${
                                                     deliveryDate === day.dateStr 
-                                                        ? 'bg-slate-900 text-white shadow-md border-transparent' 
-                                                        : 'bg-slate-50 text-slate-500 border-transparent hover:bg-slate-100'
+                                                        ? 'bg-orange-600 text-white shadow-md border-transparent font-black' 
+                                                        : 'bg-slate-50 text-slate-500 border-transparent hover:bg-slate-100 font-bold'
                                                 }`}
                                             >
                                                 <span>{day.isToday ? "Hoy" : day.label}</span>
                                                 <span className={`text-[8px] font-bold ${
-                                                    deliveryDate === day.dateStr ? 'text-slate-300' : 'text-slate-400'
+                                                    deliveryDate === day.dateStr ? 'text-orange-100' : 'text-slate-400'
                                                 }`}>{day.subLabel}</span>
                                             </button>
                                         ));
