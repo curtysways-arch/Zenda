@@ -389,6 +389,27 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                                 </div>
                                             </div>
 
+                                            {/* Tarjeta de Tiempo y Franja Horaria de Entrega */}
+                                            <div className="bg-orange-50 border border-orange-200/80 rounded-2xl p-4 flex items-center justify-between text-left shadow-xs">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="size-10 bg-orange-600 text-white rounded-xl flex items-center justify-center shrink-0 shadow-md">
+                                                        <Clock className="size-5" />
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-[10px] font-black uppercase tracking-wider text-orange-950 block">Tiempo de Entrega</span>
+                                                        <span className="text-sm font-black text-orange-900 tracking-tight block">
+                                                            {order.franjaHoraria ? `Horario: ${order.franjaHoraria}` : 'Entrega estimada: 3 - 4 horas'}
+                                                        </span>
+                                                        <span className="text-[11px] text-orange-800/80 font-bold block mt-0.5">
+                                                            📅 Fecha: {order.fechaEntrega || 'Mismo día'} ({order.tipoEntrega})
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <span className="px-3 py-1 bg-white text-orange-800 font-black text-[10px] uppercase tracking-wider rounded-xl border border-orange-200 shadow-2xs">
+                                                    {order.tipoEntrega === 'DOMICILIO' ? '🛵 Domicilio' : '🏪 Retiro'}
+                                                </span>
+                                            </div>
+
                                             {/* Lista de Ítems */}
                                             <div className="space-y-1.5 py-1">
                                                 {order.items.map(item => (
