@@ -87,6 +87,20 @@ export class NotificationService {
         console.log('[NotificationService.createNotification]:', params);
         return null;
     }
+
+    static async getNotifications(params: any): Promise<any> {
+        return { notifications: [], total: 0 };
+    }
+
+    static async trackMetric(id: string, metric: string): Promise<void> {}
+
+    static async markAllAsRead(userId: string, negocioId: string): Promise<void> {}
+
+    static async markAsRead(id: string): Promise<void> {}
+
+    static async archiveNotification(id: string): Promise<void> {}
+
+    static publishRealtime(negocioId: string, userId: string, data: any): void {}
 }
 
 // Exportaciones de compatibilidad para rutas SSE y notificaciones Push legacy
