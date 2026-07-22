@@ -7,9 +7,9 @@ export async function GET(
 ) {
     try {
         const { slug } = await params;
-        const negocio = await prisma.business.findUnique({
+        const negocio = await prisma.negocio.findUnique({
             where: { slug },
-            select: { id: true, name: true }
+            select: { id: true, nombre: true }
         });
 
         if (!negocio) {
