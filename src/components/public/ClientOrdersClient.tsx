@@ -47,6 +47,85 @@ interface Order {
     };
 }
 
+function formatFranjaHoraria(slot?: string) {
+    if (!slot) return '3 - 4 horas';
+    if (slot.includes('-')) {
+        const parts = slot.split('-');
+        return `${parts[0]}:00 - ${parts[1]}:00 hrs`;
+    }
+    if (!isNaN(Number(slot))) {
+        const start = Number(slot);
+        return `${start}:00 - ${start + 2}:00 hrs`;
+    }
+    return slot;
+}
+
+function formatFechaEntrega(fecha?: string) {
+    if (!fecha) return 'Mismo día';
+    try {
+        const dateStr = typeof fecha === 'string' ? fecha.split('T')[0] : new Date(fecha).toISOString().split('T')[0];
+        const [y, m, d] = dateStr.split('-');
+        if (y && m && d) return `${d}/${m}/${y}`;
+        return dateStr;
+    } catch (e) {
+        return fecha;
+    }
+}
+
+function DeliveryCountdown({ order }: { order: any }) {
+    const [timeLeft, setTimeLeft] = useState<string>('');
+
+    useEffect(() => {
+        const calculateRemaining = () => {
+            const now = new Date().getTime();
+            let targetTime = new Date(order.createdAt).getTime() + (3 * 60 * 60 * 1000);
+
+            if (order.fechaEntrega) {
+                const datePart = typeof order.fechaEntrega === 'string' ? order.fechaEntrega.split('T')[0] : new Date(order.fechaEntrega).toISOString().split('T')[0];
+                let hour = 18;
+                if (order.franjaHoraria) {
+                    if (order.franjaHoraria.includes('-')) {
+                        hour = parseInt(order.franjaHoraria.split('-')[1]) || 18;
+                    } else if (!isNaN(Number(order.franjaHoraria))) {
+                        hour = parseInt(order.franjaHoraria) + 2;
+                    }
+                }
+                const target = new Date(`${datePart}T${hour.toString().padStart(2, '0')}:00:00`);
+                if (!isNaN(target.getTime())) {
+                    targetTime = target.getTime();
+                }
+            }
+
+            const diff = targetTime - now;
+            if (diff <= 0) {
+                setTimeLeft('Entrega en curso / Tiempo cumplido');
+                return;
+            }
+
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            if (hours > 0) {
+                setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+            } else {
+                setTimeLeft(`${minutes}m ${seconds}s`);
+            }
+        };
+
+        calculateRemaining();
+        const interval = setInterval(calculateRemaining, 1000);
+        return () => clearInterval(interval);
+    }, [order]);
+
+    return (
+        <div className="flex items-center gap-1.5 text-xs font-black text-orange-950 bg-white/90 px-3 py-1.5 rounded-xl border border-orange-200 shadow-2xs mt-1 w-fit">
+            <span className="animate-pulse">⏱️</span>
+            <span>Tiempo restante: <strong className="text-orange-600 font-mono font-black">{timeLeft}</strong></span>
+        </div>
+    );
+}
+
 interface Props {
     negocio: any;
 }
@@ -341,7 +420,7 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                                         <span className="text-xs font-mono text-slate-400 font-bold">{new Date(order.createdAt).toLocaleDateString()}</span>
                                                     </div>
                                                     <div className="text-xs text-slate-500 font-medium mt-0.5">
-                                                        {order.tipoEntrega} • <strong className="text-slate-800 font-black">{order.franjaHoraria || 'Entrega estimada 3-4 hrs'}</strong>
+                                                        {order.tipoEntrega} • <strong className="text-slate-800 font-black">{formatFranjaHoraria(order.franjaHoraria)}</strong>
                                                     </div>
                                                 </div>
                                                 <div>
@@ -389,26 +468,33 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                                 </div>
                                             </div>
 
-                                            {/* Tarjeta de Tiempo y Franja Horaria de Entrega */}
-                                            <div className="bg-orange-50 border border-orange-200/80 rounded-2xl p-4 flex items-center justify-between text-left shadow-xs">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="size-10 bg-orange-600 text-white rounded-xl flex items-center justify-center shrink-0 shadow-md">
-                                                        <Clock className="size-5" />
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-[10px] font-black uppercase tracking-wider text-orange-950 block">Tiempo de Entrega</span>
-                                                        <span className="text-sm font-black text-orange-900 tracking-tight block">
-                                                            {order.franjaHoraria ? `Horario: ${order.franjaHoraria}` : 'Entrega estimada: 3 - 4 horas'}
+                                            {/* Tarjeta de Tiempo y Franja Horaria de Entrega (SOLO SI EL PAGO ESTÁ CONFIRMADO) */}
+                                            {order.payment?.estado === 'CONFIRMADO' && (
+                                                <div className="bg-orange-50 border border-orange-200/80 rounded-2xl p-4 flex flex-col gap-3 text-left shadow-xs">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="size-10 bg-orange-600 text-white rounded-xl flex items-center justify-center shrink-0 shadow-md">
+                                                                <Clock className="size-5" />
+                                                            </div>
+                                                            <div>
+                                                                <span className="text-[10px] font-black uppercase tracking-wider text-orange-950 block">Tiempo de Entrega Estimado</span>
+                                                                <span className="text-sm font-black text-orange-900 tracking-tight block">
+                                                                    Horario: {formatFranjaHoraria(order.franjaHoraria)}
+                                                                </span>
+                                                                <span className="text-[11px] text-orange-800/80 font-bold block mt-0.5">
+                                                                    📅 Fecha: {formatFechaEntrega(order.fechaEntrega)}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <span className="px-3 py-1 bg-white text-orange-800 font-black text-[10px] uppercase tracking-wider rounded-xl border border-orange-200 shadow-2xs shrink-0">
+                                                            {order.tipoEntrega === 'DOMICILIO' ? '🛵 Domicilio' : '🏪 Retiro'}
                                                         </span>
-                                                        <span className="text-[11px] text-orange-800/80 font-bold block mt-0.5">
-                                                            📅 Fecha: {order.fechaEntrega || 'Mismo día'} ({order.tipoEntrega})
-                                                        </span>
                                                     </div>
+                                                    
+                                                    {/* Contador en Vivo de Tiempo Restante */}
+                                                    <DeliveryCountdown order={order} />
                                                 </div>
-                                                <span className="px-3 py-1 bg-white text-orange-800 font-black text-[10px] uppercase tracking-wider rounded-xl border border-orange-200 shadow-2xs">
-                                                    {order.tipoEntrega === 'DOMICILIO' ? '🛵 Domicilio' : '🏪 Retiro'}
-                                                </span>
-                                            </div>
+                                            )}
 
                                             {/* Lista de Ítems */}
                                             <div className="space-y-1.5 py-1">
