@@ -102,17 +102,16 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
             icon: PackageCheck,
             href: `/${slug}/pedidos`,
             active: pathname.includes('/pedidos'),
+            isCentral: tipoNegocio === 'PRODUCTOS',
             visible: tipoNegocio === 'PRODUCTOS'
         },
         {
-            label: tipoNegocio === 'PRODUCTOS' ? 'Tienda' : 'Servicios',
-            icon: tipoNegocio === 'PRODUCTOS' ? ShoppingBag : Sparkles,
-            href: tipoNegocio === 'PRODUCTOS' ? `/${slug}` : `/${slug}/servicios`,
-            active: tipoNegocio === 'PRODUCTOS' 
-                ? pathname === `/${slug}` 
-                : pathname.includes('/servicios'),
+            label: 'Servicios',
+            icon: Sparkles,
+            href: `/${slug}/servicios`,
+            active: pathname.includes('/servicios'),
             isCentral: true,
-            visible: true
+            visible: tipoNegocio !== 'PRODUCTOS'
         },
         {
             label: 'Premios',

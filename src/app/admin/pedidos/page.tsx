@@ -70,6 +70,7 @@ function PedidosContent() {
 
     // Estado para edición de hora de entrega
     const [editingTimeSlot, setEditingTimeSlot] = useState('');
+    const [editingDateTime, setEditingDateTime] = useState('');
     const [savingTime, setSavingTime] = useState(false);
 
     // Visor de comprobante
@@ -110,6 +111,17 @@ function PedidosContent() {
     const handleSelectOrder = (order: Order) => {
         setSelectedOrder(order);
         setEditingTimeSlot(order.franjaHoraria || '');
+        if (order.fechaEntrega) {
+            try {
+                const dt = new Date(order.fechaEntrega);
+                const iso = new Date(dt.getTime() - (dt.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+                setEditingDateTime(iso);
+            } catch (e) {
+                setEditingDateTime('');
+            }
+        } else {
+            setEditingDateTime('');
+        }
     };
 
     const handleUpdateStatus = async (id: string, newStatus: string) => {
@@ -138,22 +150,27 @@ function PedidosContent() {
     };
 
     const handleSaveTimeSlot = async () => {
-        if (!selectedOrder || !editingTimeSlot) return;
+        if (!selectedOrder) return;
         try {
             setSavingTime(true);
+            const updatePayload: any = { id: selectedOrder.id, franjaHoraria: editingTimeSlot };
+            if (editingDateTime) {
+                updatePayload.fechaEntrega = new Date(editingDateTime).toISOString();
+            }
+
             const res = await fetch('/api/admin/pedidos', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: selectedOrder.id, franjaHoraria: editingTimeSlot })
+                body: JSON.stringify(updatePayload)
             });
 
             if (res.ok) {
                 const updated = await res.json();
-                setOrders(prev => prev.map(o => o.id === selectedOrder.id ? { ...o, franjaHoraria: updated.franjaHoraria } : o));
-                setSelectedOrder(prev => prev ? { ...prev, franjaHoraria: updated.franjaHoraria } : null);
-                alert("Hora de entrega actualizada exitosamente.");
+                setOrders(prev => prev.map(o => o.id === selectedOrder.id ? { ...o, fechaEntrega: updated.fechaEntrega, franjaHoraria: updated.franjaHoraria } : o));
+                setSelectedOrder(prev => prev ? { ...prev, fechaEntrega: updated.fechaEntrega, franjaHoraria: updated.franjaHoraria } : null);
+                alert("Fecha y hora de entrega actualizadas exitosamente. El contador del cliente ha comenzado.");
             } else {
-                alert("Error al actualizar la hora de entrega.");
+                alert("Error al actualizar la fecha y hora.");
             }
         } catch (e) {
             console.error(e);
@@ -418,11 +435,27 @@ function PedidosContent() {
                                         <span className="text-[10px] text-slate-400 block mt-0.5">Celular: {selectedOrder.telefonoCliente}</span>
                                     </div>
                                 </div>
-                                <div className="flex gap-2.5 items-start">
-                                    <Calendar className="size-4 text-slate-400 shrink-0 mt-0.5" />
-                                    <div>
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Fecha de Entrega Solicitada</span>
-                                        <span className="font-bold text-slate-800">{selectedOrder.fechaEntrega.split('T')[0]} | {selectedOrder.franjaHoraria || 'Sin hora'}</span>
+                                <div className="flex gap-2.5 items-start bg-amber-50/60 p-3 rounded-2xl border border-amber-200/80">
+                                    <Clock className="size-4 text-amber-600 shrink-0 mt-0.5" />
+                                    <div className="flex-1 space-y-1.5">
+                                        <span className="text-[9px] font-black text-amber-900 uppercase tracking-wider block">Asignar Fecha y Hora Exacta de Entrega</span>
+                                        <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                                            <input
+                                                type="datetime-local"
+                                                value={editingDateTime}
+                                                onChange={(e) => setEditingDateTime(e.target.value)}
+                                                className="bg-white border border-amber-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-500 shadow-2xs flex-1"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleSaveTimeSlot}
+                                                disabled={savingTime}
+                                                className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black transition-all active:scale-95 shadow-xs shrink-0 cursor-pointer"
+                                            >
+                                                {savingTime ? 'Guardando...' : 'Guardar'}
+                                            </button>
+                                        </div>
+                                        <p className="text-[9px] text-amber-800 font-medium">Esta fecha y hora inicia el contador regresivo en tiempo real en la pantalla del cliente.</p>
                                     </div>
                                 </div>
                                 {selectedOrder.direccionCliente && (

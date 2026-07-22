@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { 
     ShoppingBag, Plus, Minus, Trash2, MapPin, Calendar, Clock, 
     ChevronRight, Check, Loader2, Search, ArrowLeft, Phone, Info, AlertCircle
@@ -160,6 +161,101 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const [selectedLat, setSelectedLat] = useState<number | null>(null);
     const [selectedLng, setSelectedLng] = useState<number | null>(null);
 
+    // Estado para Pedido Activo y Contador Regresivo
+    const [activeOrder, setActiveOrder] = useState<any | null>(null);
+    const [countdownTime, setCountdownTime] = useState<string>('');
+
+    // Cargar pedido activo para mostrar aviso y contador en el home
+    const fetchActiveOrder = async (phone: string) => {
+        if (!phone) return;
+        try {
+            const res = await fetch(`/api/public/${negocio.slug}/orders?phone=${encodeURIComponent(phone)}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.pedidos && data.pedidos.length > 0) {
+                    const active = data.pedidos.find((p: any) => 
+                        !['ENTREGADO', 'CANCELADO', 'RECHAZADO'].includes(p.estado)
+                    );
+                    if (active) setActiveOrder(active);
+                }
+            }
+        } catch (e) {
+            console.error("Error al consultar pedido activo:", e);
+        }
+    };
+
+    // Contador regresivo en tiempo real para la entrega del pedido
+    useEffect(() => {
+        if (!activeOrder || !activeOrder.fechaEntrega) return;
+
+        const updateTimer = () => {
+            const target = new Date(activeOrder.fechaEntrega).getTime();
+            const now = new Date().getTime();
+            const diff = target - now;
+
+            if (diff <= 0) {
+                setCountdownTime('¡Tiempo de entrega cumplido! Tu pedido está en camino.');
+                return;
+            }
+
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            const hStr = hours < 10 ? `0${hours}` : `${hours}`;
+            const mStr = minutes < 10 ? `0${minutes}` : `${minutes}`;
+            const sStr = seconds < 10 ? `0${seconds}` : `${seconds}`;
+
+            setCountdownTime(`${hStr}h ${mStr}m ${sStr}s`);
+        };
+
+        updateTimer();
+        const interval = setInterval(updateTimer, 1000);
+        return () => clearInterval(interval);
+    }, [activeOrder]);
+
+    // Enviar mensaje con detalles y ubicación GPS al WhatsApp del negocio
+    const sendWhatsAppToBusiness = (pedido: any, name: string, phone: string) => {
+        try {
+            const bizPhone = negocio.telefono || (config as any)?.whatsapp || '593998877665';
+            let formattedBizPhone = bizPhone.replace(/[^0-9]/g, '');
+            if (formattedBizPhone.startsWith('0')) {
+                formattedBizPhone = '593' + formattedBizPhone.slice(1);
+            }
+
+            const itemsText = cart.map(item => `• ${item.quantity}x ${item.product.nombre} ($${(item.product.precio * item.quantity).toFixed(2)})`).join('\n');
+            
+            let locationUrl = '';
+            if (selectedLat && selectedLng) {
+                locationUrl = `📍 *Ubicación GPS:* https://maps.google.com/?q=${selectedLat},${selectedLng}\n`;
+            }
+
+            let message = `🛒 *NUEVO PEDIDO REGISTRADO #${pedido.id ? pedido.id.slice(0, 8) : ''}*\n\n`;
+            message += `👤 *Cliente:* ${name}\n`;
+            message += `📞 *Teléfono:* ${countryCode} ${phone}\n`;
+            message += `🚚 *Tipo:* ${deliveryType === 'DOMICILIO' ? 'Entrega a Domicilio' : 'Retiro en Local'}\n`;
+            
+            if (deliveryType === 'DOMICILIO') {
+                message += `🏠 *Dirección:* ${clientAddress || 'No especificada'}\n`;
+                if (clientReference) message += `📝 *Referencia:* ${clientReference}\n`;
+                if (locationUrl) message += locationUrl;
+            }
+
+            message += `📅 *Fecha/Hora Entrega:* ${deliveryDate} (${timeSlot} hrs)\n\n`;
+            message += `📦 *Detalle del Pedido:*\n${itemsText}\n\n`;
+            message += `💰 *Subtotal:* $${cartSubtotal.toFixed(2)}\n`;
+            if (deliveryType === 'DOMICILIO') {
+                message += `🛵 *Envío:* $${shippingCost.toFixed(2)}\n`;
+            }
+            message += `💵 *TOTAL A PAGAR:* $${cartTotal.toFixed(2)}\n`;
+
+            const whatsappUrl = `https://wa.me/${formattedBizPhone}?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        } catch (e) {
+            console.error("Error al enviar WhatsApp al negocio:", e);
+        }
+    };
+
     // Save Cart to localStorage
     const saveCart = (newCart: CartItem[]) => {
         setCart(newCart);
@@ -318,7 +414,10 @@ export default function ProductsStoreClient({ negocio }: Props) {
                 }
             }
 
-            if (savedPhone) setClientPhone(savedPhone);
+            if (savedPhone) {
+                setClientPhone(savedPhone);
+                fetchActiveOrder(savedPhone);
+            }
             if (savedName) setClientName(savedName);
             if (savedAddr) setClientAddress(savedAddr);
             if (savedRef) setClientReference(savedRef);
@@ -391,6 +490,10 @@ export default function ProductsStoreClient({ negocio }: Props) {
             const data = await response.json();
             setCreatedOrder(data.pedido);
             setCreatedPayment(data.payment);
+            setActiveOrder(data.pedido);
+
+            // Enviar detalles del pedido y ubicación GPS al WhatsApp del negocio
+            sendWhatsAppToBusiness(data.pedido, name, phone);
 
             // Guardar datos del cliente y su última ubicación para futuros pedidos
             saveClientDataToLocalStorage(name, phone);
@@ -802,6 +905,42 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
             {step === 'catalog' ? (
                 <>
+                    {/* Banner de Aviso de Pedido Activo + Contador Regresivo */}
+                    {activeOrder && (
+                        <div className="mx-4 mt-3 bg-slate-900 text-white rounded-3xl p-4 shadow-xl border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-3 text-left animate-fade-in">
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                                <div className="size-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black shrink-0">
+                                    <Clock className="size-5 animate-pulse" />
+                                </div>
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-black uppercase tracking-wider text-emerald-400">
+                                            🛵 Pedido Activo #{activeOrder.id.slice(0, 8)}
+                                        </span>
+                                        <span className="bg-emerald-500/20 text-emerald-300 text-[8px] font-black px-2 py-0.5 rounded-full uppercase">
+                                            {activeOrder.estado}
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-300 font-semibold mt-0.5">
+                                        Entrega estimada: {new Date(activeOrder.fechaEntrega).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ({activeOrder.franjaHoraria || 'Sin franja'})
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto border-t md:border-t-0 border-slate-800 pt-2.5 md:pt-0">
+                                <div className="text-left md:text-right">
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">Tiempo Restante</span>
+                                    <span className="text-sm font-mono font-black text-emerald-400">{countdownTime || 'Calculando...'}</span>
+                                </div>
+                                <Link
+                                    href={`/${negocio.slug}/pedidos`}
+                                    className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs rounded-xl transition-all active:scale-95 shrink-0"
+                                >
+                                    Ver Pedido →
+                                </Link>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Hero / Banner */}
                     {hasCustomBanner ? (
                         <div className="relative w-full bg-slate-950 flex flex-col items-center justify-center overflow-hidden">
@@ -1301,6 +1440,16 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 </div>
                             </div>
                         )}
+
+                        {/* Botón Añadir Productos (Sobre Confirmar Pedido) */}
+                        <button
+                            type="button"
+                            onClick={() => setStep('catalog')}
+                            className="w-full py-3.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-black rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer border border-slate-200/80 shadow-2xs"
+                        >
+                            <Plus className="size-4 text-slate-700 stroke-[2.5]" />
+                            <span>Añadir más productos al carrito</span>
+                        </button>
 
                         {/* Botón de Confirmación */}
                         <button
