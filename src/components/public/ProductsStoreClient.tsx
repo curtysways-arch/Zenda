@@ -152,6 +152,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
     }, [negocio.id]);
 
     const [submitting, setSubmitting] = useState(false);
+    const [isEditingPersonalData, setIsEditingPersonalData] = useState(false);
 
     // Modal de Mapa & Coordenadas GPS
     const [showMapModal, setShowMapModal] = useState(false);
@@ -760,6 +761,16 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         </button>
                     </div>
                 )}
+                {step === 'checkout' && (
+                    <button 
+                        type="button"
+                        onClick={() => setStep('catalog')}
+                        className="text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100/80 px-3 py-1.5 rounded-xl border border-emerald-200/80 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer shadow-2xs"
+                    >
+                        <Plus className="size-3.5 text-emerald-600 stroke-[2.5]" />
+                        <span>Añadir productos</span>
+                    </button>
+                )}
             </header>
 
             {step === 'catalog' ? (
@@ -982,81 +993,137 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             </button>
                         </div>
 
-                        {/* Datos del Cliente */}
-                        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
-                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-slate-50 pb-2">Datos de Contacto</h3>
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Nombre Completo</label>
-                                <input 
-                                    type="text"
-                                    required
-                                    placeholder="Ej: Juan Pérez"
-                                    value={clientName}
-                                    onChange={e => setClientName(e.target.value)}
-                                    className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
-                                />
+                        {/* Datos del Cliente (Oculto en tarjeta compacta si la sesión está iniciada) */}
+                        {clientPhone && clientName && !isEditingPersonalData ? (
+                            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex items-center justify-between">
+                                <div className="flex items-center gap-3.5">
+                                    <div className="size-10 rounded-2xl text-white flex items-center justify-center font-black text-sm shadow-sm" style={{ backgroundColor: primaryColor }}>
+                                        {clientName.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-1.5">
+                                            <h4 className="text-xs font-black text-slate-900">{clientName}</h4>
+                                            <span className="bg-emerald-100 text-emerald-800 text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider">Identificado</span>
+                                        </div>
+                                        <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1 mt-0.5">
+                                            <Phone className="size-3 text-slate-400" /> {clientPhone}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditingPersonalData(true)}
+                                    className="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-all active:scale-95 cursor-pointer"
+                                >
+                                    Editar datos
+                                </button>
                             </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Teléfono Celular</label>
-                                <div className="relative">
-                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                        ) : (
+                            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
+                                <div className="flex justify-between items-center border-b border-slate-50 pb-2">
+                                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Datos de Contacto</h3>
+                                    {clientPhone && clientName && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsEditingPersonalData(false)}
+                                            className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700"
+                                        >
+                                            Ocultar ↑
+                                        </button>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Nombre Completo</label>
                                     <input 
-                                        type="tel"
+                                        type="text"
                                         required
-                                        placeholder="Ej: 0998877665"
-                                        value={clientPhone}
-                                        onChange={e => setClientPhone(e.target.value)}
-                                        className="w-full bg-slate-50 rounded-xl pl-11 pr-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
+                                        placeholder="Ej: Juan Pérez"
+                                        value={clientName}
+                                        onChange={e => setClientName(e.target.value)}
+                                        className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300 text-slate-900"
                                     />
                                 </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Teléfono Celular</label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                                        <input 
+                                            type="tel"
+                                            required
+                                            placeholder="Ej: 0998877665"
+                                            value={clientPhone}
+                                            onChange={e => setClientPhone(e.target.value)}
+                                            className="w-full bg-slate-50 rounded-xl pl-11 pr-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300 text-slate-900"
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
-                        {/* Dirección y Ubicación GPS (Solo para Domicilio) */}
+                        {/* Dirección y Ubicación GPS Mejorado (Solo para Domicilio) */}
                         {deliveryType === 'DOMICILIO' && (
                             <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
-                                <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-slate-50 pb-2">Dirección de Entrega</h3>
+                                <div className="flex items-center gap-2 border-b border-slate-50 pb-2">
+                                    <MapPin className="size-4 text-emerald-600 shrink-0" />
+                                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Dirección de Entrega</h3>
+                                </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Dirección Principal</label>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Calle / Av. Principal y Secundaria</label>
                                     <input 
                                         type="text"
                                         required={deliveryType === 'DOMICILIO'}
-                                        placeholder="Ej: Av. de los Shyris y Portugal"
+                                        placeholder="Ej: Av. de los Shyris N34-120 y Portugal"
                                         value={clientAddress}
                                         onChange={e => setClientAddress(e.target.value)}
-                                        className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
+                                        className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300 text-slate-900"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Referencia (Casa/Depto/Color)</label>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Referencia (Casa / Depto / Color / Conjunto)</label>
                                     <input 
                                         type="text"
-                                        placeholder="Ej: Casa blanca de 2 pisos junto a la tienda"
+                                        placeholder="Ej: Casa blanca de 2 pisos, portón negro frente a la farmacia"
                                         value={clientReference}
                                         onChange={e => setClientReference(e.target.value)}
-                                        className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
+                                        className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300 text-slate-900"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Ubicación exacta en Mapa (Opcional)</label>
+
+                                {/* Tarjeta de Fijación de Ubicación GPS */}
+                                <div className="pt-1">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Punto Exacto en el Mapa (GPS)</label>
                                     <button
                                         type="button"
                                         onClick={() => setShowMapModal(true)}
-                                        className="w-full py-3 px-4 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/80 text-emerald-800 rounded-xl text-xs font-bold flex items-center justify-between transition-all active:scale-[0.99] cursor-pointer"
+                                        className={`w-full p-3.5 rounded-2xl border text-xs font-bold flex items-center justify-between transition-all active:scale-[0.99] cursor-pointer shadow-2xs ${
+                                            selectedLat && selectedLng 
+                                                ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900' 
+                                                : 'bg-slate-50 hover:bg-slate-100/80 border-slate-200 text-slate-700'
+                                        }`}
                                     >
-                                        <div className="flex items-center gap-2">
-                                            <MapPin className="size-4 text-emerald-600 shrink-0" />
-                                            <span>{selectedLat && selectedLng ? '📍 Ubicación GPS Seleccionada' : '🗺️ Abrir Mapa GPS para ubicar punto'}</span>
+                                        <div className="flex items-center gap-3">
+                                            <div className={`size-8 rounded-xl flex items-center justify-center shrink-0 font-bold ${
+                                                selectedLat && selectedLng ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-200 text-slate-600'
+                                            }`}>
+                                                <MapPin className="size-4" />
+                                            </div>
+                                            <div className="text-left">
+                                                <span className="block font-black text-xs">
+                                                    {selectedLat && selectedLng ? '📍 Ubicación GPS Fijada' : '🗺️ Seleccionar Punto en el Mapa'}
+                                                </span>
+                                                <span className="block text-[10px] font-medium text-slate-500">
+                                                    {selectedLat && selectedLng 
+                                                        ? `${selectedLat.toFixed(4)}, ${selectedLng.toFixed(4)}` 
+                                                        : 'Toca para abrir el mapa interactivo'}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <span className="text-[10px] uppercase font-black tracking-wider text-emerald-700">
-                                            {selectedLat && selectedLng ? 'Cambiar →' : 'Abrir →'}
+                                        <span className={`text-[10px] uppercase font-black tracking-wider px-2.5 py-1 rounded-lg ${
+                                            selectedLat && selectedLng ? 'bg-emerald-200/60 text-emerald-800' : 'bg-white border border-slate-200 text-slate-600'
+                                        }`}>
+                                            {selectedLat && selectedLng ? 'Mover →' : 'Abrir →'}
                                         </span>
                                     </button>
-                                    {selectedLat && selectedLng && (
-                                        <p className="text-[10px] text-emerald-700 font-bold pl-1 mt-1">
-                                            ✓ Coordenadas fijadas: {selectedLat.toFixed(5)}, {selectedLng.toFixed(5)}
-                                        </p>
-                                    )}
                                 </div>
                             </div>
                         )}
@@ -1142,7 +1209,17 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
                         {/* Resumen del Pedido */}
                         <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
-                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-slate-50 pb-2">Resumen</h3>
+                            <div className="flex items-center justify-between border-b border-slate-50 pb-2">
+                                <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Resumen del Pedido</h3>
+                                <button
+                                    type="button"
+                                    onClick={() => setStep('catalog')}
+                                    className="text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
+                                >
+                                    <Plus className="size-3 text-slate-500 stroke-[2.5]" />
+                                    <span>Añadir más</span>
+                                </button>
+                            </div>
                             <div className="divide-y divide-slate-100">
                                 {cart.map(item => (
                                     <div key={item.product.id} className="py-2.5 flex justify-between items-center text-xs font-semibold">
