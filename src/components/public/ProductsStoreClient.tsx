@@ -424,9 +424,6 @@ export default function ProductsStoreClient({ negocio }: Props) {
         }
     }, [deliveryDate, slotsDisponibles.length]);
 
-    // Paso 1: Enviar OTP al hacer clic en "Confirmar Pedido"
-    const handleStartCheckoutOTP = async (e: React.FormEvent) => {
-        e.preventDefault();
     // Cargar teléfono y nombre guardados de la sesión previa / OTP
     useEffect(() => {
         const savedPhone = localStorage.getItem('pinchos_client_phone');
@@ -1333,3 +1330,4 @@ export default function ProductsStoreClient({ negocio }: Props) {
         </div>
     );
 }
+
