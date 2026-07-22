@@ -6,6 +6,7 @@ import {
     ChevronRight, Check, Loader2, Search, ArrowLeft, Phone, Info, AlertCircle
 } from 'lucide-react';
 import Image from 'next/image';
+import MapSelectionModal from './MapSelectionModal';
 
 interface Product {
     id: string;
@@ -152,6 +153,11 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
     const [submitting, setSubmitting] = useState(false);
 
+    // Modal de Mapa & Coordenadas GPS
+    const [showMapModal, setShowMapModal] = useState(false);
+    const [selectedLat, setSelectedLat] = useState<number | null>(null);
+    const [selectedLng, setSelectedLng] = useState<number | null>(null);
+
     // Save Cart to localStorage
     const saveCart = (newCart: CartItem[]) => {
         setCart(newCart);
@@ -210,10 +216,25 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
     const getDynamicShippingCost = () => {
         if (deliveryType !== 'DOMICILIO') return 0;
-        return config.costoEnvio !== undefined ? parseFloat(config.costoEnvio) : 1.50;
+        const baseCost = config.costoEnvio !== undefined ? parseFloat(config.costoEnvio) : 1.50;
+        if (selectedLat && selectedLng) {
+            const latNegocio = config.latitudNegocio !== undefined ? parseFloat(config.latitudNegocio) : -0.180653;
+            const lngNegocio = config.longitudNegocio !== undefined ? parseFloat(config.longitudNegocio) : -78.467838;
+            const distance = getDistanceFromLatLonInKm(latNegocio, lngNegocio, selectedLat, selectedLng);
+            const kmCost = distance * (config.costoEnvioPorKm !== undefined ? parseFloat(config.costoEnvioPorKm) : 0.25);
+            return parseFloat((baseCost + kmCost).toFixed(2));
+        }
+        return baseCost;
     };
 
     const getShippingText = () => {
+        if (deliveryType !== 'DOMICILIO') return '';
+        if (selectedLat && selectedLng) {
+            const latNegocio = config.latitudNegocio !== undefined ? parseFloat(config.latitudNegocio) : -0.180653;
+            const lngNegocio = config.longitudNegocio !== undefined ? parseFloat(config.longitudNegocio) : -78.467838;
+            const distance = getDistanceFromLatLonInKm(latNegocio, lngNegocio, selectedLat, selectedLng);
+            return `${distance.toFixed(1)} km`;
+        }
         return '';
     };
 
@@ -274,18 +295,29 @@ export default function ProductsStoreClient({ negocio }: Props) {
         }
     }, [deliveryDate]);
 
-    // Cargar datos del cliente guardados en localStorage (Teléfono, Nombre, Dirección, Referencia)
+    // Cargar datos del cliente guardados en localStorage (Teléfono, Nombre, Dirección, Referencia, Coordenadas)
     useEffect(() => {
         try {
             const savedPhone = localStorage.getItem('pinchos_client_phone');
             const savedName = localStorage.getItem('pinchos_client_name');
             const savedAddr = localStorage.getItem('pinchos_client_address');
             const savedRef = localStorage.getItem('pinchos_client_reference');
+            const savedLat = localStorage.getItem('pinchos_client_lat');
+            const savedLng = localStorage.getItem('pinchos_client_lng');
 
             if (savedPhone) setClientPhone(savedPhone);
             if (savedName) setClientName(savedName);
             if (savedAddr) setClientAddress(savedAddr);
             if (savedRef) setClientReference(savedRef);
+
+            if (savedLat && savedLng) {
+                const pLat = parseFloat(savedLat);
+                const pLng = parseFloat(savedLng);
+                if (!isNaN(pLat) && !isNaN(pLng)) {
+                    setSelectedLat(pLat);
+                    setSelectedLng(pLng);
+                }
+            }
         } catch (e) {
             console.error("Error al leer datos guardados del cliente:", e);
         }
@@ -298,6 +330,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
             if (name) localStorage.setItem('pinchos_client_name', name);
             if (clientAddress) localStorage.setItem('pinchos_client_address', clientAddress);
             if (clientReference) localStorage.setItem('pinchos_client_reference', clientReference);
+            if (selectedLat !== null && selectedLat !== undefined) localStorage.setItem('pinchos_client_lat', selectedLat.toString());
+            if (selectedLng !== null && selectedLng !== undefined) localStorage.setItem('pinchos_client_lng', selectedLng.toString());
         } catch (e) {
             console.error("Error al guardar datos del cliente en localStorage:", e);
         }
@@ -314,8 +348,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
                 clientPhone: phone,
                 clientAddress: deliveryType === 'DOMICILIO' ? clientAddress : null,
                 clientReference: deliveryType === 'DOMICILIO' ? clientReference : null,
-                lat: null,
-                lng: null,
+                lat: deliveryType === 'DOMICILIO' ? selectedLat : null,
+                lng: deliveryType === 'DOMICILIO' ? selectedLng : null,
                 deliveryDate: deliveryDate,
                 timeSlot,
                 items: cart.map(item => ({
@@ -1003,6 +1037,27 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                         className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
                                     />
                                 </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Ubicación exacta en Mapa (Opcional)</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowMapModal(true)}
+                                        className="w-full py-3 px-4 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/80 text-emerald-800 rounded-xl text-xs font-bold flex items-center justify-between transition-all active:scale-[0.99] cursor-pointer"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <MapPin className="size-4 text-emerald-600 shrink-0" />
+                                            <span>{selectedLat && selectedLng ? '📍 Ubicación GPS Seleccionada' : '🗺️ Abrir Mapa GPS para ubicar punto'}</span>
+                                        </div>
+                                        <span className="text-[10px] uppercase font-black tracking-wider text-emerald-700">
+                                            {selectedLat && selectedLng ? 'Cambiar →' : 'Abrir →'}
+                                        </span>
+                                    </button>
+                                    {selectedLat && selectedLng && (
+                                        <p className="text-[10px] text-emerald-700 font-bold pl-1 mt-1">
+                                            ✓ Coordenadas fijadas: {selectedLat.toFixed(5)}, {selectedLng.toFixed(5)}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         )}
 
@@ -1176,6 +1231,24 @@ export default function ProductsStoreClient({ negocio }: Props) {
                     </button>
                 </div>
             )}
+
+            {/* Modal para selección de ubicación GPS en Mapa */}
+            <MapSelectionModal
+                isOpen={showMapModal}
+                onClose={() => setShowMapModal(false)}
+                initialLat={selectedLat}
+                initialLng={selectedLng}
+                businessLat={config.latitudNegocio !== undefined ? parseFloat(config.latitudNegocio) : -0.180653}
+                businessLng={config.longitudNegocio !== undefined ? parseFloat(config.longitudNegocio) : -78.467838}
+                onConfirmLocation={(latVal, lngVal) => {
+                    setSelectedLat(latVal);
+                    setSelectedLng(lngVal);
+                    try {
+                        localStorage.setItem('pinchos_client_lat', latVal.toString());
+                        localStorage.setItem('pinchos_client_lng', lngVal.toString());
+                    } catch (e) {}
+                }}
+            />
         </div>
     );
 }
