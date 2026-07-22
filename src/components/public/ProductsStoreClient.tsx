@@ -443,7 +443,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
             const res = await fetch('/api/public/auth/otp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'send_otp', phone: clientPhone, nombre: clientName })
+                body: JSON.stringify({ action: 'send_otp', phone: clientPhone, nombre: clientName, slug: negocio.slug })
             });
             const data = await res.json();
             if (data.success) {
@@ -475,7 +475,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
             const otpRes = await fetch('/api/public/auth/otp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'verify_otp', phone: clientPhone, code: otpCode })
+                body: JSON.stringify({ action: 'verify_otp', phone: clientPhone, code: otpCode, slug: negocio.slug })
             });
 
             const otpData = await otpRes.json();

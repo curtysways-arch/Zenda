@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { notificationService } from '@/lib/notifications';
+import { PaymentService } from '@/lib/payments/PaymentService';
 
 export const dynamic = 'force-dynamic';
 
@@ -151,13 +152,11 @@ export async function POST(
                 }
             });
 
-            // Importar dinámicamente PaymentService e inicializar entidad de pago
-            const { PaymentService } = require('@/lib/payments/PaymentService');
             const initialPayment = await PaymentService.createInitialPayment({
                 pedidoId: newOrder.id,
                 negocioId: negocio.id,
                 monto: total
-            });
+            }, tx);
 
             return { newOrder, initialPayment };
         });

@@ -24,12 +24,13 @@ export class PaymentService {
         negocioId: string;
         monto: number;
         methodId?: string;
-    }) {
+    }, dbClient?: any) {
+        const db = dbClient || prisma;
         const { pedidoId, negocioId, monto, methodId } = params;
 
         const codigoPago = this.generatePaymentCode('PINCHOS');
 
-        const payment = await prisma.orderPayment.create({
+        const payment = await db.orderPayment.create({
             data: {
                 pedidoId,
                 negocioId,
