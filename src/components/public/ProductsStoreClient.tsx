@@ -299,12 +299,13 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
     // Auto-seleccionar primer horario disponible al cambiar fecha
     useEffect(() => {
-        if (slotsDisponibles.length > 0) {
-            setTimeSlot(slotsDisponibles[0]);
+        const slots = getTimeSlots();
+        if (slots.length > 0) {
+            setTimeSlot(prev => (slots.includes(prev) ? prev : slots[0]));
         } else {
-            setTimeSlot('');
+            setTimeSlot(prev => (prev === '' ? prev : ''));
         }
-    }, [deliveryDate, slotsDisponibles.length]);
+    }, [deliveryDate]);
 
     // Cargar teléfono y nombre guardados de la sesión previa / OTP
     useEffect(() => {

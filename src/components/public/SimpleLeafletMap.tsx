@@ -117,6 +117,8 @@ export default function SimpleLeafletMap({
             }
         };
 
+        let checkInterval: any = null;
+
         if ((window as any).L) {
             initLeaflet();
         } else {
@@ -136,7 +138,7 @@ export default function SimpleLeafletMap({
                 script.onload = () => initLeaflet();
                 document.head.appendChild(script);
             } else {
-                const checkInterval = setInterval(() => {
+                checkInterval = setInterval(() => {
                     if ((window as any).L) {
                         clearInterval(checkInterval);
                         initLeaflet();
@@ -147,6 +149,7 @@ export default function SimpleLeafletMap({
 
         return () => {
             isMounted = false;
+            if (checkInterval) clearInterval(checkInterval);
             if (mapInstanceRef.current) {
                 try { mapInstanceRef.current.remove(); } catch (e) {}
                 mapInstanceRef.current = null;
