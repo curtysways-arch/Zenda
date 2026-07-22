@@ -91,28 +91,53 @@ export async function PUT(req: Request) {
             }
         }
 
-        // Notificación de WhatsApp al cliente
-        if (pedido.telefonoCliente) {
-            try {
-                const { whatsappService } = require('@/lib/whatsapp');
+        // Notificaciones Push + SSE + WhatsApp del Bot al Cliente
+        try {
+            const { whatsappService } = require('@/lib/whatsapp');
+            const { sseEmitter, notificationService } = require('@/lib/notifications/notificationService');
+
+            // Emitir evento SSE en tiempo real
+            sseEmitter.emit('realtime_event', {
+                negocioId: pedido.negocioId,
+                type: 'ESTADO_CAMBIADO',
+                title: `🔄 Pedido #${pedido.numeroPedido} Actualizado`,
+                message: `Nuevo Estado: ${estado || pedido.estado}`,
+                pedidoId: pedido.id
+            });
+
+            // Notificación Push al negocio
+            await notificationService.sendPushToBusiness(
+                pedido.negocioId,
+                `Pedido #${pedido.numeroPedido} -> ${estado || pedido.estado}`,
+                `Cliente: ${pedido.nombreCliente}`
+            ).catch(() => {});
+
+            // Notificación de WhatsApp DEL BOT AL CLIENTE
+            if (pedido.telefonoCliente && estado) {
                 let mensaje = '';
-                
+                const deliveryDateStr = pedidoActualizado.fechaEntrega ? new Date(pedidoActualizado.fechaEntrega).toISOString().split('T')[0] : '';
+                const timeSlotStr = pedidoActualizado.franjaHoraria || '';
+
                 switch (estado) {
                     case 'PREPARACION':
-                        mensaje = `🍢 *Tu pedido #${pedido.numeroPedido} está en preparación* en *${pedido.negocio.nombre}*. ¡Muy pronto estará listo!`;
+                    case 'EN_PREPARACION':
+                    case 'RECIBIDO':
+                        mensaje = `✅ *¡Tu pedido #${pedido.numeroPedido} ha sido CONFIRMADO!*\n\nEn *${pedido.negocio.nombre}* ya estamos preparando tus productos con la máxima calidad. 🔥\n\n📅 *Entrega Programada:* ${deliveryDateStr} (${timeSlotStr} hrs)\n\n¡Gracias por tu compra!`;
                         break;
                     case 'LISTO':
                         mensaje = pedido.tipoEntrega === 'DOMICILIO' 
-                            ? `📦 *Tu pedido #${pedido.numeroPedido} está listo* y empacado. Pronto saldrá el repartidor.`
+                            ? `📦 *Tu pedido #${pedido.numeroPedido} está listo* y empacado. El repartidor saldrá en breve.`
                             : `🏪 *Tu pedido #${pedido.numeroPedido} está listo para retirar* en el local de *${pedido.negocio.nombre}*. ¡Te esperamos!`;
                         break;
                     case 'RUTA':
-                        mensaje = `🛵 *Tu pedido #${pedido.numeroPedido} está en ruta* a tu domicilio. ¡El repartidor llegará en breve!`;
+                    case 'EN_CAMINO':
+                        mensaje = `🛵 *Tu pedido #${pedido.numeroPedido} está en ruta* hacia tu domicilio. ¡El repartidor llegará en breve!`;
                         break;
                     case 'ENTREGADO':
                         mensaje = `🎉 *Tu pedido #${pedido.numeroPedido} ha sido entregado*. ¡Gracias por tu compra en *${pedido.negocio.nombre}*! Que lo disfrutes.`;
                         break;
                     case 'CANCELADO':
+                    case 'RECHAZADO':
                         mensaje = `❌ *Tu pedido #${pedido.numeroPedido} ha sido cancelado* por el establecimiento. Si tienes dudas, contáctanos.`;
                         break;
                 }
@@ -120,9 +145,9 @@ export async function PUT(req: Request) {
                 if (mensaje) {
                     await whatsappService.sendWhatsApp(pedido.telefonoCliente, mensaje).catch(() => {});
                 }
-            } catch (notifErr) {
-                console.error('[ORDER_STATUS_NOTIF_ERROR]', notifErr);
             }
+        } catch (notifErr) {
+            console.error('[ORDER_STATUS_NOTIF_ERROR]', notifErr);
         }
 
         return NextResponse.json(pedidoActualizado);

@@ -492,9 +492,6 @@ export default function ProductsStoreClient({ negocio }: Props) {
             setCreatedPayment(data.payment);
             setActiveOrder(data.pedido);
 
-            // Enviar detalles del pedido y ubicación GPS al WhatsApp del negocio
-            sendWhatsAppToBusiness(data.pedido, name, phone);
-
             // Guardar datos del cliente y su última ubicación para futuros pedidos
             saveClientDataToLocalStorage(name, phone);
 
@@ -905,35 +902,69 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
             {step === 'catalog' ? (
                 <>
-                    {/* Banner de Aviso de Pedido Activo + Contador Regresivo */}
+                    {/* Banner de Aviso de Pedido Activo / Pendiente de Aprobación + Contador Regresivo */}
                     {activeOrder && (
-                        <div className="mx-4 mt-3 bg-slate-900 text-white rounded-3xl p-4 shadow-xl border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-3 text-left animate-fade-in">
+                        <div className={`mx-4 mt-3 rounded-3xl p-4 shadow-xl border flex flex-col md:flex-row items-center justify-between gap-3 text-left animate-fade-in ${
+                            ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
+                                ? 'bg-amber-950 text-amber-50 border-amber-800/80'
+                                : 'bg-slate-900 text-white border-slate-800'
+                        }`}>
                             <div className="flex items-center gap-3 w-full md:w-auto">
-                                <div className="size-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black shrink-0">
-                                    <Clock className="size-5 animate-pulse" />
+                                <div className={`size-10 rounded-2xl flex items-center justify-center font-black shrink-0 ${
+                                    ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
+                                        ? 'bg-amber-500/20 text-amber-400'
+                                        : 'bg-emerald-500/20 text-emerald-400'
+                                }`}>
+                                    {['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado) ? (
+                                        <AlertCircle className="size-5 animate-bounce" />
+                                    ) : (
+                                        <Clock className="size-5 animate-pulse" />
+                                    )}
                                 </div>
                                 <div className="flex-1">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs font-black uppercase tracking-wider text-emerald-400">
-                                            🛵 Pedido Activo #{activeOrder.id.slice(0, 8)}
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className={`text-xs font-black uppercase tracking-wider ${
+                                            ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
+                                                ? 'text-amber-400'
+                                                : 'text-emerald-400'
+                                        }`}>
+                                            {['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
+                                                ? `⏳ Pedido Pendiente de Aprobación #${activeOrder.id.slice(0, 8)}`
+                                                : `🛵 Pedido Confirmado #${activeOrder.id.slice(0, 8)}`}
                                         </span>
-                                        <span className="bg-emerald-500/20 text-emerald-300 text-[8px] font-black px-2 py-0.5 rounded-full uppercase">
-                                            {activeOrder.estado}
+                                        <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase ${
+                                            ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
+                                                ? 'bg-amber-500/30 text-amber-200'
+                                                : 'bg-emerald-500/20 text-emerald-300'
+                                        }`}>
+                                            {['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado) ? 'Pendiente de Aprobación' : activeOrder.estado}
                                         </span>
                                     </div>
                                     <p className="text-[11px] text-slate-300 font-semibold mt-0.5">
-                                        Entrega estimada: {new Date(activeOrder.fechaEntrega).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ({activeOrder.franjaHoraria || 'Sin franja'})
+                                        {['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
+                                            ? 'El establecimiento está verificando tu solicitud de pedido.'
+                                            : `Entrega estimada: ${new Date(activeOrder.fechaEntrega).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${activeOrder.franjaHoraria || 'Sin franja'})`}
                                     </p>
                                 </div>
                             </div>
                             <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto border-t md:border-t-0 border-slate-800 pt-2.5 md:pt-0">
                                 <div className="text-left md:text-right">
                                     <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">Tiempo Restante</span>
-                                    <span className="text-sm font-mono font-black text-emerald-400">{countdownTime || 'Calculando...'}</span>
+                                    <span className={`text-sm font-mono font-black ${
+                                        ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
+                                            ? 'text-amber-400'
+                                            : 'text-emerald-400'
+                                    }`}>
+                                        {countdownTime || 'Calculando...'}
+                                    </span>
                                 </div>
                                 <Link
                                     href={`/${negocio.slug}/pedidos`}
-                                    className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs rounded-xl transition-all active:scale-95 shrink-0"
+                                    className={`px-3.5 py-2 font-black text-xs rounded-xl transition-all active:scale-95 shrink-0 ${
+                                        ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
+                                            ? 'bg-amber-500 hover:bg-amber-600 text-slate-950'
+                                            : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950'
+                                    }`}
                                 >
                                     Ver Pedido →
                                 </Link>

@@ -85,6 +85,26 @@ export async function POST(
             uploadedBy: payment.pedido.nombreCliente || 'CLIENTE'
         });
 
+        // Notificar Push al negocio y emitir evento SSE en tiempo real
+        try {
+            const { sseEmitter, notificationService } = require('@/lib/notifications/notificationService');
+            await notificationService.sendPushToBusiness(
+                payment.negocioId,
+                `💳 Comprobante Recibido #${payment.pedido.numeroPedido}`,
+                `El cliente ${payment.pedido.nombreCliente} ha subido su comprobante de pago por $${payment.monto.toFixed(2)}.`
+            ).catch(() => {});
+
+            sseEmitter.emit('realtime_event', {
+                negocioId: payment.negocioId,
+                type: 'PAGO_SUBIDO',
+                title: `💳 Comprobante Recibido #${payment.pedido.numeroPedido}`,
+                message: `Cliente: ${payment.pedido.nombreCliente} | $${payment.monto.toFixed(2)}`,
+                pedidoId: payment.pedidoId
+            });
+        } catch (nErr) {
+            console.error('[EVIDENCE_NOTIF_ERROR]', nErr);
+        }
+
         return NextResponse.json({
             success: true,
             message: 'Comprobante subido y enviado a revisión exitosamente.',

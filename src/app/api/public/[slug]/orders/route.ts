@@ -164,16 +164,53 @@ export async function POST(
         const order = txResult.newOrder;
         const payment = txResult.initialPayment;
 
-        // Intentar notificar al administrador en segundo plano (sin bloquear la respuesta)
+        // Notificar al negocio en segundo plano (Push + SSE + WhatsApp del Bot al Negocio)
         try {
-            // Notificar vía Push al negocio (Citiox original)
+            const { whatsappService } = require('@/lib/whatsapp');
+            const { sseEmitter } = require('@/lib/notifications/notificationService');
+
+            // 1. Notificación Push al admin y evento SSE en tiempo real
             await notificationService.sendPushToBusiness(
                 negocio.id,
-                `Nuevo Pedido #${order.numeroPedido} (Pendiente de Pago)`,
-                `De ${clientName} por un total de $${total.toFixed(2)}.`
+                `🛒 ¡Nuevo Pedido #${order.numeroPedido}!`,
+                `De ${clientName} (${deliveryType === 'DOMICILIO' ? 'Domicilio' : 'Retiro'}) por $${total.toFixed(2)}.`
             ).catch(() => {});
+
+            sseEmitter.emit('realtime_event', {
+                negocioId: negocio.id,
+                type: 'NUEVO_PEDIDO',
+                title: `🛒 Nuevo Pedido #${order.numeroPedido}`,
+                message: `Cliente: ${clientName} | Total: $${total.toFixed(2)}`,
+                pedidoId: order.id
+            });
+
+            // 2. Enviar mensaje de WhatsApp DEL BOT AL NEGOCIO con detalles y ubicación GPS
+            const bizPhone = negocio.whatsapp || (negocio as any).telefono || '0998877665';
+            const itemsList = order.items ? order.items.map((i: any) => `• ${i.cantidad}x ${i.nombreProducto} ($${(i.precioUnitario * i.cantidad).toFixed(2)})`).join('\n') : '';
+            
+            let gpsLocation = '';
+            if (order.latitud && order.longitud) {
+                gpsLocation = `📍 *Ubicación GPS:* https://maps.google.com/?q=${order.latitud},${order.longitud}\n`;
+            }
+
+            let bizMsg = `🛒 *¡NUEVO PEDIDO REGISTRADO #${order.numeroPedido}!*\n\n`;
+            bizMsg += `👤 *Cliente:* ${clientName}\n`;
+            bizMsg += `📞 *Teléfono:* ${clientPhone}\n`;
+            bizMsg += `🚚 *Tipo:* ${deliveryType === 'DOMICILIO' ? 'Entrega a Domicilio' : 'Retiro en Local'}\n`;
+            if (deliveryType === 'DOMICILIO') {
+                bizMsg += `🏠 *Dirección:* ${clientAddress || 'No especificada'}\n`;
+                if (clientReference) bizMsg += `📝 *Referencia:* ${clientReference}\n`;
+                if (gpsLocation) bizMsg += gpsLocation;
+            }
+            bizMsg += `📅 *Fecha/Hora Entrega Solicitada:* ${dateToDeliver.toISOString().split('T')[0]} (${timeSlot} hrs)\n\n`;
+            bizMsg += `📦 *Detalle del Pedido:*\n${itemsList}\n\n`;
+            bizMsg += `💰 *Subtotal:* $${subtotal.toFixed(2)}\n`;
+            if (deliveryType === 'DOMICILIO') bizMsg += `🛵 *Envío:* $${costoEnvio.toFixed(2)}\n`;
+            bizMsg += `💵 *TOTAL:* $${total.toFixed(2)}\n`;
+
+            await whatsappService.sendWhatsApp(bizPhone, bizMsg).catch(() => {});
         } catch (notifErr) {
-            console.error('[ORDER_NOTIF_ERROR] Failed to send notifications:', notifErr);
+            console.error('[ORDER_NOTIF_ERROR] Failed to send notifications/whatsapp:', notifErr);
         }
 
         return NextResponse.json({ pedido: order, payment });
