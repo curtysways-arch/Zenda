@@ -1173,146 +1173,99 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         </div>
 
                         {/* Datos del Cliente */}
-                        {clientPhone && !editingPersonalData ? (
-                            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex items-center justify-between text-left">
-                                <div>
-                                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider block">✓ Cliente Autenticado</span>
-                                    <span className="text-sm font-black text-slate-900 block mt-0.5">{clientName || 'Cliente'}</span>
-                                    <span className="text-xs font-mono font-bold text-slate-500">{clientPhone}</span>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setEditingPersonalData(true)}
-                                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-black uppercase tracking-wider rounded-xl transition-colors shrink-0"
-                                >
-                                    Cambiar
-                                </button>
+                        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4 text-left">
+                            <div className="flex justify-between items-center border-b border-slate-50 pb-2">
+                                <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Datos de Contacto</h3>
+                                {clientPhone && (
+                                    <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                                        ✓ Autenticado
+                                    </span>
+                                )}
                             </div>
-                        ) : (
-                            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
-                                <div className="flex justify-between items-center border-b border-slate-50 pb-2">
-                                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Datos de Contacto</h3>
-                                    {clientPhone && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setEditingPersonalData(false)}
-                                            className="text-[10px] font-bold text-orange-600 hover:underline"
-                                        >
-                                            Guardar
-                                        </button>
-                                    )}
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Nombre Completo</label>
+                                <input 
+                                    type="text"
+                                    required
+                                    placeholder="Ej: Juan Pérez"
+                                    value={clientName}
+                                    onChange={e => setClientName(e.target.value)}
+                                    className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Teléfono Celular</label>
+                                <div className="relative">
+                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                                    <input 
+                                        type="tel"
+                                        required
+                                        placeholder="Ej: 0998877665"
+                                        value={clientPhone}
+                                        onChange={e => setClientPhone(e.target.value)}
+                                        className="w-full bg-slate-50 rounded-xl pl-11 pr-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Dirección y Ubicación GPS (Solo para Domicilio) */}
+                        {deliveryType === 'DOMICILIO' && (
+                            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4 text-left">
+                                <div className="border-b border-slate-50 pb-2">
+                                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Dirección de Entrega</h3>
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Nombre Completo</label>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Dirección Principal</label>
                                     <input 
                                         type="text"
-                                        required
-                                        placeholder="Ej: Juan Pérez"
-                                        value={clientName}
-                                        onChange={e => setClientName(e.target.value)}
+                                        required={deliveryType === 'DOMICILIO'}
+                                        placeholder="Ej: Av. de los Shyris y Portugal"
+                                        value={clientAddress}
+                                        onChange={e => setClientAddress(e.target.value)}
                                         className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Teléfono Celular</label>
-                                    <div className="relative">
-                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                                        <input 
-                                            type="tel"
-                                            required
-                                            placeholder="Ej: 0998877665"
-                                            value={clientPhone}
-                                            onChange={e => setClientPhone(e.target.value)}
-                                            className="w-full bg-slate-50 rounded-xl pl-11 pr-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
-                                        />
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Referencia (Casa/Depto/Color)</label>
+                                    <input 
+                                        type="text"
+                                        placeholder="Ej: Casa blanca de 2 pisos junto a la tienda"
+                                        value={clientReference}
+                                        onChange={e => setClientReference(e.target.value)}
+                                        className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
+                                    />
+                                </div>
+
+                                {/* Mapa de Google Maps / Leaflet para coordenadas GPS */}
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Geolocalización GPS (Mueve el pin)</label>
+                                        <button
+                                            type="button"
+                                            onClick={handleGetMyLocation}
+                                            className="text-[10px] font-black text-orange-600 hover:underline flex items-center gap-1"
+                                        >
+                                            📍 Usar mi ubicación
+                                        </button>
                                     </div>
+                                    {mapError ? (
+                                        <div className="text-[10px] text-rose-500 font-bold bg-rose-50 p-3 rounded-xl border border-rose-100">{mapError}</div>
+                                    ) : (
+                                        <div 
+                                            ref={mapRef} 
+                                            className="w-full h-44 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden relative z-0 isolate"
+                                            style={{ isolation: 'isolate' }}
+                                        />
+                                    )}
+                                    {lat && lng && (
+                                        <div className="flex justify-between text-[9px] font-bold text-slate-400">
+                                            <span>Latitud: {lat.toFixed(6)}</span>
+                                            <span>Longitud: {lng.toFixed(6)}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                        )}
-
-                        {/* Dirección y Ubicación GPS (Solo para Domicilio) */}
-                        {deliveryType === 'DOMICILIO' && (
-                            clientAddress && !editingAddress ? (
-                                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex items-center justify-between text-left">
-                                    <div>
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Dirección de Entrega Guardada</span>
-                                        <span className="text-sm font-black text-slate-900 block mt-0.5">{clientAddress}</span>
-                                        {clientReference && <span className="text-xs text-slate-500 font-medium block mt-0.5">Ref: {clientReference}</span>}
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setEditingAddress(true)}
-                                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-black uppercase tracking-wider rounded-xl transition-colors shrink-0 ml-2"
-                                    >
-                                        ✏️ Cambiar
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
-                                    <div className="flex justify-between items-center border-b border-slate-50 pb-2">
-                                        <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Dirección de Entrega</h3>
-                                        {clientAddress && (
-                                            <button
-                                                type="button"
-                                                onClick={() => setEditingAddress(false)}
-                                                className="text-[10px] font-bold text-orange-600 hover:underline"
-                                            >
-                                                Usar Guardada
-                                            </button>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Dirección Principal</label>
-                                        <input 
-                                            type="text"
-                                            required={deliveryType === 'DOMICILIO'}
-                                            placeholder="Ej: Av. de los Shyris y Portugal"
-                                            value={clientAddress}
-                                            onChange={e => setClientAddress(e.target.value)}
-                                            className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Referencia (Casa/Depto/Color)</label>
-                                        <input 
-                                            type="text"
-                                            placeholder="Ej: Casa blanca de 2 pisos junto a la tienda"
-                                            value={clientReference}
-                                            onChange={e => setClientReference(e.target.value)}
-                                            className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
-                                        />
-                                    </div>
-
-                                    {/* Mapa de Google Maps para coordenadas GPS */}
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between items-center">
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Geolocalización GPS (Mueve el pin)</label>
-                                            <button
-                                                type="button"
-                                                onClick={handleGetMyLocation}
-                                                className="text-[10px] font-black text-orange-600 hover:underline flex items-center gap-1"
-                                            >
-                                                📍 Usar mi ubicación
-                                            </button>
-                                        </div>
-                                        {mapError ? (
-                                            <div className="text-[10px] text-rose-500 font-bold bg-rose-50 p-3 rounded-xl border border-rose-100">{mapError}</div>
-                                        ) : (
-                                            <div 
-                                                ref={mapRef} 
-                                                className="w-full h-44 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden relative z-0 isolate"
-                                                style={{ isolation: 'isolate' }}
-                                            />
-                                        )}
-                                        {lat && lng && (
-                                            <div className="flex justify-between text-[9px] font-bold text-slate-400">
-                                                <span>Latitud: {lat.toFixed(6)}</span>
-                                                <span>Longitud: {lng.toFixed(6)}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )
                         )}
 
                         {/* Fecha y Franja Horaria */}
