@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { 
     ShoppingBag, Plus, Minus, Trash2, MapPin, Calendar, Clock, 
     ChevronRight, Check, Loader2, Search, ArrowLeft, Phone, Info, AlertCircle
@@ -1012,10 +1012,10 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     <SimpleLeafletMap 
                                         initialLat={config.latitudNegocio !== undefined ? parseFloat(config.latitudNegocio) : -0.180653}
                                         initialLng={config.longitudNegocio !== undefined ? parseFloat(config.longitudNegocio) : -78.467838}
-                                        onLocationSelect={(selectedLat, selectedLng) => {
-                                            setLat(selectedLat);
-                                            setLng(selectedLng);
-                                        }}
+                                        onLocationSelect={useCallback((selectedLat: number, selectedLng: number) => {
+                                            setLat(prev => (prev === selectedLat ? prev : selectedLat));
+                                            setLng(prev => (prev === selectedLng ? prev : selectedLng));
+                                        }, [])}
                                     />
                                     {lat && lng && (
                                         <div className="flex justify-between text-[9px] font-bold text-slate-400">
