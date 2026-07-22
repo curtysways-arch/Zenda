@@ -5,6 +5,52 @@ import { PaymentService } from '@/lib/payments/PaymentService';
 
 export const dynamic = 'force-dynamic';
 
+export async function GET(
+    request: Request,
+    { params }: { params: Promise<{ slug: string }> }
+) {
+    const { slug } = await params;
+    const { searchParams } = new URL(request.url);
+    const phone = searchParams.get('phone');
+
+    if (!phone) {
+        return NextResponse.json({ error: 'Teléfono requerido' }, { status: 400 });
+    }
+
+    try {
+        const negocio = await prisma.negocio.findUnique({ where: { slug } });
+        if (!negocio) {
+            return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
+        }
+
+        const cleanPhone = phone.replace(/\D/g, '');
+
+        const orders = await (prisma as any).pedido.findMany({
+            where: {
+                negocioId: negocio.id,
+                telefonoCliente: {
+                    contains: cleanPhone.slice(-7)
+                }
+            },
+            include: {
+                items: true,
+                payment: {
+                    include: {
+                        evidences: { orderBy: { createdAt: 'desc' } },
+                        method: true
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        return NextResponse.json({ success: true, orders, pedidos: orders });
+    } catch (e: any) {
+        console.error('[ORDERS_GET_API]', e);
+        return NextResponse.json({ error: e.message || 'Error interno' }, { status: 500 });
+    }
+}
+
 export async function POST(
     request: Request,
     { params }: { params: Promise<{ slug: string }> }

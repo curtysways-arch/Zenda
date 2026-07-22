@@ -169,11 +169,12 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const fetchActiveOrder = async (phone: string) => {
         if (!phone) return;
         try {
-            const res = await fetch(`/api/public/${negocio.slug}/orders?phone=${encodeURIComponent(phone)}`);
+            const res = await fetch(`/api/public/${negocio.slug}/client-orders?phone=${encodeURIComponent(phone)}`);
             if (res.ok) {
                 const data = await res.json();
-                if (data.pedidos && data.pedidos.length > 0) {
-                    const active = data.pedidos.find((p: any) => 
+                const list = data.orders || data.pedidos || [];
+                if (list.length > 0) {
+                    const active = list.find((p: any) => 
                         !['ENTREGADO', 'CANCELADO', 'RECHAZADO'].includes(p.estado)
                     );
                     if (active) setActiveOrder(active);
@@ -184,7 +185,15 @@ export default function ProductsStoreClient({ negocio }: Props) {
         }
     };
 
-    // Contador regresivo en tiempo real para la entrega del pedido
+    // Polling periódico cada 10s para mantener el estado del pedido activo actualizado en tiempo real
+    useEffect(() => {
+        if (!clientPhone) return;
+        fetchActiveOrder(clientPhone);
+        const poll = setInterval(() => {
+            fetchActiveOrder(clientPhone);
+        }, 10000);
+        return () => clearInterval(poll);
+    }, [clientPhone]);
     useEffect(() => {
         if (!activeOrder || !activeOrder.fechaEntrega) return;
 
