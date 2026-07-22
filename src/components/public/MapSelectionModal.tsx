@@ -26,12 +26,17 @@ export default function MapSelectionModal({
     const mapInstanceRef = useRef<any>(null);
     const markerInstanceRef = useRef<any>(null);
 
-    // Determinar punto inicial
-    const startLat = initialLat || businessLat;
-    const startLng = initialLng || businessLng;
+    // Almacenar coordenadas iniciales en ref para evitar re-renderizados del efecto
+    const startLatRef = useRef<number>(initialLat || businessLat);
+    const startLngRef = useRef<number>(initialLng || businessLng);
 
-    const [currentLat, setCurrentLat] = useState<number>(startLat);
-    const [currentLng, setCurrentLng] = useState<number>(startLng);
+    useEffect(() => {
+        startLatRef.current = initialLat || businessLat;
+        startLngRef.current = initialLng || businessLng;
+    }, [initialLat, initialLng, businessLat, businessLng]);
+
+    const [currentLat, setCurrentLat] = useState<number>(startLatRef.current);
+    const [currentLng, setCurrentLng] = useState<number>(startLngRef.current);
     const [isLocating, setIsLocating] = useState<boolean>(false);
     const [mapLoading, setMapLoading] = useState<boolean>(true);
 
@@ -40,46 +45,37 @@ export default function MapSelectionModal({
         if (!isOpen) return;
 
         let isCancelled = false;
+        let checkInterval: any = null;
+
+        setCurrentLat(startLatRef.current);
+        setCurrentLng(startLngRef.current);
+        setMapLoading(true);
 
         const initLeaflet = () => {
             if (isCancelled || !mapContainerRef.current) return;
 
+            const L = (window as any).L;
+            if (!L) return;
+
+            if (checkInterval) {
+                clearInterval(checkInterval);
+                checkInterval = null;
+            }
+
             // Si ya existe instancia previa en el div, destruirla limpiamente
-            if ((mapContainerRef.current as any)._leaflet_id && mapInstanceRef.current) {
-                try { mapInstanceRef.current.remove(); } catch (e) {}
+            if ((mapContainerRef.current as any)._leaflet_id || mapInstanceRef.current) {
+                try { mapInstanceRef.current?.remove(); } catch (e) {}
                 mapInstanceRef.current = null;
             }
 
-            const L = (window as any).L;
-            if (!L) {
-                // Si Leaflet script no está cargado dinámicamente, incluirlo de forma aislada
-                if (!document.getElementById('leaflet-css-modal')) {
-                    const link = document.createElement('link');
-                    link.id = 'leaflet-css-modal';
-                    link.rel = 'stylesheet';
-                    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-                    document.head.appendChild(link);
-                }
-                if (!document.getElementById('leaflet-js-modal')) {
-                    const script = document.createElement('script');
-                    script.id = 'leaflet-js-modal';
-                    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-                    script.async = true;
-                    script.onload = () => {
-                        if (!isCancelled) initLeaflet();
-                    };
-                    document.head.appendChild(script);
-                } else {
-                    setTimeout(initLeaflet, 150);
-                }
-                return;
-            }
-
             try {
+                const sLat = startLatRef.current;
+                const sLng = startLngRef.current;
+
                 const map = L.map(mapContainerRef.current, {
                     zoomControl: true,
                     attributionControl: false
-                }).setView([startLat, startLng], 15);
+                }).setView([sLat, sLng], 15);
 
                 mapInstanceRef.current = map;
 
@@ -96,7 +92,7 @@ export default function MapSelectionModal({
                     shadowSize: [41, 41]
                 });
 
-                const marker = L.marker([startLat, startLng], {
+                const marker = L.marker([sLat, sLng], {
                     draggable: true,
                     icon: icon
                 }).addTo(map);
@@ -121,12 +117,14 @@ export default function MapSelectionModal({
                     updateCoords(pos.lat, pos.lng);
                 });
 
-                // Re-calcular tamaño del mapa al abrir el modal
-                setTimeout(() => {
-                    if (mapInstanceRef.current) {
-                        mapInstanceRef.current.invalidateSize();
-                    }
-                }, 200);
+                // Re-calcular tamaño del mapa al abrir el modal en varios ticks
+                [100, 300, 600].forEach(delay => {
+                    setTimeout(() => {
+                        if (!isCancelled && mapInstanceRef.current) {
+                            mapInstanceRef.current.invalidateSize();
+                        }
+                    }, delay);
+                });
 
             } catch (err) {
                 console.error("Error al inicializar mapa en modal:", err);
@@ -134,18 +132,62 @@ export default function MapSelectionModal({
             }
         };
 
-        const timer = setTimeout(initLeaflet, 50);
+        const loadScriptAndInit = () => {
+            if ((window as any).L) {
+                initLeaflet();
+                return;
+            }
+
+            if (!document.getElementById('leaflet-css-modal')) {
+                const link = document.createElement('link');
+                link.id = 'leaflet-css-modal';
+                link.rel = 'stylesheet';
+                link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+                document.head.appendChild(link);
+            }
+
+            if (!document.getElementById('leaflet-js-modal')) {
+                const script = document.createElement('script');
+                script.id = 'leaflet-js-modal';
+                script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+                script.async = true;
+                script.onload = () => {
+                    if (!isCancelled) initLeaflet();
+                };
+                script.onerror = () => {
+                    if (!isCancelled) setMapLoading(false);
+                };
+                document.head.appendChild(script);
+            } else {
+                let retries = 0;
+                checkInterval = setInterval(() => {
+                    retries++;
+                    if ((window as any).L) {
+                        clearInterval(checkInterval);
+                        checkInterval = null;
+                        if (!isCancelled) initLeaflet();
+                    } else if (retries > 30) {
+                        clearInterval(checkInterval);
+                        checkInterval = null;
+                        if (!isCancelled) setMapLoading(false);
+                    }
+                }, 100);
+            }
+        };
+
+        const timer = setTimeout(loadScriptAndInit, 50);
 
         return () => {
             isCancelled = true;
             clearTimeout(timer);
+            if (checkInterval) clearInterval(checkInterval);
             if (mapInstanceRef.current) {
                 try { mapInstanceRef.current.remove(); } catch (e) {}
                 mapInstanceRef.current = null;
             }
             markerInstanceRef.current = null;
         };
-    }, [isOpen, startLat, startLng]);
+    }, [isOpen]);
 
     // Función para obtener la ubicación actual por GPS
     const handleUseCurrentLocation = () => {
@@ -222,7 +264,7 @@ export default function MapSelectionModal({
                 {/* Coordenadas de visualización */}
                 <div className="px-5 py-2.5 bg-slate-50 border-t border-slate-100 flex justify-between text-[10px] font-mono text-slate-500 font-bold">
                     <span>Lat: {currentLat.toFixed(6)}</span>
-                    <span>Lng: {currentLng.toFixed(6)}</span>
+                    <span>Long: {currentLng.toFixed(6)}</span>
                 </div>
 
                 {/* Footer */}
