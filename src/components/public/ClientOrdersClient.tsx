@@ -368,7 +368,7 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                                     {[
                                                         { step: 1, label: 'Recibido' },
                                                         { step: 2, label: 'Pago' },
-                                                        { step: 3, label: 'Cocina' },
+                                                        { step: 3, label: 'Producción' },
                                                         { step: 4, label: 'En Ruta' },
                                                         { step: 5, label: 'Entregado' }
                                                     ].map((s) => {
