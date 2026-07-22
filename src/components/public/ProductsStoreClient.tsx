@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { 
     ShoppingBag, Plus, Minus, Trash2, MapPin, Calendar, Clock, 
-    ChevronRight, Check, Loader2, Search, ArrowLeft, Phone, Info, AlertCircle, Truck
+    ChevronRight, Check, Loader2, Search, ArrowLeft, Phone, Info, AlertCircle
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -425,26 +425,12 @@ export default function ProductsStoreClient({ negocio }: Props) {
     }, [deliveryDate, slotsDisponibles.length]);
 
     // Cargar teléfono y nombre guardados de la sesión previa / OTP
-    const [activeOrder, setActiveOrder] = useState<any>(null);
-
     useEffect(() => {
         const savedPhone = localStorage.getItem('pinchos_client_phone');
         const savedName = localStorage.getItem('pinchos_client_name');
         if (savedPhone) setClientPhone(savedPhone);
         if (savedName) setClientName(savedName);
-
-        if (savedPhone) {
-            fetch(`/api/public/${negocio.slug}/client-orders?phone=${encodeURIComponent(savedPhone)}`)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success && Array.isArray(data.orders)) {
-                        const active = data.orders.find((o: any) => o.estado !== 'ENTREGADO' && o.estado !== 'CANCELADO');
-                        setActiveOrder(active || null);
-                    }
-                })
-                .catch(err => console.error("Error al consultar pedido activo:", err));
-        }
-    }, [negocio.slug, step]);
+    }, []);
 
     // Función auxiliar para crear pedido directamente sin repetir OTP si el cliente ya está autenticado
     const createOrderDirectly = async (phone: string, name: string) => {
@@ -918,31 +904,6 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     Hacer Pedido
                                 </button>
                             </div>
-                        </div>
-                    )}
-                    {/* Banner de Pedido Activo en la Home */}
-                    {activeOrder && (
-                        <div className="mx-6 mt-4 bg-gradient-to-r from-orange-600 via-amber-600 to-orange-600 text-white p-4 rounded-2xl shadow-xl flex items-center justify-between animate-in fade-in slide-in-from-top-3 duration-300">
-                            <div className="flex items-center gap-3">
-                                <div className="size-10 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
-                                    <Truck className="size-5 text-white" />
-                                </div>
-                                <div className="text-left">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs font-black uppercase tracking-wider">Tu Pedido #{activeOrder.numeroPedido}</span>
-                                        <span className="bg-white/20 px-2 py-0.5 rounded-md text-[9px] font-black uppercase">{activeOrder.estado}</span>
-                                    </div>
-                                    <p className="text-[11px] font-medium text-orange-100 mt-0.5">
-                                        Horario de entrega: <strong>{activeOrder.franjaHoraria || 'Entrega estimada 3-4 hrs'}</strong>
-                                    </p>
-                                </div>
-                            </div>
-                            <a
-                                href={`/${negocio.slug}/pedidos`}
-                                className="px-3 py-2 bg-white text-orange-600 text-[10px] font-black uppercase tracking-widest rounded-xl shadow-md hover:bg-orange-50 active:scale-95 transition-all shrink-0 ml-2"
-                            >
-                                Ver Estado →
-                            </a>
                         </div>
                     )}
 

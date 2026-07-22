@@ -325,85 +325,39 @@ export default function ClientOrdersClient({ negocio }: Props) {
                             </div>
                         ) : (
                             <div className="space-y-4">
-                                {orders.map(order => {
-                                    const currentStep = order.estado === 'ENTREGADO' ? 5 :
-                                                        (order.estado === 'EN_RUTA' || order.estado === 'RUTA') ? 4 :
-                                                        (order.estado === 'EN_PREPARACION' || order.estado === 'PREPARACION' || order.estado === 'LISTO') ? 3 :
-                                                        (order.payment?.estado === 'CONFIRMADO') ? 2 : 1;
-
-                                    return (
-                                        <div key={order.id} className="bg-white border border-slate-200/80 rounded-3xl p-6 space-y-5 shadow-sm hover:shadow-md transition-shadow">
-                                            {/* Header del pedido */}
-                                            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-lg font-black text-slate-900">Pedido #{order.numeroPedido}</span>
-                                                        <span className="text-xs font-mono text-slate-400 font-bold">{new Date(order.createdAt).toLocaleDateString()}</span>
-                                                    </div>
-                                                    <div className="text-xs text-slate-500 font-medium mt-0.5">
-                                                        {order.tipoEntrega} • <strong className="text-slate-800 font-black">{order.franjaHoraria || 'Entrega estimada 3-4 hrs'}</strong>
-                                                    </div>
+                                {orders.map(order => (
+                                    <div key={order.id} className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow">
+                                        {/* Header del pedido */}
+                                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-lg font-black text-slate-900">Pedido #{order.numeroPedido}</span>
+                                                    <span className="text-xs font-mono text-slate-400 font-bold">{new Date(order.createdAt).toLocaleDateString()}</span>
                                                 </div>
-                                                <div>
-                                                    {getOrderBadge(order.estado)}
+                                                <div className="text-xs text-slate-500 font-medium mt-0.5">
+                                                    {order.tipoEntrega} ({order.franjaHoraria} hrs)
                                                 </div>
                                             </div>
+                                            <div>
+                                                {getOrderBadge(order.estado)}
+                                            </div>
+                                        </div>
 
-                                            {/* Stepper de Progreso en Vivo */}
-                                            <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 space-y-3">
-                                                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-500">
-                                                    <span>Progreso de tu Pedido</span>
-                                                    <span className="text-orange-600 font-extrabold">Paso {currentStep} de 5</span>
+                                        {/* Lista de Ítems */}
+                                        <div className="space-y-1.5 py-1">
+                                            {order.items.map(item => (
+                                                <div key={item.id} className="flex justify-between text-xs text-slate-700 font-medium">
+                                                    <span><strong className="text-slate-900">{item.cantidad}x</strong> {item.nombreProducto}</span>
+                                                    <span className="font-bold text-slate-900">${(item.cantidad * item.precioUnitario).toFixed(2)}</span>
                                                 </div>
+                                            ))}
+                                        </div>
 
-                                                <div className="relative flex items-center justify-between pt-2">
-                                                    {/* Línea de progreso de fondo */}
-                                                    <div className="absolute left-4 right-4 top-1/2 -translate-y-1/2 h-1 bg-slate-200 z-0" />
-                                                    <div 
-                                                        className="absolute left-4 top-1/2 -translate-y-1/2 h-1 bg-orange-600 transition-all duration-500 z-0" 
-                                                        style={{ width: `${((currentStep - 1) / 4) * 100}%` }}
-                                                    />
-
-                                                    {/* Pasos */}
-                                                    {[
-                                                        { step: 1, label: 'Recibido' },
-                                                        { step: 2, label: 'Pago' },
-                                                        { step: 3, label: 'Producción' },
-                                                        { step: 4, label: 'En Ruta' },
-                                                        { step: 5, label: 'Entregado' }
-                                                    ].map((s) => {
-                                                        const isDone = s.step <= currentStep;
-                                                        return (
-                                                            <div key={s.step} className="relative z-10 flex flex-col items-center gap-1">
-                                                                <div className={`size-7 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${
-                                                                    isDone ? 'bg-orange-600 text-white shadow-md scale-110' : 'bg-slate-200 text-slate-400'
-                                                                }`}>
-                                                                    {isDone ? '✓' : s.step}
-                                                                </div>
-                                                                <span className={`text-[9px] font-extrabold uppercase tracking-tight ${
-                                                                    isDone ? 'text-slate-900 font-black' : 'text-slate-400'
-                                                                }`}>{s.label}</span>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-
-                                            {/* Lista de Ítems */}
-                                            <div className="space-y-1.5 py-1">
-                                                {order.items.map(item => (
-                                                    <div key={item.id} className="flex justify-between text-xs text-slate-700 font-medium">
-                                                        <span><strong className="text-slate-900">{item.cantidad}x</strong> {item.nombreProducto}</span>
-                                                        <span className="font-bold text-slate-900">${(item.cantidad * item.precioUnitario).toFixed(2)}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-
-                                            {/* Total */}
-                                            <div className="flex justify-between items-center pt-3 border-t border-slate-100 text-sm">
-                                                <span className="text-slate-500 font-bold">Total a Pagar:</span>
-                                                <span className="text-lg font-black text-orange-600">${order.total.toFixed(2)}</span>
-                                            </div>
+                                        {/* Total */}
+                                        <div className="flex justify-between items-center pt-3 border-t border-slate-100 text-sm">
+                                            <span className="text-slate-500 font-bold">Total a Pagar:</span>
+                                            <span className="text-lg font-black text-orange-600">${order.total.toFixed(2)}</span>
+                                        </div>
 
                                         {/* Sección del Pago */}
                                         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
@@ -456,8 +410,7 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                             )}
                                         </div>
                                     </div>
-                                );
-                            })}
+                                ))}
                             </div>
                         )}
                     </div>
