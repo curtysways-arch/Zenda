@@ -170,6 +170,26 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const [editingPersonalData, setEditingPersonalData] = useState(false);
     const [editingAddress, setEditingAddress] = useState(false);
 
+    const handleGetMyLocation = () => {
+        if (navigator.geolocation && leafletMapRef.current && leafletMarkerRef.current) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+                    try {
+                        leafletMapRef.current.setView([userLat, userLng], 16);
+                        leafletMarkerRef.current.setLatLng([userLat, userLng]);
+                        setLat(userLat);
+                        setLng(userLng);
+                    } catch (e) {}
+                },
+                () => {
+                    alert("No se pudo obtener tu ubicación automáticamente. Mueve el pin en el mapa.");
+                }
+            );
+        }
+    };
+
     // Leaflet Script & CSS Loader (OpenStreetMap - 100% Gratis sin API Key)
     const mapInitialized = useRef(false);
     const leafletMapRef = useRef<any>(null);
@@ -276,25 +296,6 @@ export default function ProductsStoreClient({ negocio }: Props) {
                     if (!lat || !lng) {
                         setLat(defaultLat);
                         setLng(defaultLng);
-                    }
-
-                    // Geolocalizar cliente solo si no hay latitud previa
-                    if (navigator.geolocation && (!lat || !lng)) {
-                        navigator.geolocation.getCurrentPosition(
-                            (position) => {
-                                const userLat = position.coords.latitude;
-                                const userLng = position.coords.longitude;
-                                try {
-                                    map.setView([userLat, userLng], 16);
-                                    marker.setLatLng([userLat, userLng]);
-                                    setLat(userLat);
-                                    setLng(userLng);
-                                } catch (e) {}
-                            },
-                            () => {
-                                console.log("Geolocalización denegada.");
-                            }
-                        );
                     }
 
                     // Eventos del marcador
@@ -494,7 +495,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                 })
                 .catch(err => console.error("Error al consultar pedido activo:", err));
         }
-    }, [negocio.slug, step]);
+    }, [negocio.slug]);
 
     // Función auxiliar para crear pedido directamente sin repetir OTP si el cliente ya está autenticado
     const createOrderDirectly = async (phone: string, name: string) => {
@@ -1281,7 +1282,16 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
                                     {/* Mapa de Google Maps para coordenadas GPS */}
                                     <div className="space-y-2">
-                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Geolocalización GPS (Mueve el pin)</label>
+                                        <div className="flex justify-between items-center">
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Geolocalización GPS (Mueve el pin)</label>
+                                            <button
+                                                type="button"
+                                                onClick={handleGetMyLocation}
+                                                className="text-[10px] font-black text-orange-600 hover:underline flex items-center gap-1"
+                                            >
+                                                📍 Usar mi ubicación
+                                            </button>
+                                        </div>
                                         {mapError ? (
                                             <div className="text-[10px] text-rose-500 font-bold bg-rose-50 p-3 rounded-xl border border-rose-100">{mapError}</div>
                                         ) : (
