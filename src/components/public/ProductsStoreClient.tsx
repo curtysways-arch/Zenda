@@ -201,10 +201,15 @@ export default function ProductsStoreClient({ negocio }: Props) {
             };
 
             const initMap = () => {
-                if (!mapRef.current) return;
+                if (!mapRef.current) {
+                    setTimeout(initMap, 100);
+                    return;
+                }
+                if (mapInitialized.current) return;
                 mapInitialized.current = true;
                 
                 const L = (window as any).L;
+                if (!L) return;
 
                 // Coordenadas del negocio o por defecto (Quito)
                 const latNegocio = config.latitudNegocio !== undefined ? parseFloat(config.latitudNegocio) : -0.180653;
@@ -216,10 +221,17 @@ export default function ProductsStoreClient({ negocio }: Props) {
                 // Crear el mapa de Leaflet
                 const map = L.map(mapRef.current, {
                     zoomControl: true,
-                    attributionControl: false
+                    attributionControl: false,
+                    tap: false
                 }).setView([defaultLat, defaultLng], 15);
 
                 leafletMapRef.current = map;
+
+                setTimeout(() => {
+                    if (leafletMapRef.current) {
+                        leafletMapRef.current.invalidateSize();
+                    }
+                }, 300);
 
                 // Cargar tiles de OpenStreetMap
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
