@@ -571,18 +571,18 @@ export default function ProductsStoreClient({ negocio }: Props) {
     // PANTALLA 1: VERIFICACIÓN OTP
     if (step === 'otp') {
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center px-4 py-12 text-white">
-                <div className="w-full max-w-md bg-slate-900 rounded-3xl p-8 shadow-2xl border border-slate-800 text-center space-y-6">
-                    <div className="size-16 bg-orange-500/10 rounded-2xl flex items-center justify-center mx-auto text-orange-500 border border-orange-500/20">
+            <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center px-4 py-12 text-slate-900">
+                <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl border border-slate-200/80 text-center space-y-6">
+                    <div className="size-16 bg-orange-500/10 rounded-2xl flex items-center justify-center mx-auto text-orange-600 border border-orange-500/20">
                         <Phone className="size-8" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-black text-white">Verificación de Teléfono</h2>
-                        <p className="text-xs text-slate-400 mt-1">Ingresa el código OTP enviado a <strong>{clientPhone}</strong> para verificar tu identidad y confirmar tu pedido.</p>
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Verificación de Teléfono</h2>
+                        <p className="text-xs text-slate-500 mt-1 font-medium">Ingresa el código OTP enviado a <strong>{clientPhone}</strong> para verificar tu identidad y confirmar tu pedido.</p>
                     </div>
 
                     {otpMessage && (
-                        <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-orange-400 font-semibold">
+                        <div className="p-3.5 bg-orange-50 border border-orange-200 rounded-2xl text-xs text-orange-800 font-bold">
                             {otpMessage}
                         </div>
                     )}
@@ -596,15 +596,15 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 value={otpCode}
                                 onChange={e => setOtpCode(e.target.value)}
                                 placeholder="1234"
-                                className="w-full py-4 bg-slate-950 border border-slate-800 rounded-2xl text-center text-2xl font-mono tracking-widest text-white focus:outline-none focus:border-orange-500 transition-colors"
+                                className="w-full py-4 bg-slate-50 border border-slate-200 rounded-2xl text-center text-3xl font-mono tracking-widest text-slate-900 focus:outline-none focus:border-orange-500 focus:bg-white transition-colors shadow-inner"
                             />
-                            <p className="text-[10px] text-slate-500 mt-2">Código rápido en modo prueba: <strong>1234</strong></p>
+                            <p className="text-[11px] text-slate-400 mt-2 font-medium">Código en modo prueba: <strong className="text-slate-700">1234</strong></p>
                         </div>
 
                         <button
                             type="submit"
                             disabled={otpLoading}
-                            className="w-full py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-extrabold rounded-2xl text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2"
+                            className="w-full py-4 bg-orange-600 hover:bg-orange-700 active:scale-95 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-orange-600/20 flex items-center justify-center gap-2 transition-all"
                         >
                             {otpLoading ? <Loader2 className="size-5 animate-spin" /> : 'Verificar OTP y Generar Pedido'}
                         </button>
@@ -612,7 +612,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
                     <button
                         onClick={() => setStep('checkout')}
-                        className="text-xs text-slate-500 hover:text-slate-300 transition-colors font-semibold"
+                        className="text-xs text-slate-500 hover:text-slate-800 transition-colors font-bold"
                     >
                         ← Volver a modificar datos
                     </button>
@@ -624,59 +624,59 @@ export default function ProductsStoreClient({ negocio }: Props) {
     // PANTALLA 2: DATOS BANCARIOS Y CARGA DE COMPROBANTE
     if (step === 'payment' && createdOrder) {
         return (
-            <div className="min-h-screen bg-slate-950 text-white px-4 py-8 flex flex-col justify-center items-center">
-                <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6">
-                    <div className="text-center space-y-2 pb-4 border-b border-slate-800">
-                        <span className="px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-[10px] font-black uppercase tracking-wider">
+            <div className="min-h-screen bg-slate-50 text-slate-900 px-4 py-8 flex flex-col justify-center items-center">
+                <div className="w-full max-w-lg bg-white border border-slate-200/80 rounded-3xl p-8 shadow-2xl space-y-6">
+                    <div className="text-center space-y-2 pb-4 border-b border-slate-100">
+                        <span className="px-3 py-1 bg-orange-100 text-orange-800 border border-orange-200 rounded-full text-[10px] font-black uppercase tracking-wider">
                             Paso Final: Transferencia Bancaria
                         </span>
-                        <h2 className="text-2xl font-black text-white">Completa tu Pago</h2>
-                        <p className="text-xs text-slate-400">Transfiere el monto exacto y adjunta tu comprobante para enviar a producción.</p>
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Completa tu Pago</h2>
+                        <p className="text-xs text-slate-500 font-medium">Transfiere el monto exacto y adjunta tu comprobante para enviar a producción.</p>
                     </div>
 
                     {/* Resumen del Monto y Código */}
-                    <div className="bg-gradient-to-r from-orange-500/10 to-amber-500/10 border border-orange-500/20 rounded-2xl p-4 flex justify-between items-center">
+                    <div className="bg-orange-50 border border-orange-200/70 rounded-2xl p-4 flex justify-between items-center">
                         <div>
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Código de Pago</span>
-                            <span className="text-sm font-mono font-black text-orange-400">{createdPayment?.codigoPago || `PAY-${createdOrder.id.slice(0, 6)}`}</span>
+                            <span className="text-[10px] font-black uppercase tracking-wider text-orange-900/60 block">Código de Pago</span>
+                            <span className="text-sm font-mono font-black text-orange-600">{createdPayment?.codigoPago || `PAY-${createdOrder.id.slice(0, 6)}`}</span>
                         </div>
                         <div className="text-right">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Monto a Transferir</span>
-                            <span className="text-2xl font-black text-white">${createdOrder.total.toFixed(2)}</span>
+                            <span className="text-[10px] font-black uppercase tracking-wider text-orange-900/60 block">Monto a Transferir</span>
+                            <span className="text-2xl font-black text-slate-900">${createdOrder.total.toFixed(2)}</span>
                         </div>
                     </div>
 
                     {/* Datos de la Cuenta Bancaria */}
-                    <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3 text-xs">
-                        <h3 className="font-bold text-slate-200 uppercase tracking-wider text-[11px] pb-2 border-b border-slate-800 flex items-center justify-between">
+                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3 text-xs">
+                        <h3 className="font-black text-slate-900 uppercase tracking-wider text-[11px] pb-2.5 border-b border-slate-200 flex items-center justify-between">
                             <span>🏛️ Datos para la Transferencia</span>
-                            <span className="text-orange-400 font-mono">{bankConfig?.banco || 'Banco Pichincha'}</span>
+                            <span className="text-orange-600 font-mono font-black">{bankConfig?.banco || 'Banco Pichincha'}</span>
                         </h3>
 
-                        <div className="grid grid-cols-2 gap-3 text-slate-300">
+                        <div className="grid grid-cols-2 gap-3 text-slate-700">
                             <div>
-                                <span className="text-slate-500 text-[10px] block font-semibold">TITULAR</span>
-                                <span className="font-bold text-white">{bankConfig?.titular || negocio.nombre}</span>
+                                <span className="text-slate-400 text-[10px] block font-bold uppercase tracking-wider">TITULAR</span>
+                                <span className="font-bold text-slate-900">{bankConfig?.titular || negocio.nombre}</span>
                             </div>
                             <div>
-                                <span className="text-slate-500 text-[10px] block font-semibold">TIPO DE CUENTA</span>
-                                <span className="font-bold text-white">{bankConfig?.tipoCuenta || 'Ahorros'}</span>
+                                <span className="text-slate-400 text-[10px] block font-bold uppercase tracking-wider">TIPO DE CUENTA</span>
+                                <span className="font-bold text-slate-900">{bankConfig?.tipoCuenta || 'Ahorros'}</span>
                             </div>
                             <div>
-                                <span className="text-slate-500 text-[10px] block font-semibold">NÚMERO DE CUENTA</span>
-                                <span className="font-mono font-bold text-white select-all">{bankConfig?.numeroCuenta || '2100987654'}</span>
+                                <span className="text-slate-400 text-[10px] block font-bold uppercase tracking-wider">NÚMERO DE CUENTA</span>
+                                <span className="font-mono font-black text-slate-900 text-sm select-all">{bankConfig?.numeroCuenta || '2100987654'}</span>
                             </div>
                             <div>
-                                <span className="text-slate-500 text-[10px] block font-semibold">IDENTIFICACIÓN / RUC</span>
-                                <span className="font-mono font-bold text-white">{bankConfig?.identificacion || '1792345678001'}</span>
+                                <span className="text-slate-400 text-[10px] block font-bold uppercase tracking-wider">IDENTIFICACIÓN / RUC</span>
+                                <span className="font-mono font-bold text-slate-900">{bankConfig?.identificacion || '1792345678001'}</span>
                             </div>
                         </div>
 
                         {/* Código QR si existe */}
                         {bankConfig?.qrImageUrl && (
-                            <div className="pt-3 text-center border-t border-slate-800">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Escanea el código QR de Pago</span>
-                                <img src={bankConfig.qrImageUrl} alt="QR de Pago" className="w-36 h-36 mx-auto rounded-xl border border-slate-800 shadow-md object-contain bg-white p-2" />
+                            <div className="pt-3 text-center border-t border-slate-200">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Escanea el código QR de Pago</span>
+                                <img src={bankConfig.qrImageUrl} alt="QR de Pago" className="w-36 h-36 mx-auto rounded-xl border border-slate-200 shadow-md object-contain bg-white p-2" />
                             </div>
                         )}
                     </div>
@@ -684,7 +684,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                     {/* Formulario de Carga de Comprobante */}
                     <form onSubmit={handleUploadEvidenceSubmit} className="space-y-4 pt-2">
                         <div>
-                            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                                 Subir Comprobante (PNG, JPG, WEBP o PDF) *
                             </label>
                             <input
@@ -694,12 +694,12 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 onChange={e => {
                                     if (e.target.files?.[0]) setEvidenceFile(e.target.files[0]);
                                 }}
-                                className="w-full text-xs text-slate-400 file:mr-4 file:py-3 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-orange-500 file:text-white hover:file:bg-orange-600 bg-slate-950 rounded-2xl border border-slate-800 p-2 cursor-pointer"
+                                className="w-full text-xs text-slate-600 file:mr-4 file:py-3 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-orange-600 file:text-white hover:file:bg-orange-700 bg-slate-50 rounded-2xl border border-slate-200 p-2 cursor-pointer"
                             />
                         </div>
 
                         {uploadError && (
-                            <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl text-xs font-medium">
+                            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-bold">
                                 {uploadError}
                             </div>
                         )}
@@ -707,7 +707,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         <button
                             type="submit"
                             disabled={uploadingEvidence || !evidenceFile}
-                            className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-extrabold rounded-2xl text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 disabled:opacity-40 transition-all"
+                            className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 disabled:opacity-40 transition-all active:scale-95"
                         >
                             {uploadingEvidence ? <Loader2 className="size-5 animate-spin" /> : 'Enviar Comprobante y Finalizar'}
                         </button>
@@ -720,43 +720,43 @@ export default function ProductsStoreClient({ negocio }: Props) {
     // PANTALLA 3: PEDIDO REGISTRADO Y PAGO EN REVISIÓN
     if (step === 'success' && createdOrder) {
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center px-6 py-12 text-white">
-                <div className="w-full max-w-md bg-slate-900 rounded-3xl p-8 shadow-2xl text-center border border-slate-800 animate-fade-in space-y-6">
-                    <div className="size-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto text-amber-500 border border-amber-500/20 animate-pulse">
+            <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center px-6 py-12 text-slate-900">
+                <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl text-center border border-slate-200/80 animate-fade-in space-y-6">
+                    <div className="size-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto text-amber-600 border border-amber-500/20 animate-pulse">
                         <Clock className="size-10 stroke-[2.5]" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-black text-white">¡Comprobante Recibido!</h1>
-                        <p className="text-xs text-slate-400 mt-2">
+                        <h1 className="text-2xl font-black text-slate-900 tracking-tight">¡Comprobante Recibido!</h1>
+                        <p className="text-xs text-slate-500 font-medium mt-2">
                             Tu pago está en <strong>Proceso de Verificación</strong>. Tu pedido pasará a producción automáticamente tan pronto como el administrador confirme la transferencia bancaria.
                         </p>
                     </div>
 
-                    <div className="bg-slate-950 rounded-2xl p-5 text-left border border-slate-800 space-y-3">
+                    <div className="bg-slate-50 rounded-2xl p-5 text-left border border-slate-200 space-y-3">
                         <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Pedido N°</span>
-                            <span className="text-sm font-black text-white">#{createdOrder.numeroPedido}</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Pedido N°</span>
+                            <span className="text-sm font-black text-slate-900">#{createdOrder.numeroPedido}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Estado del Pago</span>
-                            <span className="px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-[10px] font-black uppercase tracking-widest">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Estado del Pago</span>
+                            <span className="px-3 py-1 bg-amber-100 text-amber-800 border border-amber-300 rounded-full text-[10px] font-black uppercase tracking-widest">
                                 En Revisión
                             </span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Entrega</span>
-                            <span className="text-xs font-bold text-slate-300">{createdOrder.tipoEntrega}</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Entrega</span>
+                            <span className="text-xs font-bold text-slate-700">{createdOrder.tipoEntrega}</span>
                         </div>
-                        <div className="flex justify-between items-center pt-2 border-t border-slate-800">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Total</span>
-                            <span className="text-base font-black text-orange-400">${createdOrder.total.toFixed(2)}</span>
+                        <div className="flex justify-between items-center pt-2 border-t border-slate-200">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total</span>
+                            <span className="text-base font-black text-orange-600">${createdOrder.total.toFixed(2)}</span>
                         </div>
                     </div>
 
                     <div className="space-y-3">
                         <a
                             href={`/${negocio.slug}/pedidos`}
-                            className="block w-full py-4 text-center text-xs font-black uppercase tracking-widest rounded-2xl text-white shadow-lg active:scale-95 transition-transform bg-gradient-to-r from-orange-500 to-amber-500"
+                            className="block w-full py-4 text-center text-xs font-black uppercase tracking-widest rounded-2xl text-white shadow-lg active:scale-95 transition-transform bg-orange-600 hover:bg-orange-700"
                         >
                             Ver Mis Pedidos
                         </a>
@@ -765,7 +765,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 setStep('catalog');
                                 setCreatedOrder(null);
                             }}
-                            className="block w-full py-4 text-center text-xs font-black uppercase tracking-widest rounded-2xl text-slate-400 bg-slate-950 hover:bg-slate-800 border border-slate-800 active:scale-95 transition-transform"
+                            className="block w-full py-4 text-center text-xs font-black uppercase tracking-widest rounded-2xl text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 active:scale-95 transition-transform"
                         >
                             Volver al Catálogo
                         </button>

@@ -186,48 +186,50 @@ export default function ClientOrdersClient({ negocio }: Props) {
     const getOrderBadge = (status: string) => {
         switch (status) {
             case 'EN_PREPARACION':
-                return <span className="px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-full text-xs font-black animate-pulse">🔥 EN PREPARACIÓN</span>;
+            case 'PREPARACION':
+                return <span className="px-3 py-1 bg-orange-100 text-orange-800 border border-orange-200 rounded-full text-xs font-black">🔥 EN PREPARACIÓN</span>;
             case 'LISTO':
-                return <span className="px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/30 rounded-full text-xs font-black">✨ LISTO PARA ENTREGA</span>;
+                return <span className="px-3 py-1 bg-blue-100 text-blue-800 border border-blue-200 rounded-full text-xs font-black">✨ LISTO PARA ENTREGA</span>;
             case 'EN_RUTA':
-                return <span className="px-3 py-1 bg-purple-500/10 text-purple-400 border border-purple-500/30 rounded-full text-xs font-black">🛵 EN RUTA</span>;
+            case 'RUTA':
+                return <span className="px-3 py-1 bg-purple-100 text-purple-800 border border-purple-200 rounded-full text-xs font-black">🛵 EN RUTA</span>;
             case 'ENTREGADO':
-                return <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-black">🎉 ENTREGADO</span>;
+                return <span className="px-3 py-1 bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-full text-xs font-black">🎉 ENTREGADO</span>;
             case 'PAGO_EN_REVISION':
-                return <span className="px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-full text-xs font-black">⏳ PAGO EN REVISIÓN</span>;
+                return <span className="px-3 py-1 bg-amber-100 text-amber-800 border border-amber-300 rounded-full text-xs font-black">⏳ PAGO EN REVISIÓN</span>;
             case 'PENDIENTE_PAGO':
             default:
-                return <span className="px-3 py-1 bg-slate-800 text-slate-300 border border-slate-700 rounded-full text-xs font-black">💳 PENDIENTE DE PAGO</span>;
+                return <span className="px-3 py-1 bg-slate-100 text-slate-700 border border-slate-200 rounded-full text-xs font-black">💳 PENDIENTE DE PAGO</span>;
         }
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white font-sans pb-16">
+        <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-16">
             {/* Header */}
-            <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-                <Link href={`/${negocio.slug}`} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider">
+            <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-xs">
+                <Link href={`/${negocio.slug}`} className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors text-xs font-extrabold uppercase tracking-wider">
                     <ArrowLeft className="w-4 h-4" /> Volver a Tienda
                 </Link>
                 <div className="flex items-center gap-2">
-                    <ShoppingBag className="w-5 h-5 text-orange-500" />
-                    <span className="font-extrabold text-sm text-white">Mis Pedidos - Pinchos</span>
+                    <ShoppingBag className="w-5 h-5 text-orange-600" />
+                    <span className="font-black text-sm text-slate-900">Mis Pedidos - Pinchos</span>
                 </div>
             </header>
 
-            <main className="max-w-2xl mx-auto px-4 pt-6">
+            <main className="max-w-2xl mx-auto px-4 pt-8">
                 {!isVerified ? (
                     // Card de Verificación OTP
-                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6">
+                    <div className="bg-white border border-slate-200/80 rounded-3xl p-8 shadow-2xl space-y-6">
                         <div className="text-center space-y-2">
-                            <div className="w-12 h-12 bg-orange-500/10 border border-orange-500/20 text-orange-500 rounded-2xl flex items-center justify-center mx-auto">
-                                <Phone className="w-6 h-6" />
+                            <div className="w-14 h-14 bg-orange-500/10 border border-orange-500/20 text-orange-600 rounded-2xl flex items-center justify-center mx-auto">
+                                <Phone className="w-7 h-7" />
                             </div>
-                            <h2 className="text-xl font-black text-white">Consulta tus Pedidos</h2>
-                            <p className="text-xs text-slate-400">Ingresa tu número de teléfono para enviarte un código OTP de seguridad</p>
+                            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Consulta tus Pedidos</h2>
+                            <p className="text-xs text-slate-500 font-medium">Ingresa tu número de teléfono para enviarte un código OTP de seguridad</p>
                         </div>
 
                         {otpMessage && (
-                            <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-center text-xs font-semibold text-orange-400">
+                            <div className="p-3.5 bg-orange-50 border border-orange-200 rounded-2xl text-center text-xs font-bold text-orange-800">
                                 {otpMessage}
                             </div>
                         )}
@@ -235,20 +237,20 @@ export default function ClientOrdersClient({ negocio }: Props) {
                         {otpStep === 'input' ? (
                             <form onSubmit={handleSendOTP} className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Número Celular / WhatsApp</label>
+                                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">Número Celular / WhatsApp</label>
                                     <input
                                         type="tel"
                                         required
                                         value={phone}
                                         onChange={e => setPhone(e.target.value)}
                                         placeholder="0991234567"
-                                        className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono text-center text-lg focus:outline-none focus:border-orange-500 transition-colors"
+                                        className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 font-mono text-center text-lg focus:outline-none focus:border-orange-500 focus:bg-white transition-colors"
                                     />
                                 </div>
                                 <button
                                     type="submit"
                                     disabled={otpLoading}
-                                    className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold rounded-xl text-sm shadow-lg flex items-center justify-center gap-2"
+                                    className="w-full py-4 bg-orange-600 hover:bg-orange-700 active:scale-95 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-orange-600/20 flex items-center justify-center gap-2 transition-all"
                                 >
                                     {otpLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Enviar Código OTP'}
                                 </button>
@@ -256,9 +258,9 @@ export default function ClientOrdersClient({ negocio }: Props) {
                         ) : (
                             <form onSubmit={handleVerifyOTP} className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Código OTP de 4 dígitos</label>
+                                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">Código OTP de 4 dígitos</label>
                                     <div className="relative">
-                                        <KeyRound className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                                        <KeyRound className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                         <input
                                             type="text"
                                             required
@@ -266,22 +268,22 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                             value={otpCode}
                                             onChange={e => setOtpCode(e.target.value)}
                                             placeholder="1234"
-                                            className="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono text-center text-xl tracking-widest focus:outline-none focus:border-orange-500 transition-colors"
+                                            className="w-full pl-10 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 font-mono text-center text-2xl tracking-widest focus:outline-none focus:border-orange-500 focus:bg-white transition-colors"
                                         />
                                     </div>
-                                    <p className="text-[11px] text-slate-500 text-center mt-2">Prueba rápida en desarrollo: Usa <strong>1234</strong></p>
+                                    <p className="text-[11px] text-slate-400 text-center mt-2 font-medium">Prueba rápida en desarrollo: Usa <strong className="text-slate-700">1234</strong></p>
                                 </div>
                                 <button
                                     type="submit"
                                     disabled={otpLoading}
-                                    className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-sm shadow-lg flex items-center justify-center gap-2"
+                                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95"
                                 >
                                     {otpLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verificar e Ingresar'}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setOtpStep('input')}
-                                    className="w-full py-2 text-xs text-slate-400 hover:text-white"
+                                    className="w-full py-2 text-xs text-slate-500 hover:text-slate-800 font-bold"
                                 >
                                     Cambiar número de teléfono
                                 </button>
@@ -291,17 +293,17 @@ export default function ClientOrdersClient({ negocio }: Props) {
                 ) : (
                     // Listado de Pedidos
                     <div className="space-y-6">
-                        <div className="flex items-center justify-between bg-slate-900 p-4 rounded-2xl border border-slate-800">
+                        <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                             <div>
-                                <span className="text-xs text-slate-400 block">Consultando pedidos para</span>
-                                <span className="text-sm font-bold text-white font-mono">{phone}</span>
+                                <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Consultando pedidos para</span>
+                                <span className="text-sm font-black text-slate-900 font-mono">{phone}</span>
                             </div>
                             <button
                                 onClick={() => {
                                     localStorage.removeItem('pinchos_client_phone');
                                     setIsVerified(false);
                                 }}
-                                className="text-xs text-orange-400 hover:underline font-semibold"
+                                className="text-xs text-orange-600 hover:underline font-extrabold"
                             >
                                 Cambiar número
                             </button>
@@ -309,30 +311,30 @@ export default function ClientOrdersClient({ negocio }: Props) {
 
                         {loading ? (
                             <div className="flex items-center justify-center py-16">
-                                <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
-                                <span className="ml-3 text-slate-400 text-sm">Buscando tus pedidos...</span>
+                                <Loader2 className="w-8 h-8 text-orange-600 animate-spin" />
+                                <span className="ml-3 text-slate-500 text-xs font-bold">Buscando tus pedidos...</span>
                             </div>
                         ) : orders.length === 0 ? (
-                            <div className="text-center py-16 bg-slate-900/60 rounded-3xl border border-slate-800 space-y-3">
-                                <ShoppingBag className="w-12 h-12 mx-auto text-slate-600" />
-                                <h3 className="text-base font-bold text-slate-200">No tienes pedidos registrados</h3>
-                                <p className="text-xs text-slate-400">Realiza tu primer pedido de pinchos para asar desde el catálogo.</p>
-                                <Link href={`/${negocio.slug}`} className="inline-block px-5 py-2.5 bg-orange-500 text-white text-xs font-bold rounded-xl shadow-lg">
+                            <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 space-y-4 shadow-sm p-6">
+                                <ShoppingBag className="w-12 h-12 mx-auto text-slate-300" />
+                                <h3 className="text-base font-black text-slate-900">No tienes pedidos registrados</h3>
+                                <p className="text-xs text-slate-500 font-medium">Realiza tu primer pedido de pinchos para asar desde el catálogo.</p>
+                                <Link href={`/${negocio.slug}`} className="inline-block px-6 py-3 bg-orange-600 text-white text-xs font-black rounded-2xl shadow-lg hover:bg-orange-700 transition-colors">
                                     Ver Catálogo de Pinchos
                                 </Link>
                             </div>
                         ) : (
                             <div className="space-y-4">
                                 {orders.map(order => (
-                                    <div key={order.id} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
+                                    <div key={order.id} className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow">
                                         {/* Header del pedido */}
-                                        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                                             <div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-lg font-black text-white">Pedido #{order.numeroPedido}</span>
-                                                    <span className="text-xs font-mono text-slate-500">{new Date(order.createdAt).toLocaleDateString()}</span>
+                                                    <span className="text-lg font-black text-slate-900">Pedido #{order.numeroPedido}</span>
+                                                    <span className="text-xs font-mono text-slate-400 font-bold">{new Date(order.createdAt).toLocaleDateString()}</span>
                                                 </div>
-                                                <div className="text-xs text-slate-400 mt-0.5">
+                                                <div className="text-xs text-slate-500 font-medium mt-0.5">
                                                     {order.tipoEntrega} ({order.franjaHoraria} hrs)
                                                 </div>
                                             </div>
@@ -344,38 +346,38 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                         {/* Lista de Ítems */}
                                         <div className="space-y-1.5 py-1">
                                             {order.items.map(item => (
-                                                <div key={item.id} className="flex justify-between text-xs text-slate-300">
-                                                    <span>{item.cantidad}x {item.nombreProducto}</span>
-                                                    <span className="font-semibold text-slate-200">${(item.cantidad * item.precioUnitario).toFixed(2)}</span>
+                                                <div key={item.id} className="flex justify-between text-xs text-slate-700 font-medium">
+                                                    <span><strong className="text-slate-900">{item.cantidad}x</strong> {item.nombreProducto}</span>
+                                                    <span className="font-bold text-slate-900">${(item.cantidad * item.precioUnitario).toFixed(2)}</span>
                                                 </div>
                                             ))}
                                         </div>
 
                                         {/* Total */}
-                                        <div className="flex justify-between items-center pt-3 border-t border-slate-800 text-sm">
-                                            <span className="text-slate-400 font-bold">Total a Pagar:</span>
-                                            <span className="text-lg font-black text-orange-400">${order.total.toFixed(2)}</span>
+                                        <div className="flex justify-between items-center pt-3 border-t border-slate-100 text-sm">
+                                            <span className="text-slate-500 font-bold">Total a Pagar:</span>
+                                            <span className="text-lg font-black text-orange-600">${order.total.toFixed(2)}</span>
                                         </div>
 
                                         {/* Sección del Pago */}
-                                        <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800/80 space-y-3">
+                                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                                             <div className="flex justify-between items-center text-xs">
-                                                <span className="font-semibold text-slate-400">Estado del Pago:</span>
-                                                <span className="font-mono font-bold text-slate-200">{order.payment?.estado || 'PENDIENTE'}</span>
+                                                <span className="font-bold text-slate-500">Estado del Pago:</span>
+                                                <span className="font-mono font-black text-slate-900">{order.payment?.estado || 'PENDIENTE'}</span>
                                             </div>
 
-                                            {/* Si fue rechazado: mostrar el motivo y formulario de re-subida */}
+                                            {/* Si fue rechazado */}
                                             {order.payment?.estado === 'RECHAZADO' && (
-                                                <div className="space-y-3 pt-2 border-t border-rose-500/20">
-                                                    <div className="p-3 bg-rose-500/10 text-rose-300 text-xs rounded-xl border border-rose-500/20 space-y-1">
-                                                        <div className="font-bold flex items-center gap-1.5 text-rose-400">
-                                                            <XCircle className="w-4 h-4" /> Comprobante Rechazado por Administrador
+                                                <div className="space-y-3 pt-2 border-t border-rose-200">
+                                                    <div className="p-3.5 bg-rose-50 text-rose-800 text-xs rounded-2xl border border-rose-200 space-y-1">
+                                                        <div className="font-black flex items-center gap-1.5 text-rose-700">
+                                                            <XCircle className="w-4 h-4" /> Comprobante Rechazado
                                                         </div>
-                                                        <p><strong>Motivo:</strong> {order.payment.motivoRechazo || 'El comprobante no era legible o correcto.'}</p>
+                                                        <p className="font-medium"><strong>Motivo:</strong> {order.payment.motivoRechazo || 'El comprobante no era legible o correcto.'}</p>
                                                     </div>
 
                                                     <div className="space-y-2">
-                                                        <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">Subir Nuevo Comprobante (PNG, JPG, PDF)</label>
+                                                        <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">Subir Nuevo Comprobante (PNG, JPG, PDF)</label>
                                                         <input
                                                             type="file"
                                                             accept="image/png, image/jpeg, image/webp, application/pdf"
@@ -385,7 +387,7 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                                                     handleFileUpload(order.id, e.target.files[0]);
                                                                 }
                                                             }}
-                                                            className="w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-orange-500 file:text-white hover:file:bg-orange-600 bg-slate-900 rounded-xl border border-slate-800"
+                                                            className="w-full text-xs text-slate-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-orange-600 file:text-white hover:file:bg-orange-700 bg-white rounded-xl border border-slate-200 p-2 cursor-pointer"
                                                         />
                                                     </div>
                                                 </div>
@@ -393,16 +395,16 @@ export default function ClientOrdersClient({ negocio }: Props) {
 
                                             {/* Si está en revisión */}
                                             {order.payment?.estado === 'COMPROBANTE_ENVIADO' && (
-                                                <div className="p-3 bg-amber-500/10 text-amber-300 text-xs rounded-xl border border-amber-500/20 flex items-center gap-2">
-                                                    <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-                                                    <span>Tu comprobante fue recibido y está siendo verificado. Tan pronto se confirme, tu pedido pasará a preparación.</span>
+                                                <div className="p-3.5 bg-amber-50 text-amber-900 text-xs rounded-2xl border border-amber-200 flex items-center gap-2.5 font-medium">
+                                                    <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                                                    <span>Tu comprobante fue recibido y está siendo verificado. Tan pronto se confirme, tu pedido pasará a producción.</span>
                                                 </div>
                                             )}
 
                                             {/* Si está confirmado */}
                                             {order.payment?.estado === 'CONFIRMADO' && (
-                                                <div className="p-3 bg-emerald-500/10 text-emerald-300 text-xs rounded-xl border border-emerald-500/20 flex items-center gap-2">
-                                                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                                <div className="p-3.5 bg-emerald-50 text-emerald-900 text-xs rounded-2xl border border-emerald-200 flex items-center gap-2.5 font-medium">
+                                                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                                                     <span>¡Pago confirmado! Tu pedido ha ingresado a producción.</span>
                                                 </div>
                                             )}

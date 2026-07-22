@@ -16,7 +16,15 @@ export async function GET() {
     try {
         const pedidos = await (prisma as any).pedido.findMany({
             where: { negocioId },
-            include: { items: true },
+            include: { 
+                items: true,
+                payment: {
+                    include: {
+                        evidences: { orderBy: { createdAt: 'desc' } },
+                        method: true
+                    }
+                }
+            },
             orderBy: { createdAt: 'desc' }
         });
         return NextResponse.json(pedidos);
@@ -35,26 +43,53 @@ export async function PUT(req: Request) {
 
     try {
         const body = await req.json();
-        const { id, estado } = body;
+        const { id, estado, franjaHoraria, fechaEntrega, notas } = body;
 
-        if (!id || !estado) {
-            return NextResponse.json({ error: 'El ID y el estado son obligatorios' }, { status: 400 });
+        if (!id) {
+            return NextResponse.json({ error: 'El ID es obligatorio' }, { status: 400 });
         }
 
         // Validar propiedad del negocio
         const pedido = await (prisma as any).pedido.findUnique({
             where: { id },
-            include: { negocio: true }
+            include: { negocio: true, payment: true }
         });
 
         if (!pedido || pedido.negocioId !== negocioId) {
             return NextResponse.json({ error: 'No autorizado o pedido no encontrado' }, { status: 403 });
         }
 
+        const updateData: any = {};
+        if (estado) updateData.estado = estado;
+        if (franjaHoraria) updateData.franjaHoraria = franjaHoraria;
+        if (fechaEntrega) updateData.fechaEntrega = new Date(fechaEntrega);
+        if (notas !== undefined) updateData.notas = notas;
+
         const pedidoActualizado = await (prisma as any).pedido.update({
             where: { id },
-            data: { estado }
+            data: updateData,
+            include: {
+                items: true,
+                payment: {
+                    include: {
+                        evidences: { orderBy: { createdAt: 'desc' } },
+                        method: true
+                    }
+                }
+            }
         });
+
+        // Si se aprueba el pedido a PREPARACION o RECIBIDO, sincronizar el estado del pago a CONFIRMADO
+        if (estado && ['PREPARACION', 'EN_PREPARACION', 'RECIBIDO'].includes(estado) && pedido.payment) {
+            try {
+                await (prisma as any).orderPayment.update({
+                    where: { id: pedido.payment.id },
+                    data: { estado: 'CONFIRMADO' }
+                });
+            } catch (pErr) {
+                console.warn('[ORDER_STATUS_SYNC_PAYMENT_ERROR]', pErr);
+            }
+        }
 
         // Notificación de WhatsApp al cliente
         if (pedido.telefonoCliente) {
