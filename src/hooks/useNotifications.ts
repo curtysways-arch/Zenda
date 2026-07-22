@@ -21,18 +21,18 @@ export function useNotifications(slug: string): UseNotificationsResult {
                 const data = await res.json();
                 setUnreadCount(data.unreadCount || 0);
                 setIsAuthenticated(true);
-            } else if (res.status === 401) {
+
+                // También obtenemos el perfil del cliente para tener los puntos sincronizados solo si está autenticado
+                const meRes = await fetch(`/api/${slug}/referrals/me`);
+                if (meRes.ok) {
+                    const meData = await meRes.json();
+                    setPointsBalance(meData.puntos !== undefined ? meData.puntos : null);
+                }
+            } else {
                 setIsAuthenticated(false);
             }
-            
-            // También obtenemos el perfil del cliente para tener los puntos sincronizados
-            const meRes = await fetch(`/api/${slug}/referrals/me`);
-            if (meRes.ok) {
-                const meData = await meRes.json();
-                setPointsBalance(meData.puntos !== undefined ? meData.puntos : null);
-            }
         } catch (err) {
-            console.error("Error refreshing notification data:", err);
+            // Manejo silencioso de red
         } finally {
             setLoading(false);
         }

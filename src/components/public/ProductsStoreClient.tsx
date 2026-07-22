@@ -124,42 +124,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const [lat, setLat] = useState<number | null>(null);
     const [lng, setLng] = useState<number | null>(null);
     const [mapError, setMapError] = useState<string | null>(null);
-    const mapRef = useRef<HTMLDivElement>(null);
-    const googleMapRef = useRef<any>(null);
-    const markerRef = useRef<any>(null);
-
-    // Order Success Info
+    const [isMapLoading, setIsMapLoading] = useState<boolean>(true);
     const [submitting, setSubmitting] = useState(false);
-
-    // Load Catalogue
-    useEffect(() => {
-        const fetchCatalogue = async () => {
-            try {
-                setLoading(true);
-                const res = await fetch(`/api/public/${negocio.slug}/catalogue`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setProducts(data.products || []);
-                    setCategories(data.categories || []);
-                }
-            } catch (err) {
-                console.error("Error loading catalogue:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchCatalogue();
-    }, [negocio.slug]);
-
-    // Load Cart from localStorage
-    useEffect(() => {
-        const savedCart = localStorage.getItem(`cart_${negocio.id}`);
-        if (savedCart) {
-            try {
-                setCart(JSON.parse(savedCart));
-            } catch (e) {}
-        }
-    }, [negocio.id]);
 
     // Save Cart to localStorage
     const saveCart = (newCart: CartItem[]) => {
@@ -167,140 +133,175 @@ export default function ProductsStoreClient({ negocio }: Props) {
         localStorage.setItem(`cart_${negocio.id}`, JSON.stringify(newCart));
     };
 
-
-
-    // Leaflet Script & CSS Loader (OpenStreetMap - 100% Gratis sin API Key)
-    const mapInitialized = useRef(false);
+    const mapRef = useRef<HTMLDivElement>(null);
     const leafletMapRef = useRef<any>(null);
     const leafletMarkerRef = useRef<any>(null);
+    const mapInitializedRef = useRef<boolean>(false);
 
+    // Mover marcador y centrar vista dinámicamente sin recrear el mapa
+    const updateMarkerPosition = (newLat: number, newLng: number) => {
+        setLat(newLat);
+        setLng(newLng);
+        if (leafletMarkerRef.current) {
+            leafletMarkerRef.current.setLatLng([newLat, newLng]);
+        }
+        if (leafletMapRef.current) {
+            leafletMapRef.current.setView([newLat, newLng], 16);
+        }
+    };
+
+    // Obtener la ubicación GPS actual del dispositivo
+    const loadCurrentLocation = () => {
+        if (!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const uLat = pos.coords.latitude;
+                const uLng = pos.coords.longitude;
+                updateMarkerPosition(uLat, uLng);
+            },
+            (err) => {
+                console.log("Geolocalización GPS no disponible:", err.message);
+            },
+            { timeout: 5000, maximumAge: 60000 }
+        );
+    };
+
+    // Inicializar el mapa una sola vez de forma limpia
+    const initializeMap = () => {
+        if (!mapRef.current) return;
+
+        // Si ya existe instancia del mapa en el DOM, solo recalcular tamaño
+        if (mapInitializedRef.current || leafletMapRef.current || (mapRef.current as any)._leaflet_id) {
+            if (leafletMapRef.current) {
+                leafletMapRef.current.invalidateSize();
+            }
+            setIsMapLoading(false);
+            return;
+        }
+
+        const L = (window as any).L;
+        if (!L) return;
+
+        // Prioridad 1: Coordenadas guardadas en localStorage
+        const savedLatStr = localStorage.getItem('pinchos_client_lat');
+        const savedLngStr = localStorage.getItem('pinchos_client_lng');
+        const latNegocio = config.latitudNegocio !== undefined ? parseFloat(config.latitudNegocio) : -0.180653;
+        const lngNegocio = config.longitudNegocio !== undefined ? parseFloat(config.longitudNegocio) : -78.467838;
+
+        let initialLat = latNegocio;
+        let initialLng = lngNegocio;
+        let hasSavedCoords = false;
+
+        if (savedLatStr && savedLngStr) {
+            const pLat = parseFloat(savedLatStr);
+            const pLng = parseFloat(savedLngStr);
+            if (!isNaN(pLat) && !isNaN(pLng)) {
+                initialLat = pLat;
+                initialLng = pLng;
+                hasSavedCoords = true;
+            }
+        }
+
+        try {
+            const map = L.map(mapRef.current, {
+                zoomControl: true,
+                attributionControl: false
+            }).setView([initialLat, initialLng], 15);
+
+            leafletMapRef.current = map;
+            mapInitializedRef.current = true;
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(map);
+
+            const defaultIcon = L.icon({
+                iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+
+            const marker = L.marker([initialLat, initialLng], {
+                draggable: true,
+                icon: defaultIcon
+            }).addTo(map);
+
+            leafletMarkerRef.current = marker;
+            setLat(initialLat);
+            setLng(initialLng);
+            setIsMapLoading(false);
+
+            marker.on('dragend', () => {
+                const pos = marker.getLatLng();
+                setLat(pos.lat);
+                setLng(pos.lng);
+            });
+
+            map.on('click', (e: any) => {
+                const pos = e.latlng;
+                marker.setLatLng(pos);
+                setLat(pos.lat);
+                setLng(pos.lng);
+            });
+
+            // Si NO había ubicación previa guardada, intentar GPS del dispositivo
+            if (!hasSavedCoords) {
+                loadCurrentLocation();
+            }
+
+            [100, 300, 700].forEach(delay => {
+                setTimeout(() => {
+                    if (leafletMapRef.current) {
+                        leafletMapRef.current.invalidateSize();
+                    }
+                }, delay);
+            });
+
+        } catch (err) {
+            console.error("Error al inicializar mapa:", err);
+            setIsMapLoading(false);
+        }
+    };
+
+    // Manejo del ciclo de vida del mapa
     useEffect(() => {
         if (step !== 'checkout' || deliveryType !== 'DOMICILIO') {
             if (leafletMapRef.current) {
-                try {
-                    leafletMapRef.current.remove();
-                } catch (e) {}
+                try { leafletMapRef.current.remove(); } catch (e) {}
                 leafletMapRef.current = null;
             }
-            mapInitialized.current = false;
+            leafletMarkerRef.current = null;
+            mapInitializedRef.current = false;
+            setIsMapLoading(true);
             return;
         }
 
         let isCancelled = false;
+        let timerId: any = null;
 
-        const initMap = () => {
-            if (isCancelled || !mapRef.current) return;
-            
-            const L = (window as any).L;
-            if (!L) {
-                setTimeout(initMap, 100);
+        const checkAndInit = () => {
+            if (isCancelled) return;
+            if (!mapRef.current) {
+                timerId = setTimeout(checkAndInit, 100);
                 return;
             }
-
-            // Si el mapa ya existe en el nodo DOM, solo recalcular tamaño
-            if ((mapRef.current as any)._leaflet_id) {
-                if (leafletMapRef.current) {
-                    leafletMapRef.current.invalidateSize();
-                }
-                return;
-            }
-
-            // Coordenadas del negocio o por defecto (Quito)
-            const latNegocio = config.latitudNegocio !== undefined ? parseFloat(config.latitudNegocio) : -0.180653;
-            const lngNegocio = config.longitudNegocio !== undefined ? parseFloat(config.longitudNegocio) : -78.467838;
-
-            const defaultLat = latNegocio;
-            const defaultLng = lngNegocio;
-
-            try {
-                const map = L.map(mapRef.current, {
-                    zoomControl: true,
-                    attributionControl: false
-                }).setView([defaultLat, defaultLng], 15);
-
-                leafletMapRef.current = map;
-                mapInitialized.current = true;
-
-                // Cargar tiles de OpenStreetMap
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19
-                }).addTo(map);
-
-                // Icono oficial
-                const defaultIcon = L.icon({
-                    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-                    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-                    iconSize: [25, 41],
-                    iconAnchor: [12, 41],
-                    popupAnchor: [1, -34],
-                    shadowSize: [41, 41]
-                });
-
-                // Crear marcador
-                const marker = L.marker([defaultLat, defaultLng], {
-                    draggable: true,
-                    icon: defaultIcon
-                }).addTo(map);
-
-                leafletMarkerRef.current = marker;
-                setLat(defaultLat);
-                setLng(defaultLng);
-
-                // Geolocalizar cliente
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            if (isCancelled) return;
-                            const userLat = position.coords.latitude;
-                            const userLng = position.coords.longitude;
-                            map.setView([userLat, userLng], 16);
-                            marker.setLatLng([userLat, userLng]);
-                            setLat(userLat);
-                            setLng(userLng);
-                        },
-                        () => {},
-                        { timeout: 5000, maximumAge: 60000 }
-                    );
-                }
-
-                // Eventos del marcador
-                marker.on('dragend', () => {
-                    const position = marker.getLatLng();
-                    setLat(position.lat);
-                    setLng(position.lng);
-                });
-
-                // Evento al hacer click en el mapa
-                map.on('click', (e: any) => {
-                    const position = e.latlng;
-                    marker.setLatLng(position);
-                    setLat(position.lat);
-                    setLng(position.lng);
-                });
-
-                [100, 300, 700].forEach(delay => {
-                    setTimeout(() => {
-                        if (!isCancelled && leafletMapRef.current) {
-                            leafletMapRef.current.invalidateSize();
-                        }
-                    }, delay);
-                });
-
-            } catch (err) {
-                console.error("Error al inicializar mapa Leaflet:", err);
-            }
+            initializeMap();
         };
 
-        // Iniciar montaje
-        setTimeout(initMap, 50);
+        timerId = setTimeout(checkAndInit, 50);
 
         return () => {
             isCancelled = true;
+            if (timerId) clearTimeout(timerId);
             if (leafletMapRef.current) {
-                try { leafletMapRef.current.remove(); } catch(e){}
+                try { leafletMapRef.current.remove(); } catch (e) {}
                 leafletMapRef.current = null;
             }
-            mapInitialized.current = false;
+            leafletMarkerRef.current = null;
+            mapInitializedRef.current = false;
         };
     }, [step, deliveryType]);
 
@@ -435,13 +436,47 @@ export default function ProductsStoreClient({ negocio }: Props) {
         }
     }, [deliveryDate]);
 
-    // Cargar teléfono y nombre guardados de la sesión previa / OTP
+    // Cargar datos del cliente guardados en localStorage (Teléfono, Nombre, Dirección, Referencia, Coordenadas)
     useEffect(() => {
-        const savedPhone = localStorage.getItem('pinchos_client_phone');
-        const savedName = localStorage.getItem('pinchos_client_name');
-        if (savedPhone) setClientPhone(savedPhone);
-        if (savedName) setClientName(savedName);
+        try {
+            const savedPhone = localStorage.getItem('pinchos_client_phone');
+            const savedName = localStorage.getItem('pinchos_client_name');
+            const savedAddr = localStorage.getItem('pinchos_client_address');
+            const savedRef = localStorage.getItem('pinchos_client_reference');
+            const savedLat = localStorage.getItem('pinchos_client_lat');
+            const savedLng = localStorage.getItem('pinchos_client_lng');
+
+            if (savedPhone) setClientPhone(savedPhone);
+            if (savedName) setClientName(savedName);
+            if (savedAddr) setClientAddress(savedAddr);
+            if (savedRef) setClientReference(savedRef);
+
+            if (savedLat && savedLng) {
+                const parsedLat = parseFloat(savedLat);
+                const parsedLng = parseFloat(savedLng);
+                if (!isNaN(parsedLat) && !isNaN(parsedLng)) {
+                    setLat(parsedLat);
+                    setLng(parsedLng);
+                }
+            }
+        } catch (e) {
+            console.error("Error al leer datos guardados del cliente:", e);
+        }
     }, []);
+
+    // Guardar los datos del cliente en localStorage para futuros pedidos
+    const saveClientDataToLocalStorage = (name: string, phone: string) => {
+        try {
+            if (phone) localStorage.setItem('pinchos_client_phone', phone);
+            if (name) localStorage.setItem('pinchos_client_name', name);
+            if (clientAddress) localStorage.setItem('pinchos_client_address', clientAddress);
+            if (clientReference) localStorage.setItem('pinchos_client_reference', clientReference);
+            if (lat !== null && lat !== undefined) localStorage.setItem('pinchos_client_lat', lat.toString());
+            if (lng !== null && lng !== undefined) localStorage.setItem('pinchos_client_lng', lng.toString());
+        } catch (e) {
+            console.error("Error al guardar datos del cliente en localStorage:", e);
+        }
+    };
 
     // Función auxiliar para crear pedido directamente sin repetir OTP si el cliente ya está autenticado
     const createOrderDirectly = async (phone: string, name: string) => {
@@ -469,6 +504,9 @@ export default function ProductsStoreClient({ negocio }: Props) {
             const data = await response.json();
             setCreatedOrder(data.pedido);
             setCreatedPayment(data.payment);
+
+            // Guardar datos del cliente y su última ubicación para futuros pedidos
+            saveClientDataToLocalStorage(name, phone);
 
             // Cargar datos bancarios del negocio usando endpoint público
             try {
@@ -1147,27 +1185,19 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Geolocalización GPS (Mueve el pin)</label>
                                         <button
                                             type="button"
-                                            onClick={() => {
-                                                if (navigator.geolocation && leafletMapRef.current && leafletMarkerRef.current) {
-                                                    navigator.geolocation.getCurrentPosition(
-                                                        (pos) => {
-                                                            const uLat = pos.coords.latitude;
-                                                            const uLng = pos.coords.longitude;
-                                                            leafletMapRef.current.setView([uLat, uLng], 16);
-                                                            leafletMarkerRef.current.setLatLng([uLat, uLng]);
-                                                            setLat(uLat);
-                                                            setLng(uLng);
-                                                        },
-                                                        () => alert("No se pudo obtener tu ubicación automática. Puedes mover el pin manualmente.")
-                                                    );
-                                                }
-                                            }}
+                                            onClick={loadCurrentLocation}
                                             className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/80 active:scale-95 transition-all cursor-pointer"
                                         >
                                             <MapPin className="size-3" /> Usar mi ubicación
                                         </button>
                                     </div>
                                     <div className="relative w-full h-56 rounded-2xl overflow-hidden border border-slate-200 shadow-inner bg-slate-100">
+                                        {isMapLoading && (
+                                            <div className="absolute inset-0 z-20 bg-slate-100/90 backdrop-blur-xs flex items-center justify-center gap-2 text-slate-500 text-xs font-bold">
+                                                <Loader2 className="size-5 animate-spin text-emerald-600" />
+                                                <span>Cargando mapa...</span>
+                                            </div>
+                                        )}
                                         <div ref={mapRef} className="w-full h-full z-10" />
                                     </div>
                                     {lat && lng && (
