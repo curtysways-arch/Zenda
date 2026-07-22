@@ -6,6 +6,7 @@ import {
     ChevronRight, Check, Loader2, Search, ArrowLeft, Phone, Info, AlertCircle
 } from 'lucide-react';
 import Image from 'next/image';
+import SimpleLeafletMap from './SimpleLeafletMap';
 
 interface Product {
     id: string;
@@ -1142,22 +1143,17 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     />
                                 </div>
 
-                                {/* Mapa de Google Maps para coordenadas GPS */}
+                                {/* Mapa de OpenStreetMap para coordenadas GPS */}
                                 <div className="space-y-2">
                                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Geolocalización GPS (Mueve el pin)</label>
-                                    {mapError ? (
-                                        <div className="text-[10px] text-rose-500 font-bold bg-rose-50 p-3 rounded-xl border border-rose-100">{mapError}</div>
-                                    ) : (
-                                        <div 
-                                            ref={mapRef} 
-                                            className="w-full h-44 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden relative z-0 isolate"
-                                            style={{ isolation: 'isolate' }}
-                                        >
-                                            <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-xs font-bold bg-slate-100">
-                                                Cargando mapa...
-                                            </div>
-                                        </div>
-                                    )}
+                                    <SimpleLeafletMap 
+                                        initialLat={config.latitudNegocio !== undefined ? parseFloat(config.latitudNegocio) : -0.180653}
+                                        initialLng={config.longitudNegocio !== undefined ? parseFloat(config.longitudNegocio) : -78.467838}
+                                        onLocationSelect={(selectedLat, selectedLng) => {
+                                            setLat(selectedLat);
+                                            setLng(selectedLng);
+                                        }}
+                                    />
                                     {lat && lng && (
                                         <div className="flex justify-between text-[9px] font-bold text-slate-400">
                                             <span>Latitud: {lat.toFixed(6)}</span>
