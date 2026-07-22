@@ -250,6 +250,9 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         (mapRef.current as any)._leaflet_id = null;
                     }
 
+                    // Limpiar elementos hijos previos (como el texto Cargando mapa)
+                    mapRef.current.innerHTML = '';
+
                     const L = (window as any).L;
                     if (!L) return;
 
@@ -1299,11 +1302,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                                 ref={mapRef} 
                                                 className="w-full h-44 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden relative z-0 isolate"
                                                 style={{ isolation: 'isolate' }}
-                                            >
-                                                <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-xs font-bold bg-slate-100">
-                                                    Cargando mapa...
-                                                </div>
-                                            </div>
+                                            />
                                         )}
                                         {lat && lng && (
                                             <div className="flex justify-between text-[9px] font-bold text-slate-400">
