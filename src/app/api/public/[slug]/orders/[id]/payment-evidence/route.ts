@@ -85,15 +85,19 @@ export async function POST(
             uploadedBy: payment.pedido.nombreCliente || 'CLIENTE'
         });
 
-        // Notificar Push al negocio y emitir evento SSE en tiempo real
+        // Notificar al negocio (Push + SSE + WhatsApp oficial del Bot)
         try {
             const { sseEmitter, notificationService } = require('@/lib/notifications/notificationService');
+            const { whatsappService } = require('@/lib/whatsapp');
+
+            // 1. Notificación Push al negocio
             await notificationService.sendPushToBusiness(
                 payment.negocioId,
                 `💳 Comprobante Recibido #${payment.pedido.numeroPedido}`,
                 `El cliente ${payment.pedido.nombreCliente} ha subido su comprobante de pago por $${payment.monto.toFixed(2)}.`
             ).catch(() => {});
 
+            // 2. Evento SSE en tiempo real
             sseEmitter.emit('realtime_event', {
                 negocioId: payment.negocioId,
                 type: 'PAGO_SUBIDO',
@@ -101,6 +105,49 @@ export async function POST(
                 message: `Cliente: ${payment.pedido.nombreCliente} | $${payment.monto.toFixed(2)}`,
                 pedidoId: payment.pedidoId
             });
+
+            // 3. Mensaje de WhatsApp al teléfono del negocio
+            const negocio = await prisma.negocio.findUnique({
+                where: { id: payment.negocioId },
+                select: { whatsapp: true, nombre: true }
+            });
+
+            const bizPhone = negocio?.whatsapp;
+            if (bizPhone) {
+                const fullPedido = await prisma.pedido.findUnique({
+                    where: { id: payment.pedidoId },
+                    include: { items: true }
+                });
+
+                if (fullPedido) {
+                    const origin = req.nextUrl.origin || process.env.NEXTAUTH_URL || 'https://app.citiox.com';
+                    const fullEvidenceUrl = publicUrl.startsWith('http') ? publicUrl : `${origin}${publicUrl}`;
+                    const itemsList = fullPedido.items ? fullPedido.items.map((i: any) => `• ${i.cantidad}x ${i.nombreProducto} ($${(i.precioUnitario * i.cantidad).toFixed(2)})`).join('\n') : '';
+
+                    let gpsLocation = '';
+                    if (fullPedido.latitud && fullPedido.longitud) {
+                        gpsLocation = `📍 *Ubicación GPS:* https://maps.google.com/?q=${fullPedido.latitud},${fullPedido.longitud}\n`;
+                    }
+
+                    let bizMsg = `💳 *¡COMPROBANTE DE PAGO RECIBIDO!* (Pedido #${fullPedido.numeroPedido})\n\n`;
+                    bizMsg += `👤 *Cliente:* ${fullPedido.nombreCliente}\n`;
+                    bizMsg += `📞 *Teléfono:* ${fullPedido.telefonoCliente}\n`;
+                    bizMsg += `🚚 *Tipo:* ${fullPedido.tipoEntrega === 'DOMICILIO' ? 'Entrega a Domicilio' : 'Retiro en Local'}\n`;
+                    if (fullPedido.tipoEntrega === 'DOMICILIO') {
+                        bizMsg += `🏠 *Dirección:* ${fullPedido.direccionCliente || 'No especificada'}\n`;
+                        if (fullPedido.referenciaCliente) bizMsg += `📝 *Referencia:* ${fullPedido.referenciaCliente}\n`;
+                        if (gpsLocation) bizMsg += gpsLocation;
+                    }
+                    bizMsg += `\n📦 *Detalle del Pedido:*\n${itemsList}\n\n`;
+                    bizMsg += `💰 *Monto a Verificar:* $${payment.monto.toFixed(2)}\n`;
+                    bizMsg += `📄 *Comprobante Adjunto:* ${fullEvidenceUrl}\n\n`;
+                    bizMsg += `⚠️ *Por favor verifica la transferencia en tu banca y confirma la fecha/hora de entrega en tu panel de control.*`;
+
+                    await whatsappService.sendWhatsApp(bizPhone, bizMsg).catch((wErr: any) => {
+                        console.error('[EVIDENCE_WHATSAPP_SEND_ERROR]', wErr);
+                    });
+                }
+            }
         } catch (nErr) {
             console.error('[EVIDENCE_NOTIF_ERROR]', nErr);
         }
