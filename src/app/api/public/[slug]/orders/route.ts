@@ -204,6 +204,38 @@ export async function POST(
                 monto: total
             }, tx);
 
+            // Upsert cliente para vincular nombre y teléfono desde su primer pedido
+            const cleanPhoneDigits = clientPhone.replace(/\D/g, '');
+            const existingCliente = await (tx as any).cliente.findFirst({
+                where: {
+                    negocioId: negocio.id,
+                    OR: [
+                        { telefono: clientPhone },
+                        { telefono: cleanPhoneDigits },
+                        { telefono: { endsWith: cleanPhoneDigits.slice(-7) } }
+                    ]
+                }
+            });
+
+            if (existingCliente) {
+                if (clientName && (!existingCliente.nombre || existingCliente.nombre === 'Usuario' || existingCliente.nombre === 'Cliente')) {
+                    await (tx as any).cliente.update({
+                        where: { id: existingCliente.id },
+                        data: { nombre: clientName }
+                    });
+                }
+            } else {
+                await (tx as any).cliente.create({
+                    data: {
+                        id: crypto.randomUUID(),
+                        negocioId: negocio.id,
+                        nombre: clientName || "Cliente",
+                        telefono: clientPhone,
+                        updatedAt: new Date()
+                    }
+                });
+            }
+
             return { newOrder, initialPayment };
         });
 

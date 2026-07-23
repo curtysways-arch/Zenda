@@ -156,13 +156,25 @@ export async function GET(
             }
         }
 
+        // Contar total de pedidos en tiendas de productos
+        const totalPedidos = await (prisma as any).pedido.count({
+            where: {
+                negocioId: negocioId,
+                telefonoCliente: {
+                    contains: localNoZero.slice(-7)
+                }
+            }
+        });
+
         return NextResponse.json({
             ...cliente,
             telefono,
             roles,
+            totalPedidos,
             enrollments: mappedEnrollments,
             stats: {
-                reservasTotales: totalReservas
+                reservasTotales: totalReservas,
+                totalPedidos
             },
             loyalty: userPoints ? {
                 puntos: userPoints.puntos,

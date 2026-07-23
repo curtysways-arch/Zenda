@@ -32,7 +32,8 @@ import {
     AlertCircle,
     Key,
     Tag,
-    Gift
+    Gift,
+    ShoppingBag
 } from "lucide-react";
 import Link from "next/link";
 import PhoneInput from "@/components/ui/PhoneInput";
@@ -306,6 +307,14 @@ export default function MiPerfilPage() {
     const neutralColor = negocio?.colorNeutral || '#f8fafc';
     const textColor = negocio?.colorTexto || '#0f172a';
 
+    const isProductStore = negocio?.tipo === 'PRODUCTOS' || slug === 'pinchos';
+    const savedClientName = typeof window !== 'undefined' 
+        ? (localStorage.getItem('pinchos_client_name') || localStorage.getItem('user_name') || '') 
+        : '';
+    const displayName = cliente?.nombre && cliente.nombre !== 'Usuario' && cliente.nombre !== 'Cliente' 
+        ? cliente.nombre 
+        : (savedClientName || 'Cliente');
+
     return (
         <div className="min-h-screen bg-slate-50 font-sans overflow-x-hidden pb-32">
 
@@ -409,8 +418,119 @@ export default function MiPerfilPage() {
                     </div>
                 )}
 
-                {/* ── PROFILE VIEW ── */}
-                {step === 'profile' && cliente && (
+                {/* ── PROFILE VIEW FOR PRODUCT STORES (PINCHOS) ── */}
+                {step === 'profile' && cliente && isProductStore && (
+                    <div className="animate-in fade-in duration-500 space-y-5 pt-4">
+                        {/* Header Profile Card */}
+                        <div className="px-5">
+                            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex items-center gap-4 text-left">
+                                <div className="relative shrink-0">
+                                    <div className="size-20 rounded-full p-[3px]"
+                                        style={{ background: `linear-gradient(135deg, ${primaryColor}, #f97316, #ea580c)` }}>
+                                        <div className="size-full rounded-full overflow-hidden bg-white flex items-center justify-center">
+                                            {cliente?.imagenUrl ? (
+                                                <img src={cliente.imagenUrl} alt={displayName} className="size-full object-cover" />
+                                            ) : (
+                                                <span className="text-3xl font-black text-orange-600">
+                                                    {(displayName || 'C').charAt(0).toUpperCase()}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                    <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 bg-orange-50 text-orange-700 border border-orange-200/80 rounded-full inline-block mb-1">
+                                        Cliente Registrado
+                                    </span>
+                                    <h2 className="text-xl font-black text-slate-900 leading-tight truncate">
+                                        {displayName}
+                                    </h2>
+                                    <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mt-1">
+                                        <Phone size={13} className="text-orange-600 shrink-0" />
+                                        <span>{cliente?.telefono?.startsWith('+') ? cliente.telefono : `+${cliente?.telefono || telefono || '—'}`}</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Stats: Número de Pedidos & Número de Teléfono */}
+                        <div className="px-5">
+                            <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 grid grid-cols-2 divide-x divide-slate-100 text-center">
+                                <div className="flex flex-col items-center p-2">
+                                    <div className="size-11 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mb-2">
+                                        <ShoppingBag size={22} />
+                                    </div>
+                                    <span className="text-2xl font-black text-slate-900 leading-none">
+                                        {cliente?.totalPedidos !== undefined ? cliente.totalPedidos : (cliente?.stats?.totalPedidos || 0)}
+                                    </span>
+                                    <span className="text-xs font-black text-slate-700 mt-1.5 uppercase tracking-wider">Pedidos Realizados</span>
+                                </div>
+
+                                <div className="flex flex-col items-center p-2">
+                                    <div className="size-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2">
+                                        <Phone size={22} />
+                                    </div>
+                                    <span className="text-xs font-mono font-black text-slate-900 leading-none mt-2 truncate max-w-full px-1">
+                                        {cliente?.telefono || telefono}
+                                    </span>
+                                    <span className="text-xs font-black text-slate-700 mt-2 uppercase tracking-wider">Teléfono Móvil</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Informative Note */}
+                        <div className="px-5">
+                            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left flex items-start gap-3">
+                                <Info className="size-5 text-orange-600 shrink-0 mt-0.5" />
+                                <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                                    Tu nombre de cliente se guarda automáticamente al realizar tu primer pedido desde el catálogo.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Navigation & Logout Buttons */}
+                        <div className="px-5 space-y-3 pt-2">
+                            <Link
+                                href={`/${slug}/pedidos`}
+                                className="w-full py-4 px-5 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-900 flex items-center justify-between shadow-2xs active:scale-[0.99] transition-all no-underline"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="size-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                                        <ShoppingBag size={18} />
+                                    </div>
+                                    <span>Ver Mis Pedidos</span>
+                                </div>
+                                <ChevronRight size={16} className="text-slate-400" />
+                            </Link>
+
+                            <Link
+                                href={`/${slug}`}
+                                className="w-full py-4 px-5 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-900 flex items-center justify-between shadow-2xs active:scale-[0.99] transition-all no-underline"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="size-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                                        <ArrowRight size={18} />
+                                    </div>
+                                    <span>Volver al Catálogo</span>
+                                </div>
+                                <ChevronRight size={16} className="text-slate-400" />
+                            </Link>
+
+                            <button
+                                type="button"
+                                onClick={handleLogout}
+                                className="w-full py-4 px-5 bg-rose-50 hover:bg-rose-100 border border-rose-100 rounded-2xl font-black text-xs uppercase tracking-widest text-rose-600 flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer"
+                            >
+                                <LogOut size={18} />
+                                <span>Cerrar Sesión</span>
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── PROFILE VIEW FOR OTHER BUSINESS TYPES ── */}
+                {step === 'profile' && cliente && !isProductStore && (
                     <div className="animate-in fade-in duration-500">
 
                         {/* Avatar + Info */}
