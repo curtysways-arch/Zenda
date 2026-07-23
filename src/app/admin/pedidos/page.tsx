@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { 
     Clock, ChefHat, PackageCheck, Bike, CheckCircle2, AlertCircle, 
-    Loader2, Search, MapPin, Phone, Calendar, ClipboardList, ExternalLink, X, FileText, Image as ImageIcon, Check, Ban
+    Loader2, Search, MapPin, Phone, Calendar, ClipboardList, ExternalLink, X, FileText, Image as ImageIcon, Check, Ban, ArrowLeft
 } from 'lucide-react';
 
 interface OrderItem {
@@ -375,10 +375,9 @@ function PedidosContent() {
                 })}
             </div>
 
-            {/* Contenedor Principal */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Listado */}
-                <div className="lg:col-span-2 bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+            {/* ── VISTA PRINCIPAL: LISTADO DE PEDIDOS (SOLO LISTA) ── */}
+            {!selectedOrder && (
+                <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20">
                             <Loader2 className="size-8 text-slate-300 animate-spin mb-3" />
@@ -394,52 +393,61 @@ function PedidosContent() {
                                     <div 
                                         key={order.id} 
                                         onClick={() => handleSelectOrder(order)}
-                                        className={`p-6 hover:bg-slate-50/50 transition-colors cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 ${
-                                            selectedOrder?.id === order.id ? 'border-orange-600 bg-orange-50/20' : 'border-transparent'
-                                        }`}
+                                        className="p-6 hover:bg-slate-50/80 transition-colors cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 group border-l-4 border-transparent hover:border-orange-500"
                                     >
-                                        <div className="space-y-1.5">
+                                        <div className="space-y-2 text-left">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="text-sm font-black text-slate-900">Pedido #{order.numeroPedido}</span>
-                                                <span className="px-2.5 py-0.5 bg-slate-100 text-slate-700 rounded-full text-[9px] font-bold uppercase tracking-wider">
+                                                <span className="text-base font-black text-slate-900">Pedido #{order.numeroPedido}</span>
+                                                <span className="px-2.5 py-0.5 bg-slate-100 text-slate-700 rounded-full text-[9px] font-extrabold uppercase tracking-wider">
                                                     {order.tipoEntrega}
                                                 </span>
                                                 {getStatusBadge(order)}
                                             </div>
 
-                                            <p className="text-xs font-black text-slate-800">{order.nombreCliente} ({order.telefonoCliente})</p>
+                                            <p className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                                                <span>{order.nombreCliente}</span>
+                                                <span className="text-slate-400 font-semibold">({order.telefonoCliente})</span>
+                                            </p>
                                             
-                                            <div className="flex items-center gap-4 text-[10px] text-slate-500 font-bold">
-                                                <span className="flex items-center gap-1">
-                                                    <Clock className="size-3 text-orange-600" /> Entrega: {order.franjaHoraria || 'Sin asignar'}
+                                            <div className="flex items-center gap-4 text-[10px] text-slate-500 font-bold flex-wrap">
+                                                <span className="flex items-center gap-1 text-slate-600">
+                                                    <Clock className="size-3.5 text-orange-600" /> Entrega: {order.franjaHoraria || 'Sin asignar'}
                                                 </span>
                                                 {hasEvidence && (
-                                                    <span className="flex items-center gap-1 text-emerald-600 font-black">
+                                                    <span className="flex items-center gap-1 text-emerald-600 font-black bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
                                                         <FileText className="size-3" /> Comprobante Adjunto
                                                     </span>
                                                 )}
                                             </div>
 
                                             {order.direccionCliente && (
-                                                <p className="text-[10px] text-slate-500 font-medium truncate max-w-sm flex items-center gap-1">
+                                                <p className="text-[10px] text-slate-500 font-medium truncate max-w-md flex items-center gap-1">
                                                     <MapPin className="size-3 text-slate-400 shrink-0" /> {order.direccionCliente}
                                                 </p>
                                             )}
                                         </div>
                                         
-                                        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3">
-                                            <span className="text-sm font-black text-slate-950">${order.total.toFixed(2)}</span>
-                                            {nextAction && (
+                                        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                                            <div className="text-left sm:text-right">
+                                                <span className="text-[9px] font-black uppercase text-slate-400 block tracking-widest">Total</span>
+                                                <span className="text-lg font-black text-slate-950">${order.total.toFixed(2)}</span>
+                                            </div>
+
+                                            {nextAction ? (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         handleUpdateStatus(order.id, nextAction.status);
                                                     }}
                                                     disabled={updatingState === order.id}
-                                                    className={`px-4 py-2 text-[9px] font-black uppercase tracking-wider rounded-xl text-white transition-all shadow-md active:scale-95 disabled:opacity-50 ${nextAction.color}`}
+                                                    className={`px-5 py-2.5 text-[10px] font-black uppercase tracking-wider rounded-2xl text-white transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer ${nextAction.color}`}
                                                 >
                                                     {updatingState === order.id ? '...' : nextAction.label}
                                                 </button>
+                                            ) : (
+                                                <span className="text-[10px] font-black uppercase text-orange-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                                                    Ver Detalles →
+                                                </span>
                                             )}
                                         </div>
                                     </div>
@@ -454,162 +462,185 @@ function PedidosContent() {
                         </div>
                     )}
                 </div>
+            )}
 
-                {/* Detalles del Pedido Seleccionado */}
-                <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm h-fit">
-                    {selectedOrder ? (
-                        <div className="space-y-6 text-left">
-                            <div className="flex justify-between items-center border-b border-slate-100 pb-4">
-                                <div>
-                                    <h3 className="text-sm font-black text-slate-950 uppercase tracking-widest">Detalles Pedido #{selectedOrder.numeroPedido}</h3>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{selectedOrder.tipoEntrega}</span>
-                                        {getStatusBadge(selectedOrder)}
-                                    </div>
+            {/* ── VISTA PANTALLA COMPLETA: GESTIÓN DE PEDIDO SELECCIONADO ── */}
+            {selectedOrder && (
+                <div className="fixed inset-0 z-50 bg-slate-50 overflow-y-auto pb-24 text-left animate-in fade-in slide-in-from-right-4 duration-300">
+                    {/* Header Top Bar */}
+                    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3.5 flex items-center justify-between shadow-2xs">
+                        <button
+                            type="button"
+                            onClick={() => setSelectedOrder(null)}
+                            className="flex items-center gap-1.5 text-xs font-black uppercase text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-all cursor-pointer"
+                        >
+                            <ArrowLeft className="size-4" />
+                            <span>Volver al Listado</span>
+                        </button>
+
+                        <div className="text-center">
+                            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Gestión de Pedido</span>
+                            <span className="text-sm font-black text-slate-900">Pedido #{selectedOrder.numeroPedido}</span>
+                        </div>
+
+                        <button 
+                            type="button"
+                            onClick={() => handleUpdateStatus(selectedOrder.id, 'CANCELADO')}
+                            disabled={['ENTREGADO', 'CANCELADO'].includes(selectedOrder.estado)}
+                            className="px-3 py-1.5 border border-rose-100 text-rose-500 hover:bg-rose-50 rounded-xl text-[10px] font-black uppercase tracking-wider disabled:opacity-40 cursor-pointer"
+                        >
+                            Cancelar
+                        </button>
+                    </header>
+
+                    {/* Contenido Detalle a Pantalla Completa */}
+                    <main className="max-w-2xl mx-auto p-4 md:p-6 space-y-6">
+                        {/* Cabecera Estado y Tipo */}
+                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
+                            <div>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Tipo de Entrega</span>
+                                <span className="text-sm font-black text-slate-900">{selectedOrder.tipoEntrega}</span>
+                            </div>
+                            <div>
+                                {getStatusBadge(selectedOrder)}
+                            </div>
+                        </div>
+
+                        {/* Comprobante de Pago adjunto si existe */}
+                        {selectedOrder.payment?.evidences && selectedOrder.payment.evidences.length > 0 && (
+                            <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-3xl p-5 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-black text-emerald-950 uppercase tracking-wider flex items-center gap-2">
+                                        <FileText className="size-5 text-emerald-600" /> Comprobante de Pago Subido
+                                    </span>
+                                    <span className="text-xs font-bold text-emerald-800 font-mono bg-white/80 px-2.5 py-1 rounded-lg border border-emerald-200">
+                                        ${selectedOrder.payment.monto.toFixed(2)}
+                                    </span>
                                 </div>
-                                <button 
-                                    onClick={() => handleUpdateStatus(selectedOrder.id, 'CANCELADO')}
-                                    disabled={['ENTREGADO', 'CANCELADO'].includes(selectedOrder.estado)}
-                                    className="px-3 py-1.5 border border-rose-100 text-rose-500 hover:bg-rose-50 rounded-xl text-[9px] font-black uppercase tracking-wider disabled:opacity-40"
+                                <button
+                                    onClick={() => setPreviewEvidenceUrl(selectedOrder.payment!.evidences![0].fileUrl)}
+                                    className="w-full py-3 bg-white border border-emerald-300 hover:bg-emerald-100/50 text-emerald-950 rounded-2xl text-xs font-black flex items-center justify-center gap-2 transition-all shadow-2xs cursor-pointer"
                                 >
-                                    Cancelar
+                                    <ImageIcon className="size-4 text-emerald-600" /> Ver Comprobante Adjunto en Pantalla Completa
                                 </button>
                             </div>
+                        )}
 
-                            {/* Comprobante de Pago adjunto si existe */}
-                            {selectedOrder.payment?.evidences && selectedOrder.payment.evidences.length > 0 && (
-                                <div className="bg-emerald-50/50 border border-emerald-200/60 rounded-2xl p-4 space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[10px] font-black text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
-                                            <FileText className="size-4 text-emerald-600" /> Comprobante de Pago Subido
-                                        </span>
-                                        <span className="text-[10px] font-bold text-emerald-700 font-mono">
-                                            ${selectedOrder.payment.monto.toFixed(2)}
-                                        </span>
-                                    </div>
-                                    <button
-                                        onClick={() => setPreviewEvidenceUrl(selectedOrder.payment!.evidences![0].fileUrl)}
-                                        className="w-full py-2.5 bg-white border border-emerald-300 hover:bg-emerald-100/50 text-emerald-900 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer"
-                                    >
-                                        <ImageIcon className="size-4 text-emerald-600" /> Ver Comprobante Adjunto
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* Entrega Programada */}
-                            <div className="bg-orange-50/60 border border-orange-200/80 rounded-2xl p-4 space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-black text-orange-950 uppercase tracking-widest flex items-center gap-1.5">
-                                        <Clock className="size-4 text-orange-600" /> Entrega Programada
-                                    </span>
-                                    <button
-                                        type="button"
-                                        onClick={() => openDateModalForOrder(selectedOrder)}
-                                        className="text-[10px] font-black text-orange-600 hover:underline uppercase tracking-wider flex items-center gap-1 cursor-pointer"
-                                    >
-                                        <Calendar className="size-3" /> Modificar Fecha
-                                    </button>
-                                </div>
-                                <div className="text-xs font-bold text-slate-900">
-                                    {selectedOrder.fechaEntrega ? (
-                                        <span>
-                                            {new Date(selectedOrder.fechaEntrega).toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} ({selectedOrder.franjaHoraria || 'Sin franja'})
-                                        </span>
-                                    ) : (
-                                        <span className="text-slate-400 italic">Por definir al confirmar pago</span>
-                                    )}
-                                </div>
+                        {/* Entrega Programada */}
+                        <div className="bg-orange-50/70 border border-orange-200/80 rounded-3xl p-5 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-black text-orange-950 uppercase tracking-widest flex items-center gap-2">
+                                    <Clock className="size-5 text-orange-600" /> Entrega Programada
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => openDateModalForOrder(selectedOrder)}
+                                    className="text-xs font-black text-orange-700 hover:underline uppercase tracking-wider flex items-center gap-1.5 bg-white/80 px-3 py-1.5 rounded-xl border border-orange-200 cursor-pointer"
+                                >
+                                    <Calendar className="size-4 text-orange-600" /> Modificar Fecha
+                                </button>
                             </div>
+                            <div className="text-sm font-black text-slate-900 bg-white/90 p-3.5 rounded-2xl border border-orange-100">
+                                {selectedOrder.fechaEntrega ? (
+                                    <span>
+                                        {new Date(selectedOrder.fechaEntrega).toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} ({selectedOrder.franjaHoraria || 'Sin franja'})
+                                    </span>
+                                ) : (
+                                    <span className="text-slate-400 italic">Por definir al confirmar pago</span>
+                                )}
+                            </div>
+                        </div>
 
-                            {/* Datos Cliente */}
-                            <div className="space-y-2.5 text-xs">
-                                <div className="flex gap-2.5 items-start">
+                        {/* Datos del Cliente */}
+                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm space-y-4">
+                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b border-slate-100 pb-2.5">
+                                Información del Cliente
+                            </h3>
+                            <div className="space-y-3 text-xs">
+                                <div className="flex gap-3 items-start">
                                     <ClipboardList className="size-4 text-slate-400 shrink-0 mt-0.5" />
                                     <div>
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Cliente</span>
-                                        <span className="font-bold text-slate-800">{selectedOrder.nombreCliente}</span>
-                                        <span className="text-[10px] text-slate-400 block mt-0.5">Celular: {selectedOrder.telefonoCliente}</span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Nombre</span>
+                                        <span className="font-bold text-slate-900 text-sm">{selectedOrder.nombreCliente}</span>
+                                        <span className="text-xs text-slate-500 font-semibold block mt-0.5">Celular: {selectedOrder.telefonoCliente}</span>
                                     </div>
                                 </div>
                                 {selectedOrder.direccionCliente && (
-                                    <div className="flex gap-2.5 items-start">
+                                    <div className="flex gap-3 items-start border-t border-slate-100 pt-3">
                                         <MapPin className="size-4 text-slate-400 shrink-0 mt-0.5" />
                                         <div>
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Dirección</span>
-                                            <span className="font-bold text-slate-800">{selectedOrder.direccionCliente}</span>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Dirección de Entrega</span>
+                                            <span className="font-bold text-slate-900">{selectedOrder.direccionCliente}</span>
                                             {selectedOrder.referenciaCliente && (
-                                                <span className="text-[10px] text-slate-400 block mt-0.5">Ref: {selectedOrder.referenciaCliente}</span>
+                                                <span className="text-xs text-slate-500 font-medium block mt-0.5">Ref: {selectedOrder.referenciaCliente}</span>
                                             )}
                                             {selectedOrder.latitud && selectedOrder.longitud && (
                                                 <a 
                                                     href={`https://www.google.com/maps/search/?api=1&query=${selectedOrder.latitud},${selectedOrder.longitud}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1 text-[9px] font-black uppercase text-indigo-600 mt-2 bg-indigo-50 px-2 py-1 rounded-lg"
+                                                    className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-indigo-600 mt-2.5 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl border border-indigo-200/80 transition-colors"
                                                 >
-                                                    <ExternalLink className="size-3" />
-                                                    Ver ubicación GPS en Mapa
+                                                    <ExternalLink className="size-3.5" />
+                                                    Ver Ubicación GPS en Mapa
                                                 </a>
                                             )}
                                         </div>
                                     </div>
                                 )}
                             </div>
+                        </div>
 
-                            {/* Productos Comprados */}
-                            <div className="border-t border-slate-100 pt-4 space-y-3">
-                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Items Comprados</h4>
-                                <div className="divide-y divide-slate-100">
-                                    {selectedOrder.items.map(item => (
-                                        <div key={item.id} className="py-2 flex justify-between text-xs font-semibold">
-                                            <div>
-                                                <span className="font-black text-slate-900">{item.cantidad}x</span> {item.nombreProducto}
-                                            </div>
-                                            <span className="font-black text-slate-800">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
+                        {/* Productos Comprados */}
+                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm space-y-3">
+                            <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b border-slate-100 pb-2.5">
+                                Items Comprados
+                            </h4>
+                            <div className="divide-y divide-slate-100">
+                                {selectedOrder.items.map(item => (
+                                    <div key={item.id} className="py-2.5 flex justify-between text-xs font-semibold">
+                                        <div>
+                                            <span className="font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md mr-1.5">{item.cantidad}x</span>
+                                            <span className="text-slate-900 font-bold">{item.nombreProducto}</span>
                                         </div>
-                                    ))}
-                                </div>
+                                        <span className="font-black text-slate-950">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
+                                    </div>
+                                ))}
                             </div>
+                        </div>
 
-                            {/* Totales y Botón Aprobar */}
-                            <div className="border-t border-slate-100 pt-4 space-y-3">
-                                <div className="space-y-1.5 text-xs font-bold text-slate-600">
+                        {/* Totales y Botón de Acción Principal */}
+                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm space-y-4">
+                            <div className="space-y-2 text-xs font-bold text-slate-600">
+                                <div className="flex justify-between">
+                                    <span>Subtotal</span>
+                                    <span>${selectedOrder.subtotal.toFixed(2)}</span>
+                                </div>
+                                {selectedOrder.tipoEntrega === 'DOMICILIO' && (
                                     <div className="flex justify-between">
-                                        <span>Subtotal</span>
-                                        <span>${selectedOrder.subtotal.toFixed(2)}</span>
+                                        <span>Costo de Envío</span>
+                                        <span>${selectedOrder.costoEnvio.toFixed(2)}</span>
                                     </div>
-                                    {selectedOrder.tipoEntrega === 'DOMICILIO' && (
-                                        <div className="flex justify-between">
-                                            <span>Envío</span>
-                                            <span>${selectedOrder.costoEnvio.toFixed(2)}</span>
-                                        </div>
-                                    )}
-                                    <div className="flex justify-between text-sm font-black text-slate-950 pt-2 border-t border-slate-100">
-                                        <span>Total</span>
-                                        <span>${selectedOrder.total.toFixed(2)}</span>
-                                    </div>
-                                </div>
-
-                                {getNextAction(selectedOrder) && (
-                                    <button
-                                        onClick={() => handleUpdateStatus(selectedOrder.id, getNextAction(selectedOrder)!.status)}
-                                        disabled={updatingState === selectedOrder.id}
-                                        className={`w-full py-3.5 text-xs font-black uppercase tracking-widest rounded-2xl text-white shadow-lg transition-all active:scale-95 disabled:opacity-50 ${getNextAction(selectedOrder)!.color}`}
-                                    >
-                                        {updatingState === selectedOrder.id ? 'Actualizando...' : getNextAction(selectedOrder)!.label}
-                                    </button>
                                 )}
+                                <div className="flex justify-between text-base font-black text-slate-950 pt-2.5 border-t border-slate-100">
+                                    <span>Total A Pagar</span>
+                                    <span className="text-orange-600">${selectedOrder.total.toFixed(2)}</span>
+                                </div>
                             </div>
+
+                            {getNextAction(selectedOrder) && (
+                                <button
+                                    onClick={() => handleUpdateStatus(selectedOrder.id, getNextAction(selectedOrder)!.status)}
+                                    disabled={updatingState === selectedOrder.id}
+                                    className={`w-full py-4 text-xs font-black uppercase tracking-widest rounded-2xl text-white shadow-xl transition-all active:scale-95 disabled:opacity-50 cursor-pointer ${getNextAction(selectedOrder)!.color}`}
+                                >
+                                    {updatingState === selectedOrder.id ? 'Actualizando...' : getNextAction(selectedOrder)!.label}
+                                </button>
+                            )}
                         </div>
-                    ) : (
-                        <div className="text-center py-20">
-                            <ClipboardList className="size-12 text-slate-200 mx-auto mb-3" />
-                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Selecciona un Pedido</h3>
-                            <p className="text-[11px] text-slate-400 font-medium">Haz click sobre cualquier pedido para ver los detalles completos y asignarle hora.</p>
-                        </div>
-                    )}
+                    </main>
                 </div>
-            </div>
+            )}
         </div>
     );
 }
