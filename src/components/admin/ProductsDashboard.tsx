@@ -224,7 +224,7 @@ export default async function ProductsDashboard({ negocioId, role }: Props) {
                                                 </span>
                                             </div>
                                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">
-                                                {order.nombreCliente} • {order.tipoEntrega} • {order.franjaHoraria} hrs
+                                                {order.nombreCliente} • {order.tipoEntrega} • {order.fechaEntrega ? new Date(order.fechaEntrega).toLocaleDateString('es-EC', { hour: '2-digit', minute: '2-digit' }) : 'Sin fecha'}
                                             </p>
                                         </div>
                                         <div className="flex items-center justify-between sm:justify-end gap-4">

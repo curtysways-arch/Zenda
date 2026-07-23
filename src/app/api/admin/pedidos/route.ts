@@ -115,14 +115,22 @@ export async function PUT(req: Request) {
             // Notificación de WhatsApp DEL BOT AL CLIENTE
             if (pedido.telefonoCliente && estado) {
                 let mensaje = '';
-                const deliveryDateStr = pedidoActualizado.fechaEntrega ? new Date(pedidoActualizado.fechaEntrega).toISOString().split('T')[0] : '';
-                const timeSlotStr = pedidoActualizado.franjaHoraria || '';
+                const formattedFechaEntrega = pedidoActualizado.fechaEntrega 
+                    ? new Date(pedidoActualizado.fechaEntrega).toLocaleDateString('es-EC', { 
+                        weekday: 'long', 
+                        day: 'numeric', 
+                        month: 'long', 
+                        year: 'numeric', 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    }) 
+                    : 'Por definir';
 
                 switch (estado) {
                     case 'PREPARACION':
                     case 'EN_PREPARACION':
                     case 'RECIBIDO':
-                        mensaje = `✅ *¡Tu pedido #${pedido.numeroPedido} ha sido CONFIRMADO!*\n\nEn *${pedido.negocio.nombre}* ya estamos preparando tus productos con la máxima calidad. 🔥\n\n📅 *Entrega Programada:* ${deliveryDateStr} (${timeSlotStr} hrs)\n\n¡Gracias por tu compra!`;
+                        mensaje = `✅ *¡Tu pedido #${pedido.numeroPedido} ha sido CONFIRMADO!*\n\nEn *${pedido.negocio.nombre}* ya estamos preparando tus productos con la máxima calidad. 🔥\n\n📅 *Fecha y Hora de Entrega Confirmada:* ${formattedFechaEntrega}\n\n¡Gracias por tu compra!`;
                         break;
                     case 'LISTO':
                         mensaje = pedido.tipoEntrega === 'DOMICILIO' 

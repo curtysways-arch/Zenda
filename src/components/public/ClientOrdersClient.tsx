@@ -351,7 +351,7 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                                     </span>
                                                 </div>
                                                 <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
-                                                    {order.tipoEntrega} • {order.franjaHoraria} hrs
+                                                    {order.tipoEntrega} • {order.fechaEntrega ? new Date(order.fechaEntrega).toLocaleDateString('es-EC', { weekday: 'short', hour: '2-digit', minute: '2-digit' }) : 'Por definir'}
                                                 </p>
                                             </div>
                                             <div>

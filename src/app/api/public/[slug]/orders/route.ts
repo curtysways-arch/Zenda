@@ -280,7 +280,16 @@ export async function POST(
                 if (clientReference) bizMsg += `📝 *Referencia:* ${clientReference}\n`;
                 if (gpsLocation) bizMsg += gpsLocation;
             }
-            bizMsg += `📅 *Fecha/Hora Entrega Solicitada:* ${dateToDeliver.toISOString().split('T')[0]} (${timeSlot} hrs)\n\n`;
+            const requestedDateFormatted = dateToDeliver 
+                ? new Date(dateToDeliver).toLocaleDateString('es-EC', { 
+                    weekday: 'short', 
+                    day: 'numeric', 
+                    month: 'short', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                }) 
+                : 'No especificada';
+            bizMsg += `📅 *Horario Referencial Solicitado:* ${requestedDateFormatted}\n\n`;
             bizMsg += `📦 *Detalle del Pedido:*\n${itemsList}\n\n`;
             bizMsg += `💰 *Subtotal:* $${subtotal.toFixed(2)}\n`;
             if (deliveryType === 'DOMICILIO') bizMsg += `🛵 *Envío:* $${costoEnvio.toFixed(2)}\n`;
