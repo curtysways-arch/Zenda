@@ -128,7 +128,6 @@ function PedidosContent() {
             const iso = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
             setModalDateTime(iso);
         }
-        setModalTimeSlot(order.franjaHoraria || '14:00 - 15:00 hrs');
     };
 
     const handleUpdateStatus = async (id: string, newStatus: string) => {
@@ -178,8 +177,7 @@ function PedidosContent() {
                 body: JSON.stringify({
                     id: confirmDateModalOrder.id,
                     estado: 'PREPARACION',
-                    fechaEntrega: isoDate,
-                    franjaHoraria: modalTimeSlot || '14:00 hrs'
+                    fechaEntrega: isoDate
                 })
             });
 
@@ -272,79 +270,6 @@ function PedidosContent() {
                 </div>
             )}
 
-            {/* Modal de Asignación de Fecha y Hora al Confirmar Pago */}
-            {confirmDateModalOrder && (
-                <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 text-left">
-                        <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                            <div>
-                                <h3 className="font-black text-slate-900 text-base uppercase tracking-tight">Confirmar Pago y Asignar Entrega</h3>
-                                <p className="text-xs text-slate-500 font-bold mt-0.5">Pedido #{confirmDateModalOrder.numeroPedido} • {confirmDateModalOrder.nombreCliente}</p>
-                            </div>
-                            <button 
-                                onClick={() => setConfirmDateModalOrder(null)} 
-                                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 cursor-pointer"
-                            >
-                                <X className="size-5" />
-                            </button>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-3.5 text-xs text-emerald-900 font-medium">
-                                <p className="font-black text-emerald-950 flex items-center gap-1.5 mb-1">
-                                    <CheckCircle2 className="size-4 text-emerald-600 shrink-0" /> ¡Confirmación de Pago y Producción!
-                                </p>
-                                <span>Ingresa la fecha y hora estimada de entrega para activar el contador regresivo en tiempo real para el cliente.</span>
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
-                                    📅 Fecha y Hora Estimada de Entrega
-                                </label>
-                                <input
-                                    type="datetime-local"
-                                    required
-                                    value={modalDateTime}
-                                    onChange={(e) => setModalDateTime(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-300 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-all shadow-xs"
-                                />
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
-                                    ⏰ Franja Horaria / Nota de Entrega (Opcional)
-                                </label>
-                                <input
-                                    type="text"
-                                    value={modalTimeSlot}
-                                    onChange={(e) => setModalTimeSlot(e.target.value)}
-                                    placeholder="Ej: 14:00 - 15:00 hrs"
-                                    className="w-full bg-slate-50 border border-slate-300 rounded-2xl px-4 py-3 text-xs font-bold text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-all shadow-xs"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3 pt-2">
-                            <button
-                                type="button"
-                                onClick={() => setConfirmDateModalOrder(null)}
-                                className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs uppercase tracking-wider rounded-2xl transition-all cursor-pointer"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleConfirmApprovalWithDate}
-                                disabled={submittingModal || !modalDateTime}
-                                className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
-                            >
-                                {submittingModal ? <Loader2 className="size-4 animate-spin" /> : 'Confirmar Pago'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* Header */}
             <div>
                 <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none italic uppercase">
@@ -411,7 +336,7 @@ function PedidosContent() {
                                             
                                             <div className="flex items-center gap-4 text-[10px] text-slate-500 font-bold flex-wrap">
                                                 <span className="flex items-center gap-1 text-slate-600">
-                                                    <Clock className="size-3.5 text-orange-600" /> Entrega: {order.franjaHoraria || 'Sin asignar'}
+                                                    <Clock className="size-3.5 text-orange-600" /> Entrega: {order.fechaEntrega ? new Date(order.fechaEntrega).toLocaleDateString('es-EC', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Sin asignar'}
                                                 </span>
                                                 {hasEvidence && (
                                                     <span className="flex items-center gap-1 text-emerald-600 font-black bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
@@ -543,7 +468,7 @@ function PedidosContent() {
                             <div className="text-sm font-black text-slate-900 bg-white/90 p-3.5 rounded-2xl border border-orange-100">
                                 {selectedOrder.fechaEntrega ? (
                                     <span>
-                                        {new Date(selectedOrder.fechaEntrega).toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} ({selectedOrder.franjaHoraria || 'Sin franja'})
+                                        {new Date(selectedOrder.fechaEntrega).toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 ) : (
                                     <span className="text-slate-400 italic">Por definir al confirmar pago</span>
@@ -639,6 +564,66 @@ function PedidosContent() {
                             )}
                         </div>
                     </main>
+                </div>
+            )}
+
+            {/* Modal de Asignación de Fecha y Hora al Confirmar Pago */}
+            {confirmDateModalOrder && (
+                <div className="fixed inset-0 z-[200] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 text-left">
+                        <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                            <div>
+                                <h3 className="font-black text-slate-900 text-base uppercase tracking-tight">Asignar Fecha Exacta de Entrega</h3>
+                                <p className="text-xs text-slate-500 font-bold mt-0.5">Pedido #{confirmDateModalOrder.numeroPedido} • {confirmDateModalOrder.nombreCliente}</p>
+                            </div>
+                            <button 
+                                onClick={() => setConfirmDateModalOrder(null)} 
+                                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 cursor-pointer"
+                            >
+                                <X className="size-5" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-3.5 text-xs text-emerald-900 font-medium">
+                                <p className="font-black text-emerald-950 flex items-center gap-1.5 mb-1">
+                                    <CheckCircle2 className="size-4 text-emerald-600 shrink-0" /> ¡Confirmación de Pago y Producción!
+                                </p>
+                                <span>Selecciona la fecha y hora exacta de entrega. Esta fecha iniciará el contador regresivo en tiempo real para el cliente.</span>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                                    📅 Fecha y Hora Exacta de Entrega
+                                </label>
+                                <input
+                                    type="datetime-local"
+                                    required
+                                    value={modalDateTime}
+                                    onChange={(e) => setModalDateTime(e.target.value)}
+                                    className="w-full bg-slate-50 border border-slate-300 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-all shadow-xs"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setConfirmDateModalOrder(null)}
+                                className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs uppercase tracking-wider rounded-2xl transition-all cursor-pointer"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmApprovalWithDate}
+                                disabled={submittingModal || !modalDateTime}
+                                className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                                {submittingModal ? <Loader2 className="size-4 animate-spin" /> : 'Guardar y Aprobar'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

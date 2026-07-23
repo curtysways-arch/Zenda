@@ -324,7 +324,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                             <div>
                                 <span className="text-[10px] font-black text-amber-900/70 uppercase tracking-widest block">Programación de Entrega</span>
                                 <span className="text-xs font-black text-amber-950">
-                                    Franja Horaria: {order.franjaHoraria} hrs
+                                    Fecha y Hora Exacta de Entrega
                                 </span>
                             </div>
                         </div>

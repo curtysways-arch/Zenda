@@ -1006,7 +1006,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     <p className="text-[11px] text-slate-300 font-semibold mt-1">
                                         {['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
                                             ? 'El establecimiento está verificando tu pago para programar el envío.'
-                                            : `Entrega estimada: ${activeOrder.fechaEntrega ? new Date(activeOrder.fechaEntrega).toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : 'Por definir'} (${activeOrder.franjaHoraria || ''})`}
+                                            : `Entrega estimada: ${activeOrder.fechaEntrega ? new Date(activeOrder.fechaEntrega).toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : 'Por definir'}`}
                                     </p>
                                 </div>
                             </div>
