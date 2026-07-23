@@ -39,9 +39,13 @@ export default async function AdminLayout({
         redirect('/login');
     }
 
-    // Leer la ruta actual
+    // Leer la ruta actual con fallbacks para evitar bucles de redirección
     const headersList = await headers();
-    const currentPath = headersList.get('x-current-path') || '';
+    const currentPath = 
+        headersList.get('x-current-path') || 
+        headersList.get('next-url') || 
+        headersList.get('x-invoke-path') || 
+        '';
 
     if (currentPath.includes('/admin/vencido') || currentPath.includes('/admin/onboarding')) {
         return <>{children}</>;

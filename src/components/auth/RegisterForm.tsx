@@ -70,7 +70,7 @@ export default function RegisterForm() {
             if (loginRes?.error) {
                 router.push("/login?registered=true");
             } else {
-                router.push("/admin");
+                router.push("/admin/onboarding");
                 router.refresh();
             }
 

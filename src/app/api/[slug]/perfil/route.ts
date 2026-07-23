@@ -282,6 +282,60 @@ export async function PATCH(
             });
         }
 
+        // Buscar o vincular con registro de Usuario para el sistema de gamificación/misiones
+        let usuario = await prisma.usuario.findFirst({
+            where: {
+                OR: [
+                    { phone: telefono },
+                    { phone: localTelefono },
+                    { phone: digitsOnly },
+                    { phone: { endsWith: localNoZero } },
+                    ...(email ? [{ email: email }] : [])
+                ]
+            }
+        });
+
+        if (!usuario) {
+            try {
+                usuario = await prisma.usuario.create({
+                    data: {
+                        id: crypto.randomUUID(),
+                        nombre: nombre || "Usuario",
+                        email: email || null,
+                        phone: telefono,
+                        role: 'USER',
+                        status: 'verified',
+                        updatedAt: new Date()
+                    }
+                });
+            } catch (uErr) {
+                console.warn("[Perfil] No se pudo crear registro de usuario para gamificación:", uErr);
+            }
+        }
+
+        const targetUserId = usuario?.id || cliente.id;
+
+        // Disparar evento de crecimiento para completar la misión "Perfil al día"
+        try {
+            const { publishGrowthEvent } = await import('@/lib/growth/eventBus');
+            await publishGrowthEvent(negocioId, targetUserId, 'PROFILE_COMPLETED', {
+                clienteId: cliente.id,
+                nombre: cliente.nombre,
+                email: cliente.email,
+                imagenUrl: cliente.imagenUrl,
+                fechaNacimiento: cliente.fechaNacimiento
+            });
+            await publishGrowthEvent(negocioId, targetUserId, 'PROFILE_UPDATED', {
+                clienteId: cliente.id,
+                nombre: cliente.nombre,
+                email: cliente.email,
+                imagenUrl: cliente.imagenUrl,
+                fechaNacimiento: cliente.fechaNacimiento
+            });
+        } catch (evErr: any) {
+            console.error("[Perfil] Error emitiendo evento de gamificación:", evErr.message);
+        }
+
         return NextResponse.json({
             success: true,
             message: "Perfil actualizado correctamente",

@@ -17,19 +17,27 @@ export async function GET(_: Request, { params }: Params) {
 }
 
 /**
- * PATCH /api/superadmin/mission-definitions/[id]
+ * PUT /api/superadmin/mission-definitions/[id]
  * Actualiza campos de la definición.
  */
-export async function PATCH(request: Request, { params }: Params) {
+export async function PUT(request: Request, { params }: Params) {
   try {
     const { id } = await params;
     const body = await request.json();
     const updated = await MissionDefinitionService.update(id, body);
     return NextResponse.json({ success: true, mission: updated });
   } catch (err: any) {
-    console.error('[API Superadmin MissionDefinition PATCH]', err.message);
+    console.error('[API Superadmin MissionDefinition PUT]', err.message);
     return NextResponse.json({ error: err.message }, { status: 400 });
   }
+}
+
+/**
+ * PATCH /api/superadmin/mission-definitions/[id]
+ * Actualiza campos de la definición.
+ */
+export async function PATCH(request: Request, { params }: Params) {
+  return PUT(request, { params });
 }
 
 /**

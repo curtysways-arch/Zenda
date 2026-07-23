@@ -282,7 +282,8 @@ export default function MisionesUnificadasClient({
           ?`/api/superadmin/misiones-globales/${editingBusiness.id}`
           :'/api/superadmin/misiones-globales';
         const res=await fetch(url,{method:editingBusiness?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-        const data=await res.json();
+        let data: any = {};
+        try { data = await res.json(); } catch { throw new Error(`Error en servidor (${res.status})`); }
         if(!res.ok||!data.success) throw new Error(data.error||'Error al guardar');
         showToast(editingBusiness?'Misión de negocio actualizada':'Misión de negocio creada');
         const lr=await fetch('/api/superadmin/misiones-globales');
@@ -298,11 +299,13 @@ export default function MisionesUnificadasClient({
           ?`/api/superadmin/mission-definitions/${editingClient.id}`
           :'/api/superadmin/mission-definitions';
         const res=await fetch(url,{method:editingClient?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-        const data=await res.json();
+        let data: any = {};
+        try { data = await res.json(); } catch { throw new Error(`Error en servidor (${res.status})`); }
         if(!res.ok) throw new Error(data.error||'Error al guardar');
         showToast(editingClient?'Misión de cliente actualizada':'Misión de cliente creada');
         const lr=await fetch('/api/superadmin/mission-definitions');
-        const ld=await lr.json();
+        let ld: any = [];
+        try { ld = await lr.json(); } catch {}
         
         // Fix: admitir tanto arreglo directo como objeto con la propiedad missions
         const rawMissions = Array.isArray(ld) ? ld : (ld.missions || []);

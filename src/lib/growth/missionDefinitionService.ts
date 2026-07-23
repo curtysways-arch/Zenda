@@ -14,6 +14,7 @@ export interface CreateMissionDefinitionInput {
   config?: any;
   metadata?: any;
   requiresBusinessReward?: boolean;
+  rewardIds?: string[];
 }
 
 export interface UpdateMissionDefinitionInput extends Partial<CreateMissionDefinitionInput> {
@@ -44,6 +45,16 @@ export class MissionDefinitionService {
       include: { Rewards: { include: { RewardCatalog: true } }, Publications: true },
     });
 
+    if (input.rewardIds && input.rewardIds.length > 0) {
+      await prisma.missionRewardDefinition.createMany({
+        data: input.rewardIds.map((rewardCatalogId, index) => ({
+          missionDefinitionId: mission.id,
+          rewardCatalogId,
+          orden: index + 1,
+        })),
+      });
+    }
+
     await publishDomainEvent('MISSION_DEFINITION', mission.id, 'MISSION_DEFINITION_CREATED', {
       nombre: mission.nombre,
       status: mission.status,
@@ -53,7 +64,7 @@ export class MissionDefinitionService {
   }
 
   /**
-   * Actualiza una definición existente. Solo funciona si está en DRAFT.
+   * Actualiza una definición existente.
    */
   static async update(id: string, input: UpdateMissionDefinitionInput) {
     const existing = await prisma.missionDefinition.findUniqueOrThrow({ where: { id } });
@@ -81,6 +92,21 @@ export class MissionDefinitionService {
       },
       include: { Rewards: { include: { RewardCatalog: true } }, Publications: true },
     });
+
+    if (input.rewardIds !== undefined) {
+      await prisma.missionRewardDefinition.deleteMany({
+        where: { missionDefinitionId: id },
+      });
+      if (input.rewardIds.length > 0) {
+        await prisma.missionRewardDefinition.createMany({
+          data: input.rewardIds.map((rewardCatalogId, index) => ({
+            missionDefinitionId: id,
+            rewardCatalogId,
+            orden: index + 1,
+          })),
+        });
+      }
+    }
 
     return updated;
   }

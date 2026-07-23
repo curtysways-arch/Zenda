@@ -43,6 +43,7 @@ export async function POST(request: Request) {
       config,
       metadata,
       requiresBusinessReward,
+      rewardIds,
     } = body;
 
     if (!nombre || !descripcion || !triggerEvent) {
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
       config,
       metadata,
       requiresBusinessReward: !!requiresBusinessReward,
+      rewardIds,
     });
 
     return NextResponse.json({ success: true, mission }, { status: 201 });
