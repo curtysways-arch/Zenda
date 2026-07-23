@@ -64,24 +64,20 @@ interface Props {
 function formatDeliveryDate(dateStr: string | null | undefined): string {
     if (!dateStr) return 'Fecha por definir';
     try {
-        const clean = String(dateStr).split('T')[0];
-        const parts = clean.split('-');
-        if (parts.length === 3) {
-            const year = parseInt(parts[0]);
-            const month = parseInt(parts[1]) - 1;
-            const day = parseInt(parts[2]);
-            const d = new Date(year, month, day);
-            if (!isNaN(d.getTime())) {
-                const dayName = d.toLocaleDateString('es-EC', { weekday: 'long' });
-                const monthName = d.toLocaleDateString('es-EC', { month: 'long' });
-                const capDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
-                const capMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-                return `${capDay}, ${day} de ${capMonth} de ${year}`;
-            }
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+            return d.toLocaleDateString('es-EC', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
         }
-        return clean;
+        return String(dateStr);
     } catch {
-        return String(dateStr).split('T')[0];
+        return String(dateStr);
     }
 }
 

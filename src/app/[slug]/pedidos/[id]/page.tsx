@@ -40,8 +40,8 @@ export default async function OrderTrackingPage({
         direccionCliente: pedido.direccionCliente,
         referenciaCliente: pedido.referenciaCliente,
         fechaEntrega: pedido.fechaEntrega instanceof Date 
-            ? pedido.fechaEntrega.toISOString().split('T')[0] 
-            : String(pedido.fechaEntrega).split('T')[0],
+            ? pedido.fechaEntrega.toISOString() 
+            : (pedido.fechaEntrega ? String(pedido.fechaEntrega) : null),
         franjaHoraria: pedido.franjaHoraria,
         subtotal: pedido.subtotal,
         costoEnvio: pedido.costoEnvio,
