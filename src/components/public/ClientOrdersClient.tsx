@@ -12,9 +12,11 @@ import {
     Loader2,
     ArrowLeft,
     Phone,
-    KeyRound
+    KeyRound,
+    ChevronRight
 } from 'lucide-react';
 import Link from 'next/link';
+import OrderTrackingClient from './OrderTrackingClient';
 
 interface Order {
     id: string;
@@ -23,6 +25,12 @@ interface Order {
     costoEnvio: number;
     total: number;
     tipoEntrega: string;
+    nombreCliente?: string;
+    telefonoCliente?: string;
+    direccionCliente?: string | null;
+    referenciaCliente?: string | null;
+    latitud?: number | null;
+    longitud?: number | null;
     fechaEntrega: string;
     franjaHoraria: string;
     estado: string; // OrderStatus
@@ -51,6 +59,20 @@ interface Props {
     negocio: any;
 }
 
+function formatShortDate(dateStr: string | null | undefined): string {
+    if (!dateStr) return '';
+    try {
+        const clean = String(dateStr).split('T')[0];
+        const parts = clean.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return clean;
+    } catch {
+        return String(dateStr).split('T')[0];
+    }
+}
+
 export default function ClientOrdersClient({ negocio }: Props) {
     const primaryColor = negocio?.colorPrimario || '#ff6b2b';
     const secondaryColor = negocio?.colorSecundario || '#1a0a00';
@@ -59,17 +81,13 @@ export default function ClientOrdersClient({ negocio }: Props) {
     const [isVerified, setIsVerified] = useState(false);
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(false);
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
     // OTP Verification State
     const [otpStep, setOtpStep] = useState<'input' | 'verify'>('input');
     const [otpCode, setOtpCode] = useState('');
     const [otpLoading, setOtpLoading] = useState(false);
     const [otpMessage, setOtpMessage] = useState<string | null>(null);
-
-    // Resubir comprobante
-    const [uploadingForId, setUploadingForId] = useState<string | null>(null);
-    const [uploadError, setUploadError] = useState<string | null>(null);
-    const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
 
     useEffect(() => {
         // Cargar teléfono guardado previamente en localStorage
@@ -87,7 +105,13 @@ export default function ClientOrdersClient({ negocio }: Props) {
             const res = await fetch(`/api/public/${negocio.slug}/client-orders?phone=${encodeURIComponent(clientPhone)}`);
             const data = await res.json();
             if (data.success) {
-                setOrders(data.orders || []);
+                const fetchedOrders = data.orders || [];
+                setOrders(fetchedOrders);
+                // Si había un pedido seleccionado, actualizar sus datos
+                if (selectedOrder) {
+                    const updated = fetchedOrders.find((o: Order) => o.id === selectedOrder.id);
+                    if (updated) setSelectedOrder(updated);
+                }
             }
         } catch (error) {
             console.error('Error al consultar pedidos:', error);
@@ -155,34 +179,6 @@ export default function ClientOrdersClient({ negocio }: Props) {
         }
     };
 
-    const handleFileUpload = async (orderId: string, file: File) => {
-        try {
-            setUploadingForId(orderId);
-            setUploadError(null);
-            setUploadSuccess(null);
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const res = await fetch(`/api/public/${negocio.slug}/orders/${orderId}/payment-evidence`, {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await res.json();
-            if (data.success) {
-                setUploadSuccess('¡Comprobante enviado a revisión con éxito!');
-                fetchOrders(phone);
-            } else {
-                setUploadError(data.error || 'Error al subir el comprobante.');
-            }
-        } catch (error: any) {
-            setUploadError('Error al procesar la subida del archivo.');
-        } finally {
-            setUploadingForId(null);
-        }
-    };
-
     const getOrderBadge = (status: string) => {
         switch (status) {
             case 'EN_PREPARACION':
@@ -203,6 +199,18 @@ export default function ClientOrdersClient({ negocio }: Props) {
         }
     };
 
+    // Si hay un pedido seleccionado, mostrar vista a pantalla completa con OrderTrackingClient
+    if (selectedOrder) {
+        return (
+            <OrderTrackingClient
+                order={selectedOrder}
+                negocio={negocio}
+                onBack={() => setSelectedOrder(null)}
+                onRefreshOrders={() => fetchOrders(phone)}
+            />
+        );
+    }
+
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-16">
             {/* Header */}
@@ -212,7 +220,7 @@ export default function ClientOrdersClient({ negocio }: Props) {
                 </Link>
                 <div className="flex items-center gap-2">
                     <ShoppingBag className="w-5 h-5 text-orange-600" />
-                    <span className="font-black text-sm text-slate-900">Mis Pedidos - Pinchos</span>
+                    <span className="font-black text-sm text-slate-900">Mis Pedidos - {negocio.nombre}</span>
                 </div>
             </header>
 
@@ -303,7 +311,7 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                     localStorage.removeItem('pinchos_client_phone');
                                     setIsVerified(false);
                                 }}
-                                className="text-xs text-orange-600 hover:underline font-extrabold"
+                                className="text-xs text-orange-600 hover:underline font-extrabold cursor-pointer"
                             >
                                 Cambiar número
                             </button>
@@ -318,96 +326,57 @@ export default function ClientOrdersClient({ negocio }: Props) {
                             <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 space-y-4 shadow-sm p-6">
                                 <ShoppingBag className="w-12 h-12 mx-auto text-slate-300" />
                                 <h3 className="text-base font-black text-slate-900">No tienes pedidos registrados</h3>
-                                <p className="text-xs text-slate-500 font-medium">Realiza tu primer pedido de pinchos para asar desde el catálogo.</p>
+                                <p className="text-xs text-slate-500 font-medium">Realiza tu primer pedido de productos desde el catálogo.</p>
                                 <Link href={`/${negocio.slug}`} className="inline-block px-6 py-3 bg-orange-600 text-white text-xs font-black rounded-2xl shadow-lg hover:bg-orange-700 transition-colors">
-                                    Ver Catálogo de Pinchos
+                                    Ver Catálogo
                                 </Link>
                             </div>
                         ) : (
                             <div className="space-y-4">
                                 {orders.map(order => (
-                                    <div key={order.id} className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow">
+                                    <div 
+                                        key={order.id} 
+                                        onClick={() => setSelectedOrder(order)}
+                                        className="bg-white border border-slate-200/80 rounded-3xl p-5 space-y-3.5 shadow-2xs hover:shadow-md transition-all cursor-pointer group active:scale-[0.99] text-left"
+                                    >
                                         {/* Header del pedido */}
-                                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                                        <div className="flex items-start justify-between border-b border-slate-100 pb-3">
                                             <div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-lg font-black text-slate-900">Pedido #{order.numeroPedido}</span>
-                                                    <span className="text-xs font-mono text-slate-400 font-bold">{new Date(order.createdAt).toLocaleDateString()}</span>
+                                                    <span className="text-base font-black text-slate-900 group-hover:text-orange-600 transition-colors">
+                                                        Pedido #{order.numeroPedido}
+                                                    </span>
+                                                    <span className="text-xs font-mono font-bold text-slate-400">
+                                                        {formatShortDate(order.createdAt)}
+                                                    </span>
                                                 </div>
-                                                <div className="text-xs text-slate-500 font-medium mt-0.5">
-                                                    {order.tipoEntrega} ({order.franjaHoraria} hrs)
-                                                </div>
+                                                <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
+                                                    {order.tipoEntrega} • {order.franjaHoraria} hrs
+                                                </p>
                                             </div>
                                             <div>
                                                 {getOrderBadge(order.estado)}
                                             </div>
                                         </div>
 
-                                        {/* Lista de Ítems */}
-                                        <div className="space-y-1.5 py-1">
-                                            {order.items.map(item => (
-                                                <div key={item.id} className="flex justify-between text-xs text-slate-700 font-medium">
-                                                    <span><strong className="text-slate-900">{item.cantidad}x</strong> {item.nombreProducto}</span>
-                                                    <span className="font-bold text-slate-900">${(item.cantidad * item.precioUnitario).toFixed(2)}</span>
-                                                </div>
-                                            ))}
+                                        {/* Lista de Ítems Resumida */}
+                                        <div className="text-xs text-slate-600 font-medium line-clamp-2">
+                                            {order.items.map(i => `${i.cantidad}x ${i.nombreProducto}`).join(', ')}
                                         </div>
 
-                                        {/* Total */}
-                                        <div className="flex justify-between items-center pt-3 border-t border-slate-100 text-sm">
-                                            <span className="text-slate-500 font-bold">Total a Pagar:</span>
-                                            <span className="text-lg font-black text-orange-600">${order.total.toFixed(2)}</span>
-                                        </div>
-
-                                        {/* Sección del Pago */}
-                                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                                            <div className="flex justify-between items-center text-xs">
-                                                <span className="font-bold text-slate-500">Estado del Pago:</span>
-                                                <span className="font-mono font-black text-slate-900">{order.payment?.estado || 'PENDIENTE'}</span>
+                                        {/* Total & Botón de Ver Detalles */}
+                                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                                            <div>
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Total a Pagar</span>
+                                                <span className="text-base font-black text-slate-900">${order.total.toFixed(2)}</span>
                                             </div>
-
-                                            {/* Si fue rechazado */}
-                                            {order.payment?.estado === 'RECHAZADO' && (
-                                                <div className="space-y-3 pt-2 border-t border-rose-200">
-                                                    <div className="p-3.5 bg-rose-50 text-rose-800 text-xs rounded-2xl border border-rose-200 space-y-1">
-                                                        <div className="font-black flex items-center gap-1.5 text-rose-700">
-                                                            <XCircle className="w-4 h-4" /> Comprobante Rechazado
-                                                        </div>
-                                                        <p className="font-medium"><strong>Motivo:</strong> {order.payment.motivoRechazo || 'El comprobante no era legible o correcto.'}</p>
-                                                    </div>
-
-                                                    <div className="space-y-2">
-                                                        <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">Subir Nuevo Comprobante (PNG, JPG, PDF)</label>
-                                                        <input
-                                                            type="file"
-                                                            accept="image/png, image/jpeg, image/webp, application/pdf"
-                                                            disabled={uploadingForId === order.id}
-                                                            onChange={e => {
-                                                                if (e.target.files?.[0]) {
-                                                                    handleFileUpload(order.id, e.target.files[0]);
-                                                                }
-                                                            }}
-                                                            className="w-full text-xs text-slate-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-orange-600 file:text-white hover:file:bg-orange-700 bg-white rounded-xl border border-slate-200 p-2 cursor-pointer"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Si está en revisión */}
-                                            {order.payment?.estado === 'COMPROBANTE_ENVIADO' && (
-                                                <div className="p-3.5 bg-amber-50 text-amber-900 text-xs rounded-2xl border border-amber-200 flex items-center gap-2.5 font-medium">
-                                                    <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-                                                    <span>Tu comprobante fue recibido y está siendo verificado. Tan pronto se confirme, tu pedido pasará a producción.</span>
-                                                </div>
-                                            )}
-
-                                            {/* Si está confirmado */}
-                                            {order.payment?.estado === 'CONFIRMADO' && (
-                                                <div className="p-3.5 bg-emerald-50 text-emerald-900 text-xs rounded-2xl border border-emerald-200 flex items-center gap-2.5 font-medium">
-                                                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                                                    <span>¡Pago confirmado! Tu pedido ha ingresado a producción.</span>
-                                                </div>
-                                            )}
+                                            <button
+                                                type="button"
+                                                className="px-3.5 py-2 bg-orange-50 group-hover:bg-orange-600 text-orange-700 group-hover:text-white font-black text-xs rounded-xl border border-orange-200/80 transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                                            >
+                                                <span>Ver Detalles y Proceso</span>
+                                                <ChevronRight className="size-4" />
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
