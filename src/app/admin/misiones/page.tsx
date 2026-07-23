@@ -1386,20 +1386,26 @@ export default function QuestDashboard() {
                 });
             }
 
-            const data = await res.json();
+            const text = await res.text();
+            let data: any = {};
+            try {
+                data = text ? JSON.parse(text) : {};
+            } catch {
+                data = { error: `Respuesta del servidor no válida (${res.status})` };
+            }
 
-            if (data.success) {
+            if (res.ok && data.success) {
                 showToast(editingQuestId ? 'Desafío editado con éxito' : 'Misión creada con éxito desde el asistente', 'success');
                 setIsWizardOpen(false);
                 setWizardStep(1);
                 setEditingQuestId(null);
                 fetchData();
             } else {
-                showToast(data.error || 'Error al crear/editar misión', 'error');
+                showToast(data.error || `Error (${res.status}) al crear/editar misión`, 'error');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error en wizard:', error);
-            showToast('Error de conexión', 'error');
+            showToast(error?.message || 'Error de conexión', 'error');
         } finally {
             setSubmitting(false);
         }

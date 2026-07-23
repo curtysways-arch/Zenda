@@ -412,16 +412,14 @@ export async function PUT(request: Request) {
                 where: { id: questId, negocioId }
             });
             if (bm) {
-                if (data.activa !== undefined) {
-                    await prisma.businessMission.update({
-                        where: { id: questId },
-                        data: {
-                            status: data.activa ? 'ACTIVE' : 'PAUSED'
-                        }
-                    });
-                    return NextResponse.json({ success: true, message: 'Estado de la misión actualizado con éxito' });
-                }
-                return NextResponse.json({ error: 'Operación no soportada para misiones globales' }, { status: 400 });
+                const newStatus = data?.activa !== undefined ? (data.activa ? 'ACTIVE' : 'PAUSED') : undefined;
+                await prisma.businessMission.update({
+                    where: { id: questId },
+                    data: {
+                        ...(newStatus ? { status: newStatus } : {})
+                    }
+                });
+                return NextResponse.json({ success: true, message: 'Misión actualizada con éxito' });
             }
 
             // Buscamos la misión existente para obtener su historial y no perderlo

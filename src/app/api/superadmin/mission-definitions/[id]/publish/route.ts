@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { MissionDefinitionService } from '@/lib/growth/missionDefinitionService';
 
-type Params = { params: Promise<{ id: string }> };
+type Params = { params: Promise<{ id: string }> | { id: string } };
 
 /**
  * POST /api/superadmin/mission-definitions/[id]/publish
@@ -10,7 +10,13 @@ type Params = { params: Promise<{ id: string }> };
  */
 export async function POST(request: Request, { params }: Params) {
   try {
-    const { id } = await params;
+    const resolvedParams = await (params instanceof Promise ? params : Promise.resolve(params));
+    const id = resolvedParams?.id;
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID no proporcionado' }, { status: 400 });
+    }
+
     const body = await request.json();
     const { action, globalSeasonId, fechaInicio, fechaFin, prioridad, segmentacion } = body;
 
@@ -36,8 +42,11 @@ export async function POST(request: Request, { params }: Params) {
       const mission = await MissionDefinitionService.archive(id);
       return NextResponse.json({ success: true, mission });
     }
+
+    return NextResponse.json({ error: 'Acción no válida' }, { status: 400 });
   } catch (err: any) {
     console.error('[API Superadmin MissionDefinition Publish]', err.message);
-    return NextResponse.json({ error: err.message }, { status: 400 });
+    return NextResponse.json({ error: err.message || 'Error en publicación' }, { status: 400 });
   }
 }
+

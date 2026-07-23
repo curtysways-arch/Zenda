@@ -163,21 +163,30 @@ export default function MisionesGlobalesClient({ initialMissions }: { initialMis
                 body: JSON.stringify(payload)
             });
 
-            const data = await res.json();
+            const text = await res.text();
+            let data: any = {};
+            try {
+                data = text ? JSON.parse(text) : {};
+            } catch {
+                data = { error: `Respuesta no válida del servidor (${res.status})` };
+            }
 
             if (res.ok && data.success) {
                 showToast(editingMission ? 'Misión actualizada' : 'Misión creada con éxito');
                 
                 // Refresh list
                 const resList = await fetch('/api/superadmin/misiones-globales');
-                const listData = await resList.json();
-                if (listData.success) {
-                    setMissions(listData.missions);
+                if (resList.ok) {
+                    const listText = await resList.text();
+                    const listData = listText ? JSON.parse(listText) : {};
+                    if (listData.success) {
+                        setMissions(listData.missions);
+                    }
                 }
                 
                 setIsModalOpen(false);
             } else {
-                showToast(data.error || 'Error procesando la solicitud', 'error');
+                showToast(data.error || `Error (${res.status}) procesando la solicitud`, 'error');
             }
         } catch (err: any) {
             showToast(err.message || 'Error de conexión', 'error');

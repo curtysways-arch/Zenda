@@ -277,7 +277,9 @@ export default function MissionEditorClient({
         })
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      let data: any = {};
+      try { data = text ? JSON.parse(text) : {}; } catch { data = { error: `Error en servidor (${res.status})` }; }
       if (!res.ok) throw new Error(data.error || 'Error al guardar la misión');
 
       const savedMission = data.mission;
@@ -326,15 +328,19 @@ export default function MissionEditorClient({
       
       // Recargar lista
       const listRes = await fetch('/api/superadmin/mission-definitions');
-      const listData = await listRes.json();
-      if (listData.success) {
-        setMissions(listData.missions);
+      if (listRes.ok) {
+        const listText = await listRes.text();
+        let listData: any = {};
+        try { listData = listText ? JSON.parse(listText) : {}; } catch {}
+        if (listData.success) {
+          setMissions(listData.missions);
+        }
       }
 
       setIsCreating(false);
       setEditingMission(null);
     } catch (err: any) {
-      showToast(err.message, 'error');
+      showToast(err.message || 'Error al guardar la misión', 'error');
     } finally {
       setLoading(false);
     }
@@ -350,16 +356,22 @@ export default function MissionEditorClient({
           action: publish ? 'publish' : 'archive'
         })
       });
-      const data = await res.json();
+      const text = await res.text();
+      let data: any = {};
+      try { data = text ? JSON.parse(text) : {}; } catch { data = { error: `Error en servidor (${res.status})` }; }
       if (!res.ok) throw new Error(data.error || 'Error en operación');
 
       showToast(`Misión ${publish ? 'publicada' : 'archivada'} correctamente`);
       
       const listRes = await fetch('/api/superadmin/mission-definitions');
-      const listData = await listRes.json();
-      if (listData.success) setMissions(listData.missions);
+      if (listRes.ok) {
+        const listText = await listRes.text();
+        let listData: any = {};
+        try { listData = listText ? JSON.parse(listText) : {}; } catch {}
+        if (listData.success) setMissions(listData.missions);
+      }
     } catch (e: any) {
-      showToast(e.message, 'error');
+      showToast(e.message || 'Error en la operación', 'error');
     } finally {
       setLoading(false);
     }
@@ -370,13 +382,15 @@ export default function MissionEditorClient({
     setLoading(true);
     try {
       const res = await fetch(`/api/superadmin/mission-definitions/${id}`, { method: 'DELETE' });
-      const data = await res.json();
+      const text = await res.text();
+      let data: any = {};
+      try { data = text ? JSON.parse(text) : {}; } catch { data = { error: `Error en servidor (${res.status})` }; }
       if (!res.ok) throw new Error(data.error || 'Error al eliminar');
 
       showToast('Definición eliminada correctamente');
       setMissions(missions.filter(m => m.id !== id));
     } catch (e: any) {
-      showToast(e.message, 'error');
+      showToast(e.message || 'Error al eliminar', 'error');
     } finally {
       setLoading(false);
     }
