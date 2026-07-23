@@ -246,29 +246,6 @@ function PedidosContent() {
 
     return (
         <div className="space-y-6 text-left">
-            {/* Modal de Vista Previa de Comprobante */}
-            {previewEvidenceUrl && (
-                <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl relative space-y-4">
-                        <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                            <h3 className="font-black text-slate-900 text-sm">Comprobante de Pago Adjunto</h3>
-                            <button onClick={() => setPreviewEvidenceUrl(null)} className="p-1 rounded-full hover:bg-slate-100 text-slate-400">
-                                <X className="size-5" />
-                            </button>
-                        </div>
-                        {previewEvidenceUrl.endsWith('.pdf') ? (
-                            <iframe src={previewEvidenceUrl} className="w-full h-96 rounded-2xl border border-slate-200" title="PDF Comprobante" />
-                        ) : (
-                            <img src={previewEvidenceUrl} alt="Comprobante" className="max-h-96 w-auto mx-auto rounded-2xl object-contain shadow-md border border-slate-100" />
-                        )}
-                        <div className="pt-2 text-right">
-                            <a href={previewEvidenceUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold inline-flex items-center gap-2">
-                                <ExternalLink className="size-4" /> Abrir en pantalla completa
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Header */}
             <div>
@@ -432,19 +409,23 @@ function PedidosContent() {
                         </div>
 
                         {/* Comprobante de Pago adjunto si existe */}
-                        {selectedOrder.payment?.evidences && selectedOrder.payment.evidences.length > 0 && (
+                        {((selectedOrder.payment?.evidences && selectedOrder.payment.evidences.length > 0) || (selectedOrder.payment as any)?.comprobanteUrl || (selectedOrder as any)?.comprobanteUrl) && (
                             <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-3xl p-5 space-y-3">
                                 <div className="flex items-center justify-between">
                                     <span className="text-xs font-black text-emerald-950 uppercase tracking-wider flex items-center gap-2">
                                         <FileText className="size-5 text-emerald-600" /> Comprobante de Pago Subido
                                     </span>
                                     <span className="text-xs font-bold text-emerald-800 font-mono bg-white/80 px-2.5 py-1 rounded-lg border border-emerald-200">
-                                        ${selectedOrder.payment.monto.toFixed(2)}
+                                        ${selectedOrder.payment?.monto ? selectedOrder.payment.monto.toFixed(2) : selectedOrder.total.toFixed(2)}
                                     </span>
                                 </div>
                                 <button
-                                    onClick={() => setPreviewEvidenceUrl(selectedOrder.payment!.evidences![0].fileUrl)}
-                                    className="w-full py-3 bg-white border border-emerald-300 hover:bg-emerald-100/50 text-emerald-950 rounded-2xl text-xs font-black flex items-center justify-center gap-2 transition-all shadow-2xs cursor-pointer"
+                                    type="button"
+                                    onClick={() => {
+                                        const url = selectedOrder.payment?.evidences?.[0]?.fileUrl || (selectedOrder.payment as any)?.comprobanteUrl || (selectedOrder as any)?.comprobanteUrl;
+                                        if (url) setPreviewEvidenceUrl(url);
+                                    }}
+                                    className="w-full py-3 bg-white border border-emerald-300 hover:bg-emerald-100/50 text-emerald-950 rounded-2xl text-xs font-black flex items-center justify-center gap-2 transition-all shadow-2xs cursor-pointer active:scale-95"
                                 >
                                     <ImageIcon className="size-4 text-emerald-600" /> Ver Comprobante Adjunto en Pantalla Completa
                                 </button>
@@ -622,6 +603,38 @@ function PedidosContent() {
                             >
                                 {submittingModal ? <Loader2 className="size-4 animate-spin" /> : 'Guardar y Aprobar'}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Vista Previa de Comprobante (z-[300] para sobreponerse a todo) */}
+            {previewEvidenceUrl && (
+                <div className="fixed inset-0 z-[300] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl relative space-y-4">
+                        <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                            <h3 className="font-black text-slate-900 text-sm">Comprobante de Pago Adjunto</h3>
+                            <button onClick={() => setPreviewEvidenceUrl(null)} className="p-1 rounded-full hover:bg-slate-100 text-slate-400 cursor-pointer">
+                                <X className="size-5" />
+                            </button>
+                        </div>
+                        {previewEvidenceUrl.endsWith('.pdf') ? (
+                            <iframe src={previewEvidenceUrl} className="w-full h-96 rounded-2xl border border-slate-200" title="PDF Comprobante" />
+                        ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={previewEvidenceUrl} alt="Comprobante" className="max-h-96 w-auto mx-auto rounded-2xl object-contain shadow-md border border-slate-100" />
+                        )}
+                        <div className="pt-2 flex justify-between items-center">
+                            <button
+                                type="button"
+                                onClick={() => setPreviewEvidenceUrl(null)}
+                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                            >
+                                Cerrar
+                            </button>
+                            <a href={previewEvidenceUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold inline-flex items-center gap-2 transition-all cursor-pointer">
+                                <ExternalLink className="size-4" /> Abrir en pantalla completa
+                            </a>
                         </div>
                     </div>
                 </div>

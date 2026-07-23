@@ -360,18 +360,31 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                         </span>
                     </div>
 
-                    {/* Si fue rechazado */}
-                    {order.payment?.estado === 'RECHAZADO' && (
+                    {/* Si fue rechazado O si el pago está pendiente (no se ha subido comprobante) */}
+                    {(!order.payment || order.payment.estado === 'PENDIENTE' || order.payment.estado === 'RECHAZADO' || order.estado === 'PENDIENTE_PAGO') && (
                         <div className="space-y-3 pt-1">
-                            <div className="p-4 bg-rose-50 text-rose-800 text-xs rounded-2xl border border-rose-200 space-y-1">
-                                <div className="font-black flex items-center gap-1.5 text-rose-700">
-                                    <XCircle className="size-4" /> Comprobante Rechazado
+                            {order.payment?.estado === 'RECHAZADO' ? (
+                                <div className="p-4 bg-rose-50 text-rose-800 text-xs rounded-2xl border border-rose-200 space-y-1">
+                                    <div className="font-black flex items-center gap-1.5 text-rose-700">
+                                        <XCircle className="size-4" /> Comprobante Rechazado
+                                    </div>
+                                    <p className="font-medium"><strong>Motivo:</strong> {order.payment.motivoRechazo || 'El comprobante no era legible o correcto.'}</p>
                                 </div>
-                                <p className="font-medium"><strong>Motivo:</strong> {order.payment.motivoRechazo || 'El comprobante no era legible o correcto.'}</p>
-                            </div>
+                            ) : (
+                                <div className="p-4 bg-orange-50/80 text-orange-950 text-xs rounded-2xl border border-orange-200/80 space-y-1">
+                                    <div className="font-black flex items-center gap-1.5 text-orange-800 uppercase tracking-wider text-[11px]">
+                                        <AlertCircle className="size-4 text-orange-600 shrink-0" /> Pago Pendiente de Comprobante
+                                    </div>
+                                    <p className="font-medium text-slate-600 leading-relaxed">
+                                        Aún no se ha adjuntado el comprobante de pago para este pedido. Por favor sube tu comprobante para enviar a producción.
+                                    </p>
+                                </div>
+                            )}
 
-                            <div className="space-y-2">
-                                <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">Subir Nuevo Comprobante (PNG, JPG, PDF)</label>
+                            <div className="space-y-2 pt-1">
+                                <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
+                                    {order.payment?.estado === 'RECHAZADO' ? 'Subir Nuevo Comprobante (PNG, JPG, PDF)' : 'Subir Comprobante de Pago (PNG, JPG, PDF) *'}
+                                </label>
                                 <input
                                     type="file"
                                     accept="image/png, image/jpeg, image/webp, application/pdf"
@@ -385,7 +398,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                 />
                                 {uploading && (
                                     <div className="flex items-center gap-2 text-xs text-orange-600 font-bold">
-                                        <Loader2 className="size-4 animate-spin" /> Subiendo nuevo comprobante...
+                                        <Loader2 className="size-4 animate-spin" /> Subiendo comprobante de pago...
                                     </div>
                                 )}
                                 {uploadSuccess && (
