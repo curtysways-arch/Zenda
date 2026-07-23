@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { 
     ShoppingBag, Plus, Minus, Trash2, MapPin, Calendar, Clock, 
-    ChevronRight, Check, Loader2, Search, ArrowLeft, Phone, Info, AlertCircle, User
+    ChevronRight, Check, Loader2, Search, ArrowLeft, Phone, Info, AlertCircle, User,
+    Copy, Building2, CreditCard, Hash, FileText, UploadCloud, ShieldCheck, Send, Lock, Wallet
 } from 'lucide-react';
 import Image from 'next/image';
 import MapSelectionModal from './MapSelectionModal';
@@ -121,6 +122,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
     };
     const [deliveryDate, setDeliveryDate] = useState<string>(getInitialDate());
     const [timeSlot, setTimeSlot] = useState('');
+    const [copiedCode, setCopiedCode] = useState(false);
 
     // Load Catalogue
     useEffect(() => {
@@ -735,95 +737,241 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
     // PANTALLA 2: DATOS BANCARIOS Y CARGA DE COMPROBANTE
     if (step === 'payment' && createdOrder) {
+        const paymentCode = createdPayment?.codigoPago || `PINCHOS-${createdOrder.id.slice(0, 6).toUpperCase()}`;
+
         return (
-            <div className="min-h-screen bg-slate-50 text-slate-900 px-4 py-8 flex flex-col justify-center items-center">
-                <div className="w-full max-w-lg bg-white border border-slate-200/80 rounded-3xl p-8 shadow-2xl space-y-6">
-                    <div className="text-center space-y-2 pb-4 border-b border-slate-100">
-                        <span className="px-3 py-1 bg-orange-100 text-orange-800 border border-orange-200 rounded-full text-[10px] font-black uppercase tracking-wider">
-                            Paso Final: Transferencia Bancaria
-                        </span>
-                        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Completa tu Pago</h2>
-                        <p className="text-xs text-slate-500 font-medium">Transfiere el monto exacto y adjunta tu comprobante para enviar a producción.</p>
+            <div className="min-h-screen bg-slate-950 text-slate-900 flex flex-col justify-start items-center pb-12">
+                {/* Header Oscuro con Banner y Logo */}
+                <header className="relative w-full max-w-lg bg-slate-950 pt-6 pb-12 px-6 flex items-center justify-between overflow-hidden">
+                    {bannerImage && (
+                        <div 
+                            className="absolute inset-0 opacity-40 bg-cover bg-center pointer-events-none"
+                            style={{ backgroundImage: `url('${bannerImage}')` }}
+                        />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/80 to-slate-950" />
+
+                    <button 
+                        onClick={() => setStep('checkout')}
+                        className="relative z-10 size-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 cursor-pointer border border-white/10"
+                        title="Volver"
+                    >
+                        <ArrowLeft className="size-5" />
+                    </button>
+
+                    <div className="relative z-10 flex items-center gap-2">
+                        {negocio.logoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={negocio.logoUrl} alt={negocio.nombre} className="h-10 w-auto object-contain" />
+                        ) : (
+                            <span className="text-lg font-black text-white italic tracking-tighter uppercase">{negocio.nombre}</span>
+                        )}
                     </div>
 
-                    {/* Resumen del Monto y Código */}
-                    <div className="bg-orange-50 border border-orange-200/70 rounded-2xl p-4 flex justify-between items-center">
-                        <div>
-                            <span className="text-[10px] font-black uppercase tracking-wider text-orange-900/60 block">Código de Pago</span>
-                            <span className="text-sm font-mono font-black text-orange-600">{createdPayment?.codigoPago || `PAY-${createdOrder.id.slice(0, 6)}`}</span>
+                    <div className="size-10 opacity-0" />
+                </header>
+
+                {/* Hoja Blanca de Contenido Principal */}
+                <div className="relative z-20 w-full max-w-lg bg-slate-50 rounded-t-[36px] -mt-6 px-4 sm:px-6 py-6 border-t border-white/20 shadow-2xl space-y-5">
+                    
+                    {/* Título & Badges */}
+                    <div className="text-center space-y-1.5 pb-1">
+                        <div className="flex items-center justify-center gap-2 flex-wrap">
+                            <span className="px-3 py-1 bg-orange-600 text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-xs">
+                                Paso Final
+                            </span>
+                            <span className="px-3 py-1 bg-orange-100/80 text-orange-900 rounded-full text-[9px] font-black uppercase tracking-wider">
+                                Transferencia Bancaria
+                            </span>
                         </div>
-                        <div className="text-right">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-orange-900/60 block">Monto a Transferir</span>
-                            <span className="text-2xl font-black text-slate-900">${createdOrder.total.toFixed(2)}</span>
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tight pt-1">Completa tu pago</h2>
+                        <div className="w-8 h-1 bg-orange-600 rounded-full mx-auto" />
+                        <p className="text-xs text-slate-500 font-medium max-w-xs mx-auto pt-0.5 leading-relaxed">
+                            Transfiere el monto exacto y adjunta tu comprobante para enviar a producción.
+                        </p>
+                    </div>
+
+                    {/* Tarjeta 1: Código de Pago y Monto a Transferir */}
+                    <div className="bg-gradient-to-r from-orange-50/90 via-orange-50/50 to-orange-50/90 border border-orange-200/80 rounded-3xl p-4 sm:p-5 flex items-center justify-between shadow-2xs">
+                        <div className="space-y-0.5">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-orange-900/70 block">Código de Pago</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-mono font-black text-orange-700 tracking-wider">{paymentCode}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(paymentCode);
+                                        setCopiedCode(true);
+                                        setTimeout(() => setCopiedCode(false), 2000);
+                                    }}
+                                    className="p-1.5 text-orange-600 hover:text-orange-800 bg-orange-100 hover:bg-orange-200 rounded-lg transition-all active:scale-95 cursor-pointer"
+                                    title="Copiar código"
+                                >
+                                    {copiedCode ? <Check className="size-4 text-emerald-600" /> : <Copy className="size-4" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="h-10 w-px bg-orange-200/70 mx-1" />
+
+                        <div className="flex items-center gap-3">
+                            <div className="text-right space-y-0.5">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-orange-900/70 block">Monto a Transferir</span>
+                                <span className="text-2xl font-black text-slate-900 tracking-tight">${createdOrder.total.toFixed(2)}</span>
+                            </div>
+                            <div className="size-11 bg-orange-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-600/30 shrink-0">
+                                <Wallet className="size-6" />
+                            </div>
                         </div>
                     </div>
 
-                    {/* Datos de la Cuenta Bancaria */}
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3 text-xs">
-                        <h3 className="font-black text-slate-900 uppercase tracking-wider text-[11px] pb-2.5 border-b border-slate-200 flex items-center justify-between">
-                            <span>🏛️ Datos para la Transferencia</span>
-                            <span className="text-orange-600 font-mono font-black">{bankConfig?.banco || 'Banco Pichincha'}</span>
-                        </h3>
-
-                        <div className="grid grid-cols-2 gap-3 text-slate-700">
-                            <div>
-                                <span className="text-slate-400 text-[10px] block font-bold uppercase tracking-wider">TITULAR</span>
-                                <span className="font-bold text-slate-900">{bankConfig?.titular || negocio.nombre}</span>
+                    {/* Tarjeta 2: Datos para la Transferencia */}
+                    <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md space-y-4 text-left">
+                        <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                            <div className="flex items-center gap-3">
+                                <div className="size-10 bg-slate-900 text-white rounded-full flex items-center justify-center font-black shadow-xs shrink-0">
+                                    <Building2 className="size-5" />
+                                </div>
+                                <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Datos para la Transferencia</span>
                             </div>
-                            <div>
-                                <span className="text-slate-400 text-[10px] block font-bold uppercase tracking-wider">TIPO DE CUENTA</span>
-                                <span className="font-bold text-slate-900">{bankConfig?.tipoCuenta || 'Ahorros'}</span>
-                            </div>
-                            <div>
-                                <span className="text-slate-400 text-[10px] block font-bold uppercase tracking-wider">NÚMERO DE CUENTA</span>
-                                <span className="font-mono font-black text-slate-900 text-sm select-all">{bankConfig?.numeroCuenta || '2100987654'}</span>
-                            </div>
-                            <div>
-                                <span className="text-slate-400 text-[10px] block font-bold uppercase tracking-wider">IDENTIFICACIÓN / RUC</span>
-                                <span className="font-mono font-bold text-slate-900">{bankConfig?.identificacion || '1792345678001'}</span>
+                            <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl">
+                                <span className="text-xs font-black text-orange-700 uppercase tracking-wider">{bankConfig?.banco || 'BANCO PICHINCHA'}</span>
+                                <div className="size-5 bg-amber-400 text-slate-950 font-black rounded flex items-center justify-center text-[9px] shadow-2xs">
+                                    P
+                                </div>
                             </div>
                         </div>
 
-                        {/* Código QR si existe */}
+                        <div className="grid grid-cols-2 gap-4 pt-1">
+                            <div className="flex items-center gap-3">
+                                <div className="size-8 bg-orange-100/70 text-orange-700 rounded-full flex items-center justify-center shrink-0">
+                                    <User className="size-4" />
+                                </div>
+                                <div>
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">TITULAR</span>
+                                    <span className="text-xs font-black text-slate-900">{bankConfig?.titular || 'Poleth Caicedo'}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <div className="size-8 bg-orange-100/70 text-orange-700 rounded-full flex items-center justify-center shrink-0">
+                                    <CreditCard className="size-4" />
+                                </div>
+                                <div>
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">TIPO DE CUENTA</span>
+                                    <span className="text-xs font-black text-slate-900">{bankConfig?.tipoCuenta || 'Ahorros'}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <div className="size-8 bg-orange-100/70 text-orange-700 rounded-full flex items-center justify-center shrink-0">
+                                    <Hash className="size-4" />
+                                </div>
+                                <div>
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">NÚMERO DE CUENTA</span>
+                                    <span className="text-xs font-mono font-black text-slate-900 select-all">{bankConfig?.numeroCuenta || '2213913435'}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <div className="size-8 bg-orange-100/70 text-orange-700 rounded-full flex items-center justify-center shrink-0">
+                                    <FileText className="size-4" />
+                                </div>
+                                <div>
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">IDENTIFICACIÓN / RUC</span>
+                                    <span className="text-xs font-mono font-black text-slate-900">{bankConfig?.identificacion || '1792345678001'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Código QR opcional */}
                         {bankConfig?.qrImageUrl && (
-                            <div className="pt-3 text-center border-t border-slate-200">
+                            <div className="pt-3 text-center border-t border-slate-100">
                                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Escanea el código QR de Pago</span>
-                                <img src={bankConfig.qrImageUrl} alt="QR de Pago" className="w-36 h-36 mx-auto rounded-xl border border-slate-200 shadow-md object-contain bg-white p-2" />
+                                <img src={bankConfig.qrImageUrl} alt="QR de Pago" className="w-36 h-36 mx-auto rounded-2xl border border-slate-200 shadow-md object-contain bg-white p-2" />
                             </div>
                         )}
                     </div>
 
-                    {/* Formulario de Carga de Comprobante */}
-                    <form onSubmit={handleUploadEvidenceSubmit} className="space-y-4 pt-2">
-                        <div>
-                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                                Subir Comprobante (PNG, JPG, WEBP o PDF) *
+                    {/* Formulario de Carga de Comprobante con Estilo Dashed */}
+                    <form onSubmit={handleUploadEvidenceSubmit} className="space-y-4 pt-1">
+                        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md space-y-3">
+                            <label className="block text-[10px] font-black text-slate-900 uppercase tracking-widest">
+                                SUBIR COMPROBANTE (PNG, JPG, WEBP O PDF) *
                             </label>
-                            <input
-                                type="file"
-                                required
-                                accept="image/png, image/jpeg, image/webp, application/pdf"
-                                onChange={e => {
-                                    if (e.target.files?.[0]) setEvidenceFile(e.target.files[0]);
-                                }}
-                                className="w-full text-xs text-slate-600 file:mr-4 file:py-3 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-orange-600 file:text-white hover:file:bg-orange-700 bg-slate-50 rounded-2xl border border-slate-200 p-2 cursor-pointer"
-                            />
+
+                            <div 
+                                onClick={() => document.getElementById('evidence-file-input')?.click()}
+                                className="border-2 border-dashed border-orange-300/80 hover:border-orange-500 bg-orange-50/30 hover:bg-orange-50/60 rounded-2xl p-4 flex items-center gap-3 transition-all cursor-pointer"
+                            >
+                                <div className="size-10 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center shrink-0 shadow-2xs">
+                                    <UploadCloud className="size-5" />
+                                </div>
+                                
+                                <button
+                                    type="button"
+                                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+                                >
+                                    Seleccionar archivo
+                                </button>
+
+                                <span className="text-xs font-semibold text-slate-500 truncate flex-1">
+                                    {evidenceFile ? evidenceFile.name : 'Sin archivos seleccionados'}
+                                </span>
+
+                                <input
+                                    id="evidence-file-input"
+                                    type="file"
+                                    required
+                                    accept="image/png, image/jpeg, image/webp, application/pdf"
+                                    onChange={e => {
+                                        if (e.target.files?.[0]) setEvidenceFile(e.target.files[0]);
+                                    }}
+                                    className="hidden"
+                                />
+                            </div>
+
+                            <div className="bg-slate-100/80 rounded-2xl p-3.5 flex items-start gap-3 border border-slate-200/60">
+                                <ShieldCheck className="size-5 text-orange-600 shrink-0 mt-0.5" />
+                                <div className="text-[10px] text-slate-600 font-semibold leading-relaxed">
+                                    <strong className="text-slate-800 block">Tu comprobante es 100% seguro.</strong>
+                                    Solo se usa para validar tu pago y enviar tu pedido a producción.
+                                </div>
+                            </div>
                         </div>
 
                         {uploadError && (
-                            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-bold">
+                            <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-bold text-center">
                                 {uploadError}
                             </div>
                         )}
 
-                        <button
-                            type="submit"
-                            disabled={uploadingEvidence || !evidenceFile}
-                            className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 disabled:opacity-40 transition-all active:scale-95"
-                        >
-                            {uploadingEvidence ? <Loader2 className="size-5 animate-spin" /> : 'Enviar Comprobante y Finalizar'}
-                        </button>
+                        {/* Botón Principal enviar comprobante */}
+                        <div className="space-y-2 pt-1">
+                            <button
+                                type="submit"
+                                disabled={uploadingEvidence || !evidenceFile}
+                                className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 disabled:opacity-50 transition-all active:scale-[0.98] cursor-pointer"
+                            >
+                                {uploadingEvidence ? (
+                                    <>
+                                        <Loader2 className="size-5 animate-spin" />
+                                        Enviando comprobante...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Send className="size-4" />
+                                        ENVIAR COMPROBANTE Y FINALIZAR
+                                    </>
+                                )}
+                            </button>
+                            <div className="flex items-center justify-center gap-1.5 text-center pt-1">
+                                <Lock className="size-3 text-slate-400" />
+                                <span className="text-[11px] font-bold text-slate-400">Tus datos están protegidos</span>
+                            </div>
+                        </div>
                     </form>
+
                 </div>
             </div>
         );
