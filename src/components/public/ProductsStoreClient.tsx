@@ -195,19 +195,22 @@ export default function ProductsStoreClient({ negocio }: Props) {
         return () => clearInterval(poll);
     }, [clientPhone]);
     useEffect(() => {
-        if (!activeOrder || !activeOrder.fechaEntrega) return;
-
         const updateTimer = () => {
+            if (!activeOrder?.fechaEntrega) {
+                setCountdownTime('Por asignar');
+                return;
+            }
+
             const target = new Date(activeOrder.fechaEntrega).getTime();
             const now = new Date().getTime();
             const diff = target - now;
 
             if (diff <= 0) {
-                setCountdownTime('¡Tiempo de entrega cumplido! Tu pedido está en camino.');
+                setCountdownTime('¡Tiempo estimado cumplido!');
                 return;
             }
 
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const hours = Math.floor(diff / (1000 * 60 * 60));
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
@@ -1002,8 +1005,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     </div>
                                     <p className="text-[11px] text-slate-300 font-semibold mt-1">
                                         {['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
-                                            ? 'El establecimiento está verificando tu solicitud de pedido.'
-                                            : `Entrega estimada: ${activeOrder.franjaHoraria ? activeOrder.franjaHoraria + ' hrs' : 'Sin franja'}`}
+                                            ? 'El establecimiento está verificando tu pago para programar el envío.'
+                                            : `Entrega estimada: ${activeOrder.fechaEntrega ? new Date(activeOrder.fechaEntrega).toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : 'Por definir'} (${activeOrder.franjaHoraria || ''})`}
                                     </p>
                                 </div>
                             </div>

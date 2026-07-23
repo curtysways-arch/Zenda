@@ -68,10 +68,11 @@ function PedidosContent() {
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [updatingState, setUpdatingState] = useState<string | null>(null);
 
-    // Estado para edición de hora de entrega
-    const [editingTimeSlot, setEditingTimeSlot] = useState('');
-    const [editingDateTime, setEditingDateTime] = useState('');
-    const [savingTime, setSavingTime] = useState(false);
+    // Modal de asignación de fecha y hora de entrega al confirmar pago
+    const [confirmDateModalOrder, setConfirmDateModalOrder] = useState<Order | null>(null);
+    const [modalDateTime, setModalDateTime] = useState('');
+    const [modalTimeSlot, setModalTimeSlot] = useState('');
+    const [submittingModal, setSubmittingModal] = useState(false);
 
     // Visor de comprobante
     const [previewEvidenceUrl, setPreviewEvidenceUrl] = useState<string | null>(null);
@@ -87,7 +88,6 @@ function PedidosContent() {
                     const orderToHighlight = data.find((o: Order) => o.id === highlightId);
                     if (orderToHighlight) {
                         setSelectedOrder(orderToHighlight);
-                        setEditingTimeSlot(orderToHighlight.franjaHoraria || '');
                         if (TAB_STATES.nuevos.includes(orderToHighlight.estado)) setActiveTab('nuevos');
                         else if (TAB_STATES.preparacion.includes(orderToHighlight.estado)) setActiveTab('preparacion');
                         else if (TAB_STATES.listos.includes(orderToHighlight.estado)) setActiveTab('listos');
@@ -110,27 +110,42 @@ function PedidosContent() {
 
     const handleSelectOrder = (order: Order) => {
         setSelectedOrder(order);
-        setEditingTimeSlot(order.franjaHoraria || '');
+    };
+
+    const openDateModalForOrder = (order: Order) => {
+        setConfirmDateModalOrder(order);
         if (order.fechaEntrega) {
             try {
                 const dt = new Date(order.fechaEntrega);
                 const iso = new Date(dt.getTime() - (dt.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-                setEditingDateTime(iso);
+                setModalDateTime(iso);
             } catch (e) {
-                setEditingDateTime('');
+                setModalDateTime(new Date().toISOString().slice(0, 16));
             }
         } else {
-            setEditingDateTime('');
+            const now = new Date();
+            now.setHours(now.getHours() + 2);
+            const iso = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+            setModalDateTime(iso);
         }
+        setModalTimeSlot(order.franjaHoraria || '14:00 - 15:00 hrs');
     };
 
     const handleUpdateStatus = async (id: string, newStatus: string) => {
+        const targetOrder = orders.find(o => o.id === id);
+
+        // Al aprobar/confirmar pago y pasar a producción, abrir modal de fecha y hora
+        if (newStatus === 'PREPARACION' && targetOrder) {
+            openDateModalForOrder(targetOrder);
+            return;
+        }
+
         try {
             setUpdatingState(id);
             const res = await fetch('/api/admin/pedidos', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, estado: newStatus, franjaHoraria: editingTimeSlot || undefined })
+                body: JSON.stringify({ id, estado: newStatus })
             });
 
             if (res.ok) {
@@ -149,33 +164,39 @@ function PedidosContent() {
         }
     };
 
-    const handleSaveTimeSlot = async () => {
-        if (!selectedOrder) return;
+    const handleConfirmApprovalWithDate = async () => {
+        if (!confirmDateModalOrder || !modalDateTime) {
+            alert("Por favor ingresa la fecha y hora de entrega.");
+            return;
+        }
         try {
-            setSavingTime(true);
-            const updatePayload: any = { id: selectedOrder.id, franjaHoraria: editingTimeSlot };
-            if (editingDateTime) {
-                updatePayload.fechaEntrega = new Date(editingDateTime).toISOString();
-            }
-
+            setSubmittingModal(true);
+            const isoDate = new Date(modalDateTime).toISOString();
             const res = await fetch('/api/admin/pedidos', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatePayload)
+                body: JSON.stringify({
+                    id: confirmDateModalOrder.id,
+                    estado: 'PREPARACION',
+                    fechaEntrega: isoDate,
+                    franjaHoraria: modalTimeSlot || '14:00 hrs'
+                })
             });
 
             if (res.ok) {
                 const updated = await res.json();
-                setOrders(prev => prev.map(o => o.id === selectedOrder.id ? { ...o, fechaEntrega: updated.fechaEntrega, franjaHoraria: updated.franjaHoraria } : o));
-                setSelectedOrder(prev => prev ? { ...prev, fechaEntrega: updated.fechaEntrega, franjaHoraria: updated.franjaHoraria } : null);
-                alert("Fecha y hora de entrega actualizadas exitosamente. El contador del cliente ha comenzado.");
+                setOrders(prev => prev.map(o => o.id === confirmDateModalOrder.id ? { ...o, ...updated } : o));
+                if (selectedOrder?.id === confirmDateModalOrder.id) {
+                    setSelectedOrder(prev => prev ? { ...prev, ...updated } : null);
+                }
+                setConfirmDateModalOrder(null);
             } else {
-                alert("Error al actualizar la fecha y hora.");
+                alert("Error al confirmar el pedido con la fecha de entrega.");
             }
         } catch (e) {
-            console.error(e);
+            console.error("Error approving order with date:", e);
         } finally {
-            setSavingTime(false);
+            setSubmittingModal(false);
         }
     };
 
@@ -246,6 +267,79 @@ function PedidosContent() {
                             <a href={previewEvidenceUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold inline-flex items-center gap-2">
                                 <ExternalLink className="size-4" /> Abrir en pantalla completa
                             </a>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Asignación de Fecha y Hora al Confirmar Pago */}
+            {confirmDateModalOrder && (
+                <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 text-left">
+                        <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                            <div>
+                                <h3 className="font-black text-slate-900 text-base uppercase tracking-tight">Confirmar Pago y Asignar Entrega</h3>
+                                <p className="text-xs text-slate-500 font-bold mt-0.5">Pedido #{confirmDateModalOrder.numeroPedido} • {confirmDateModalOrder.nombreCliente}</p>
+                            </div>
+                            <button 
+                                onClick={() => setConfirmDateModalOrder(null)} 
+                                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 cursor-pointer"
+                            >
+                                <X className="size-5" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-3.5 text-xs text-emerald-900 font-medium">
+                                <p className="font-black text-emerald-950 flex items-center gap-1.5 mb-1">
+                                    <CheckCircle2 className="size-4 text-emerald-600 shrink-0" /> ¡Confirmación de Pago y Producción!
+                                </p>
+                                <span>Ingresa la fecha y hora estimada de entrega para activar el contador regresivo en tiempo real para el cliente.</span>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                                    📅 Fecha y Hora Estimada de Entrega
+                                </label>
+                                <input
+                                    type="datetime-local"
+                                    required
+                                    value={modalDateTime}
+                                    onChange={(e) => setModalDateTime(e.target.value)}
+                                    className="w-full bg-slate-50 border border-slate-300 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-all shadow-xs"
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                                    ⏰ Franja Horaria / Nota de Entrega (Opcional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={modalTimeSlot}
+                                    onChange={(e) => setModalTimeSlot(e.target.value)}
+                                    placeholder="Ej: 14:00 - 15:00 hrs"
+                                    className="w-full bg-slate-50 border border-slate-300 rounded-2xl px-4 py-3 text-xs font-bold text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-all shadow-xs"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setConfirmDateModalOrder(null)}
+                                className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs uppercase tracking-wider rounded-2xl transition-all cursor-pointer"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmApprovalWithDate}
+                                disabled={submittingModal || !modalDateTime}
+                                className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                                {submittingModal ? <Loader2 className="size-4 animate-spin" /> : 'Confirmar Pago'}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -382,29 +476,6 @@ function PedidosContent() {
                                 </button>
                             </div>
 
-                            {/* Sección Asignación / Edición de Hora de Entrega */}
-                            <div className="bg-orange-50/50 border border-orange-200/60 rounded-2xl p-4 space-y-3">
-                                <label className="block text-[10px] font-black text-orange-900 uppercase tracking-wider flex items-center gap-1.5">
-                                    <Clock className="size-3.5 text-orange-600" /> Asignar / Cambiar Hora de Entrega
-                                </label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={editingTimeSlot}
-                                        onChange={e => setEditingTimeSlot(e.target.value)}
-                                        placeholder="Ej: 14:00 - 15:00 hrs o 3 horas"
-                                        className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl font-semibold text-slate-900 focus:outline-none focus:border-orange-500"
-                                    />
-                                    <button
-                                        onClick={handleSaveTimeSlot}
-                                        disabled={savingTime}
-                                        className="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-black shrink-0 transition-colors shadow-sm disabled:opacity-50"
-                                    >
-                                        {savingTime ? <Loader2 className="size-4 animate-spin" /> : 'Guardar Hora'}
-                                    </button>
-                                </div>
-                            </div>
-
                             {/* Comprobante de Pago adjunto si existe */}
                             {selectedOrder.payment?.evidences && selectedOrder.payment.evidences.length > 0 && (
                                 <div className="bg-emerald-50/50 border border-emerald-200/60 rounded-2xl p-4 space-y-3">
@@ -418,12 +489,37 @@ function PedidosContent() {
                                     </div>
                                     <button
                                         onClick={() => setPreviewEvidenceUrl(selectedOrder.payment!.evidences![0].fileUrl)}
-                                        className="w-full py-2.5 bg-white border border-emerald-300 hover:bg-emerald-100/50 text-emerald-900 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-xs"
+                                        className="w-full py-2.5 bg-white border border-emerald-300 hover:bg-emerald-100/50 text-emerald-900 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-xs cursor-pointer"
                                     >
                                         <ImageIcon className="size-4 text-emerald-600" /> Ver Comprobante Adjunto
                                     </button>
                                 </div>
                             )}
+
+                            {/* Entrega Programada */}
+                            <div className="bg-orange-50/60 border border-orange-200/80 rounded-2xl p-4 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-black text-orange-950 uppercase tracking-widest flex items-center gap-1.5">
+                                        <Clock className="size-4 text-orange-600" /> Entrega Programada
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => openDateModalForOrder(selectedOrder)}
+                                        className="text-[10px] font-black text-orange-600 hover:underline uppercase tracking-wider flex items-center gap-1 cursor-pointer"
+                                    >
+                                        <Calendar className="size-3" /> Modificar Fecha
+                                    </button>
+                                </div>
+                                <div className="text-xs font-bold text-slate-900">
+                                    {selectedOrder.fechaEntrega ? (
+                                        <span>
+                                            {new Date(selectedOrder.fechaEntrega).toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} ({selectedOrder.franjaHoraria || 'Sin franja'})
+                                        </span>
+                                    ) : (
+                                        <span className="text-slate-400 italic">Por definir al confirmar pago</span>
+                                    )}
+                                </div>
+                            </div>
 
                             {/* Datos Cliente */}
                             <div className="space-y-2.5 text-xs">
@@ -433,29 +529,6 @@ function PedidosContent() {
                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Cliente</span>
                                         <span className="font-bold text-slate-800">{selectedOrder.nombreCliente}</span>
                                         <span className="text-[10px] text-slate-400 block mt-0.5">Celular: {selectedOrder.telefonoCliente}</span>
-                                    </div>
-                                </div>
-                                <div className="flex gap-2.5 items-start bg-amber-50/60 p-3 rounded-2xl border border-amber-200/80">
-                                    <Clock className="size-4 text-amber-600 shrink-0 mt-0.5" />
-                                    <div className="flex-1 space-y-1.5">
-                                        <span className="text-[9px] font-black text-amber-900 uppercase tracking-wider block">Asignar Fecha y Hora Exacta de Entrega</span>
-                                        <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
-                                            <input
-                                                type="datetime-local"
-                                                value={editingDateTime}
-                                                onChange={(e) => setEditingDateTime(e.target.value)}
-                                                className="bg-white border border-amber-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-500 shadow-2xs flex-1"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={handleSaveTimeSlot}
-                                                disabled={savingTime}
-                                                className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black transition-all active:scale-95 shadow-xs shrink-0 cursor-pointer"
-                                            >
-                                                {savingTime ? 'Guardando...' : 'Guardar'}
-                                            </button>
-                                        </div>
-                                        <p className="text-[9px] text-amber-800 font-medium">Esta fecha y hora inicia el contador regresivo en tiempo real en la pantalla del cliente.</p>
                                     </div>
                                 </div>
                                 {selectedOrder.direccionCliente && (
