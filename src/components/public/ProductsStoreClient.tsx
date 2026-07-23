@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { 
     ShoppingBag, Plus, Minus, Trash2, MapPin, Calendar, Clock, 
-    ChevronRight, Check, Loader2, Search, ArrowLeft, Phone, Info, AlertCircle
+    ChevronRight, Check, Loader2, Search, ArrowLeft, Phone, Info, AlertCircle, User
 } from 'lucide-react';
 import Image from 'next/image';
 import MapSelectionModal from './MapSelectionModal';
@@ -552,21 +552,31 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const handleStartCheckoutOTP = async (e: React.FormEvent) => {
         e.preventDefault();
         if (cart.length === 0) return;
-        if (!clientName || !clientPhone) {
-            alert("Por favor ingresa tu nombre y teléfono.");
-            return;
+
+        const savedPhone = clientPhone || localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone');
+        const savedName = clientName || localStorage.getItem('pinchos_client_name') || localStorage.getItem('user_name');
+
+        if (!savedPhone || !savedName) {
+            if (!clientName || !clientPhone) {
+                alert("Por favor ingresa tu nombre y teléfono para continuar.");
+                return;
+            }
         }
+
         if (deliveryType === 'DOMICILIO' && !clientAddress) {
-            alert("Por favor ingresa tu dirección.");
+            alert("Por favor ingresa tu dirección de entrega.");
             return;
         }
 
-        // SI EL CLIENTE YA VERIFICÓ OTP PREVIAMENTE CON ESTE TELÉFONO EN ESTE NAVEGADOR
-        const savedPhone = localStorage.getItem('pinchos_client_phone');
-        if (savedPhone && savedPhone.trim() === clientPhone.trim()) {
+        const phoneToUse = (savedPhone || clientPhone).trim();
+        const nameToUse = (savedName || clientName).trim();
+
+        // SI EL CLIENTE YA ESTÁ AUTENTICADO CON ESTE NAVEGADOR
+        const isAuth = localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone');
+        if (isAuth) {
             try {
                 setSubmitting(true);
-                await createOrderDirectly(clientPhone, clientName);
+                await createOrderDirectly(phoneToUse, nameToUse);
             } catch (err) {
                 alert("Error de conexión al procesar el pedido.");
             } finally {
@@ -575,14 +585,14 @@ export default function ProductsStoreClient({ negocio }: Props) {
             return;
         }
 
-        // SI NO ESTÁ AUTENTICADO, SOLICITAR OTP
+        // SI ES UN CLIENTE NUEVO (NO AUTENTICADO), SOLICITAR OTP VÍA WHATSAPP
         try {
             setSubmitting(true);
             setOtpMessage(null);
             const res = await fetch('/api/public/auth/otp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'send_otp', phone: clientPhone, nombre: clientName, slug: negocio.slug })
+                body: JSON.stringify({ action: 'send_otp', phone: phoneToUse, nombre: nameToUse, slug: negocio.slug })
             });
             const data = await res.json();
             if (data.success) {
@@ -624,9 +634,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
                 return;
             }
 
-            // Guardar sesión del cliente autenticado
-            localStorage.setItem('pinchos_client_phone', clientPhone);
-            localStorage.setItem('pinchos_client_name', clientName);
+            // Guardar sesión unificada del cliente autenticado
+            saveClientDataToLocalStorage(clientName, clientPhone);
 
             // Crear el pedido
             await createOrderDirectly(clientPhone, clientName);
@@ -905,13 +914,31 @@ export default function ProductsStoreClient({ negocio }: Props) {
                 </div>
                 
                 {step === 'catalog' && (
-                    <div className="relative">
+                    <div className="flex items-center gap-2">
+                        {clientPhone ? (
+                            <Link 
+                                href={`/${negocio.slug}/perfil`}
+                                className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-all cursor-pointer shadow-2xs"
+                            >
+                                <User className="size-3.5 text-slate-500" />
+                                <span className="truncate max-w-[70px] sm:max-w-[100px]">{clientName || 'Perfil'}</span>
+                            </Link>
+                        ) : (
+                            <Link
+                                href={`/${negocio.slug}/perfil`}
+                                className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200/80 transition-all cursor-pointer shadow-2xs flex items-center gap-1"
+                            >
+                                <User className="size-3.5 text-emerald-600" />
+                                <span>Login</span>
+                            </Link>
+                        )}
+
                         <button 
                             onClick={() => {
                                 if (cart.length > 0) setStep('checkout');
                             }}
                             disabled={cart.length === 0}
-                            className="relative p-2 text-slate-600 disabled:text-slate-300 disabled:bg-transparent active:scale-95 transition-transform"
+                            className="relative p-2 text-slate-600 disabled:text-slate-300 disabled:bg-transparent active:scale-95 transition-transform cursor-pointer"
                         >
                             <ShoppingBag className="size-6" />
                             {totalItems > 0 && (

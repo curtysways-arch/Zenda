@@ -169,16 +169,43 @@ export default function MiPerfilPage() {
                 } else {
                     setEditFechaNacimiento("");
                 }
+                if (data.telefono) {
+                    localStorage.setItem('pinchos_client_phone', data.telefono);
+                    localStorage.setItem('user_phone', data.telefono);
+                }
+                if (data.nombre) {
+                    localStorage.setItem('pinchos_client_name', data.nombre);
+                    localStorage.setItem('user_name', data.nombre);
+                }
+                setStep('profile');
+                fetchReservas();
+            } else {
+                // Verificar si hay sesión guardada en localStorage
+                const savedPhone = localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone');
+                const savedName = localStorage.getItem('pinchos_client_name') || localStorage.getItem('user_name') || 'Cliente';
+                if (savedPhone) {
+                    setTelefono(savedPhone);
+                    setCliente({ telefono: savedPhone, nombre: savedName });
+                    setStep('profile');
+                    fetchReservas();
+                } else {
+                    setCliente(null);
+                    setStep('phone');
+                }
+            }
+        } catch (error) {
+            console.error("Error al cargar perfil:", error);
+            const savedPhone = localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone');
+            const savedName = localStorage.getItem('pinchos_client_name') || localStorage.getItem('user_name') || 'Cliente';
+            if (savedPhone) {
+                setTelefono(savedPhone);
+                setCliente({ telefono: savedPhone, nombre: savedName });
                 setStep('profile');
                 fetchReservas();
             } else {
                 setCliente(null);
                 setStep('phone');
             }
-        } catch (error) {
-            console.error("Error al cargar perfil:", error);
-            setCliente(null);
-            setStep('phone');
         } finally {
             setLoading(false);
         }
@@ -269,6 +296,8 @@ export default function MiPerfilPage() {
                 body: JSON.stringify({ telefono, code }),
             });
             if (res.ok) {
+                localStorage.setItem('pinchos_client_phone', telefono);
+                localStorage.setItem('user_phone', telefono);
                 await fetchProfile();
             } else {
                 const data = await res.json();
@@ -284,6 +313,13 @@ export default function MiPerfilPage() {
     const handleLogout = async () => {
         if (!confirm("¿Seguro que deseas cerrar tu sesión?")) return;
         try {
+            localStorage.removeItem('pinchos_client_phone');
+            localStorage.removeItem('pinchos_client_name');
+            localStorage.removeItem('pinchos_client_address');
+            localStorage.removeItem('pinchos_client_reference');
+            localStorage.removeItem('user_phone');
+            localStorage.removeItem('user_name');
+            localStorage.removeItem('customerInfo');
             await fetch(`/api/${slug}/auth/logout`, { method: "POST" });
             setCliente(null);
             setReservas([]);

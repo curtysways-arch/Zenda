@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { notificationService } from '@/lib/notifications';
 import { v4 as uuidv4 } from 'uuid';
+import { SignJWT } from 'jose';
 
 // Memoria caché de respaldo rápida para entornos donde la BD o WhatsApp varíen
 const otpStore = new Map<string, { code: string; expiresAt: number }>();
@@ -124,12 +125,35 @@ export async function POST(req: NextRequest) {
             // Consumir OTP usado
             otpStore.delete(cleanPhone);
 
-            return NextResponse.json({
+            // Generar JWT para sesión unificada de cliente
+            const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "default_otp_secret_key_change_me");
+            const token = await new SignJWT({
+                telefono: cleanPhone,
+                negocioId: negocio?.id || null,
+                slug: slug,
+                roles: ['USER']
+            })
+                .setProtectedHeader({ alg: "HS256" })
+                .setIssuedAt()
+                .setExpirationTime("30d")
+                .sign(secret);
+
+            const response = NextResponse.json({
                 success: true,
                 verified: true,
                 phone: cleanPhone,
                 message: 'Teléfono verificado con éxito.'
             });
+
+            response.cookies.set("customer_token", token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                maxAge: 60 * 60 * 24 * 30, // 30 días
+                path: "/",
+            });
+
+            return response;
         }
 
         return NextResponse.json(
