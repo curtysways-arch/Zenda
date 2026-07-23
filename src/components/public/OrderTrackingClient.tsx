@@ -154,10 +154,15 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
             const diff = target - now;
 
             if (diff <= 0) {
-                setCountdownTime('¡Tiempo estimado cumplido!');
+                if (['LISTO', 'RUTA', 'EN_CAMINO'].includes(order.estado)) {
+                    setCountdownTime('¡En camino / Listo!');
+                } else {
+                    setCountdownTime('¡En preparación final!');
+                }
                 return;
             }
 
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((diff % (1000 * 60)) / 1000);
@@ -166,7 +171,11 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
             const mStr = minutes < 10 ? `0${minutes}` : `${minutes}`;
             const sStr = seconds < 10 ? `0${seconds}` : `${seconds}`;
 
-            setCountdownTime(`${hStr}h ${mStr}m ${sStr}s`);
+            if (days > 0) {
+                setCountdownTime(`${days}d ${hStr}h ${mStr}m ${sStr}s`);
+            } else {
+                setCountdownTime(`${hStr}h ${mStr}m ${sStr}s`);
+            }
         };
 
         updateTimer();

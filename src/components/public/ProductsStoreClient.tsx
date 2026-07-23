@@ -177,7 +177,9 @@ export default function ProductsStoreClient({ negocio }: Props) {
                     const active = list.find((p: any) => 
                         !['ENTREGADO', 'CANCELADO', 'RECHAZADO'].includes(p.estado)
                     );
-                    if (active) setActiveOrder(active);
+                    setActiveOrder(active || null);
+                } else {
+                    setActiveOrder(null);
                 }
             }
         } catch (e) {
@@ -194,9 +196,20 @@ export default function ProductsStoreClient({ negocio }: Props) {
         }, 10000);
         return () => clearInterval(poll);
     }, [clientPhone]);
+
     useEffect(() => {
         const updateTimer = () => {
-            if (!activeOrder?.fechaEntrega) {
+            if (!activeOrder) {
+                setCountdownTime('');
+                return;
+            }
+
+            if (['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)) {
+                setCountdownTime('Pendiente de confirmación');
+                return;
+            }
+
+            if (!activeOrder.fechaEntrega) {
                 setCountdownTime('Por asignar');
                 return;
             }
@@ -206,11 +219,16 @@ export default function ProductsStoreClient({ negocio }: Props) {
             const diff = target - now;
 
             if (diff <= 0) {
-                setCountdownTime('¡Tiempo estimado cumplido!');
+                if (['LISTO', 'RUTA', 'EN_CAMINO'].includes(activeOrder.estado)) {
+                    setCountdownTime('¡En camino / Listo!');
+                } else {
+                    setCountdownTime('¡En preparación final!');
+                }
                 return;
             }
 
-            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
@@ -218,7 +236,11 @@ export default function ProductsStoreClient({ negocio }: Props) {
             const mStr = minutes < 10 ? `0${minutes}` : `${minutes}`;
             const sStr = seconds < 10 ? `0${seconds}` : `${seconds}`;
 
-            setCountdownTime(`${hStr}h ${mStr}m ${sStr}s`);
+            if (days > 0) {
+                setCountdownTime(`${days}d ${hStr}h ${mStr}m ${sStr}s`);
+            } else {
+                setCountdownTime(`${hStr}h ${mStr}m ${sStr}s`);
+            }
         };
 
         updateTimer();
@@ -1023,7 +1045,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     </span>
                                 </div>
                                 <Link
-                                    href={`/${negocio.slug}/pedidos`}
+                                    href={`/${negocio.slug}/pedidos/${activeOrder.id}`}
                                     className={`px-4 py-2.5 font-black text-xs rounded-xl transition-all active:scale-95 shrink-0 shadow-md flex items-center gap-1.5 ${
                                         ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
                                             ? 'bg-amber-500 hover:bg-amber-600 text-slate-950'
