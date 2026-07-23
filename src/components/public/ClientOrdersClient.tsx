@@ -77,8 +77,19 @@ export default function ClientOrdersClient({ negocio }: Props) {
     const primaryColor = negocio?.colorPrimario || '#ff6b2b';
     const secondaryColor = negocio?.colorSecundario || '#1a0a00';
 
-    const [phone, setPhone] = useState('');
-    const [isVerified, setIsVerified] = useState(false);
+    const [phone, setPhone] = useState<string>(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone') || '';
+        }
+        return '';
+    });
+    const [isVerified, setIsVerified] = useState<boolean>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone');
+            return !!saved;
+        }
+        return false;
+    });
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -91,7 +102,7 @@ export default function ClientOrdersClient({ negocio }: Props) {
 
     useEffect(() => {
         // Cargar teléfono guardado previamente en localStorage
-        const savedPhone = localStorage.getItem('pinchos_client_phone');
+        const savedPhone = phone || (typeof window !== 'undefined' ? (localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone')) : null);
         if (savedPhone) {
             setPhone(savedPhone);
             setIsVerified(true);

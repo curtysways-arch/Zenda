@@ -39,12 +39,19 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
     const searchParams = useSearchParams();
     const activeTabParam = searchParams.get('tab');
 
-    // Detectar sesión de forma reactiva en el cliente
-    const [hasSession, setHasSession] = useState(false);
+    // Detectar sesión de forma reactiva y síncrona en el cliente
+    const [hasSession, setHasSession] = useState<boolean>(() => {
+        if (typeof window !== 'undefined') {
+            const phone = localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone');
+            if (phone || document.cookie.includes('cs=1') || document.cookie.includes('customer_token')) {
+                return true;
+            }
+        }
+        return false;
+    });
 
     useEffect(() => {
         const checkSession = async () => {
-            // 1. Verificar si hay teléfono guardado en localStorage
             if (typeof window !== 'undefined') {
                 const phone = localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone');
                 if (phone) {
@@ -52,12 +59,10 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
                     return;
                 }
             }
-            // 2. Verificar la cookie cs=1 o customer_token
             if (document.cookie.includes('cs=1') || document.cookie.includes('customer_token')) {
                 setHasSession(true);
                 return;
             }
-            // 3. Consultar el servidor para sincronizar
             try {
                 const res = await fetch(`/api/${slug}/auth/session`, { credentials: 'include' });
                 const data = await res.json();
