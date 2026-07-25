@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { 
     Clock, MapPin, Phone, ShoppingBag, MessageCircle, 
     CheckCircle2, AlertCircle, ChefHat, PackageCheck, Bike,
-    ArrowLeft, Upload, FileText, Loader2, XCircle, ShieldCheck, Flame, ExternalLink, Calendar
+    ArrowLeft, Upload, FileText, Loader2, XCircle, ShieldCheck, Flame, ExternalLink, Calendar,
+    Copy, Building2, CreditCard, Hash, UploadCloud, Send, Lock, Wallet, User, Check, X
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -99,15 +100,37 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
     const [order, setOrder] = useState<Order>(initialOrder);
     const [countdownTime, setCountdownTime] = useState<string>('');
 
-    // Re-upload state
+    // Re-upload & Payment Modal state
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
     const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [bankConfig, setBankConfig] = useState<any>(null);
+    const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
+    const [copiedCode, setCopiedCode] = useState(false);
 
     const primaryColor = negocio.colorPrimario || '#ff6b2b';
     const isDelivery = order.tipoEntrega === 'DOMICILIO';
     const isCancelled = order.estado === 'CANCELADO' || order.estado === 'RECHAZADO';
     const stepIndex = getStepIndex(order.estado, order.payment?.estado);
+
+    // Load Bank Details for Payment Modal
+    useEffect(() => {
+        const fetchBankDetails = async () => {
+            try {
+                const res = await fetch(`/api/public/${negocio.slug}/bank-details`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.method) {
+                        setBankConfig(data.method);
+                    }
+                }
+            } catch (err) {
+                console.error("Error loading bank details in tracking:", err);
+            }
+        };
+        fetchBankDetails();
+    }, [negocio.slug]);
 
     // Update internal state if prop updates
     useEffect(() => {
@@ -381,33 +404,23 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                 </div>
                             )}
 
-                            <div className="space-y-2 pt-1">
-                                <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
-                                    {order.payment?.estado === 'RECHAZADO' ? 'Subir Nuevo Comprobante (PNG, JPG, PDF)' : 'Subir Comprobante de Pago (PNG, JPG, PDF) *'}
-                                </label>
-                                <input
-                                    type="file"
-                                    accept="image/png, image/jpeg, image/webp, application/pdf"
-                                    disabled={uploading}
-                                    onChange={e => {
-                                        if (e.target.files?.[0]) {
-                                            handleFileUpload(e.target.files[0]);
-                                        }
-                                    }}
-                                    className="w-full text-xs text-slate-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-orange-600 file:text-white hover:file:bg-orange-700 bg-slate-50 rounded-xl border border-slate-200 p-2 cursor-pointer"
-                                />
-                                {uploading && (
-                                    <div className="flex items-center gap-2 text-xs text-orange-600 font-bold">
-                                        <Loader2 className="size-4 animate-spin" /> Subiendo comprobante de pago...
-                                    </div>
-                                )}
+                            <div className="pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPaymentModal(true)}
+                                    className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                                >
+                                    <Wallet className="size-4" />
+                                    <span>VER DATOS BANCARIOS Y SUBIR COMPROBANTE</span>
+                                </button>
+
                                 {uploadSuccess && (
-                                    <div className="p-3 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200">
+                                    <div className="mt-3 p-3 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200">
                                         {uploadSuccess}
                                     </div>
                                 )}
                                 {uploadError && (
-                                    <div className="p-3 bg-rose-50 text-rose-800 text-xs font-bold rounded-xl border border-rose-200">
+                                    <div className="mt-3 p-3 bg-rose-50 text-rose-800 text-xs font-bold rounded-xl border border-rose-200">
                                         {uploadError}
                                     </div>
                                 )}
@@ -521,6 +534,242 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                     </button>
                 </div>
             </main>
+
+            {/* Modal de Pago a Pantalla Completa con Datos Bancarios y Carga de Comprobante */}
+            {showPaymentModal && (
+                <div className="fixed inset-0 z-[300] bg-slate-950 text-slate-900 flex flex-col justify-start items-center pb-12 overflow-y-auto animate-fade-in">
+                    {/* Header Oscuro */}
+                    <header className="relative w-full max-w-lg bg-slate-950 pt-6 pb-12 px-6 flex items-center justify-between overflow-hidden shrink-0">
+                        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/80 to-slate-950" />
+
+                        <button 
+                            type="button"
+                            onClick={() => setShowPaymentModal(false)}
+                            className="relative z-10 size-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 cursor-pointer border border-white/10"
+                            title="Volver"
+                        >
+                            <ArrowLeft className="size-5" />
+                        </button>
+
+                        <div className="relative z-10 flex items-center gap-2">
+                            <span className="text-lg font-black text-white italic tracking-tighter uppercase">{negocio.nombre}</span>
+                        </div>
+
+                        <button 
+                            type="button"
+                            onClick={() => setShowPaymentModal(false)}
+                            className="relative z-10 size-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 cursor-pointer border border-white/10"
+                            title="Cerrar"
+                        >
+                            <X className="size-5" />
+                        </button>
+                    </header>
+
+                    {/* Hoja Blanca de Contenido Principal */}
+                    <div className="relative z-20 w-full max-w-lg bg-slate-50 rounded-t-[36px] -mt-6 px-4 sm:px-6 py-6 border-t border-white/20 shadow-2xl space-y-5">
+                        
+                        {/* Título & Badges */}
+                        <div className="text-center space-y-1.5 pb-1">
+                            <div className="flex items-center justify-center gap-2 flex-wrap">
+                                <span className="px-3 py-1 bg-orange-600 text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-xs">
+                                    Paso Final
+                                </span>
+                                <span className="px-3 py-1 bg-orange-100/80 text-orange-900 rounded-full text-[9px] font-black uppercase tracking-wider">
+                                    Transferencia Bancaria
+                                </span>
+                            </div>
+                            <h2 className="text-2xl font-black text-slate-900 tracking-tight pt-1">Completa tu pago</h2>
+                            <div className="w-8 h-1 bg-orange-600 rounded-full mx-auto" />
+                            <p className="text-xs text-slate-500 font-medium max-w-xs mx-auto pt-0.5 leading-relaxed">
+                                Transfiere el monto exacto y adjunta tu comprobante para enviar a producción.
+                            </p>
+                        </div>
+
+                        {/* Tarjeta 1: Código de Pago y Monto a Transferir */}
+                        <div className="bg-gradient-to-r from-orange-50/90 via-orange-50/50 to-orange-50/90 border border-orange-200/80 rounded-3xl p-4 sm:p-5 flex items-center justify-between shadow-2xs">
+                            <div className="space-y-0.5">
+                                <span className="text-[9px] font-black uppercase tracking-widest text-orange-900/70 block">Código de Pago</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-mono font-black text-orange-700 tracking-wider">
+                                        {order.payment?.codigoPago || `PINCHOS-${order.id.slice(0, 6).toUpperCase()}`}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const code = order.payment?.codigoPago || `PINCHOS-${order.id.slice(0, 6).toUpperCase()}`;
+                                            navigator.clipboard.writeText(code);
+                                            setCopiedCode(true);
+                                            setTimeout(() => setCopiedCode(false), 2000);
+                                        }}
+                                        className="p-1.5 text-orange-600 hover:text-orange-800 bg-orange-100 hover:bg-orange-200 rounded-lg transition-all active:scale-95 cursor-pointer"
+                                        title="Copiar código"
+                                    >
+                                        {copiedCode ? <Check className="size-4 text-emerald-600" /> : <Copy className="size-4" />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="h-10 w-px bg-orange-200/70 mx-1" />
+
+                            <div className="flex items-center gap-3">
+                                <div className="text-right space-y-0.5">
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-orange-900/70 block">Monto a Transferir</span>
+                                    <span className="text-2xl font-black text-slate-900 tracking-tight">${order.total.toFixed(2)}</span>
+                                </div>
+                                <div className="size-11 bg-orange-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-600/30 shrink-0">
+                                    <Wallet className="size-6" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Tarjeta 2: Datos para la Transferencia */}
+                        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md space-y-4 text-left">
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-10 bg-slate-900 text-white rounded-full flex items-center justify-center font-black shadow-xs shrink-0">
+                                        <Building2 className="size-5" />
+                                    </div>
+                                    <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Datos para la Transferencia</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl">
+                                    <span className="text-xs font-black text-orange-700 uppercase tracking-wider">{bankConfig?.banco || 'BANCO PICHINCHA'}</span>
+                                    <div className="size-5 bg-amber-400 text-slate-950 font-black rounded flex items-center justify-center text-[9px] shadow-2xs">
+                                        P
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 pt-1">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-8 bg-orange-100/70 text-orange-700 rounded-full flex items-center justify-center shrink-0">
+                                        <User className="size-4" />
+                                    </div>
+                                    <div>
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">TITULAR</span>
+                                        <span className="text-xs font-black text-slate-900">{bankConfig?.titular || 'Poleth Caicedo'}</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <div className="size-8 bg-orange-100/70 text-orange-700 rounded-full flex items-center justify-center shrink-0">
+                                        <CreditCard className="size-4" />
+                                    </div>
+                                    <div>
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">TIPO DE CUENTA</span>
+                                        <span className="text-xs font-black text-slate-900">{bankConfig?.tipoCuenta || 'Ahorros'}</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <div className="size-8 bg-orange-100/70 text-orange-700 rounded-full flex items-center justify-center shrink-0">
+                                        <Hash className="size-4" />
+                                    </div>
+                                    <div>
+                                        <span className="text-xs font-mono font-black text-slate-900 select-all">{bankConfig?.numeroCuenta || '2213913435'}</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <div className="size-8 bg-orange-100/70 text-orange-700 rounded-full flex items-center justify-center shrink-0">
+                                        <FileText className="size-4" />
+                                    </div>
+                                    <div>
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">IDENTIFICACIÓN / RUC</span>
+                                        <span className="text-xs font-mono font-black text-slate-900">{bankConfig?.identificacion || '1792345678001'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Formulario de Carga de Comprobante */}
+                        <form 
+                            onSubmit={async (e) => {
+                                e.preventDefault();
+                                if (evidenceFile) {
+                                    await handleFileUpload(evidenceFile);
+                                    setShowPaymentModal(false);
+                                }
+                            }} 
+                            className="space-y-4 pt-1"
+                        >
+                            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md space-y-3">
+                                <label className="block text-[10px] font-black text-slate-900 uppercase tracking-widest">
+                                    SUBIR COMPROBANTE (PNG, JPG, WEBP O PDF) *
+                                </label>
+
+                                <div 
+                                    onClick={() => document.getElementById('tracking-evidence-file-input')?.click()}
+                                    className="border-2 border-dashed border-orange-300/80 hover:border-orange-500 bg-orange-50/30 hover:bg-orange-50/60 rounded-2xl p-4 flex items-center gap-3 transition-all cursor-pointer"
+                                >
+                                    <div className="size-10 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center shrink-0 shadow-2xs">
+                                        <UploadCloud className="size-5" />
+                                    </div>
+                                    
+                                    <button
+                                        type="button"
+                                        className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-black text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+                                    >
+                                        Seleccionar archivo
+                                    </button>
+
+                                    <span className="text-xs font-semibold text-slate-500 truncate flex-1">
+                                        {evidenceFile ? evidenceFile.name : 'Sin archivos seleccionados'}
+                                    </span>
+
+                                    <input
+                                        id="tracking-evidence-file-input"
+                                        type="file"
+                                        required
+                                        accept="image/png, image/jpeg, image/webp, application/pdf"
+                                        onChange={e => {
+                                            if (e.target.files?.[0]) setEvidenceFile(e.target.files[0]);
+                                        }}
+                                        className="hidden"
+                                    />
+                                </div>
+
+                                <div className="bg-slate-100/80 rounded-2xl p-3.5 flex items-start gap-3 border border-slate-200/60">
+                                    <ShieldCheck className="size-5 text-orange-600 shrink-0 mt-0.5" />
+                                    <div className="text-[10px] text-slate-600 font-semibold leading-relaxed">
+                                        <strong className="text-slate-800 block">Tu comprobante es 100% seguro.</strong>
+                                        Solo se usa para validar tu pago y enviar tu pedido a producción.
+                                    </div>
+                                </div>
+                            </div>
+
+                            {uploadError && (
+                                <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-bold text-center">
+                                    {uploadError}
+                                </div>
+                            )}
+
+                            <div className="space-y-2 pt-1">
+                                <button
+                                    type="submit"
+                                    disabled={uploading || !evidenceFile}
+                                    className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 disabled:opacity-50 transition-all active:scale-[0.98] cursor-pointer"
+                                >
+                                    {uploading ? (
+                                        <>
+                                            <Loader2 className="size-5 animate-spin" />
+                                            Enviando comprobante...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Send className="size-4" />
+                                            ENVIAR COMPROBANTE Y FINALIZAR
+                                        </>
+                                    )}
+                                </button>
+                                <div className="flex items-center justify-center gap-1.5 text-center pt-1">
+                                    <Lock className="size-3 text-slate-400" />
+                                    <span className="text-[11px] font-bold text-slate-400">Tus datos están protegidos</span>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
