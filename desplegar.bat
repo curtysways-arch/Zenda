@@ -11,7 +11,7 @@ git push origin main
 
 echo.
 echo 2. Conectando al VPS, compilando y reiniciando app...
-ssh -t root@citiox.com "cd $(dirname $(find / -name .git 2>/dev/null | grep -v node_modules | head -n 1)) && git pull origin main && npm run build && pm2 restart zenda-app"
+ssh root@citiox.com "cd /root/zenda || cd /var/www/zenda || cd /var/www/html/zenda ; git pull origin main && npm run build && pm2 restart all"
 
 echo.
 echo ===================================================
