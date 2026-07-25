@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { 
     ShoppingBag, Plus, Minus, Trash2, MapPin, Calendar, Clock, 
     ChevronRight, Check, Loader2, Search, ArrowLeft, Phone, Info, AlertCircle, User,
-    Copy, Building2, CreditCard, Hash, FileText, UploadCloud, ShieldCheck, Send, Lock, Wallet, X, ZoomIn
+    Copy, Building2, CreditCard, Hash, FileText, UploadCloud, ShieldCheck, Send, Lock, Wallet, X, ZoomIn, Share2
 } from 'lucide-react';
 import Image from 'next/image';
 import MapSelectionModal from './MapSelectionModal';
@@ -124,6 +124,32 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const [timeSlot, setTimeSlot] = useState('');
     const [copiedCode, setCopiedCode] = useState(false);
     const [zoomProduct, setZoomProduct] = useState<Product | null>(null);
+    const [showShareToast, setShowShareToast] = useState(false);
+
+    // Función para Compartir la App / Tienda
+    const handleShareApp = async () => {
+        const shareData = {
+            title: negocio.nombre,
+            text: `¡Pide tus productos online en ${negocio.nombre}! 🍢🔥`,
+            url: typeof window !== 'undefined' ? window.location.href : ''
+        };
+
+        if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                // Compartir cancelado o no soportado
+            }
+        } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+            try {
+                await navigator.clipboard.writeText(window.location.href);
+                setShowShareToast(true);
+                setTimeout(() => setShowShareToast(false), 3000);
+            } catch (err) {
+                console.error("No se pudo copiar el enlace:", err);
+            }
+        }
+    };
 
     // Load Catalogue
     useEffect(() => {
@@ -1064,6 +1090,16 @@ export default function ProductsStoreClient({ negocio }: Props) {
                 
                 {step === 'catalog' && (
                     <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={handleShareApp}
+                            className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200/80 px-2.5 py-1.5 rounded-xl transition-all cursor-pointer shadow-2xs active:scale-95"
+                            title="Compartir esta app"
+                        >
+                            <Share2 className="size-3.5 text-orange-600 shrink-0" />
+                            <span className="hidden sm:inline">Compartir</span>
+                        </button>
+
                         {clientPhone ? (
                             <Link 
                                 href={`/${negocio.slug}/perfil`}
@@ -1873,6 +1909,14 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             </div>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Toast Notificación de Compartir / Enlace Copiado */}
+            {showShareToast && (
+                <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[350] bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-white/20 flex items-center gap-2.5 text-xs font-black animate-fade-in">
+                    <Check className="size-4 text-emerald-400 shrink-0" />
+                    <span>¡Enlace de la tienda copiado al portapapeles! 📋</span>
                 </div>
             )}
         </div>

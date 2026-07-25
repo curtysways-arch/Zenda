@@ -33,7 +33,8 @@ import {
     Key,
     Tag,
     Gift,
-    ShoppingBag
+    ShoppingBag,
+    Share2
 } from "lucide-react";
 import Link from "next/link";
 import PhoneInput from "@/components/ui/PhoneInput";
@@ -928,6 +929,41 @@ export default function MiPerfilPage() {
                                 </Link>
                             </div>
                         )}
+
+                        {/* Compartir App */}
+                        <div className="px-5 mt-3">
+                            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                                <button 
+                                    onClick={async () => {
+                                        const shareData = {
+                                            title: negocio?.nombre || 'Pinchos',
+                                            text: `¡Pide tus productos online en ${negocio?.nombre || 'Pinchos'}! 🍢🔥`,
+                                            url: typeof window !== 'undefined' ? `${window.location.origin}/${negocio?.slug || 'pinchos'}` : ''
+                                        };
+                                        if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+                                            try { await navigator.share(shareData); } catch (e) {}
+                                        } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                                            try { 
+                                                await navigator.clipboard.writeText(`${window.location.origin}/${negocio?.slug || 'pinchos'}`);
+                                                alert('¡Enlace de la tienda copiado al portapapeles! 📋');
+                                            } catch (e) {}
+                                        }
+                                    }}
+                                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-orange-50/50 active:bg-orange-100/50 transition-colors cursor-pointer"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-10 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600 border border-orange-100">
+                                            <Share2 size={20} />
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="font-black text-slate-800 text-[13px]">Compartir esta App / Tienda</p>
+                                            <p className="text-[10px] text-slate-400 font-medium">Recomienda nuestra tienda a tus amigos</p>
+                                        </div>
+                                    </div>
+                                    <ChevronRight size={18} className="text-slate-400" />
+                                </button>
+                            </div>
+                        </div>
 
                         {/* Cerrar Sesión */}
                         <div className="px-5 mt-3 mb-8">
