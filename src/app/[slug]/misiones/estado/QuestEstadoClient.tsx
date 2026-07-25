@@ -270,9 +270,6 @@ export default function QuestEstadoClient({ slug, primaryColor, textColor, negoc
                                                         {r.startsWith('+') ? r : `+${r}`}
                                                     </span>
                                                 ))}
-                                                <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-400">
-                                                    RECOMPENSA ESPECIAL 🎁
-                                                </span>
                                             </div>
                                         )}
                                     </div>

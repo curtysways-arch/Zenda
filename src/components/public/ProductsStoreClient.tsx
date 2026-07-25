@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { 
     ShoppingBag, Plus, Minus, Trash2, MapPin, Calendar, Clock, 
     ChevronRight, Check, Loader2, Search, ArrowLeft, Phone, Info, AlertCircle, User,
-    Copy, Building2, CreditCard, Hash, FileText, UploadCloud, ShieldCheck, Send, Lock, Wallet
+    Copy, Building2, CreditCard, Hash, FileText, UploadCloud, ShieldCheck, Send, Lock, Wallet, X, ZoomIn
 } from 'lucide-react';
 import Image from 'next/image';
 import MapSelectionModal from './MapSelectionModal';
@@ -123,6 +123,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const [deliveryDate, setDeliveryDate] = useState<string>(getInitialDate());
     const [timeSlot, setTimeSlot] = useState('');
     const [copiedCode, setCopiedCode] = useState(false);
+    const [zoomProduct, setZoomProduct] = useState<Product | null>(null);
 
     // Load Catalogue
     useEffect(() => {
@@ -1293,52 +1294,77 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     
                                     return (
                                         <div key={p.id} className="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex gap-4 relative overflow-hidden group">
-                                            {/* Imagen del Producto */}
-                                            <div className="relative size-24 rounded-2xl bg-slate-50 overflow-hidden shrink-0">
+                                            {/* Imagen del Producto (Click para Zoom) */}
+                                            <div 
+                                                onClick={() => setZoomProduct(p)}
+                                                className="relative size-24 sm:size-28 rounded-2xl bg-slate-100 overflow-hidden shrink-0 cursor-pointer group/img transition-transform duration-300"
+                                                title="Haz clic para ampliar la imagen"
+                                            >
                                                 {p.imagenUrl ? (
-                                                    <img src={p.imagenUrl} alt={p.nombre} className="w-full h-full object-cover" />
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    <img 
+                                                        src={p.imagenUrl} 
+                                                        alt={p.nombre} 
+                                                        className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-500" 
+                                                    />
                                                 ) : (
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-emerald-500/5 text-emerald-600 font-black text-xl italic uppercase">
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-emerald-500/5 text-emerald-600 font-black text-2xl italic uppercase">
                                                         {p.nombre.substring(0, 1)}
                                                     </div>
                                                 )}
+
+                                                {/* Badge de Zoom en la esquina de la imagen */}
+                                                <div className="absolute bottom-1.5 right-1.5 size-7 rounded-xl bg-slate-950/70 hover:bg-slate-950 text-white flex items-center justify-center backdrop-blur-xs transition-all shadow-md group-hover/img:scale-110">
+                                                    <ZoomIn className="size-3.5" />
+                                                </div>
                                             </div>
 
                                             {/* Detalles del Producto */}
                                             <div className="flex-1 flex flex-col justify-between text-left">
                                                 <div>
-                                                    <h3 className="text-sm font-black text-slate-800 tracking-tight leading-tight group-hover:text-slate-900">{p.nombre}</h3>
+                                                    <h3 
+                                                        onClick={() => setZoomProduct(p)}
+                                                        className="text-sm sm:text-base font-black text-slate-800 tracking-tight leading-tight group-hover:text-slate-900 cursor-pointer hover:underline"
+                                                    >
+                                                        {p.nombre}
+                                                    </h3>
                                                     {p.descripcion && (
-                                                        <p className="text-[10px] text-slate-400 font-medium leading-relaxed mt-1 line-clamp-2">{p.descripcion}</p>
+                                                        <p className="text-[11px] text-slate-400 font-medium leading-relaxed mt-1 line-clamp-2">{p.descripcion}</p>
                                                     )}
                                                 </div>
-                                                <div className="flex justify-between items-end mt-3">
-                                                    <span className="text-sm font-black text-slate-800">${p.precio.toFixed(2)}</span>
+                                                <div className="flex justify-between items-end mt-3 flex-wrap gap-2">
+                                                    <span className="text-base font-black text-slate-900">${p.precio.toFixed(2)}</span>
                                                     
-                                                    {/* Control de Carrito */}
+                                                    {/* Control de Carrito Más Grande */}
                                                     {inCart ? (
-                                                        <div className="flex items-center bg-slate-100 rounded-xl p-1 gap-2">
+                                                        <div className="flex items-center bg-slate-100/90 rounded-2xl p-1 gap-2.5 border border-slate-200/80 shadow-2xs">
                                                             <button 
+                                                                type="button"
                                                                 onClick={() => updateQuantity(p.id, -1)}
-                                                                className="size-6 bg-white hover:bg-slate-50 text-slate-600 rounded-lg flex items-center justify-center shadow-sm active:scale-90 transition-transform"
+                                                                className="size-8 bg-white hover:bg-slate-200 text-slate-800 rounded-xl flex items-center justify-center shadow-xs active:scale-90 transition-transform cursor-pointer"
+                                                                title="Disminuir cantidad"
                                                             >
-                                                                <Minus className="size-3" />
+                                                                <Minus className="size-4 stroke-[2.5]" />
                                                             </button>
-                                                            <span className="text-xs font-black text-slate-800 min-w-[16px] text-center">{inCart.quantity}</span>
+                                                            <span className="text-sm font-black text-slate-900 min-w-[20px] text-center">{inCart.quantity}</span>
                                                             <button 
+                                                                type="button"
                                                                 onClick={() => updateQuantity(p.id, 1)}
-                                                                className="size-6 bg-white hover:bg-slate-50 text-slate-600 rounded-lg flex items-center justify-center shadow-sm active:scale-90 transition-transform"
+                                                                className="size-8 bg-white hover:bg-slate-200 text-slate-800 rounded-xl flex items-center justify-center shadow-xs active:scale-90 transition-transform cursor-pointer"
+                                                                title="Aumentar cantidad"
                                                             >
-                                                                <Plus className="size-3" />
+                                                                <Plus className="size-4 stroke-[2.5]" />
                                                             </button>
                                                         </div>
                                                     ) : (
                                                         <button 
+                                                            type="button"
                                                             onClick={() => addToCart(p)}
-                                                            className="h-8 px-4 rounded-xl text-[10px] font-black uppercase tracking-wider text-white shadow-md active:scale-95 transition-transform flex items-center gap-1"
+                                                            className="h-10 px-5 rounded-2xl text-xs font-black uppercase tracking-wider text-white shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
                                                             style={{ backgroundColor: primaryColor }}
                                                         >
-                                                            Agregar
+                                                            <Plus className="size-4 stroke-[2.5]" />
+                                                            <span>Agregar</span>
                                                         </button>
                                                     )}
                                                 </div>
@@ -1754,6 +1780,101 @@ export default function ProductsStoreClient({ negocio }: Props) {
                     } catch (e) {}
                 }}
             />
+
+            {/* Modal de Zoom de Producto Ampliado */}
+            {zoomProduct && (
+                <div 
+                    className="fixed inset-0 z-[300] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
+                    onClick={() => setZoomProduct(null)}
+                >
+                    <div 
+                        className="bg-white rounded-3xl overflow-hidden max-w-lg w-full shadow-2xl relative border border-white/20 text-left flex flex-col max-h-[90vh]"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Botón Cerrar */}
+                        <button 
+                            type="button"
+                            onClick={() => setZoomProduct(null)}
+                            className="absolute top-4 right-4 z-20 size-10 rounded-full bg-slate-950/70 hover:bg-slate-950 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 cursor-pointer border border-white/20 shadow-lg"
+                            title="Cerrar"
+                        >
+                            <X className="size-5" />
+                        </button>
+
+                        {/* Imagen Ampliada */}
+                        <div className="relative w-full h-72 sm:h-96 bg-slate-950 flex items-center justify-center overflow-hidden shrink-0">
+                            {zoomProduct.imagenUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img 
+                                    src={zoomProduct.imagenUrl} 
+                                    alt={zoomProduct.nombre} 
+                                    className="w-full h-full object-contain p-2"
+                                />
+                            ) : (
+                                <div className="text-white/40 font-black text-6xl italic uppercase">
+                                    {zoomProduct.nombre.substring(0, 2)}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Detalles del Producto y Controles */}
+                        <div className="p-6 space-y-4 overflow-y-auto">
+                            <div className="flex justify-between items-start gap-4 border-b border-slate-100 pb-4">
+                                <div>
+                                    <h2 className="text-xl font-black text-slate-900 tracking-tight">{zoomProduct.nombre}</h2>
+                                    {zoomProduct.descripcion && (
+                                        <p className="text-xs text-slate-500 font-medium leading-relaxed mt-1">
+                                            {zoomProduct.descripcion}
+                                        </p>
+                                    )}
+                                </div>
+                                <span className="text-2xl font-black text-slate-900 shrink-0">
+                                    ${zoomProduct.precio.toFixed(2)}
+                                </span>
+                            </div>
+
+                            {/* Controles de Carrito en Modal */}
+                            <div className="pt-1 flex items-center justify-between gap-4">
+                                <span className="text-xs font-black uppercase tracking-wider text-slate-400">Cantidad</span>
+                                {(() => {
+                                    const itemInCart = cart.find(item => item.product.id === zoomProduct.id);
+                                    return itemInCart ? (
+                                        <div className="flex items-center bg-slate-100/90 rounded-2xl p-1.5 gap-4 border border-slate-200 shadow-2xs">
+                                            <button 
+                                                type="button"
+                                                onClick={() => updateQuantity(zoomProduct.id, -1)}
+                                                className="size-9 bg-white hover:bg-slate-200 text-slate-800 rounded-xl flex items-center justify-center shadow-xs active:scale-90 transition-transform cursor-pointer"
+                                                title="Disminuir cantidad"
+                                            >
+                                                <Minus className="size-4 stroke-[2.5]" />
+                                            </button>
+                                            <span className="text-base font-black text-slate-900 min-w-[24px] text-center">{itemInCart.quantity}</span>
+                                            <button 
+                                                type="button"
+                                                onClick={() => updateQuantity(zoomProduct.id, 1)}
+                                                className="size-9 bg-white hover:bg-slate-200 text-slate-800 rounded-xl flex items-center justify-center shadow-xs active:scale-90 transition-transform cursor-pointer"
+                                                title="Aumentar cantidad"
+                                            >
+                                                <Plus className="size-4 stroke-[2.5]" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button 
+                                            type="button"
+                                            onClick={() => addToCart(zoomProduct)}
+                                            className="h-12 px-6 rounded-2xl text-xs font-black uppercase tracking-wider text-white shadow-xl hover:shadow-2xl active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                                            style={{ backgroundColor: primaryColor }}
+                                        >
+                                            <Plus className="size-4 stroke-[2.5]" />
+                                            <span>Agregar al Carrito</span>
+                                        </button>
+                                    );
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

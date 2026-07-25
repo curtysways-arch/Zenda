@@ -27,12 +27,18 @@ export async function GET(
         }
 
         const telefono = payload.telefono as string;
-        const negocioId = payload.negocioId as string;
-        const tokenSlug = payload.slug as string;
 
-        if (tokenSlug !== slug) {
-            return NextResponse.json({ error: "Acceso no autorizado" }, { status: 403 });
+        // Resolver el negocio a partir del slug de la URL para permitir navegación multi-negocio
+        const targetNegocio = await prisma.negocio.findUnique({
+            where: { slug: slug },
+            select: { id: true }
+        });
+
+        if (!targetNegocio) {
+            return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
         }
+
+        const negocioId = targetNegocio.id;
 
         // Variaciones del teléfono para máxima compatibilidad
         const localTelefono = telefono.replace(/^\+(\d{1,4})/, ''); 
@@ -228,12 +234,18 @@ export async function PATCH(
         }
 
         const telefono = payload.telefono as string;
-        const negocioId = payload.negocioId as string;
-        const tokenSlug = payload.slug as string;
 
-        if (tokenSlug !== slug) {
-            return NextResponse.json({ error: "Acceso no autorizado" }, { status: 403 });
+        // Resolver el negocio a partir del slug de la URL para permitir navegación multi-negocio
+        const targetNegocio = await prisma.negocio.findUnique({
+            where: { slug: slug },
+            select: { id: true }
+        });
+
+        if (!targetNegocio) {
+            return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
         }
+
+        const negocioId = targetNegocio.id;
 
         const body = await req.json();
         const { nombre, email, imagenUrl, fechaNacimiento } = body;

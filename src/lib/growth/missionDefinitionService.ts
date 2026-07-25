@@ -73,6 +73,21 @@ export class MissionDefinitionService {
       throw new Error('No se puede editar una misión archivada.');
     }
 
+    if (input.rewardIds !== undefined) {
+      await prisma.missionRewardDefinition.deleteMany({
+        where: { missionDefinitionId: id },
+      });
+      if (input.rewardIds.length > 0) {
+        await prisma.missionRewardDefinition.createMany({
+          data: input.rewardIds.map((rewardCatalogId, index) => ({
+            missionDefinitionId: id,
+            rewardCatalogId,
+            orden: index + 1,
+          })),
+        });
+      }
+    }
+
     const updated = await prisma.missionDefinition.update({
       where: { id },
       data: {
@@ -92,21 +107,6 @@ export class MissionDefinitionService {
       },
       include: { Rewards: { include: { RewardCatalog: true } }, Publications: true },
     });
-
-    if (input.rewardIds !== undefined) {
-      await prisma.missionRewardDefinition.deleteMany({
-        where: { missionDefinitionId: id },
-      });
-      if (input.rewardIds.length > 0) {
-        await prisma.missionRewardDefinition.createMany({
-          data: input.rewardIds.map((rewardCatalogId, index) => ({
-            missionDefinitionId: id,
-            rewardCatalogId,
-            orden: index + 1,
-          })),
-        });
-      }
-    }
 
     return updated;
   }

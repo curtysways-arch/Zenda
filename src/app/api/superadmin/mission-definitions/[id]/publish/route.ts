@@ -17,10 +17,17 @@ export async function POST(request: Request, { params }: Params) {
       return NextResponse.json({ error: 'ID no proporcionado' }, { status: 400 });
     }
 
-    const body = await request.json();
-    const { action, globalSeasonId, fechaInicio, fechaFin, prioridad, segmentacion } = body;
+    let body: any = {};
+    try {
+      body = await request.json();
+    } catch (e) {
+      body = {};
+    }
 
-    if (!action || !['publish', 'archive'].includes(action)) {
+    const action = body?.action || 'publish';
+    const { globalSeasonId, fechaInicio, fechaFin, prioridad, segmentacion } = body;
+
+    if (!['publish', 'archive'].includes(action)) {
       return NextResponse.json(
         { error: "El campo 'action' debe ser 'publish' o 'archive'" },
         { status: 400 }

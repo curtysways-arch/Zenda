@@ -31,11 +31,23 @@ export async function GET(
             return NextResponse.json({ error: "Sesión expirada" }, { status: 401 });
         }
 
-        const { telefono, negocioId, slug: tokenSlug } = payload;
+        const telefono = payload.telefono as string;
 
-        if (!telefono || !negocioId) {
+        if (!telefono) {
             return NextResponse.json({ error: "Token incompleto" }, { status: 400 });
         }
+
+        // Resolver el negocio a partir del slug de la URL
+        const targetNegocio = await prisma.negocio.findUnique({
+            where: { slug: slug },
+            select: { id: true }
+        });
+
+        if (!targetNegocio) {
+            return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
+        }
+
+        const negocioId = targetNegocio.id;
 
         // Normalizar variaciones del teléfono
         const localTelefono = String(telefono).replace(/^\+(\d{1,4})/, '');
@@ -43,7 +55,7 @@ export async function GET(
         const localNoZero = localTelefono.replace(/^0+/, '');
 
         // DEBUG TEMPORAL - ver qué trae el JWT
-        console.log(`[reservas-cliente] telefono=${telefono} negocioId=${negocioId} slug=${tokenSlug}`);
+        console.log(`[reservas-cliente] telefono=${telefono} negocioId=${negocioId} slug=${slug}`);
         console.log(`[reservas-cliente] localTelefono=${localTelefono} digitsOnly=${digitsOnly} localNoZero=${localNoZero}`);
 
         // Buscar clienteIds usando SQL flexible (LIKE para compatibilidad con distintos formatos)

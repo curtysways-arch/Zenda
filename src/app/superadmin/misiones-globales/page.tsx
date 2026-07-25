@@ -28,7 +28,8 @@ export default async function MisionesGlobalesPage() {
     let clientMissions: any[] = [];
     try {
         const clientRaw = await (prisma as any).missionDefinition.findMany({
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
+            include: { Rewards: true }
         });
         clientMissions = clientRaw.map((m: any) => ({
             id: m.id,
@@ -41,6 +42,7 @@ export default async function MisionesGlobalesPage() {
             status: m.status,
             requiresBusinessReward: m.requiresBusinessReward,
             version: m.version,
+            rewardIds: m.Rewards ? m.Rewards.map((r: any) => r.rewardCatalogId) : [],
         }));
     } catch {
         // Si el modelo aún no existe en este entorno, seguimos con array vacío

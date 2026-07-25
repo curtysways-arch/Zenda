@@ -18,6 +18,7 @@ interface ClientMission {
   id: string; nombre: string; descripcion: string; categoria: MissionCategory;
   dificultad: QuestDifficulty; triggerEvent: string; cantidadMeta: number;
   status: string; requiresBusinessReward: boolean; version: string;
+  rewardIds?: string[];
 }
 interface RewardCatalog { id: string; nombre: string; tipo: string; }
 type MissionType = 'NEGOCIO' | 'CLIENTE';
@@ -186,7 +187,8 @@ export default function MisionesUnificadasClient({
     setNombre(m.nombre); setDescripcionCli(m.descripcion); setCategoria(m.categoria);
     setDificultad(m.dificultad); setTriggerEvent(m.triggerEvent); setCantidadMeta(m.cantidadMeta);
     setRequiresBusinessReward(m.requiresBusinessReward); setVersion(m.version);
-    setSelectedRewardIds([]); setIsModalOpen(true);
+    const existingRewards = m.rewardIds || ((m as any).Rewards ? (m as any).Rewards.map((r: any) => r.rewardCatalogId) : []);
+    setSelectedRewardIds(existingRewards); setIsModalOpen(true);
   };
 
   const handleRewardSubmit = async (e: React.FormEvent) => {
@@ -320,7 +322,8 @@ export default function MisionesUnificadasClient({
         setClientMissions(rawMissions.map((m:any)=>({
           id:m.id, nombre:m.nombre, descripcion:m.descripcion, categoria:m.categoria,
           dificultad:m.dificultad, triggerEvent:m.triggerEvent, cantidadMeta:m.cantidadMeta,
-          status:m.status, requiresBusinessReward:m.requiresBusinessReward, version:m.version
+          status:m.status, requiresBusinessReward:m.requiresBusinessReward, version:m.version,
+          rewardIds: m.Rewards ? m.Rewards.map((r:any) => r.rewardCatalogId) : (m.rewardIds || selectedRewardIds)
         })));
       }
       setIsModalOpen(false);
@@ -331,27 +334,45 @@ export default function MisionesUnificadasClient({
   const deleteBusiness = async (id:string) => {
     if(!confirm('¿Eliminar esta misión de negocio?')) return;
     const res=await fetch(`/api/superadmin/misiones-globales/${id}`,{method:'DELETE'});
+    const text = await res.text();
+    let data: any = {};
+    try { data = text ? JSON.parse(text) : {}; } catch {}
     if(res.ok){showToast('Misión eliminada');setBusinessMissions(p=>p.filter(m=>m.id!==id));}
-    else showToast('Error al eliminar','error');
+    else showToast(data.error || 'Error al eliminar','error');
   };
   const deleteClient = async (id:string) => {
     if(!confirm('¿Eliminar esta misión de cliente?')) return;
     const res=await fetch(`/api/superadmin/mission-definitions/${id}`,{method:'DELETE'});
+    const text = await res.text();
+    let data: any = {};
+    try { data = text ? JSON.parse(text) : {}; } catch {}
     if(res.ok){showToast('Misión eliminada');setClientMissions(p=>p.filter(m=>m.id!==id));}
-    else showToast('Error al eliminar','error');
+    else showToast(data.error || 'Error al eliminar','error');
   };
   const publishClient = async (id:string) => {
-    const res=await fetch(`/api/superadmin/mission-definitions/${id}/publish`,{method:'POST'});
+    const res=await fetch(`/api/superadmin/mission-definitions/${id}/publish`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ action: 'publish' })
+    });
+    const text = await res.text();
+    let data: any = {};
+    try { data = text ? JSON.parse(text) : {}; } catch {}
     if(res.ok){showToast('Misión publicada');setClientMissions(p=>p.map(m=>m.id===id?{...m,status:'PUBLISHED'}:m));}
-    else showToast('Error al publicar','error');
+    else showToast(data.error || 'Error al publicar','error');
   };
   const toggleActive = async (m:GlobalMission) => {
     const res=await fetch(`/api/superadmin/misiones-globales/${m.id}`,{
       method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({activa:!m.activa})
     });
+    const text = await res.text();
+    let data: any = {};
+    try { data = text ? JSON.parse(text) : {}; } catch {}
     if(res.ok){
       showToast(m.activa?'Misión pausada':'Misión activada');
       setBusinessMissions(p=>p.map(x=>x.id===m.id?{...x,activa:!x.activa}:x));
+    } else {
+      showToast(data.error || 'Error al actualizar','error');
     }
   };
 
@@ -483,7 +504,29 @@ export default function MisionesUnificadasClient({
                       <div className="space-y-1.5 pt-3 border-t border-slate-100 dark:border-slate-800 text-[10px] font-bold uppercase tracking-wider">
                         <div className="flex justify-between"><span className="text-slate-400">Trigger</span><span className="text-slate-700 dark:text-slate-300">{TRIGGER_LABELS[m.triggerEvent]||m.triggerEvent} x{m.cantidadMeta}</span></div>
                         <div className="flex justify-between"><span className="text-slate-400">Categoria</span><span className="text-slate-700 dark:text-slate-300">{m.categoria}</span></div>
-                        {m.requiresBusinessReward&&<div className="flex justify-between"><span className="text-slate-400">Premio</span><span className="text-amber-600 dark:text-amber-400">Requiere config. local</span></div>}
+                        {(() => {
+                          const assignedNames = (m.rewardIds || [])
+                            .map(id => rewardsList.find(r => r.id === id)?.nombre)
+                            .filter(Boolean);
+                          if (assignedNames.length > 0) {
+                            return (
+                              <div className="flex justify-between gap-2">
+                                <span className="text-slate-400 shrink-0">Premio</span>
+                                <span className="text-emerald-600 dark:text-emerald-400 font-black text-right truncate">
+                                  🎁 {assignedNames.join(', ')}
+                                </span>
+                              </div>
+                            );
+                          }
+                          if (m.requiresBusinessReward) {
+                            return (
+                              <div className="flex justify-between"><span className="text-slate-400">Premio</span><span className="text-amber-600 dark:text-amber-400">Requiere config. local</span></div>
+                            );
+                          }
+                          return (
+                            <div className="flex justify-between"><span className="text-slate-400">Premio</span><span className="text-slate-400 font-normal">Sin premio asignado</span></div>
+                          );
+                        })()}
                       </div>
                     </div>
                     <div className="px-5 py-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 flex justify-between">

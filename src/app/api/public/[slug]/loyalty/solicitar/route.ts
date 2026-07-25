@@ -29,7 +29,18 @@ export async function POST(
         }
 
         const phone = payload.telefono as string;
-        const negocioId = payload.negocioId as string;
+
+        // Resolver el negocio a partir del slug de la URL
+        const targetNegocio = await prisma.negocio.findUnique({
+            where: { slug: slug },
+            select: { id: true }
+        });
+
+        if (!targetNegocio) {
+            return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
+        }
+
+        const negocioId = targetNegocio.id;
 
         // 1. Obtener usuario
         const digitsOnly = phone.replace(/\D/g, '');
