@@ -248,7 +248,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
     const waLink = `https://wa.me/${waPhone}?text=${waMessage}`;
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
+        <div className="min-h-screen bg-slate-50 text-slate-900 pb-36 sm:pb-40">
             {/* Top Bar Navigation */}
             <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3.5 flex items-center justify-between shadow-2xs">
                 <button

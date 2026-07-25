@@ -223,7 +223,7 @@ export default function ClientOrdersClient({ negocio }: Props) {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-16">
+        <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-36 sm:pb-40">
             {/* Header */}
             <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-xs">
                 <Link href={`/${negocio.slug}`} className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors text-xs font-extrabold uppercase tracking-wider">
