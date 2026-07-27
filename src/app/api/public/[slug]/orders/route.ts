@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { notificationService } from '@/lib/notifications';
 import { PaymentService } from '@/lib/payments/PaymentService';
+import { formatToEcuadorPhone, getPhoneSearchConditions } from '@/lib/phoneUtils';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,17 +23,7 @@ export async function GET(
         if (!negocio) {
             return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
         }
-        const rawPhone = phone.trim();
-        const cleanDigits = phone.replace(/\D/g, '');
-        const digits9 = cleanDigits.length >= 9 ? cleanDigits.slice(-9) : cleanDigits;
-        const digits7 = cleanDigits.length >= 7 ? cleanDigits.slice(-7) : cleanDigits;
-
-        const phoneConditions = [
-            { telefonoCliente: { contains: rawPhone } },
-            { telefonoCliente: { contains: cleanDigits } },
-            { telefonoCliente: { contains: digits9 } },
-            { telefonoCliente: { contains: digits7 } }
-        ];
+        const phoneConditions = getPhoneSearchConditions(phone);
 
         // 1. Intentar buscar por el negocioId del slug actual
         let orders = await (prisma as any).pedido.findMany({
@@ -46,6 +37,7 @@ export async function GET(
             },
             orderBy: { createdAt: 'desc' }
         });
+
 
         // 2. Fallback: Si no hay pedidos asociados a este negocioId específico, buscar todos los pedidos con ese teléfono
         if (orders.length === 0) {
@@ -195,7 +187,7 @@ export async function POST(
                     numeroPedido: nextOrderNumber,
                     tipoEntrega: deliveryType,
                     nombreCliente: clientName,
-                    telefonoCliente: clientPhone,
+                    telefonoCliente: formatToEcuadorPhone(clientPhone),
                     direccionCliente: clientAddress || null,
                     referenciaCliente: clientReference || null,
                     latitud: lat || null,

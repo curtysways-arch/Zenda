@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Sparkles, Phone, ArrowRight, AlertCircle, Key, User, LogOut, PackageCheck, ShoppingBag, ShieldCheck, MapPin } from 'lucide-react';
 import PhoneInput from '@/components/ui/PhoneInput';
+import { formatToEcuadorPhone } from '@/lib/phoneUtils';
 import PinchoSuperLoader from './PinchoSuperLoader';
 
 interface PinchoProfileViewProps {
@@ -143,12 +144,14 @@ export default function PinchoProfileView({
 
             if (verified) {
                 const finalName = name.trim() || 'Cliente';
+                const formattedPhone = formatToEcuadorPhone(phone);
                 if (typeof window !== 'undefined') {
-                    localStorage.setItem('pinchos_client_phone', cleanPhone);
-                    localStorage.setItem('user_phone', cleanPhone);
+                    localStorage.setItem('pinchos_client_phone', formattedPhone);
+                    localStorage.setItem('user_phone', formattedPhone);
                     localStorage.setItem('pinchos_client_name', finalName);
                     localStorage.setItem('user_name', finalName);
                 }
+                setPhone(formattedPhone);
                 setName(finalName);
                 setStep('profile');
             }

@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { PinchoFriendlyCodeService } from './pinchoFriendlyCodeService';
 import { PaymentService } from '@/lib/payments/PaymentService';
+import { formatToEcuadorPhone } from '@/lib/phoneUtils';
 
 export type PinchoOrderStatus = 
     | 'BORRADOR'
@@ -136,7 +137,7 @@ export class PinchoOrderService {
                     numeroPedido: nextSeq,
                     tipoEntrega: deliveryType,
                     nombreCliente: clientName,
-                    telefonoCliente: clientPhone,
+                    telefonoCliente: formatToEcuadorPhone(clientPhone),
                     direccionCliente: clientAddress || null,
                     referenciaCliente: clientReference || null,
                     latitud: lat || null,

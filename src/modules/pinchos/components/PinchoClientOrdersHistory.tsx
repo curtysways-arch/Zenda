@@ -3,6 +3,7 @@ import { ShoppingBag, Clock, CheckCircle2, XCircle, AlertCircle, ArrowLeft, Refr
 import Link from 'next/link';
 import { PinchoFriendlyCodeService } from '../services/pinchoFriendlyCodeService';
 import { PinchoCartItem } from '../services/pinchoCartService';
+import { formatToEcuadorPhone } from '@/lib/phoneUtils';
 
 interface OrdersHistoryProps {
     storeSlug: string;
@@ -23,10 +24,11 @@ export default function PinchoClientOrdersHistory({
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            const savedPhone = localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone') || '';
-            setPhone(savedPhone);
-            if (savedPhone) {
-                fetchOrders(savedPhone);
+            const rawPhone = localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone') || '';
+            const savedPhone = formatToEcuadorPhone(rawPhone);
+            setPhone(savedPhone || rawPhone);
+            if (savedPhone || rawPhone) {
+                fetchOrders(savedPhone || rawPhone);
             }
         }
     }, [storeSlug]);

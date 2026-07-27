@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { User, Phone, KeyRound, Loader2, ArrowRight, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { User, Phone, KeyRound, Loader2, ArrowRight, CheckCircle2, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { formatToEcuadorPhone } from '@/lib/phoneUtils';
 import PinchoSuperLoader from './PinchoSuperLoader';
 
 interface Step2Props {
@@ -149,13 +150,14 @@ export default function Step2PinchoAuth({
             }
 
             if (verified) {
+                const formattedPhone = formatToEcuadorPhone(clientPhone);
                 if (typeof window !== 'undefined') {
-                    localStorage.setItem('pinchos_client_phone', clientPhone.trim());
-                    localStorage.setItem('user_phone', clientPhone.trim());
+                    localStorage.setItem('pinchos_client_phone', formattedPhone);
+                    localStorage.setItem('user_phone', formattedPhone);
                     localStorage.setItem('pinchos_client_name', clientName.trim());
                     localStorage.setItem('user_name', clientName.trim());
                 }
-                onAuthenticated(clientName.trim(), clientPhone.trim());
+                onAuthenticated(clientName.trim(), formattedPhone);
             }
         } catch (err) {
             setOtpMessage('Error al validar el código OTP.');

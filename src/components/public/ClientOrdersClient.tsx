@@ -13,9 +13,13 @@ import {
     ArrowLeft,
     Phone,
     KeyRound,
+    MapPin,
+    DollarSign,
+    Calendar,
     ChevronRight
 } from 'lucide-react';
 import Link from 'next/link';
+import { formatToEcuadorPhone } from '@/lib/phoneUtils';
 import OrderTrackingClient from './OrderTrackingClient';
 
 interface Order {
@@ -178,9 +182,12 @@ export default function ClientOrdersClient({ negocio }: Props) {
             });
             const data = await res.json();
             if (data.success) {
-                localStorage.setItem('pinchos_client_phone', phone);
+                const formattedPhone = formatToEcuadorPhone(phone);
+                localStorage.setItem('pinchos_client_phone', formattedPhone);
+                localStorage.setItem('user_phone', formattedPhone);
+                setPhone(formattedPhone);
                 setIsVerified(true);
-                fetchOrders(phone);
+                fetchOrders(formattedPhone);
             } else {
                 setOtpMessage(data.error || 'Código incorrecto.');
             }
