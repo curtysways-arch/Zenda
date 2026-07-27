@@ -113,10 +113,11 @@ export default function ClientOrdersClient({ negocio }: Props) {
     const fetchOrders = async (clientPhone: string) => {
         try {
             setLoading(true);
-            const res = await fetch(`/api/public/${negocio.slug}/client-orders?phone=${encodeURIComponent(clientPhone)}`);
+            // Corrección: la ruta correcta es /orders, no /client-orders
+            const res = await fetch(`/api/public/${negocio.slug}/orders?phone=${encodeURIComponent(clientPhone)}`);
             const data = await res.json();
-            if (data.success) {
-                const fetchedOrders = data.orders || [];
+            if (data.success || data.orders || data.pedidos) {
+                const fetchedOrders = data.orders || data.pedidos || [];
                 setOrders(fetchedOrders);
                 // Si había un pedido seleccionado, actualizar sus datos
                 if (selectedOrder) {
@@ -259,9 +260,12 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                     <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">Número Celular / WhatsApp</label>
                                     <input
                                         type="tel"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
                                         required
+                                        autoFocus
                                         value={phone}
-                                        onChange={e => setPhone(e.target.value)}
+                                        onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
                                         placeholder="0991234567"
                                         className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 font-mono text-center text-lg focus:outline-none focus:border-orange-500 focus:bg-white transition-colors"
                                     />
@@ -277,20 +281,22 @@ export default function ClientOrdersClient({ negocio }: Props) {
                         ) : (
                             <form onSubmit={handleVerifyOTP} className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">Código OTP de 4 dígitos</label>
+                                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">Código OTP de 6 dígitos</label>
                                     <div className="relative">
                                         <KeyRound className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                         <input
-                                            type="text"
+                                            type="tel"
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
                                             required
+                                            autoFocus
                                             maxLength={6}
                                             value={otpCode}
-                                            onChange={e => setOtpCode(e.target.value)}
-                                            placeholder="1234"
-                                            className="w-full pl-10 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 font-mono text-center text-2xl tracking-widest focus:outline-none focus:border-orange-500 focus:bg-white transition-colors"
+                                            onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                                            placeholder="123456"
+                                            className="w-full pl-10 pr-4 py-3.5 bg-slate-50 border-2 border-orange-400 rounded-2xl text-slate-900 font-mono text-center text-2xl tracking-[0.4em] focus:outline-none focus:border-orange-600 focus:bg-white transition-colors"
                                         />
                                     </div>
-                                    <p className="text-[11px] text-slate-400 text-center mt-2 font-medium">Prueba rápida en desarrollo: Usa <strong className="text-slate-700">1234</strong></p>
                                 </div>
                                 <button
                                     type="submit"
