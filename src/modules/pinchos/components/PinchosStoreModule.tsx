@@ -17,6 +17,7 @@ import PinchoSuperLoader from './PinchoSuperLoader';
 import PinchoBannerCarousel from './PinchoBannerCarousel';
 import PinchoFloatingCartBar from './PinchoFloatingCartBar';
 import PinchoLoginModal from './PinchoLoginModal';
+import PinchoProfileView from './PinchoProfileView';
 import { PinchoCartService, PinchoCartItem, PinchoCartState } from '../services/pinchoCartService';
 
 interface StoreProps {
@@ -39,8 +40,8 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
     const primaryColor = negocio.colorPrimario || '#ff6b2b';
     const storeSlug = negocio.slug;
 
-    // View state: 'catalog' | 'checkout' | 'orders_history'
-    const [view, setView] = useState<'catalog' | 'checkout' | 'orders_history'>('catalog');
+    // View state: 'catalog' | 'checkout' | 'orders_history' | 'profile'
+    const [view, setView] = useState<'catalog' | 'checkout' | 'orders_history' | 'profile'>('catalog');
     const [currentStep, setCurrentStep] = useState<number>(1);
 
     // Products & Categories
@@ -280,6 +281,17 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
         );
     }
 
+    if (view === 'profile') {
+        return (
+            <PinchoProfileView
+                storeSlug={storeSlug}
+                storeName={negocio.nombre}
+                onBackToStore={() => setView('catalog')}
+                onViewOrders={() => setView('orders_history')}
+            />
+        );
+    }
+
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 pb-36 font-sans">
             {/* Top Bar Header */}
@@ -309,7 +321,7 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                             if (clientPhone) {
                                 setView('orders_history');
                             } else {
-                                setShowLoginModal(true);
+                                setView('profile');
                             }
                         }}
                         className="px-3.5 py-1.5 bg-orange-600 hover:bg-orange-700 text-white font-black text-[10px] uppercase tracking-wider rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"

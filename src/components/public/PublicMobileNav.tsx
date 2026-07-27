@@ -115,7 +115,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
             href: `/${slug}/pedidos`,
             active: pathname.includes('/pedidos'),
             isCentral: tipoNegocio === 'PRODUCTOS',
-            visible: hasSession && tipoNegocio === 'PRODUCTOS'
+            visible: tipoNegocio === 'PRODUCTOS'
         },
         {
             label: 'Servicios',
@@ -137,7 +137,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
             icon: User,
             href: `/${slug}/perfil`,
             active: pathname.includes('/perfil'),
-            visible: hasSession
+            visible: true
         },
     ].filter(t => t.visible);
 
