@@ -66,14 +66,12 @@ export default function PinchoProductDetailModal({
         : 'Delicioso pincho preparado con productos seleccionados frescos, embutidos y vegetales marinados con especias naturales de la casa.';
 
     return (
-        <div className="fixed inset-0 z-[500] bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto custom-scrollbar animate-fade-in font-sans">
+        <div className="fixed inset-0 z-[500] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto custom-scrollbar animate-fade-in font-sans">
             {/* Backdrop Click */}
             <div className="absolute inset-0" onClick={onClose} />
 
-            {/* Modal Card - Sitting safely above bottom nav bar (mb-16 sm:mb-0) */}
-            <div className="relative bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[84vh] sm:max-h-[88vh] text-left animate-scale-up border border-slate-200/80 mb-16 sm:mb-0">
-                {/* Drag Handle Bar for Mobile */}
-                <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto my-2 shrink-0 sm:hidden" />
+            {/* Centered Modal Card */}
+            <div className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[86vh] text-left animate-scale-up border border-slate-200/80 my-auto">
 
                 {/* Close Button (Floating Frosted Glass) */}
                 <button

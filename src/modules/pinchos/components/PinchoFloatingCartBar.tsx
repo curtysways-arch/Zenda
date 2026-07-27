@@ -17,7 +17,7 @@ export default function PinchoFloatingCartBar({
     if (itemCount <= 0) return null;
 
     return (
-        <div className="fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-lg font-sans animate-bounce-short">
+        <div className="fixed bottom-[84px] sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-lg font-sans animate-bounce-short">
             <button
                 type="button"
                 onClick={onOpenCart}
