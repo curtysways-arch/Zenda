@@ -4,7 +4,7 @@ import { notificationService } from '@/lib/notifications';
 import { whatsappService } from '@/lib/whatsapp';
 import { v4 as uuidv4 } from 'uuid';
 
-// Memoria caché de respaldo rápida para entornos donde la BD o WhatsApp varíen
+// Memoria caché de respaldo rápida para entornos de desarrollo y producción
 const otpStore = new Map<string, { code: string; expiresAt: number }>();
 
 export async function POST(req: NextRequest) {
@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
         const storeName = negocio?.nombre || 'PinchoListo';
 
         if (action === 'send_otp') {
-            // Generar código de 4 dígitos (p. ej., 1234 por defecto o aleatorio)
-            const generatedCode = cleanPhone.endsWith('0000') ? '1234' : Math.floor(1000 + Math.random() * 9000).toString();
+            // Generar código OTP real de 6 dígitos aleatorios
+            const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
             const expiresAt = Date.now() + 10 * 60 * 1000; // Válido por 10 minutos
 
             // Guardar en memoria caché
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
                     await prisma.otpCode.create({
                         data: {
                             id: uuidv4(),
-                            telefono: phone,
+                            telefono: cleanPhone,
                             businessId: negocio.id,
                             code: generatedCode,
                             expires_at: new Date(expiresAt)
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
 
             console.log(`\n=========================================\n🔑 OTP Citiox [${cleanPhone}]: ${generatedCode}\n=========================================\n`);
 
-            // 1. Enviar mensaje de WhatsApp directo a través del Bot oficial
+            // 1. Enviar mensaje de WhatsApp directo a través del Bot oficial de WhatsApp
             const waMsg = `🔑 *Código de Verificación OTP*\n\nHola, tu código de acceso para *${storeName}* es: *${generatedCode}*\n\n_Válido por 10 minutos. No compartas este código con nadie._`;
             
             try {
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
                 console.warn('[OTP Auth] WhatsApp directo no enviado:', directWaErr);
             }
 
-            // 2. Intentar también vía notificationService por plantilla
+            // 2. Intentar también vía notificationService por plantilla oficial
             if (negocio) {
                 try {
                     await notificationService.sendOTP(negocio.id, cleanPhone, generatedCode, storeName);
@@ -88,33 +88,31 @@ export async function POST(req: NextRequest) {
 
             return NextResponse.json({
                 success: true,
-                message: `Código OTP enviado a WhatsApp ${cleanPhone}.`,
-                devCode: process.env.NODE_ENV !== 'production' ? generatedCode : undefined
+                message: `Código OTP de 6 dígitos enviado a tu WhatsApp (${cleanPhone}).`
             });
         }
 
         if (action === 'verify_otp') {
-            if (!code) {
+            if (!code || code.trim().length === 0) {
                 return NextResponse.json(
                     { success: false, error: 'El código OTP es requerido.' },
                     { status: 400 }
                 );
             }
 
+            const cleanCode = code.trim();
             const stored = otpStore.get(cleanPhone);
 
-            // Permitir '1234', '123456', '0000' como códigos maestros de prueba/demo
-            const isValidMasterCode = ['1234', '123456', '0000'].includes(code.trim());
-            const isValidStored = stored && stored.code.trim() === code.trim() && Date.now() <= stored.expiresAt;
+            const isValidStored = stored && stored.code.trim() === cleanCode && Date.now() <= stored.expiresAt;
 
             let isValidDb = false;
-            if (negocio && !isValidMasterCode && !isValidStored) {
+            if (negocio && !isValidStored) {
                 try {
                     const dbOtp = await prisma.otpCode.findFirst({
                         where: {
-                            telefono: phone,
+                            telefono: cleanPhone,
                             businessId: negocio.id,
-                            code: code.trim(),
+                            code: cleanCode,
                             verified: false,
                             expires_at: { gt: new Date() }
                         },
@@ -132,7 +130,7 @@ export async function POST(req: NextRequest) {
                 }
             }
 
-            if (isValidMasterCode || isValidStored || isValidDb) {
+            if (isValidStored || isValidDb) {
                 return NextResponse.json({
                     success: true,
                     message: 'Sesión verificada exitosamente.'
@@ -140,7 +138,7 @@ export async function POST(req: NextRequest) {
             }
 
             return NextResponse.json(
-                { success: false, error: 'El código OTP es incorrecto o ha expirado.' },
+                { success: false, error: 'El código OTP ingresado es incorrecto o ha expirado.' },
                 { status: 400 }
             );
         }

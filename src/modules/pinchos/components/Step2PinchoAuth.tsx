@@ -246,13 +246,13 @@ export default function Step2PinchoAuth({
                             <span>Código de Verificación OTP</span>
                         </span>
                         <p className="text-xs text-slate-500 font-medium mt-1">
-                            Enviamos un código de 4 dígitos a tu WhatsApp <strong>{clientPhone}</strong>.
+                            Enviamos un código de 6 dígitos a tu WhatsApp <strong>{clientPhone}</strong>.
                         </p>
                     </div>
 
                     <div>
                         <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider mb-1">
-                            Código OTP de 4 dígitos *
+                            Código OTP de 6 dígitos *
                         </label>
                         <input
                             type="text"
@@ -260,7 +260,7 @@ export default function Step2PinchoAuth({
                             required
                             value={otpCode}
                             onChange={(e) => setOtpCode(e.target.value)}
-                            placeholder="Ej: 1234"
+                            placeholder="Ej: 123456"
                             className="w-full text-center text-lg font-mono font-black tracking-widest text-slate-900 bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-orange-500"
                         />
                     </div>

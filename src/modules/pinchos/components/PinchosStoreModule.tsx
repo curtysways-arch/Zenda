@@ -304,10 +304,18 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                 <div className="flex items-center gap-2">
                     <button
                         type="button"
-                        onClick={() => setView('orders_history')}
-                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                        onClick={() => {
+                            if (clientPhone) {
+                                setView('orders_history');
+                            } else {
+                                setView('checkout');
+                                setCurrentStep(2);
+                            }
+                        }}
+                        className="px-3.5 py-1.5 bg-orange-600 hover:bg-orange-700 text-white font-black text-[10px] uppercase tracking-wider rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
                     >
-                        Mis Pedidos
+                        <User className="size-3.5" />
+                        <span>{clientPhone ? 'MIS PEDIDOS' : 'LOGIN'}</span>
                     </button>
 
                     <button
