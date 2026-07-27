@@ -354,6 +354,7 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                                 couponCode={cartState.couponCode || ''}
                                 setCouponCode={(code) => setCartState(prev => ({ ...prev, couponCode: code }))}
                                 onContinue={() => setCurrentStep(2)}
+                                onBackToCatalog={() => setView('catalog')}
                             />
                         )}
 

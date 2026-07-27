@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, Plus, Minus, Trash2, ArrowRight, Tag } from 'lucide-react';
+import { ShoppingBag, Plus, Minus, Trash2, ArrowRight, ArrowLeft, Tag, PlusCircle } from 'lucide-react';
 import { PinchoCartItem } from '../services/pinchoCartService';
 
 interface Step1Props {
@@ -7,6 +7,7 @@ interface Step1Props {
     onUpdateQuantity: (productId: string, delta: number) => void;
     onRemoveItem: (productId: string) => void;
     onContinue: () => void;
+    onBackToCatalog?: () => void;
     couponCode: string;
     setCouponCode: (code: string) => void;
     primaryColor?: string;
@@ -17,6 +18,7 @@ export default function Step1PinchoCart({
     onUpdateQuantity,
     onRemoveItem,
     onContinue,
+    onBackToCatalog,
     couponCode,
     setCouponCode,
     primaryColor = '#ff6b2b'
@@ -33,13 +35,36 @@ export default function Step1PinchoCart({
                 <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
                     Explora nuestro menú y añade tus pinchos favoritos para iniciar tu pedido.
                 </p>
+                {onBackToCatalog && (
+                    <button
+                        type="button"
+                        onClick={onBackToCatalog}
+                        className="px-5 py-3 bg-orange-600 hover:bg-orange-700 text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer"
+                    >
+                        Ver Menú de Productos
+                    </button>
+                )}
             </div>
         );
     }
 
     return (
-        <div className="space-y-5 max-w-xl mx-auto">
-            {/* Encabezado */}
+        <div className="space-y-5 max-w-xl mx-auto text-left">
+            {/* Top Navigation Bar: Volver al Menú */}
+            {onBackToCatalog && (
+                <div className="flex items-center justify-between">
+                    <button
+                        type="button"
+                        onClick={onBackToCatalog}
+                        className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-700 hover:text-slate-900 bg-white border border-slate-200/80 px-3.5 py-2 rounded-2xl shadow-2xs transition-all active:scale-95 cursor-pointer"
+                    >
+                        <ArrowLeft className="size-4 text-orange-600" />
+                        <span>Volver al Menú</span>
+                    </button>
+                </div>
+            )}
+
+            {/* Encabezado y Productos */}
             <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm space-y-3">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                     <span className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
@@ -114,6 +139,20 @@ export default function Step1PinchoCart({
                         </div>
                     ))}
                 </div>
+
+                {/* Botón para Añadir Otro Producto */}
+                {onBackToCatalog && (
+                    <div className="pt-2 border-t border-slate-100">
+                        <button
+                            type="button"
+                            onClick={onBackToCatalog}
+                            className="w-full py-3 bg-orange-50 hover:bg-orange-100 border border-orange-200/80 text-orange-900 font-black rounded-2xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                        >
+                            <PlusCircle className="size-4 text-orange-600" />
+                            <span>AÑADIR OTRO PRODUCTO AL CARRITO</span>
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Cupón Opcional */}
