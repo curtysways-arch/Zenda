@@ -4,8 +4,62 @@ import { PinchoCheckoutSessionService } from '@/modules/pinchos/services/pinchoC
 import { PinchoNotificationService } from '@/modules/pinchos/services/pinchoNotificationService';
 import { PinchoAnalyticsService } from '@/modules/pinchos/services/pinchoAnalyticsService';
 import prisma from '@/lib/prisma';
+import { getPhoneSearchConditions } from '@/lib/phoneUtils';
 
 export const dynamic = 'force-dynamic';
+
+export async function GET(request: Request) {
+    const { searchParams } = new URL(request.url);
+    const phone = searchParams.get('phone');
+
+    if (!phone) {
+        return NextResponse.json({ error: 'Teléfono requerido' }, { status: 400 });
+    }
+
+    try {
+        const phoneConditions = getPhoneSearchConditions(phone);
+
+        const negocio = await prisma.negocio.findFirst({
+            where: {
+                OR: [
+                    { slug: 'pinchos' },
+                    { slug: 'pincholisto' }
+                ]
+            }
+        });
+
+        let orders = negocio ? await (prisma as any).pedido.findMany({
+            where: {
+                negocioId: negocio.id,
+                OR: phoneConditions
+            },
+            include: {
+                items: true,
+                payment: true
+            },
+            orderBy: { createdAt: 'desc' }
+        }) : [];
+
+        if (orders.length === 0) {
+            orders = await (prisma as any).pedido.findMany({
+                where: {
+                    OR: phoneConditions
+                },
+                include: {
+                    items: true,
+                    payment: true
+                },
+                orderBy: { createdAt: 'desc' }
+            });
+        }
+
+        return NextResponse.json({ success: true, orders, pedidos: orders });
+    } catch (e: any) {
+        console.error('[API_PINCHOS_ORDERS_GET]', e);
+        return NextResponse.json({ error: e.message || 'Error interno' }, { status: 500 });
+    }
+}
+
 
 export async function POST(req: NextRequest) {
     try {
