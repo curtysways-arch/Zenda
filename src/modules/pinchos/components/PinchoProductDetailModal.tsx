@@ -70,8 +70,8 @@ export default function PinchoProductDetailModal({
             {/* Backdrop Click */}
             <div className="absolute inset-0" onClick={onClose} />
 
-            {/* Modal Card */}
-            <div className="relative bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[92vh] sm:max-h-[90vh] text-left animate-scale-up border border-slate-200/80">
+            {/* Modal Card - Sitting safely above bottom nav bar (mb-16 sm:mb-0) */}
+            <div className="relative bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[84vh] sm:max-h-[88vh] text-left animate-scale-up border border-slate-200/80 mb-16 sm:mb-0">
                 {/* Drag Handle Bar for Mobile */}
                 <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto my-2 shrink-0 sm:hidden" />
 
@@ -87,8 +87,8 @@ export default function PinchoProductDetailModal({
 
                 {/* Scrollable Modal Body */}
                 <div className="overflow-y-auto custom-scrollbar flex-1 pb-2">
-                    {/* Top Image (occupies ~55-60% visual height) */}
-                    <div className="relative w-full aspect-[4/3] bg-slate-100 overflow-hidden">
+                    {/* Top Image (aspect 16:9 on mobile for compact fit) */}
+                    <div className="relative w-full aspect-[16/9] sm:aspect-[4/3] bg-slate-100 overflow-hidden">
                         {product.imagenUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -98,15 +98,15 @@ export default function PinchoProductDetailModal({
                             />
                         ) : (
                             <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-orange-100 via-amber-50 to-orange-50 text-orange-600">
-                                <span className="text-6xl">🍢</span>
-                                <span className="text-xs font-black uppercase tracking-widest text-orange-700 mt-2">PinchoListo</span>
+                                <span className="text-5xl">🍢</span>
+                                <span className="text-xs font-black uppercase tracking-widest text-orange-700 mt-1">PinchoListo</span>
                             </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                     </div>
 
                     {/* Content Section */}
-                    <div className="p-5 sm:p-6 space-y-4">
+                    <div className="p-4 sm:p-6 space-y-3.5">
                         {/* Title & Category Badge */}
                         <div className="space-y-1">
                             <span className="inline-block px-2.5 py-0.5 bg-orange-100 text-orange-800 text-[10px] font-black uppercase tracking-widest rounded-md">
@@ -123,7 +123,7 @@ export default function PinchoProductDetailModal({
                         </p>
 
                         {/* Additional Badges with Icons */}
-                        <div className="grid grid-cols-2 gap-2 pt-1">
+                        <div className="grid grid-cols-2 gap-2 pt-0.5">
                             <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-200/60 text-[11px] font-bold text-slate-700">
                                 <span className="text-sm">🥩</span>
                                 <span>Producto fresco</span>
@@ -143,7 +143,7 @@ export default function PinchoProductDetailModal({
                         </div>
 
                         {/* Price & Quantity Selector Section */}
-                        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 flex items-center justify-between gap-4 mt-2">
+                        <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-200/80 flex items-center justify-between gap-4">
                             {/* Prominent Price */}
                             <div>
                                 <span className="text-[10px] font-black uppercase text-slate-400 block tracking-wider">Precio Unitario</span>
@@ -177,7 +177,7 @@ export default function PinchoProductDetailModal({
                         </div>
 
                         {/* Total Display */}
-                        <div className="flex justify-between items-center px-1 text-xs border-t border-slate-100 pt-3">
+                        <div className="flex justify-between items-center px-1 text-xs border-t border-slate-100 pt-2.5">
                             <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Total Estimado</span>
                             <span className="text-lg font-black text-slate-900 font-mono">${totalPrice.toFixed(2)}</span>
                         </div>
@@ -185,7 +185,7 @@ export default function PinchoProductDetailModal({
                 </div>
 
                 {/* Fixed Sticky Bottom Action Bar with Action Buttons */}
-                <div className="p-4 bg-white/95 backdrop-blur-md border-t border-slate-200/80 shrink-0 space-y-2">
+                <div className="p-3.5 bg-white/95 backdrop-blur-md border-t border-slate-200/80 shrink-0 space-y-2">
                     {/* Primary Button: Aceptar y Agregar */}
                     <button
                         type="button"
