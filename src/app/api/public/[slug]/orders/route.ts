@@ -25,24 +25,47 @@ export async function GET(
 
         const cleanPhone = phone.replace(/\D/g, '');
 
-        const orders = await (prisma as any).pedido.findMany({
-            where: {
-                negocioId: negocio.id,
-                telefonoCliente: {
-                    contains: cleanPhone.slice(-7)
-                }
-            },
-            include: {
-                items: true,
-                payment: {
-                    include: {
-                        evidences: { orderBy: { createdAt: 'desc' } },
-                        method: true
+        // Intentar múltiples variantes del número para mayor compatibilidad
+        const variants = [
+            cleanPhone,
+            cleanPhone.slice(-10),
+            cleanPhone.slice(-9),
+            cleanPhone.slice(-7),
+        ].filter((v, i, arr) => v.length >= 7 && arr.indexOf(v) === i);
+
+        let orders: any[] = [];
+
+        // Buscar con cada variante hasta encontrar resultados
+        for (const variant of variants) {
+            const found = await (prisma as any).pedido.findMany({
+                where: {
+                    negocioId: negocio.id,
+                    telefonoCliente: {
+                        contains: variant
                     }
-                }
-            },
-            orderBy: { createdAt: 'desc' }
-        });
+                },
+                include: {
+                    items: true,
+                    payment: {
+                        include: {
+                            evidences: { orderBy: { createdAt: 'desc' } },
+                            method: true
+                        }
+                    }
+                },
+                orderBy: { createdAt: 'desc' }
+            });
+
+            if (found.length > 0) {
+                orders = found;
+                break;
+            }
+        }
+
+        // Si aun sin resultados, buscar solo por teléfono sin restricción de negocio como fallback de debug
+        if (orders.length === 0) {
+            console.log(`[ORDERS_GET] No se encontraron pedidos para negocioId=${negocio.id} con teléfono variants=${JSON.stringify(variants)}`);
+        }
 
         return NextResponse.json({ success: true, orders, pedidos: orders });
     } catch (e: any) {
