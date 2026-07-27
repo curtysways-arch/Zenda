@@ -192,9 +192,11 @@ export default function PinchoOrderTrackingClient({ order: initialOrder, timelin
                     </div>
                 )}
 
-                {/* Order Items */}
+                {/* Order Items & Breakdown */}
                 <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm space-y-3 text-left">
                     <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Detalle del Pedido</span>
+                    
+                    {/* Items List */}
                     <div className="divide-y divide-slate-100">
                         {order.items?.map((item: any) => (
                             <div key={item.id} className="py-2 flex justify-between items-center text-xs">
@@ -203,11 +205,72 @@ export default function PinchoOrderTrackingClient({ order: initialOrder, timelin
                             </div>
                         ))}
                     </div>
-                    <div className="flex justify-between border-t border-slate-100 pt-2 text-sm font-black">
-                        <span className="text-slate-700">Total a Pagar</span>
-                        <span className="text-orange-600 font-mono">${order.total.toFixed(2)}</span>
+
+                    {/* Breakdown: Subtotal, Shipping, Total */}
+                    <div className="border-t border-slate-100 pt-3 space-y-1.5 text-xs">
+                        <div className="flex justify-between text-slate-600 font-medium">
+                            <span>Subtotal Productos</span>
+                            <span className="font-mono text-slate-900">
+                                ${((order.subtotal !== undefined && order.subtotal !== null) 
+                                    ? order.subtotal 
+                                    : (order.items?.reduce((acc: number, it: any) => acc + (it.precioUnitario * it.cantidad), 0) || 0)
+                                ).toFixed(2)}
+                            </span>
+                        </div>
+
+                        {order.tipoEntrega === 'DOMICILIO' && (
+                            <div className="flex justify-between text-slate-600 font-medium">
+                                <span className="flex items-center gap-1">
+                                    <Bike className="size-3.5 text-orange-600" />
+                                    <span>Costo de Envío (Domicilio)</span>
+                                </span>
+                                <span className="font-mono text-slate-900">
+                                    ${((order.costoEnvio !== undefined && order.costoEnvio !== null)
+                                        ? order.costoEnvio
+                                        : (order.total - ((order.subtotal !== undefined && order.subtotal !== null) ? order.subtotal : (order.items?.reduce((acc: number, it: any) => acc + (it.precioUnitario * it.cantidad), 0) || 0)))
+                                    ).toFixed(2)}
+                                </span>
+                            </div>
+                        )}
+
+                        {order.tipoEntrega === 'RETIRO' && (
+                            <div className="flex justify-between text-slate-500 font-medium">
+                                <span>Modalidad</span>
+                                <span className="font-bold text-slate-700 uppercase text-[11px]">Retiro en Local ($0.00)</span>
+                            </div>
+                        )}
+
+                        <div className="flex justify-between border-t border-slate-200 pt-2 text-sm font-black">
+                            <span className="text-slate-900">Total a Pagar</span>
+                            <span className="text-orange-600 font-mono text-base">${order.total.toFixed(2)}</span>
+                        </div>
                     </div>
                 </div>
+
+                {/* Delivery Address Details */}
+                {order.tipoEntrega === 'DOMICILIO' && (
+                    <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm space-y-2 text-left">
+                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block flex items-center gap-1.5">
+                            <Bike className="size-3.5 text-orange-600" />
+                            <span>Dirección de Entrega</span>
+                        </span>
+                        <p className="text-xs font-bold text-slate-900">{order.direccionCliente || 'Dirección de domicilio registrada'}</p>
+                        {order.referenciaCliente && (
+                            <p className="text-[11px] text-slate-500 font-medium">Ref: {order.referenciaCliente}</p>
+                        )}
+                        {order.latitud && order.longitud && (
+                            <a
+                                href={`https://maps.google.com/?q=${order.latitud},${order.longitud}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-[11px] font-bold text-orange-600 hover:text-orange-800 pt-1"
+                            >
+                                <span>📍 Ver Ubicación en Google Maps</span>
+                            </a>
+                        )}
+                    </div>
+                )}
+
 
                 {/* Payment Evidence Uploaded */}
                 {latestEvidence && (
