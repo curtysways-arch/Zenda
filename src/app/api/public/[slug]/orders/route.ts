@@ -22,14 +22,14 @@ export async function GET(
         if (!negocio) {
             return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
         }
-        const cleanPhone = phone.replace(/\D/g, '');
-
-        // Construir condiciones de teléfono con 9 y 7 dígitos para coincidir con +593959997521 o 0959997521
-        const digits9 = cleanPhone.length >= 9 ? cleanPhone.slice(-9) : cleanPhone;
-        const digits7 = cleanPhone.length >= 7 ? cleanPhone.slice(-7) : cleanPhone;
+        const rawPhone = phone.trim();
+        const cleanDigits = phone.replace(/\D/g, '');
+        const digits9 = cleanDigits.length >= 9 ? cleanDigits.slice(-9) : cleanDigits;
+        const digits7 = cleanDigits.length >= 7 ? cleanDigits.slice(-7) : cleanDigits;
 
         const phoneConditions = [
-            { telefonoCliente: { contains: cleanPhone } },
+            { telefonoCliente: { contains: rawPhone } },
+            { telefonoCliente: { contains: cleanDigits } },
             { telefonoCliente: { contains: digits9 } },
             { telefonoCliente: { contains: digits7 } }
         ];
@@ -42,12 +42,7 @@ export async function GET(
             },
             include: {
                 items: true,
-                payment: {
-                    include: {
-                        evidences: { orderBy: { createdAt: 'desc' } },
-                        method: true
-                    }
-                }
+                payment: true
             },
             orderBy: { createdAt: 'desc' }
         });
@@ -60,12 +55,7 @@ export async function GET(
                 },
                 include: {
                     items: true,
-                    payment: {
-                        include: {
-                            evidences: { orderBy: { createdAt: 'desc' } },
-                            method: true
-                        }
-                    }
+                    payment: true
                 },
                 orderBy: { createdAt: 'desc' }
             });
