@@ -12,6 +12,7 @@ import Step5PinchoPayment from './Step5PinchoPayment';
 import Step6PinchoWaitingConfirmation from './Step6PinchoWaitingConfirmation';
 import PinchoSmartActiveOrderBanner from './PinchoSmartActiveOrderBanner';
 import PinchoClientOrdersHistory from './PinchoClientOrdersHistory';
+import PinchoProductDetailModal from './PinchoProductDetailModal';
 import { PinchoCartService, PinchoCartItem, PinchoCartState } from '../services/pinchoCartService';
 
 interface StoreProps {
@@ -141,6 +142,22 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                 return { ...prev, items: updatedItems };
             }
             return prev;
+        });
+    };
+
+    const handleAddToCartWithQuantity = (product: any, qtyToAdd: number) => {
+        setCartState(prev => {
+            const existingIndex = prev.items.findIndex(i => i.product.id === product.id);
+            if (existingIndex === -1) {
+                return {
+                    ...prev,
+                    items: [...prev.items, { product, quantity: qtyToAdd }]
+                };
+            } else {
+                const updatedItems = [...prev.items];
+                updatedItems[existingIndex].quantity += qtyToAdd;
+                return { ...prev, items: updatedItems };
+            }
         });
     };
 
@@ -519,35 +536,17 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                 </main>
             )}
 
-            {/* Product Image Lightbox Modal */}
-            {zoomProduct && (
-                <div className="fixed inset-0 z-[400] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl max-w-lg w-full p-5 space-y-4 shadow-2xl relative animate-fade-in text-left">
-                        <button
-                            type="button"
-                            onClick={() => setZoomProduct(null)}
-                            className="absolute top-4 right-4 size-10 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-700 cursor-pointer"
-                        >
-                            <X className="size-5" />
-                        </button>
-
-                        <div className="rounded-2xl overflow-hidden aspect-square bg-slate-100">
-                            {zoomProduct.imagenUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={zoomProduct.imagenUrl} alt={zoomProduct.nombre} className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-6xl">🍢</div>
-                            )}
-                        </div>
-
-                        <div>
-                            <h3 className="text-lg font-black text-slate-900">{zoomProduct.nombre}</h3>
-                            <p className="text-xs text-slate-500 mt-1 leading-relaxed">{zoomProduct.descripcion}</p>
-                            <span className="text-xl font-black text-orange-600 font-mono block mt-2">${zoomProduct.precio.toFixed(2)}</span>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Redesigned Product Detail Modal */}
+            <PinchoProductDetailModal
+                product={zoomProduct}
+                onClose={() => setZoomProduct(null)}
+                onAddToCart={handleAddToCartWithQuantity}
+                currentCartQuantity={
+                    zoomProduct 
+                        ? (cartState.items.find(i => i.product.id === zoomProduct.id)?.quantity || 0)
+                        : 0
+                }
+            />
         </div>
     );
 }
