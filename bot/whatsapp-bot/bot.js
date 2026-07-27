@@ -82,7 +82,8 @@ const httpServer = http.createServer(async (req, res) => {
   // Endpoint para forzar reconexión / arranque
   if (req.method === "POST" && req.url === "/connect") {
     try {
-      startBot(false); // No borrar credenciales al conectar, usar sesión previa
+      const forceClean = connectionState === 'closed' || !sock;
+      startBot(forceClean); // Si estaba cerrado o desconectado, forzar arranque limpio para generar QR fresco
       res.writeHead(200);
       res.end(JSON.stringify({ success: true, message: "Intentando conectar..." }));
     } catch (e) {
@@ -232,7 +233,7 @@ async function startBot(force = false) {
       }
       
       // Intentar obtener la versión más reciente de WhatsApp de forma dinámica, con fallback moderno
-      let version = [6, 45, 0];
+      let version = [2, 3000, 1015901307];
       try {
         const { version: latestVersion } = await fetchLatestBaileysVersion();
         version = latestVersion;
