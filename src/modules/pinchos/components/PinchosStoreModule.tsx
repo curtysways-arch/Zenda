@@ -16,6 +16,7 @@ import PinchoProductDetailModal from './PinchoProductDetailModal';
 import PinchoSuperLoader from './PinchoSuperLoader';
 import PinchoBannerCarousel from './PinchoBannerCarousel';
 import PinchoFloatingCartBar from './PinchoFloatingCartBar';
+import PinchoLoginModal from './PinchoLoginModal';
 import { PinchoCartService, PinchoCartItem, PinchoCartState } from '../services/pinchoCartService';
 
 interface StoreProps {
@@ -52,9 +53,9 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
     // Cart State
     const [cartState, setCartState] = useState<PinchoCartState>(() => PinchoCartService.loadCart(negocio.id));
 
-    // Client & Order States
-    const [clientName, setClientName] = useState('');
-    const [clientPhone, setClientPhone] = useState('');
+    const [clientName, setClientName] = useState<string>('');
+    const [clientPhone, setClientPhone] = useState<string>('');
+    const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
     const [activeOrder, setActiveOrder] = useState<any>(null);
     const [createdOrder, setCreatedOrder] = useState<any>(null);
     const [bankConfig, setBankConfig] = useState<any>(null);
@@ -308,8 +309,7 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                             if (clientPhone) {
                                 setView('orders_history');
                             } else {
-                                setView('checkout');
-                                setCurrentStep(2);
+                                setShowLoginModal(true);
                             }
                         }}
                         className="px-3.5 py-1.5 bg-orange-600 hover:bg-orange-700 text-white font-black text-[10px] uppercase tracking-wider rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
@@ -587,6 +587,20 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                     }}
                 />
             )}
+
+            {/* Dedicated Login Modal */}
+            <PinchoLoginModal
+                isOpen={showLoginModal}
+                onClose={() => setShowLoginModal(false)}
+                storeSlug={negocio.slug}
+                initialName={clientName}
+                initialPhone={clientPhone}
+                onLoginSuccess={(name, phone) => {
+                    setClientName(name);
+                    setClientPhone(phone);
+                    setView('orders_history');
+                }}
+            />
 
             {/* Super Loading Overlay */}
             <PinchoSuperLoader
