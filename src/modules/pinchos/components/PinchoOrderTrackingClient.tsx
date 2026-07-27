@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle2, Clock, ChefHat, Bike, Package, XCircle, AlertCircle, CreditCard, RefreshCw, ExternalLink, Send, Wallet, ShieldCheck, UploadCloud, Copy, Check, Loader2, Info } from 'lucide-react';
 import Step5PinchoPayment from './Step5PinchoPayment';
+import PinchoSuperLoader from './PinchoSuperLoader';
 
 interface TimelineEntry {
     id: string;
@@ -320,6 +321,20 @@ export default function PinchoOrderTrackingClient({ order: initialOrder, timelin
                     </div>
                 )}
             </main>
+
+            <PinchoSuperLoader
+                show={uploading || reactivating}
+                title={
+                    uploading 
+                        ? 'Subiendo Comprobante...' 
+                        : 'Reactivando Pedido...'
+                }
+                subtitle={
+                    uploading 
+                        ? 'Enviando imagen de transferencia al sistema de pagos...' 
+                        : 'Restableciendo tu orden para ingresar la transferencia...'
+                }
+            />
         </div>
     );
 }

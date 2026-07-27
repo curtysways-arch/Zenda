@@ -13,6 +13,7 @@ import Step6PinchoWaitingConfirmation from './Step6PinchoWaitingConfirmation';
 import PinchoSmartActiveOrderBanner from './PinchoSmartActiveOrderBanner';
 import PinchoClientOrdersHistory from './PinchoClientOrdersHistory';
 import PinchoProductDetailModal from './PinchoProductDetailModal';
+import PinchoSuperLoader from './PinchoSuperLoader';
 import { PinchoCartService, PinchoCartItem, PinchoCartState } from '../services/pinchoCartService';
 
 interface StoreProps {
@@ -546,6 +547,25 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                     zoomProduct 
                         ? (cartState.items.find(i => i.product.id === zoomProduct.id)?.quantity || 0)
                         : 0
+                }
+            />
+
+            {/* Super Loading Overlay */}
+            <PinchoSuperLoader
+                show={submitting || uploading}
+                title={
+                    submitting 
+                        ? 'Registrando tu Pedido...' 
+                        : uploading 
+                            ? 'Subiendo Comprobante...' 
+                            : 'Procesando...'
+                }
+                subtitle={
+                    submitting 
+                        ? 'Estamos guardando tus datos y generando tu orden con código único...' 
+                        : uploading 
+                            ? 'Enviando la imagen de tu transferencia para verificación...' 
+                            : 'Un momento por favor...'
                 }
             />
         </div>

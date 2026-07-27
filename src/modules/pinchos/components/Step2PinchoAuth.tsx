@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, Phone, KeyRound, Loader2, ArrowRight, CheckCircle2, ShieldCheck } from 'lucide-react';
+import PinchoSuperLoader from './PinchoSuperLoader';
 
 interface Step2Props {
     clientName: string;
@@ -288,6 +289,16 @@ export default function Step2PinchoAuth({
                     </div>
                 </form>
             )}
+
+            <PinchoSuperLoader
+                show={submitting}
+                title={otpStep === 'info' ? 'Enviando Código OTP...' : 'Verificando Código...'}
+                subtitle={
+                    otpStep === 'info' 
+                        ? 'Enviando mensaje a tu WhatsApp oficial...' 
+                        : 'Validando credenciales de acceso...'
+                }
+            />
         </div>
     );
 }
