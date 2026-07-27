@@ -169,32 +169,15 @@ export default function PinchoLoginModal({
                     <form onSubmit={handleSendOTP} className="space-y-4">
                         <div className="border-b border-slate-100 pb-3">
                             <span className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                                <User className="size-4 text-orange-600" />
-                                <span>Iniciar Sesión / Registro</span>
+                                <Phone className="size-4 text-orange-600" />
+                                <span>Iniciar Sesión</span>
                             </span>
                             <p className="text-xs text-slate-500 font-medium mt-1">
-                                Ingresa tus datos para acceder a tu historial de pedidos y compras.
+                                Ingresa tu número de WhatsApp para acceder a tu historial de pedidos.
                             </p>
                         </div>
 
                         <div className="space-y-3">
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider mb-1">
-                                    Nombre y Apellido *
-                                </label>
-                                <div className="relative">
-                                    <User className="size-4 text-slate-400 absolute left-3 top-3.5" />
-                                    <input
-                                        type="text"
-                                        required
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        placeholder="Ej: Poleth Caicedo"
-                                        className="w-full text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-3 focus:outline-none focus:border-orange-500"
-                                    />
-                                </div>
-                            </div>
-
                             <div>
                                 <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider mb-1">
                                     Número de WhatsApp *
@@ -203,9 +186,12 @@ export default function PinchoLoginModal({
                                     <Phone className="size-4 text-slate-400 absolute left-3 top-3.5" />
                                     <input
                                         type="tel"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
                                         required
+                                        autoFocus
                                         value={phone}
-                                        onChange={(e) => setPhone(e.target.value)}
+                                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
                                         placeholder="Ej: 0991234567"
                                         className="w-full text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-3 focus:outline-none focus:border-orange-500"
                                     />
@@ -254,13 +240,16 @@ export default function PinchoLoginModal({
                                 Código OTP de 6 dígitos *
                             </label>
                             <input
-                                type="text"
+                                type="tel"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
                                 maxLength={6}
                                 required
+                                autoFocus
                                 value={otpCode}
-                                onChange={(e) => setOtpCode(e.target.value)}
-                                placeholder="Ej: 123456"
-                                className="w-full text-center text-lg font-mono font-black tracking-widest text-slate-900 bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-orange-500"
+                                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                                placeholder="123456"
+                                className="w-full text-center text-2xl font-mono font-black tracking-[0.4em] text-slate-900 bg-slate-50 border-2 border-orange-400 rounded-xl p-4 focus:outline-none focus:border-orange-600"
                             />
                         </div>
 

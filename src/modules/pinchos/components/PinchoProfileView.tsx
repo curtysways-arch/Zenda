@@ -216,22 +216,6 @@ export default function PinchoProfileView({
                             </div>
 
                             <form onSubmit={handleSendOtp} className="space-y-5">
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1.5 ml-2">
-                                        Tu Nombre (Opcional)
-                                    </label>
-                                    <div className="relative">
-                                        <User className="size-4 text-slate-400 absolute left-3 top-3.5" />
-                                        <input
-                                            type="text"
-                                            value={name}
-                                            onChange={(e) => setName(e.target.value)}
-                                            placeholder="Ej: Poleth Caicedo"
-                                            className="w-full text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-3 focus:outline-none focus:border-orange-500"
-                                        />
-                                    </div>
-                                </div>
-
                                 <div className="space-y-1.5">
                                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-2">
                                         NÚMERO MÓVIL (WHATSAPP)
@@ -287,14 +271,16 @@ export default function PinchoProfileView({
                                         Ingresa el Código de 6 dígitos
                                     </label>
                                     <input
-                                        type="text"
+                                        type="tel"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
                                         maxLength={6}
                                         required
                                         autoFocus
                                         value={otpCode}
                                         onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                                        placeholder="Ej: 123456"
-                                        className="w-full text-center text-2xl font-mono font-black tracking-widest text-slate-900 bg-white border-2 border-orange-500 rounded-2xl p-4 shadow-md focus:outline-none"
+                                        placeholder="123456"
+                                        className="w-full text-center text-2xl font-mono font-black tracking-[0.4em] text-slate-900 bg-white border-2 border-orange-500 rounded-2xl p-4 shadow-md focus:outline-none"
                                     />
                                 </div>
 
