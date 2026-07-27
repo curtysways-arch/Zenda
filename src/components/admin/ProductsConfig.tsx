@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Loader2, CheckCircle2, AlertCircle, MapPin } from 'lucide-react';
+import { Save, Loader2, CheckCircle2, AlertCircle, MapPin, Upload } from 'lucide-react';
 import ImageUploader from '@/components/ui/ImageUploader';
 import PaymentMethodsConfig from '@/components/admin/PaymentMethodsConfig';
 
@@ -35,6 +35,37 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
             : config.bannerUrl ? [config.bannerUrl] : []
     );
     const [newBannerUrl, setNewBannerUrl] = useState('');
+    const [uploadingBanner, setUploadingBanner] = useState(false);
+
+    const handleUploadBannerFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            setUploadingBanner(true);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('category', 'banners');
+
+            const res = await fetch('/api/admin/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await res.json();
+            if (data.url) {
+                setBannerUrls(prev => [...prev, data.url]);
+            } else {
+                alert(data.error || 'Error al subir la imagen.');
+            }
+        } catch (err) {
+            console.error('Error al subir banner:', err);
+            alert('Error de conexión al subir la imagen.');
+        } finally {
+            setUploadingBanner(false);
+            e.target.value = '';
+        }
+    };
 
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -166,8 +197,8 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                             </div>
                         )}
 
-                        {/* Agregar Nuevo Banner por URL */}
-                        <div className="flex gap-2 pt-1">
+                        {/* Agregar Nuevo Banner por URL o Archivo */}
+                        <div className="flex flex-col sm:flex-row gap-2 pt-1">
                             <input
                                 type="text"
                                 placeholder="Pegar URL de nueva imagen para el banner (ej: https://...)"
@@ -175,18 +206,31 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                                 onChange={(e) => setNewBannerUrl(e.target.value)}
                                 className="flex-1 bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-orange-500"
                             />
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    if (newBannerUrl.trim()) {
-                                        setBannerUrls(prev => [...prev, newBannerUrl.trim()]);
-                                        setNewBannerUrl('');
-                                    }
-                                }}
-                                className="px-5 py-3 bg-orange-600 hover:bg-orange-700 text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
-                            >
-                                + Añadir Banner
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (newBannerUrl.trim()) {
+                                            setBannerUrls(prev => [...prev, newBannerUrl.trim()]);
+                                            setNewBannerUrl('');
+                                        }
+                                    }}
+                                    className="px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+                                >
+                                    + Añadir URL
+                                </button>
+                                <label className="px-4 py-3 bg-slate-900 hover:bg-black text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer shrink-0 flex items-center justify-center gap-1.5">
+                                    {uploadingBanner ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                                    <span>{uploadingBanner ? 'Subiendo...' : 'Subir Imagen'}</span>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        disabled={uploadingBanner}
+                                        onChange={handleUploadBannerFile}
+                                    />
+                                </label>
+                            </div>
                         </div>
                     </div>
 
