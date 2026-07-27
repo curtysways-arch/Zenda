@@ -22,27 +22,41 @@ export async function GET(
         if (!negocio) {
             return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
         }
-
         const cleanPhone = phone.replace(/\D/g, '');
 
-        // Intentar múltiples variantes del número para mayor compatibilidad
-        const variants = [
-            cleanPhone,
-            cleanPhone.slice(-10),
-            cleanPhone.slice(-9),
-            cleanPhone.slice(-7),
-        ].filter((v, i, arr) => v.length >= 7 && arr.indexOf(v) === i);
+        // Construir condiciones de teléfono con 9 y 7 dígitos para coincidir con +593959997521 o 0959997521
+        const digits9 = cleanPhone.length >= 9 ? cleanPhone.slice(-9) : cleanPhone;
+        const digits7 = cleanPhone.length >= 7 ? cleanPhone.slice(-7) : cleanPhone;
 
-        let orders: any[] = [];
+        const phoneConditions = [
+            { telefonoCliente: { contains: cleanPhone } },
+            { telefonoCliente: { contains: digits9 } },
+            { telefonoCliente: { contains: digits7 } }
+        ];
 
-        // Buscar con cada variante hasta encontrar resultados
-        for (const variant of variants) {
-            const found = await (prisma as any).pedido.findMany({
-                where: {
-                    negocioId: negocio.id,
-                    telefonoCliente: {
-                        contains: variant
+        // 1. Intentar buscar por el negocioId del slug actual
+        let orders = await (prisma as any).pedido.findMany({
+            where: {
+                negocioId: negocio.id,
+                OR: phoneConditions
+            },
+            include: {
+                items: true,
+                payment: {
+                    include: {
+                        evidences: { orderBy: { createdAt: 'desc' } },
+                        method: true
                     }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        // 2. Fallback: Si no hay pedidos asociados a este negocioId específico, buscar todos los pedidos con ese teléfono
+        if (orders.length === 0) {
+            orders = await (prisma as any).pedido.findMany({
+                where: {
+                    OR: phoneConditions
                 },
                 include: {
                     items: true,
@@ -55,16 +69,6 @@ export async function GET(
                 },
                 orderBy: { createdAt: 'desc' }
             });
-
-            if (found.length > 0) {
-                orders = found;
-                break;
-            }
-        }
-
-        // Si aun sin resultados, buscar solo por teléfono sin restricción de negocio como fallback de debug
-        if (orders.length === 0) {
-            console.log(`[ORDERS_GET] No se encontraron pedidos para negocioId=${negocio.id} con teléfono variants=${JSON.stringify(variants)}`);
         }
 
         return NextResponse.json({ success: true, orders, pedidos: orders });
