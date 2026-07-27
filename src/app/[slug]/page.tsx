@@ -19,6 +19,7 @@ import NotificationBell from '@/components/public/NotificationBell';
 import { NotificationService } from '@/lib/notifications/notificationService';
 import HomeServicesClient from './HomeServicesClient';
 import ProductsStoreClient from '@/components/public/ProductsStoreClient';
+import { ModuleResolver } from '@/lib/modules/ModuleResolver';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,6 +40,11 @@ export default async function PublicNegocioPage({
     }
 
     if (negocio.tipoNegocio === 'PRODUCTOS') {
+        // Dispatch via ModuleResolver — never hardcode slug here
+        if (ModuleResolver.isPinchosModule(slug)) {
+            const { default: PinchosStoreModule } = await import('@/modules/pinchos/components/PinchosStoreModule');
+            return <PinchosStoreModule negocio={negocio} />;
+        }
         return <ProductsStoreClient negocio={negocio} />;
     }
     

@@ -1,71 +1,47 @@
-import { notFound } from 'next/navigation';
 import prisma from '@/lib/prisma';
-import OrderTrackingClient from '@/components/public/OrderTrackingClient';
-import { getNegocioBySlug } from '@/lib/services';
+import { notFound } from 'next/navigation';
+import { ModuleResolver } from '@/lib/modules/ModuleResolver';
+import { PinchoFriendlyCodeService } from '@/modules/pinchos/services/pinchoFriendlyCodeService';
 
 export const dynamic = 'force-dynamic';
 
-export default async function OrderTrackingPage({
-    params
-}: {
+interface Props {
     params: Promise<{ slug: string; id: string }>;
-}) {
+}
+
+export default async function PinchoOrderDetailPage({ params }: Props) {
     const { slug, id } = await params;
-    
-    // Obtener negocio
-    const negocio = await getNegocioBySlug(slug);
-    if (!negocio) {
+
+    // Guard: only allow pinchos module
+    if (!ModuleResolver.isPinchosModule(slug)) {
         notFound();
     }
 
-    // Obtener pedido con sus items
-    const pedido = await (prisma as any).pedido.findUnique({
+    const order = await (prisma as any).pedido.findUnique({
         where: { id },
         include: {
-            items: true
+            items: true,
+            payment: {
+                include: {
+                    evidences: { orderBy: { createdAt: 'desc' }, take: 1 }
+                }
+            }
         }
     });
 
-    if (!pedido || pedido.negocioId !== negocio.id) {
+    if (!order) {
         notFound();
     }
 
-    // Formatear el pedido para serialización limpia
-    const formattedOrder = {
-        id: pedido.id,
-        numeroPedido: pedido.numeroPedido,
-        tipoEntrega: pedido.tipoEntrega,
-        nombreCliente: pedido.nombreCliente,
-        telefonoCliente: pedido.telefonoCliente,
-        direccionCliente: pedido.direccionCliente,
-        referenciaCliente: pedido.referenciaCliente,
-        fechaEntrega: pedido.fechaEntrega instanceof Date 
-            ? pedido.fechaEntrega.toISOString() 
-            : (pedido.fechaEntrega ? String(pedido.fechaEntrega) : null),
-        franjaHoraria: pedido.franjaHoraria,
-        subtotal: pedido.subtotal,
-        costoEnvio: pedido.costoEnvio,
-        total: pedido.total,
-        estado: pedido.estado,
-        notas: pedido.notas,
-        createdAt: pedido.createdAt instanceof Date ? pedido.createdAt.toISOString() : String(pedido.createdAt),
-        items: (pedido.items || []).map((item: any) => ({
-            id: item.id,
-            nombreProducto: item.nombreProducto,
-            precioUnitario: item.precioUnitario,
-            cantidad: item.cantidad
-        }))
-    };
+    const timeline = await (prisma as any).pinchoOrderTimeline.findMany({
+        where: { pedidoId: id },
+        orderBy: { createdAt: 'asc' }
+    });
 
-    return (
-        <OrderTrackingClient 
-            order={formattedOrder} 
-            negocio={{
-                nombre: negocio.nombre,
-                slug: negocio.slug,
-                whatsapp: negocio.whatsapp,
-                colorPrimario: negocio.colorPrimario
-            }} 
-        />
-    );
+    const friendlyCode = PinchoFriendlyCodeService.formatFriendlyCode(order.numeroPedido, 'PIN');
+
+    // Dynamically import the tracking client
+    const { default: PinchoOrderTrackingClient } = await import('@/modules/pinchos/components/PinchoOrderTrackingClient');
+
+    return <PinchoOrderTrackingClient order={{ ...order, friendlyCode }} timeline={timeline} storeSlug={slug} />;
 }

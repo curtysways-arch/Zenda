@@ -2729,5 +2729,58 @@ model PaymentHistory {
   @@index([paymentId])
 }
 
+// ─── MÓDULO PINCHOS - CHECKOUT & ANALYTICS ───────────────────────────────────
+
+model PinchoCheckoutSession {
+  id              String   @id @default(uuid())
+  negocioId       String
+  sessionId       String   @unique
+  clienteTelefono String?
+  clienteNombre   String?
+  pasoActual      Int      @default(1)
+  items           Json
+  cuponCodigo     String?
+  tipoEntrega     String?  // "RETIRO" | "DOMICILIO"
+  direccion       String?
+  referencia      String?
+  latitud         Float?
+  longitud        Float?
+  metodoPago      String?
+  observaciones   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([negocioId])
+  @@index([sessionId])
+}
+
+model PinchoCheckoutAnalytics {
+  id          String   @id @default(uuid())
+  negocioId   String
+  sessionId   String
+  stepName    String   // "ADD_TO_CART" | "CHECKOUT_START" | "OTP_VALIDATED" | "ADDRESS_ENTERED" | "PAYMENT_PAGE_VIEW" | "EVIDENCE_UPLOADED" | "PAYMENT_CONFIRMED" | "ABANDONED"
+  stepIndex   Int
+  timeSpentMs Int?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([negocioId])
+  @@index([sessionId])
+  @@index([stepName])
+}
+
+model PinchoOrderTimeline {
+  id             String   @id @default(uuid())
+  pedidoId       String
+  estadoAnterior String?
+  estadoNuevo    String
+  comentario     String?
+  creadoPor      String   @default("SISTEMA")
+  createdAt      DateTime @default(now())
+
+  @@index([pedidoId])
+}
+
+
 
 

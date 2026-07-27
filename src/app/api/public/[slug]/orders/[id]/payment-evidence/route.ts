@@ -152,7 +152,28 @@ export async function POST(
             console.error('[EVIDENCE_NOTIF_ERROR]', nErr);
         }
 
+        // Registrar en PinchoOrderTimeline si el pedido es del módulo Pinchos
+        try {
+            const { ModuleResolver } = require('@/lib/modules/ModuleResolver');
+            const { default: prismaClient } = require('@/lib/prisma');
+            const negocioSlug = await prismaClient.negocio.findUnique({ where: { id: payment.negocioId }, select: { slug: true } });
+            if (negocioSlug?.slug && ModuleResolver.isPinchosModule(negocioSlug.slug)) {
+                await prismaClient.pinchoOrderTimeline.create({
+                    data: {
+                        pedidoId: payment.pedidoId,
+                        estadoAnterior: 'PENDIENTE_PAGO',
+                        estadoNuevo: 'PAGO_EN_REVISION',
+                        comentario: 'Comprobante de pago subido por el cliente. Pendiente de verificación.',
+                        creadoPor: payment.pedido.nombreCliente || 'CLIENTE'
+                    }
+                });
+            }
+        } catch (tlErr) {
+            console.error('[EVIDENCE_TIMELINE_ERROR]', tlErr);
+        }
+
         return NextResponse.json({
+
             success: true,
             message: 'Comprobante subido y enviado a revisión exitosamente.',
             evidence: result.evidence,
