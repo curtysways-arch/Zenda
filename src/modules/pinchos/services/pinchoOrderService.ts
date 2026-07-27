@@ -94,8 +94,14 @@ export class PinchoOrderService {
             });
         }
 
-        // Shipping Cost
+        // Minimum Order Amount validation
         const config = (negocio.configuracion as any) || {};
+        const minOrderAmount = config.montoMinimoPedido !== undefined ? parseFloat(config.montoMinimoPedido) : 0;
+        if (minOrderAmount > 0 && subtotal < minOrderAmount) {
+            throw new Error(`El pedido mínimo configurado es de $${minOrderAmount.toFixed(2)}. Agrega más productos para continuar.`);
+        }
+
+        // Shipping Cost
         let costoEnvio = 0;
         if (deliveryType === 'DOMICILIO') {
             const baseCost = config.costoEnvio !== undefined ? parseFloat(config.costoEnvio) : 1.50;

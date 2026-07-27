@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, Search, Plus, Minus, User, ZoomIn, X, Share2, Check } from 'lucide-react';
+import { ShoppingBag, Search, Plus, Minus, User, ZoomIn, X, Share2, Check, ArrowLeft } from 'lucide-react';
 import PinchoCheckoutStepper from './PinchoCheckoutStepper';
 import Step1PinchoCart from './Step1PinchoCart';
 import Step2PinchoAuth from './Step2PinchoAuth';
@@ -346,7 +346,19 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                         onStepClick={(step) => setCurrentStep(step)}
                     />
 
-                    <main className="px-4 pt-6">
+                    {/* Back to Menu Button Bar (just below Stepper / Header) */}
+                    <div className="max-w-xl mx-auto px-4 pt-3 pb-1 flex items-center justify-between">
+                        <button
+                            type="button"
+                            onClick={() => setView('catalog')}
+                            className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-slate-700 hover:text-slate-900 bg-white border border-slate-200/80 px-3 py-1.5 rounded-xl shadow-2xs transition-all active:scale-95 cursor-pointer"
+                        >
+                            <ArrowLeft className="size-3.5 text-orange-600" />
+                            <span>Volver al Menú</span>
+                        </button>
+                    </div>
+
+                    <main className="px-4 pt-2">
                         {currentStep === 1 && (
                             <Step1PinchoCart
                                 items={cartState.items}
@@ -356,6 +368,11 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                                 setCouponCode={(code) => setCartState(prev => ({ ...prev, couponCode: code }))}
                                 onContinue={() => setCurrentStep(2)}
                                 onBackToCatalog={() => setView('catalog')}
+                                minOrderAmount={
+                                    (negocio.configuracion as any)?.montoMinimoPedido !== undefined
+                                        ? parseFloat((negocio.configuracion as any).montoMinimoPedido)
+                                        : 0
+                                }
                             />
                         )}
 

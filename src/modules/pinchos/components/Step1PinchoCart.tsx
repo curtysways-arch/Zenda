@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, Plus, Minus, Trash2, ArrowRight, ArrowLeft, Tag, PlusCircle } from 'lucide-react';
+import { ShoppingBag, Plus, Minus, Trash2, ArrowRight, Tag, PlusCircle, AlertCircle } from 'lucide-react';
 import { PinchoCartItem } from '../services/pinchoCartService';
 
 interface Step1Props {
@@ -10,6 +10,7 @@ interface Step1Props {
     onBackToCatalog?: () => void;
     couponCode: string;
     setCouponCode: (code: string) => void;
+    minOrderAmount?: number;
     primaryColor?: string;
 }
 
@@ -21,13 +22,16 @@ export default function Step1PinchoCart({
     onBackToCatalog,
     couponCode,
     setCouponCode,
+    minOrderAmount = 0,
     primaryColor = '#ff6b2b'
 }: Step1Props) {
     const subtotal = items.reduce((acc, i) => acc + (i.product.precio * i.quantity), 0);
+    const amountNeededForMin = minOrderAmount > 0 ? Math.max(0, minOrderAmount - subtotal) : 0;
+    const isMinAmountMet = amountNeededForMin === 0;
 
     if (items.length === 0) {
         return (
-            <div className="bg-white rounded-3xl p-8 border border-slate-200/80 text-center space-y-4 shadow-sm max-w-lg mx-auto">
+            <div className="bg-white rounded-3xl p-8 border border-slate-200/80 text-center space-y-4 shadow-sm max-w-lg mx-auto font-sans">
                 <div className="size-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
                     <ShoppingBag className="size-8" />
                 </div>
@@ -49,18 +53,19 @@ export default function Step1PinchoCart({
     }
 
     return (
-        <div className="space-y-5 max-w-xl mx-auto text-left">
-            {/* Top Navigation Bar: Volver al Menú */}
-            {onBackToCatalog && (
-                <div className="flex items-center justify-between">
-                    <button
-                        type="button"
-                        onClick={onBackToCatalog}
-                        className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-700 hover:text-slate-900 bg-white border border-slate-200/80 px-3.5 py-2 rounded-2xl shadow-2xs transition-all active:scale-95 cursor-pointer"
-                    >
-                        <ArrowLeft className="size-4 text-orange-600" />
-                        <span>Volver al Menú</span>
-                    </button>
+        <div className="space-y-5 max-w-xl mx-auto text-left font-sans">
+            {/* Warning Banner if Min Order Amount not met */}
+            {!isMinAmountMet && (
+                <div className="bg-amber-50 border border-amber-200/90 rounded-2xl p-4 flex items-start gap-3 shadow-2xs">
+                    <AlertCircle className="size-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="text-xs space-y-0.5">
+                        <span className="font-black text-amber-950 block uppercase tracking-wider text-[11px]">
+                            Pedido Mínimo: ${minOrderAmount.toFixed(2)}
+                        </span>
+                        <p className="text-amber-800 font-medium">
+                            Tu subtotal es de <strong>${subtotal.toFixed(2)}</strong>. Agrega <strong>${amountNeededForMin.toFixed(2)}</strong> más en productos para poder continuar.
+                        </p>
+                    </div>
                 </div>
             )}
 
@@ -174,6 +179,12 @@ export default function Step1PinchoCart({
                         <span>Subtotal Productos</span>
                         <span className="font-mono text-white">${subtotal.toFixed(2)}</span>
                     </div>
+                    {minOrderAmount > 0 && (
+                        <div className="flex justify-between text-[11px] text-slate-400 font-medium">
+                            <span>Pedido Mínimo Requerido</span>
+                            <span className="font-mono text-amber-400">${minOrderAmount.toFixed(2)}</span>
+                        </div>
+                    )}
                     <div className="flex justify-between text-sm font-black text-white pt-2 border-t border-slate-800/80">
                         <span>Total estimado</span>
                         <span className="text-lg font-mono text-orange-400">${subtotal.toFixed(2)}</span>
@@ -182,11 +193,22 @@ export default function Step1PinchoCart({
 
                 <button
                     type="button"
+                    disabled={!isMinAmountMet}
                     onClick={onContinue}
-                    className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-orange-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                    className={`w-full py-4 font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                        isMinAmountMet
+                            ? 'bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white shadow-orange-600/30 active:scale-[0.98]'
+                            : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-80'
+                    }`}
                 >
-                    <span>CONTINUAR A DATOS DEL CLIENTE</span>
-                    <ArrowRight className="size-4" />
+                    {isMinAmountMet ? (
+                        <>
+                            <span>CONTINUAR A DATOS DEL CLIENTE</span>
+                            <ArrowRight className="size-4" />
+                        </>
+                    ) : (
+                        <span>FALTAN ${amountNeededForMin.toFixed(2)} PARA EL PEDIDO MÍNIMO</span>
+                    )}
                 </button>
             </div>
         </div>
