@@ -68,12 +68,14 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
             fetch(`/api/public/${storeSlug}/catalogue`)
                 .then(r => r.json())
                 .then(d => {
-                    if (d.productos) setProducts(d.productos);
-                    if (d.categorias) setCategories(d.categorias);
+                    // API returns { products, categories }
+                    if (d.products) setProducts(d.products);
+                    if (d.categories) setCategories(d.categories);
                 })
                 .catch(err => console.error("Error loading catalogue:", err));
         }
     }, [storeSlug, initialProducts.length]);
+
 
     // Session ID initialization for temporary draft
     useEffect(() => {

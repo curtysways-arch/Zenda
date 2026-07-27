@@ -47,17 +47,22 @@ export async function POST(req: NextRequest) {
             items
         });
 
-        // Delete temporary checkout draft upon order creation
+        // Delete temporary checkout draft — safe if table not yet migrated
         if (sessionId) {
-            await PinchoCheckoutSessionService.deleteSession(sessionId);
-            await PinchoAnalyticsService.trackStep({
-                storeId: targetStoreId,
-                sessionId,
-                stepName: 'PAYMENT_PAGE_VIEW',
-                stepIndex: 5,
-                metadata: { orderId: newOrder.id, friendlyCode }
-            });
+            try {
+                await PinchoCheckoutSessionService.deleteSession(sessionId);
+                await PinchoAnalyticsService.trackStep({
+                    storeId: targetStoreId,
+                    sessionId,
+                    stepName: 'PAYMENT_PAGE_VIEW',
+                    stepIndex: 5,
+                    metadata: { orderId: newOrder.id, friendlyCode }
+                });
+            } catch (_) {
+                // Tables not yet migrated — ignore silently
+            }
         }
+
 
         // Notify business & client
         await PinchoNotificationService.notifyStatusChange({

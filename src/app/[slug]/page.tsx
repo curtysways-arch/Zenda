@@ -43,10 +43,32 @@ export default async function PublicNegocioPage({
         // Dispatch via ModuleResolver — never hardcode slug here
         if (ModuleResolver.isPinchosModule(slug)) {
             const { default: PinchosStoreModule } = await import('@/modules/pinchos/components/PinchosStoreModule');
-            return <PinchosStoreModule negocio={negocio} />;
+
+            // Pre-fetch products server-side so the first render is not empty
+            let initialProducts: any[] = [];
+            let initialCategories: any[] = [];
+            try {
+                const [prods, cats] = await Promise.all([
+                    (prisma as any).producto.findMany({
+                        where: { negocioId: negocio.id, activo: true },
+                        orderBy: { orden: 'asc' }
+                    }),
+                    (prisma as any).categoriaProducto.findMany({
+                        where: { negocioId: negocio.id, activo: true },
+                        orderBy: { orden: 'asc' }
+                    })
+                ]);
+                initialProducts = prods;
+                initialCategories = cats;
+            } catch (_) {
+                // Non-critical — client will fetch via useEffect
+            }
+
+            return <PinchosStoreModule negocio={negocio} initialProducts={initialProducts} initialCategories={initialCategories} />;
         }
         return <ProductsStoreClient negocio={negocio} />;
     }
+
     
     negocio.canchas = negocio.services || [];
 

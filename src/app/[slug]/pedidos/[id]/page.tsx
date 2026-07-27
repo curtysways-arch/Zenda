@@ -33,10 +33,18 @@ export default async function PinchoOrderDetailPage({ params }: Props) {
         notFound();
     }
 
-    const timeline = await (prisma as any).pinchoOrderTimeline.findMany({
-        where: { pedidoId: id },
-        orderBy: { createdAt: 'asc' }
-    });
+    // Timeline: safe query — table may not exist before Prisma migration runs in production
+    let timeline: any[] = [];
+    try {
+        timeline = await (prisma as any).pinchoOrderTimeline.findMany({
+            where: { pedidoId: id },
+            orderBy: { createdAt: 'asc' }
+        });
+    } catch (_) {
+        // Table not yet migrated in production — show empty timeline
+        timeline = [];
+    }
+
 
     const friendlyCode = PinchoFriendlyCodeService.formatFriendlyCode(order.numeroPedido, 'PIN');
 
