@@ -19,6 +19,7 @@ import PinchoFloatingCartBar from './PinchoFloatingCartBar';
 import PinchoLoginModal from './PinchoLoginModal';
 import PinchoProfileView from './PinchoProfileView';
 import { PinchoCartService, PinchoCartItem, PinchoCartState } from '../services/pinchoCartService';
+import { formatToEcuadorPhone } from '@/lib/phoneUtils';
 
 interface StoreProps {
     negocio: {
@@ -215,6 +216,12 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                 setActiveOrder(data.pedido);
                 setCurrentStep(5);
                 
+                if (typeof window !== 'undefined' && clientPhone) {
+                    const formatted = formatToEcuadorPhone(clientPhone);
+                    localStorage.setItem('pinchos_client_phone', formatted);
+                    localStorage.setItem('user_phone', formatted);
+                }
+
                 // Clear cart locally
                 PinchoCartService.clearCart(negocio.id);
                 setCartState(PinchoCartService.getInitialState());
