@@ -170,21 +170,38 @@ export default function Step2PinchoAuth({
                 <form onSubmit={handleSendOTP} className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4 text-left">
                     <div className="border-b border-slate-100 pb-3">
                         <span className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                            <Phone className="size-4 text-orange-600" />
+                            <User className="size-4 text-orange-600" />
                             <span>Identificación del Cliente</span>
                         </span>
                         <p className="text-xs text-slate-500 font-medium mt-1">
-                            Ingresa tu número de WhatsApp para confirmar tu pedido y recibir actualizaciones.
+                            Ingresa tu nombre y teléfono para confirmar tu pedido y recibir actualizaciones.
                         </p>
                     </div>
 
                     <div className="space-y-3">
                         <div>
                             <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider mb-1">
+                                Nombre y Apellido *
+                            </label>
+                            <div className="relative">
+                                <User className="size-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                <input
+                                    type="text"
+                                    required
+                                    value={clientName}
+                                    onChange={(e) => setClientName(e.target.value)}
+                                    placeholder="Ej: Juan Pérez"
+                                    className="w-full text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-3 focus:outline-none focus:border-orange-500"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider mb-1">
                                 Número de WhatsApp *
                             </label>
                             <div className="relative">
-                                <Phone className="size-4 text-slate-400 absolute left-3 top-3.5" />
+                                <Phone className="size-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                                 <input
                                     type="tel"
                                     inputMode="numeric"
