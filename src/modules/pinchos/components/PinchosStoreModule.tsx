@@ -464,7 +464,16 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                         {currentStep === 6 && (
                             <Step6PinchoWaitingConfirmation
                                 order={createdOrder || activeOrder}
-                                onViewOrder={() => setView('orders_history')}
+                                onViewOrder={() => {
+                                    const targetOrder = createdOrder || activeOrder;
+                                    if (targetOrder?.id) {
+                                        if (typeof window !== 'undefined') {
+                                            window.location.href = `/${storeSlug}/pedidos/${targetOrder.id}`;
+                                        }
+                                    } else {
+                                        setView('orders_history');
+                                    }
+                                }}
                             />
                         )}
                     </main>
