@@ -44,19 +44,6 @@ export default function PinchoProductDetailModal({
 
     const handleAcceptAdd = () => {
         onAddToCart(product, quantity);
-        setToastMsg(currentCartQuantity > 0 ? '✅ Se actualizó tu carrito.' : '✅ ¡Producto agregado al carrito!');
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 2000);
-    };
-
-    const handleAddAndGoToCart = () => {
-        onAddToCart(product, quantity);
-        onClose();
-        if (onGoToCart) onGoToCart();
-    };
-
-    const handleAddAndKeepBrowsing = () => {
-        onAddToCart(product, quantity);
         onClose();
     };
 
@@ -71,7 +58,7 @@ export default function PinchoProductDetailModal({
             <div className="absolute inset-0" onClick={onClose} />
 
             {/* Centered Modal Card */}
-            <div className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[86vh] text-left animate-scale-up border border-slate-200/80 my-auto">
+            <div className="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[88vh] text-left animate-scale-up border border-slate-200/80 my-auto">
 
                 {/* Close Button (Floating Frosted Glass) */}
                 <button
@@ -85,26 +72,25 @@ export default function PinchoProductDetailModal({
 
                 {/* Scrollable Modal Body */}
                 <div className="overflow-y-auto custom-scrollbar flex-1 pb-2">
-                    {/* Top Image (aspect 16:9 on mobile for compact fit) */}
-                    <div className="relative w-full aspect-[16/9] sm:aspect-[4/3] bg-slate-100 overflow-hidden">
+                    {/* Top Image (100% Full Image without cropping) */}
+                    <div className="relative w-full bg-slate-100/80 flex items-center justify-center min-h-[220px] max-h-[48vh] overflow-hidden p-1">
                         {product.imagenUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
                                 src={product.imagenUrl}
                                 alt={product.nombre}
-                                className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
+                                className="w-full max-h-[46vh] object-contain rounded-2xl"
                             />
                         ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-orange-100 via-amber-50 to-orange-50 text-orange-600">
+                            <div className="w-full py-12 flex flex-col items-center justify-center bg-gradient-to-br from-orange-100 via-amber-50 to-orange-50 text-orange-600">
                                 <span className="text-5xl">🍢</span>
                                 <span className="text-xs font-black uppercase tracking-widest text-orange-700 mt-1">PinchoListo</span>
                             </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                     </div>
 
                     {/* Content Section */}
-                    <div className="p-4 sm:p-6 space-y-3.5">
+                    <div className="p-4 sm:p-6 space-y-4">
                         {/* Title & Category Badge */}
                         <div className="space-y-1">
                             <span className="inline-block px-2.5 py-0.5 bg-orange-100 text-orange-800 text-[10px] font-black uppercase tracking-widest rounded-md">
@@ -119,26 +105,6 @@ export default function PinchoProductDetailModal({
                         <p className="text-xs text-slate-600 font-medium leading-relaxed">
                             {displayDescription}
                         </p>
-
-                        {/* Additional Badges with Icons */}
-                        <div className="grid grid-cols-2 gap-2 pt-0.5">
-                            <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-200/60 text-[11px] font-bold text-slate-700">
-                                <span className="text-sm">🥩</span>
-                                <span>Producto fresco</span>
-                            </div>
-                            <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-200/60 text-[11px] font-bold text-slate-700">
-                                <Snowflake className="size-3.5 text-blue-500 shrink-0" />
-                                <span>Mantener refrigerado</span>
-                            </div>
-                            <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-200/60 text-[11px] font-bold text-slate-700">
-                                <Flame className="size-3.5 text-amber-500 shrink-0" />
-                                <span>Listo para asar</span>
-                            </div>
-                            <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-200/60 text-[11px] font-bold text-slate-700">
-                                <Truck className="size-3.5 text-emerald-600 shrink-0" />
-                                <span>Entrega rápida</span>
-                            </div>
-                        </div>
 
                         {/* Price & Quantity Selector Section */}
                         <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-200/80 flex items-center justify-between gap-4">
@@ -182,39 +148,18 @@ export default function PinchoProductDetailModal({
                     </div>
                 </div>
 
-                {/* Fixed Sticky Bottom Action Bar with Action Buttons */}
-                <div className="p-3.5 bg-white/95 backdrop-blur-md border-t border-slate-200/80 shrink-0 space-y-2">
-                    {/* Primary Button: Aceptar y Agregar */}
+                {/* Single Action Button: Aceptar y Agregar */}
+                <div className="p-3.5 bg-white/95 backdrop-blur-md border-t border-slate-200/80 shrink-0">
                     <button
                         type="button"
                         onClick={handleAcceptAdd}
-                        className="w-full py-3.5 bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 hover:from-orange-700 hover:to-orange-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                        className="w-full py-4 bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 hover:from-orange-700 hover:to-orange-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
                     >
                         <ShoppingBag className="size-4 stroke-[2.5]" />
                         <span>
                             ACEPTAR Y AGREGAR {quantity > 1 ? `(${quantity}) ` : ''}• ${totalPrice.toFixed(2)}
                         </span>
                     </button>
-
-                    {/* Secondary Row: Ver Carrito & Añadir Más Productos */}
-                    <div className="grid grid-cols-2 gap-2 pt-0.5">
-                        <button
-                            type="button"
-                            onClick={handleAddAndGoToCart}
-                            className="py-2.5 bg-slate-900 hover:bg-slate-950 text-white font-black rounded-xl text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
-                        >
-                            <ArrowRight className="size-3.5 text-orange-400" />
-                            <span>VER CARRITO</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleAddAndKeepBrowsing}
-                            className="py-2.5 bg-orange-50 hover:bg-orange-100 border border-orange-200/80 text-orange-900 font-black rounded-xl text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
-                        >
-                            <PlusCircle className="size-3.5 text-orange-600" />
-                            <span>AÑADIR MÁS</span>
-                        </button>
-                    </div>
                 </div>
             </div>
 
