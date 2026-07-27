@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { notificationService } from '@/lib/notifications';
+import { whatsappService } from '@/lib/whatsapp';
 import { v4 as uuidv4 } from 'uuid';
-import { SignJWT } from 'jose';
 
 // Memoria caché de respaldo rápida para entornos donde la BD o WhatsApp varíen
 const otpStore = new Map<string, { code: string; expiresAt: number }>();
@@ -27,16 +27,24 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Buscar negocio para enviar la plantilla del OTP por WhatsApp
-        const negocio = await prisma.negocio.findFirst({
-            where: { OR: [{ slug }, { slug: 'pinchos' }] },
+        // Buscar negocio flexiblemente para enviar el OTP por WhatsApp
+        let negocio = await prisma.negocio.findFirst({
+            where: { OR: [{ slug }, { slug: 'pinchos' }, { slug: 'pincho-listo' }] },
             select: { id: true, nombre: true }
         });
+
+        if (!negocio) {
+            negocio = await prisma.negocio.findFirst({
+                select: { id: true, nombre: true }
+            });
+        }
+
+        const storeName = negocio?.nombre || 'PinchoListo';
 
         if (action === 'send_otp') {
             // Generar código de 4 dígitos (p. ej., 1234 por defecto o aleatorio)
             const generatedCode = cleanPhone.endsWith('0000') ? '1234' : Math.floor(1000 + Math.random() * 9000).toString();
-            const expiresAt = Date.now() + 10 * 60 * 1000; // Valido por 10 minutos
+            const expiresAt = Date.now() + 10 * 60 * 1000; // Válido por 10 minutos
 
             // Guardar en memoria caché
             otpStore.set(cleanPhone, { code: generatedCode, expiresAt });
@@ -60,12 +68,21 @@ export async function POST(req: NextRequest) {
 
             console.log(`\n=========================================\n🔑 OTP Citiox [${cleanPhone}]: ${generatedCode}\n=========================================\n`);
 
-            // Intentar enviar WhatsApp oficial de Citiox (sin bloquear la respuesta)
+            // 1. Enviar mensaje de WhatsApp directo a través del Bot oficial
+            const waMsg = `🔑 *Código de Verificación OTP*\n\nHola, tu código de acceso para *${storeName}* es: *${generatedCode}*\n\n_Válido por 10 minutos. No compartas este código con nadie._`;
+            
+            try {
+                await whatsappService.sendWhatsApp(cleanPhone, waMsg);
+            } catch (directWaErr) {
+                console.warn('[OTP Auth] WhatsApp directo no enviado:', directWaErr);
+            }
+
+            // 2. Intentar también vía notificationService por plantilla
             if (negocio) {
                 try {
-                    await notificationService.sendOTP(negocio.id, cleanPhone, generatedCode, negocio.nombre);
+                    await notificationService.sendOTP(negocio.id, cleanPhone, generatedCode, storeName);
                 } catch (waErr) {
-                    console.warn('[OTP Auth] WhatsApp no enviado, usando fallback de consola/master code:', waErr);
+                    console.warn('[OTP Auth] NotificationService sendOTP omitido:', waErr);
                 }
             }
 
@@ -111,59 +128,31 @@ export async function POST(req: NextRequest) {
                         });
                     }
                 } catch (dbErr) {
-                    console.warn('[OTP Verify] Error al verificar en DB:', dbErr);
+                    console.warn('[OTP Auth] Error buscando en DB:', dbErr);
                 }
             }
 
-            if (!isValidStored && !isValidMasterCode && !isValidDb) {
-                return NextResponse.json(
-                    { success: false, error: 'El código OTP es incorrecto o ha expirado.' },
-                    { status: 400 }
-                );
+            if (isValidMasterCode || isValidStored || isValidDb) {
+                return NextResponse.json({
+                    success: true,
+                    message: 'Sesión verificada exitosamente.'
+                });
             }
 
-            // Consumir OTP usado
-            otpStore.delete(cleanPhone);
-
-            // Generar JWT para sesión unificada de cliente
-            const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "default_otp_secret_key_change_me");
-            const token = await new SignJWT({
-                telefono: cleanPhone,
-                negocioId: negocio?.id || null,
-                slug: slug,
-                roles: ['USER']
-            })
-                .setProtectedHeader({ alg: "HS256" })
-                .setIssuedAt()
-                .setExpirationTime("30d")
-                .sign(secret);
-
-            const response = NextResponse.json({
-                success: true,
-                verified: true,
-                phone: cleanPhone,
-                message: 'Teléfono verificado con éxito.'
-            });
-
-            response.cookies.set("customer_token", token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: "lax",
-                maxAge: 60 * 60 * 24 * 30, // 30 días
-                path: "/",
-            });
-
-            return response;
+            return NextResponse.json(
+                { success: false, error: 'El código OTP es incorrecto o ha expirado.' },
+                { status: 400 }
+            );
         }
 
         return NextResponse.json(
-            { success: false, error: 'Acción no soportada.' },
+            { success: false, error: 'Acción no válida.' },
             { status: 400 }
         );
     } catch (error: any) {
-        console.error('Error en API OTP:', error);
+        console.error('[OTP Auth] Error crítico:', error);
         return NextResponse.json(
-            { success: false, error: error.message || 'Error al procesar OTP' },
+            { success: false, error: error.message || 'Error interno al procesar OTP.' },
             { status: 500 }
         );
     }
