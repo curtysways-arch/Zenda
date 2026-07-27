@@ -28,6 +28,13 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
     const [latitudNegocio, setLatitudNegocio] = useState(config.latitudNegocio !== undefined ? config.latitudNegocio.toString() : '-0.180653');
     const [longitudNegocio, setLongitudNegocio] = useState(config.longitudNegocio !== undefined ? config.longitudNegocio.toString() : '-78.467838');
     const [horaLimiteMismoDia, setHoraLimiteMismoDia] = useState(config.horaLimiteMismoDia || '18:00');
+    // Banners del carrusel
+    const [bannerUrls, setBannerUrls] = useState<string[]>(
+        Array.isArray(config.bannerUrls) && config.bannerUrls.length > 0
+            ? config.bannerUrls
+            : config.bannerUrl ? [config.bannerUrl] : []
+    );
+    const [newBannerUrl, setNewBannerUrl] = useState('');
 
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -39,6 +46,7 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
             configuracion: {
                 ...config,
                 wizardCompleted: true,
+                bannerUrls: bannerUrls.filter(u => u && u.trim() !== ''),
                 montoMinimoPedido: parseFloat(montoMinimoPedido) || 0,
                 tiempoMaximoEntrega,
                 costoEnvio: parseFloat(costoEnvio) || 0,
@@ -123,6 +131,62 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                                     className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
                                 />
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Banners del Carrusel de la Tienda */}
+                    <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm space-y-4">
+                        <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-2">
+                            <div>
+                                <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Banners del Carrusel (Imágenes de Portada)</h3>
+                                <p className="text-[11px] text-slate-400 font-medium">Añade varias imágenes para mostrarlas en el carrusel animado de tu tienda.</p>
+                            </div>
+                            <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-xl shrink-0">
+                                {bannerUrls.length} banners
+                            </span>
+                        </div>
+
+                        {/* Banners Existentes */}
+                        {bannerUrls.length > 0 && (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                {bannerUrls.map((url, idx) => (
+                                    <div key={url + idx} className="relative aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 group">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={url} alt={`Banner ${idx + 1}`} className="w-full h-full object-cover" />
+                                        <button
+                                            type="button"
+                                            onClick={() => setBannerUrls(prev => prev.filter((_, i) => i !== idx))}
+                                            className="absolute top-2 right-2 size-7 bg-rose-600 text-white rounded-full flex items-center justify-center text-xs font-black shadow-md hover:bg-rose-700 transition-colors cursor-pointer"
+                                            title="Eliminar banner"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Agregar Nuevo Banner por URL */}
+                        <div className="flex gap-2 pt-1">
+                            <input
+                                type="text"
+                                placeholder="Pegar URL de nueva imagen para el banner (ej: https://...)"
+                                value={newBannerUrl}
+                                onChange={(e) => setNewBannerUrl(e.target.value)}
+                                className="flex-1 bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-orange-500"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (newBannerUrl.trim()) {
+                                        setBannerUrls(prev => [...prev, newBannerUrl.trim()]);
+                                        setNewBannerUrl('');
+                                    }
+                                }}
+                                className="px-5 py-3 bg-orange-600 hover:bg-orange-700 text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+                            >
+                                + Añadir Banner
+                            </button>
                         </div>
                     </div>
 

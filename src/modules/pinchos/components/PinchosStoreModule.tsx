@@ -14,6 +14,8 @@ import PinchoSmartActiveOrderBanner from './PinchoSmartActiveOrderBanner';
 import PinchoClientOrdersHistory from './PinchoClientOrdersHistory';
 import PinchoProductDetailModal from './PinchoProductDetailModal';
 import PinchoSuperLoader from './PinchoSuperLoader';
+import PinchoBannerCarousel from './PinchoBannerCarousel';
+import PinchoFloatingCartBar from './PinchoFloatingCartBar';
 import { PinchoCartService, PinchoCartItem, PinchoCartState } from '../services/pinchoCartService';
 
 interface StoreProps {
@@ -442,18 +444,13 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                 </div>
             ) : (
                 /* Catalog View */
-                <main className="max-w-4xl mx-auto px-4 pt-6 space-y-6">
-                    {/* Search Bar */}
-                    <div className="relative">
-                        <Search className="size-4 text-slate-400 absolute left-4 top-3.5" />
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Buscar deliciosos pinchos, combos y bebidas..."
-                            className="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200/80 rounded-2xl pl-10 pr-4 py-3 shadow-2xs focus:outline-none focus:border-orange-500"
-                        />
-                    </div>
+                <main className="max-w-4xl mx-auto px-4 pt-4 space-y-6 pb-28">
+                    {/* Banner Carousel with Delivery Time */}
+                    <PinchoBannerCarousel
+                        banners={(negocio.configuracion as any)?.bannerUrls || [(negocio.configuracion as any)?.bannerUrl].filter(Boolean)}
+                        deliveryTime={(negocio.configuracion as any)?.tiempoMaximoEntrega || '30-45 min'}
+                        storeName={negocio.nombre}
+                    />
 
                     {/* Category Tabs */}
                     {categories.length > 0 && (
@@ -555,17 +552,33 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                 </main>
             )}
 
-            {/* Redesigned Product Detail Modal */}
+            {/* Redesigned Product Detail Modal with Action Buttons */}
             <PinchoProductDetailModal
                 product={zoomProduct}
                 onClose={() => setZoomProduct(null)}
                 onAddToCart={handleAddToCartWithQuantity}
+                onGoToCart={() => {
+                    setView('checkout');
+                    setCurrentStep(1);
+                }}
                 currentCartQuantity={
                     zoomProduct 
                         ? (cartState.items.find(i => i.product.id === zoomProduct.id)?.quantity || 0)
                         : 0
                 }
             />
+
+            {/* Floating Bottom Cart Bar */}
+            {view === 'catalog' && (
+                <PinchoFloatingCartBar
+                    itemCount={cartState.items.reduce((acc, i) => acc + i.quantity, 0)}
+                    totalAmount={cartState.items.reduce((acc, i) => acc + (i.product.precio * i.quantity), 0)}
+                    onOpenCart={() => {
+                        setView('checkout');
+                        setCurrentStep(1);
+                    }}
+                />
+            )}
 
             {/* Super Loading Overlay */}
             <PinchoSuperLoader

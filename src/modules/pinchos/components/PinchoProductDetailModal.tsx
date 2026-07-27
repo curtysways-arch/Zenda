@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Minus, ShoppingBag, CheckCircle2, Flame, Snowflake, Truck, Sparkles } from 'lucide-react';
+import { X, Plus, Minus, ShoppingBag, CheckCircle2, Flame, Snowflake, Truck, ArrowRight, PlusCircle } from 'lucide-react';
 
 interface Product {
     id: string;
@@ -15,6 +15,7 @@ interface ModalProps {
     product: Product | null;
     onClose: () => void;
     onAddToCart: (product: Product, quantity: number) => void;
+    onGoToCart?: () => void;
     currentCartQuantity?: number;
 }
 
@@ -22,6 +23,7 @@ export default function PinchoProductDetailModal({
     product,
     onClose,
     onAddToCart,
+    onGoToCart,
     currentCartQuantity = 0
 }: ModalProps) {
     const [quantity, setQuantity] = useState(1);
@@ -40,11 +42,22 @@ export default function PinchoProductDetailModal({
     const handleIncrement = () => setQuantity(q => q + 1);
     const handleDecrement = () => setQuantity(q => (q > 1 ? q - 1 : 1));
 
-    const handleAdd = () => {
+    const handleAcceptAdd = () => {
         onAddToCart(product, quantity);
         setToastMsg(currentCartQuantity > 0 ? '✅ Se actualizó tu carrito.' : '✅ ¡Producto agregado al carrito!');
         setShowToast(true);
-        setTimeout(() => setShowToast(false), 2500);
+        setTimeout(() => setShowToast(false), 2000);
+    };
+
+    const handleAddAndGoToCart = () => {
+        onAddToCart(product, quantity);
+        onClose();
+        if (onGoToCart) onGoToCart();
+    };
+
+    const handleAddAndKeepBrowsing = () => {
+        onAddToCart(product, quantity);
+        onClose();
     };
 
     // Default description fallback if empty
@@ -53,12 +66,12 @@ export default function PinchoProductDetailModal({
         : 'Delicioso pincho preparado con productos seleccionados frescos, embutidos y vegetales marinados con especias naturales de la casa.';
 
     return (
-        <div className="fixed inset-0 z-[500] bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto custom-scrollbar animate-fade-in">
+        <div className="fixed inset-0 z-[500] bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto custom-scrollbar animate-fade-in font-sans">
             {/* Backdrop Click */}
             <div className="absolute inset-0" onClick={onClose} />
 
             {/* Modal Card */}
-            <div className="relative bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[90vh] sm:max-h-[88vh] text-left animate-scale-up border border-slate-200/80">
+            <div className="relative bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[92vh] sm:max-h-[90vh] text-left animate-scale-up border border-slate-200/80">
                 {/* Drag Handle Bar for Mobile */}
                 <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto my-2 shrink-0 sm:hidden" />
 
@@ -73,7 +86,7 @@ export default function PinchoProductDetailModal({
                 </button>
 
                 {/* Scrollable Modal Body */}
-                <div className="overflow-y-auto custom-scrollbar flex-1 pb-24">
+                <div className="overflow-y-auto custom-scrollbar flex-1 pb-2">
                     {/* Top Image (occupies ~55-60% visual height) */}
                     <div className="relative w-full aspect-[4/3] bg-slate-100 overflow-hidden">
                         {product.imagenUrl ? (
@@ -171,18 +184,39 @@ export default function PinchoProductDetailModal({
                     </div>
                 </div>
 
-                {/* Fixed Sticky Bottom Bar with Main Button */}
+                {/* Fixed Sticky Bottom Action Bar with Action Buttons */}
                 <div className="p-4 bg-white/95 backdrop-blur-md border-t border-slate-200/80 shrink-0 space-y-2">
+                    {/* Primary Button: Aceptar y Agregar */}
                     <button
                         type="button"
-                        onClick={handleAdd}
-                        className="w-full py-4 bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 hover:from-orange-700 hover:to-orange-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                        onClick={handleAcceptAdd}
+                        className="w-full py-3.5 bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 hover:from-orange-700 hover:to-orange-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
                     >
                         <ShoppingBag className="size-4 stroke-[2.5]" />
                         <span>
-                            🛒 AGREGAR {quantity > 1 ? `${quantity} ` : ''}AL CARRITO • ${totalPrice.toFixed(2)}
+                            ACEPTAR Y AGREGAR {quantity > 1 ? `(${quantity}) ` : ''}• ${totalPrice.toFixed(2)}
                         </span>
                     </button>
+
+                    {/* Secondary Row: Ver Carrito & Añadir Más Productos */}
+                    <div className="grid grid-cols-2 gap-2 pt-0.5">
+                        <button
+                            type="button"
+                            onClick={handleAddAndGoToCart}
+                            className="py-2.5 bg-slate-900 hover:bg-slate-950 text-white font-black rounded-xl text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+                        >
+                            <ArrowRight className="size-3.5 text-orange-400" />
+                            <span>VER CARRITO</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleAddAndKeepBrowsing}
+                            className="py-2.5 bg-orange-50 hover:bg-orange-100 border border-orange-200/80 text-orange-900 font-black rounded-xl text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+                        >
+                            <PlusCircle className="size-3.5 text-orange-600" />
+                            <span>AÑADIR MÁS</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
