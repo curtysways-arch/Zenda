@@ -16,6 +16,29 @@ export type PinchoOrderStatus =
     | 'CANCELADO'
     | 'PAGO_EXPIRADO';
 
+/** Safe helper: registers a timeline entry only if the table exists in production */
+async function safeTimelineCreate(data: {
+    pedidoId: string;
+    estadoAnterior?: string | null;
+    estadoNuevo: string;
+    comentario?: string;
+    creadoPor?: string;
+}) {
+    try {
+        await (prisma as any).pinchoOrderTimeline.create({
+            data: {
+                pedidoId: data.pedidoId,
+                estadoAnterior: data.estadoAnterior ?? null,
+                estadoNuevo: data.estadoNuevo,
+                comentario: data.comentario || `Estado: ${data.estadoNuevo}`,
+                creadoPor: data.creadoPor || 'SISTEMA'
+            }
+        });
+    } catch (_) {
+        // Table not yet migrated in production — skip silently
+    }
+}
+
 export class PinchoOrderService {
     public static async createOrderFromCheckout(payload: {
         storeId: string;
@@ -71,7 +94,7 @@ export class PinchoOrderService {
             });
         }
 
-        // Distance & Shipping Calculation
+        // Shipping Cost
         const config = (negocio.configuracion as any) || {};
         let costoEnvio = 0;
         if (deliveryType === 'DOMICILIO') {
@@ -90,7 +113,7 @@ export class PinchoOrderService {
         }
         dateToDeliver.setHours(0, 0, 0, 0);
 
-        // Atomic Transaction for order creation & initial payment
+        // Atomic Transaction — ONLY core order + payment. Timeline is done separately.
         const result = await prisma.$transaction(async (tx) => {
             const lastOrder = await (tx as any).pedido.findFirst({
                 where: { negocioId: storeId },
@@ -133,18 +156,16 @@ export class PinchoOrderService {
                 monto: total
             }, tx);
 
-            // Log transition in PinchoOrderTimeline
-            await (tx as any).pinchoOrderTimeline.create({
-                data: {
-                    pedidoId: newOrder.id,
-                    estadoAnterior: null,
-                    estadoNuevo: 'PENDIENTE_PAGO',
-                    comentario: `Pedido registrado con código amigable ${friendlyCode}`,
-                    creadoPor: 'CLIENTE'
-                }
-            });
-
             return { newOrder, initialPayment, friendlyCode };
+        });
+
+        // Log timeline AFTER transaction — safe, won't roll back the order if table missing
+        await safeTimelineCreate({
+            pedidoId: result.newOrder.id,
+            estadoAnterior: null,
+            estadoNuevo: 'PENDIENTE_PAGO',
+            comentario: `Pedido registrado con código amigable ${result.friendlyCode}`,
+            creadoPor: 'CLIENTE'
         });
 
         return result;
@@ -162,7 +183,7 @@ export class PinchoOrderService {
 
         const currentStatus = order.estado;
 
-        // State Machine Enforcement: Never allow transition to PREPARANDO_PEDIDO without CONFIRMADO payment
+        // State Machine Enforcement
         if (nextStatus === 'PREPARANDO_PEDIDO') {
             const paymentStatus = order.payment?.estado;
             if (paymentStatus !== 'CONFIRMADO') {
@@ -175,15 +196,13 @@ export class PinchoOrderService {
             data: { estado: nextStatus }
         });
 
-        // Record Timeline entry
-        await (prisma as any).pinchoOrderTimeline.create({
-            data: {
-                pedidoId,
-                estadoAnterior: currentStatus,
-                estadoNuevo: nextStatus,
-                comentario: comment || `Estado cambiado a ${nextStatus}`,
-                creadoPor: performedBy
-            }
+        // Safe timeline — won't crash if table doesn't exist
+        await safeTimelineCreate({
+            pedidoId,
+            estadoAnterior: currentStatus,
+            estadoNuevo: nextStatus,
+            comentario: comment || `Estado cambiado a ${nextStatus}`,
+            creadoPor: performedBy
         });
 
         return updatedOrder;

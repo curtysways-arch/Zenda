@@ -124,7 +124,12 @@ export class PinchoPaymentService {
                 }
             });
 
-            await (tx as any).pinchoOrderTimeline.create({
+            return { updatedPayment, updatedOrder };
+        });
+
+        // Safe timeline AFTER transaction — won't crash if table not yet migrated
+        try {
+            await (prisma as any).pinchoOrderTimeline.create({
                 data: {
                     pedidoId,
                     estadoAnterior: payment.pedido.estado,
@@ -133,10 +138,11 @@ export class PinchoPaymentService {
                     creadoPor: adminName
                 }
             });
-
-            return { updatedPayment, updatedOrder };
-        });
+        } catch (_) {
+            // Table not yet migrated
+        }
 
         return result;
+
     }
 }
