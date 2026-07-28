@@ -236,14 +236,14 @@ function CitasAdminPageContent() {
     };
 
     const handleUpdateStatus = async (id: string, nuevoEstado: string) => {
+        const estadoFinal = (nuevoEstado === 'client_checked_in') ? 'in_progress' : nuevoEstado;
         let confirmMsg = '¿Actualizar el estado de esta cita?';
         let showMontoInput = false;
         let precioSugerido = 0;
 
         if (nuevoEstado === 'confirmed') confirmMsg = '¿Confirmar esta cita?';
         else if (nuevoEstado === 'cancelled') confirmMsg = '¿Rechazar/Cancelar esta cita?';
-        else if (nuevoEstado === 'client_checked_in') confirmMsg = '¿Confirmar la asistencia del cliente (Llegó)?';
-        else if (nuevoEstado === 'in_progress') confirmMsg = '¿Confirmar la llegada del cliente (Llegó)?';
+        else if (nuevoEstado === 'client_checked_in' || nuevoEstado === 'in_progress') confirmMsg = '¿Confirmar la llegada del cliente e iniciar el servicio?';
         else if (nuevoEstado === 'completed') {
             confirmMsg = '¿Finalizar esta cita?';
             showMontoInput = true;
@@ -269,7 +269,7 @@ function CitasAdminPageContent() {
             const resFetch = await fetch(`/api/appointments/${id}/status`, {
                 method: 'PATCH',
                 body: JSON.stringify({ 
-                    estado: nuevoEstado,
+                    estado: estadoFinal,
                     montoCobrado: montoCobrado
                 })
             });

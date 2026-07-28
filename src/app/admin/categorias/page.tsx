@@ -125,7 +125,7 @@ export default function AdminCategorias() {
     return (
         <div className="space-y-6 text-left">
             {/* Header */}
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none italic uppercase">
                         Categorías
@@ -136,7 +136,7 @@ export default function AdminCategorias() {
                 </div>
                 <button
                     onClick={handleOpenCreate}
-                    className="flex items-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-md"
+                    className="flex items-center justify-center gap-2 bg-slate-900 text-white px-5 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-md w-full sm:w-auto shrink-0"
                 >
                     <FolderPlus className="size-4" />
                     Nueva Categoría
@@ -151,59 +151,102 @@ export default function AdminCategorias() {
                         <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">Cargando categorías...</span>
                     </div>
                 ) : categories.length > 0 ? (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="border-b border-slate-100 bg-slate-50/50">
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Orden</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Estado</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {categories.map((cat, idx) => (
-                                    <tr key={cat.id} className="hover:bg-slate-50/30 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <span className="text-xs font-black text-slate-500">#{cat.orden}</span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-xs font-black text-slate-800 uppercase italic">{cat.nombre}</span>
-                                        </td>
-                                        <td className="px-6 py-4 flex justify-center">
+                    <div>
+                        {/* Vista Escritorio (Tabla) */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="border-b border-slate-100 bg-slate-50/50">
+                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Orden</th>
+                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nombre</th>
+                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Estado</th>
+                                        <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {categories.map((cat) => (
+                                        <tr key={cat.id} className="hover:bg-slate-50/30 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <span className="text-xs font-black text-slate-500">#{cat.orden}</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="text-xs font-black text-slate-800 uppercase italic">{cat.nombre}</span>
+                                            </td>
+                                            <td className="px-6 py-4 flex justify-center">
+                                                <button 
+                                                    onClick={() => handleToggleActive(cat)}
+                                                    className="focus:outline-none"
+                                                >
+                                                    {cat.activo ? (
+                                                        <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-wider">Activo</span>
+                                                    ) : (
+                                                        <span className="px-3 py-1 bg-slate-200 text-slate-500 rounded-full text-[9px] font-black uppercase tracking-wider">Inactivo</span>
+                                                    )}
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleOpenEdit(cat)}
+                                                        className="size-8 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl flex items-center justify-center transition-colors"
+                                                        title="Editar"
+                                                    >
+                                                        <Edit className="size-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(cat.id)}
+                                                        className="size-8 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl flex items-center justify-center transition-colors"
+                                                        title="Eliminar"
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Vista Móvil (Tarjetas) */}
+                        <div className="md:hidden divide-y divide-slate-100 p-2">
+                            {categories.map((cat) => (
+                                <div key={cat.id} className="p-4 flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">#{cat.orden}</span>
+                                        <div>
+                                            <h4 className="text-xs font-black text-slate-900 uppercase italic">{cat.nombre}</h4>
                                             <button 
                                                 onClick={() => handleToggleActive(cat)}
-                                                className="focus:outline-none"
+                                                className="mt-1 inline-block"
                                             >
                                                 {cat.activo ? (
-                                                    <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-wider">Activo</span>
+                                                    <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 rounded-full text-[8px] font-black uppercase tracking-wider">Activo</span>
                                                 ) : (
-                                                    <span className="px-3 py-1 bg-slate-200 text-slate-500 rounded-full text-[9px] font-black uppercase tracking-wider">Inactivo</span>
+                                                    <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full text-[8px] font-black uppercase tracking-wider">Inactivo</span>
                                                 )}
                                             </button>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleOpenEdit(cat)}
-                                                    className="size-8 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl flex items-center justify-center transition-colors"
-                                                    title="Editar"
-                                                >
-                                                    <Edit className="size-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(cat.id)}
-                                                    className="size-8 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl flex items-center justify-center transition-colors"
-                                                    title="Eliminar"
-                                                >
-                                                    <Trash2 className="size-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => handleOpenEdit(cat)}
+                                            className="size-9 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl flex items-center justify-center transition-colors"
+                                            title="Editar"
+                                        >
+                                            <Edit className="size-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(cat.id)}
+                                            className="size-9 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-xl flex items-center justify-center transition-colors"
+                                            title="Eliminar"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 ) : (
                     <div className="text-center py-20">

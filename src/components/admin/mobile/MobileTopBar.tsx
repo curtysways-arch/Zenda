@@ -109,8 +109,7 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN', negocioNom
         await signOut({ callbackUrl: '/login' });
     };
 
-    const qrColor = primaryColor.replace('#', '');
-    const qrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareUrl)}&color=${qrColor}` : '';
+    const qrUrl = shareUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareUrl)}&color=000000` : '';
     const waUrl = shareUrl ? `https://api.whatsapp.com/send?text=${encodeURIComponent(`¡Reserva tu cita aquí! 👉 ${shareUrl}`)}` : '#';
 
     return (

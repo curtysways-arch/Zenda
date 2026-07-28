@@ -8,6 +8,9 @@ import {
 import ImageUploader from '@/components/ui/ImageUploader';
 import Image from 'next/image';
 
+import Link from 'next/link';
+import { FolderPlus } from 'lucide-react';
+
 interface Product {
     id: string;
     nombre: string;
@@ -34,9 +37,14 @@ export default function AdminProductos() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterCategory, setFilterCategory] = useState('all');
     
-    // Modal states
+    // Product Modal states
     const [isOpen, setIsOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+    // Quick Category Modal states
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState('');
+    const [creatingCategory, setCreatingCategory] = useState(false);
     
     // Form fields
     const [nombre, setNombre] = useState('');
@@ -48,6 +56,46 @@ export default function AdminProductos() {
     const [orden, setOrden] = useState(0);
     const [categoriaId, setCategoriaId] = useState('');
     const [saving, setSaving] = useState(false);
+
+    const handleQuickCreateCategory = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newCategoryName.trim()) return;
+
+        try {
+            setCreatingCategory(true);
+            const res = await fetch('/api/admin/categorias', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre: newCategoryName.trim(),
+                    activo: true,
+                    orden: categories.length
+                })
+            });
+
+            if (res.ok) {
+                const catRes = await fetch('/api/admin/categorias');
+                if (catRes.ok) {
+                    const catData = await catRes.json();
+                    const activeCats = catData.filter((c: any) => c.activo);
+                    setCategories(activeCats);
+                    const createdCat = activeCats.find((c: any) => c.nombre.toLowerCase() === newCategoryName.trim().toLowerCase()) || activeCats[activeCats.length - 1];
+                    if (createdCat) {
+                        setCategoriaId(createdCat.id);
+                    }
+                }
+                setNewCategoryName('');
+                setIsCategoryModalOpen(false);
+            } else {
+                alert("Ocurrió un error al crear la categoría.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error de conexión.");
+        } finally {
+            setCreatingCategory(false);
+        }
+    };
 
     const fetchData = async () => {
         try {
@@ -191,13 +239,22 @@ export default function AdminProductos() {
                         Administra el catálogo de pinchos y productos que ofreces
                     </p>
                 </div>
-                <button
-                    onClick={handleOpenCreate}
-                    className="flex items-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-md shrink-0 w-fit"
-                >
-                    <Plus className="size-4" />
-                    Nuevo Producto
-                </button>
+                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                    <Link
+                        href="/admin/categorias"
+                        className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
+                    >
+                        <FolderPlus className="size-4 text-slate-600" />
+                        Categorías
+                    </Link>
+                    <button
+                        onClick={handleOpenCreate}
+                        className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-md"
+                    >
+                        <Plus className="size-4" />
+                        Nuevo Producto
+                    </button>
+                </div>
             </div>
 
             {/* Buscador & Filtros */}
@@ -382,9 +439,19 @@ export default function AdminProductos() {
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Categoría</label>
+                                            <div className="flex justify-between items-center mb-1.5">
+                                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Categoría</label>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsCategoryModalOpen(true)}
+                                                    className="text-[9px] font-black text-slate-600 hover:text-slate-900 uppercase tracking-wider flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-lg transition-colors"
+                                                >
+                                                    <FolderPlus className="size-3" />
+                                                    <span>+ Nueva</span>
+                                                </button>
+                                            </div>
                                             <select
                                                 required
                                                 value={categoriaId}
@@ -469,6 +536,56 @@ export default function AdminProductos() {
                                     <>
                                         <Save className="size-4" />
                                         Guardar Producto
+                                    </>
+                                )}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Creación Rápida de Categoría */}
+            {isCategoryModalOpen && (
+                <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+                    <div className="w-full max-w-sm bg-white rounded-[2rem] p-6 shadow-2xl border border-slate-100 animate-fade-in text-left">
+                        <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
+                            <h3 className="text-xs font-black text-slate-950 uppercase tracking-widest flex items-center gap-2">
+                                <FolderPlus className="size-4 text-slate-700" />
+                                Nueva Categoría
+                            </h3>
+                            <button onClick={() => setIsCategoryModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                <X className="size-4" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleQuickCreateCategory} className="space-y-4">
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Nombre de la Categoría</label>
+                                <input
+                                    type="text"
+                                    required
+                                    autoFocus
+                                    placeholder="Ej: Pinchos, Bebidas, Combos"
+                                    value={newCategoryName}
+                                    onChange={e => setNewCategoryName(e.target.value)}
+                                    className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={creatingCategory}
+                                className="w-full mt-4 py-3 bg-slate-900 hover:bg-slate-950 text-white rounded-2xl text-xs font-black uppercase tracking-widest active:scale-95 transition-transform flex items-center justify-center gap-2"
+                            >
+                                {creatingCategory ? (
+                                    <>
+                                        <Loader2 className="size-4 animate-spin" />
+                                        Creando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="size-4" />
+                                        Crear y Seleccionar
                                     </>
                                 )}
                             </button>

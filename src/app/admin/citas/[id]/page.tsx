@@ -87,10 +87,12 @@ export default function ReservaDetailPage({ params }: { params: Promise<{ id: st
     useEffect(() => { fetchReserva(); }, [id]);
 
     const handleStatusUpdate = async (newStatus: string) => {
+        const targetStatus = (newStatus === 'client_checked_in') ? 'in_progress' : newStatus;
+
         const statusMap: Record<string, string> = {
             'confirmed': 'CONFIRMAR',
-            'client_checked_in': 'CONFIRMAR LLEGADA',
-            'in_progress': 'MARCAR LLEGADA',
+            'client_checked_in': 'CONFIRMAR LLEGADA E INICIAR SERVICIO',
+            'in_progress': 'CONFIRMAR LLEGADA E INICIAR SERVICIO',
             'completed': 'FINALIZAR CITA',
             'cancelled': 'CANCELAR',
             'pending': 'RESTAURAR'
@@ -105,7 +107,7 @@ export default function ReservaDetailPage({ params }: { params: Promise<{ id: st
             precioSugerido = reserva?.total || reserva?.service?.precio || 0;
         }
 
-        const res = await confirm(`¿Estás seguro que deseas ${actionText} esta reserva?`, {
+        const res = await confirm(`¿Estás seguro que deseas ${actionText.toLowerCase()} esta reserva?`, {
             title: newStatus === 'completed' ? 'Finalizar y Cobrar' : 'Actualizar Estado',
             showInput: showMontoInput,
             inputValue: precioSugerido,
@@ -124,7 +126,7 @@ export default function ReservaDetailPage({ params }: { params: Promise<{ id: st
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    estado: newStatus,
+                    estado: targetStatus,
                     montoCobrado: montoCobrado
                 })
             });
@@ -425,16 +427,9 @@ export default function ReservaDetailPage({ params }: { params: Promise<{ id: st
                                     </button>
                                 )}
 
-                                {(reserva.estado === 'confirmed' || reserva.estado === 'approved' || reserva.estado === 'pending') && (
-                                    <button onClick={() => handleStatusUpdate('in_progress')} className="flex items-center justify-between p-6 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-3xl font-black uppercase italic tracking-widest text-xs hover:bg-indigo-100 transition-all group shadow-sm">
-                                        Marcar Llegada
-                                        <Zap className="group-hover:scale-125 transition-transform" />
-                                    </button>
-                                )}
-
-                                {reserva.estado === 'client_checked_in' && (
+                                {(reserva.estado === 'confirmed' || reserva.estado === 'approved' || reserva.estado === 'pending' || reserva.estado === 'client_checked_in') && (
                                     <button onClick={() => handleStatusUpdate('in_progress')} className="flex items-center justify-between p-6 bg-purple-50 border border-purple-100 text-purple-700 rounded-3xl font-black uppercase italic tracking-widest text-xs hover:bg-purple-100 transition-all group shadow-sm">
-                                        Confirmar Llegada
+                                        {reserva.estado === 'client_checked_in' ? 'Iniciar Servicio' : 'Marcar Llegada e Iniciar Servicio'}
                                         <Sparkles className="group-hover:scale-125 transition-transform" />
                                     </button>
                                 )}

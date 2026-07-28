@@ -234,16 +234,9 @@ export default function MobileAppointmentDetail({
                             </button>
                         )}
 
-                        {(reserva.estado === 'confirmed' || reserva.estado === 'approved' || reserva.estado === 'pending') && (
-                            <button onClick={() => onStatusUpdate('client_checked_in')} className="flex items-center justify-between p-5 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-2xl font-black uppercase italic tracking-widest text-[11px] active:scale-95 transition-all">
-                                Marcar Llegada
-                                <Zap size={16} />
-                            </button>
-                        )}
-
-                        {reserva.estado === 'client_checked_in' && (
+                        {(reserva.estado === 'confirmed' || reserva.estado === 'approved' || reserva.estado === 'pending' || reserva.estado === 'client_checked_in') && (
                             <button onClick={() => onStatusUpdate('in_progress')} className="flex items-center justify-between p-5 bg-purple-50 border border-purple-100 text-purple-700 rounded-2xl font-black uppercase italic tracking-widest text-[11px] active:scale-95 transition-all">
-                                Iniciar Servicio
+                                {reserva.estado === 'client_checked_in' ? 'Iniciar Servicio' : 'Marcar Llegada e Iniciar Servicio'}
                                 <Sparkles size={16} />
                             </button>
                         )}

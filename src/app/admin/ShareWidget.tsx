@@ -22,7 +22,7 @@ export function ShareWidget({ url, negocio }: { url: string; negocio?: any }) {
         if (color) setQrColor(color);
     }, []);
 
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}&color=${qrColor}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}&color=000000`;
     const whatsappMessage = `¡Hola! Reserva tu cita aquí: ${url}`;
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMessage)}`;
 
