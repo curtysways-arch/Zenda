@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
         }
 
 
-        // Notify business & client
+        // Notify business & client (WhatsApp + Push + SSE)
         await PinchoNotificationService.notifyStatusChange({
             storeId: targetStoreId,
             storeName,
@@ -128,7 +128,13 @@ export async function POST(req: NextRequest) {
             clientName,
             clientPhone,
             newStatus: 'PENDIENTE_PAGO',
-            total: newOrder.total
+            total: newOrder.total,
+            items: newOrder.items,
+            deliveryType,
+            clientAddress,
+            clientReference,
+            lat,
+            lng
         }).catch(() => {});
 
         return NextResponse.json({ 

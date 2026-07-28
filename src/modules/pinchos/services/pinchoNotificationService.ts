@@ -1,5 +1,8 @@
 import { notificationService } from '@/lib/notifications/notificationService';
+import { sseEmitter } from '@/lib/notifications/notificationService';
 import { whatsappService } from '@/lib/whatsapp';
+import prisma from '@/lib/prisma';
+import { formatToEcuadorPhone } from '@/lib/phoneUtils';
 
 export class PinchoNotificationService {
     public static async notifyStatusChange(payload: {
@@ -14,8 +17,14 @@ export class PinchoNotificationService {
         newStatus: string;
         paymentStatus?: string;
         total: number;
+        items?: any[];
+        deliveryType?: string;
+        clientAddress?: string;
+        clientReference?: string;
+        lat?: number;
+        lng?: number;
     }) {
-        const { storeId, storeName, storePhone, numeroPedido, friendlyCode, clientName, clientPhone, newStatus, paymentStatus, total } = payload;
+        const { storeId, storeName, storePhone, numeroPedido, friendlyCode, clientName, clientPhone, newStatus, paymentStatus, total, items, deliveryType, clientAddress, clientReference, lat, lng } = payload;
 
         let title = '';
         let message = '';
@@ -27,13 +36,13 @@ export class PinchoNotificationService {
                 break;
             case 'PAGO_EN_REVISION':
             case 'COMPROBANTE_ENVIADO':
-                title = `⏳ Comprobante Recibido #${friendlyCode}`;
+                title = `💳 Comprobante Recibido #${friendlyCode}`;
                 message = `Hola ${clientName}, recibimos tu comprobante. El equipo de ${storeName} está verificando tu pago.`;
                 break;
             case 'EN_PREPARACION':
             case 'PREPARANDO_PEDIDO':
                 title = `🎉 ¡Pago Confirmado! #${friendlyCode}`;
-                message = `¡Buenas noticias ${clientName}! Tu pago fue confirmado. Ya comenzamos a preparar tus pinchos maridados y empacados.`;
+                message = `¡Buenas noticias ${clientName}! Tu pago fue confirmado. Ya comenzamos a preparar tus pinchos maridados.`;
                 break;
             case 'LISTO':
                 title = `🍢 ¡Pedido Listo! #${friendlyCode}`;
@@ -58,22 +67,70 @@ export class PinchoNotificationService {
                 break;
         }
 
-        // WhatsApp notification to Client
+        // 1. WhatsApp al CLIENTE
         if (clientPhone) {
             try {
-                await whatsappService.sendWhatsApp(clientPhone, `${title}\n\n${message}`);
+                const formattedClientPhone = formatToEcuadorPhone(clientPhone);
+                await whatsappService.sendWhatsApp(formattedClientPhone, `*${title}*\n\n${message}`);
             } catch (e) {
-                console.error('[PinchoNotificationService] Error sending WhatsApp to client:', e);
+                console.error('[PinchoNotificationService] Error enviando WhatsApp al cliente:', e);
             }
         }
 
-        // Push notification & Real-time SSE to Admin
+        // 2. Notificación al NEGOCIO (Push + SSE + WhatsApp al Administrador del Negocio)
         try {
+            const negocio = await prisma.negocio.findUnique({
+                where: { id: storeId },
+                select: { whatsapp: true, nombre: true }
+            });
+
+            const bizPhone = storePhone || negocio?.whatsapp;
+
+            // Push Notification al negocio
             await notificationService.sendPushToBusiness(storeId, title, message).catch(() => {});
+
+            // Evento SSE en tiempo real
+            sseEmitter.emit('realtime_event', {
+                negocioId: storeId,
+                type: newStatus === 'PENDIENTE_PAGO' ? 'NUEVO_PEDIDO' : 'ESTADO_ACTUALIZADO',
+                title: `${title} (${clientName})`,
+                message: `$${total.toFixed(2)} - ${newStatus}`,
+                pedidoId
+            });
+
+            // WhatsApp al Negocio/Dueño
+            if (bizPhone) {
+                const formattedBizPhone = formatToEcuadorPhone(bizPhone);
+                let itemsList = '';
+                if (items && Array.isArray(items) && items.length > 0) {
+                    itemsList = items.map((i: any) => `• ${i.cantidad || 1}x ${i.nombreProducto || i.nombre || 'Producto'} ($${((i.precioUnitario || i.precio || 0) * (i.cantidad || 1)).toFixed(2)})`).join('\n');
+                }
+
+                let gpsLocation = '';
+                if (lat && lng) {
+                    gpsLocation = `📍 *Ubicación GPS:* https://maps.google.com/?q=${lat},${lng}\n`;
+                }
+
+                let bizMsg = `🛒 *¡NOTIFICACIÓN DE PEDIDO #${friendlyCode}!*\n\n`;
+                bizMsg += `📌 *Estado:* ${newStatus}\n`;
+                bizMsg += `👤 *Cliente:* ${clientName}\n`;
+                bizMsg += `📞 *Teléfono:* ${clientPhone}\n`;
+                if (deliveryType) bizMsg += `🚚 *Tipo:* ${deliveryType === 'DOMICILIO' ? 'Entrega a Domicilio' : 'Retiro en Local'}\n`;
+                if (clientAddress) bizMsg += `🏠 *Dirección:* ${clientAddress}\n`;
+                if (clientReference) bizMsg += `📝 *Referencia:* ${clientReference}\n`;
+                if (gpsLocation) bizMsg += gpsLocation;
+                if (itemsList) bizMsg += `\n📦 *Detalle:*\n${itemsList}\n\n`;
+                bizMsg += `💰 *TOTAL:* $${total.toFixed(2)}\n`;
+
+                await whatsappService.sendWhatsApp(formattedBizPhone, bizMsg).catch((err: any) => {
+                    console.error('[PinchoNotificationService] Error enviando WhatsApp al negocio:', err);
+                });
+            }
         } catch (e) {
-            // Ignore push errors
+            console.error('[PinchoNotificationService] Error procesando notificación de negocio:', e);
         }
 
         return { success: true, title, message };
     }
 }
+

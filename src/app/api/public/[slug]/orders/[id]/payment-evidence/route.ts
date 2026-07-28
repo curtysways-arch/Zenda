@@ -141,11 +141,16 @@ export async function POST(
                     bizMsg += `\n📦 *Detalle del Pedido:*\n${itemsList}\n\n`;
                     bizMsg += `💰 *Monto a Verificar:* $${payment.monto.toFixed(2)}\n`;
                     bizMsg += `📄 *Comprobante Adjunto:* ${fullEvidenceUrl}\n\n`;
-                    bizMsg += `⚠️ *Por favor verifica la transferencia en tu banca y confirma la fecha/hora de entrega en tu panel de control.*`;
-
                     await whatsappService.sendWhatsApp(bizPhone, bizMsg).catch((wErr: any) => {
                         console.error('[EVIDENCE_WHATSAPP_SEND_ERROR]', wErr);
                     });
+
+                    // 4. Mensaje de WhatsApp de confirmación al CLIENTE
+                    if (fullPedido.telefonoCliente) {
+                        const friendlyCode = `PIN-${fullPedido.numeroPedido}`;
+                        const clientMsg = `💳 *¡Comprobante Recibido!* (#${friendlyCode})\n\nHola ${fullPedido.nombreCliente}, recibimos tu comprobante de pago por $${payment.monto.toFixed(2)}. El equipo de ${negocio?.nombre || 'la tienda'} está verificando tu pago.`;
+                        await whatsappService.sendWhatsApp(fullPedido.telefonoCliente, clientMsg).catch(() => {});
+                    }
                 }
             }
         } catch (nErr) {
