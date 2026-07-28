@@ -79,12 +79,43 @@ export class StorageService {
     const { fileTypeFromBuffer } = await import('file-type');
     const type = await fileTypeFromBuffer(buffer);
     if (!type) throw new Error('Unable to detect file type');
-    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowed.includes(type.mime)) {
       throw new Error('Unsupported file type');
     }
 
-    // 2️⃣ Redimensionar y generar variantes con Sharp
+    const folder = `${businessId}/${category}`;
+    const fileId = uuidv4();
+    const db = (await import('../prisma')).default;
+
+    // Si es un GIF animado, guardamos el archivo original intacto para mantener la animación
+    if (type.mime === 'image/gif') {
+      const originalName = `${fileId}_original.gif`;
+      const originalUrl = await this.provider.uploadFile(buffer, folder, originalName, 'image/gif');
+
+      const media = await db.media.create({
+        data: {
+          businessId,
+          url: originalUrl,
+          fileKey: `${folder}/${originalName}`,
+          provider: STORAGE_PROVIDER,
+          mimeType: 'image/gif',
+          size: buffer.length,
+          width: null,
+          height: null,
+          category,
+        },
+      });
+
+      return {
+        id: media.id,
+        url: originalUrl,
+        mediumUrl: originalUrl,
+        thumbUrl: originalUrl,
+      };
+    }
+
+    // 2️⃣ Redimensionar y generar variantes con Sharp para JPG/PNG/WEBP
     const original = await sharp(buffer)
       .rotate()
       .resize({ width: 1200, withoutEnlargement: true })
@@ -102,8 +133,6 @@ export class StorageService {
       .toBuffer();
 
     // 3️⃣ Guardar archivos con nombres predecibles y únicos
-    const folder = `${businessId}/${category}`;
-    const fileId = uuidv4();
     const originalName = `${fileId}_original.webp`;
     const mediumName = `${fileId}_medium.webp`;
     const thumbName = `${fileId}_thumb.webp`;
