@@ -78,8 +78,8 @@ export class PinchoNotificationService {
             }
         }
 
-        // Pequeña pausa de 1.5 segundos para evitar colisión en el socket del bot de WhatsApp
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Pausa de 3 segundos para evitar colisión en el socket del bot de WhatsApp
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
         // 2. Notificación al NEGOCIO (Push + SSE + WhatsApp al Administrador del Negocio)
         try {
