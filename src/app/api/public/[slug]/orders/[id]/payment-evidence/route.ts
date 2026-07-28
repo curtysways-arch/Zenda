@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { PaymentService } from '@/lib/payments/PaymentService';
+import { formatToEcuadorPhone } from '@/lib/phoneUtils';
 import path from 'path';
 import fs from 'fs';
 
@@ -141,15 +142,20 @@ export async function POST(
                     bizMsg += `\n📦 *Detalle del Pedido:*\n${itemsList}\n\n`;
                     bizMsg += `💰 *Monto a Verificar:* $${payment.monto.toFixed(2)}\n`;
                     bizMsg += `📄 *Comprobante Adjunto:* ${fullEvidenceUrl}\n\n`;
-                    await whatsappService.sendWhatsApp(bizPhone, bizMsg).catch((wErr: any) => {
+                    const formattedBizPhone = formatToEcuadorPhone(bizPhone);
+                    await whatsappService.sendWhatsApp(formattedBizPhone, bizMsg).catch((wErr: any) => {
                         console.error('[EVIDENCE_WHATSAPP_SEND_ERROR]', wErr);
                     });
 
+                    // Pausa de 1.5 segundos entre mensajes para evitar colisión en socket de Baileys
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+
                     // 4. Mensaje de WhatsApp de confirmación al CLIENTE
                     if (fullPedido.telefonoCliente) {
+                        const formattedClientPhone = formatToEcuadorPhone(fullPedido.telefonoCliente);
                         const friendlyCode = `PIN-${fullPedido.numeroPedido}`;
                         const clientMsg = `💳 *¡Comprobante Recibido!* (#${friendlyCode})\n\nHola ${fullPedido.nombreCliente}, recibimos tu comprobante de pago por $${payment.monto.toFixed(2)}. El equipo de ${negocio?.nombre || 'la tienda'} está verificando tu pago.`;
-                        await whatsappService.sendWhatsApp(fullPedido.telefonoCliente, clientMsg).catch(() => {});
+                        await whatsappService.sendWhatsApp(formattedClientPhone, clientMsg).catch(() => {});
                     }
                 }
             }

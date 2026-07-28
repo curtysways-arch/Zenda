@@ -71,20 +71,24 @@ export class PinchoNotificationService {
         if (clientPhone) {
             try {
                 const formattedClientPhone = formatToEcuadorPhone(clientPhone);
+                console.log(`[PinchoNotificationService] Enviando WhatsApp a CLIENTE: ${formattedClientPhone}`);
                 await whatsappService.sendWhatsApp(formattedClientPhone, `*${title}*\n\n${message}`);
             } catch (e) {
                 console.error('[PinchoNotificationService] Error enviando WhatsApp al cliente:', e);
             }
         }
 
+        // Pequeña pausa de 1.5 segundos para evitar colisión en el socket del bot de WhatsApp
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
         // 2. Notificación al NEGOCIO (Push + SSE + WhatsApp al Administrador del Negocio)
         try {
             const negocio = await prisma.negocio.findUnique({
                 where: { id: storeId },
-                select: { whatsapp: true, nombre: true }
+                select: { whatsapp: true, nombre: true, configuracion: true }
             });
 
-            const bizPhone = storePhone || negocio?.whatsapp;
+            const bizPhone = storePhone || negocio?.whatsapp || (negocio?.configuracion as any)?.whatsapp || (negocio as any)?.telefono;
 
             // Push Notification al negocio
             await notificationService.sendPushToBusiness(storeId, title, message).catch(() => {});
@@ -101,6 +105,8 @@ export class PinchoNotificationService {
             // WhatsApp al Negocio/Dueño
             if (bizPhone) {
                 const formattedBizPhone = formatToEcuadorPhone(bizPhone);
+                console.log(`[PinchoNotificationService] Enviando WhatsApp a NEGOCIO: ${formattedBizPhone}`);
+
                 let itemsList = '';
                 if (items && Array.isArray(items) && items.length > 0) {
                     itemsList = items.map((i: any) => `• ${i.cantidad || 1}x ${i.nombreProducto || i.nombre || 'Producto'} ($${((i.precioUnitario || i.precio || 0) * (i.cantidad || 1)).toFixed(2)})`).join('\n');
@@ -125,6 +131,8 @@ export class PinchoNotificationService {
                 await whatsappService.sendWhatsApp(formattedBizPhone, bizMsg).catch((err: any) => {
                     console.error('[PinchoNotificationService] Error enviando WhatsApp al negocio:', err);
                 });
+            } else {
+                console.warn(`[PinchoNotificationService] No se encontró número de WhatsApp para el negocio ID: ${storeId}`);
             }
         } catch (e) {
             console.error('[PinchoNotificationService] Error procesando notificación de negocio:', e);
