@@ -9,6 +9,7 @@ export interface ModuleInfo {
 const MODULE_MAPPINGS: Record<string, ModuleType> = {
     pinchos: 'pinchos',
     'pincho-listo': 'pinchos',
+    pincholisto: 'pinchos',
     spa: 'reservas',
     dentista: 'reservas',
     barberia: 'reservas',
@@ -18,6 +19,7 @@ const MODULE_MAPPINGS: Record<string, ModuleType> = {
 export class ModuleResolver {
     public static resolve(slug: string): ModuleType {
         const normalized = (slug || '').toLowerCase().trim();
+        if (normalized.includes('pincho')) return 'pinchos';
         return MODULE_MAPPINGS[normalized] || 'reservas';
     }
 
