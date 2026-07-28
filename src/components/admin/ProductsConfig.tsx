@@ -52,11 +52,18 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                 body: formData
             });
 
-            const data = await res.json();
-            if (data.url) {
+            const text = await res.text();
+            let data: any = {};
+            try {
+                data = JSON.parse(text);
+            } catch (_) {
+                data = { error: text || `Error HTTP ${res.status}` };
+            }
+
+            if (res.ok && data.url) {
                 setBannerUrls(prev => [...prev, data.url]);
             } else {
-                alert(data.error || 'Error al subir la imagen.');
+                alert(data.error || `Error (${res.status}) al subir la imagen.`);
             }
         } catch (err) {
             console.error('Error al subir banner:', err);
