@@ -121,8 +121,13 @@ export async function POST(
                 });
 
                 if (fullPedido) {
-                    const origin = req.nextUrl.origin || process.env.NEXTAUTH_URL || 'https://app.citiox.com';
-                    const fullEvidenceUrl = publicUrl.startsWith('http') ? publicUrl : `${origin}${publicUrl}`;
+                    const hostHeader = req.headers.get('host') || '';
+                    const protocolHeader = req.headers.get('x-forwarded-proto') || 'https';
+                    const baseUrl = process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')
+                        ? process.env.NEXT_PUBLIC_APP_URL
+                        : (hostHeader && !hostHeader.includes('localhost') ? `${protocolHeader}://${hostHeader}` : 'https://citiox.com');
+
+                    const fullEvidenceUrl = publicUrl.startsWith('http') ? publicUrl : `${baseUrl}${publicUrl}`;
                     const itemsList = fullPedido.items ? fullPedido.items.map((i: any) => `• ${i.cantidad}x ${i.nombreProducto} ($${(i.precioUnitario * i.cantidad).toFixed(2)})`).join('\n') : '';
 
                     let gpsLocation = '';
@@ -130,7 +135,7 @@ export async function POST(
                         gpsLocation = `📍 *Ubicación GPS:* https://maps.google.com/?q=${fullPedido.latitud},${fullPedido.longitud}\n`;
                     }
 
-                    let bizMsg = `💳 *¡COMPROBANTE DE PAGO RECIBIDO!* (Pedido #${fullPedido.numeroPedido})\n\n`;
+                    let bizMsg = `💳 *¡COMPROBANTE DE PAGO RECIBIDO!*\n\n`;
                     bizMsg += `👤 *Cliente:* ${fullPedido.nombreCliente}\n`;
                     bizMsg += `📞 *Teléfono:* ${fullPedido.telefonoCliente}\n`;
                     bizMsg += `🚚 *Tipo:* ${fullPedido.tipoEntrega === 'DOMICILIO' ? 'Entrega a Domicilio' : 'Retiro en Local'}\n`;
