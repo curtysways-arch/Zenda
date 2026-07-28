@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
+import prisma from '../prisma';
 import { StorageProvider } from '../storage/storageProvider';
 import { STORAGE_PATH, STORAGE_PROVIDER } from '../config/storage';
 
@@ -86,14 +87,13 @@ export class StorageService {
 
     const folder = `${businessId}/${category}`;
     const fileId = uuidv4();
-    const db = (await import('../prisma')).default;
 
     // Si es un GIF animado, guardamos el archivo original intacto para mantener la animación
     if (type.mime === 'image/gif') {
       const originalName = `${fileId}_original.gif`;
       const originalUrl = await this.provider.uploadFile(buffer, folder, originalName, 'image/gif');
 
-      const media = await db.media.create({
+      const media = await (prisma as any).media.create({
         data: {
           businessId,
           url: originalUrl,
@@ -144,8 +144,7 @@ export class StorageService {
     ]);
 
     // 4️⃣ Registrar en Prisma
-    const db = (await import('../prisma')).default;
-    const media = await db.media.create({
+    const media = await (prisma as any).media.create({
       data: {
         businessId,
         url: originalUrl,
@@ -168,8 +167,7 @@ export class StorageService {
   }
 
   async deleteMedia(mediaId: string): Promise<void> {
-    const db = (await import('../prisma')).default;
-    const media = await db.media.findUnique({ where: { id: mediaId } });
+    const media = await (prisma as any).media.findUnique({ where: { id: mediaId } });
     if (!media) return;
 
     // Borrar archivo original
@@ -185,7 +183,7 @@ export class StorageService {
     ]);
 
     // Borrar el registro
-    await db.media.delete({ where: { id: mediaId } });
+    await (prisma as any).media.delete({ where: { id: mediaId } });
   }
 }
 
