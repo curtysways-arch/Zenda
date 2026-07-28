@@ -24,7 +24,7 @@ export class PinchoNotificationService {
         lat?: number;
         lng?: number;
     }) {
-        const { storeId, storeName, storePhone, numeroPedido, friendlyCode, clientName, clientPhone, newStatus, paymentStatus, total, items, deliveryType, clientAddress, clientReference, lat, lng } = payload;
+        const { storeId, storeName, storePhone, pedidoId, numeroPedido, friendlyCode, clientName, clientPhone, newStatus, paymentStatus, total, items, deliveryType, clientAddress, clientReference, lat, lng } = payload;
 
         let title = '';
         let message = '';
