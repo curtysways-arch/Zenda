@@ -43,6 +43,7 @@ import { twMerge } from "tailwind-merge";
 import RatingModal from "@/components/RatingModal";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { hasModule } from "@/lib/business/BusinessModuleResolver";
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -935,17 +936,22 @@ export default function MiPerfilPage() {
                             <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
                                 <button 
                                     onClick={async () => {
+                                        const targetSlug = negocio?.slug || slug;
                                         const shareData = {
-                                            title: negocio?.nombre || 'Pinchos',
-                                            text: `¡Pide tus productos online en ${negocio?.nombre || 'Pinchos'}! 🍢🔥`,
-                                            url: typeof window !== 'undefined' ? `${window.location.origin}/${negocio?.slug || 'pinchos'}` : ''
+                                            title: negocio?.nombre || 'CitiOx',
+                                            text: hasModule(negocio?.tipoNegocio, 'APPOINTMENTS') 
+                                                ? `¡Agenda tu cita online en ${negocio?.nombre || 'nuestro negocio'}! 📅✨` 
+                                                : (hasModule(negocio?.tipoNegocio, 'RESERVATIONS') 
+                                                    ? `¡Reserva tu cancha online en ${negocio?.nombre || 'nuestro negocio'}! ⚽`
+                                                    : `¡Visita nuestra tienda online en ${negocio?.nombre || 'nuestra tienda'}! 🛒`),
+                                            url: typeof window !== 'undefined' ? `${window.location.origin}/${targetSlug}` : ''
                                         };
                                         if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare && navigator.canShare(shareData)) {
                                             try { await navigator.share(shareData); } catch (e) {}
                                         } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
                                             try { 
-                                                await navigator.clipboard.writeText(`${window.location.origin}/${negocio?.slug || 'pinchos'}`);
-                                                alert('¡Enlace de la tienda copiado al portapapeles! 📋');
+                                                await navigator.clipboard.writeText(`${window.location.origin}/${targetSlug}`);
+                                                alert('¡Enlace del negocio copiado al portapapeles! 📋');
                                             } catch (e) {}
                                         }
                                     }}
@@ -956,8 +962,8 @@ export default function MiPerfilPage() {
                                             <Share2 size={20} />
                                         </div>
                                         <div className="text-left">
-                                            <p className="font-black text-slate-800 text-[13px]">Compartir esta App / Tienda</p>
-                                            <p className="text-[10px] text-slate-400 font-medium">Recomienda nuestra tienda a tus amigos</p>
+                                            <p className="font-black text-slate-800 text-[13px]">Compartir esta App / Negocio</p>
+                                            <p className="text-[10px] text-slate-400 font-medium">Recomienda nuestro negocio a tus amigos</p>
                                         </div>
                                     </div>
                                     <ChevronRight size={18} className="text-slate-400" />
