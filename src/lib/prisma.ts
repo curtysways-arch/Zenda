@@ -35,35 +35,21 @@ function resolveLibSqlUrl(dbUrl: string): string {
 }
 
 function createPrismaClientSync(): PrismaClient {
-    const dbUrl = process.env['DATABASE_URL'] || 'file:./dev.db';
-
-    if (dbUrl.startsWith('postgresql://') || dbUrl.startsWith('postgres://')) {
-        // ── PostgreSQL (producción) ──────────────────────────────────────────
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { Pool } = require('pg');
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { PrismaPg } = require('@prisma/adapter-pg');
-
-        const pool = new Pool({ connectionString: dbUrl });
-        const adapter = new PrismaPg(pool);
-
-        return new PrismaClient({
-            adapter,
-            log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
-        });
-    } else {
-        // ── SQLite / libSQL (desarrollo) ─────────────────────────────────────
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { PrismaLibSql } = require('@prisma/adapter-libsql');
-
-        const resolvedUrl = resolveLibSqlUrl(dbUrl);
-        const adapter = new PrismaLibSql({ url: resolvedUrl });
-
-        return new PrismaClient({
-            adapter,
-            log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-        });
+    let rawUrl = process.env['DATABASE_URL'] || 'file:./dev.db';
+    if (rawUrl.startsWith('postgresql://') || rawUrl.startsWith('postgres://')) {
+        rawUrl = 'file:./dev.db';
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { PrismaLibSql } = require('@prisma/adapter-libsql');
+
+    const resolvedUrl = resolveLibSqlUrl(rawUrl);
+    const adapter = new PrismaLibSql({ url: resolvedUrl });
+
+    return new PrismaClient({
+        adapter,
+        log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    });
 }
 
 // Inicialización perezosa (lazy) mediante un Proxy.

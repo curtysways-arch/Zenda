@@ -28,6 +28,9 @@ conn.on("ready", async () => {
   console.log("\n🚀 Conectado exitosamente al VPS (157.173.203.174)...");
 
   try {
+    // 0. Corregir DATABASE_URL en .env si es necesario
+    await execCommand(conn, `sed -i 's|DATABASE_URL=.*|DATABASE_URL="file:./dev.db"|g' ${REMOTE_BASE}/.env`, "0. Asegurando DATABASE_URL=file:./dev.db en .env del VPS");
+
     // 1. Git reset y pull
     await execCommand(conn, `cd ${REMOTE_BASE} && git reset --hard HEAD && git clean -fd && git pull origin main`, "1. Sincronizando repositorio con GitHub (git reset & pull)");
 
