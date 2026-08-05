@@ -20,7 +20,19 @@ export async function GET(
     }
 
     try {
-        const negocio = await prisma.negocio.findUnique({ where: { slug } });
+        let negocio = await prisma.negocio.findUnique({ where: { slug } });
+        if (!negocio && (slug === 'lavado' || slug === 'demo-lavado')) {
+            negocio = await prisma.negocio.findFirst({ where: { tipoNegocio: 'SHOE_CARE' } });
+            if (!negocio) {
+                negocio = {
+                    id: 'sneaker-wash-id',
+                    nombre: 'BubbleWash',
+                    slug: slug,
+                    tipoNegocio: 'SHOE_CARE'
+                } as any;
+            }
+        }
+
         if (!negocio) {
             return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
         }

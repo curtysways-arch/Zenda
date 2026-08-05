@@ -15,9 +15,23 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
 export default async function MisPedidosPage(props: { params: Promise<{ slug: string }> }) {
     const { slug } = await props.params;
 
-    const negocio = await prisma.negocio.findUnique({
+    let negocio = await prisma.negocio.findUnique({
         where: { slug }
     });
+
+    if (!negocio && (slug === 'lavado' || slug === 'demo-lavado')) {
+        negocio = await prisma.negocio.findFirst({
+            where: { tipoNegocio: 'SHOE_CARE' }
+        });
+        if (!negocio) {
+            negocio = {
+                id: 'sneaker-wash-id',
+                nombre: 'BubbleWash',
+                slug: slug,
+                tipoNegocio: 'SHOE_CARE'
+            } as any;
+        }
+    }
 
     if (!negocio) {
         notFound();

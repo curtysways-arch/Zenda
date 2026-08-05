@@ -20,6 +20,20 @@ export async function GET(
             }
         });
 
+        if (!negocio && (slug === 'lavado' || slug === 'demo-lavado')) {
+            return NextResponse.json({
+                id: 'sneaker-wash-id',
+                nombre: 'BubbleWash',
+                slug: slug,
+                tipoNegocio: 'SHOE_CARE',
+                logoUrl: '/images/bubblewash/hero_sneakers.jpg',
+                colorPrimario: '#7c3aed',
+                colorSecundario: '#4c1d95',
+                whatsapp: '0991234567',
+                mostrarPrecios: true
+            });
+        }
+
         if (!negocio) {
             return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
         }
