@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { notificationService } from '@/lib/notifications';
 import { PaymentService } from '@/lib/payments/PaymentService';
 import { formatToEcuadorPhone, getPhoneSearchConditions } from '@/lib/phoneUtils';
+import { hasModule } from '@/lib/business/BusinessModuleResolver';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,10 +24,16 @@ export async function GET(
         if (!negocio) {
             return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
         }
+
+        // 🟢 Validación de Módulo
+        if (!hasModule(negocio.tipoNegocio, 'ORDERS')) {
+            return NextResponse.json({ error: 'MODULE_NOT_AVAILABLE', message: 'El módulo de pedidos no está disponible para este negocio.' }, { status: 403 });
+        }
+
         const phoneConditions = getPhoneSearchConditions(phone);
 
-        // 1. Intentar buscar por el negocioId del slug actual
-        let orders = await (prisma as any).pedido.findMany({
+        // 🔒 Consulta delimitada ESTRICTAMENTE por negocioId (sin fallbacks cross-tenant)
+        const orders = await (prisma as any).pedido.findMany({
             where: {
                 negocioId: negocio.id,
                 OR: phoneConditions
@@ -37,21 +44,6 @@ export async function GET(
             },
             orderBy: { createdAt: 'desc' }
         });
-
-
-        // 2. Fallback: Si no hay pedidos asociados a este negocioId específico, buscar todos los pedidos con ese teléfono
-        if (orders.length === 0) {
-            orders = await (prisma as any).pedido.findMany({
-                where: {
-                    OR: phoneConditions
-                },
-                include: {
-                    items: true,
-                    payment: true
-                },
-                orderBy: { createdAt: 'desc' }
-            });
-        }
 
         return NextResponse.json({ success: true, orders, pedidos: orders });
     } catch (e: any) {
@@ -90,6 +82,11 @@ export async function POST(
             return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
         }
 
+        // 🟢 Validación de Módulo
+        if (!hasModule(negocio.tipoNegocio, 'ORDERS')) {
+            return NextResponse.json({ error: 'MODULE_NOT_AVAILABLE', message: 'El módulo de pedidos no está disponible para este negocio.' }, { status: 403 });
+        }
+
         // Obtener productos de la base de datos para calcular el precio correcto
         const productIds = items.map(item => item.productId);
         const dbProducts = await (prisma as any).producto.findMany({
@@ -122,7 +119,7 @@ export async function POST(
 
         // Helper para distancia Haversine
         const getDistanceFromLatLonInKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-            const R = 6371; // Radio de la Tierra en km
+            const R = 6371;
             const dLat = (lat2 - lat1) * (Math.PI / 180);
             const dLon = (lon2 - lon1) * (Math.PI / 180);
             const a =
@@ -130,14 +127,13 @@ export async function POST(
                 Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
                 Math.sin(dLon / 2) * Math.sin(dLon / 2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            const d = R * c; // Distancia en km
-            return d;
+            return R * c;
         };
 
         // Configuración de envío y monto mínimo
         const config = (negocio.configuracion as any) || {};
 
-        // Validar monto mínimo en productos (sin incluir envío)
+        // Validar monto mínimo en productos
         const minOrderAmount = config.montoMinimoPedido !== undefined ? parseFloat(config.montoMinimoPedido) : 0;
         if (minOrderAmount > 0 && subtotal < minOrderAmount) {
             return NextResponse.json({
@@ -167,7 +163,6 @@ export async function POST(
         } else if (deliveryDate && deliveryDate.includes('-')) {
             dateToDeliver = new Date(deliveryDate + 'T00:00:00');
         }
-        // Limpiar hora de la fecha
         dateToDeliver.setHours(0, 0, 0, 0);
 
         // Generar número de pedido secuencial por negocio (transacción segura)
@@ -213,7 +208,7 @@ export async function POST(
                 monto: total
             }, tx);
 
-            // Upsert cliente para vincular nombre y teléfono desde su primer pedido
+            // Upsert cliente para vincular nombre y teléfono en el ámbito del negocio actual
             const cleanPhoneDigits = clientPhone.replace(/\D/g, '');
             const existingCliente = await (tx as any).cliente.findFirst({
                 where: {
@@ -251,12 +246,11 @@ export async function POST(
         const order = txResult.newOrder;
         const payment = txResult.initialPayment;
 
-        // Notificar al negocio en segundo plano (Push + SSE + WhatsApp del Bot al Negocio)
+        // Notificaciones en segundo plano
         try {
             const { whatsappService } = require('@/lib/whatsapp');
             const { sseEmitter } = require('@/lib/notifications/notificationService');
 
-            // 1. Notificación Push al admin y evento SSE en tiempo real
             await notificationService.sendPushToBusiness(
                 negocio.id,
                 `🛒 ¡Nuevo Pedido #${order.numeroPedido}!`,
@@ -271,7 +265,6 @@ export async function POST(
                 pedidoId: order.id
             });
 
-            // 2. Enviar mensaje de WhatsApp DEL BOT AL NEGOCIO con detalles y ubicación GPS
             const bizPhone = negocio.whatsapp || (negocio as any).telefono || '0998877665';
             const itemsList = order.items ? order.items.map((i: any) => `• ${i.cantidad}x ${i.nombreProducto} ($${(i.precioUnitario * i.cantidad).toFixed(2)})`).join('\n') : '';
             
@@ -306,7 +299,7 @@ export async function POST(
 
             await whatsappService.sendWhatsApp(bizPhone, bizMsg).catch(() => {});
         } catch (notifErr) {
-            console.error('[ORDER_NOTIF_ERROR] Failed to send notifications/whatsapp:', notifErr);
+            console.error('[ORDER_NOTIF_ERROR]', notifErr);
         }
 
         return NextResponse.json({ pedido: order, payment });

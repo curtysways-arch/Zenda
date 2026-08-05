@@ -28,7 +28,12 @@ export async function GET(request: Request) {
             }
         });
 
-        let orders = negocio ? await (prisma as any).pedido.findMany({
+        if (!negocio) {
+            return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
+        }
+
+        // 🔒 Consulta delimitada ESTRICTAMENTE por negocioId (sin fallbacks cross-tenant)
+        const orders = await (prisma as any).pedido.findMany({
             where: {
                 negocioId: negocio.id,
                 OR: phoneConditions
@@ -38,20 +43,7 @@ export async function GET(request: Request) {
                 payment: true
             },
             orderBy: { createdAt: 'desc' }
-        }) : [];
-
-        if (orders.length === 0) {
-            orders = await (prisma as any).pedido.findMany({
-                where: {
-                    OR: phoneConditions
-                },
-                include: {
-                    items: true,
-                    payment: true
-                },
-                orderBy: { createdAt: 'desc' }
-            });
-        }
+        });
 
         return NextResponse.json({ success: true, orders, pedidos: orders });
     } catch (e: any) {
@@ -59,7 +51,6 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: e.message || 'Error interno' }, { status: 500 });
     }
 }
-
 
 export async function POST(req: NextRequest) {
     try {
@@ -86,7 +77,6 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Datos de pedido inválidos o faltantes.' }, { status: 400 });
         }
 
-        // Create order via PinchoOrderService
         const { newOrder, initialPayment, friendlyCode } = await PinchoOrderService.createOrderFromCheckout({
             storeId: targetStoreId,
             clientName,
@@ -101,7 +91,6 @@ export async function POST(req: NextRequest) {
             items
         });
 
-        // Delete temporary checkout draft — safe if table not yet migrated
         if (sessionId) {
             try {
                 await PinchoCheckoutSessionService.deleteSession(sessionId);
@@ -113,12 +102,10 @@ export async function POST(req: NextRequest) {
                     metadata: { orderId: newOrder.id, friendlyCode }
                 });
             } catch (_) {
-                // Tables not yet migrated — ignore silently
+                // Ignore silently
             }
         }
 
-
-        // Notify business & client (WhatsApp + Push + SSE)
         await PinchoNotificationService.notifyStatusChange({
             storeId: targetStoreId,
             storeName,

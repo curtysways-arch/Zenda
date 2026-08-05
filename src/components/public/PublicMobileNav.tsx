@@ -1,38 +1,17 @@
 'use client';
 
-import { Home, Calendar, User, Gift, Sparkles, ShoppingBag, PackageCheck, GraduationCap } from 'lucide-react';
+import { Home, Calendar, User, Gift, Sparkles, PackageCheck, GraduationCap } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { clsx } from 'clsx';
 import { useState, useEffect } from 'react';
+import { hasModule } from '@/lib/business/BusinessModuleResolver';
 
 interface PublicMobileNavProps {
     slug: string;
     hasActiveCourses?: boolean;
     tipoNegocio?: string;
     isLoyaltyEnabled?: boolean;
-}
-
-/** Convierte un color hex a luminancia (0-255) */
-function hexToLuma(hex: string): number {
-    const clean = hex.replace('#', '');
-    if (clean.length !== 6) return 128;
-    const r = parseInt(clean.substring(0, 2), 16);
-    const g = parseInt(clean.substring(2, 4), 16);
-    const b = parseInt(clean.substring(4, 6), 16);
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-/** 
- * Computa el ratio de contraste entre dos colores (WCAG).
- * Retorna un valor entre 1 y 21.
- */
-function contrastRatio(hex1: string, hex2: string): number {
-    const L1 = hexToLuma(hex1) / 255;
-    const L2 = hexToLuma(hex2) / 255;
-    const lighter = Math.max(L1, L2);
-    const darker = Math.min(L1, L2);
-    return (lighter + 0.05) / (darker + 0.05);
 }
 
 export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNegocio = 'RESERVA', isLoyaltyEnabled = true }: PublicMobileNavProps) {
@@ -43,7 +22,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
     // Detectar sesión de forma reactiva y síncrona en el cliente
     const [hasSession, setHasSession] = useState<boolean>(() => {
         if (typeof window !== 'undefined') {
-            const phone = localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone');
+            const phone = localStorage.getItem(`${slug}_client_phone`) || localStorage.getItem('user_phone');
             if (phone || document.cookie.includes('cs=1') || document.cookie.includes('customer_token')) {
                 return true;
             }
@@ -54,7 +33,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
     useEffect(() => {
         const checkSession = async () => {
             if (typeof window !== 'undefined') {
-                const phone = localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone');
+                const phone = localStorage.getItem(`${slug}_client_phone`) || localStorage.getItem('user_phone');
                 if (phone) {
                     setHasSession(true);
                     return;
@@ -95,82 +74,87 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
         return null;
     }
 
+    const canAppointments = hasModule(tipoNegocio, 'APPOINTMENTS') || hasModule(tipoNegocio, 'RESERVATIONS');
+    const canOrders = hasModule(tipoNegocio, 'ORDERS');
     const isShoeCare = tipoNegocio === 'SHOE_CARE' || slug.includes('lavado') || slug.includes('sneaker');
 
-    const tabs = (tipoNegocio === 'SPORTS_COURTS' ? [
-        {
-            label: 'Inicio',
-            icon: Home,
-            href: `/${slug}`,
-            active: pathname === `/${slug}`,
-            visible: true
-        },
-        {
-            label: 'Reservas',
+    const tabs = [];
+
+    // 1. Tab Inicio
+    tabs.push({
+        label: 'Inicio',
+        icon: Home,
+        href: `/${slug}`,
+        active: pathname === `/${slug}` && !pathname.includes('/servicios'),
+        visible: true
+    });
+
+    // 2. Tab Secundario: "Mis Citas" (RESERVA) vs "Mis Pedidos / Órdenes" (PRODUCTOS / SHOE_CARE) vs "Reservas" (SPORTS_COURTS)
+    if (canAppointments) {
+        tabs.push({
+            label: 'Mis Citas',
             icon: Calendar,
             href: `/${slug}/mis-reservas`,
             active: pathname.includes('/mis-reservas') && activeTabParam !== 'academia',
             visible: true
-        },
-        {
+        });
+    } else if (canOrders) {
+        tabs.push({
+            label: isShoeCare ? 'Mis Órdenes' : 'Mis Pedidos',
+            icon: PackageCheck,
+            href: `/${slug}/pedidos`,
+            active: pathname.includes('/pedidos'),
+            visible: hasSession
+        });
+    }
+
+    // Tab opcional Academia para canchas/deportes
+    if (hasModule(tipoNegocio, 'ACADEMIA') || hasActiveCourses) {
+        tabs.push({
             label: 'Academia',
             icon: GraduationCap,
             href: `/${slug}/mis-reservas?tab=academia`,
             active: pathname.includes('/cursos') || (pathname.includes('/mis-reservas') && activeTabParam === 'academia'),
             visible: true
-        },
-        {
-            label: 'Perfil',
-            icon: User,
-            href: `/${slug}/perfil`,
-            active: pathname.includes('/perfil'),
-            visible: true
-        }
-    ] : [
-        {
-            label: 'Inicio',
-            icon: Home,
-            href: `/${slug}`,
-            active: pathname === `/${slug}` && !pathname.includes('/servicios'),
-            visible: true
-        },
-        {
-            label: isShoeCare ? 'Mis Órdenes' : 'Mis Pedidos',
-            icon: PackageCheck,
-            href: `/${slug}/pedidos`,
-            active: pathname.includes('/pedidos') || pathname.includes('/mis-reservas'),
-            visible: hasSession // ✅ Se muestra SOLO cuando el usuario está logueado
-        },
-        {
-            label: 'Servicios',
-            icon: Sparkles,
-            href: `/${slug}#servicios`,
-            active: pathname.includes('/servicios'),
-            isCentral: true,
-            visible: true // ✅ Siempre visible
-        },
-        {
+        });
+    }
+
+    // 3. Tab Central: Servicios / Catálogo
+    tabs.push({
+        label: hasModule(tipoNegocio, 'SERVICES') ? 'Servicios' : 'Catálogo',
+        icon: Sparkles,
+        href: `/${slug}#servicios`,
+        active: pathname.includes('/servicios'),
+        isCentral: true,
+        visible: true
+    });
+
+    // 4. Tab Premios (Loyalty)
+    if (hasModule(tipoNegocio, 'LOYALTY')) {
+        tabs.push({
             label: 'Premios',
             icon: Gift,
             href: `/${slug}/misiones`,
             active: pathname.includes('/referidos') || pathname.includes('/misiones'),
-            visible: hasSession && isLoyaltyEnabled // ✅ Se muestra SOLO cuando el usuario está logueado
-        },
-        {
-            label: 'Perfil',
-            icon: User,
-            href: `/${slug}/perfil`,
-            active: pathname.includes('/perfil'),
-            visible: true // ✅ Siempre visible
-        },
-    ]).filter(t => t.visible);
+            visible: hasSession && isLoyaltyEnabled
+        });
+    }
+
+    // 5. Tab Perfil
+    tabs.push({
+        label: 'Perfil',
+        icon: User,
+        href: `/${slug}/perfil`,
+        active: pathname.includes('/perfil'),
+        visible: true
+    });
+
+    const visibleTabs = tabs.filter(t => t.visible);
 
     return (
-        <nav
-            className="fixed bottom-0 left-0 right-0 z-[9999] h-[72px] pb-safe border-t pointer-events-auto bg-slate-900 border-slate-800 text-white shadow-[0_-4px_25px_rgba(0,0,0,0.4)]"
-        >
+        <nav className="fixed bottom-0 left-0 right-0 z-[9999] h-[72px] pb-safe border-t pointer-events-auto bg-slate-900 border-slate-800 text-white shadow-[0_-4px_25px_rgba(0,0,0,0.4)]">
             <div className="flex items-center justify-around h-full px-2">
-                {tabs.map((tab) => {
+                {visibleTabs.map((tab) => {
                     if (tab.isCentral) {
                         const CentralIcon = tab.icon;
                         return (
@@ -187,7 +171,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
                                         boxShadow: '0 4px 14px rgba(0, 0, 0, 0.3)'
                                     }}
                                 >
-                                    <CentralIcon size={24} style={{ color: 'var(--nav-bg)' }} fill={tab.label === 'Tienda' ? 'none' : 'currentColor'} />
+                                    <CentralIcon size={24} style={{ color: 'var(--nav-bg)' }} />
                                 </div>
                                 <span 
                                     className="text-[9px] font-black uppercase tracking-widest leading-none mt-1.5"

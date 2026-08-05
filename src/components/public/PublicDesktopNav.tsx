@@ -1,9 +1,10 @@
 'use client';
 
-import { Home, Calendar, User, FileText, Scissors, Menu, X, Gift, Tag } from 'lucide-react';
+import { Home, Calendar, User, FileText, Scissors, Gift, Tag, PackageCheck } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { hasModule } from '@/lib/business/BusinessModuleResolver';
 
 interface PublicDesktopNavProps {
     slug: string;
@@ -26,7 +27,6 @@ export default function PublicDesktopNav({
 }: PublicDesktopNavProps) {
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
-    const [menuOpen, setMenuOpen] = useState(false);
     const [hasSession, setHasSession] = useState(false);
 
     useEffect(() => {
@@ -49,47 +49,43 @@ export default function PublicDesktopNav({
         return null;
     }
 
-    const isProductos = tipoNegocio === 'PRODUCTOS';
+    const canAppointments = hasModule(tipoNegocio, 'APPOINTMENTS') || hasModule(tipoNegocio, 'RESERVATIONS');
+    const canOrders = hasModule(tipoNegocio, 'ORDERS');
+    const canServices = hasModule(tipoNegocio, 'SERVICES');
+    const isShoeCare = tipoNegocio === 'SHOE_CARE' || slug.includes('lavado') || slug.includes('sneaker');
 
-    const navItems = isProductos ? [
+    const navItems = [
         {
             label: 'Inicio',
             href: `/${slug}`,
             icon: Home,
             active: pathname === `/${slug}`
         },
-        {
-            label: 'Perfil',
-            href: `/${slug}/perfil`,
-            icon: User,
-            active: pathname.includes('/perfil')
-        }
-    ] : [
-        {
-            label: 'Inicio',
-            href: `/${slug}`,
-            icon: Home,
-            active: pathname === `/${slug}`
-        },
-        {
+        ...(canServices ? [{
             label: 'Servicios',
             href: `/${slug}/servicios`,
             icon: Scissors,
             active: pathname.includes('/servicios')
-        },
-        {
+        }] : []),
+        ...(canAppointments ? [{
             label: 'Reservas',
             href: `/${slug}/mis-reservas`,
             icon: Calendar,
             active: pathname.includes('/mis-reservas')
-        },
+        }] : []),
+        ...(canOrders ? [{
+            label: isShoeCare ? 'Mis Órdenes' : 'Mis Pedidos',
+            href: `/${slug}/pedidos`,
+            icon: PackageCheck,
+            active: pathname.includes('/pedidos')
+        }] : []),
         ...(pagesCount > 0 ? [{
             label: 'Páginas',
             href: `/${slug}#paginas`,
             icon: FileText,
             active: pathname.includes('/pagina')
         }] : []),
-        ...(isLoyaltyEnabled ? [{
+        ...((isLoyaltyEnabled && hasModule(tipoNegocio, 'LOYALTY')) ? [{
             label: 'Premios',
             href: `/${slug}/referidos`,
             icon: Gift,
@@ -109,6 +105,14 @@ export default function PublicDesktopNav({
         }
     ];
 
+    const buttonText = canOrders 
+        ? 'Ver Catálogo' 
+        : (hasModule(tipoNegocio, 'RESERVATIONS') ? 'Reservar Cancha' : 'Reservar Cita');
+
+    const buttonHref = canOrders 
+        ? `/${slug}` 
+        : `/${slug}#servicios`;
+
     return (
         <nav 
             className={`hidden md:block fixed top-0 left-0 right-0 z-[200] transition-all duration-500 ${
@@ -119,7 +123,7 @@ export default function PublicDesktopNav({
         >
             <div className="w-full px-6 md:px-10 h-[76px] flex items-center justify-between gap-8">
                 
-                {/* Logo / Brand — mismo estilo que móvil */}
+                {/* Logo / Brand */}
                 <Link 
                     href={`/${slug}`} 
                     className="flex items-center gap-3.5 flex-shrink-0 group"
@@ -169,11 +173,11 @@ export default function PublicDesktopNav({
 
                 {/* CTA Button */}
                 <Link
-                    href={isProductos ? `/${slug}` : `/${slug}#servicios`}
+                    href={buttonHref}
                     className="flex-shrink-0 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
                     style={{ backgroundColor: 'var(--primary)' }}
                 >
-                    {isProductos ? 'Ver Catálogo' : (tipoNegocio === 'SPORTS_COURTS' ? 'Reservar Cancha' : 'Reservar Cita')}
+                    {buttonText}
                 </Link>
             </div>
         </nav>

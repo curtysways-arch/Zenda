@@ -82,14 +82,16 @@ export default function ClientOrdersClient({ negocio }: Props) {
     const secondaryColor = negocio?.colorSecundario || '#1a0a00';
 
     const [phone, setPhone] = useState<string>(() => {
+        const storageKey = `${negocio?.slug || 'generic'}_client_phone`;
         if (typeof window !== 'undefined') {
-            return localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone') || '';
+            return localStorage.getItem(storageKey) || '';
         }
         return '';
     });
     const [isVerified, setIsVerified] = useState<boolean>(() => {
+        const storageKey = `${negocio?.slug || 'generic'}_client_phone`;
         if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone');
+            const saved = localStorage.getItem(storageKey);
             return !!saved;
         }
         return false;
@@ -105,8 +107,8 @@ export default function ClientOrdersClient({ negocio }: Props) {
     const [otpMessage, setOtpMessage] = useState<string | null>(null);
 
     useEffect(() => {
-        // Cargar teléfono guardado previamente en localStorage
-        const savedPhone = phone || (typeof window !== 'undefined' ? (localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone')) : null);
+        const storageKey = `${negocio?.slug || 'generic'}_client_phone`;
+        const savedPhone = phone || (typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null);
         if (savedPhone) {
             setPhone(savedPhone);
             setIsVerified(true);
@@ -183,7 +185,8 @@ export default function ClientOrdersClient({ negocio }: Props) {
             const data = await res.json();
             if (data.success) {
                 const formattedPhone = formatToEcuadorPhone(phone);
-                localStorage.setItem('pinchos_client_phone', formattedPhone);
+                const storageKey = `${negocio?.slug || 'generic'}_client_phone`;
+                localStorage.setItem(storageKey, formattedPhone);
                 localStorage.setItem('user_phone', formattedPhone);
                 setPhone(formattedPhone);
                 setIsVerified(true);
@@ -339,7 +342,8 @@ export default function ClientOrdersClient({ negocio }: Props) {
                             </div>
                             <button
                                 onClick={() => {
-                                    localStorage.removeItem('pinchos_client_phone');
+                                    const storageKey = `${negocio?.slug || 'generic'}_client_phone`;
+                                    localStorage.removeItem(storageKey);
                                     setIsVerified(false);
                                 }}
                                 className="text-xs font-extrabold hover:underline cursor-pointer"

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { hasModule } from '@/lib/business/BusinessModuleResolver';
 
 export async function GET(
     req: NextRequest,
@@ -28,6 +29,14 @@ export async function GET(
             );
         }
 
+        // 🟢 Validación de Módulo
+        if (!hasModule(negocio.tipoNegocio, 'ORDERS')) {
+            return NextResponse.json(
+                { success: false, error: 'MODULE_NOT_AVAILABLE', message: 'El módulo de pedidos no está disponible para este negocio.' },
+                { status: 403 }
+            );
+        }
+
         const rawPhone = phone.trim();
         const cleanDigits = phone.replace(/\D/g, '');
         const digits9 = cleanDigits.length >= 9 ? cleanDigits.slice(-9) : cleanDigits;
@@ -40,7 +49,8 @@ export async function GET(
             { telefonoCliente: { contains: digits7 } }
         ];
 
-        let orders = await prisma.pedido.findMany({
+        // 🔒 Consulta delimitada ESTRICTAMENTE por negocioId (sin fallbacks cross-tenant)
+        const orders = await prisma.pedido.findMany({
             where: {
                 negocioId: negocio.id,
                 OR: phoneConditions
@@ -51,19 +61,6 @@ export async function GET(
             },
             orderBy: { createdAt: 'desc' }
         });
-
-        if (orders.length === 0) {
-            orders = await prisma.pedido.findMany({
-                where: {
-                    OR: phoneConditions
-                },
-                include: {
-                    items: true,
-                    payment: true
-                },
-                orderBy: { createdAt: 'desc' }
-            });
-        }
 
         return NextResponse.json({
             success: true,
