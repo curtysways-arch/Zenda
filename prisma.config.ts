@@ -10,10 +10,15 @@ import { defineConfig } from "prisma/config";
 // La variable DATABASE_URL se lee del archivo .env (cargado por dotenv/config).
 // ─────────────────────────────────────────────────────────────────────────────
 
+let dbUrl = process.env["DATABASE_URL"] || "file:./dev.db";
+if (!dbUrl.startsWith("file:") && !dbUrl.startsWith("postgres:") && !dbUrl.startsWith("postgresql:")) {
+    dbUrl = "file:./dev.db";
+}
+
 export default defineConfig({
     schema: "prisma/schema.prisma",
     datasource: {
-        url: process.env["DATABASE_URL"] || "file:./dev.db",
+        url: dbUrl,
     },
     migrations: {
         seed: "npx tsx prisma/seed.ts",
