@@ -153,10 +153,10 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
 
     return (
         <nav 
-            className="fixed bottom-0 left-0 right-0 z-[9999] h-[72px] pb-safe border-t pointer-events-auto shadow-[0_-4px_25px_rgba(0,0,0,0.25)] transition-colors duration-300"
+            className="fixed bottom-0 left-0 right-0 z-[9999] h-[72px] pb-safe border-t pointer-events-auto bg-white shadow-[0_-4px_25px_rgba(0,0,0,0.15)] transition-colors duration-300"
             style={{
-                backgroundColor: 'var(--nav-bg)',
-                borderColor: 'var(--nav-border)'
+                backgroundColor: 'var(--nav-bg, #ffffff)',
+                borderColor: 'var(--nav-border, #e2e8f0)'
             }}
         >
             <div className="flex items-center justify-around h-full px-2">
@@ -172,16 +172,16 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
                                 <div 
                                     className="size-14 rounded-full flex items-center justify-center shadow-lg border-2 active:scale-95 transition-transform"
                                     style={{
-                                        backgroundColor: 'var(--primary)',
+                                        backgroundColor: 'var(--primary, #7c3aed)',
                                         borderColor: 'rgba(255,255,255,0.35)',
                                         boxShadow: '0 4px 14px rgba(0, 0, 0, 0.3)'
                                     }}
                                 >
-                                    <CentralIcon size={24} style={{ color: 'var(--text-on-primary)' }} />
+                                    <CentralIcon size={24} style={{ color: 'var(--text-on-primary, #ffffff)' }} />
                                 </div>
                                 <span 
                                     className="text-[9px] font-black uppercase tracking-widest leading-none mt-1.5"
-                                    style={{ color: 'var(--nav-active)' }}
+                                    style={{ color: 'var(--nav-active, #0f172a)' }}
                                 >
                                     {tab.label}
                                 </span>
@@ -192,7 +192,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
                         <Link
                             key={tab.label}
                             href={tab.href}
-                            style={{ color: tab.active ? 'var(--nav-active)' : 'var(--nav-inactive)' }}
+                            style={{ color: tab.active ? 'var(--nav-active, #0f172a)' : 'var(--nav-inactive, #64748b)' }}
                             className={clsx(
                                 'flex flex-col items-center justify-center transition-all relative flex-1 h-full',
                                 !tab.active && 'hover:opacity-100 transition-opacity'
@@ -213,7 +213,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
                             <span
                                 className="text-[9px] font-bold uppercase tracking-widest leading-none mt-1.5"
                                 style={{ 
-                                    color: tab.active ? 'var(--nav-active)' : 'var(--nav-inactive)',
+                                    color: tab.active ? 'var(--nav-active, #0f172a)' : 'var(--nav-inactive, #64748b)',
                                     fontWeight: tab.active ? 900 : 600,
                                 }}
                             >
@@ -224,7 +224,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
                                 <div
                                     className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-b-full"
                                     style={{
-                                        backgroundColor: 'var(--nav-active)',
+                                        backgroundColor: 'var(--nav-active, #0f172a)',
                                         opacity: 0.9,
                                     }}
                                 />
