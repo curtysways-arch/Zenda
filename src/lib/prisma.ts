@@ -35,11 +35,25 @@ function resolveLibSqlUrl(dbUrl: string): string {
 }
 
 function createPrismaClientSync(): PrismaClient {
-    let rawUrl = process.env['DATABASE_URL'] || 'file:./dev.db';
+    const rawUrl = process.env['DATABASE_URL'] || 'file:./dev.db';
+
     if (rawUrl.startsWith('postgresql://') || rawUrl.startsWith('postgres://')) {
-        rawUrl = 'file:./dev.db';
+        // ── PRODUCCIÓN: PostgreSQL via @prisma/adapter-pg ──────────────────────
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { Pool } = require('pg');
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { PrismaPg } = require('@prisma/adapter-pg');
+
+        const pool = new Pool({ connectionString: rawUrl });
+        const adapter = new PrismaPg(pool);
+
+        return new PrismaClient({
+            adapter,
+            log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+        });
     }
 
+    // ── DESARROLLO: SQLite via @prisma/adapter-libsql ──────────────────────────
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { PrismaLibSql } = require('@prisma/adapter-libsql');
 
@@ -83,4 +97,3 @@ const prisma = new Proxy({} as PrismaClient, {
 
 export default prisma;
 export { prisma };
-
