@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Calendar, User, Gift, Sparkles, ShoppingBag, PackageCheck } from 'lucide-react';
+import { Home, Calendar, User, Gift, Sparkles, ShoppingBag, PackageCheck, GraduationCap } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { clsx } from 'clsx';
@@ -10,6 +10,7 @@ interface PublicMobileNavProps {
     slug: string;
     hasActiveCourses?: boolean;
     tipoNegocio?: string;
+    isLoyaltyEnabled?: boolean;
 }
 
 /** Convierte un color hex a luminancia (0-255) */
@@ -34,7 +35,7 @@ function contrastRatio(hex1: string, hex2: string): number {
     return (lighter + 0.05) / (darker + 0.05);
 }
 
-export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNegocio = 'RESERVA' }: PublicMobileNavProps) {
+export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNegocio = 'RESERVA', isLoyaltyEnabled = true }: PublicMobileNavProps) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const activeTabParam = searchParams.get('tab');
@@ -94,7 +95,38 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
         return null;
     }
 
-    const tabs = [
+    const isShoeCare = tipoNegocio === 'SHOE_CARE' || slug.includes('lavado') || slug.includes('sneaker');
+
+    const tabs = (tipoNegocio === 'SPORTS_COURTS' ? [
+        {
+            label: 'Inicio',
+            icon: Home,
+            href: `/${slug}`,
+            active: pathname === `/${slug}`,
+            visible: true
+        },
+        {
+            label: 'Reservas',
+            icon: Calendar,
+            href: `/${slug}/mis-reservas`,
+            active: pathname.includes('/mis-reservas') && activeTabParam !== 'academia',
+            visible: true
+        },
+        {
+            label: 'Academia',
+            icon: GraduationCap,
+            href: `/${slug}/mis-reservas?tab=academia`,
+            active: pathname.includes('/cursos') || (pathname.includes('/mis-reservas') && activeTabParam === 'academia'),
+            visible: true
+        },
+        {
+            label: 'Perfil',
+            icon: User,
+            href: `/${slug}/perfil`,
+            active: pathname.includes('/perfil'),
+            visible: true
+        }
+    ] : [
         {
             label: 'Inicio',
             icon: Home,
@@ -103,51 +135,39 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
             visible: true
         },
         {
-            label: 'Agenda',
-            icon: Calendar,
-            href: `/${slug}/mis-reservas`,
-            active: pathname.includes('/mis-reservas') && activeTabParam !== 'academia',
-            visible: hasSession && tipoNegocio !== 'PRODUCTOS'
-        },
-        {
-            label: 'Mis Pedidos',
+            label: isShoeCare ? 'Mis Órdenes' : 'Mis Pedidos',
             icon: PackageCheck,
             href: `/${slug}/pedidos`,
-            active: pathname.includes('/pedidos'),
-            isCentral: tipoNegocio === 'PRODUCTOS',
-            visible: tipoNegocio === 'PRODUCTOS'
+            active: pathname.includes('/pedidos') || pathname.includes('/mis-reservas'),
+            visible: hasSession // ✅ Se muestra SOLO cuando el usuario está logueado
         },
         {
             label: 'Servicios',
             icon: Sparkles,
-            href: `/${slug}/servicios`,
+            href: `/${slug}#servicios`,
             active: pathname.includes('/servicios'),
             isCentral: true,
-            visible: tipoNegocio !== 'PRODUCTOS'
+            visible: true // ✅ Siempre visible
         },
         {
             label: 'Premios',
             icon: Gift,
             href: `/${slug}/misiones`,
             active: pathname.includes('/referidos') || pathname.includes('/misiones'),
-            visible: tipoNegocio !== 'PRODUCTOS'
+            visible: hasSession && isLoyaltyEnabled // ✅ Se muestra SOLO cuando el usuario está logueado
         },
         {
             label: 'Perfil',
             icon: User,
             href: `/${slug}/perfil`,
             active: pathname.includes('/perfil'),
-            visible: true
+            visible: true // ✅ Siempre visible
         },
-    ].filter(t => t.visible);
+    ]).filter(t => t.visible);
 
     return (
         <nav
-            className="fixed bottom-0 left-0 right-0 z-[500] h-[72px] pb-safe border-t pointer-events-auto md:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.15)]"
-            style={{
-                backgroundColor: 'var(--nav-bg)',
-                borderColor: 'var(--nav-border)',
-            }}
+            className="fixed bottom-0 left-0 right-0 z-[9999] h-[72px] pb-safe border-t pointer-events-auto bg-slate-900 border-slate-800 text-white shadow-[0_-4px_25px_rgba(0,0,0,0.4)]"
         >
             <div className="flex items-center justify-around h-full px-2">
                 {tabs.map((tab) => {

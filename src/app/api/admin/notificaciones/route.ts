@@ -32,10 +32,7 @@ export async function GET(req: Request) {
         // 2. WHERE clause para notificaciones operativas del negocio (excluyendo las notificaciones dirigidas al cliente final)
         const operationalWhere: any = {
             negocioId,
-            OR: [
-                { recipientType: null },
-                { recipientType: { not: 'USER' } }
-            ]
+            recipientType: { not: 'USER' }
         };
 
         if (filter === 'unread') {

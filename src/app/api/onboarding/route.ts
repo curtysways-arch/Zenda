@@ -36,12 +36,17 @@ export async function POST(req: Request) {
         const currentConfig = (currentNegocio.configuracion as any) || {};
 
         // Update configuracion object
+        // Normalizar diasAtencion: 7 (ISO domingo) → 0 (JS domingo) para consistencia
+        const diasNormalizados = Array.isArray(diasAtencion)
+            ? diasAtencion.map((d: any) => { const n = Number(d); return n === 7 ? 0 : n; })
+            : undefined;
+
         const updatedConfig = {
             ...currentConfig,
             wizardCompleted: true,
             tipoNegocio: tipoNegocio || currentConfig.tipoNegocio,
             descripcionCorta: descripcion || currentConfig.descripcionCorta,
-            diasAtencion: diasAtencion !== undefined ? diasAtencion : currentConfig.diasAtencion
+            diasAtencion: diasNormalizados !== undefined ? diasNormalizados : currentConfig.diasAtencion
         };
 
         // We use a transaction to do everything at once

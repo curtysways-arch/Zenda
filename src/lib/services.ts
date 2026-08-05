@@ -37,7 +37,7 @@ export async function getNegocioBySlug(slug: string) {
             console.log(`[SERVICES] Negocio encontrado: ${negocio.nombre} (${negocio.id})`);
             // Bypass para cargar los campos ignorados por la caché de Prisma JS antes de reiniciar "npm run dev"
             try {
-                const extraData: any[] = await prisma.$queryRawUnsafe(`SELECT tipoNegocio, bannerUrl, saludoTitulo, nombreFallback, mensajeBienvenida, mostrarPrecios, isDemo, statusOverride, statusNote, colorSecundario, colorTexto, colorNeutral, colorTerciario, logoUrl, heroTitulo, heroSubtitulo, tieneCafeteria, tieneParking, tieneWifi, tieneVestidores, tieneTienda, moduloTorneos, instagramUrl, facebookUrl, tiktokUrl, emailContacto, websiteUrl, youtubeUrl, faqUrl, terminosUrl, privacidadUrl, ciudad FROM Negocio WHERE id = '${negocio.id}'`);
+                const extraData: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM Negocio WHERE id = '${negocio.id}'`);
                 if (extraData && extraData.length > 0) {
                     const raw = extraData[0];
                     negocio.tipoNegocio = raw.tipoNegocio || raw.tiponegocio || raw.TIPO_NEGOCIO || 'RESERVA';

@@ -22,6 +22,7 @@ import ProductsStoreClient from '@/components/public/ProductsStoreClient';
 import { ModuleResolver } from '@/lib/modules/ModuleResolver';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function PublicNegocioPage({
     params,
@@ -67,6 +68,88 @@ export default async function PublicNegocioPage({
             return <PinchosStoreModule negocio={negocio} initialProducts={initialProducts} initialCategories={initialCategories} />;
         }
         return <ProductsStoreClient negocio={negocio} />;
+    }
+
+    let isShoeCareModule = negocio.tipoNegocio === 'SHOE_CARE' || (negocio.configuracion as any)?.tipoNegocio === 'SHOE_CARE' || slug.includes('lavado') || slug.includes('sneaker');
+
+    if (isShoeCareModule) {
+        let realReviews: any[] = [];
+        let paginas: any[] = [];
+        
+        // Consulta de páginas con Prisma ORM directo
+        try {
+            const dbPages = await prisma.page.findMany({
+                where: { businessId: negocio.id, status: 'published' },
+                orderBy: { updatedAt: 'desc' }
+            });
+            paginas = dbPages.map((p: any) => ({
+                id: p.id,
+                businessId: p.businessId,
+                title: p.title,
+                slug: p.slug,
+                contentHtml: p.contentHtml || '',
+                featuredImage: p.featuredImage || null,
+                buttonText: p.buttonText || null,
+                buttonUrl: p.buttonUrl || null,
+                status: p.status,
+            }));
+            console.log(`[SHOE_CARE_PAGES] Cargadas ${paginas.length} páginas para negocio ${negocio.id}:`, paginas.map(p => p.slug));
+        } catch (err) {
+            console.error('[SHOE_CARE_PAGES_ERROR]', err);
+        }
+
+
+        // Consulta de reviews
+        try {
+            const dbReviews = await prisma.rating.findMany({
+                where: {
+                    appointment: { negocioId: negocio.id },
+                    raterRole: 'client',
+                    stars: { gt: 0 }
+                },
+                include: {
+                    appointment: {
+                        include: { cliente: true, service: true }
+                    }
+                },
+                orderBy: { createdAt: 'desc' },
+                take: 6
+            });
+            realReviews = dbReviews.map((r: any) => ({
+                id: r.id,
+                comment: r.comment,
+                stars: r.stars,
+                author: r.appointment?.cliente?.nombre || 'Cliente',
+                servicio: r.appointment?.service?.nombre || null
+            })).filter(r => r.comment && r.comment.trim() !== '');
+        } catch (_) {}
+
+        const { default: ShoeCareLanding } = await import('@/modules/shoe-care/components/ShoeCareLanding');
+        return <ShoeCareLanding negocio={negocio} reviews={realReviews} paginasPersonalizadas={paginas} />;
+    }
+
+    if (negocio.tipoNegocio === 'SPORTS_COURTS' || (negocio.configuracion as any)?.tipoNegocio === 'SPORTS_COURTS' || slug.includes('canchas')) {
+        let paginasCanchas: any[] = [];
+        try {
+            const dbPages = await prisma.page.findMany({
+                where: { businessId: negocio.id, status: 'published' },
+                orderBy: { updatedAt: 'desc' }
+            });
+            paginasCanchas = dbPages.map((p: any) => ({
+                id: p.id,
+                businessId: p.businessId,
+                title: p.title,
+                slug: p.slug,
+                contentHtml: p.contentHtml || '',
+                featuredImage: p.featuredImage || null,
+                buttonText: p.buttonText || null,
+                buttonUrl: p.buttonUrl || null,
+                status: p.status,
+            }));
+        } catch (_) {}
+
+        const { default: CanchaPublicLanding } = await import('@/modules/sports-courts/components/CanchaPublicLanding');
+        return <CanchaPublicLanding negocio={negocio} canchas={negocio.services || []} paginasPersonalizadas={paginasCanchas} />;
     }
 
     
@@ -391,7 +474,9 @@ export default async function PublicNegocioPage({
         
         let defaultBanner = 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&q=80&w=1200'; // Default Spa
         
-        if (tipoRubro.includes('dental') || tipoRubro.includes('odont') || tipoRubro.includes('dent') || tipoRubro.includes('clinic')) {
+        if (tipoRubro.includes('cancha') || tipoRubro.includes('padel') || tipoRubro.includes('tenis') || tipoRubro.includes('futbol') || tipoRubro.includes('deport') || (negocio as any).tipoNegocio === 'SPORTS_COURTS') {
+            defaultBanner = 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&q=80&w=1200'; // Cancha de Pádel / Tenis
+        } else if (tipoRubro.includes('dental') || tipoRubro.includes('odont') || tipoRubro.includes('dent') || tipoRubro.includes('clinic')) {
             defaultBanner = 'https://images.unsplash.com/photo-1606811971618-4486d14f3f99?auto=format&fit=crop&q=80&w=1200'; // Dental
         } else if (tipoRubro.includes('barber') || tipoRubro.includes('pelu') || tipoRubro.includes('salon') || tipoRubro.includes('estet') || tipoRubro.includes('corte')) {
             defaultBanner = 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=1200'; // Peluquería / Estética
@@ -483,11 +568,15 @@ export default async function PublicNegocioPage({
         }
 
         // Verificar si hoy es un día de atención configurado
-        // getDay() => 0=Dom, 1=Lun, ..., 6=Sab
-        // El admin también usa 0=Dom, 1=Lun, ..., 6=Sab (mismo sistema JS)
+        // Sistema JS: 0=Dom, 1=Lun, ..., 6=Sab
+        // Algunos negocios creados via Superadmin pueden tener 7=Domingo (ISO).
+        // Normalizamos ambas representaciones a 0=Domingo antes de comparar.
         const diasAtencionRaw = config?.diasAtencion;
         if (diasAtencionRaw && Array.isArray(diasAtencionRaw) && diasAtencionRaw.length > 0) {
-            const diasNumericos = diasAtencionRaw.map((d: any) => Number(d));
+            const diasNumericos = diasAtencionRaw.map((d: any) => {
+                const n = Number(d);
+                return n === 7 ? 0 : n; // 7 (ISO domingo) → 0 (JS domingo)
+            });
             if (!diasNumericos.includes(todayDay)) {
                 return false; // Hoy no es día de atención
             }
@@ -642,6 +731,15 @@ export default async function PublicNegocioPage({
         // No bloquear el render si falla la consulta del referido
     }
 
+    if (isShoeCareModule) {
+        const { default: ShoeCareLanding } = await import('@/modules/shoe-care/components/ShoeCareLanding');
+        return (
+            <main className="min-h-screen font-sans pb-32 relative overflow-x-hidden">
+                <ShoeCareLanding negocio={negocio} />
+            </main>
+        );
+    }
+
     return (
         <main className="min-h-screen font-sans pb-32 md:pb-12 relative overflow-x-hidden" style={{ backgroundColor: neutralColor }}>
             {/* Cabecera Flotante (Solo Móvil) */}
@@ -744,7 +842,7 @@ export default async function PublicNegocioPage({
                                         boxShadow: `0 10px 20px ${primaryColor}30`
                                     }}
                                 >
-                                    Elegir servicio
+                                    {(negocio as any).tipoNegocio === 'SPORTS_COURTS' ? 'Elegir cancha' : 'Elegir servicio'}
                                     <ChevronRight size={12} strokeWidth={3} />
                                 </Link>
                                 <p className="text-[7.5px] font-bold text-white/40 flex items-center justify-center gap-1 mt-1.5 tracking-wide text-center mx-auto">

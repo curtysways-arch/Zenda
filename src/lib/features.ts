@@ -13,7 +13,10 @@ export type FeatureFlag =
     | 'automation'             // Automatizaciones complejas (seguimientos, etc.)
     | 'tournaments_module'     // Módulo de portafolio / torneos
     | 'courses_module'         // Módulo de academia / cursos
-    | 'automatic_discounts';   // Promociones y descuentos automáticos
+    | 'communications_module'  // Módulo de comunicaciones y notificaciones masivas
+    | 'communications_module'  // Módulo de comunicaciones y notificaciones masivas
+    | 'automatic_discounts'    // Promociones y descuentos automáticos
+    | 'loyalty_module';        // Club de fidelización, puntos, diamantes y niveles
 
 /**
  * Límites numéricos que varían según el plan.
@@ -50,7 +53,9 @@ export const DEFAULT_PLAN_CAPABILITIES: Record<'BEGIN' | 'PRO' | 'BUSINESS', Par
         automation: false,
         tournaments_module: false,
         courses_module: false,
-        automatic_discounts: false
+        communications_module: false,
+        automatic_discounts: false,
+        loyalty_module: false
     },
     PRO: {
         whatsapp_notifications: true,
@@ -67,7 +72,9 @@ export const DEFAULT_PLAN_CAPABILITIES: Record<'BEGIN' | 'PRO' | 'BUSINESS', Par
         automation: false,
         tournaments_module: true,
         courses_module: false,
-        automatic_discounts: true
+        communications_module: true,
+        automatic_discounts: true,
+        loyalty_module: true
     },
     BUSINESS: {
         whatsapp_notifications: true,
@@ -84,7 +91,9 @@ export const DEFAULT_PLAN_CAPABILITIES: Record<'BEGIN' | 'PRO' | 'BUSINESS', Par
         automation: true,
         tournaments_module: true,
         courses_module: true,
-        automatic_discounts: true
+        communications_module: true,
+        automatic_discounts: true,
+        loyalty_module: true
     }
 };
 

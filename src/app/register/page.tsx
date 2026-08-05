@@ -14,7 +14,7 @@ export default function RegisterPage() {
 
             {/* Header */}
             <header className="pt-8 px-6 flex justify-between items-center relative z-10 w-full max-w-4xl mx-auto">
-                <Link href="/" className="flex items-center gap-3 group">
+                <a href="/" className="flex items-center gap-3 group">
                     <div className="relative">
                         <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-2xl blur-lg opacity-30 scale-110" />
                         <div className="relative w-11 h-11 bg-white rounded-2xl shadow-lg border border-slate-100 flex items-center justify-center p-1.5 overflow-hidden">
@@ -24,14 +24,14 @@ export default function RegisterPage() {
                     <span className="text-xl font-black tracking-tight bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 bg-clip-text text-transparent italic">
                         CitiOx
                     </span>
-                </Link>
-                <Link
+                </a>
+                <a
                     href="/"
-                    className="flex items-center gap-2 text-xs font-black text-slate-400 hover:text-slate-700 transition-colors uppercase tracking-widest"
+                    className="flex items-center gap-2 text-xs font-black text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest bg-slate-50 px-4 py-2 rounded-xl border border-slate-200"
                 >
                     <ArrowLeft size={14} />
-                    Volver
-                </Link>
+                    Volver al inicio
+                </a>
             </header>
 
             {/* Main Content */}

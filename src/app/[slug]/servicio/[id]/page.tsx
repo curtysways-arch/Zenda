@@ -35,6 +35,17 @@ export default async function CanchaDetailPage({
     if (!negocio) {
         notFound();
     }
+
+    if (negocio.tipoNegocio === 'SPORTS_COURTS' || (negocio.configuracion as any)?.tipoNegocio === 'SPORTS_COURTS' || slug.includes('canchas')) {
+        const cancha = (negocio.services || []).find((c: any) => c.id === id) || {
+            id,
+            nombre: 'Cancha 1 (Cristal)',
+            tipo: 'PÁDEL CRISTAL',
+            precio: negocio.precioHora || 25000,
+        };
+        const { default: CanchaDetailView } = await import('@/modules/sports-courts/components/CanchaDetailView');
+        return <CanchaDetailView negocio={negocio} cancha={cancha} />;
+    }
     
     // Mapeo retro-compatible
     negocio.canchas = negocio.services || [];

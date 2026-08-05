@@ -59,12 +59,19 @@ export default async function AdminLayout({
         status = await checkSubscriptionStatus(negocioId);
         negocio = await prisma.negocio.findUnique({
             where: { id: negocioId },
-            select: { colorPrimario: true, configuracion: true, nombre: true }
+            select: { colorPrimario: true, configuracion: true, nombre: true, tipoNegocio: true }
         });
         primaryColor = negocio?.colorPrimario || '#0ea5e9';
         
-        const config = (negocio?.configuracion as any) || {};
-        if (config.wizardCompleted !== true) {
+        let config: any = {};
+        if (typeof negocio?.configuracion === 'string') {
+            try { config = JSON.parse(negocio.configuracion); } catch { config = {}; }
+        } else {
+            config = negocio?.configuracion || {};
+        }
+
+        // Solo redirigir si explícitamente es false (para permitir que negocios existentes ingresen directamente)
+        if (config.wizardCompleted === false) {
             redirect('/admin/onboarding');
         }
 
@@ -75,6 +82,7 @@ export default async function AdminLayout({
     const isNoPlan = status.reason === 'NO_PLAN';
     const isSuspended = status.reason === 'SUSPENDED';
     const isDemo = (session.user as any).isDemo === true;
+    const isCustomBackoffice = negocio?.tipoNegocio === 'SHOE_CARE' || negocio?.tipoNegocio === 'ordenes-servicio';
 
     // Solo bloquear si el negocio realmente no existe o tiene ID inválido
     // Para NO_PLAN, SUSPENDED y EXPIRED: permitir acceso con banner visible
@@ -86,7 +94,7 @@ export default async function AdminLayout({
         <ConfirmProvider primaryColor={primaryColor}>
             <div className="flex h-screen bg-slate-50 overflow-hidden light-theme" style={{ '--primary-color': primaryColor } as any}>
                 
-                {/* Sidebar Unificado */}
+                {/* Sidebar Unificado para todos los negocios de Citiox */}
                 <AdminSidebar primaryColor={primaryColor} />
 
                 {/* ── ÁREA PRINCIPAL ── */}
@@ -106,10 +114,10 @@ export default async function AdminLayout({
                                     <Link href="/register" className="bg-white text-amber-600 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest">Crear mi Spa</Link>
                                 </div>
                             )}
-                            {(isExpired || isNoPlan || isSuspended) && !isDemo && (
+                            {(isExpired || isSuspended) && !isDemo && !isSuperAdmin && process.env.NODE_ENV === 'production' && (
                                 <div className="bg-rose-600 text-white px-6 py-2 flex items-center justify-between shadow-lg">
                                     <p className="text-[9px] font-black uppercase tracking-widest italic">
-                                        {isSuspended ? 'Negocio Suspendido' : isNoPlan ? 'Sin Plan Activo' : 'Periodo Terminado'}
+                                        {isSuspended ? 'Negocio Suspendido' : 'Periodo Terminado'}
                                     </p>
                                     <Link href="/admin/plan" className="bg-white text-rose-600 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest">Activar Plan</Link>
                                 </div>

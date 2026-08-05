@@ -4,6 +4,41 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 
+export async function GET(
+    req: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params;
+        const session = await getServerSession(authOptions);
+        if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
+        const negocioId = (session.user as any).negocioId;
+        const user = await (prisma as any).usuario.findFirst({
+            where: { id, negocioId },
+            include: {
+                UserRole: {
+                    include: { Role: true }
+                }
+            }
+        });
+
+        if (!user) {
+            return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
+        }
+
+        const formatted = {
+            ...user,
+            password: "",
+            roles: (user.UserRole || []).map((ur: any) => ur.Role?.name || "")
+        };
+
+        return NextResponse.json(formatted);
+    } catch (error) {
+        return NextResponse.json({ error: "Error al obtener usuario" }, { status: 500 });
+    }
+}
+
 export async function PATCH(
     req: Request,
     { params }: { params: Promise<{ id: string }> }

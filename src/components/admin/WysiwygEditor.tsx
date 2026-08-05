@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import 'react-quill-new/dist/quill.snow.css';
-import { useMemo, useCallback, useRef } from 'react';
+import { useMemo, useCallback, useRef, useState } from 'react';
 
 // ReactQuill dinámico para evitar errores de SSR
 const ReactQuill = dynamic(async () => {
@@ -17,6 +17,7 @@ interface WysiwygEditorProps {
 
 export default function WysiwygEditor({ value, onChange }: WysiwygEditorProps) {
     const quillRef = useRef<any>(null);
+    const [isCodeMode, setIsCodeMode] = useState(false);
 
     // El handler de imagen personalizado para subir al servidor
     const imageHandler = useCallback(() => {
@@ -88,15 +89,50 @@ export default function WysiwygEditor({ value, onChange }: WysiwygEditorProps) {
 
     return (
         <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-            <ReactQuill
-                forwardedRef={quillRef}
-                theme="snow"
-                value={value}
-                onChange={onChange}
-                modules={modules}
-                formats={formats}
-                className="min-h-[400px]"
-            />
+            {/* Control Bar: Selector Visual vs Código HTML */}
+            <div className="bg-slate-100 border-b border-slate-200/80 px-4 py-2.5 flex items-center justify-between">
+                <div className="flex items-center gap-1.5 bg-slate-200/80 p-1 rounded-xl">
+                    <button
+                        type="button"
+                        onClick={() => setIsCodeMode(false)}
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-black tracking-wide transition-all flex items-center gap-1.5 ${!isCodeMode ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                    >
+                        ✏️ Editor Visual
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setIsCodeMode(true)}
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-black tracking-wide transition-all flex items-center gap-1.5 ${isCodeMode ? 'bg-white text-purple-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                    >
+                        {`</>`} Código HTML
+                    </button>
+                </div>
+                <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider hidden sm:inline">
+                    {isCodeMode ? '🚀 Modo Código HTML directo' : '✨ Modo Editor Enriquecido'}
+                </span>
+            </div>
+
+            {isCodeMode ? (
+                <div className="p-4 bg-slate-950">
+                    <textarea
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
+                        placeholder="Escribe o pega aquí tu código HTML..."
+                        className="w-full min-h-[400px] p-4 bg-slate-900 text-emerald-400 font-mono text-xs rounded-2xl border border-slate-800 outline-none focus:border-purple-500 transition-all leading-relaxed"
+                    />
+                </div>
+            ) : (
+                <ReactQuill
+                    forwardedRef={quillRef}
+                    theme="snow"
+                    value={value}
+                    onChange={onChange}
+                    modules={modules}
+                    formats={formats}
+                    className="min-h-[400px]"
+                />
+            )}
+
             <style jsx global>{`
                 /* Forzar el color del texto a oscuro para que sea visible por defecto */
                 .ql-container.ql-snow {

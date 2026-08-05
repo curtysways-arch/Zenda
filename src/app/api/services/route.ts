@@ -29,6 +29,8 @@ export async function GET(req: Request) {
             const extra = (s.extraInfo as any) || {};
             return {
                 ...s,
+                descripcion: extra.descripcion || '',
+                imagenUrl: extra.imagenUrl || '',
                 categoryId: extra.categoryId || null,
                 tipo: extra.tipo || null,
                 imagenes: s.Imagen || [],

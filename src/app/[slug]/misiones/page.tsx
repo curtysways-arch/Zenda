@@ -1,4 +1,5 @@
 import { getNegocioBySlug } from '@/lib/services';
+import { featureService } from '@/lib/services/featureService';
 import { notFound } from 'next/navigation';
 import QuestList from './QuestList';
 
@@ -13,6 +14,11 @@ export default async function PublicMisionesPage({
     const negocio = await getNegocioBySlug(slug);
 
     if (!negocio) {
+        notFound();
+    }
+
+    const isLoyaltyEnabled = await featureService.canUseFeature(negocio.id, 'loyalty_module');
+    if (!isLoyaltyEnabled) {
         notFound();
     }
 

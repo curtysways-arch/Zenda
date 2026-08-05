@@ -18,28 +18,13 @@ if (!dbUrl) {
 let finalUrl = dbUrl;
 if (dbUrl.startsWith('file:')) {
     const relativePath = dbUrl.replace('file:', '');
-    const absolutePath = path.resolve(process.cwd(), relativePath);
-    finalUrl = `file:${absolutePath}`;
+    const absolutePath = path.resolve(process.cwd(), relativePath).replace(/\\/g, '/');
+    finalUrl = `file:///${absolutePath}`;
 }
 
 console.log(`🔗 Conectando a: ${finalUrl}`);
 
-// 2. Configurar Prisma adaptativo según la base de datos
-let prisma: PrismaClient;
-
-if (finalUrl.startsWith('postgresql://') || finalUrl.startsWith('postgres://')) {
-    const { Pool } = require('pg');
-    const { PrismaPg } = require('@prisma/adapter-pg');
-    const pool = new Pool({ connectionString: finalUrl });
-    const adapter = new PrismaPg(pool);
-    prisma = new PrismaClient({ adapter });
-} else {
-    const { createClient } = require('@libsql/client');
-    const { PrismaLibSql } = require('@prisma/adapter-libsql');
-    const client = createClient({ url: finalUrl });
-    const adapter = new PrismaLibSql(client);
-    prisma = new PrismaClient({ adapter });
-}
+import prisma from '../src/lib/prisma';
 
 async function main() {
     console.log('🌱 Iniciando siembra de datos...');

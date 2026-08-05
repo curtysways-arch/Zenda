@@ -5,7 +5,9 @@ import { authOptions } from "@/lib/auth";
 
 async function isSuperAdmin() {
     const session = await getServerSession(authOptions);
-    return (session?.user as any)?.role === 'SUPER_ADMIN';
+    const role = (session?.user as any)?.role;
+    const roles = (session?.user as any)?.roles || [];
+    return role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || role === 'ADMIN' || roles.includes('SUPERADMIN') || (session?.user as any)?.isAdminUser;
 }
 
 export async function GET() {

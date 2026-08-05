@@ -33,7 +33,7 @@ enum RewardStatus {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
 model Attendance {
@@ -394,9 +394,17 @@ model Negocio {
   paymentMethods             PaymentMethod[]
   orderPayments              OrderPayment[]
   tipoNegocio                String                       @default("RESERVA")
+  businessTypeId             String?
+  businessProfileId          String?
+  BusinessType               BusinessType?                @relation("NegocioBusinessType", fields: [businessTypeId], references: [id])
+  BusinessProfile            BusinessProfile?             @relation("NegocioBusinessProfile", fields: [businessProfileId], references: [id])
   categoriasProducto         CategoriaProducto[]
   productos                  Producto[]
   pedidos                    Pedido[]
+  // ─── LOGÍSTICA TRANSVERSAL ─────────────────────────────────────────────────────
+  OperableResources          OperableResource[]    @relation("NegocioOperableResources")
+  DeliveryRoutes             DeliveryRoute[]
+  DeliveryInvitations        DeliveryInvitation[]
 }
 
 model OtpCode {
@@ -479,6 +487,7 @@ model Plan {
   tournaments_enabled                                            Boolean               @default(false)
   automatic_discounts_enabled                                    Boolean               @default(false)
   courses_module                                                 Boolean               @default(false)
+  communications_module                                          Boolean               @default(false)
   max_locations                                                  Int                   @default(1)
   is_recommended                                                 Boolean               @default(false)
   isFree                                                         Boolean               @default(false)
@@ -489,6 +498,7 @@ model Plan {
   SubscriptionHistory_SubscriptionHistory_plan_nuevo_idToPlan    SubscriptionHistory[] @relation("SubscriptionHistory_plan_nuevo_idToPlan")
   SubscriptionHistory_SubscriptionHistory_plan_anterior_idToPlan SubscriptionHistory[] @relation("SubscriptionHistory_plan_anterior_idToPlan")
   Suscripcion                                                    Suscripcion[]
+  businessTypeLinks                                              BusinessTypePlan[]
 }
 
 model ProcessedMessage {
@@ -2615,6 +2625,7 @@ model Pedido {
   total             Float
   estado            String       @default("PENDIENTE_PAGO") // "BORRADOR" | "PENDIENTE_PAGO" | "PAGO_EN_REVISION" | "PAGO_CONFIRMADO" | "EN_PREPARACION" | "LISTO" | "EN_RUTA" | "ENTREGADO" | "CANCELADO"
   notas             String?
+  extraInfo         Json?
   negocio           Negocio      @relation(fields: [negocioId], references: [id], onDelete: Cascade)
   items             PedidoItem[]
   payment           OrderPayment?
@@ -2781,6 +2792,569 @@ model PinchoOrderTimeline {
   @@index([pedidoId])
 }
 
+// ─── BUSINESS TYPE MANAGER (RFC-0010 ENTERPRISE CONFIGURABLE) ────────────────
 
+model BusinessType {
+  id                String   @id @default(uuid())
+  slug              String   @unique
+  name              String
+  description       String?
+  icon              String   @default("Briefcase")
+  color             String   @default("#6366f1")
+  resourceType      String   @default("HUMAN") // "HUMAN" | "INFRASTRUCTURE" | "EQUIPMENT" | "PHYSICAL_ITEM"
+  active            Boolean  @default(true)
+  sortOrder         Int      @default(0)
+  rulesOverride     Json?
+  landingThemeId    String?  @default("modern")
+  adminThemeId      String?  @default("sidebar")
+  initialConfig     Json?
+  uiLabels          Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
+  states           BusinessTypeState[]
+  capabilities     BusinessTypeCapability[]
+  profiles         BusinessProfile[]
+  planLinks        BusinessTypePlan[]
+  negocios         Negocio[]               @relation("NegocioBusinessType")
+  blueprints       BusinessBlueprint[]
+  experiences      BusinessTypeExperience[]
+  landingTemplates BusinessLandingTemplate[]
+  adminTemplates   BusinessAdminTemplate[]
+  moduleLinks      BusinessTypeModule[]
+  featureLinks     BusinessTypeFeature[]
+  addonLinks       BusinessTypeAddon[]
+  operationRules   OperationRule[]
+  intelligenceConfigs IntelligenceConfig[]
+}
+
+model BusinessTypeState {
+  id             String       @id @default(uuid())
+  businessTypeId String
+  name           String
+  slug           String
+  color          String       @default("#6366f1")
+  icon           String       @default("Circle")
+  tipo           String       @default("NORMAL") // "INICIAL" | "NORMAL" | "FINAL" | "CANCELACION"
+  sortOrder      Int          @default(0)
+  transitions    Json?
+  createdAt      DateTime     @default(now())
+  businessType   BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([businessTypeId, slug])
+}
+
+model BusinessTypeCapability {
+  id             String       @id @default(uuid())
+  businessTypeId String
+  capability     String
+  active         Boolean      @default(true)
+  businessType   BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([businessTypeId, capability])
+}
+
+model BusinessProfile {
+  id               String       @id @default(uuid())
+  businessTypeId   String
+  name             String
+  description      String?
+  icon             String       @default("Star")
+  settingsOverride Json?
+  active           Boolean      @default(true)
+  sortOrder        Int          @default(0)
+  createdAt        DateTime     @default(now())
+  businessType     BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+  negocios         Negocio[]    @relation("NegocioBusinessProfile")
+}
+
+model BusinessTypePlan {
+  id             String       @id @default(uuid())
+  businessTypeId String
+  planId         String
+  businessType   BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+  plan           Plan         @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([businessTypeId, planId])
+}
+
+// ─── CITIOX RUNTIME PLATFORM (NÚCLEO ARQUITECTÓNICO DEFINITIVO) ───────────────────
+
+model BusinessBlueprint {
+  id                  String       @id @default(uuid())
+  slug                String       @unique
+  code                String       @unique
+  name                String
+  description         String?
+  icon                String       @default("Layers")
+  businessTypeId      String
+  version             String       @default("1.0.0")
+  active              Boolean      @default(true)
+  isDefault           Boolean      @default(false)
+  
+  modules             Json?
+  capabilities        Json?
+  workflowId          String?
+  experienceProfileId String?
+  policies            Json?
+  integrations        Json?
+  aiSkills            Json?
+
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  businessType        BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+}
+
+model ExperienceProfile {
+  id                  String   @id @default(uuid())
+  code                String   @unique
+  name                String
+  description         String?
+  version             String   @default("1.0.0")
+  active              Boolean  @default(true)
+  
+  landingPackId       String?
+  adminPackId         String?
+  dashboardPackId     String?
+  navigationPackId    String?
+  formsPackId         String?
+  cardsPackId         String?
+  tablesPackId        String?
+  widgetsPackId       String?
+  themePackId         String?
+  mobilePackId        String?
+  reportsPackId       String?
+  kpiPackId           String?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  typeLinks           BusinessTypeExperience[]
+}
+
+model BusinessTypeExperience {
+  id                  String            @id @default(uuid())
+  businessTypeId      String
+  experienceProfileId String
+  isDefault           Boolean           @default(false)
+  createdAt           DateTime          @default(now())
+
+  businessType        BusinessType      @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+  experienceProfile   ExperienceProfile @relation(fields: [experienceProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([businessTypeId, experienceProfileId])
+}
+
+model BusinessLandingTemplate {
+  id             String       @id @default(uuid())
+  businessTypeId String
+  name           String
+  slug           String
+  description    String?
+  component      String
+  previewImage   String?
+  thumbnail      String?
+  version        String       @default("1.0.0")
+  active         Boolean      @default(true)
+  isDefault      Boolean      @default(false)
+  sortOrder      Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  businessType   BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+  
+  @@unique([businessTypeId, slug])
+}
+
+model BusinessAdminTemplate {
+  id             String       @id @default(uuid())
+  businessTypeId String
+  name           String
+  component      String
+  layoutType     String       @default("SIDEBAR")
+  previewImage   String?
+  version        String       @default("1.0.0")
+  active         Boolean      @default(true)
+  isDefault      Boolean      @default(false)
+  sortOrder      Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  businessType   BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+}
+
+model BusinessModuleCatalog {
+  id          String               @id @default(uuid())
+  code        String               @unique
+  name        String
+  description String?
+  icon        String               @default("Package")
+  active      Boolean              @default(true)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  typeLinks   BusinessTypeModule[]
+}
+
+model BusinessTypeModule {
+  id             String                @id @default(uuid())
+  businessTypeId String
+  moduleId       String
+  enabled        Boolean               @default(true)
+  required       Boolean               @default(false)
+  createdAt      DateTime              @default(now())
+
+  businessType   BusinessType          @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+  module         BusinessModuleCatalog @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([businessTypeId, moduleId])
+}
+
+model BusinessFeatureCatalog {
+  id          String                @id @default(uuid())
+  code        String                @unique
+  name        String
+  description String?
+  icon        String                @default("Zap")
+  createdAt   DateTime              @default(now())
+
+  typeLinks   BusinessTypeFeature[]
+}
+
+model BusinessTypeFeature {
+  id             String                 @id @default(uuid())
+  businessTypeId String
+  featureId      String
+  enabled        Boolean                @default(true)
+  createdAt      DateTime               @default(now())
+
+  businessType   BusinessType           @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+  feature        BusinessFeatureCatalog @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@unique([businessTypeId, featureId])
+}
+
+model BusinessAddonCatalog {
+  id          String              @id @default(uuid())
+  code        String              @unique
+  name        String
+  description String?
+  icon        String              @default("PlusCircle")
+  price       Float               @default(0)
+  createdAt   DateTime            @default(now())
+
+  typeLinks   BusinessTypeAddon[]
+}
+
+model BusinessTypeAddon {
+  id             String               @id @default(uuid())
+  businessTypeId String
+  addonId        String
+  enabled        Boolean              @default(true)
+  createdAt      DateTime             @default(now())
+
+  businessType   BusinessType         @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+  addon          BusinessAddonCatalog @relation(fields: [addonId], references: [id], onDelete: Cascade)
+
+  @@unique([businessTypeId, addonId])
+}
+
+model ModuleDependency {
+  id                String   @id @default(uuid())
+  moduleCode        String
+  dependsOnCode     String
+  createdAt         DateTime @default(now())
+
+  @@unique([moduleCode, dependsOnCode])
+}
+
+model ThemePack {
+  id             String   @id @default(uuid())
+  code           String   @unique
+  name           String
+  primaryColor   String   @default("#7c3aed")
+  secondaryColor String   @default("#4f46e5")
+  accentColor    String   @default("#f59e0b")
+  fontHeading    String   @default("Inter")
+  fontBody       String   @default("Inter")
+  createdAt      DateTime @default(now())
+}
+
+model DashboardLayout {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  description String?
+  icon        String   @default("LayoutDashboard")
+  layoutType  String   @default("CARDS")
+  createdAt   DateTime @default(now())
+}
+
+model ReportTemplate {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  category    String   @default("GENERAL")
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model RoleCatalog {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  description String?
+  permissions Json?
+  createdAt   DateTime @default(now())
+}
+
+model AutomationCatalog {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  name         String
+  triggerEvent String
+  actions      Json
+  createdAt    DateTime @default(now())
+}
+
+model AiAssistantCatalog {
+  id             String   @id @default(uuid())
+  code           String   @unique
+  name           String
+  roleName       String
+  promptTemplate String
+  capabilities   Json?
+  createdAt      DateTime @default(now())
+}
+
+model BusinessAiSkill {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  description String?
+  icon        String   @default("Sparkles")
+  category    String   @default("RECOMMENDATION")
+  createdAt   DateTime @default(now())
+}
+
+model BusinessPolicy {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  category    String   @default("GENERAL")
+  rules       Json?
+  createdAt   DateTime @default(now())
+}
+
+model BusinessIntegration {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  category    String   @default("PAYMENT")
+  icon        String   @default("Plug")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model OperationRule {
+  id             String       @id @default(uuid())
+  businessTypeId String
+  code           String
+  name           String
+  ruleType       String       @default("POLICY")
+  config         Json?
+  createdAt      DateTime     @default(now())
+
+  businessType   BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+}
+
+model IntelligenceConfig {
+  id                String       @id @default(uuid())
+  businessTypeId    String
+  code              String
+  name              String
+  aiAssistantId     String?
+  promptTemplate    String?
+  suggestionsConfig Json?
+  createdAt         DateTime     @default(now())
+
+  businessType      BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+}
+// ─── MÓDULO DE LOGÍSTICA TRANSVERSAL (v1.0.0) ────────────────────────────────────
+// Arquitectura: capability=delivery, OperableResource como abstracción universal
+// Compatible con: BubbleWash, Restaurantes, Florerías, Farmacias, Veterinarias, etc.
+
+/// Abstracción universal de recursos asignables (canchas, staff, vehículos, repartidores)
+model OperableResource {
+  id           String          @id @default(uuid())
+  negocioId    String
+  name         String          // "Juan García" | "Moto #1" | "Cancha Padel"
+  resourceType String          // HUMAN | VEHICLE | INFRASTRUCTURE | EQUIPMENT
+  category     String?         // DELIVERY_DRIVER | SPECIALIST | COURT | CABIN
+  avatar       String?
+  capacity     Int             @default(1)
+  active       Boolean         @default(true)
+  estado       String          @default("DISPONIBLE") // DISPONIBLE | OCUPADO | FUERA_DE_SERVICIO
+  metadata     Json?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  negocio      Negocio         @relation("NegocioOperableResources", fields: [negocioId], references: [id], onDelete: Cascade)
+  profile      ResourceProfile?
+  invitation   DeliveryInvitation?
+  assignments  DeliveryAssignment[]
+  routeStops   DeliveryRouteStop[]
+  location     DriverLocation?
+
+  @@index([negocioId])
+  @@index([negocioId, category])
+  @@index([negocioId, resourceType, active])
+}
+
+/// Perfil especializado solo para category = DELIVERY_DRIVER
+model ResourceProfile {
+  id                 String          @id @default(uuid())
+  resourceId         String          @unique
+  verificationStatus String          @default("INVITED")
+  // INVITED | PENDING_VERIFICATION | APPROVED | REJECTED | SUSPENDED
+  
+  // Datos personales
+  licencia           String?
+  documento          String?
+  telefono           String?
+  fotografiaUrl      String?
+  fechaNacimiento    String?
+  direccion          String?
+  email              String?
+  contactoEmergencia String?
+  
+  // Vehículo extendido
+  vehiculo           String?         // Moto | Auto | Bicicleta | A pie
+  marca              String?
+  modelo             String?
+  color              String?
+  placa              String?
+  anio               String?
+  tipoVehiculo       String?         // MOTO | AUTO | BICICLETA | A_PIE | CAMION
+  
+  // Documentos subidos (URLs o IDs privadas)
+  cedulaFrenteUrl    String?
+  cedulaReversoUrl   String?
+  licenciaUrl        String?
+  matriculaUrl       String?
+  fotoVehiculoUrl    String?
+  selfieUrl          String?
+
+  activo             Boolean         @default(true)
+  observaciones      String?
+  motivoRechazo      String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  resource           OperableResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+}
+
+/// Invitación de registro para nuevos repartidores
+model DeliveryInvitation {
+  id          String           @id @default(uuid())
+  negocioId   String
+  resourceId  String           @unique
+  telefono    String
+  token       String           @unique // UUID o token unico
+  expiresAt   DateTime
+  usedAt      DateTime?
+  status      String           @default("PENDING") // PENDING | USED | EXPIRED | CANCELLED
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  negocio     Negocio          @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  resource    OperableResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@index([negocioId])
+  @@index([token])
+}
+
+/// Misión de transporte individual (un retiro o una entrega)
+model DeliveryAssignment {
+  id               String             @id @default(uuid())
+  negocioId        String
+  resourceId       String             // OperableResource (repartidor asignado)
+  routeId          String?            // DeliveryRoute (opcional, si pertenece a una ruta)
+  tipo             String             // RETIRO | ENTREGA
+  estado           String             @default("ASIGNADO")
+  // estados: ASIGNADO | ACEPTADO | EN_RUTA | LLEGO | COMPLETADO | CANCELADO
+  ordenReferenciaId  String?          // ID de Pedido o Orden de Servicio (desacoplado)
+  ordenReferenciaTipo String?         // SHOE_CARE | RESTAURANT | PHARMACY | etc.
+  clienteNombre    String?
+  clienteTelefono  String?
+  clienteDireccion String?
+  clienteLatitud   Float?
+  clienteLongitud  Float?
+  notas            String?
+  horaAsignacion   DateTime           @default(now())
+  horaSalida       DateTime?
+  horaLlegada      DateTime?
+  horaCompletado   DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  resource         OperableResource   @relation(fields: [resourceId], references: [id])
+  route            DeliveryRoute?     @relation(fields: [routeId], references: [id])
+
+  @@index([negocioId])
+  @@index([resourceId])
+  @@index([routeId])
+  @@index([negocioId, estado])
+}
+
+/// Agrupación de múltiples asignaciones en una ruta diaria
+model DeliveryRoute {
+  id          String               @id @default(uuid())
+  negocioId   String
+  nombre      String               // "Ruta Mañana #1" | "Zona Norte"
+  fecha       DateTime
+  estado      String               @default("PLANIFICADA")
+  // estados: PLANIFICADA | EN_PROGRESO | COMPLETADA | CANCELADA
+  notas       String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  negocio     Negocio              @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  assignments DeliveryAssignment[]
+  stops       DeliveryRouteStop[]
+
+  @@index([negocioId])
+  @@index([negocioId, fecha])
+}
+
+/// Parada individual dentro de una ruta (permite reordenar y asignar recursos)
+model DeliveryRouteStop {
+  id          String            @id @default(uuid())
+  routeId     String
+  resourceId  String?           // OperableResource (repartidor asignado a esta parada)
+  orden       Int               // Posición en la ruta (1, 2, 3, ...)
+  tipo        String            // RETIRO | ENTREGA
+  estado      String            @default("PENDIENTE")
+  clienteNombre    String?
+  clienteTelefono  String?
+  clienteDireccion String?
+  latitud     Float?
+  longitud    Float?
+  horaEstimada     String?      // HH:mm
+  horaReal         DateTime?
+  notas       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  route       DeliveryRoute     @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  resource    OperableResource? @relation(fields: [resourceId], references: [id])
+
+  @@index([routeId])
+}
+
+/// Preparación arquitectónica para tracking GPS en tiempo real (futuro)
+/// No consume APIs de mapas todavía - solo almacena coordenadas
+model DriverLocation {
+  id         String           @id @default(uuid())
+  resourceId String           @unique
+  lat        Float
+  lng        Float
+  updatedAt  DateTime         @updatedAt
+  resource   OperableResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+}
 

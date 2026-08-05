@@ -16,13 +16,13 @@ export async function GET(req: Request) {
         const search = searchParams.get("search") || "";
 
         // 1. Obtener ReferralRewards (Campaña / Referidos) PENDIENTE_ENTREGA
-        const referralRewards = await prisma.referralReward.findMany({
+        const referralRewards = await (prisma as any).referralReward.findMany({
             where: {
                 negocioId,
                 estado: "PENDIENTE_ENTREGA",
                 Usuario: {
                     OR: [
-                        { nombre: { contains: search, mode: "insensitive" } },
+                        { nombre: { contains: search } },
                         { phone: { contains: search } }
                     ]
                 }
@@ -45,7 +45,7 @@ export async function GET(req: Request) {
                 estado: "PENDIENTE_ENTREGA",
                 Usuario: {
                     OR: [
-                        { nombre: { contains: search, mode: "insensitive" } },
+                        { nombre: { contains: search } },
                         { phone: { contains: search } }
                     ]
                 }
@@ -62,15 +62,15 @@ export async function GET(req: Request) {
         });
 
         // Formatear ambos
-        const formattedReferrals = referralRewards.map(reward => ({
+        const formattedReferrals = referralRewards.map((reward: any) => ({
             id: reward.id,
             tipoOrigen: "REFERIDO",
             claimCode: reward.claimCode || "N/A",
             createdAt: reward.createdAt,
             estado: reward.estado,
             Usuario: reward.Usuario,
-            premioNombre: reward.Campaign.nombre,
-            detallesRecompensa: reward.Campaign.valorRecompensa,
+            premioNombre: reward.Campaign?.nombre || 'Premio',
+            detallesRecompensa: reward.Campaign?.valorRecompensa || '',
             costoPuntos: 0
         }));
 

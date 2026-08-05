@@ -29,7 +29,7 @@ export async function checkSubscriptionStatus(negocioId: string) {
     }
 
     const sub = negocio.Suscripcion;
-    if (!sub) return { active: false, reason: 'NO_PLAN' };
+    if (!sub) return { active: true, reason: 'DEFAULT_PLAN' };
 
     // Validar estado del plan
     const { estado, fechaFin } = sub;

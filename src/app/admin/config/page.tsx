@@ -386,6 +386,12 @@ export default function ConfigMensajesPage() {
 
 
 
+                <DeliveryLogisticsConfigSection 
+                    configs={configs}
+                    onSaveConfig={handleSave}
+                    primaryColor={primaryColor}
+                />
+
                 <UbicacionesManager />
             </div>
         </>
@@ -448,6 +454,117 @@ function WhatsAppConfigSection({ negocio, onSave, isSaving, primaryColor }: any)
         </div>
     );
 }
+
+function DeliveryLogisticsConfigSection({ configs, onSaveConfig, primaryColor }: any) {
+    const [baseCost, setBaseCost] = useState(configs.costoEnvio || '1.50');
+    const [kmCost, setKmCost] = useState(configs.costoEnvioPorKm || '0.30');
+    const [minOrder, setMinOrder] = useState(configs.montoMinimoPedido || '0.00');
+    const [lat, setLat] = useState(configs.latitudNegocio || '-0.180653');
+    const [lng, setLng] = useState(configs.longitudNegocio || '-78.467838');
+
+    useEffect(() => {
+        if (configs.costoEnvio !== undefined) setBaseCost(configs.costoEnvio);
+        if (configs.costoEnvioPorKm !== undefined) setKmCost(configs.costoEnvioPorKm);
+        if (configs.montoMinimoPedido !== undefined) setMinOrder(configs.montoMinimoPedido);
+        if (configs.latitudNegocio !== undefined) setLat(configs.latitudNegocio);
+        if (configs.longitudNegocio !== undefined) setLng(configs.longitudNegocio);
+    }, [configs]);
+
+    return (
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/40 overflow-hidden p-8 space-y-6">
+            <div className="flex justify-between items-start border-b border-gray-100 pb-4">
+                <div>
+                    <h3 className="font-black text-gray-900 leading-tight uppercase tracking-tight flex items-center gap-2">
+                        <Car size={20} className="text-purple-600" />
+                        Tarifas de Logística (Retiro & Entrega a Domicilio)
+                    </h3>
+                    <p className="text-gray-400 text-sm mt-1">Configura el costo base de retiro/entrega y el recargo dinámico por distancia GPS desde tu local.</p>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Tarifa Base Retiro & Entrega ($)</label>
+                    <input
+                        type="number"
+                        step="0.10"
+                        value={baseCost}
+                        onChange={(e) => setBaseCost(e.target.value)}
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-900 outline-none"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">Tarifa mínima fija aplicada a solicitudes a domicilio.</p>
+                </div>
+
+                <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Costo por Kilómetro Adicional ($/km)</label>
+                    <input
+                        type="number"
+                        step="0.05"
+                        value={kmCost}
+                        onChange={(e) => setKmCost(e.target.value)}
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-900 outline-none"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">Multiplicador sumado por cada km desde el local al cliente.</p>
+                </div>
+
+                <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Monto Mínimo de Pedido ($)</label>
+                    <input
+                        type="number"
+                        step="1.00"
+                        value={minOrder}
+                        onChange={(e) => setMinOrder(e.target.value)}
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-900 outline-none"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">Monto mínimo en servicios para permitir delivery ($0 para desactivar).</p>
+                </div>
+            </div>
+
+            {/* Coordenadas GPS del Local */}
+            <div className="pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Latitud GPS del Local</label>
+                    <input
+                        type="text"
+                        value={lat}
+                        onChange={(e) => setLat(e.target.value)}
+                        placeholder="-0.180653"
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-mono font-bold text-slate-900 outline-none"
+                    />
+                </div>
+                <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Longitud GPS del Local</label>
+                    <input
+                        type="text"
+                        value={lng}
+                        onChange={(e) => setLng(e.target.value)}
+                        placeholder="-78.467838"
+                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-mono font-bold text-slate-900 outline-none"
+                    />
+                </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+                <button
+                    onClick={async () => {
+                        await onSaveConfig('costoEnvio', baseCost);
+                        await onSaveConfig('costoEnvioPorKm', kmCost);
+                        await onSaveConfig('montoMinimoPedido', minOrder);
+                        await onSaveConfig('latitudNegocio', lat);
+                        await onSaveConfig('longitudNegocio', lng);
+                        alert('✅ Parámetros de tarifa de envío y distancia guardados con éxito');
+                    }}
+                    className="px-8 py-4 rounded-2xl text-white text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-lg transition-transform active:scale-95 cursor-pointer"
+                    style={{ backgroundColor: primaryColor }}
+                >
+                    <Save size={16} />
+                    Guardar Tarifas de Envío
+                </button>
+            </div>
+        </div>
+    );
+}
+
 
 
 function UbicacionesManager() {

@@ -17,9 +17,11 @@ import {
     Users,
     Tags,
     MessageCircle,
+    MessageSquare,
     Palette
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { resolvePlanTier, DEFAULT_PLAN_CAPABILITIES } from "@/lib/features";
 
 interface PlanModalProps {
     plan?: any;
@@ -41,6 +43,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
         tournaments_enabled: false,
         automatic_discounts_enabled: false,
         courses_module: false,
+        communications_module: false,
+        loyalty_module: false,
         max_locations: "1" as any,
         is_recommended: false,
         activo: true,
@@ -58,6 +62,7 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
         analytics: false,
         automation: false,
         citas_activacion: "1" as any,
+        tipo_negocio: "TODOS",
     });
 
     useEffect(() => {
@@ -70,6 +75,9 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                 ? featuresObj.reduce((acc: any, f: string) => ({ ...acc, [f]: true }), {}) 
                 : featuresObj;
 
+            const tier = resolvePlanTier(plan?.name || plan?.nombre || "");
+            const defaultCaps = DEFAULT_PLAN_CAPABILITIES[tier] || {};
+
             setFormData({
                 name: plan?.name || plan?.nombre || "",
                 description: plan?.description || "",
@@ -78,9 +86,11 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                 max_fields: plan?.max_fields || plan?.limiteCanchas || 5,
                 maxStaff: plan?.maxStaff || 1,
                 max_reservations_per_month: plan?.max_reservations_per_month || plan?.limiteReservas || 100,
-                tournaments_enabled: plan?.tournaments_enabled ?? false,
-                automatic_discounts_enabled: plan?.automatic_discounts_enabled ?? false,
-                courses_module: plan?.courses_module ?? false,
+                tournaments_enabled: plan?.tournaments_enabled ?? featuresMapped?.tournaments_module ?? defaultCaps.tournaments_module ?? false,
+                automatic_discounts_enabled: plan?.automatic_discounts_enabled ?? featuresMapped?.automatic_discounts ?? defaultCaps.automatic_discounts ?? false,
+                courses_module: plan?.courses_module ?? featuresMapped?.courses_module ?? defaultCaps.courses_module ?? false,
+                communications_module: plan?.communications_module ?? featuresMapped?.communications_module ?? defaultCaps.communications_module ?? false,
+                loyalty_module: plan?.loyalty_module ?? featuresMapped?.loyalty_module ?? defaultCaps.loyalty_module ?? false,
                 max_locations: plan?.max_locations || 1,
                 is_recommended: plan?.is_recommended ?? false,
                 activo: plan ? (plan.activo ?? true) : true,
@@ -98,6 +108,7 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                 analytics: featuresMapped?.analytics ?? false,
                 automation: featuresMapped?.automation ?? false,
                 citas_activacion: featuresMapped?.citas_activacion ?? 1,
+                tipo_negocio: featuresMapped?.tipo_negocio || "TODOS",
             });
         }
     }, [plan, isOpen]);
@@ -126,6 +137,8 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                 tournaments_enabled: formData.tournaments_enabled,
                 automatic_discounts_enabled: formData.automatic_discounts_enabled,
                 courses_module: formData.courses_module,
+                communications_module: formData.communications_module,
+                loyalty_module: formData.loyalty_module,
                 max_locations: parseInt(formData.max_locations.toString()),
                 is_recommended: formData.is_recommended,
                 activo: formData.activo,
@@ -140,7 +153,9 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                     custom_phrases: formData.custom_phrases,
                     analytics: formData.analytics,
                     automation: formData.automation,
+                    loyalty_module: formData.loyalty_module,
                     citas_activacion: parseInt(formData.citas_activacion?.toString() || "1"),
+                    tipo_negocio: formData.tipo_negocio,
                 }
             };
 
@@ -208,6 +223,25 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-black ml-1 flex items-center gap-2" style={{ color: '#000' }}>
+                                    <Tags size={14} className="text-indigo-600" />
+                                    Tipo de Negocio Asignado
+                                </label>
+                                <select
+                                    style={{ color: '#000', backgroundColor: '#fff' }}
+                                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none transition-all font-black"
+                                    value={formData.tipo_negocio}
+                                    onChange={(e) => setFormData({ ...formData, tipo_negocio: e.target.value })}
+                                >
+                                    <option value="TODOS">🌐 TODOS (Plan Universal)</option>
+                                    <option value="SPORTS_COURTS">🏓 Canchas Deportivas & Clubes (SPORTS_COURTS)</option>
+                                    <option value="RESERVA">💆 Spa, Citas & Bienestar (RESERVA)</option>
+                                    <option value="PRODUCTOS">🛒 Tienda, Ecommerce & Pedidos (PRODUCTOS)</option>
+                                    <option value="ACADEMIA">🎓 Clases, Academias & Cursos (ACADEMIA)</option>
+                                </select>
                             </div>
 
                             <div className="space-y-2">
@@ -480,6 +514,46 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                         className="sr-only peer"
                                         checked={formData.courses_module}
                                         onChange={(e) => setFormData({ ...formData, courses_module: e.target.checked })}
+                                    />
+                                    <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
+                                        <MessageSquare size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-black" style={{ color: '#000' }}>Sistema de Comunicaciones</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>¿Habilitar notificaciones y anuncios masivos (WhatsApp / Push)?</p>
+                                    </div>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={formData.communications_module}
+                                        onChange={(e) => setFormData({ ...formData, communications_module: e.target.checked })}
+                                    />
+                                    <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-slate-100 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-amber-100 text-amber-700 rounded-lg">
+                                        <Trophy size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-black" style={{ color: '#000' }}>Club de Fidelización</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-tight" style={{ color: '#1e293b' }}>¿Habilitar misiones, diamantes, niveles y premios?</p>
+                                    </div>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={formData.loyalty_module}
+                                        onChange={(e) => setFormData({ ...formData, loyalty_module: e.target.checked })}
                                     />
                                     <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                                 </label>

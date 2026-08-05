@@ -51,15 +51,15 @@ export default function MobileStaff({ staff, primaryColor, onNew, onEdit, onSche
                     </button>
                 </div>
 
-                <div className="relative group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                <div className="relative group flex items-center">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none z-10" size={18} />
                     <input 
                         type="text"
                         placeholder="BUSCAR PROFESIONAL..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-2 transition-all shadow-inner"
-                        style={{ '--tw-ring-color': primaryColor } as any}
+                        style={{ paddingLeft: '3.2rem' }}
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pr-4 text-xs font-black uppercase tracking-widest focus:outline-none focus:ring-2 transition-all shadow-inner"
                     />
                 </div>
             </div>

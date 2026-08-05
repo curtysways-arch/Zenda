@@ -223,7 +223,7 @@ export default function MapSelectionModal({
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-[100000] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
             <div className="bg-white w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border border-slate-200">
                 {/* Header */}
                 <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">

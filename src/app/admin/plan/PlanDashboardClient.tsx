@@ -13,10 +13,12 @@ import {
     Package, 
     TrendingUp,
     RefreshCw,
-    Users
+    Users,
+    X
 } from "lucide-react";
 import Link from "next/link";
 import UpgradeModal from "@/components/ui/UpgradeModal";
+import { getFormattedPlanFeatures } from "@/lib/planFeaturesHelper";
 
 
 interface PlanDashboardClientProps {
@@ -386,73 +388,24 @@ export default function PlanDashboardClient({
                                 )}
                             </div>
 
-                             <div className="flex-1 space-y-3 mb-8 text-sm font-medium text-slate-600">
-                                <div className="flex items-center gap-2">
-                                    <CheckCircle2 size={16} style={{ color: 'var(--primary-color)' }} />
-                                    <span>{((plan as any).maxAppointmentsMonthly ?? (plan as any).max_reservations_per_month ?? 40) >= 999999 ? 'Citas ilimitadas' : `${(plan as any).maxAppointmentsMonthly ?? (plan as any).max_reservations_per_month ?? 40} citas mensuales`}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <CheckCircle2 size={16} style={{ color: 'var(--primary-color)' }} />
-                                    <span>{(plan as any).maxStaff >= 999 ? 'Especialistas ilimitados' : `Hasta ${(plan as any).maxStaff} especialista${(plan as any).maxStaff > 1 ? 's' : ''}`}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <CheckCircle2 size={16} style={{ color: 'var(--primary-color)' }} />
-                                    <span>{(plan as any).max_locations >= 100 ? 'Sedes ilimitadas' : `Hasta ${(plan as any).max_locations} sede${(plan as any).max_locations > 1 ? 's' : ''}`}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <CheckCircle2 size={16} style={{ color: 'var(--primary-color)' }} />
-                                    <span>{(plan as any).max_fields >= 999 ? 'Servicios ilimitados' : `Hasta ${(plan as any).max_fields} servicio${(plan as any).max_fields > 1 ? 's' : ''}`}</span>
-                                </div>
-                                {(() => {
-                                    const getFeatureLabel = (key: string): string => {
-                                        const labels: Record<string, string> = {
-                                            whatsapp_notifications: "Notificaciones por WhatsApp",
-                                            whatsapp_otp: "Seguridad OTP por WhatsApp",
-                                            whatsapp_reminders: "Recordatorios automáticos",
-                                            whatsapp_campaigns: "Campañas masivas",
-                                            custom_colors: "Colores personalizados",
-                                            custom_logo: "Logo propio",
-                                            custom_phrases: "Frases personalizadas",
-                                            remove_zenda_branding: "Sin marca de agua de CitiOx",
-                                            analytics: "Reportes Avanzados",
-                                            automation: "Automatizaciones",
-                                            tournaments_module: "Módulo de Torneos",
-                                            courses_module: "Módulo de Academia/Cursos",
-                                            automatic_discounts: "Descuentos Automáticos",
-                                            multi_staff: "Agenda Multi-profesional",
-                                            multi_branch: "Múltiples Sucursales"
-                                        };
-                                        return labels[key] || key.replace(/_/g, ' ');
-                                    };
-
-                                    const features = (plan as any).features;
-                                    if (!features) return [];
-                                    
-                                    let parsedFeatures = features;
-                                    if (typeof features === 'string') {
-                                        try {
-                                            parsedFeatures = JSON.parse(features);
-                                        } catch (e) {
-                                            return [];
-                                        }
-                                    }
-
-                                    let finalFeaturesList: string[] = [];
-                                    if (Array.isArray(parsedFeatures)) {
-                                        finalFeaturesList = parsedFeatures.map(f => getFeatureLabel(f));
-                                    } else if (typeof parsedFeatures === 'object') {
-                                        finalFeaturesList = Object.entries(parsedFeatures)
-                                            .filter(([_, val]) => val === true)
-                                            .map(([key]) => getFeatureLabel(key));
-                                    }
-
-                                    return finalFeaturesList.map((featLabel) => (
-                                        <div key={featLabel} className="flex items-center gap-2">
-                                            <CheckCircle2 size={16} style={{ color: 'var(--primary-color)' }} />
-                                            <span className="capitalize">{featLabel}</span>
-                                        </div>
-                                    ));
-                                })()}
+                             <div className="flex-1 space-y-3 mb-8 text-sm">
+                                {getFormattedPlanFeatures(plan).map((feat, idx) => (
+                                    <div key={idx} className="flex items-start gap-3">
+                                        {feat.included ? (
+                                            <div className="size-6 rounded-full border-2 border-indigo-500/30 bg-indigo-50 flex items-center justify-center flex-shrink-0 text-indigo-600 mt-0.5 shadow-sm">
+                                                <CheckCircle2 size={16} className="text-indigo-600 fill-indigo-100" />
+                                            </div>
+                                        ) : (
+                                            <div className="size-6 rounded-full border-2 border-slate-200 bg-slate-50 flex items-center justify-center flex-shrink-0 text-slate-300 mt-0.5">
+                                                <X size={14} className="text-slate-300" />
+                                            </div>
+                                        )}
+                                        <span className={`text-sm ${feat.included ? 'font-bold text-slate-900' : 'font-medium text-slate-400 opacity-60'}`}>
+                                            <span className={`mr-2 ${feat.included ? '' : 'grayscale opacity-50'}`}>{feat.emoji}</span>
+                                            {feat.text}
+                                        </span>
+                                    </div>
+                                ))}
                             </div>
 
                             {/* Lógica de botón corregida: permitir cambio a ANUAL aunque sea el mismo plan */}

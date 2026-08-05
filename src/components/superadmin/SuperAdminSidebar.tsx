@@ -71,6 +71,8 @@ export default function SuperAdminSidebar() {
     const menuItems = [
         { name: 'Dashboard', href: '/superadmin', icon: LayoutDashboard },
         { name: 'Negocios', href: '/superadmin/negocios', icon: Building2 },
+        { name: 'Citiox Studio', href: '/superadmin/citiox-studio', icon: Briefcase },
+        { name: 'Tipos de Negocio', href: '/superadmin/tipos-negocio', icon: Briefcase },
         { name: 'WhatsApp', href: '/superadmin/whatsapp', icon: MessageCircle },
         { name: 'Comunicaciones', href: '/superadmin/comunicaciones', icon: Megaphone },
         { name: 'Planes', href: '/superadmin/planes', icon: Package },

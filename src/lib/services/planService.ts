@@ -151,27 +151,33 @@ export const planService = {
      * IMPORTANTE: NO existe un plan separado llamado "Founder".
      * El beneficio de fundador es un flag dentro de Suscripcion.
      */
-    async assignDefaultPlan(businessId: string) {
-        // 1. Contar fundadores activos
-        const activeFoundersCount = await (prisma.suscripcion as any).count({
-            where: {
-                isFounder: true,
-                estado: { in: ['active', 'activa', 'ACTIVA'] }
-            }
-        });
+    async assignDefaultPlan(businessId: string, selectedPlanId?: string) {
+        let basePlan: any = null;
+        if (selectedPlanId) {
+            basePlan = await (prisma.plan as any).findFirst({
+                where: {
+                    OR: [
+                        { id: selectedPlanId },
+                        { name: { equals: selectedPlanId, mode: 'insensitive' } }
+                    ],
+                    activo: true
+                }
+            });
+        }
 
-        // 2. Buscar el plan base (PRO o el disponible más relevante)
-        let basePlan = await (prisma.plan as any).findFirst({
-            where: {
-                OR: [
-                    { id: 'plan_pro' },
-                    { name: { contains: 'PRO' } },
-                    { name: { contains: 'Pro' } }
-                ],
-                activo: true,
-                id: { not: 'founder' }
-            }
-        });
+        if (!basePlan) {
+            basePlan = await (prisma.plan as any).findFirst({
+                where: {
+                    OR: [
+                        { id: 'plan_pro' },
+                        { name: { contains: 'PRO' } },
+                        { name: { contains: 'Pro' } }
+                    ],
+                    activo: true,
+                    id: { not: 'founder' }
+                }
+            });
+        }
 
         // Fallback: primer plan activo no-founder
         if (!basePlan) {
@@ -196,6 +202,13 @@ export const planService = {
         const timeZone = getBusinessTimeZone(business?.configuracion);
 
         const { founderLockedPrice, founderMax } = await getFounderConfig();
+
+        const activeFoundersCount = await (prisma.suscripcion as any).count({
+            where: {
+                isFounder: true,
+                estado: { in: ['active', 'activa', 'ACTIVA'] }
+            }
+        });
 
         if (activeFoundersCount < founderMax) {
             // ── ASIGNAR COMO FUNDADOR ──

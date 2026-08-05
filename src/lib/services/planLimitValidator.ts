@@ -290,5 +290,33 @@ export const planLimitValidator = {
             };
         }
         return { allowed: true };
+    },
+
+    /**
+     * Valida si el módulo de Comunicaciones y Notificaciones Masivas está habilitado.
+     */
+    async canAccessCommunications(businessId: string): Promise<{ allowed: boolean; message?: string }> {
+        const canAccess = await featureService.canUseFeature(businessId, 'communications_module');
+        if (!canAccess) {
+            return {
+                allowed: false,
+                message: "Tu plan actual no incluye el módulo de Comunicaciones y Notificaciones Masivas. Actualiza tu plan para enviar anuncios masivos por WhatsApp y Push."
+            };
+        }
+        return { allowed: true };
+    },
+
+    /**
+     * Valida si el módulo Club de Fidelización (Puntos/Niveles/Premios) está habilitado.
+     */
+    async canAccessLoyalty(businessId: string): Promise<{ allowed: boolean; message?: string }> {
+        const canAccess = await featureService.canUseFeature(businessId, 'loyalty_module');
+        if (!canAccess) {
+            return {
+                allowed: false,
+                message: "Tu plan actual no incluye el Club de Fidelización. Actualiza tu plan para activar misiones, diamantes, niveles y recompensas."
+            };
+        }
+        return { allowed: true };
     }
 };

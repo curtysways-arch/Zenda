@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { planService } from "@/lib/services/planService";
 import crypto from "crypto";
 import { whatsappService } from "@/lib/whatsapp";
+import { BusinessProvisioningService } from "@/core/services/BusinessProvisioningService";
 
 async function isSuperAdmin() {
     const session = await getServerSession(authOptions);
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
             heroSubtitulo,
             bannerUrl,
             bannerUrls, // Múltiples fotos de portada
-            diasAtencion, // Array de números [1, 2, 3, 4, 5, 6] (1=Lunes, 7=Domingo)
+            diasAtencion, // Array de números [1, 2, 3, 4, 5, 6, 0] (JS: 0=Dom, 1=Lun...6=Sab) o [7] para Domingo (ISO)
             servicios, // Array: { id, nombre, duracion, precio, imageMediaId }
             profesionales, // Array: { name, role, imageMediaId, servicesIds }
             crearDemo // Booleano
@@ -77,13 +78,47 @@ export async function POST(req: Request) {
             ? bannerUrls[0]
             : (bannerUrl || (crearDemo ? "https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=1200&h=400&fit=crop" : null));
 
+        let mappedTipo = 'RESERVA';
+        if (tipoNegocio === 'SPORTS_COURTS' || tipoNegocio?.includes('Canchas') || tipoNegocio?.includes('Pádel') || tipoNegocio?.includes('Fútbol')) {
+            mappedTipo = 'SPORTS_COURTS';
+        } else if (tipoNegocio === 'PRODUCTOS' || tipoNegocio?.includes('Tienda') || tipoNegocio?.includes('Ecommerce')) {
+            mappedTipo = 'PRODUCTOS';
+        } else if (tipoNegocio === 'ACADEMIA' || tipoNegocio?.includes('Academia') || tipoNegocio?.includes('Curso')) {
+            mappedTipo = 'ACADEMIA';
+        }
+
+        let finalBusinessTypeId = body.businessTypeId || null;
+        if (!finalBusinessTypeId) {
+            const btFound = await prisma.businessType.findFirst({
+                where: {
+                    OR: [
+                        { name: tipoNegocio },
+                        { slug: tipoNegocio?.toLowerCase() },
+                        { slug: mappedTipo.toLowerCase() }
+                    ]
+                }
+            });
+            if (btFound) {
+                finalBusinessTypeId = btFound.id;
+            }
+        }
+
         // 1. Configuración del JSON
+        // Normalizar diasAtencion: convertir 7 (ISO domingo) a 0 (JS domingo)
+        const diasAtencionNormalizados = (Array.isArray(diasAtencion) && diasAtencion.length > 0)
+            ? diasAtencion.map((d: any) => { const n = Number(d); return n === 7 ? 0 : n; })
+            : [1, 2, 3, 4, 5, 6]; // L-S por defecto
+
         const configuracionJson = {
             wizardCompleted: true,
             setupCompleted: true,
             createdBySuperAdmin: true,
-            tipoNegocio: tipoNegocio || "Otro",
-            bannerUrl: primaryBanner
+            tipoNegocio: mappedTipo,
+            categoriaNombre: tipoNegocio || "Otro",
+            bannerUrl: primaryBanner,
+            diasAtencion: diasAtencionNormalizados,
+            horarioApertura: horarioApertura || "08:00",
+            horarioCierre: horarioCierre || "22:00"
         };
 
         // Procesar transaccionalmente
@@ -104,6 +139,8 @@ export async function POST(req: Request) {
                     precioHora: parseFloat(precioHora?.toString()) || 0,
                     logoUrl: logoUrl || (crearDemo ? "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=150&h=150&fit=crop" : null),
                     estado: 'ACTIVO',
+                    tipoNegocio: mappedTipo,
+                    businessTypeId: finalBusinessTypeId,
                     colorPrimario: colorPrimario || '#1dc95c',
                     colorSecundario: colorSecundario || '#112117',
                     heroTitulo: heroTitulo || `Bienvenido a ${nombre}`,
@@ -226,9 +263,7 @@ export async function POST(req: Request) {
                 }];
             }
 
-            const activeDays = (diasAtencion && Array.isArray(diasAtencion) && diasAtencion.length > 0)
-                ? diasAtencion
-                : [1, 2, 3, 4, 5, 6]; // L-S por defecto
+            const activeDays = diasAtencionNormalizados; // Ya normalizado arriba (7→0)
 
             for (const p of finalProfesionalesInput) {
                 const staffId = crypto.randomUUID();

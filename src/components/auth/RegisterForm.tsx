@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
     Dribbble,
     Mail,
@@ -32,6 +32,8 @@ export default function RegisterForm() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const selectedPlanId = searchParams.get("plan");
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({
@@ -49,7 +51,10 @@ export default function RegisterForm() {
             const res = await fetch("/api/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({
+                    ...formData,
+                    planId: selectedPlanId
+                })
             });
 
             const data = await res.json();

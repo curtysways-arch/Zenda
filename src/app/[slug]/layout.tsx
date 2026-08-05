@@ -77,6 +77,7 @@ export default async function NegocioLayout({
     });
 
     const canUseCustomColors = await featureService.canUseFeature(negocio.id, 'custom_colors');
+    const isLoyaltyEnabled = await featureService.canUseFeature(negocio.id, 'loyalty_module');
 
     const config = negocio.configuracion ? (typeof negocio.configuracion === 'string' ? JSON.parse(negocio.configuracion) : negocio.configuracion) as any : null;
     
@@ -193,7 +194,7 @@ export default async function NegocioLayout({
                 /* Interceptores dinámicos del branding sobre clases de Tailwind */
                 
                 /* Botones principales y fondos de color de marca */
-                .bg-pink-500, .bg-emerald-500, .bg-indigo-500, .bg-blue-500, .bg-slate-900:not(.text-white), .bg-primary {
+                .bg-pink-500, .bg-emerald-500, .bg-indigo-500, .bg-blue-500, .bg-primary {
                     background-color: var(--primary) !important;
                     color: var(--text-on-primary) !important;
                 }
@@ -391,15 +392,17 @@ export default async function NegocioLayout({
                     logoUrl={negocio.logoUrl} 
                     nombre={negocio.nombre} 
                     tipoNegocio={negocio.tipoNegocio || 'RESERVA'}
+                    isLoyaltyEnabled={isLoyaltyEnabled}
                 />
                 <div className="flex-1">
                     {children}
                 </div>
-                <LoyaltyCelebration slug={slug} primaryColor={primaryInput} />
+                {isLoyaltyEnabled && <LoyaltyCelebration slug={slug} primaryColor={primaryInput} />}
                 <PublicMobileNav 
                     slug={slug} 
                     hasActiveCourses={hasActiveCourses} 
                     tipoNegocio={negocio.tipoNegocio || 'RESERVA'}
+                    isLoyaltyEnabled={isLoyaltyEnabled}
                 />
             </div>
         </>

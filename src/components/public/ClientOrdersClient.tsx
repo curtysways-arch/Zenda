@@ -198,23 +198,25 @@ export default function ClientOrdersClient({ negocio }: Props) {
         }
     };
 
+    const isShoeCare = negocio?.tipoNegocio === 'SHOE_CARE' || negocio?.slug?.includes('lavado') || negocio?.slug?.includes('sneaker');
+
     const getOrderBadge = (status: string) => {
         switch (status) {
             case 'EN_PREPARACION':
             case 'PREPARACION':
-                return <span className="px-3 py-1 bg-orange-100 text-orange-800 border border-orange-200 rounded-full text-xs font-black">🔥 EN PREPARACIÓN</span>;
+                return <span className="px-3 py-1 bg-purple-950 text-purple-300 border border-purple-800/60 rounded-full text-xs font-black">⚡ EN PROCESO</span>;
             case 'LISTO':
-                return <span className="px-3 py-1 bg-blue-100 text-blue-800 border border-blue-200 rounded-full text-xs font-black">✨ LISTO PARA ENTREGA</span>;
+                return <span className="px-3 py-1 bg-emerald-950 text-emerald-300 border border-emerald-800/60 rounded-full text-xs font-black">✨ LISTO PARA ENTREGA</span>;
             case 'EN_RUTA':
             case 'RUTA':
-                return <span className="px-3 py-1 bg-purple-100 text-purple-800 border border-purple-200 rounded-full text-xs font-black">🛵 EN RUTA</span>;
+                return <span className="px-3 py-1 bg-indigo-950 text-indigo-300 border border-indigo-800/60 rounded-full text-xs font-black">🛵 EN CAMINO</span>;
             case 'ENTREGADO':
-                return <span className="px-3 py-1 bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-full text-xs font-black">🎉 ENTREGADO</span>;
+                return <span className="px-3 py-1 bg-emerald-900/50 text-emerald-300 border border-emerald-700/60 rounded-full text-xs font-black">🎉 ENTREGADO</span>;
             case 'PAGO_EN_REVISION':
-                return <span className="px-3 py-1 bg-amber-100 text-amber-800 border border-amber-300 rounded-full text-xs font-black">⏳ PAGO EN REVISIÓN</span>;
+                return <span className="px-3 py-1 bg-amber-950 text-amber-300 border border-amber-800/60 rounded-full text-xs font-black">⏳ PAGO EN REVISIÓN</span>;
             case 'PENDIENTE_PAGO':
             default:
-                return <span className="px-3 py-1 bg-slate-100 text-slate-700 border border-slate-200 rounded-full text-xs font-black">💳 PENDIENTE DE PAGO</span>;
+                return <span className="px-3 py-1 bg-purple-950/80 text-purple-200 border border-purple-800/60 rounded-full text-xs font-black">💳 PENDIENTE DE PAGO</span>;
         }
     };
 
@@ -233,37 +235,40 @@ export default function ClientOrdersClient({ negocio }: Props) {
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-36 sm:pb-40">
             {/* Header */}
-            <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-xs">
+            <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-xs">
                 <Link href={`/${negocio.slug}`} className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors text-xs font-extrabold uppercase tracking-wider">
                     <ArrowLeft className="w-4 h-4" /> Volver a Tienda
                 </Link>
                 <div className="flex items-center gap-2">
-                    <ShoppingBag className="w-5 h-5 text-orange-600" />
-                    <span className="font-black text-sm text-slate-900">Mis Pedidos - {negocio.nombre}</span>
+                    <ShoppingBag className="w-5 h-5 text-slate-800" style={{ color: primaryColor }} />
+                    <span className="font-black text-sm text-slate-900">Mis Órdenes - {negocio.nombre}</span>
                 </div>
             </header>
 
             <main className="max-w-2xl mx-auto px-4 pt-8">
                 {!isVerified ? (
                     // Card de Verificación OTP
-                    <div className="bg-white border border-slate-200/80 rounded-3xl p-8 shadow-2xl space-y-6">
+                    <div className="bg-white border border-slate-200/80 rounded-3xl p-8 shadow-xl space-y-6">
                         <div className="text-center space-y-2">
-                            <div className="w-14 h-14 bg-orange-500/10 border border-orange-500/20 text-orange-600 rounded-2xl flex items-center justify-center mx-auto">
+                            <div 
+                                className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto text-white shadow-md"
+                                style={{ backgroundColor: primaryColor }}
+                            >
                                 <Phone className="w-7 h-7" />
                             </div>
-                            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Consulta tus Pedidos</h2>
+                            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Consulta tus Órdenes de Servicio</h2>
                             <p className="text-xs text-slate-500 font-medium">Ingresa tu número de teléfono para enviarte un código OTP de seguridad</p>
                         </div>
 
                         {otpMessage && (
-                            <div className="p-3.5 bg-orange-50 border border-orange-200 rounded-2xl text-center text-xs font-bold text-orange-800">
+                            <div className="p-3.5 bg-slate-100 border border-slate-200 rounded-2xl text-center text-xs font-bold text-slate-800">
                                 {otpMessage}
                             </div>
                         )}
 
                         {otpStep === 'input' ? (
                             <form onSubmit={handleSendOTP} className="space-y-4">
-                                <div>
+                                <div className="text-left">
                                     <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">Número Celular / WhatsApp</label>
                                     <input
                                         type="tel"
@@ -274,20 +279,21 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                         value={phone}
                                         onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
                                         placeholder="0991234567"
-                                        className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 font-mono text-center text-lg focus:outline-none focus:border-orange-500 focus:bg-white transition-colors"
+                                        className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 font-mono text-center text-lg focus:outline-none focus:bg-white transition-colors"
                                     />
                                 </div>
                                 <button
                                     type="submit"
                                     disabled={otpLoading}
-                                    className="w-full py-4 bg-orange-600 hover:bg-orange-700 active:scale-95 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-orange-600/20 flex items-center justify-center gap-2 transition-all"
+                                    className="w-full py-4 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer"
+                                    style={{ backgroundColor: primaryColor }}
                                 >
                                     {otpLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Enviar Código OTP'}
                                 </button>
                             </form>
                         ) : (
                             <form onSubmit={handleVerifyOTP} className="space-y-4">
-                                <div>
+                                <div className="text-left">
                                     <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">Código OTP de 6 dígitos</label>
                                     <div className="relative">
                                         <KeyRound className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -301,21 +307,22 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                             value={otpCode}
                                             onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
                                             placeholder="123456"
-                                            className="w-full pl-10 pr-4 py-3.5 bg-slate-50 border-2 border-orange-400 rounded-2xl text-slate-900 font-mono text-center text-2xl tracking-[0.4em] focus:outline-none focus:border-orange-600 focus:bg-white transition-colors"
+                                            className="w-full pl-10 pr-4 py-3.5 bg-slate-50 border-2 rounded-2xl text-slate-900 font-mono text-center text-2xl tracking-[0.4em] focus:outline-none focus:bg-white transition-colors"
+                                            style={{ borderColor: primaryColor }}
                                         />
                                     </div>
                                 </div>
                                 <button
                                     type="submit"
                                     disabled={otpLoading}
-                                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95"
+                                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
                                 >
                                     {otpLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verificar e Ingresar'}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setOtpStep('input')}
-                                    className="w-full py-2 text-xs text-slate-500 hover:text-slate-800 font-bold"
+                                    className="w-full py-2 text-xs text-slate-500 hover:text-slate-800 font-bold cursor-pointer"
                                 >
                                     Cambiar número de teléfono
                                 </button>
@@ -325,9 +332,9 @@ export default function ClientOrdersClient({ negocio }: Props) {
                 ) : (
                     // Listado de Pedidos
                     <div className="space-y-6">
-                        <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                            <div>
-                                <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Consultando pedidos para</span>
+                        <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+                            <div className="text-left">
+                                <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Consultando órdenes para</span>
                                 <span className="text-sm font-black text-slate-900 font-mono">{phone}</span>
                             </div>
                             <button
@@ -335,7 +342,8 @@ export default function ClientOrdersClient({ negocio }: Props) {
                                     localStorage.removeItem('pinchos_client_phone');
                                     setIsVerified(false);
                                 }}
-                                className="text-xs text-orange-600 hover:underline font-extrabold cursor-pointer"
+                                className="text-xs font-extrabold hover:underline cursor-pointer"
+                                style={{ color: primaryColor }}
                             >
                                 Cambiar número
                             </button>
@@ -343,67 +351,90 @@ export default function ClientOrdersClient({ negocio }: Props) {
 
                         {loading ? (
                             <div className="flex items-center justify-center py-16">
-                                <Loader2 className="w-8 h-8 text-orange-600 animate-spin" />
-                                <span className="ml-3 text-slate-500 text-xs font-bold">Buscando tus pedidos...</span>
+                                <Loader2 className="w-8 h-8 animate-spin" style={{ color: primaryColor }} />
+                                <span className="ml-3 text-slate-500 text-xs font-bold">Buscando tus órdenes de servicio...</span>
                             </div>
                         ) : orders.length === 0 ? (
-                            <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 space-y-4 shadow-sm p-6">
+                            <div className="text-center py-16 bg-white rounded-3xl border border-slate-200/80 space-y-4 shadow-xs p-6">
                                 <ShoppingBag className="w-12 h-12 mx-auto text-slate-300" />
-                                <h3 className="text-base font-black text-slate-900">No tienes pedidos registrados</h3>
-                                <p className="text-xs text-slate-500 font-medium">Realiza tu primer pedido de productos desde el catálogo.</p>
-                                <Link href={`/${negocio.slug}`} className="inline-block px-6 py-3 bg-orange-600 text-white text-xs font-black rounded-2xl shadow-lg hover:bg-orange-700 transition-colors">
-                                    Ver Catálogo
+                                <h3 className="text-base font-black text-slate-900">No tienes órdenes registradas</h3>
+                                <p className="text-xs text-slate-500 font-medium">Solicita tu primer servicio de mantenimiento y lavado.</p>
+                                <Link 
+                                    href={`/${negocio.slug}`} 
+                                    className="inline-block px-6 py-3 text-white text-xs font-black rounded-2xl shadow-md transition-colors"
+                                    style={{ backgroundColor: primaryColor }}
+                                >
+                                    Solicitar Servicio
                                 </Link>
                             </div>
                         ) : (
                             <div className="space-y-4">
-                                {orders.map(order => (
-                                    <div 
-                                        key={order.id} 
-                                        onClick={() => setSelectedOrder(order)}
-                                        className="bg-white border border-slate-200/80 rounded-3xl p-5 space-y-3.5 shadow-2xs hover:shadow-md transition-all cursor-pointer group active:scale-[0.99] text-left"
-                                    >
-                                        {/* Header del pedido */}
-                                        <div className="flex items-start justify-between border-b border-slate-100 pb-3">
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-base font-black text-slate-900 group-hover:text-orange-600 transition-colors">
-                                                        Pedido #{order.numeroPedido}
-                                                    </span>
-                                                    <span className="text-xs font-mono font-bold text-slate-400">
-                                                        {formatShortDate(order.createdAt)}
-                                                    </span>
+                                {orders.map(order => {
+                                    const extra = (order as any)?.extraInfo ? (typeof (order as any).extraInfo === 'string' ? JSON.parse((order as any).extraInfo) : (order as any).extraInfo) : {};
+                                    const fotosEntrega: string[] = extra?.fotosEntrega || [];
+                                    const isFinalizada = order.estado === 'ENTREGADO' || order.estado === 'LISTO';
+                                    const previewFoto = fotosEntrega.length > 0 ? fotosEntrega[0] : null;
+
+                                    return (
+                                        <div 
+                                            key={order.id} 
+                                            onClick={() => setSelectedOrder(order)}
+                                            className="bg-white border border-slate-200/80 rounded-3xl p-5 space-y-3.5 shadow-2xs hover:shadow-md transition-all cursor-pointer group active:scale-[0.99] text-left"
+                                        >
+                                            {/* Header del pedido */}
+                                            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-base font-black text-slate-900 group-hover:text-purple-600 transition-colors">
+                                                            Orden #{order.numeroPedido}
+                                                        </span>
+                                                        <span className="text-xs font-mono font-bold text-slate-400">
+                                                            {formatShortDate(order.createdAt)}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
+                                                        {order.tipoEntrega} • {order.fechaEntrega ? new Date(order.fechaEntrega).toLocaleDateString('es-EC', { weekday: 'short', hour: '2-digit', minute: '2-digit' }) : 'Por definir'}
+                                                    </p>
                                                 </div>
-                                                <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
-                                                    {order.tipoEntrega} • {order.fechaEntrega ? new Date(order.fechaEntrega).toLocaleDateString('es-EC', { weekday: 'short', hour: '2-digit', minute: '2-digit' }) : 'Por definir'}
-                                                </p>
+                                                <div>
+                                                    {getOrderBadge(order.estado)}
+                                                </div>
                                             </div>
-                                            <div>
-                                                {getOrderBadge(order.estado)}
-                                            </div>
-                                        </div>
 
-                                        {/* Lista de Ítems Resumida */}
-                                        <div className="text-xs text-slate-600 font-medium line-clamp-2">
-                                            {order.items.map(i => `${i.cantidad}x ${i.nombreProducto}`).join(', ')}
-                                        </div>
+                                            {/* Imagen del Resultado Final si está finalizado */}
+                                            {isFinalizada && previewFoto && (
+                                                <div className="p-3 bg-purple-50/60 border border-purple-100 rounded-2xl flex items-center gap-3">
+                                                    <img src={previewFoto} alt="Resultado Final" className="w-16 h-16 object-cover rounded-xl border border-purple-200 shrink-0 shadow-xs" />
+                                                    <div>
+                                                        <span className="text-[10px] font-black text-purple-900 uppercase tracking-widest block">✨ Cuidado Completado</span>
+                                                        <p className="text-xs font-bold text-purple-950 mt-0.5">Tus artículos han sido restaurados con éxito.</p>
+                                                    </div>
+                                                </div>
+                                            )}
 
-                                        {/* Total & Botón de Ver Detalles */}
-                                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
-                                            <div>
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Total a Pagar</span>
-                                                <span className="text-base font-black text-slate-900">${order.total.toFixed(2)}</span>
+                                            {/* Lista de Ítems Resumida */}
+                                            <div className="text-xs text-slate-600 font-medium line-clamp-2">
+                                                {order.items.map(i => `${i.cantidad}x ${i.nombreProducto}`).join(', ')}
                                             </div>
-                                            <button
-                                                type="button"
-                                                className="px-3.5 py-2 bg-orange-50 group-hover:bg-orange-600 text-orange-700 group-hover:text-white font-black text-xs rounded-xl border border-orange-200/80 transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                                            >
-                                                <span>Ver Detalles y Proceso</span>
-                                                <ChevronRight className="size-4" />
-                                            </button>
+
+                                            {/* Total & Botón de Ver Detalles */}
+                                            <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                                                <div>
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Total a Pagar</span>
+                                                    <span className="text-base font-black text-slate-900">${order.total.toFixed(2)}</span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    className="px-3.5 py-2 text-white font-black text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                                                    style={{ backgroundColor: primaryColor }}
+                                                >
+                                                    <span>Ver Detalles y Proceso</span>
+                                                    <ChevronRight className="size-4" />
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>

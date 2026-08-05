@@ -9,12 +9,31 @@ export async function GET() {
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-        const roles = await prisma.role.findMany({
+        let roles = await (prisma as any).role.findMany({
             orderBy: { name: 'asc' }
         });
 
+        if (!roles || roles.length === 0) {
+            // Crear roles básicos del sistema si aún no existen
+            const defaultNames = ['ADMIN', 'STAFF', 'RECEPCIONISTA'];
+            roles = [];
+            for (const name of defaultNames) {
+                const created = await (prisma as any).role.upsert({
+                    where: { name },
+                    update: {},
+                    create: { id: name.toLowerCase(), name }
+                });
+                roles.push(created);
+            }
+        }
+
         return NextResponse.json(roles);
     } catch (error) {
-        return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+        console.error("Error fetching roles:", error);
+        return NextResponse.json([
+            { id: 'admin', name: 'ADMIN' },
+            { id: 'staff', name: 'STAFF' },
+            { id: 'recepcionista', name: 'RECEPCIONISTA' }
+        ]);
     }
 }

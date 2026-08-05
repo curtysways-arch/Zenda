@@ -8,12 +8,16 @@ import FeatureGate from '@/components/ui/FeatureGate';
 import Link from 'next/link';
 import ImageUploader from '@/components/ui/ImageUploader';
 import ColorPaletteEditor from '@/components/admin/ColorPaletteEditor';
+import CoverageManagerModal from '@/components/admin/CoverageManagerModal';
+import DynamicFavicon from '@/components/DynamicFavicon';
+import { Layers } from 'lucide-react';
 
 export default function NegocioConfigPage() {
     const [negocio, setNegocio] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [showCoverageModal, setShowCoverageModal] = useState(false);
 
     useEffect(() => {
         async function fetchNegocio() {
@@ -44,7 +48,7 @@ export default function NegocioConfigPage() {
             });
 
             if (res.ok) {
-                setMessage({ type: 'success', text: 'Información actualizada correctamente' });
+                setMessage({ type: 'success', text: 'Cambios guardados correctamente ✓' });
             } else {
                 const data = await res.json();
                 setMessage({ type: 'error', text: data.details || data.error || 'Error al actualizar la información' });
@@ -55,6 +59,13 @@ export default function NegocioConfigPage() {
             setSaving(false);
         }
     };
+
+    // Auto-dismiss del toast de éxito/error después de 4 segundos
+    useEffect(() => {
+        if (!message) return;
+        const timer = setTimeout(() => setMessage(null), 4000);
+        return () => clearTimeout(timer);
+    }, [message]);
 
     if (loading) {
         return (
@@ -77,16 +88,32 @@ export default function NegocioConfigPage() {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl mx-auto">
+            <DynamicFavicon negocio={negocio} defaultTitle="Perfil del Negocio" />
             <div>
                 <h1 className="text-3xl font-black text-gray-900 tracking-tight">Perfil del Negocio</h1>
-                <p className="text-gray-500 text-sm font-medium">Gestiona la identidad y horarios generales de tu complejo.</p>
+                <p className="text-gray-500 text-sm font-medium">Gestiona la identidad visual, logo, banners y horarios generales de tu negocio.</p>
             </div>
 
+            {/* Toast fijo en esquina inferior derecha — visible sin importar el scroll */}
             {message && (
-                <div className={`p-4 rounded-2xl flex items-center gap-3 animate-in slide-in-from-top-2 duration-300 ${message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-700 border border-red-100'
-                    }`}>
-                    {message.type === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} className="text-red-500" />}
-                    <span className="text-sm font-bold">{message.text}</span>
+                <div
+                    className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border animate-in slide-in-from-bottom-4 duration-300 ${
+                        message.type === 'success'
+                            ? 'bg-emerald-600 text-white border-emerald-500'
+                            : 'bg-red-600 text-white border-red-500'
+                    }`}
+                >
+                    {message.type === 'success'
+                        ? <CheckCircle2 size={22} />
+                        : <AlertCircle size={22} />}
+                    <span className="text-sm font-black tracking-wide">{message.text}</span>
+                    <button
+                        type="button"
+                        onClick={() => setMessage(null)}
+                        className="ml-2 opacity-70 hover:opacity-100 transition-opacity text-lg leading-none"
+                    >
+                        ×
+                    </button>
                 </div>
             )}
 
@@ -95,7 +122,7 @@ export default function NegocioConfigPage() {
                 <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 p-10">
                     <div className="flex flex-col md:flex-row gap-10 items-start w-full">
                         <div className="w-full md:w-1/3">
-                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2 mb-2 block">Logo del Complejo</label>
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2 mb-2 block">Logo del Negocio</label>
                             <ImageUploader
                                 category="logo"
                                 currentUrl={negocio.logoUrl || ''}
@@ -107,7 +134,7 @@ export default function NegocioConfigPage() {
                         </div>
                         <div className="flex-1 space-y-6 w-full">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">Nombre del Complejo</label>
+                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">Nombre del Negocio</label>
                                 <div className="relative">
                                     <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
                                     <input
@@ -257,13 +284,23 @@ export default function NegocioConfigPage() {
                     </FeatureGate>
                 </div>
 
-                {/* Datos de Contacto */}
+                {/* Datos de Contacto y Cobertura */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 p-8 space-y-6">
-                        <h3 className="font-black text-gray-900 uppercase tracking-widest text-[10px] flex items-center gap-2">
-                            <Phone size={14} className="text-emerald-500" />
-                            Contacto y Ubicación
-                        </h3>
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-black text-gray-900 uppercase tracking-widest text-[10px] flex items-center gap-2">
+                                <Phone size={14} className="text-emerald-500" />
+                                Contacto y Ubicación
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setShowCoverageModal(true)}
+                                className="px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-xl text-[10px] font-black uppercase tracking-wider transition border border-purple-200 flex items-center gap-1.5"
+                            >
+                                <Layers size={12} />
+                                Cobertura (Polígono GPS)
+                            </button>
+                        </div>
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">WhatsApp</label>
@@ -586,6 +623,13 @@ export default function NegocioConfigPage() {
                     </button>
                 </div>
             </form>
+
+            {/* Modal de Gestion de Cobertura de Delivery (Poligono en Mapa) */}
+            <CoverageManagerModal
+                isOpen={showCoverageModal}
+                onClose={() => setShowCoverageModal(false)}
+                negocioId={negocio?.id}
+            />
         </div>
     );
 }

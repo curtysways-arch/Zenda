@@ -1,22 +1,23 @@
 import prisma from '../src/lib/prisma';
 
-async function main() {
-    console.log("--- LISTA DE USUARIOS Y ROLES ---");
-    const usuarios = await prisma.usuario.findMany({
-        select: {
-            id: true,
-            nombre: true,
-            email: true,
-            role: true,
-            negocioId: true
-        }
-    });
-    
-    usuarios.forEach(u => {
-        console.log(`ID: ${u.id} | Nombre: ${u.nombre} | Email: ${u.email} | Rol: ${u.role} | NegocioID: ${u.negocioId}`);
-    });
+async function checkUsers() {
+  const users = await prisma.usuario.findMany({
+    select: {
+      id: true,
+      nombre: true,
+      email: true,
+      phone: true,
+      role: true,
+      status: true,
+      negocioId: true,
+      createdAt: true
+    }
+  });
+
+  console.log("👥 USUARIOS REGISTRADOS EN BD:");
+  console.log(JSON.stringify(users, null, 2));
 }
 
-main()
-    .catch(console.error)
-    .finally(() => prisma.$disconnect());
+checkUsers()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());

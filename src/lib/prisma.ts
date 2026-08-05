@@ -81,13 +81,13 @@ function getPrisma(): PrismaClient {
 }
 
 const prisma = new Proxy({} as PrismaClient, {
-    get(target, prop, receiver) {
+    get(target, prop) {
         // Evitar interceptar propiedades internas usadas por frameworks u optimizadores
         if (prop === '$$typeof' || prop === 'then' || prop === 'constructor' || prop === 'toJSON') {
             return undefined;
         }
         const instance = getPrisma();
-        const value = Reflect.get(instance, prop);
+        const value = (instance as any)[prop];
         if (typeof value === 'function') {
             return value.bind(instance);
         }

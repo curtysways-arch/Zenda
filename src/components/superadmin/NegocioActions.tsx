@@ -56,10 +56,12 @@ export default function NegocioActions({ negocio, onEdit }: NegocioActionsProps)
             if (res.ok) {
                 router.refresh();
             } else {
-                alert("Error al eliminar el negocio");
+                const data = await res.json().catch(() => ({}));
+                alert(data.error || "Error al eliminar el negocio");
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
+            alert(error?.message || "Error de red al eliminar el negocio");
         } finally {
             setLoading(false);
         }

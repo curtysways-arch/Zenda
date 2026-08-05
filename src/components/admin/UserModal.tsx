@@ -1,8 +1,7 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Save, Loader2, User, Phone, Mail, Shield, Check } from "lucide-react";
+import { X, Save, Loader2, User, Phone, Mail, Shield, Check, Scissors, CalendarCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface UserModalProps {
@@ -16,12 +15,31 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
     const [loading, setLoading] = useState(false);
     const [availableRoles, setAvailableRoles] = useState<any[]>([]);
     const isEdit = !!(user && user.id);
+
     const [formData, setFormData] = useState({
-        nombre: user?.nombre || "",
-        phone: user?.phone || "",
-        email: user?.email || "",
-        roles: user?.roles || ["USER"]
+        nombre: "",
+        phone: "",
+        email: "",
+        roles: ["STAFF"]
     });
+
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                nombre: user.nombre || "",
+                phone: user.phone || "",
+                email: user.email || "",
+                roles: Array.isArray(user.roles) && user.roles.length > 0 ? user.roles : ["STAFF"]
+            });
+        } else {
+            setFormData({
+                nombre: "",
+                phone: "",
+                email: "",
+                roles: ["STAFF"]
+            });
+        }
+    }, [user, isOpen]);
 
     useEffect(() => {
         const fetchRoles = async () => {
@@ -29,22 +47,47 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
                 const res = await fetch("/api/admin/roles");
                 if (res.ok) {
                     const data = await res.json();
-                    setAvailableRoles(data);
+                    if (Array.isArray(data) && data.length > 0) {
+                        setAvailableRoles(data);
+                    } else {
+                        setAvailableRoles([
+                            { id: "ADMIN", name: "ADMIN", description: "Acceso total a configuración" },
+                            { id: "STAFF", name: "STAFF", description: "Atención y agenda propia" },
+                            { id: "RECEPCIONISTA", name: "RECEPCIONISTA", description: "Caja y reservas" }
+                        ]);
+                    }
                 }
             } catch (e) {
                 console.error(e);
+                setAvailableRoles([
+                    { id: "ADMIN", name: "ADMIN", description: "Acceso total a configuración" },
+                    { id: "STAFF", name: "STAFF", description: "Atención y agenda propia" },
+                    { id: "RECEPCIONISTA", name: "RECEPCIONISTA", description: "Caja y reservas" }
+                ]);
             }
         };
         fetchRoles();
     }, []);
 
+    const defaultRolesList = [
+        { id: "ADMIN", name: "ADMIN", label: "Administrador", desc: "Acceso total a configuración y gestión" },
+        { id: "STAFF", name: "STAFF", label: "Personal / Especialista", desc: "Atención a clientes y agenda propia" },
+        { id: "RECEPCIONISTA", name: "RECEPCIONISTA", label: "Recepcionista", desc: "Registro de reservas y cobros" }
+    ];
+
+    const rolesToRender = availableRoles.length > 0 ? availableRoles : defaultRolesList;
+
     const toggleRole = (roleName: string) => {
-        setFormData(prev => ({
-            ...prev,
-            roles: prev.roles.includes(roleName)
+        setFormData(prev => {
+            const hasRole = prev.roles.includes(roleName);
+            const newRoles = hasRole
                 ? prev.roles.filter((r: string) => r !== roleName)
-                : [...prev.roles, roleName]
-        }));
+                : [...prev.roles, roleName];
+            return {
+                ...prev,
+                roles: newRoles.length > 0 ? newRoles : [roleName]
+            };
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -63,11 +106,11 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
                 onClose();
             } else {
                 const data = await res.json();
-                alert(data.error || "Error al guardar");
+                alert(data.error || "Error al guardar el usuario");
             }
         } catch (error) {
             console.error("Error al guardar usuario:", error);
-            alert("Error de conexión: No se pudo contactar con el servidor. Verifica tu internet o si el servidor está corriendo.");
+            alert("Error de conexión al guardar usuario.");
         } finally {
             setLoading(false);
         }
@@ -76,80 +119,102 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-[#f8faf9] w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in zoom-in duration-300">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+            {/* Backdrop */}
+            <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300" onClick={onClose} />
+
+            {/* Modal Container */}
+            <div className="relative bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row my-auto max-h-[92vh] border border-slate-100 z-10 animate-in zoom-in-95 duration-200">
                 
-                {/* Lateral Decorativo */}
-                <div className="hidden md:flex w-1/3 bg-slate-900 p-12 flex-col justify-between items-start text-white relative overflow-hidden">
-                    <div className="relative z-10 space-y-4">
-                        <div className="size-16 rounded-3xl bg-emerald-500 flex items-center justify-center">
-                            <User size={32} />
+                {/* Panel Lateral Decorativo */}
+                <div className="hidden md:flex w-1/3 bg-slate-900 p-6 flex-col justify-between items-start text-white relative overflow-hidden shrink-0">
+                    <div className="relative z-10 space-y-3">
+                        <div className="size-12 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30">
+                            <User size={24} />
                         </div>
-                        <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">
-                            {isEdit ? "Editar Usuario" : "Nuevo Usuario"}
+                        <h2 className="text-xl font-black uppercase tracking-tight leading-tight">
+                            {isEdit ? "Editar Permisos" : "Nuevo Colaborador"}
                         </h2>
-                        <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">
-                            {isEdit ? "Actualiza los permisos de acceso." : "Crea una cuenta para un nuevo colaborador."}
+                        <p className="text-slate-400 font-medium text-[11px] leading-relaxed">
+                            {isEdit ? "Actualiza los roles y accesos asignados." : "Asigna roles de acceso para tu equipo de trabajo."}
                         </p>
                     </div>
-                    {/* Círculos decorativos */}
-                    <div className="absolute -bottom-20 -left-20 size-64 bg-emerald-500/10 rounded-full blur-3xl" />
+                    <div className="absolute -bottom-20 -left-20 size-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
                 </div>
 
-                {/* Formulario */}
-                <div className="flex-1 p-8 md:p-12 space-y-8 max-h-[90vh] overflow-y-auto custom-scrollbar">
-                    <div className="flex justify-end md:hidden">
-                        <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-900 transition-colors">
-                            <X size={24} />
-                        </button>
-                    </div>
+                {/* Formulario Compacto con Header y Footer Fijo */}
+                <div className="flex-1 flex flex-col min-h-0 bg-white">
+                    <form onSubmit={handleSubmit} className="flex flex-col h-full min-h-0">
+                        {/* Header Fijo */}
+                        <div className="shrink-0 px-5 py-3.5 flex items-center justify-between border-b border-slate-100 bg-slate-50/50">
+                            <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">
+                                {isEdit ? "Editar Permisos" : "Nuevo Colaborador"}
+                            </h3>
+                            <button 
+                                type="button" 
+                                onClick={onClose} 
+                                className="p-1.5 text-slate-400 hover:text-slate-900 transition-colors rounded-full hover:bg-slate-200/50"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                        <div className="space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">Nombre Completo</label>
-                                <div className="relative">
-                                    <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300">
-                                        <User size={20} />
-                                    </span>
+                        {/* Cuerpo Scrolleable */}
+                        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 custom-scrollbar">
+                            {/* Nombre Completo */}
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-1">
+                                    Nombre Completo
+                                </label>
+                                <div className="relative flex items-center">
+                                    <div className="absolute left-3.5 text-slate-400 pointer-events-none z-10">
+                                        <User size={16} />
+                                    </div>
                                     <input 
                                         required
                                         type="text"
-                                        className="w-full pl-14 pr-6 py-5 bg-white border-none rounded-3xl font-bold text-slate-900 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none shadow-sm"
-                                        placeholder="Ej: Juan Pérez"
+                                        style={{ paddingLeft: '2.8rem' }}
+                                        className="w-full pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none text-xs"
+                                        placeholder="Ej: Carlos Camacho"
                                         value={formData.nombre}
                                         onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                                     />
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">Teléfono</label>
-                                    <div className="relative">
-                                        <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300">
-                                            <Phone size={18} />
-                                        </span>
+                            {/* Teléfono & Email */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-1">
+                                        Teléfono
+                                    </label>
+                                    <div className="relative flex items-center">
+                                        <div className="absolute left-3.5 text-slate-400 pointer-events-none z-10">
+                                            <Phone size={15} />
+                                        </div>
                                         <input 
                                             required
                                             type="tel"
-                                            className="w-full pl-14 pr-6 py-5 bg-white border-none rounded-3xl font-bold text-slate-900 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none shadow-sm"
+                                            style={{ paddingLeft: '2.8rem' }}
+                                            className="w-full pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none text-xs"
                                             placeholder="+593..."
                                             value={formData.phone}
                                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                         />
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4">Email (Opcional)</label>
-                                    <div className="relative">
-                                        <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300">
-                                            <Mail size={18} />
-                                        </span>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-1">
+                                        Email (Opcional)
+                                    </label>
+                                    <div className="relative flex items-center">
+                                        <div className="absolute left-3.5 text-slate-400 pointer-events-none z-10">
+                                            <Mail size={15} />
+                                        </div>
                                         <input 
                                             type="email"
-                                            className="w-full pl-14 pr-6 py-5 bg-white border-none rounded-3xl font-bold text-slate-900 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none shadow-sm"
+                                            style={{ paddingLeft: '2.8rem' }}
+                                            className="w-full pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 transition-all outline-none text-xs"
                                             placeholder="correo@ejemplo.com"
                                             value={formData.email}
                                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -158,57 +223,67 @@ export default function UserModal({ isOpen, onClose, user, onSuccess }: UserModa
                                 </div>
                             </div>
 
-                            <div className="space-y-4">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-4 flex items-center gap-2">
-                                    <Shield size={14} className="text-emerald-500" /> Roles y Permisos
+                            {/* Selector de Roles y Permisos */}
+                            <div className="space-y-1.5 pt-0.5">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-1 flex items-center gap-1.5">
+                                    <Shield size={13} className="text-indigo-600" /> Selección de Rol y Permisos
                                 </label>
                                 <div className="grid grid-cols-1 gap-2">
-                                    {availableRoles.map(role => (
-                                        <button
-                                            key={role.id}
-                                            type="button"
-                                            onClick={() => toggleRole(role.name)}
-                                            className={cn(
-                                                "flex items-center justify-between p-5 rounded-3xl border-2 transition-all group",
-                                                formData.roles.includes(role.name)
-                                                    ? "bg-white border-emerald-500 text-emerald-600 shadow-lg shadow-emerald-500/5"
-                                                    : "bg-white border-slate-100 text-slate-600 hover:border-slate-200"
-                                            )}
-                                        >
-                                            <div className="flex items-center gap-4">
+                                    {rolesToRender.map((role: any) => {
+                                        const roleName = role.name || role.id;
+                                        const isSelected = formData.roles.includes(roleName);
+                                        return (
+                                            <button
+                                                key={role.id || roleName}
+                                                type="button"
+                                                onClick={() => toggleRole(roleName)}
+                                                className={cn(
+                                                    "flex items-center justify-between p-2.5 px-3 rounded-xl border transition-all text-left group active:scale-98",
+                                                    isSelected
+                                                        ? "bg-indigo-50/70 border-indigo-500 text-indigo-950 shadow-xs"
+                                                        : "bg-slate-50/60 border-slate-100 text-slate-600 hover:border-slate-200"
+                                                )}
+                                            >
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className={cn(
+                                                        "size-8 rounded-lg flex items-center justify-center transition-colors shrink-0",
+                                                        isSelected ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-slate-200"
+                                                    )}>
+                                                        {roleName === 'ADMIN' ? <Shield size={15} /> : roleName === 'STAFF' ? <Scissors size={15} /> : <CalendarCheck size={15} />}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-black uppercase tracking-tight text-[11px] leading-none">{role.label || roleName}</h4>
+                                                        <p className="text-[9.5px] font-medium text-slate-500 leading-tight mt-0.5">{role.desc || role.description || `Permiso de tipo ${roleName}`}</p>
+                                                    </div>
+                                                </div>
                                                 <div className={cn(
-                                                    "size-10 rounded-2xl flex items-center justify-center transition-colors",
-                                                    formData.roles.includes(role.name) ? "bg-emerald-50" : "bg-slate-50 group-hover:bg-slate-100"
+                                                    "size-5 rounded-md flex items-center justify-center shrink-0 border transition-all ml-2",
+                                                    isSelected ? "bg-indigo-600 border-indigo-600 text-white" : "border-slate-200 bg-white"
                                                 )}>
-                                                    <Shield size={20} />
+                                                    {isSelected && <Check size={11} className="stroke-[3]" />}
                                                 </div>
-                                                <span className="font-black uppercase tracking-tight text-sm">{role.name}</span>
-                                            </div>
-                                            {formData.roles.includes(role.name) && (
-                                                <div className="bg-emerald-500 text-white p-1 rounded-lg">
-                                                    <Check size={14} />
-                                                </div>
-                                            )}
-                                        </button>
-                                    ))}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex gap-4 pt-4">
+                        {/* Footer Fijo */}
+                        <div className="shrink-0 p-3 px-5 bg-slate-50 border-t border-slate-100 flex items-center gap-3">
                             <button 
                                 type="button" 
                                 onClick={onClose}
-                                className="flex-1 py-5 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 transition-colors"
+                                className="px-3 py-2.5 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 transition-colors"
                             >
                                 Cancelar
                             </button>
                             <button 
                                 type="submit"
                                 disabled={loading}
-                                className="flex-[2] bg-slate-900 text-white font-black py-5 rounded-[2rem] shadow-xl shadow-slate-900/10 hover:bg-emerald-600 transition-all flex items-center justify-center gap-3 uppercase tracking-widest text-xs active:scale-95 disabled:opacity-50"
+                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-2.5 rounded-xl shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs active:scale-95 disabled:opacity-50"
                             >
-                                {loading ? <Loader2 className="animate-spin" /> : <><Save size={18} /> {isEdit ? "Actualizar" : "Crear Usuario"}</>}
+                                {loading ? <Loader2 className="animate-spin" size={15} /> : <><Save size={15} /> {isEdit ? "Guardar Permisos" : "Crear / Promover Usuario"}</>}
                             </button>
                         </div>
                     </form>

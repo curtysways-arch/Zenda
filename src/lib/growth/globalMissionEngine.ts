@@ -178,10 +178,10 @@ export class GlobalMissionEngine {
                 });
                 if (!negocio) return 0;
                 const hasLogo = !!negocio.logoUrl;
-                const hasDir = !!negocio.direccion;
-                const hasCiudad = !!negocio.ciudad;
                 const hasHours = !!negocio.horarioApertura && !!negocio.horarioCierre;
-                return (hasLogo && hasDir && hasCiudad && hasHours) ? 1 : 0;
+                const hasServices = (await prisma.service.count({ where: { negocioId } })) > 0;
+                const hasStaff = (await prisma.staff.count({ where: { businessId: negocioId } })) > 0;
+                return (hasLogo && hasHours && hasServices && hasStaff) ? 1 : 0;
 
             case GlobalMissionType.LOYALTY_ENABLED:
                 // Verificar si tiene puntos habilitados en la configuración o si ha creado niveles de lealtad

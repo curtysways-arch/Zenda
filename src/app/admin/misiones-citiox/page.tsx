@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useSession } from 'next-auth/react';
@@ -126,15 +128,27 @@ export default function MisionesCitioxPage() {
         }
     }, [selectedMission]);
 
+    const [adminWhatsApp, setAdminWhatsApp] = useState<string>('593968118444');
+
+    const getWaUrl = (titulo: string) => {
+        let clean = (adminWhatsApp || '593968118444').replace(/\D/g, '');
+        if (clean.startsWith('0') && clean.length === 10) {
+            clean = '593' + clean.substring(1);
+        }
+        const msg = `¡Hola Citiox! He completado la misión "${titulo}". Quisiera coordinar el envío de mi Kit de Flyers impresos con código QR para mi negocio.`;
+        return `https://api.whatsapp.com/send?phone=${clean}&text=${encodeURIComponent(msg)}`;
+    };
+
     const fetchData = async () => {
         setLoading(true);
         try {
-            const res = await fetch('/api/admin/misiones-globales');
+            const res = await fetch(`/api/admin/misiones-globales?t=${Date.now()}`);
             if (res.ok) {
                 const data = await res.json();
                 setMissions(data.missions || []);
                 setProgress(data.progress || []);
                 setHistory(data.history || []);
+                if (data.adminWhatsApp) setAdminWhatsApp(data.adminWhatsApp);
             }
         } catch (err) {
             console.error('Error cargando misiones Citiox:', err);
@@ -176,9 +190,14 @@ export default function MisionesCitioxPage() {
         // Formatear texto de recompensa
         let rewardText = '';
         const rTipo = m.recompensaTipo;
-        const rVal = m.recompensaValor || {};
+        let rVal: any = m.recompensaValor || {};
+        if (typeof rVal === 'string') {
+            try { rVal = JSON.parse(rVal); } catch (e) {}
+        }
 
-        if (rTipo === 'FREE_DAYS') {
+        if (rVal?.texto) {
+            rewardText = rVal.texto;
+        } else if (rTipo === 'FREE_DAYS') {
             rewardText = `+${rVal.dias || 0} Días Gratis de Suscripción`;
         } else if (rTipo === 'UNLOCK_FEATURE') {
             rewardText = `Desbloquea: ${rVal.feature || 'Módulo Premium'}`;
@@ -189,8 +208,21 @@ export default function MisionesCitioxPage() {
         } else if (rTipo === 'BADGE') {
             rewardText = `Insignia: ${rVal.badge || 'Socio Destacado'}`;
         } else {
-            rewardText = 'Recompensa Especial';
+            rewardText = 'Material Físico / Premio Especial';
         }
+
+        const isFlyerStr = (s?: string) => {
+            if (!s) return false;
+            const str = String(s).toLowerCase();
+            return str.includes('flyer') || str.includes('físico') || str.includes('fisico') || str.includes('impreso') || str.includes('kit');
+        };
+
+        const isFlyerMission = 
+            isFlyerStr(m.titulo) ||
+            isFlyerStr(m.descripcion) ||
+            isFlyerStr(rewardText) ||
+            rTipo === 'PROMOTION' ||
+            JSON.stringify(m).toLowerCase().includes('flyer');
 
         return {
             ...m,
@@ -200,7 +232,8 @@ export default function MisionesCitioxPage() {
             recompensaDada,
             fechaCompletada,
             porcentaje,
-            rewardText
+            rewardText,
+            isFlyerMission
         };
     });
 
@@ -360,10 +393,10 @@ export default function MisionesCitioxPage() {
                             <div
                                 key={m.id}
                                 className={clsx(
-                                    "bg-white dark:bg-slate-900 rounded-3xl border transition-all duration-300 relative overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-xl hover:-translate-y-1 group",
+                                    "bg-slate-900 rounded-3xl border transition-all duration-300 relative overflow-hidden flex flex-col justify-between shadow-xl hover:-translate-y-1 group",
                                     m.completada
-                                        ? "border-emerald-200 dark:border-emerald-900/50"
-                                        : "border-slate-200/80 dark:border-slate-800"
+                                        ? "border-emerald-500/50 shadow-emerald-950/20"
+                                        : "border-slate-800 shadow-black/40"
                                 )}
                             >
                                 {/* Barra de acento temática */}
@@ -372,25 +405,25 @@ export default function MisionesCitioxPage() {
                                     style={{ backgroundColor: themeColor }}
                                 />
 
-                                <div className="p-5 sm:p-6 space-y-5 flex-1">
+                                <div className="p-5 sm:p-6 space-y-4 flex-1">
                                     {/* Cabecera de la Tarjeta */}
                                     <div className="flex items-start justify-between gap-3">
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-3 min-w-0 flex-1">
                                             <div
-                                                className="size-12 rounded-2xl flex items-center justify-center shrink-0 border"
+                                                className="size-12 rounded-2xl flex items-center justify-center shrink-0 border shadow-md"
                                                 style={{
-                                                    backgroundColor: `color-mix(in srgb, ${themeColor}, transparent 90%)`,
-                                                    borderColor: `color-mix(in srgb, ${themeColor}, transparent 75%)`,
+                                                    backgroundColor: `color-mix(in srgb, ${themeColor}, transparent 85%)`,
+                                                    borderColor: themeColor,
                                                     color: themeColor
                                                 }}
                                             >
-                                                <IconComp size={22} />
+                                                <IconComp size={24} />
                                             </div>
-                                            <div>
-                                                <h3 className="font-black text-base text-slate-900 dark:text-white uppercase italic tracking-tight line-clamp-1">
+                                            <div className="min-w-0 flex-1">
+                                                <h3 className="font-black text-sm sm:text-base text-white uppercase italic tracking-tight leading-snug line-clamp-2 drop-shadow-xs">
                                                     {m.titulo}
                                                 </h3>
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mt-0.5">
                                                     Meta: {m.objetivo} {m.objetivo === 1 ? 'acción' : 'acciones'}
                                                 </span>
                                             </div>
@@ -398,18 +431,18 @@ export default function MisionesCitioxPage() {
 
                                         {/* Insignia de Estado */}
                                         {m.completada ? (
-                                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-wider shrink-0">
+                                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-black uppercase tracking-wider shrink-0">
                                                 <Check size={12} /> Completada
                                             </span>
                                         ) : (
-                                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 text-[10px] font-black uppercase tracking-wider shrink-0">
+                                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-black uppercase tracking-wider shrink-0">
                                                 <Clock size={12} /> En Proceso
                                             </span>
                                         )}
                                     </div>
 
                                     {/* Descripción */}
-                                    <p className="text-xs font-medium text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
+                                    <p className="text-xs font-medium text-slate-300 line-clamp-2 leading-relaxed">
                                         {m.descripcion}
                                     </p>
 
@@ -417,11 +450,11 @@ export default function MisionesCitioxPage() {
                                     <div className="space-y-2 pt-1">
                                         <div className="flex items-center justify-between text-xs font-bold">
                                             <span className="text-slate-400 text-[10px] uppercase tracking-wider">Progreso Actual</span>
-                                            <span className="text-slate-900 dark:text-white font-black">
+                                            <span className="text-white font-black">
                                                 {Math.min(m.objetivo, m.progresoActual)} de {m.objetivo} ({m.porcentaje}%)
                                             </span>
                                         </div>
-                                        <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
+                                        <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
                                             <div
                                                 className="h-full rounded-full transition-all duration-700"
                                                 style={{
@@ -433,28 +466,47 @@ export default function MisionesCitioxPage() {
                                     </div>
 
                                     {/* Recompensa */}
-                                    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-3 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                                    <div className="bg-slate-800/80 rounded-2xl p-3 border border-slate-700/80 flex items-center justify-between gap-2">
                                         <div className="flex items-center gap-2 min-w-0">
-                                            <Gift size={16} className="text-cyan-500 shrink-0" />
-                                            <span className="text-xs font-black text-slate-800 dark:text-slate-200 truncate">
+                                            <Gift size={16} className="text-cyan-400 shrink-0" />
+                                            <span className="text-xs font-black text-white truncate">
                                                 {m.rewardText}
                                             </span>
                                         </div>
-                                        {m.recompensaDada && (
-                                            <span className="text-[9px] font-black uppercase tracking-wider text-emerald-500 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-md shrink-0">
+                                        {(m.isFlyerMission || m.recompensaTipo === 'PROMOTION' || m.titulo?.toLowerCase().includes('flyer')) ? (
+                                            <a
+                                                href={getWaUrl(m.titulo)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-md shrink-0 transition-transform active:scale-95 border border-emerald-300"
+                                            >
+                                                📲 Solicitar por WhatsApp
+                                            </a>
+                                        ) : m.recompensaDada ? (
+                                            <span className="text-[9px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-950/80 border border-emerald-800/60 px-2 py-0.5 rounded-md shrink-0">
                                                 Otorgado
                                             </span>
-                                        )}
+                                        ) : null}
                                     </div>
                                 </div>
 
                                 {/* Botón de Acción */}
-                                <div className="p-4 pt-0">
+                                <div className="p-4 pt-0 space-y-2">
+                                    {(m.isFlyerMission || m.recompensaTipo === 'PROMOTION' || m.titulo?.toLowerCase().includes('flyer')) && (
+                                        <a
+                                            href={getWaUrl(m.titulo)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-3.5 px-4 rounded-2xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 block text-center border-2 border-emerald-300 active:scale-95"
+                                        >
+                                            📲 SOLICITAR FLYERS POR WHATSAPP &rarr;
+                                        </a>
+                                    )}
                                     <button
                                         onClick={() => handleOpenDetails(m)}
-                                        className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white py-3.5 px-4 rounded-2xl text-xs font-black uppercase tracking-wider transition-colors flex items-center justify-center gap-2 group-hover:bg-cyan-500 group-hover:text-slate-950"
+                                        className="w-full bg-slate-800 hover:bg-slate-700 text-white py-3.5 px-4 rounded-2xl text-xs font-black uppercase tracking-wider transition-colors flex items-center justify-center gap-2 border border-slate-700"
                                     >
-                                        <Info size={15} />
+                                        <Info size={15} className="text-cyan-400" />
                                         Ver Detalles de la Misión
                                     </button>
                                 </div>
@@ -616,7 +668,7 @@ export default function MisionesCitioxPage() {
                                 <div>
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Estado de Ejecución</p>
                                     <p className="text-sm sm:text-base font-black text-slate-900 dark:text-white">
-                                        {selectedMission.completada ? 'Completada y Adjudicada' : 'En progreso activo'}
+                                        {selectedMission.completada ? 'Completada y Lista' : 'En progreso activo'}
                                     </p>
                                 </div>
                                 {selectedMission.completada ? (
@@ -627,10 +679,33 @@ export default function MisionesCitioxPage() {
                             </div>
                         </div>
 
+                        {/* BOTÓN DESTACADO DE SOLICITUD POR WHATSAPP PARA MATERIAL FÍSICO / FLYERS */}
+                        {(selectedMission.titulo?.toLowerCase().includes('flyer') || selectedMission.rewardText?.toLowerCase().includes('flyer') || selectedMission.rewardText?.toLowerCase().includes('físico')) && (
+                            <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 p-6 rounded-3xl text-white space-y-3 shadow-xl">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl shrink-0">
+                                        📦
+                                    </div>
+                                    <div>
+                                        <h4 className="font-black text-base uppercase tracking-tight text-white">¡Solicita tu Kit Físico con Código QR!</h4>
+                                        <p className="text-xs text-emerald-100 font-medium">Haz clic para coordinar con soporte el envío o entrega de tus flyers impresos.</p>
+                                    </div>
+                                </div>
+                                <a
+                                    href={getWaUrl(selectedMission.titulo)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-full bg-white hover:bg-emerald-50 text-emerald-950 py-4 px-5 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 text-center"
+                                >
+                                    📲 SOLICITAR MI KIT DE FLYERS POR WHATSAPP &rarr;
+                                </a>
+                            </div>
+                        )}
+
                         {/* BOTÓN PRINCIPAL DE CERRAR */}
                         <button
                             onClick={handleCloseDetails}
-                            className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-cyan-500 dark:hover:bg-cyan-400 text-white dark:text-slate-950 py-4 sm:py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95"
+                            className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white py-4 sm:py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95"
                         >
                             Entendido, Volver a Misiones
                         </button>

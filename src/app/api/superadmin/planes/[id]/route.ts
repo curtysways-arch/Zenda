@@ -57,8 +57,20 @@ export async function PATCH(
             updateData.is_recommended = Boolean(body.is_recommended);
         if (body.activo !== undefined)
             updateData.activo = Boolean(body.activo);
-        if (body.features !== undefined)
+        if (body.features !== undefined) {
             updateData.features = body.features;
+            if (body.loyalty_module !== undefined) {
+                (updateData.features as any).loyalty_module = Boolean(body.loyalty_module);
+            }
+        } else if (body.loyalty_module !== undefined) {
+            const currentFeatures = typeof currentPlan.features === 'string'
+                ? JSON.parse(currentPlan.features)
+                : (currentPlan.features || {});
+            updateData.features = {
+                ...currentFeatures,
+                loyalty_module: Boolean(body.loyalty_module)
+            };
+        }
 
         console.log("DEBUG: Update Data ->", JSON.stringify(updateData));
 

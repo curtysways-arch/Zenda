@@ -46,10 +46,16 @@ export async function POST(req: NextRequest) {
             tournaments_enabled: Boolean(body.tournaments_enabled ?? false),
             automatic_discounts_enabled: Boolean(body.automatic_discounts_enabled ?? false),
             courses_module: Boolean(body.courses_module ?? false),
+            communications_module: Boolean(body.communications_module ?? false),
             max_locations: Math.floor(Number(body.max_locations ?? 1)),
             is_recommended: Boolean(body.is_recommended ?? false),
             activo: true,
-            features: body.features ? body.features : undefined,
+            features: body.features ? {
+                ...body.features,
+                loyalty_module: Boolean(body.loyalty_module ?? body.features?.loyalty_module ?? false)
+            } : {
+                loyalty_module: Boolean(body.loyalty_module ?? false)
+            },
             updated_at: new Date()
         };
 

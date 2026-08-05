@@ -7,6 +7,7 @@ import { useConfirm } from '@/components/admin/ConfirmContext';
 import {
     LayoutDashboard,
     CalendarDays,
+    Dribbble,
     Sparkles,
     Settings,
     Users,
@@ -27,15 +28,24 @@ import {
     Contact,
     Scissors,
     CreditCard,
+    Store,
     ShieldCheck,
     Gift,
     Bell,
     Zap,
     Briefcase,
+    Footprints,
+    Utensils,
+    Kanban,
+    PlusCircle,
+    ClipboardList,
+    Truck,
+    Wallet,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useSession, signOut } from 'next-auth/react';
+import { getModuleManifest } from '@/core/modules/registry';
 
 function cn(...inputs: any[]) {
     return twMerge(clsx(inputs));
@@ -88,6 +98,9 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
     const [unreadNotifications, setUnreadNotifications] = useState(0);
     const [coursesEnabled, setCoursesEnabled] = useState(false);
     const [promotionsEnabled, setPromotionsEnabled] = useState(false);
+    const [loyaltyEnabled, setLoyaltyEnabled] = useState(false);
+    const [hasDelivery, setHasDelivery] = useState(false); // ✅ Capability: delivery
+    const [hasService, setHasService] = useState(false);   // ✅ Capability: service
 
     const checkFeatures = async () => {
         try {
@@ -100,6 +113,27 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
             if (resP.ok) {
                 const data = await resP.json();
                 setPromotionsEnabled(data.allowed);
+            }
+            const resL = await fetch('/api/admin/validate-access?feature=loyalty');
+            if (resL.ok) {
+                const data = await resL.json();
+                setLoyaltyEnabled(data.allowed);
+            }
+            // ✅ Detectar capabilities (delivery y service) desde la configuracion del negocio
+            const resNeg = await fetch('/api/negocio');
+            if (resNeg.ok) {
+                const negData = await resNeg.json();
+                let config: any = {};
+                if (typeof negData.configuracion === 'string') {
+                    try { config = JSON.parse(negData.configuracion); } catch { config = {}; }
+                } else {
+                    config = negData.configuracion || {};
+                }
+                const caps = config.capabilities || config;
+                setHasDelivery(Boolean(caps.delivery));
+                // Si el tipo de negocio es SHOE_CARE u ordenes-servicio, service es true por defecto o lo que diga la config
+                const isServiceBusiness = negData.tipoNegocio === 'SHOE_CARE' || negData.tipoNegocio === 'ordenes-servicio' || Boolean(caps.service);
+                setHasService(isServiceBusiness);
             }
         } catch (error) {
             console.error("Error checking features", error);
@@ -175,10 +209,36 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
         return () => clearInterval(intervalId);
     }, [pathname]); // Refresh when navigating to have fresh count
 
-    const menuItems = (tipoNegocio === 'PRODUCTOS' ? [
+    const menuItems = (tipoNegocio === 'SPORTS_COURTS' ? [
+        // --- CORE OPERATIVO (CANCHAS) ---
+        { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, section: 'GESTIÓN OPERATIVA' },
+        { name: 'Reservas', href: '/admin/reservas', icon: CalendarDays, section: 'GESTIÓN OPERATIVA', badge: pendingReservations > 0 ? pendingReservations : undefined },
+        { name: 'Mis Canchas', href: '/admin/canchas', icon: Dribbble, section: 'GESTIÓN OPERATIVA', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Bloqueos', href: '/admin/bloqueos', icon: Lock, section: 'GESTIÓN OPERATIVA', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Partidos', href: '/admin/partidos', icon: Users, section: 'GESTIÓN OPERATIVA' },
+        { name: 'Torneos', href: '/admin/torneos', icon: Trophy, section: 'GESTIÓN OPERATIVA', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+
+        // --- ACADEMIA Y MARKETING ---
+        { name: 'Cursos', href: '/admin/cursos', icon: ShieldCheck, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'], enabled: coursesEnabled },
+        { name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'], enabled: promotionsEnabled },
+        { name: 'Páginas', href: '/admin/paginas', icon: Layout, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+
+        // --- ADMINISTRACIÓN ---
+        { name: 'Clientes', href: '/admin/clientes', icon: Contact, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Personal', href: '/admin/usuarios', icon: Users, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Reportes', href: '/admin/reportes', icon: BarChart3, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+
+        // --- CONFIGURACIÓN ---
+        { name: 'Configuración', href: '/admin/config', icon: Settings, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Perfil', href: '/admin/perfil', icon: Building2, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Mi Plan', href: '/admin/plan', icon: Package, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Super Panel', href: '/superadmin', icon: ShieldCheck, section: 'CONFIGURACIÓN', roles: ['SUPERADMIN'] },
+    ] : tipoNegocio === 'PRODUCTOS' ? [
         // --- CORE OPERATIVO ---
         { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, section: 'GESTIÓN OPERATIVA' },
         { name: 'Pedidos', href: '/admin/pedidos', icon: Package, section: 'GESTIÓN OPERATIVA' },
+        // ✅ Logística: solo si el negocio tiene capability delivery
+        ...(hasDelivery ? [{ name: 'Logística', href: '/admin/logistica', icon: Truck, section: 'GESTIÓN OPERATIVA' }] : []),
         
         // --- CATÁLOGO ---
         { name: 'Productos', href: '/admin/productos', icon: Sparkles, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
@@ -189,10 +249,36 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
         { name: 'Personal', href: '/admin/usuarios', icon: Users, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Reportes', href: '/admin/reportes', icon: BarChart3, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         
-        // --- CONFIGURACIÓN ---
+        // --- MARKETING & CONFIGURACIÓN ---
+        { name: 'Páginas', href: '/admin/paginas', icon: Layout, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Anuncios', href: '/admin/notificaciones', icon: Bell, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Configuración', href: '/admin/config', icon: Settings, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Perfil', href: '/admin/perfil', icon: Building2, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Mi Plan', href: '/admin/plan', icon: Package, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Super Panel', href: '/superadmin', icon: ShieldCheck, section: 'CONFIGURACIÓN', roles: ['SUPERADMIN'] },
+    ] : (tipoNegocio === 'SHOE_CARE' || tipoNegocio === 'ordenes-servicio' || hasService) ? [
+        // --- CORE OPERATIVO ---
+        { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, section: 'GESTIÓN OPERATIVA' },
+        // ✅ Recepciones: solo si el negocio tiene capability service == true
+        ...(hasService ? [{ name: 'Recepciones', href: '/admin/recepciones', icon: Store, section: 'GESTIÓN OPERATIVA' }] : []),
+        { name: 'Órdenes', href: '/admin/ordenes-servicio', icon: Package, section: 'GESTIÓN OPERATIVA' },
+        // ✅ Logística: solo si el negocio tiene capability delivery
+        ...(hasDelivery ? [{ name: 'Logística', href: '/admin/logistica', icon: Truck, section: 'GESTIÓN OPERATIVA' }] : []),
+
+        // --- ACADEMIA Y MARKETING ---
+        { name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Páginas', href: '/admin/paginas', icon: Layout, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+
+        // --- ADMINISTRACIÓN ---
+        { name: 'Clientes', href: '/admin/clientes', icon: Contact, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Servicios', href: '/admin/servicios', icon: Scissors, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Repartidores & Staff', href: '/admin/staff', icon: Users, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Reportes', href: '/admin/reportes', icon: BarChart3, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+
+        // --- CONFIGURACIÓN ---
+        { name: 'Perfil', href: '/admin/perfil', icon: Building2, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Métodos de Pago', href: '/admin/metodos-pago', icon: Wallet, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Configuración', href: '/admin/config', icon: Settings, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Mi Plan', href: '/admin/plan', icon: Package, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Super Panel', href: '/superadmin', icon: ShieldCheck, section: 'CONFIGURACIÓN', roles: ['SUPERADMIN'] },
     ] : [
@@ -206,7 +292,7 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
         // --- ACADEMIA Y MARKETING ---
         { name: 'Academia', href: '/admin/cursos', icon: GraduationCap, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'STAFF', 'SUPERADMIN'], enabled: coursesEnabled },
         { name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'], enabled: promotionsEnabled },
-        { name: 'Club de Beneficios', href: '/admin/misiones', icon: Trophy, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Club de Beneficios', href: '/admin/misiones', icon: Trophy, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'], enabled: loyaltyEnabled },
         { name: 'Misiones Citiox', href: '/admin/misiones-citiox', icon: Briefcase, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Comunicación', href: '/admin/comunicacion', icon: MessageSquare, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Newsletter', href: '/admin/newsletter', icon: Mail, section: 'ACADEMIA Y MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },

@@ -88,9 +88,9 @@ export async function POST(req: Request) {
             return { nuevoNegocio, nuevoUsuario };
         });
 
-        // 3. Asignar el plan por defecto (Trial)
+        // 3. Asignar el plan seleccionado o por defecto (Trial)
         try {
-            await planService.assignDefaultPlan(result.nuevoNegocio.id);
+            await planService.assignDefaultPlan(result.nuevoNegocio.id, body.planId || body.plan);
         } catch (planError) {
             console.error("⚠️ Error al asignar plan trial:", planError);
         }

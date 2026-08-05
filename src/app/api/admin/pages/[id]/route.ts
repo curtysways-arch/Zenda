@@ -40,7 +40,14 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         const { title, contentHtml, status, featuredImage, buttonText, buttonUrl, imageMediaId } = await req.json();
 
         const cleanHtml = DOMPurify.sanitize(contentHtml);
-        const slug = slugify(title, { lower: true, strict: true });
+        let slug = slugify(title, { lower: true, strict: true });
+        
+        // Preservar slugs maestros para inyección directa en el landing
+        if (id.includes('por_que_elegirnos') || title.toLowerCase().includes('elegirnos') || title.toLowerCase().includes('resultados')) {
+            slug = 'por-que-elegirnos';
+        } else if (id.includes('como_funciona') || title.toLowerCase().includes('funciona')) {
+            slug = 'como-funciona';
+        }
 
         // Actualizar usando Prisma ORM estándar
         const updatedPage = await prisma.page.update({

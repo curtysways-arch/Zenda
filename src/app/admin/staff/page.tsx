@@ -55,13 +55,41 @@ function StaffContent() {
                 setLoading(false);
                 return;
             }
-            const res = await fetch(`/api/staff?businessId=${negocioId}`);
-            if (res.ok) {
-                const data = await res.json();
-                setStaff(Array.isArray(data) ? data : []);
-            } else {
-                setStaff([]);
+            const [resStaff, resLogistics] = await Promise.all([
+                fetch(`/api/staff?businessId=${negocioId}`),
+                fetch(`/api/logistics/resources`)
+            ]);
+
+            let combined: StaffMember[] = [];
+            if (resStaff.ok) {
+                const dataStaff = await resStaff.json();
+                if (Array.isArray(dataStaff)) combined = [...dataStaff];
             }
+
+            if (resLogistics.ok) {
+                const dataDrivers = await resLogistics.json();
+                if (Array.isArray(dataDrivers)) {
+                    const mappedDrivers: StaffMember[] = dataDrivers.map((d: any) => ({
+                        id: d.id,
+                        name: d.name,
+                        role: 'REPARTIDOR',
+                        avatar: d.avatar || d.profile?.fotografiaUrl || null,
+                        active: d.active ?? true,
+                        ratingPromedio: 5.0,
+                        totalReviews: 0,
+                        services: [{ id: 'delivery', nombre: 'Servicio de Delivery' }],
+                        workingHours: {}
+                    }));
+                    
+                    // Evitar duplicados si coinciden por ID o nombre
+                    const existingIds = new Set(combined.map(s => s.id));
+                    mappedDrivers.forEach(dr => {
+                        if (!existingIds.has(dr.id)) combined.push(dr);
+                    });
+                }
+            }
+
+            setStaff(combined);
         } catch (error) {
             console.error("Error fetching staff:", error);
         } finally {
@@ -138,27 +166,25 @@ function StaffContent() {
                         <p className="text-slate-600 font-medium">Administra a los profesionales y sus horarios de atención.</p>
                     </div>
 
-                    <FeatureGate feature="multi_staff" fallbackMessage="Tu plan no permite agregar más profesionales.">
-                        <button 
-                            onClick={handleCreate}
-                            className="flex items-center gap-2 text-white font-black px-6 py-4 rounded-[2rem] shadow-xl transition-all active:scale-95 uppercase tracking-widest text-xs"
-                            style={{ backgroundColor: primaryColor }}
-                        >
-                            <Plus size={18} /> Nuevo Profesional
-                        </button>
-                    </FeatureGate>
+                    <button 
+                        onClick={handleCreate}
+                        className="flex items-center gap-2 text-white font-black px-6 py-4 rounded-[2rem] shadow-xl transition-all active:scale-95 uppercase tracking-widest text-xs cursor-pointer"
+                        style={{ backgroundColor: primaryColor }}
+                    >
+                        <Plus size={18} /> Nuevo Profesional / Repartidor
+                    </button>
                 </div>
 
-                <div className="relative group">
-                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 transition-colors" size={20} 
-                            style={ { color: primaryColor } as any } />
+                <div className="relative group flex items-center">
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 transition-colors pointer-events-none z-10" size={20} 
+                            style={{ color: primaryColor }} />
                     <input 
                         type="text"
                         placeholder="Buscar por nombre o cargo..."
-                        className="w-full pl-14 pr-6 py-5 bg-white border-2 border-slate-100 rounded-[2.5rem] font-bold text-slate-900 outline-none transition-all shadow-sm"
-                        style={ { '--tw-border-opacity': '1' } as any }
+                        style={{ paddingLeft: '3.6rem' }}
+                        className="w-full pr-6 py-5 bg-white border-2 border-slate-100 rounded-[2.5rem] font-bold text-slate-900 outline-none transition-all shadow-sm"
                         onFocus={(e) => e.target.style.borderColor = primaryColor}
-                        onBlur={(e) => e.target.style.borderColor = 'rgb(241, 245, 249)'}
+                        onBlur={(e) => e.target.style.borderColor = 'rgb(241 245 249)'}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />

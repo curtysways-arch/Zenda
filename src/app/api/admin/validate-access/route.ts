@@ -35,6 +35,10 @@ export async function GET(req: Request) {
         case 'automatic-discounts':
             validation = await planLimitValidator.canAccessAutomaticDiscounts(negocioId);
             break;
+        case 'loyalty':
+        case 'loyalty_module':
+            validation = await planLimitValidator.canAccessLoyalty(negocioId);
+            break;
         default:
             return NextResponse.json({ error: "Feature no especificada" }, { status: 400 });
     }

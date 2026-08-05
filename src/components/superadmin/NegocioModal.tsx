@@ -29,6 +29,14 @@ const generateLocalId = () => {
 
 // Plantillas de servicios según tipo de negocio
 const PLANTILLAS_SERVICIOS: Record<string, Array<{ nombre: string; duracion: number; precio: number }>> = {
+    "Canchas Deportivas & Clubes": [
+        { nombre: "Reserva Cancha Pádel Cristal 90 Min", duracion: 90, precio: 25 },
+        { nombre: "Reserva Cancha Fútbol Sintético", duracion: 90, precio: 25 },
+        { nombre: "Clase Particular de Pádel 60 Min", duracion: 60, precio: 30 }
+    ],
+    "Tienda / Ecommerce & Productos": [
+        { nombre: "Catálogo de Productos Físicos", duracion: 0, precio: 0 }
+    ],
     "Spa / Centro Estético": [
         { nombre: "Limpieza Facial Profunda", duracion: 60, precio: 45 },
         { nombre: "Masaje Relajante Corporal", duracion: 60, precio: 50 },
@@ -87,6 +95,8 @@ const PLANTILLAS_SERVICIOS: Record<string, Array<{ nombre: string; duracion: num
 };
 
 const CATEGORIAS_NEGOCIO = [
+    "Canchas Deportivas & Clubes",
+    "Tienda / Ecommerce & Productos",
     "Spa / Centro Estético",
     "Barbería",
     "Salón de Belleza",
@@ -128,6 +138,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
     const [error, setError] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);
     const [planes, setPlanes] = useState<any[]>([]);
+    const [dbBusinessTypes, setDbBusinessTypes] = useState<any[]>([]);
 
     // Estados para navegación del Wizard
     const [creationMode, setCreationMode] = useState<"none" | "fast" | "assisted">("none");
@@ -160,7 +171,9 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
         adminNombre: "",
 
         // Branding
-        tipoNegocio: "Spa / Centro Estético",
+        tipoNegocio: "Canchas Deportivas & Clubes",
+        businessTypeId: "",
+        businessProfileId: "",
         logoUrl: "",
         bannerUrl: "",
         bannerUrls: [] as string[],
@@ -195,18 +208,23 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
 
     useEffect(() => {
         setMounted(true);
-        const fetchPlanes = async () => {
+        const fetchData = async () => {
             try {
-                const res = await fetch("/api/superadmin/planes");
-                if (res.ok) {
-                    const data = await res.json();
+                const resPlanes = await fetch("/api/superadmin/planes");
+                if (resPlanes.ok) {
+                    const data = await resPlanes.json();
                     setPlanes(data);
                 }
+                const resTypes = await fetch("/api/public/tipos-negocio");
+                if (resTypes.ok) {
+                    const dataTypes = await resTypes.json();
+                    setDbBusinessTypes(dataTypes);
+                }
             } catch (err) {
-                console.error("Error fetching planes:", err);
+                console.error("Error fetching data in NegocioModal:", err);
             }
         };
-        fetchPlanes();
+        fetchData();
     }, []);
 
     // Reiniciar estados al abrir/cerrar
@@ -232,6 +250,8 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                 plan_id: negocio.suscripcion?.planId || "",
                 plan_status: negocio.suscripcion?.estado || "trial",
                 tipoNegocio: negocio.configuracion?.tipoNegocio || "Spa / Centro Estético",
+                businessTypeId: negocio.businessTypeId || "",
+                businessProfileId: negocio.businessProfileId || "",
                 colorPrimario: negocio.colorPrimario || "#1dc95c",
                 colorSecundario: negocio.colorSecundario || "#112117",
                 heroTitulo: negocio.heroTitulo || "",
@@ -262,7 +282,9 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                 adminNombre: "",
                 plan_id: "",
                 plan_status: "trial",
-                tipoNegocio: "Spa / Centro Estético",
+                tipoNegocio: "Canchas Deportivas & Clubes",
+                businessTypeId: "",
+                businessProfileId: "",
                 colorPrimario: "#1dc95c",
                 colorSecundario: "#112117",
                 heroTitulo: "",
@@ -1070,14 +1092,29 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                     <label className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest px-1 ml-1">Tipo de Negocio / Especialidad</label>
                                     <select
                                         value={formData.tipoNegocio}
-                                        onChange={(e) => handleCategoriaChange(e.target.value)}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            const foundBt = dbBusinessTypes.find(b => b.name === val || b.slug === val);
+                                            handleCategoriaChange(val);
+                                            if (foundBt) {
+                                                setFormData(prev => ({ ...prev, businessTypeId: foundBt.id }));
+                                            }
+                                        }}
                                         className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-2xl outline-none focus:border-emerald-500/30 text-sm font-bold !text-slate-900 dark:!text-white italic"
                                     >
-                                        {CATEGORIAS_NEGOCIO.map(cat => (
-                                            <option key={cat} value={cat} style={{ color: '#1e293b', backgroundColor: '#ffffff' }}>{cat}</option>
-                                        ))}
+                                        {dbBusinessTypes.length > 0 ? (
+                                            dbBusinessTypes.map(bt => (
+                                                <option key={bt.id} value={bt.name} style={{ color: '#1e293b', backgroundColor: '#ffffff' }}>
+                                                    {bt.name} ({bt.resourceType})
+                                                </option>
+                                            ))
+                                        ) : (
+                                            CATEGORIAS_NEGOCIO.map(cat => (
+                                                <option key={cat} value={cat} style={{ color: '#1e293b', backgroundColor: '#ffffff' }}>{cat}</option>
+                                            ))
+                                        )}
                                     </select>
-                                    <p className="text-[9px] text-slate-500 font-bold italic ml-1">Esto cargará plantillas de servicios autocompletados.</p>
+                                    <p className="text-[9px] text-slate-500 font-bold italic ml-1">Esto cargará la máquina de estados y plantillas del tipo de negocio asignado.</p>
                                 </div>
 
                                 <InputField 

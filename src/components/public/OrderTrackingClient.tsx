@@ -106,13 +106,54 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
     const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [bankConfig, setBankConfig] = useState<any>(null);
+    const [selectedTab, setSelectedTab] = useState<'STATUS' | 'PHOTOS'>('STATUS');
     const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
     const [copiedCode, setCopiedCode] = useState(false);
 
-    const primaryColor = negocio.colorPrimario || '#ff6b2b';
+    const primaryColor = negocio.colorPrimario || '#9333ea';
+
+    // Subir comprobante
+    const handleFileUpload = async (file: File) => {
+        try {
+            setUploading(true);
+            setUploadError(null);
+            setUploadSuccess(null);
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await fetch(`/api/public/${negocio.slug}/orders/${order.id}/payment-evidence`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                setUploadSuccess('¡Comprobante enviado a revisión exitosamente!');
+                setOrder(prev => ({
+                    ...prev,
+                    payment: data.payment || { ...prev.payment, estado: 'COMPROBANTE_ENVIADO' }
+                }));
+                if (onRefreshOrders) onRefreshOrders();
+            } else {
+                setUploadError(data.error || 'Error al subir el comprobante.');
+            }
+        } catch (error: any) {
+            setUploadError('Error de conexión al subir el comprobante.');
+        } finally {
+            setUploading(false);
+        }
+    };
     const isDelivery = order.tipoEntrega === 'DOMICILIO';
     const isCancelled = order.estado === 'CANCELADO' || order.estado === 'RECHAZADO';
     const stepIndex = getStepIndex(order.estado, order.payment?.estado);
+
+    // Extraer fotos de auditoría de extraInfo si existen
+    const extraInfo = (order as any)?.extraInfo ? (typeof (order as any).extraInfo === 'string' ? JSON.parse((order as any).extraInfo) : (order as any).extraInfo) : {};
+    const fotosRecepcion: string[] = extraInfo?.fotosRecepcion || [];
+    const fotosProceso: string[] = extraInfo?.fotosProceso || [];
+    const fotosEntrega: string[] = extraInfo?.fotosEntrega || [];
+    const hasPhotos = fotosRecepcion.length > 0 || fotosProceso.length > 0 || fotosEntrega.length > 0;
 
     // Load Bank Details for Payment Modal
     useEffect(() => {
@@ -174,9 +215,9 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
 
             if (diff <= 0) {
                 if (['LISTO', 'RUTA', 'EN_CAMINO'].includes(order.estado)) {
-                    setCountdownTime('¡En camino / Listo!');
+                    setCountdownTime('¡Listo para entrega!');
                 } else {
-                    setCountdownTime('¡En preparación final!');
+                    setCountdownTime('¡En proceso final de cuidado!');
                 }
                 return;
             }
@@ -202,39 +243,6 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
         return () => clearInterval(timer);
     }, [order.fechaEntrega, isCancelled, order.estado]);
 
-    // Subir comprobante
-    const handleFileUpload = async (file: File) => {
-        try {
-            setUploading(true);
-            setUploadError(null);
-            setUploadSuccess(null);
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const res = await fetch(`/api/public/${negocio.slug}/orders/${order.id}/payment-evidence`, {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await res.json();
-            if (data.success) {
-                setUploadSuccess('¡Comprobante enviado a revisión exitosamente!');
-                setOrder(prev => ({
-                    ...prev,
-                    payment: data.payment || { ...prev.payment, estado: 'COMPROBANTE_ENVIADO' }
-                }));
-                if (onRefreshOrders) onRefreshOrders();
-            } else {
-                setUploadError(data.error || 'Error al subir el comprobante.');
-            }
-        } catch (error: any) {
-            setUploadError('Error de conexión al subir el comprobante.');
-        } finally {
-            setUploading(false);
-        }
-    };
-
     const handleBackClick = () => {
         if (onBack) {
             onBack();
@@ -244,308 +252,395 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
     };
 
     const waPhone = negocio.whatsapp ? negocio.whatsapp.replace(/\D/g, '') : '';
-    const waMessage = encodeURIComponent(`Hola ${negocio.nombre}, necesito información de mi pedido #${order.numeroPedido}.`);
+    const waMessage = encodeURIComponent(`Hola ${negocio.nombre}, necesito información de mi orden #${order.numeroPedido}.`);
     const waLink = `https://wa.me/${waPhone}?text=${waMessage}`;
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 pb-36 sm:pb-40">
-            {/* Top Bar Navigation */}
-            <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3.5 flex items-center justify-between shadow-2xs">
+        <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-36 sm:pb-40">
+            {/* Top Bar Navigation limpia en fondo blanco */}
+            <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3.5 flex items-center justify-between shadow-xs">
                 <button
                     type="button"
                     onClick={handleBackClick}
-                    className="flex items-center gap-1.5 text-xs font-black uppercase text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-xl transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 text-xs font-black uppercase text-slate-700 hover:text-slate-900 bg-slate-100 border border-slate-200 px-3.5 py-2 rounded-xl transition-all cursor-pointer"
                 >
                     <ArrowLeft className="size-4" />
                     <span>Volver</span>
                 </button>
 
                 <div className="text-center">
-                    <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Detalles del Pedido</span>
-                    <span className="text-sm font-black text-slate-900">Pedido #{order.numeroPedido}</span>
+                    <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Orden de Servicio</span>
+                    <span className="text-sm font-black text-slate-900">Orden #{order.numeroPedido}</span>
                 </div>
 
-                <span className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${
-                    isCancelled ? 'bg-rose-100 text-rose-800' : 'bg-orange-100 text-orange-800'
+                <span className={`text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full border ${
+                    isCancelled ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-purple-50 text-purple-700 border-purple-200'
                 }`}>
                     {order.estado}
                 </span>
             </header>
 
             <main className="max-w-xl mx-auto px-4 pt-6 space-y-5">
-                {/* Visual Timeline Progress Bar */}
-                {!isCancelled ? (
-                    <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm space-y-4">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                                <Clock className="size-4 text-orange-600 animate-pulse" />
-                                <span>Progreso de Tu Pedido</span>
-                            </h3>
-                            <span className="text-[10px] font-black text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full border border-orange-200 uppercase tracking-wider">
-                                Paso {stepIndex} de 5
+                {/* Visual Banner Hero de Estado en Blanco */}
+                <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-3 relative overflow-hidden text-left">
+                    <div 
+                        className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-15 pointer-events-none"
+                        style={{ backgroundColor: primaryColor }}
+                    />
+                    <div className="flex items-center gap-3">
+                        <div 
+                            className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-md font-black"
+                            style={{ backgroundColor: primaryColor }}
+                        >
+                            <PackageCheck className="size-6" />
+                        </div>
+                        <div>
+                            <span className="text-[10px] font-black uppercase tracking-widest block" style={{ color: primaryColor }}>
+                                Servicio Profesional
                             </span>
+                            <h2 className="text-lg font-black text-slate-900">Orden de Cuidado #{order.numeroPedido}</h2>
                         </div>
+                    </div>
+                </div>
 
-                        <div className="pt-2 pb-1 px-1">
-                            <div className="relative flex justify-between items-center">
-                                {/* Track Line */}
-                                <div className="absolute left-4 right-4 top-4 h-1 bg-slate-100 -z-0" />
-                                {/* Active Fill Line */}
-                                <div 
-                                    className="absolute left-4 h-1 bg-gradient-to-r from-orange-500 to-emerald-500 transition-all duration-500 -z-0" 
-                                    style={{ width: `${Math.min(100, Math.max(0, ((stepIndex - 1) / 4) * 100))}%` }}
-                                />
+                {/* Navegación por pestañas: Estado & Auditoría de Fotos */}
+                {hasPhotos && (
+                    <div className="flex bg-slate-200/60 p-1.5 rounded-2xl border border-slate-200 gap-1.5">
+                        <button
+                            type="button"
+                            onClick={() => setSelectedTab('STATUS')}
+                            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                selectedTab === 'STATUS'
+                                    ? 'bg-white text-slate-900 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-800'
+                            }`}
+                        >
+                            Seguimiento
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setSelectedTab('PHOTOS')}
+                            className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                                selectedTab === 'PHOTOS'
+                                    ? 'bg-white text-slate-900 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-800'
+                            }`}
+                        >
+                            <span>Auditoría de Fotos</span>
+                            <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                {fotosRecepcion.length + fotosProceso.length + fotosEntrega.length}
+                            </span>
+                        </button>
+                    </div>
+                )}
 
-                                {/* Step Nodes */}
-                                {[
-                                    { step: 1, label: 'RECIBIDO', icon: FileText },
-                                    { step: 2, label: 'PAGO', icon: ShieldCheck },
-                                    { step: 3, label: 'PRODUCCIÓN', icon: Flame },
-                                    { step: 4, label: isDelivery ? 'EN RUTA' : 'LISTO', icon: isDelivery ? Bike : PackageCheck },
-                                    { step: 5, label: 'ENTREGADO', icon: CheckCircle2 }
-                                ].map(item => {
-                                    const isCompleted = item.step < stepIndex;
-                                    const isCurrent = item.step === stepIndex;
-                                    const Icon = item.icon;
-
-                                    return (
-                                        <div key={item.step} className="flex flex-col items-center z-10">
-                                            <div className={`size-8 rounded-full flex items-center justify-center text-xs transition-all duration-300 ${
-                                                isCurrent
-                                                    ? 'bg-orange-600 text-white font-black ring-4 ring-orange-200 scale-110 shadow-md animate-pulse'
-                                                    : isCompleted
-                                                        ? 'bg-emerald-600 text-white font-black shadow-2xs'
-                                                        : 'bg-slate-100 text-slate-400 font-bold border border-slate-200'
-                                            }`}>
-                                                {isCompleted ? <CheckCircle2 className="size-4" /> : <Icon className="size-4" />}
-                                            </div>
-                                            <span className={`text-[8px] font-black uppercase tracking-wider mt-2 transition-colors ${
-                                                isCurrent ? 'text-orange-600' : isCompleted ? 'text-slate-800' : 'text-slate-400'
-                                            }`}>
-                                                {item.label}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
+                {selectedTab === 'PHOTOS' && hasPhotos ? (
+                    <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-5 text-left">
+                        {fotosRecepcion.length > 0 && (
+                            <div className="space-y-3">
+                                <h4 className="text-xs font-black uppercase tracking-widest text-purple-700 flex items-center gap-2">
+                                    <span>📸 Fotos de Recepción (Antes del Cuidado)</span>
+                                </h4>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {fotosRecepcion.map((url, idx) => (
+                                        <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
+                                            <img src={url} alt={`Recepción ${idx}`} className="w-full h-24 object-cover rounded-xl border border-slate-200 hover:scale-105 transition-transform" />
+                                        </a>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
+
+                        {fotosProceso.length > 0 && (
+                            <div className="space-y-3 pt-3 border-t border-slate-100">
+                                <h4 className="text-xs font-black uppercase tracking-widest text-indigo-700 flex items-center gap-2">
+                                    <span>⚡ Fotos de Proceso (En Taller)</span>
+                                </h4>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {fotosProceso.map((url, idx) => (
+                                        <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
+                                            <img src={url} alt={`Proceso ${idx}`} className="w-full h-24 object-cover rounded-xl border border-slate-200 hover:scale-105 transition-transform" />
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {fotosEntrega.length > 0 && (
+                            <div className="space-y-3 pt-3 border-t border-slate-100">
+                                <h4 className="text-xs font-black uppercase tracking-widest text-emerald-700 flex items-center gap-2">
+                                    <span>✨ Fotos del Resultado (Listo para Entrega)</span>
+                                </h4>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {fotosEntrega.map((url, idx) => (
+                                        <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
+                                            <img src={url} alt={`Entrega ${idx}`} className="w-full h-24 object-cover rounded-xl border border-slate-200 hover:scale-105 transition-transform" />
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 ) : (
-                    <div className="bg-rose-50 border border-rose-200 text-rose-900 rounded-3xl p-5 flex items-start gap-3.5">
-                        <AlertCircle className="size-6 text-rose-600 shrink-0 mt-0.5" />
-                        <div>
-                            <h3 className="text-xs font-black uppercase tracking-wider text-rose-950">Pedido Cancelado o Rechazado</h3>
-                            <p className="text-xs font-medium text-rose-800 mt-1 leading-relaxed">
-                                Este pedido fue cancelado. Si tienes dudas, contáctanos por WhatsApp.
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Tiempo de Entrega y Programación */}
-                <div className="bg-amber-50/70 border border-amber-200/80 rounded-3xl p-5 space-y-3 text-left">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="size-10 bg-amber-500 text-white rounded-2xl flex items-center justify-center font-black shadow-2xs">
-                                <Clock className="size-5" />
-                            </div>
-                            <div>
-                                <span className="text-[10px] font-black text-amber-900/70 uppercase tracking-widest block">Programación de Entrega</span>
-                                <span className="text-xs font-black text-amber-950">
-                                    Fecha y Hora Exacta de Entrega
-                                </span>
-                            </div>
-                        </div>
-                        <span className="px-3 py-1 bg-amber-200/70 border border-amber-300/80 text-amber-950 text-[10px] font-black uppercase rounded-xl tracking-wider">
-                            {order.tipoEntrega}
-                        </span>
-                    </div>
-
-                    <div className="pt-2 border-t border-amber-200/60 flex items-center gap-2 text-xs font-bold text-amber-950">
-                        <Calendar className="size-4 text-amber-700 shrink-0" />
-                        <span>Fecha: {formatDeliveryDate(order.fechaEntrega)}</span>
-                    </div>
-
-                    {countdownTime && (
-                        <div className="bg-white/90 rounded-2xl p-3 border border-amber-200/80 flex items-center justify-between shadow-2xs">
-                            <span className="text-[10px] font-black uppercase text-amber-900 tracking-wider">Tiempo Restante Estimado</span>
-                            <span className="text-xs font-mono font-black text-orange-600">{countdownTime}</span>
-                        </div>
-                    )}
-                </div>
-
-                {/* Estado del Pago & Subida de Comprobante */}
-                <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm space-y-3 text-left">
-                    <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
-                        <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Estado del Pago</span>
-                        <span className="text-xs font-mono font-black text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg">
-                            {order.payment?.estado || 'PENDIENTE'}
-                        </span>
-                    </div>
-
-                    {/* Si fue rechazado O si el pago está pendiente (no se ha subido comprobante) */}
-                    {(!order.payment || order.payment.estado === 'PENDIENTE' || order.payment.estado === 'RECHAZADO' || order.estado === 'PENDIENTE_PAGO') && (
-                        <div className="space-y-3 pt-1">
-                            {order.payment?.estado === 'RECHAZADO' ? (
-                                <div className="p-4 bg-rose-50 text-rose-800 text-xs rounded-2xl border border-rose-200 space-y-1">
-                                    <div className="font-black flex items-center gap-1.5 text-rose-700">
-                                        <XCircle className="size-4" /> Comprobante Rechazado
-                                    </div>
-                                    <p className="font-medium"><strong>Motivo:</strong> {order.payment.motivoRechazo || 'El comprobante no era legible o correcto.'}</p>
+                    <>
+                        {/* Visual Timeline Progress Bar en Fondo Blanco */}
+                        {!isCancelled ? (
+                            <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-4 text-left">
+                                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                                        <Clock className="size-4" style={{ color: primaryColor }} />
+                                        <span>Progreso de Tu Orden</span>
+                                    </h3>
+                                    <span className="text-[10px] font-black text-purple-800 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-100 uppercase tracking-wider">
+                                        Etapa {stepIndex} de 5
+                                    </span>
                                 </div>
-                            ) : (
-                                <div className="p-4 bg-orange-50/80 text-orange-950 text-xs rounded-2xl border border-orange-200/80 space-y-1">
-                                    <div className="font-black flex items-center gap-1.5 text-orange-800 uppercase tracking-wider text-[11px]">
-                                        <AlertCircle className="size-4 text-orange-600 shrink-0" /> Pago Pendiente de Comprobante
+
+                                <div className="pt-2 pb-1 px-1">
+                                    <div className="relative flex justify-between items-center">
+                                        {/* Track Line */}
+                                        <div className="absolute left-4 right-4 top-4 h-1 bg-slate-100 -z-0" />
+                                        {/* Active Fill Line */}
+                                        <div 
+                                            className="absolute left-4 h-1 transition-all duration-500 -z-0" 
+                                            style={{ 
+                                                width: `${Math.min(100, Math.max(0, ((stepIndex - 1) / 4) * 100))}%`,
+                                                backgroundColor: primaryColor
+                                            }}
+                                        />
+
+                                        {/* Step Nodes */}
+                                        {[
+                                            { step: 1, label: 'RECIBIDO', icon: FileText },
+                                            { step: 2, label: 'PAGO', icon: ShieldCheck },
+                                            { step: 3, label: 'TALLER', icon: Flame },
+                                            { step: 4, label: isDelivery ? 'EN RUTA' : 'LISTO', icon: isDelivery ? Bike : PackageCheck },
+                                            { step: 5, label: 'ENTREGADO', icon: CheckCircle2 }
+                                        ].map(item => {
+                                            const isCompleted = item.step < stepIndex;
+                                            const isCurrent = item.step === stepIndex;
+                                            const Icon = item.icon;
+
+                                            return (
+                                                <div key={item.step} className="flex flex-col items-center z-10">
+                                                    <div 
+                                                        className={`size-8 rounded-full flex items-center justify-center text-xs transition-all duration-300 ${
+                                                            isCurrent
+                                                                ? 'text-white font-black scale-110 shadow-md'
+                                                                : isCompleted
+                                                                    ? 'bg-emerald-500 text-white font-black'
+                                                                    : 'bg-slate-100 text-slate-400 border border-slate-200'
+                                                        }`}
+                                                        style={isCurrent ? { backgroundColor: primaryColor } : {}}
+                                                    >
+                                                        {isCompleted ? <CheckCircle2 className="size-4" /> : <Icon className="size-4" />}
+                                                    </div>
+                                                    <span className={`text-[8px] font-black uppercase tracking-wider mt-2 transition-colors ${
+                                                        isCurrent ? 'text-slate-900 font-bold' : isCompleted ? 'text-emerald-700' : 'text-slate-400'
+                                                    }`}>
+                                                        {item.label}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                    <p className="font-medium text-slate-600 leading-relaxed">
-                                        Aún no se ha adjuntado el comprobante de pago para este pedido. Por favor sube tu comprobante para enviar a producción.
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-rose-50 border border-rose-200 text-rose-900 rounded-3xl p-5 flex items-start gap-3.5">
+                                <AlertCircle className="size-6 text-rose-600 shrink-0 mt-0.5" />
+                                <div>
+                                    <h3 className="text-xs font-black uppercase tracking-wider text-rose-800">Orden Cancelada</h3>
+                                    <p className="text-xs font-medium text-rose-700 mt-1 leading-relaxed">
+                                        Esta orden fue cancelada. Si tienes alguna inquietud, contáctanos por WhatsApp.
                                     </p>
                                 </div>
-                            )}
-
-                            <div className="pt-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPaymentModal(true)}
-                                    className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
-                                >
-                                    <Wallet className="size-4" />
-                                    <span>VER DATOS BANCARIOS Y SUBIR COMPROBANTE</span>
-                                </button>
-
-                                {uploadSuccess && (
-                                    <div className="mt-3 p-3 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200">
-                                        {uploadSuccess}
-                                    </div>
-                                )}
-                                {uploadError && (
-                                    <div className="mt-3 p-3 bg-rose-50 text-rose-800 text-xs font-bold rounded-xl border border-rose-200">
-                                        {uploadError}
-                                    </div>
-                                )}
                             </div>
-                        </div>
-                    )}
-
-                    {/* Si está en revisión */}
-                    {(order.payment?.estado === 'COMPROBANTE_ENVIADO' || order.payment?.estado === 'PAGO_EN_REVISION') && (
-                        <div className="p-4 bg-amber-50 text-amber-900 text-xs rounded-2xl border border-amber-200 flex items-start gap-3 font-medium">
-                            <Clock className="size-5 text-amber-600 shrink-0 mt-0.5" />
-                            <div className="leading-relaxed">
-                                <strong className="block font-black text-amber-950">Comprobante en Verificación</strong>
-                                <span>Tu comprobante fue recibido y está siendo validado por el comercio.</span>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Si está confirmado */}
-                    {order.payment?.estado === 'CONFIRMADO' && (
-                        <div className="p-4 bg-emerald-50 text-emerald-900 text-xs rounded-2xl border border-emerald-200 flex items-start gap-3 font-medium">
-                            <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
-                            <div>
-                                <strong className="block font-black text-emerald-950">¡Pago Confirmado!</strong>
-                                <span>Tu pago ha sido validado correctamente.</span>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Dirección y GPS */}
-                {isDelivery && (
-                    <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm space-y-3 text-left">
-                        <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b border-slate-100 pb-2 flex items-center gap-2">
-                            <MapPin className="size-4 text-orange-600" />
-                            <span>Dirección de Entrega</span>
-                        </h3>
-                        <div className="text-xs font-semibold text-slate-800 space-y-1">
-                            <p className="font-bold text-slate-900">{order.direccionCliente || 'No especificada'}</p>
-                            {order.referenciaCliente && (
-                                <p className="text-[11px] text-slate-500 font-medium">Ref: {order.referenciaCliente}</p>
-                            )}
-                        </div>
-                        {order.latitud && order.longitud && (
-                            <a 
-                                href={`https://www.google.com/maps/search/?api=1&query=${order.latitud},${order.longitud}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-2xs"
-                            >
-                                <ExternalLink className="size-4 text-emerald-600" />
-                                <span>Ver Ubicación Exacta en Mapa GPS</span>
-                            </a>
                         )}
-                    </div>
-                )}
 
-                {/* Desglose de Productos */}
-                <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm space-y-3 text-left">
-                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b border-slate-100 pb-2 flex items-center gap-2">
-                        <ShoppingBag className="size-4 text-orange-600" />
-                        <span>Detalle de Productos</span>
-                    </h3>
-                    <div className="divide-y divide-slate-100">
-                        {order.items.map(item => (
-                            <div key={item.id} className="py-2.5 flex justify-between items-center text-xs font-semibold">
-                                <span className="text-slate-700">
-                                    <strong className="text-slate-950 font-black">{item.cantidad}x</strong> {item.nombreProducto}
+                        {/* Tiempo de Entrega y Programación */}
+                        <div className="bg-white border border-slate-200/80 rounded-3xl p-5 space-y-3 text-left">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-10 bg-purple-600 text-white rounded-2xl flex items-center justify-center font-black shadow-md">
+                                        <Clock className="size-5" />
+                                    </div>
+                                    <div>
+                                        <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest block">Compromiso de Entrega</span>
+                                        <span className="text-xs font-black text-white">
+                                            Fecha Estimada de Entrega
+                                        </span>
+                                    </div>
+                                </div>
+                                <span className="px-3 py-1 bg-purple-950 border border-purple-800 text-purple-300 text-[10px] font-black uppercase rounded-xl tracking-wider">
+                                    {order.tipoEntrega}
                                 </span>
-                                <span className="font-black text-slate-900">${(item.cantidad * item.precioUnitario).toFixed(2)}</span>
                             </div>
-                        ))}
-                    </div>
-                    <div className="border-t border-slate-100 pt-3 space-y-1.5 text-xs font-bold">
-                        <div className="flex justify-between text-slate-400">
-                            <span>Subtotal</span>
-                            <span>${order.subtotal.toFixed(2)}</span>
-                        </div>
-                        {isDelivery && (
-                            <div className="flex justify-between text-slate-400">
-                                <span>Costo de Envío</span>
-                                <span>${order.costoEnvio.toFixed(2)}</span>
-                            </div>
-                        )}
-                        <div className="flex justify-between text-sm font-black text-slate-950 pt-2 border-t border-slate-100">
-                            <span>Total a Pagar</span>
-                            <span className="text-base text-orange-600">${order.total.toFixed(2)}</span>
-                        </div>
-                    </div>
-                </div>
 
-                {/* Acciones & WhatsApp */}
-                <div className="space-y-3 pt-2">
-                    {negocio.whatsapp && (
-                        <a 
-                            href={waLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-transform rounded-2xl text-white text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 cursor-pointer"
-                        >
-                            <MessageCircle className="size-4 shrink-0" />
-                            <span>Ayuda por WhatsApp sobre este Pedido</span>
-                        </a>
-                    )}
-                    <button 
-                        type="button"
-                        onClick={handleBackClick}
-                        className="w-full py-3.5 text-center text-xs font-black uppercase tracking-widest rounded-2xl text-slate-700 bg-slate-100 hover:bg-slate-200 active:scale-[0.98] transition-transform cursor-pointer border border-slate-200"
-                    >
-                        Volver a Mis Pedidos
-                    </button>
-                </div>
+                            <div className="space-y-1">
+                                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Fecha Estimada de Entrega</p>
+                                <p className="text-sm font-black text-slate-900 flex items-center gap-2">
+                                    <Calendar className="size-4 text-slate-400" />
+                                    <span>{formatDeliveryDate(order.fechaEntrega)}</span>
+                                </p>
+                            </div>
+
+                            {countdownTime && !isCancelled && order.estado !== 'ENTREGADO' && (
+                                <div className="p-3 bg-purple-50 text-purple-900 rounded-2xl border border-purple-100 flex items-center justify-between font-mono text-xs">
+                                    <span className="font-bold uppercase tracking-wider text-[10px]">Tiempo Restante Estimado</span>
+                                    <span className="font-black text-sm">{countdownTime}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Estado del Pago & Subida de Comprobante */}
+                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-3 text-left">
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
+                                <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Estado del Pago</span>
+                                <span className="text-xs font-mono font-black text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg">
+                                    {order.payment?.estado || 'PENDIENTE'}
+                                </span>
+                            </div>
+
+                            {/* Si fue rechazado O si el pago está pendiente */}
+                            {(!order.payment || order.payment.estado === 'PENDIENTE' || order.payment.estado === 'RECHAZADO' || order.estado === 'PENDIENTE_PAGO') && (
+                                <div className="space-y-3 pt-1">
+                                    {order.payment?.estado === 'RECHAZADO' ? (
+                                        <div className="p-4 bg-rose-50 text-rose-800 text-xs rounded-2xl border border-rose-200 space-y-1">
+                                            <div className="font-black flex items-center gap-1.5 text-rose-700">
+                                                <XCircle className="size-4" /> Comprobante Rechazado
+                                            </div>
+                                            <p className="font-medium"><strong>Motivo:</strong> {order.payment.motivoRechazo || 'El comprobante no era legible o correcto.'}</p>
+                                        </div>
+                                    ) : (
+                                        <div className="p-4 bg-orange-50/80 text-orange-950 text-xs rounded-2xl border border-orange-200/80 space-y-1">
+                                            <div className="font-black flex items-center gap-1.5 text-orange-800 uppercase tracking-wider text-[11px]">
+                                                <AlertCircle className="size-4 text-orange-600 shrink-0" /> Pago Pendiente de Comprobante
+                                            </div>
+                                            <p className="font-medium text-slate-600 leading-relaxed">
+                                                Aún no se ha adjuntado el comprobante de pago para este pedido. Por favor sube tu comprobante para enviar a producción.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    <div className="pt-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPaymentModal(true)}
+                                            className="w-full py-4 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                                            style={{ backgroundColor: primaryColor }}
+                                        >
+                                            <Wallet className="size-4" />
+                                            <span>VER DATOS BANCARIOS Y SUBIR COMPROBANTE</span>
+                                        </button>
+
+                                        {uploadSuccess && (
+                                            <div className="mt-3 p-3 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200">
+                                                {uploadSuccess}
+                                            </div>
+                                        )}
+                                        {uploadError && (
+                                            <div className="mt-3 p-3 bg-rose-50 text-rose-800 text-xs font-bold rounded-xl border border-rose-200">
+                                                {uploadError}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Si está en revisión */}
+                            {(order.payment?.estado === 'COMPROBANTE_ENVIADO' || order.payment?.estado === 'PAGO_EN_REVISION') && (
+                                <div className="p-4 bg-amber-50 text-amber-900 text-xs rounded-2xl border border-amber-200 flex items-start gap-3 font-medium">
+                                    <Clock className="size-5 text-amber-600 shrink-0 mt-0.5" />
+                                    <div className="leading-relaxed">
+                                        <strong className="block font-black text-amber-950">Comprobante en Verificación</strong>
+                                        <span>Tu comprobante fue recibido y está siendo validado por el comercio.</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Si está confirmado */}
+                            {order.payment?.estado === 'CONFIRMADO' && (
+                                <div className="p-4 bg-emerald-50 text-emerald-900 text-xs rounded-2xl border border-emerald-200 flex items-start gap-3 font-medium">
+                                    <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
+                                    <div>
+                                        <strong className="block font-black text-emerald-950">¡Pago Confirmado!</strong>
+                                        <span>Tu pago ha sido validado correctamente.</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Desglose de Productos */}
+                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-3 text-left">
+                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b border-slate-100 pb-2 flex items-center gap-2">
+                                <ShoppingBag className="size-4" style={{ color: primaryColor }} />
+                                <span>Detalle de Servicios Contratados</span>
+                            </h3>
+                            <div className="divide-y divide-slate-100">
+                                {order.items.map(item => (
+                                    <div key={item.id} className="py-2.5 flex justify-between items-center text-xs font-semibold">
+                                        <span className="text-slate-700">
+                                            <strong className="text-slate-900 font-black">{item.cantidad}x</strong> {item.nombreProducto}
+                                        </span>
+                                        <span className="font-black text-slate-900">${(item.cantidad * item.precioUnitario).toFixed(2)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="border-t border-slate-100 pt-3 space-y-1.5 text-xs font-bold">
+                                <div className="flex justify-between text-slate-400">
+                                    <span>Subtotal</span>
+                                    <span>${order.subtotal.toFixed(2)}</span>
+                                </div>
+                                {isDelivery && (
+                                    <div className="flex justify-between text-slate-400">
+                                        <span>Costo de Envío</span>
+                                        <span>${order.costoEnvio.toFixed(2)}</span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between text-sm font-black text-slate-900 pt-2 border-t border-slate-100">
+                                    <span>Total a Pagar</span>
+                                    <span className="text-base" style={{ color: primaryColor }}>${order.total.toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Acciones & WhatsApp */}
+                        <div className="space-y-3 pt-2">
+                            {negocio.whatsapp && (
+                                <a 
+                                    href={waLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-transform rounded-2xl text-white text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 cursor-pointer"
+                                >
+                                    <MessageCircle className="size-4 shrink-0" />
+                                    <span>Ayuda por WhatsApp sobre este Pedido</span>
+                                </a>
+                            )}
+                            <button 
+                                type="button"
+                                onClick={handleBackClick}
+                                className="w-full py-3.5 text-center text-xs font-black uppercase tracking-widest rounded-2xl text-slate-700 bg-slate-100 hover:bg-slate-200 active:scale-[0.98] transition-transform cursor-pointer border border-slate-200"
+                            >
+                                Volver a Mis Órdenes
+                            </button>
+                        </div>
+                    </>
+                )}
             </main>
 
-            {/* Modal de Pago a Pantalla Completa con Datos Bancarios y Carga de Comprobante */}
             {showPaymentModal && (
-                <div className="fixed inset-0 z-[300] bg-slate-950 text-slate-900 flex flex-col justify-start items-center pb-12 overflow-y-auto animate-fade-in">
-                    {/* Header Oscuro */}
-                    <header className="relative w-full max-w-lg bg-slate-950 pt-6 pb-12 px-6 flex items-center justify-between overflow-hidden shrink-0">
-                        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/80 to-slate-950" />
-
+                <div className="fixed inset-0 z-[300] bg-slate-900/60 backdrop-blur-sm text-slate-900 flex flex-col justify-start items-center pb-12 overflow-y-auto animate-fade-in">
+                    {/* Header Dinámico con Color de Marca */}
+                    <header 
+                        className="relative w-full max-w-lg pt-6 pb-12 px-6 flex items-center justify-between overflow-hidden shrink-0 shadow-lg text-white"
+                        style={{ backgroundColor: primaryColor }}
+                    >
                         <button 
                             type="button"
                             onClick={() => setShowPaymentModal(false)}
-                            className="relative z-10 size-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 cursor-pointer border border-white/10"
+                            className="relative z-10 size-10 rounded-full bg-black/20 hover:bg-black/30 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 cursor-pointer border border-white/20"
                             title="Volver"
                         >
                             <ArrowLeft className="size-5" />
@@ -558,7 +653,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                         <button 
                             type="button"
                             onClick={() => setShowPaymentModal(false)}
-                            className="relative z-10 size-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 cursor-pointer border border-white/10"
+                            className="relative z-10 size-10 rounded-full bg-black/20 hover:bg-black/30 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 cursor-pointer border border-white/20"
                             title="Cerrar"
                         >
                             <X className="size-5" />
@@ -571,26 +666,29 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                         {/* Título & Badges */}
                         <div className="text-center space-y-1.5 pb-1">
                             <div className="flex items-center justify-center gap-2 flex-wrap">
-                                <span className="px-3 py-1 bg-orange-600 text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-xs">
+                                <span 
+                                    className="px-3 py-1 text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-xs"
+                                    style={{ backgroundColor: primaryColor }}
+                                >
                                     Paso Final
                                 </span>
-                                <span className="px-3 py-1 bg-orange-100/80 text-orange-900 rounded-full text-[9px] font-black uppercase tracking-wider">
+                                <span className="px-3 py-1 bg-slate-200 text-slate-800 rounded-full text-[9px] font-black uppercase tracking-wider">
                                     Transferencia Bancaria
                                 </span>
                             </div>
                             <h2 className="text-2xl font-black text-slate-900 tracking-tight pt-1">Completa tu pago</h2>
-                            <div className="w-8 h-1 bg-orange-600 rounded-full mx-auto" />
+                            <div className="w-8 h-1 rounded-full mx-auto" style={{ backgroundColor: primaryColor }} />
                             <p className="text-xs text-slate-500 font-medium max-w-xs mx-auto pt-0.5 leading-relaxed">
                                 Transfiere el monto exacto y adjunta tu comprobante para enviar a producción.
                             </p>
                         </div>
 
                         {/* Tarjeta 1: Código de Pago y Monto a Transferir */}
-                        <div className="bg-gradient-to-r from-orange-50/90 via-orange-50/50 to-orange-50/90 border border-orange-200/80 rounded-3xl p-4 sm:p-5 flex items-center justify-between shadow-2xs">
+                        <div className="bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-5 flex items-center justify-between shadow-2xs">
                             <div className="space-y-0.5">
-                                <span className="text-[9px] font-black uppercase tracking-widest text-orange-900/70 block">Código de Pago</span>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">Código de Pago</span>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm font-mono font-black text-orange-700 tracking-wider">
+                                    <span className="text-sm font-mono font-black text-slate-900 tracking-wider">
                                         {order.payment?.codigoPago || `PINCHOS-${order.id.slice(0, 6).toUpperCase()}`}
                                     </span>
                                     <button
@@ -601,7 +699,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                             setCopiedCode(true);
                                             setTimeout(() => setCopiedCode(false), 2000);
                                         }}
-                                        className="p-1.5 text-orange-600 hover:text-orange-800 bg-orange-100 hover:bg-orange-200 rounded-lg transition-all active:scale-95 cursor-pointer"
+                                        className="p-1.5 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all active:scale-95 cursor-pointer"
                                         title="Copiar código"
                                     >
                                         {copiedCode ? <Check className="size-4 text-emerald-600" /> : <Copy className="size-4" />}
@@ -609,33 +707,36 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                 </div>
                             </div>
 
-                            <div className="h-10 w-px bg-orange-200/70 mx-1" />
+                            <div className="h-10 w-px bg-slate-200 mx-1" />
 
                             <div className="flex items-center gap-3">
                                 <div className="text-right space-y-0.5">
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-orange-900/70 block">Monto a Transferir</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">Monto a Transferir</span>
                                     <span className="text-2xl font-black text-slate-900 tracking-tight">${order.total.toFixed(2)}</span>
                                 </div>
-                                <div className="size-11 bg-orange-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-600/30 shrink-0">
+                                <div 
+                                    className="size-11 text-white rounded-2xl flex items-center justify-center shadow-md shrink-0"
+                                    style={{ backgroundColor: primaryColor }}
+                                >
                                     <Wallet className="size-6" />
                                 </div>
                             </div>
                         </div>
 
                         {/* Tarjeta 2: Datos para la Transferencia */}
-                        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md space-y-4 text-left">
+                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-4 text-left">
                             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                                 <div className="flex items-center gap-3">
-                                    <div className="size-10 bg-slate-900 text-white rounded-full flex items-center justify-center font-black shadow-xs shrink-0">
+                                    <div 
+                                        className="size-10 text-white rounded-full flex items-center justify-center font-black shadow-xs shrink-0"
+                                        style={{ backgroundColor: primaryColor }}
+                                    >
                                         <Building2 className="size-5" />
                                     </div>
                                     <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Datos para la Transferencia</span>
                                 </div>
-                                <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl">
-                                    <span className="text-xs font-black text-orange-700 uppercase tracking-wider">{bankConfig?.banco || 'BANCO PICHINCHA'}</span>
-                                    <div className="size-5 bg-amber-400 text-slate-950 font-black rounded flex items-center justify-center text-[9px] shadow-2xs">
-                                        P
-                                    </div>
+                                <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl">
+                                    <span className="text-xs font-black text-slate-800 uppercase tracking-wider">{bankConfig?.banco || 'BANCO PICHINCHA'}</span>
                                 </div>
                             </div>
 
@@ -747,7 +848,8 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                 <button
                                     type="submit"
                                     disabled={uploading || !evidenceFile}
-                                    className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl shadow-orange-600/30 flex items-center justify-center gap-2 disabled:opacity-50 transition-all active:scale-[0.98] cursor-pointer"
+                                    className="w-full py-4 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 transition-all active:scale-[0.98] cursor-pointer"
+                                    style={{ backgroundColor: primaryColor }}
                                 >
                                     {uploading ? (
                                         <>

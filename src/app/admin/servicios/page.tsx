@@ -92,7 +92,7 @@ export default function ServicesAdminPage() {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                     <div>
                         <h1 className="text-3xl font-black text-gray-900 tracking-tight">Mis Servicios</h1>
-                        <p className="text-gray-500 font-medium text-sm">Gestiona tus servicios de belleza y tratamientos.</p>
+                        <p className="text-gray-500 font-medium text-sm">Gestiona tus servicios de limpieza, restauración y tratamientos.</p>
                     </div>
                     <button
                         onClick={() => {

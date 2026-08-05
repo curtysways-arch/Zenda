@@ -682,7 +682,7 @@ export default function MisionesUnificadasClient({
                             'whatsapp_notifications', 'whatsapp_otp', 'whatsapp_reminders', 'whatsapp_campaigns',
                             'custom_colors', 'custom_logo', 'custom_phrases', 'remove_zenda_branding',
                             'multi_staff', 'multi_branch', 'analytics', 'automation',
-                            'tournaments_module', 'courses_module', 'automatic_discounts'
+                            'tournaments_module', 'courses_module', 'communications_module', 'automatic_discounts'
                           ];
                           if (!validFeatures.includes(recompensaValorInput)) {
                             setRecompensaValorInput('whatsapp_notifications');
@@ -724,6 +724,7 @@ export default function MisionesUnificadasClient({
                           <option value="automation">Flujos automatizados y seguimientos</option>
                           <option value="tournaments_module">Módulo de portafolio / Torneos</option>
                           <option value="courses_module">Módulo de Academia / Cursos</option>
+                          <option value="communications_module">Módulo de Comunicaciones y Anuncios</option>
                           <option value="automatic_discounts">Descuentos automáticos</option>
                         </select>
                       </>

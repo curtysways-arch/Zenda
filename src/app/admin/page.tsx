@@ -32,8 +32,25 @@ export default async function AdminDashboard() {
         return null;
     }
 
-    if (tipoNegocio === 'PRODUCTOS') {
+    const negocioObj = await prisma.negocio.findUnique({
+        where: { id: negocioId },
+        select: { id: true, nombre: true, slug: true, colorPrimario: true, tipoNegocio: true, configuracion: true }
+    });
+
+    const activeType = negocioObj?.tipoNegocio || tipoNegocio;
+
+    if (activeType === 'SHOE_CARE' || activeType === 'ordenes-servicio') {
+        const { default: ShoeCareBackoffice } = await import('@/modules/shoe-care/components/ShoeCareBackoffice');
+        return <ShoeCareBackoffice negocio={negocioObj} />;
+    }
+
+    if (activeType === 'PRODUCTOS') {
         return <ProductsDashboard negocioId={negocioId} role={role} />;
+    }
+
+    if (activeType === 'SPORTS_COURTS') {
+        const { default: CanchaAdminDashboard } = await import('@/modules/sports-courts/components/CanchaAdminDashboard');
+        return <CanchaAdminDashboard negocio={negocioObj} />;
     }
 
     const isStaff = role === 'STAFF' || role === 'PROFESIONAL';

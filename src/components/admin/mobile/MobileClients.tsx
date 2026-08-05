@@ -34,14 +34,15 @@ export default function MobileClients({ clientes, primaryColor, onVerHistorial }
                     </div>
                 </div>
                 
-                <div className="relative group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-all group-focus-within:text-slate-900 group-focus-within:scale-110" size={20} />
+                <div className="relative group flex items-center">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" size={20} />
                     <input 
                         type="text"
                         placeholder="BUSCAR POR NOMBRE O TELÉFONO..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-100 text-slate-900 text-sm py-4 pl-12 pr-6 rounded-2xl focus:outline-none transition-all placeholder:text-slate-300 italic font-bold uppercase shadow-inner"
+                        style={{ paddingLeft: '3.2rem' }}
+                        className="w-full bg-slate-50 border border-slate-100 text-slate-900 text-sm py-4 pr-6 rounded-2xl focus:outline-none transition-all placeholder:text-slate-300 italic font-bold uppercase shadow-inner"
                     />
                 </div>
             </div>
@@ -104,14 +105,13 @@ export default function MobileClients({ clientes, primaryColor, onVerHistorial }
                             <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">
                                 MIEMBRO DESDE {format(new Date(c.createdAt), 'MMM yyyy', { locale: es })}
                             </span>
-                            <button 
-                                type="button"
-                                onClick={() => onVerHistorial(c)}
+                            <Link 
+                                href={`/admin/clientes/${c.id}`}
                                 className="flex items-center gap-1 text-[9px] font-black uppercase italic active:scale-95 transition-transform outline-none" 
                                 style={{ color: primaryColor }}
                             >
                                 Ver Ficha <ChevronRight size={12} />
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 ))}

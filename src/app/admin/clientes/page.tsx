@@ -83,19 +83,19 @@ export default function ClientesPage() {
                 </div>
 
                 <div className="flex gap-4">
-                    <div className="relative flex-1 group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[var(--primary-color)] transition-colors" size={20} />
+                    <div className="relative flex-1 group flex items-center">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[var(--primary-color)] transition-colors pointer-events-none z-10" size={20} />
                         <input
                             type="text"
                             placeholder="Buscar por nombre o teléfono..."
-                            className="w-full pl-12 pr-4 py-4 bg-white border border-gray-100 rounded-2xl outline-none transition-all text-sm font-medium text-gray-900 shadow-sm"
-                            style={{ '--focus-ring': 'color-mix(in srgb, var(--primary-color), transparent 95%)' } as any}
+                            style={{ paddingLeft: '3.2rem' }}
+                            className="w-full pr-4 py-4 bg-white border border-gray-100 rounded-2xl outline-none transition-all text-sm font-medium text-gray-900 shadow-sm"
                             onFocus={(e) => {
                                 e.currentTarget.style.borderColor = 'var(--primary-color)';
-                                e.currentTarget.style.boxShadow = '0 0 0 4px var(--focus-ring)';
+                                e.currentTarget.style.boxShadow = '0 0 0 4px color-mix(in srgb, var(--primary-color), transparent 95%)';
                             }}
                             onBlur={(e) => {
-                                e.currentTarget.style.borderColor = 'rgb(243, 244, 246)';
+                                e.currentTarget.style.borderColor = 'rgb(243 244 246)';
                                 e.currentTarget.style.boxShadow = 'none';
                             }}
                             value={searchTerm}
@@ -110,17 +110,15 @@ export default function ClientesPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredClientes.map((cliente) => (
-                        <div key={cliente.id} className="bg-white rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/30 overflow-hidden hover:scale-[1.02] transition-transform group">
+                        <div key={cliente.id} className="bg-white rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/30 overflow-hidden hover:scale-[1.02] transition-transform group flex flex-col justify-between">
                             <div className="p-8 space-y-6">
                                 <div className="flex justify-between items-start">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 font-black text-xl transition shadow-inner group-hover:text-white"
-                                             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--primary-color)'}
-                                             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgb(249, 250, 251)'}>
+                                    <Link href={`/admin/clientes/${cliente.id}`} className="flex items-center gap-4 group/title">
+                                        <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 font-black text-xl transition shadow-inner group-hover/title:bg-[var(--primary-color)] group-hover/title:text-white">
                                             {cliente.nombre.charAt(0)}
                                         </div>
                                         <div>
-                                            <h3 className="font-black text-gray-900 text-lg leading-tight uppercase tracking-tight">{cliente.nombre}</h3>
+                                            <h3 className="font-black text-gray-900 text-lg leading-tight uppercase tracking-tight group-hover/title:text-[var(--primary-color)] transition-colors">{cliente.nombre}</h3>
                                             <div className="flex items-center gap-3 mt-1">
                                                 <p className="text-xs text-gray-500 font-bold flex items-center gap-1">
                                                     <Phone size={12} style={{ color: 'var(--primary-color)' }} />
@@ -135,20 +133,17 @@ export default function ClientesPage() {
                                                 )}
                                             </div>
                                         </div>
-                                    </div>
-                                    <button 
-                                        onClick={() => {
-                                            setSelectedCliente(cliente);
-                                            setIsHistorialOpen(true);
-                                        }}
-                                        className="p-2 text-gray-300 transition hover:text-[var(--primary-color)] active:scale-95 outline-none"
-                                        title="Ver historial de citas"
+                                    </Link>
+                                    <Link 
+                                        href={`/admin/clientes/${cliente.id}`}
+                                        className="p-2 text-gray-400 hover:text-[var(--primary-color)] hover:bg-slate-50 rounded-xl transition active:scale-95 outline-none"
+                                        title="Ver Ficha Completa del Cliente"
                                     >
                                         <ExternalLink size={18} />
-                                    </button>
+                                    </Link>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <Link href={`/admin/clientes/${cliente.id}`} className="grid grid-cols-2 gap-4 block">
                                     <div className="p-4 rounded-2xl space-y-1"
                                          style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 95%)', borderColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', borderStyle: 'solid', borderWidth: '1px' }}>
                                         <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--primary-color)' }}>Citas</p>
@@ -164,27 +159,18 @@ export default function ClientesPage() {
                                             <p className="font-black text-gray-900 text-xl">${cliente.totalSpent || cliente.totalGastado}</p>
                                         </div>
                                     </div>
-                                </div>
+                                </Link>
 
                                 <div className="pt-4 border-t border-gray-50 flex justify-between items-center">
                                     <div>
                                         <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-none">Miembro desde</p>
                                         <p className="text-xs font-bold text-gray-700 whitespace-nowrap">{format(new Date(cliente.createdAt), "MMM yyyy", { locale: es })}</p>
                                     </div>
-                                    <Link 
-                                        href={`/admin/usuarios?phone=${cliente.telefono}&name=${cliente.nombre}`}
-                                        className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.backgroundColor = 'var(--primary-color)';
-                                            e.currentTarget.style.color = 'white';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.backgroundColor = 'rgb(248, 250, 252)';
-                                            e.currentTarget.style.color = 'rgb(71, 85, 105)';
-                                        }}
+                                    <Link
+                                        href={`/admin/clientes/${cliente.id}`}
+                                        className="flex items-center gap-2 px-3.5 py-2 bg-slate-900 text-white hover:bg-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95"
                                     >
-                                        <Users size={12} />
-                                        Gestionar Rol
+                                        Ver Ficha Completa →
                                     </Link>
                                 </div>
                             </div>

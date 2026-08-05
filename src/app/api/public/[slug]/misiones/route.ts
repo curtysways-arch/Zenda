@@ -46,6 +46,12 @@ export async function GET(
             return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
         }
 
+        const { featureService } = await import('@/lib/services/featureService');
+        const isLoyaltyEnabled = await featureService.canUseFeature(negocio.id, 'loyalty_module');
+        if (!isLoyaltyEnabled) {
+            return NextResponse.json({ allowed: false, error: 'El club de fidelización no está disponible para este negocio' }, { status: 403 });
+        }
+
         // 2. Obtener sesión de usuario (opcional)
         let userId: string | undefined = undefined;
 

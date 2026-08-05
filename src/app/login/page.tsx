@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, Loader2, ArrowRight, Sparkles, Zap, BarChart3, Smartphone, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Loader2, ArrowRight, ArrowLeft, Sparkles, Zap, BarChart3, Smartphone, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -40,7 +40,18 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex overflow-hidden bg-slate-950">
+        <div className="min-h-screen flex overflow-hidden bg-slate-950 relative">
+
+            {/* Top Back Button */}
+            <div className="absolute top-4 right-4 z-50">
+                <a
+                    href="/"
+                    className="flex items-center gap-2 text-xs font-black text-slate-600 hover:text-slate-900 bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl border border-slate-200 shadow-sm transition-all active:scale-95"
+                >
+                    <ArrowLeft size={14} />
+                    Volver al inicio
+                </a>
+            </div>
 
             {/* ── PANEL IZQUIERDO: Branding (solo desktop) ── */}
             <div className="hidden lg:flex flex-col justify-between w-[55%] relative p-14 overflow-hidden">

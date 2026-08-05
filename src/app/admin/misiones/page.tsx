@@ -54,6 +54,7 @@ import {
 } from 'lucide-react';
 import ImageUploader from '@/components/ui/ImageUploader';
 import LevelsAdminTab from '@/components/admin/loyalty/LevelsAdminTab';
+import PlanRestriction from '@/components/admin/PlanRestriction';
 
 interface ActionConfig {
     id: string;
@@ -1998,7 +1999,8 @@ export default function QuestDashboard() {
     };
 
     return (
-        <div className="p-6 space-y-8 max-w-7xl mx-auto">
+        <PlanRestriction feature="loyalty">
+            <div className="p-6 space-y-8 max-w-7xl mx-auto">
             {/* TOAST SYSTEM */}
             {toastMsg && (
                 <div className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-5 py-3.5 rounded-2xl shadow-xl border text-xs font-bold transition-all uppercase tracking-widest ${
@@ -4923,5 +4925,6 @@ export default function QuestDashboard() {
                 </div>
             )}
         </div>
+        </PlanRestriction>
     );
 }

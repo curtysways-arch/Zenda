@@ -112,6 +112,32 @@ export async function POST(req: Request) {
             }
         });
 
+        // Si el rol es Repartidor o Driver, sincronizar con OperableResource para el módulo de logística
+        const normalizedRole = (role || '').toUpperCase();
+        if (normalizedRole.includes('REPARTIDOR') || normalizedRole.includes('DRIVER') || normalizedRole.includes('LOGÍSTICA')) {
+            try {
+                await (prisma as any).operableResource.create({
+                    data: {
+                        negocioId: businessId,
+                        name,
+                        resourceType: 'HUMAN',
+                        category: 'DELIVERY_DRIVER',
+                        avatar: avatar || null,
+                        active: true,
+                        estado: 'DISPONIBLE',
+                        profile: {
+                            create: {
+                                telefono: '',
+                                activo: true
+                            }
+                        }
+                    }
+                });
+            } catch (driverErr) {
+                console.error('Error creando OperableResource sincronizado:', driverErr);
+            }
+        }
+
         const staff = {
             ...rawStaff,
             services: rawStaff.Service || []

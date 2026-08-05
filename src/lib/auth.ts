@@ -120,7 +120,7 @@ export const authOptions: AuthOptions = {
                             });
                             slug = negocio?.slug || null;
                             isDemo = negocio?.isDemo || false;
-                            tipoNegocio = negocio?.tipoNegocio || 'RESERVA';
+                            tipoNegocio = negocio?.tipoNegocio || (negocio?.configuracion as any)?.tipoNegocio || (user as any)?.tipoNegocio || 'RESERVA';
                         } catch (e) {}
                     }
 
@@ -167,6 +167,25 @@ export const authOptions: AuthOptions = {
                 token.permisos = user.permisos || [];
                 token.scope = user.scope || null;
                 token.estado = user.estado || null;
+            } else if (token?.id && !token.isAdminUser) {
+                try {
+                    const dbUser = await prisma.usuario.findUnique({
+                        where: { id: token.id },
+                        select: { negocioId: true, role: true }
+                    });
+                    if (dbUser && dbUser.negocioId) {
+                        token.negocioId = dbUser.negocioId;
+                        const negocio = await prisma.negocio.findUnique({
+                            where: { id: dbUser.negocioId },
+                            select: { slug: true, isDemo: true, tipoNegocio: true }
+                        });
+                        if (negocio) {
+                            token.slug = negocio.slug;
+                            token.isDemo = negocio.isDemo;
+                            token.tipoNegocio = negocio.tipoNegocio;
+                        }
+                    }
+                } catch (e) {}
             }
             return token;
         },

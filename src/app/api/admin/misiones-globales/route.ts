@@ -59,11 +59,18 @@ export async function GET() {
             orderBy: { fecha: 'desc' }
         });
 
+        // 5. Obtener número de WhatsApp de Superadmin para solicitudes directas
+        const waConfig = await (prisma as any).globalConfig.findUnique({
+            where: { clave: 'NUMERO_WHATSAPP_ADMIN' }
+        });
+        const adminWhatsApp = waConfig?.valor || process.env.NEXT_PUBLIC_ADMIN_WHATSAPP || '593968118444';
+
         return NextResponse.json({
             success: true,
             missions,
             progress,
-            history
+            history,
+            adminWhatsApp
         });
     } catch (err: any) {
         console.error('[API Admin GlobalMissions GET] Error:', err.message);

@@ -28,7 +28,7 @@ export async function GET() {
 
         if (negocio) {
             try {
-                const extraData: any[] = await prisma.$queryRawUnsafe(`SELECT saludoTitulo, nombreFallback, mensajeBienvenida, colorSecundario, colorTerciario, colorNeutral, colorTexto, colorSubTexto, logoUrl, heroTitulo, heroSubtitulo, tieneCafeteria, tieneParking, tieneWifi, tieneVestidores, tieneTienda, instagramUrl, facebookUrl, tiktokUrl, emailContacto, websiteUrl, youtubeUrl, faqUrl, terminosUrl, privacidadUrl, whatsapp_notifications FROM Negocio WHERE id = '${negocio.id}'`);
+                const extraData: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM Negocio WHERE id = '${negocio.id}'`);
                 if (extraData && extraData.length > 0) {
                     if (!('saludoTitulo' in negocio) || negocio.saludoTitulo === undefined) {
                       negocio.saludoTitulo = extraData[0].saludoTitulo;

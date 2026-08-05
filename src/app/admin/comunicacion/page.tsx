@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { 
     MessageSquare, Send, Bell, Gift, Trophy, Calendar,
     Sparkles, Loader2, BarChart2, Link2, X, ChevronDown,
-    ExternalLink, Check
+    ExternalLink, Check, Lock, Zap, ShieldCheck, ArrowRight
 } from 'lucide-react';
 import { useConfirm } from '@/components/admin/ConfirmContext';
 import { getFcmToken } from '@/lib/firebase';
@@ -420,11 +421,105 @@ export default function ComunicacionAdminPage() {
         }
     };
 
+    const [planFeatures, setPlanFeatures] = useState<any>(null);
+    const [loadingFeatures, setLoadingFeatures] = useState(true);
+
+    useEffect(() => {
+        const fetchFeatures = async () => {
+            try {
+                const res = await fetch('/api/features');
+                if (res.ok) {
+                    const data = await res.json();
+                    setPlanFeatures(data);
+                }
+            } catch (err) {
+                console.error("Error fetching features:", err);
+            } finally {
+                setLoadingFeatures(false);
+            }
+        };
+        fetchFeatures();
+    }, []);
+
     const toggleChannel = (channel: string) => {
         setChannels(prev =>
             prev.includes(channel) ? prev.filter(c => c !== channel) : [...prev, channel]
         );
     };
+
+    if (loadingFeatures) {
+        return (
+            <div className="min-h-[400px] flex items-center justify-center">
+                <Loader2 className="animate-spin text-indigo-600" size={32} />
+            </div>
+        );
+    }
+
+    if (planFeatures && planFeatures.communications_module === false) {
+        return (
+            <div className="max-w-4xl mx-auto py-12 px-6">
+                <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-[2.5rem] p-10 md:p-16 text-white shadow-2xl relative overflow-hidden border border-indigo-500/20 text-center space-y-8">
+                    
+                    {/* Background glow */}
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-48 -mt-48 pointer-events-none" />
+
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full text-xs font-black uppercase tracking-widest shadow-inner">
+                        <Lock size={14} className="text-indigo-400" /> Módulo de Plan Superior
+                    </div>
+
+                    <div className="space-y-4 max-w-2xl mx-auto">
+                        <h2 className="text-3xl md:text-5xl font-black tracking-tight leading-tight italic text-white">
+                            <span className="text-white block">Sistema de Comunicaciones</span>
+                            <span className="bg-gradient-to-r from-purple-300 via-pink-300 to-indigo-300 bg-clip-text text-transparent not-italic font-extrabold block mt-1">
+                                Notificaciones Masivas
+                            </span>
+                        </h2>
+                        <p className="text-slate-200 font-medium text-sm md:text-base leading-relaxed">
+                            Envía anuncios importantes por WhatsApp y Notificaciones Push directas a la app de tus clientes. Segmenta por VIPs, clientes inactivos o toda tu base de datos.
+                        </p>
+                    </div>
+
+                    {/* Ventajas */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto text-left pt-4">
+                        <div className="flex items-center gap-3 bg-white/10 p-4 rounded-2xl border border-white/15">
+                            <Zap size={20} className="text-amber-400 shrink-0" />
+                            <div>
+                                <p className="text-xs font-black text-white">Notificaciones Push Instantáneas</p>
+                                <p className="text-[10px] text-slate-300 font-semibold">Directo a la pantalla de tus clientes</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 bg-white/10 p-4 rounded-2xl border border-white/15">
+                            <ShieldCheck size={20} className="text-emerald-400 shrink-0" />
+                            <div>
+                                <p className="text-xs font-black text-white">Segmentación Inteligente</p>
+                                <p className="text-[10px] text-slate-300 font-semibold">Todos, VIPs o Inactivos</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* CTA */}
+                    <div className="pt-6 flex flex-col sm:flex-row justify-center gap-4">
+                        <Link
+                            href="/admin/plan"
+                            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:brightness-110 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-indigo-900/50 flex items-center justify-center gap-2 active:scale-95"
+                        >
+                            Actualizar Plan Ahora
+                            <ArrowRight size={16} />
+                        </Link>
+                        <a
+                            href="https://wa.me/593968118444?text=Hola%20CitiOx,%20quisiera%20habilitar%20el%20módulo%20de%20comunicaciones%20para%20mi%20negocio"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="bg-white/10 hover:bg-white/20 text-white border border-white/10 px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                        >
+                            Hablar con Asesor
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8 pb-20">

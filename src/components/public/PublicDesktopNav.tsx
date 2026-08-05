@@ -12,6 +12,7 @@ interface PublicDesktopNavProps {
     logoUrl?: string | null;
     nombre?: string;
     tipoNegocio?: string;
+    isLoyaltyEnabled?: boolean;
 }
 
 export default function PublicDesktopNav({ 
@@ -20,7 +21,8 @@ export default function PublicDesktopNav({
     pagesCount = 0,
     logoUrl = null,
     nombre = '',
-    tipoNegocio = 'RESERVA'
+    tipoNegocio = 'RESERVA',
+    isLoyaltyEnabled = true
 }: PublicDesktopNavProps) {
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
@@ -87,12 +89,12 @@ export default function PublicDesktopNav({
             icon: FileText,
             active: pathname.includes('/pagina')
         }] : []),
-        {
+        ...(isLoyaltyEnabled ? [{
             label: 'Premios',
             href: `/${slug}/referidos`,
             icon: Gift,
             active: pathname.includes('/referidos') || pathname.includes('/misiones')
-        },
+        }] : []),
         ...(hasSession ? [{
             label: 'Mis Cupones',
             href: `/${slug}/mis-cupones`,
@@ -171,7 +173,7 @@ export default function PublicDesktopNav({
                     className="flex-shrink-0 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
                     style={{ backgroundColor: 'var(--primary)' }}
                 >
-                    {isProductos ? 'Ver Catálogo' : 'Reservar Cita'}
+                    {isProductos ? 'Ver Catálogo' : (tipoNegocio === 'SPORTS_COURTS' ? 'Reservar Cancha' : 'Reservar Cita')}
                 </Link>
             </div>
         </nav>

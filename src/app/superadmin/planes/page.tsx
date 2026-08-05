@@ -8,10 +8,14 @@ import {
     Dribbble,
     Star,
     Tags,
-    Zap
+    Zap,
+    MessageSquare,
+    CheckCircle2,
+    X
 } from "lucide-react";
 import PlanCardActions from "@/components/superadmin/PlanCardActions";
 import CreatePlanButton from "@/components/superadmin/CreatePlanButton";
+import { getFormattedPlanFeatures } from "@/lib/planFeaturesHelper";
 
 export default async function PlanesPage() {
     const planes = await (prisma.plan as any).findMany({
@@ -48,15 +52,19 @@ export default async function PlanesPage() {
                                 <div className="flex gap-2 flex-wrap justify-end">
                                     {(() => {
                                         const feats = plan.features ? (typeof plan.features === 'string' ? JSON.parse(plan.features) : plan.features) : {};
-                                        const citas = Number((feats as any)?.citas_activacion ?? 1);
-                                        if (citas > 0) {
-                                            return (
-                                                <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                                                    Activa a la {citas}ª Cita
-                                                </span>
-                                            );
-                                        }
-                                        return null;
+                                        const tipo = (feats as any)?.tipo_negocio || 'TODOS';
+                                        const tipoLabels: Record<string, string> = {
+                                            SPORTS_COURTS: '🏓 Canchas',
+                                            RESERVA: '💆 Spa & Citas',
+                                            PRODUCTOS: '🛒 Ecommerce',
+                                            ACADEMIA: '🎓 Academias',
+                                            TODOS: '🌐 Universal'
+                                        };
+                                        return (
+                                            <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-[10px] font-black uppercase tracking-widest border border-purple-200">
+                                                {tipoLabels[tipo] || tipo}
+                                            </span>
+                                        );
                                     })()}
                                     {plan.trial_days > 0 && (
                                         <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-[10px] font-bold uppercase tracking-widest">
@@ -81,46 +89,27 @@ export default async function PlanesPage() {
                         </div>
 
                         <div className="p-8 space-y-4 flex-1 bg-white">
-                            <div className="grid grid-cols-1 gap-3">
-                                <div className="flex items-center gap-4 text-slate-600 font-medium text-sm">
-                                    <div className="p-1.5 bg-amber-50 rounded-lg">
-                                        <Zap size={16} className="text-amber-500" />
+                            <div className="space-y-3">
+                                {getFormattedPlanFeatures(plan).map((feat, idx) => (
+                                    <div key={idx} className="flex items-start gap-3">
+                                        {feat.included ? (
+                                            <div className="size-6 rounded-full border-2 border-indigo-500/30 bg-indigo-50 flex items-center justify-center flex-shrink-0 text-indigo-600 mt-0.5 shadow-sm">
+                                                <CheckCircle2 size={16} className="text-indigo-600 fill-indigo-100" />
+                                            </div>
+                                        ) : (
+                                            <div className="size-6 rounded-full border-2 border-slate-200 bg-slate-50 flex items-center justify-center flex-shrink-0 text-slate-300 mt-0.5">
+                                                <X size={14} className="text-slate-300" />
+                                            </div>
+                                        )}
+                                        <span className={`text-sm ${feat.included ? 'font-bold text-slate-900' : 'font-medium text-slate-400 opacity-50'}`}>
+                                            <span className={`mr-2 ${feat.included ? '' : 'grayscale opacity-50'}`}>{feat.emoji}</span>
+                                            {feat.text}
+                                        </span>
                                     </div>
-                                    <span>{plan.max_reservations_per_month} citas/mes</span>
-                                </div>
-                                <div className="flex items-center gap-4 text-slate-600 font-medium text-sm">
-                                    <div className="p-1.5 bg-indigo-50 rounded-lg">
-                                        <Users size={16} className="text-indigo-500" />
-                                    </div>
-                                    <span>Hasta {plan.maxStaff >= 999999 ? 'Ilimitados' : plan.maxStaff} {plan.maxStaff === 1 ? 'especialista' : 'especialistas'}</span>
-                                </div>
-                                <div className="flex items-center gap-4 text-slate-600 font-medium text-sm">
-                                    <div className="p-1.5 bg-emerald-50 rounded-lg">
-                                        <MapPin size={16} className="text-emerald-500" />
-                                    </div>
-                                    <span>Hasta {plan.max_locations} {plan.max_locations === 1 ? 'sede' : 'sedes'}</span>
-                                </div>
-                                <div className={`flex items-center gap-4 font-medium text-sm ${plan.tournaments_enabled ? 'text-slate-600' : 'text-slate-300'}`}>
-                                    <div className={`p-1.5 rounded-lg ${plan.tournaments_enabled ? 'bg-amber-50' : 'bg-slate-50'}`}>
-                                        <Star size={16} className={plan.tournaments_enabled ? 'text-amber-500' : 'text-slate-300'} />
-                                    </div>
-                                    <span>Portafolio de Trabajos {plan.tournaments_enabled ? 'Habilitado' : 'No incluido'}</span>
-                                </div>
-                                <div className={`flex items-center gap-4 font-medium text-sm ${plan.automatic_discounts_enabled ? 'text-slate-600' : 'text-slate-300'}`}>
-                                    <div className={`p-1.5 rounded-lg ${plan.automatic_discounts_enabled ? 'bg-orange-50' : 'bg-slate-50'}`}>
-                                        <Tags size={16} className={plan.automatic_discounts_enabled ? 'text-orange-500' : 'text-slate-300'} />
-                                    </div>
-                                    <span>Módulo de Promociones {plan.automatic_discounts_enabled ? 'Habilitado' : 'No incluido'}</span>
-                                </div>
-                                <div className={`flex items-center gap-4 font-medium text-sm ${plan.courses_module ? 'text-slate-600' : 'text-slate-300'}`}>
-                                    <div className={`p-1.5 rounded-lg ${plan.courses_module ? 'bg-emerald-50' : 'bg-slate-50'}`}>
-                                        <Dribbble size={16} className={plan.courses_module ? 'text-emerald-500' : 'text-slate-300'} />
-                                    </div>
-                                    <span>Programas / Cursos {plan.courses_module ? 'Habilitados' : 'No incluido'}</span>
-                                </div>
+                                ))}
                             </div>
 
-                            <div className="pt-4 border-t border-slate-50 flex items-center gap-2">
+                            <div className="pt-4 border-t border-slate-100 flex items-center gap-2">
                                 <div className="p-1.5 bg-blue-50 rounded-lg">
                                     <Users size={16} className="text-blue-500" />
                                 </div>

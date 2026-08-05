@@ -422,32 +422,131 @@ function StepVisual({ data, setData, onNext, onPrev }: any) {
 }
 
 function StepType({ data, setData, onNext, onPrev }: any) {
-    const tipos = [
-        'Spa', 'Barbería', 'Centro estético', 'Clínica', 
-        'Gimnasio', 'Academia', 'Salón de belleza', 'Masajes', 'Otro'
+    const BLUEPRINTS = [
+        { 
+            id: 'SPORTS_COURTS', 
+            name: 'Reserva de Canchas & Pádel', 
+            icon: '🎾', 
+            tag: 'Canchas / Clubes',
+            desc: 'Reserva de turnos por hora, torneos relámpago, escuela/cursos y sedes.',
+            color: 'border-emerald-500 bg-emerald-50/40 text-emerald-900',
+            defaultService: { nombre: 'Reserva Cancha Sintética (1 hora)', duracion: '60', precio: '25' }
+        },
+        { 
+            id: 'SHOE_CARE', 
+            name: 'Sneaker Wash & Calzado', 
+            icon: '🫧', 
+            tag: 'Lavado / Detallado',
+            desc: 'Recepción presencial, inspección física, recolección y delivery a domicilio.',
+            color: 'border-purple-500 bg-purple-50/40 text-purple-900',
+            defaultService: { nombre: 'Lavado Completo Sneakers', duracion: '48', precio: '7' }
+        },
+        { 
+            id: 'SPA', 
+            name: 'Spa, Estética & Bienestar', 
+            icon: '💆‍♀️', 
+            tag: 'Salud & Relax',
+            desc: 'Agenda de citas con terapeutas, catálogo de masajes y faciales.',
+            color: 'border-pink-500 bg-pink-50/40 text-pink-900',
+            defaultService: { nombre: 'Masaje Relajante Corporal (60 min)', duracion: '60', precio: '40' }
+        },
+        { 
+            id: 'BARBERIA', 
+            name: 'Barbería & Salón de Belleza', 
+            icon: '💈', 
+            tag: 'Estilo & Corte',
+            desc: 'Citas rápidas, combos de corte + barba, uñas y extensiones.',
+            color: 'border-amber-500 bg-amber-50/40 text-amber-900',
+            defaultService: { nombre: 'Corte de Cabello + Barba Premium', duracion: '45', precio: '15' }
+        },
+        { 
+            id: 'GIMNASIO', 
+            name: 'Gimnasio & Centro Fitness', 
+            icon: '🏋️‍♂️', 
+            tag: 'Fitness / Entrenamiento',
+            desc: 'Pases mensuales, clases grupales, entrenadores y cupones.',
+            color: 'border-cyan-500 bg-cyan-50/40 text-cyan-900',
+            defaultService: { nombre: 'Membresía Mensual Fitness Pro', duracion: '30', precio: '35' }
+        },
+        { 
+            id: 'ACADEMIA', 
+            name: 'Academia, Escuela & Cursos', 
+            icon: '🎓', 
+            tag: 'Educación / Formación',
+            desc: 'Inscripción a talleres, pago de mensualidad y horarios de clases.',
+            color: 'border-blue-500 bg-blue-50/40 text-blue-900',
+            defaultService: { nombre: 'Curso Formación Mensual', duracion: '60', precio: '30' }
+        },
+        { 
+            id: 'RESTAURANTE', 
+            name: 'Restaurante & Gastronomía', 
+            icon: '🍽️', 
+            tag: 'Comida & Bebidas',
+            desc: 'Menú digital, pedidos a mesa, cocina y servicio a domicilio.',
+            color: 'border-rose-500 bg-rose-50/40 text-rose-900',
+            defaultService: { nombre: 'Combo Almuerzo Ejecutivo', duracion: '30', precio: '8' }
+        },
+        { 
+            id: 'Otro', 
+            name: 'Servicios Generales & Comercio', 
+            icon: '🏬', 
+            tag: 'Múltiples Módulos',
+            desc: 'Configuración genérica adaptada a tu modelo de negocio.',
+            color: 'border-slate-500 bg-slate-50/40 text-slate-900',
+            defaultService: { nombre: 'Consulta de Servicio General', duracion: '30', precio: '20' }
+        }
     ];
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
-                <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter italic">Tipo de Negocio</h2>
-                <p className="text-slate-500 font-medium">Esto nos ayudará a personalizar tu experiencia y configurar tu sistema.</p>
+                <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter italic">Selecciona tu Modelo de Negocio (Business Blueprint)</h2>
+                <p className="text-slate-500 font-medium">Citiox activará automáticamente los módulos, experiencia de usuario y reglas operativas ideales para tu sector.</p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {tipos.map(t => (
-                    <button
-                        key={t}
-                        onClick={() => setData({...data, tipoNegocio: t})}
-                        className={`p-6 rounded-[2rem] border-2 text-center font-black uppercase tracking-tighter italic transition-all duration-300 ${
-                            data.tipoNegocio === t 
-                            ? 'border-cyan-500 bg-cyan-50/50 text-cyan-700 shadow-md scale-105'
-                            : 'border-slate-100 bg-white text-slate-400 hover:border-slate-300'
-                        }`}
-                    >
-                        {t}
-                    </button>
-                ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {BLUEPRINTS.map(bp => {
+                    const isSelected = data.tipoNegocio === bp.id;
+                    return (
+                        <div
+                            key={bp.id}
+                            onClick={() => {
+                                setData((prev: any) => ({
+                                    ...prev,
+                                    tipoNegocio: bp.id,
+                                    servicioNombre: prev.servicioNombre || bp.defaultService.nombre,
+                                    servicioDuracion: prev.servicioDuracion || bp.defaultService.duracion,
+                                    servicioPrecio: prev.servicioPrecio || bp.defaultService.precio
+                                }));
+                            }}
+                            className={`p-6 rounded-[2rem] border-2 text-left space-y-3 cursor-pointer transition-all duration-300 relative flex flex-col justify-between ${
+                                isSelected 
+                                    ? `${bp.color} border-2 shadow-xl scale-[1.02]` 
+                                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:shadow-md'
+                            }`}
+                        >
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-3xl">{bp.icon}</span>
+                                    <span className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${
+                                        isSelected ? 'bg-white/80 text-slate-900' : 'bg-slate-100 text-slate-500'
+                                    }`}>
+                                        {bp.tag}
+                                    </span>
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-black text-slate-900 leading-tight uppercase italic">{bp.name}</h3>
+                                    <p className="text-xs text-slate-500 font-medium mt-1 leading-snug">{bp.desc}</p>
+                                </div>
+                            </div>
+
+                            <div className="pt-2 border-t border-slate-100/60 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                <span>{isSelected ? '✓ Seleccionado' : 'Hacer clic para elegir'}</span>
+                                <ChevronRight size={14} className={isSelected ? 'text-slate-900' : 'text-slate-400'} />
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
 
             <div className="flex justify-between mt-8">
@@ -455,7 +554,7 @@ function StepType({ data, setData, onNext, onPrev }: any) {
                 <button 
                     onClick={onNext}
                     disabled={!data.tipoNegocio}
-                    className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-2xl font-black uppercase tracking-widest hover:brightness-110 disabled:opacity-50 disabled:brightness-100 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20"
+                    className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-2xl font-black uppercase tracking-widest hover:brightness-110 disabled:opacity-50 disabled:brightness-100 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20 cursor-pointer"
                 >
                     Continuar <ArrowRight size={18} />
                 </button>

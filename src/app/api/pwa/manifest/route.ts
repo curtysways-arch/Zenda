@@ -61,22 +61,11 @@ export async function GET(request: Request) {
       display: "standalone",
       theme_color: business.colorPrimario || defaultManifest.theme_color,
       background_color: "#ffffff",
-      icons: business.logoUrl ? [
+      icons: (business.logoUrl && !business.logoUrl.includes('unsplash')) ? [
         {
           src: business.logoUrl,
           sizes: "any",
-          type: "image/png",
           purpose: "any maskable"
-        },
-        {
-          src: business.logoUrl,
-          sizes: "192x192",
-          type: "image/png"
-        },
-        {
-          src: business.logoUrl,
-          sizes: "512x512",
-          type: "image/png"
         }
       ] : defaultManifest.icons
     };

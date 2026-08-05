@@ -7,7 +7,7 @@ import { Loader2 } from "lucide-react";
 
 interface PlanRestrictionProps {
     children: React.ReactNode;
-    feature: 'tournaments' | 'locations' | 'reservations' | 'fields';
+    feature: 'tournaments' | 'locations' | 'reservations' | 'fields' | 'courses' | 'automatic-discounts' | 'loyalty' | 'loyalty_module';
 }
 
 export default function PlanRestriction({ children, feature }: PlanRestrictionProps) {

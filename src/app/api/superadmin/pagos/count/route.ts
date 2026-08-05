@@ -8,7 +8,10 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || (session.user as any).role !== 'SUPERADMIN') {
+        const role = (session?.user as any)?.role;
+        const roles = (session?.user as any)?.roles || [];
+        const isSuper = role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || role === 'ADMIN' || roles.includes('SUPERADMIN') || (session?.user as any)?.isAdminUser;
+        if (!session || !isSuper) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 

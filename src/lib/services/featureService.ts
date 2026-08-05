@@ -38,7 +38,7 @@ export const featureService = {
 
         // Si no tiene suscripción o plan asignado en DB, asumir trial/plan por defecto
         if (!business.Suscripcion?.Plan) {
-            return feature === 'custom_colors' || feature === 'custom_logo';
+            return feature === 'custom_colors' || feature === 'custom_logo' || feature === 'loyalty_module';
         }
 
         const estado = (business.Suscripcion.estado || '').toLowerCase();
@@ -84,6 +84,12 @@ export const featureService = {
         }
         if (feature === 'courses_module' && plan.courses_module !== undefined) {
             return plan.courses_module;
+        }
+        if (feature === 'communications_module' && (plan as any).communications_module !== undefined) {
+            return (plan as any).communications_module;
+        }
+        if (feature === 'loyalty_module' && (plan as any).loyalty_module !== undefined) {
+            return (plan as any).loyalty_module;
         }
 
         // 3. Fallback a mapeos por defecto basados en el nombre del plan
@@ -153,7 +159,7 @@ export const featureService = {
             'whatsapp_notifications', 'whatsapp_otp', 'whatsapp_reminders', 'whatsapp_campaigns',
             'custom_colors', 'custom_logo', 'custom_phrases', 'remove_zenda_branding',
             'multi_staff', 'multi_branch', 'analytics', 'automation',
-            'tournaments_module', 'courses_module', 'automatic_discounts'
+            'tournaments_module', 'courses_module', 'communications_module', 'automatic_discounts', 'loyalty_module'
         ];
 
             for (const flag of allFlags) {

@@ -71,8 +71,8 @@ export async function POST(req: Request) {
         // Generar un email ficticio si no tiene, para cumplir con el unique del schema
         const finalEmail = email || `${phone}@cancha.com`;
         
-        // Verificar si ya existe
-        const existing = await prisma.usuario.findFirst({
+        // Verificar si ya existe el usuario
+        let targetUser = await prisma.usuario.findFirst({
             where: { 
                 OR: [
                     { phone },
@@ -81,33 +81,56 @@ export async function POST(req: Request) {
             }
         });
 
-        if (existing) {
-            return NextResponse.json({ error: "Ya existe un usuario con este teléfono o email" }, { status: 400 });
+        if (targetUser) {
+            // Actualizar el usuario existente con el negocio y nombre
+            targetUser = await prisma.usuario.update({
+                where: { id: targetUser.id },
+                data: {
+                    nombre,
+                    phone,
+                    negocioId: targetUser.negocioId || negocioId,
+                    status: "active",
+                    updatedAt: new Date()
+                }
+            });
+
+            // Limpiar roles previos para reasignar los nuevos
+            await (prisma as any).userRole.deleteMany({
+                where: { user_id: targetUser.id }
+            });
+        } else {
+            // Crear usuario nuevo
+            targetUser = await prisma.usuario.create({
+                data: {
+                    id: crypto.randomUUID(),
+                    nombre,
+                    phone,
+                    email: finalEmail,
+                    password: await bcrypt.hash(Math.random().toString(36), 10),
+                    negocioId,
+                    status: "active",
+                    auth_method: "otp",
+                    updatedAt: new Date()
+                }
+            });
         }
 
-        // Crear usuario
-        const usuario = await prisma.usuario.create({
-            data: {
-                id: crypto.randomUUID(),
-                nombre,
-                phone,
-                email: finalEmail,
-                password: await bcrypt.hash(Math.random().toString(36), 10), // Password aleatorio por ahora
-                negocioId,
-                status: "active",
-                auth_method: "otp",
-                updatedAt: new Date()
-            }
-        });
-
-        // Asignar roles
+        // Asignar roles seleccionados
         if (roles && Array.isArray(roles)) {
             for (const roleName of roles) {
-                const role = await (prisma as any).role.findUnique({ where: { name: roleName } });
+                let role = await (prisma as any).role.findUnique({ where: { name: roleName } });
+                if (!role) {
+                    role = await (prisma as any).role.create({
+                        data: {
+                            id: roleName.toLowerCase(),
+                            name: roleName
+                        }
+                    });
+                }
                 if (role) {
                     await (prisma as any).userRole.create({
                         data: {
-                            user_id: usuario.id,
+                            user_id: targetUser.id,
                             role_id: role.id
                         }
                     });
@@ -115,7 +138,7 @@ export async function POST(req: Request) {
             }
         }
 
-        return NextResponse.json({ success: true, usuario });
+        return NextResponse.json({ success: true, usuario: targetUser });
     } catch (error) {
         console.error("Error creating user:", error);
         return NextResponse.json({ error: "Error al crear usuario" }, { status: 500 });
