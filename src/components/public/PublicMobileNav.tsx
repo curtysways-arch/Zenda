@@ -2,7 +2,7 @@
 
 import { Home, Calendar, User, Gift, Sparkles, PackageCheck, GraduationCap } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
 import { useState, useEffect } from 'react';
 import { hasModule } from '@/lib/business/BusinessModuleResolver';
@@ -16,29 +16,20 @@ interface PublicMobileNavProps {
 
 export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNegocio = 'RESERVA', isLoyaltyEnabled = true }: PublicMobileNavProps) {
     const pathname = usePathname();
-    const searchParams = useSearchParams();
-    const activeTabParam = searchParams.get('tab');
-
-    // Detectar sesión de forma reactiva y síncrona en el cliente
-    const [hasSession, setHasSession] = useState<boolean>(() => {
-        if (typeof window !== 'undefined') {
-            const phone = localStorage.getItem(`${slug}_client_phone`) || localStorage.getItem('user_phone');
-            if (phone || document.cookie.includes('cs=1') || document.cookie.includes('customer_token')) {
-                return true;
-            }
-        }
-        return false;
-    });
+    const [activeTabParam, setActiveTabParam] = useState<string | null>(null);
+    const [hasSession, setHasSession] = useState<boolean>(false);
 
     useEffect(() => {
-        const checkSession = async () => {
-            if (typeof window !== 'undefined') {
-                const phone = localStorage.getItem(`${slug}_client_phone`) || localStorage.getItem('user_phone');
-                if (phone) {
-                    setHasSession(true);
-                    return;
-                }
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            setActiveTabParam(params.get('tab'));
+            const phone = localStorage.getItem(`${slug}_client_phone`) || localStorage.getItem('user_phone');
+            if (phone) {
+                setHasSession(true);
+                return;
             }
+        }
+        const checkSession = async () => {
             if (document.cookie.includes('cs=1') || document.cookie.includes('customer_token')) {
                 setHasSession(true);
                 return;
@@ -104,7 +95,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
             icon: PackageCheck,
             href: `/${slug}/pedidos`,
             active: pathname.includes('/pedidos'),
-            visible: hasSession
+            visible: true
         });
     }
 
@@ -136,7 +127,7 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
             icon: Gift,
             href: `/${slug}/misiones`,
             active: pathname.includes('/referidos') || pathname.includes('/misiones'),
-            visible: hasSession && isLoyaltyEnabled
+            visible: isLoyaltyEnabled
         });
     }
 
