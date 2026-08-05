@@ -126,14 +126,11 @@ export default async function NegocioLayout({
     const headerTextSecondaryInput = headerBgLuma < 0.5 ? '#cbd5e1' : '#475569';
     const headerBorderInput = headerBgLuma < 0.5 ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
 
-    // Calcular colores para la barra de navegación inferior (Mobile BottomNav) basada en colorSecundario
-    const navBgInput = (negocio as any).colorSecundario || theme.secondaryColor || theme.primaryDark;
-    const navBgRgb = hexToRgb(navBgInput) || { r: 15, g: 23, b: 42 };
-    const navBgLuma = (0.2126 * navBgRgb.r + 0.7152 * navBgRgb.g + 0.0722 * navBgRgb.b) / 255;
-    
-    const navActiveInput = navBgLuma < 0.5 ? '#ffffff' : '#0f172a';
-    const navInactiveInput = navBgLuma < 0.5 ? 'rgba(255, 255, 255, 0.65)' : 'rgba(15, 23, 42, 0.65)';
-    const navBorderInput = navBgLuma < 0.5 ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)';
+    // Fondo blanco sólido (#ffffff) permanente en todas las pantallas
+    const navBgInput = '#ffffff';
+    const navActiveInput = primaryInput || theme.primaryColor || '#0f172a';
+    const navInactiveInput = '#64748b';
+    const navBorderInput = '#e2e8f0';
 
     return (
         <>
