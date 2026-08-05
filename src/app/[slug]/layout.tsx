@@ -121,11 +121,19 @@ export default async function NegocioLayout({
         
     const headerBgRgb = hexToRgb(headerBgInput) || { r: 255, g: 255, b: 255 };
     const headerBgLuma = (0.2126 * headerBgRgb.r + 0.7152 * headerBgRgb.g + 0.0722 * headerBgRgb.b) / 255;
-    
-    // Contraste para textos en la barra superior
+        // Contraste para textos en la barra superior (Header)
     const headerTextInput = headerBgLuma < 0.5 ? '#ffffff' : '#0f172a';
     const headerTextSecondaryInput = headerBgLuma < 0.5 ? '#cbd5e1' : '#475569';
     const headerBorderInput = headerBgLuma < 0.5 ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+
+    // Calcular colores para la barra de navegación inferior (Mobile BottomNav) basada en colorSecundario
+    const navBgInput = (negocio as any).colorSecundario || theme.secondaryColor || theme.primaryDark;
+    const navBgRgb = hexToRgb(navBgInput) || { r: 15, g: 23, b: 42 };
+    const navBgLuma = (0.2126 * navBgRgb.r + 0.7152 * navBgRgb.g + 0.0722 * navBgRgb.b) / 255;
+    
+    const navActiveInput = navBgLuma < 0.5 ? '#ffffff' : '#0f172a';
+    const navInactiveInput = navBgLuma < 0.5 ? 'rgba(255, 255, 255, 0.65)' : 'rgba(15, 23, 42, 0.65)';
+    const navBorderInput = navBgLuma < 0.5 ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)';
 
     return (
         <>
@@ -163,12 +171,12 @@ export default async function NegocioLayout({
                     --info: ${theme.infoColor};
                     --shadow: ${theme.shadowColor};
                     
-                    /* Navegación móvil dinámica */
-                    --nav-bg: ${theme.primaryDark};
-                    --nav-active: ${theme.textOnPrimary};
-                    --nav-inactive: ${theme.textOnPrimary}80;
-                    --nav-border: ${theme.primaryDark};
-                }
+                    /* Navegación móvil dinámica basada en colorSecundario */
+                    --nav-bg: ${navBgInput};
+                    --nav-active: ${navActiveInput};
+                    --nav-inactive: ${navInactiveInput};
+                    --nav-border: ${navBorderInput};
+                }`   }
 
                 /* Forzar el color de texto dinámico en los encabezados y textos principales */
                 .text-header-dynamic {

@@ -152,7 +152,13 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
     const visibleTabs = tabs.filter(t => t.visible);
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-[9999] h-[72px] pb-safe border-t pointer-events-auto bg-slate-900 border-slate-800 text-white shadow-[0_-4px_25px_rgba(0,0,0,0.4)]">
+        <nav 
+            className="fixed bottom-0 left-0 right-0 z-[9999] h-[72px] pb-safe border-t pointer-events-auto shadow-[0_-4px_25px_rgba(0,0,0,0.25)] transition-colors duration-300"
+            style={{
+                backgroundColor: 'var(--nav-bg)',
+                borderColor: 'var(--nav-border)'
+            }}
+        >
             <div className="flex items-center justify-around h-full px-2">
                 {visibleTabs.map((tab) => {
                     if (tab.isCentral) {
@@ -166,12 +172,12 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
                                 <div 
                                     className="size-14 rounded-full flex items-center justify-center shadow-lg border-2 active:scale-95 transition-transform"
                                     style={{
-                                        backgroundColor: 'var(--nav-active)',
-                                        borderColor: 'rgba(255,255,255,0.25)',
+                                        backgroundColor: 'var(--primary)',
+                                        borderColor: 'rgba(255,255,255,0.35)',
                                         boxShadow: '0 4px 14px rgba(0, 0, 0, 0.3)'
                                     }}
                                 >
-                                    <CentralIcon size={24} style={{ color: 'var(--nav-bg)' }} />
+                                    <CentralIcon size={24} style={{ color: 'var(--text-on-primary)' }} />
                                 </div>
                                 <span 
                                     className="text-[9px] font-black uppercase tracking-widest leading-none mt-1.5"
