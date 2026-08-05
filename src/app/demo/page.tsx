@@ -40,6 +40,78 @@ export default function DemoPage() {
 
     const demos = [
         {
+            title: "Symechas Peluquería",
+            slug: "symechas-peluquera",
+            industry: "Peluquería y Estética Capilar",
+            color: "from-rose-500 to-pink-600",
+            lightBg: "bg-rose-500/10",
+            textColor: "text-rose-600",
+            icon: Scissors,
+            highlights: [
+                "Agendamiento en línea de servicios de peluquería y mechas.",
+                "Gestión completa de clientes y recordatorios automatizados por WhatsApp.",
+                "Control de agendas y solicitudes de citas presenciales."
+            ],
+            credentials: {
+                email: "cinthyasoledaf@gmail.com",
+                password: "admin123"
+            }
+        },
+        {
+            title: "Pinchos y Asados Zenda",
+            slug: "pinchos",
+            industry: "Gastronomía y Delivery",
+            color: "from-amber-500 to-orange-600",
+            lightBg: "bg-amber-500/10",
+            textColor: "text-amber-600",
+            icon: Building2,
+            highlights: [
+                "Catálogo de combos y productos gastronómicos en tiempo real.",
+                "Checkout rápido con modalidad Retiro en Local o Entrega a Domicilio.",
+                "Notificación directa del pedido a WhatsApp de cocina."
+            ],
+            credentials: {
+                email: "pinchos@citiox.com",
+                password: "admin123"
+            }
+        },
+        {
+            title: "Complejo Deportivo El Dorado",
+            slug: "demo-canchas",
+            industry: "Reserva de Canchas y Escuela",
+            color: "from-emerald-500 to-teal-600",
+            lightBg: "bg-emerald-500/10",
+            textColor: "text-emerald-600",
+            icon: Activity,
+            highlights: [
+                "Grilla interactiva de reservas por cancha (Pádel / Tenis) y horario.",
+                "Módulo de Escuela Deportiva con inscripciones y control de asistencia.",
+                "Página de Reglamento y Normas del Complejo en vivo."
+            ],
+            credentials: {
+                email: "canchas@citiox.com",
+                password: "admin123"
+            }
+        },
+        {
+            title: "Sneaker Wash Premium",
+            slug: "lavado",
+            industry: "Lavado de Calzado & Delivery",
+            color: "from-sky-500 to-blue-600",
+            lightBg: "bg-sky-500/10",
+            textColor: "text-sky-600",
+            icon: Rocket,
+            highlights: [
+                "Catálogo de limpieza y restauración con botón directo a WhatsApp.",
+                "Gestión de recolección y despacho en local o a domicilio.",
+                "Modal de solicitud e historial de clientes registrado."
+            ],
+            credentials: {
+                email: "lavado@citiox.com",
+                password: "admin123"
+            }
+        },
+        {
             title: "Aura Spa",
             slug: "demo-spa",
             industry: "Spa y Centro Estético",
@@ -90,24 +162,6 @@ export default function DemoPage() {
             ],
             credentials: {
                 email: "citas@bellanails.demo",
-                password: "admin123"
-            }
-        },
-        {
-            title: "Vortex Fitness Club",
-            slug: "vortex-fitness",
-            industry: "Gimnasio y Centros Deportivos",
-            color: "from-emerald-500 to-teal-600",
-            lightBg: "bg-emerald-500/10",
-            textColor: "text-emerald-600",
-            icon: Activity,
-            highlights: [
-                "Módulo de suscripciones mensuales recurrentes.",
-                "Reserva de clases grupales con límite de aforo diario.",
-                "Control de asistencia mediante check-in rápido."
-            ],
-            credentials: {
-                email: "admin@vortexfit.demo",
                 password: "admin123"
             }
         },
