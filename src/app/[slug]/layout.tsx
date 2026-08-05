@@ -176,7 +176,7 @@ export default async function NegocioLayout({
                     --nav-active: ${navActiveInput};
                     --nav-inactive: ${navInactiveInput};
                     --nav-border: ${navBorderInput};
-                }`   }
+                }
 
                 /* Forzar el color de texto dinámico en los encabezados y textos principales */
                 .text-header-dynamic {
