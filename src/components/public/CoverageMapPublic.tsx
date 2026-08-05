@@ -46,7 +46,18 @@ export default function CoverageMapPublic({ negocioId, onCheckLocation }: Covera
         const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
-          setCobertura(data);
+          setCobertura({
+            activa: data.activa ?? true,
+            mensaje: data.mensaje || 'Retiramos y entregamos tus zapatos dentro de nuestra zona de cobertura.',
+            poligono: Array.isArray(data.poligono) && data.poligono.length > 0 ? data.poligono : [
+              [-0.170, -78.485],
+              [-0.150, -78.470],
+              [-0.160, -78.440],
+              [-0.200, -78.450],
+              [-0.220, -78.480],
+              [-0.190, -78.500]
+            ]
+          });
         }
       } catch (err) {
         console.error('Error loading public coverage:', err);
@@ -72,8 +83,10 @@ export default function CoverageMapPublic({ negocioId, onCheckLocation }: Covera
       const L = (window as any).L;
       if (!L || !mapDivRef.current) return;
 
+      const currentPolygon = Array.isArray(cobertura?.poligono) ? cobertura.poligono : [];
+
       if (!mapInstanceRef.current) {
-        const center = cobertura.poligono.length > 0 ? cobertura.poligono[0] : [-0.180653, -78.467838];
+        const center = currentPolygon.length > 0 ? currentPolygon[0] : [-0.180653, -78.467838];
         const map = L.map(mapDivRef.current, {
           center: center,
           zoom: 12,
@@ -90,8 +103,8 @@ export default function CoverageMapPublic({ negocioId, onCheckLocation }: Covera
       }
 
       const map = mapInstanceRef.current;
-      if (cobertura.poligono.length > 0) {
-        const polyLayer = L.polygon(cobertura.poligono, {
+      if (currentPolygon.length > 0) {
+        const polyLayer = L.polygon(currentPolygon, {
           color: '#7C3AED',
           fillColor: '#8B5CF6',
           fillOpacity: 0.3,
