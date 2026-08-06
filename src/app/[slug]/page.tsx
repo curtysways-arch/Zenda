@@ -1489,12 +1489,12 @@ export default async function PublicNegocioPage({
 
                 {/* Reviews list */}
                 <div className="overflow-y-auto flex-1 px-5 pb-5 mt-3 space-y-3">
-                    {reviews.length === 0 ? (
+                    {allReviews.length === 0 ? (
                         <div className="py-10 text-center">
                             <p className="text-slate-400 text-xs font-semibold">Aún no hay opiniones registradas.</p>
                         </div>
                     ) : (
-                        reviews.map((r: any, idx: number) => {
+                        allReviews.map((r: any, idx: number) => {
                             const nombre = r.appointment?.cliente?.nombre || 'Cliente';
                             const inicial = nombre.charAt(0).toUpperCase();
                             const apellidoInicial = nombre.split(' ')[1]?.charAt(0).toUpperCase() || '';
@@ -1535,7 +1535,9 @@ export default async function PublicNegocioPage({
                                         </div>
                                         <span className="text-[9px] font-semibold text-slate-400 shrink-0">{fecha}</span>
                                     </div>
-                                    <p className="text-[11px] text-slate-600 leading-relaxed font-medium">{r.comment}</p>
+                                    <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                                        {r.comment && r.comment.trim() !== '' ? r.comment : 'Calificación de 5 estrellas por excelente servicio en el negocio.'}
+                                    </p>
                                     {r.appointment?.servicio && (
                                         <div className="flex items-center gap-1">
                                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-300"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
