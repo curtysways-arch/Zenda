@@ -1,8 +1,23 @@
+import prisma from './prisma';
+import { sendWhatsAppMessage } from '@/lib/whatsapp-client';
+import { whatsappService } from './whatsapp';
+
 let adminModule: any = null;
 try {
     adminModule = require('firebase-admin');
 } catch {
     // firebase-admin is optional
+}
+
+async function getGlobalConfig(clave: string): Promise<string | null> {
+    try {
+        const config = await prisma.globalConfig.findUnique({
+            where: { clave }
+        });
+        return config?.valor || null;
+    } catch {
+        return null;
+    }
 }
 
 // Variable to track initialization promise
