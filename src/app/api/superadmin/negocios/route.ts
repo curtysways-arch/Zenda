@@ -85,6 +85,8 @@ export async function POST(req: Request) {
             mappedTipo = 'PRODUCTOS';
         } else if (tipoNegocio === 'ACADEMIA' || tipoNegocio?.includes('Academia') || tipoNegocio?.includes('Curso')) {
             mappedTipo = 'ACADEMIA';
+        } else if (tipoNegocio === 'SHOE_CARE' || tipoNegocio?.includes('Lavado de Zapatillas') || tipoNegocio?.includes('Sneaker') || tipoNegocio?.includes('Shoe Care')) {
+            mappedTipo = 'SHOE_CARE';
         }
 
         let finalBusinessTypeId = body.businessTypeId || null;

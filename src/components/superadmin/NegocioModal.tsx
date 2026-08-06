@@ -91,6 +91,11 @@ const PLANTILLAS_SERVICIOS: Record<string, Array<{ nombre: string; duracion: num
     "Academia": [
         { nombre: "Clase Introductoria Práctica", duracion: 60, precio: 15 },
         { nombre: "Evaluación y Nivelación", duracion: 45, precio: 20 }
+    ],
+    "Lavado de Zapatillas": [
+        { nombre: "Lavado Express", duracion: 30, precio: 8 },
+        { nombre: "Lavado Premium Completo", duracion: 60, precio: 15 },
+        { nombre: "Restauración y Customización", duracion: 120, precio: 35 }
     ]
 };
 
@@ -109,6 +114,7 @@ const CATEGORIAS_NEGOCIO = [
     "Nutrición",
     "Fisioterapia",
     "Academia",
+    "Lavado de Zapatillas",
     "Otro"
 ];
 
