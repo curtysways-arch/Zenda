@@ -23,8 +23,8 @@ conn.on("ready", async () => {
   }
 
   try {
-    await exec(`cd /opt/Zenda && git pull origin main 2>&1`, "PASO 1: Pull del código");
-    await exec(`cd /opt/Zenda && DATABASE_URL="${DB_URL}" npm run build 2>&1`, "PASO 2: Build Next.js");
+    await exec(`cd /opt/Zenda && git checkout -- . && git pull origin main 2>&1`, "PASO 1: Pull del código");
+    await exec(`cd /opt/Zenda && rm -f .next/lock && DATABASE_URL="${DB_URL}" npm run build 2>&1`, "PASO 2: Build Next.js");
     await exec(`cd /opt/Zenda && pm2 restart zenda-app --update-env && sleep 8`, "PASO 3: Reiniciar PM2");
 
     console.log("\n============================================");
