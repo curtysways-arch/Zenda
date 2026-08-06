@@ -126,7 +126,15 @@ export default async function NegocioLayout({
     const headerTextSecondaryInput = headerBgLuma < 0.5 ? '#cbd5e1' : '#475569';
     const headerBorderInput = headerBgLuma < 0.5 ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
 
-    // Autodetección de tema claro/oscuro para la barra de navegación inferior (Mobile Navigation)
+    // 🎨 Configuración Inteligente de Barra de Navegación Inferior (Mobile Bottom Nav)
+    // Respetar colorSecundario explícito del negocio (ej. rosado en Symechas) o calcular según contraste
+    const hasCustomSecundario = (negocio as any).colorSecundario && 
+        (negocio as any).colorSecundario !== '#1e293b' && 
+        (negocio as any).colorSecundario !== '#0f172a' &&
+        (negocio as any).colorSecundario !== '#ffffff';
+
+    const customNavBg = config?.colorBottomNav || (hasCustomSecundario ? (negocio as any).colorSecundario : null);
+
     const mainBgHex = ((negocio as any).colorNeutral && (negocio as any).colorNeutral !== '#FFF5F5') 
         ? (negocio as any).colorNeutral 
         : (theme.backgroundColor || '#ffffff');
@@ -135,15 +143,27 @@ export default async function NegocioLayout({
     
     const isDarkTheme = mainBgLuma < 0.5 || headerBgLuma < 0.5;
 
-    const navBgInput = isDarkTheme 
-        ? ((negocio as any).colorNeutral && (negocio as any).colorNeutral !== '#ffffff' && (negocio as any).colorNeutral !== '#FFF5F5'
-            ? (negocio as any).colorNeutral
-            : (headerBgInput !== '#ffffff' ? headerBgInput : (theme.surfaceSecondary || '#0f172a')))
-        : '#ffffff';
+    const navBgInput = customNavBg 
+        ? customNavBg 
+        : (isDarkTheme 
+            ? ((negocio as any).colorNeutral && (negocio as any).colorNeutral !== '#ffffff' && (negocio as any).colorNeutral !== '#FFF5F5'
+                ? (negocio as any).colorNeutral
+                : (headerBgInput !== '#ffffff' ? headerBgInput : (theme.surfaceSecondary || '#0f172a')))
+            : '#ffffff');
 
-    const navActiveInput = primaryInput || theme.primaryColor || '#7c3aed';
-    const navInactiveInput = isDarkTheme ? '#94a3b8' : '#64748b';
-    const navBorderInput = isDarkTheme ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0';
+    // Calcular luma de la barra de navegación seleccionada para ajustar contraste perfecto de iconos/textos
+    const finalNavRgb = hexToRgb(navBgInput) || { r: 255, g: 255, b: 255 };
+    const finalNavLuma = (0.2126 * finalNavRgb.r + 0.7152 * finalNavRgb.g + 0.0722 * finalNavRgb.b) / 255;
+
+    const isNavDark = finalNavLuma < 0.5;
+    const isCustomColored = !!customNavBg;
+
+    const navActiveInput = isCustomColored
+        ? (isNavDark ? '#ffffff' : '#0f172a')
+        : (primaryInput || theme.primaryColor || '#7c3aed');
+
+    const navInactiveInput = isNavDark ? 'rgba(255, 255, 255, 0.75)' : '#64748b';
+    const navBorderInput = isNavDark ? 'rgba(255, 255, 255, 0.15)' : '#e2e8f0';
 
     return (
         <>
