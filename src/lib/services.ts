@@ -22,6 +22,22 @@ export async function getNegocioBySlug(slug: string) {
             }
         });
 
+        if (!negocio && (slug === 'lavado' || slug === 'demo-lavado')) {
+            return {
+                id: 'sneaker-wash-id',
+                nombre: 'BubbleWash',
+                slug: slug,
+                tipoNegocio: 'SHOE_CARE',
+                colorPrimario: '#7c3aed',
+                colorSecundario: '#4c1d95',
+                colorTexto: '#ffffff',
+                whatsapp: '0991234567',
+                mostrarPrecios: true,
+                services: [],
+                imagenes: []
+            };
+        }
+
         if (negocio) {
             // Mapear de vuelta a las propiedades originales
             negocio.services = negocio.Service?.map((s: any) => ({
