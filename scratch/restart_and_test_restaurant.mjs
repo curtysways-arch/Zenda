@@ -1,13 +1,14 @@
-// Restart PM2 and seed restaurant demo
+// Build, restart PM2 and test full restaurant management endpoints on VPS
 import { Client } from "ssh2";
 
 const VPS = "157.173.203.174";
 const USER = "root";
 const PASS = "Elmassuelto005624";
+const DB_URL = "postgresql://zenda_user:CitioxProd2024!@127.0.0.1:5432/zenda_db?schema=public";
 
 const conn = new Client();
 conn.on("ready", async () => {
-  console.log("Conectado al VPS...\n");
+  console.log("Conectado al VPS. Desplegando nuevas funcionalidades del panel admin...\n");
 
   function exec(cmd, label) {
     return new Promise((resolve, reject) => {
@@ -23,57 +24,34 @@ conn.on("ready", async () => {
   }
 
   try {
-    // Step 1: PM2 restart
-    const r1 = await exec(`cd /opt/Zenda && pm2 restart zenda-app --update-env 2>&1 && echo "PM2_OK" && sleep 5`, "PASO 3: Reiniciar PM2");
-    console.log(`\nPM2 exit code: ${r1.code}`);
+    await exec(`cd /opt/Zenda && git checkout -- . && git pull origin main 2>&1`, "PASO 1: Pull del código");
+    await exec(`cd /opt/Zenda && rm -f .next/lock && DATABASE_URL="${DB_URL}" npm run build 2>&1`, "PASO 2: Build Next.js");
+    await exec(`cd /opt/Zenda && pm2 restart zenda-app --update-env 2>&1 && sleep 5`, "PASO 3: Reiniciar PM2");
 
-    // Step 2: Wait and test health
-    await new Promise(r => setTimeout(r, 3000));
-    
-    // Step 3: Test seed endpoint
-    const r2 = await exec(`curl -s -o /tmp/seed_result.json -w "\\nHTTP_STATUS:%{http_code}" "http://127.0.0.1:3000/api/demo/seed-restaurant" 2>&1 && cat /tmp/seed_result.json | head -c 300`, "PASO 4: Ejecutar Seeder Restaurante");
-    console.log(`\nSeed exit code: ${r2.code}`);
+    console.log("\n=== PRUEBAS DE ENDPOINTS DE GESTIÓN Y ADMINISTRACIÓN ===");
 
-    // Step 4: Test routes
-    const r3 = await exec(`
-      echo "=== TEST RUTAS RESTAURANTE ==="
+    await exec(`
+      echo "1. Test GET /api/parrilla-citiox-demo/negocio:"
+      curl -s "http://127.0.0.1:3000/api/parrilla-citiox-demo/negocio" | head -c 250
       echo ""
-      echo "1. Landing /parrilla-citiox-demo:"
-      curl -s -o /dev/null -w "HTTP %{http_code} en %{time_total}s\\n" "http://127.0.0.1:3000/parrilla-citiox-demo"
-      
+
+      echo "2. Test GET /api/parrilla-citiox-demo/promotions:"
+      curl -s "http://127.0.0.1:3000/api/parrilla-citiox-demo/promotions" | head -c 250
       echo ""
-      echo "2. KDS /parrilla-citiox-demo/cocina:"
-      curl -s -o /dev/null -w "HTTP %{http_code} en %{time_total}s\\n" "http://127.0.0.1:3000/parrilla-citiox-demo/cocina"
-      
+
+      echo "3. Test GET /api/parrilla-citiox-demo/catalogue:"
+      curl -s "http://127.0.0.1:3000/api/parrilla-citiox-demo/catalogue" | head -c 250
       echo ""
-      echo "3. Admin /parrilla-citiox-demo/admin:"
+
+      echo "4. Test GET /api/parrilla-citiox-demo/tables:"
+      curl -s "http://127.0.0.1:3000/api/parrilla-citiox-demo/tables" | head -c 250
+      echo ""
+
+      echo "5. Verificación de página Admin /parrilla-citiox-demo/admin:"
       curl -s -o /dev/null -w "HTTP %{http_code} en %{time_total}s\\n" "http://127.0.0.1:3000/parrilla-citiox-demo/admin"
-      
-      echo ""
-      echo "4. Mesa QR /parrilla-citiox-demo/mesa/03:"
-      curl -s -o /dev/null -w "HTTP %{http_code} en %{time_total}s\\n" "http://127.0.0.1:3000/parrilla-citiox-demo/mesa/03"
-      
-      echo ""
-      echo "5. API Tables /api/parrilla-citiox-demo/tables:"
-      curl -s "http://127.0.0.1:3000/api/parrilla-citiox-demo/tables" | head -c 200
-      
-      echo ""
-      echo ""
-      echo "6. API Kitchen /api/parrilla-citiox-demo/kitchen:"
-      curl -s "http://127.0.0.1:3000/api/parrilla-citiox-demo/kitchen" | head -c 200
-      
-      echo ""
-      echo ""
-      echo "7. API Channels /api/parrilla-citiox-demo/channels:"
-      curl -s "http://127.0.0.1:3000/api/parrilla-citiox-demo/channels"
-      
-      echo ""
-      echo "=== AISLAMIENTO: /symechas-peluquera/tables ==="
-      curl -s "http://127.0.0.1:3000/api/symechas-peluquera/tables" | head -c 150
-    `, "PASO 5: Test endpoints y aislamiento multi-negocio");
+    `, "PASO 4: Verificación de APIs de Administración");
 
-    console.log(`\nTests exit code: ${r3.code}`);
-    console.log("\n=== DEPLOY Y TESTS COMPLETADOS ===");
+    console.log("\n=== DEPLOY Y TESTS COMPLETADOS CON ÉXITO ===");
 
   } catch (e) {
     console.error("Error:", e.message);

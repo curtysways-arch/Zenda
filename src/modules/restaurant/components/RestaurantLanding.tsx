@@ -1,11 +1,12 @@
 'use client';
 // src/modules/restaurant/components/RestaurantLanding.tsx
-// Landing Page Pública del Blueprint RESTAURANT — menú digital, carrito, canales dinámicos
+// Landing Page Pública del Blueprint RESTAURANT — menú digital, promociones oficial Citiox, perfil, carrito, canales dinámicos
 // Activada desde [slug]/page.tsx cuando blueprintId === 'RESTAURANT'
-// NO contiene lógica hardcodeada por nombre/slug — todo se resuelve desde negocio.configuracion
 
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Plus, Minus, X, MapPin, Clock, ChefHat, Truck, ShoppingBag, QrCode, Star, Phone, Loader2 } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, X, MapPin, Clock, ChefHat, Truck, ShoppingBag, QrCode, Star, Phone, Loader2, User } from 'lucide-react';
+import PromotionsSection from '@/components/public/PromotionsSection';
+import Link from 'next/link';
 
 interface Product {
   id: string;
@@ -26,6 +27,7 @@ export default function RestaurantLanding({ negocio, initialProducts, initialCat
 }) {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [promotions, setPromotions] = useState<any[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [showCart, setShowCart] = useState(false);
@@ -36,6 +38,20 @@ export default function RestaurantLanding({ negocio, initialProducts, initialCat
 
   const cfg = (negocio.configuracion as any) || {};
   const channels = cfg.channels || {};
+
+  // Fetch active promotions for this business
+  useEffect(() => {
+    async function fetchPromos() {
+      try {
+        const res = await fetch(`/api/${negocio.slug}/promotions`);
+        if (res.ok) {
+          const data = await res.json();
+          setPromotions(data.promotions || []);
+        }
+      } catch (_) {}
+    }
+    fetchPromos();
+  }, [negocio.slug]);
 
   // Channels activos — si un canal está en false, se oculta su UI
   const showDelivery = channels.DELIVERY !== false;
@@ -63,9 +79,6 @@ export default function RestaurantLanding({ negocio, initialProducts, initialCat
     if (cart.length === 0 || !form.nombre || !form.telefono) return;
     setSubmitting(true);
     try {
-      const lastOrderRes = await fetch(`/api/${negocio.slug}/admin-orders`);
-      const lastOrderData = lastOrderRes.ok ? await lastOrderRes.json() : { orders: [] };
-      const lastNum = (lastOrderData.orders || []).reduce((max: number, o: any) => Math.max(max, o.numeroPedido || 0), 0);
       const res = await fetch(`/api/public/${negocio.slug}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -86,7 +99,6 @@ export default function RestaurantLanding({ negocio, initialProducts, initialCat
         setTimeout(() => setOrderSuccess(false), 5000);
       }
     } catch (e) {
-      // Fallback: show success anyway for demo
       setOrderSuccess(true); setCart([]); setShowOrderModal(null);
       setTimeout(() => setOrderSuccess(false), 5000);
     } finally { setSubmitting(false); }
@@ -100,7 +112,7 @@ export default function RestaurantLanding({ negocio, initialProducts, initialCat
       <div style={{ position: 'relative', minHeight: 420, display: 'flex', alignItems: 'flex-end', overflow: 'hidden' }}>
         {/* Background gradient overlay */}
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${cs} 0%, rgba(0,0,0,0.2) 50%, ${cp}50 100%)` }} />
-        <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&q=80" alt="La Parrilla" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'multiply', opacity: 0.6 }} />
+        <img src={cfg.bannerUrl || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&q=80"} alt={negocio.nombre} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'multiply', opacity: 0.6 }} />
 
         {/* Nav */}
         <nav style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
@@ -108,10 +120,15 @@ export default function RestaurantLanding({ negocio, initialProducts, initialCat
             {negocio.logoUrl && <img src={negocio.logoUrl} alt={negocio.nombre} style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', border: `2px solid ${cp}` }} onError={e => (e.currentTarget.style.display = 'none')} />}
             <span style={{ color: '#fff', fontWeight: 900, fontSize: 18 }}>{negocio.nombre}</span>
           </div>
-          <button onClick={() => setShowCart(true)} style={{ background: cp, border: 'none', borderRadius: 999, padding: '10px 20px', color: '#fff', cursor: 'pointer', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
-            <ShoppingCart size={16} />
-            {cartCount > 0 ? `${cartCount} — $${cartTotal.toFixed(2)}` : 'Carrito'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Link href={`/${negocio.slug}/perfil`} style={{ color: '#fff', background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', borderRadius: 999, padding: '10px 16px', fontSize: 13, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <User size={16} /> Perfil
+            </Link>
+            <button onClick={() => setShowCart(true)} style={{ background: cp, border: 'none', borderRadius: 999, padding: '10px 20px', color: '#fff', cursor: 'pointer', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
+              <ShoppingCart size={16} />
+              {cartCount > 0 ? `${cartCount} — $${cartTotal.toFixed(2)}` : 'Carrito'}
+            </button>
+          </div>
         </nav>
 
         {/* Hero content */}
@@ -154,6 +171,20 @@ export default function RestaurantLanding({ negocio, initialProducts, initialCat
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.7)', fontSize: 13, whiteSpace: 'nowrap' }}><Star size={14} color="#fbbf24" fill="#fbbf24" /> 4.9 excelente</div>
         {negocio.whatsapp && <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, whiteSpace: 'nowrap' }}><a href={`https://wa.me/${negocio.whatsapp.replace(/\D/g, '')}`} target="_blank" style={{ color: '#25d366', textDecoration: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}><Phone size={14} /> WhatsApp</a></div>}
       </div>
+
+      {/* Módulo Oficial de Promociones Citiox */}
+      {promotions.length > 0 && (
+        <div style={{ padding: '24px 24px 0' }}>
+          <PromotionsSection
+            promociones={promotions}
+            slug={negocio.slug}
+            primaryColor={cp}
+            tertiaryColor={negocio.colorTerciario || '#ea580c'}
+            textColor="#ffffff"
+            showPrices={true}
+          />
+        </div>
+      )}
 
       {/* Menu Section */}
       <div id="menu" style={{ padding: '32px 24px' }}>

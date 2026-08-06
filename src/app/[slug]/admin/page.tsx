@@ -1,14 +1,14 @@
 'use client';
 // src/app/[slug]/admin/page.tsx
 // Dashboard Administrativo Dinámico Completo
-// Módulos: KPIs, Productos (CRUD), Categorías, Mesas (CRUD), Pedidos (Kanban), Identidad (Colores/Logo/Banner/Horarios), Promociones (CRUD), Canales
-// 100% genérico — funciona para cualquier Blueprint con capabilities
+// Módulos: KPIs, Identidad Visual (Logo/Colores/Hero/Contacto), Productos (CRUD + Subida de Imágenes), Categorías, Mesas (CRUD), Pedidos (Kanban), Promociones Citiox (CRUD + Subida de Imágenes), Canales y Perfil
+// 100% genérico — soporta subida de archivos reales y reutiliza los módulos oficiales de Citiox
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   BarChart3, Package, Layout, ClipboardList, Radio, Loader2, TrendingUp, ShoppingBag, Users,
   DollarSign, Plus, Edit3, Eye, EyeOff, ToggleLeft, ToggleRight, RefreshCw, ChefHat, X, Save,
-  Check, Trash2, Palette, Sparkles, Tag, Image as ImageIcon, Clock, Phone, MapPin, Settings
+  Check, Trash2, Palette, Sparkles, Tag, Image as ImageIcon, Clock, Phone, MapPin, Upload, User, ExternalLink
 } from 'lucide-react';
 
 type AdminTab = 'dashboard' | 'identidad' | 'productos' | 'mesas' | 'pedidos' | 'promociones' | 'canales';
@@ -40,6 +40,57 @@ const KANBAN_COLS = [
 
 const TABLE_STATES = ['DISPONIBLE', 'OCUPADA', 'RESERVADA'];
 const TABLE_COLORS: Record<string, string> = { DISPONIBLE: '#10b981', OCUPADA: '#f59e0b', RESERVADA: '#6366f1' };
+
+// Componente para Subida de Imágenes
+function ImageUploaderInput({ slug, value, onChange, label }: { slug: string; value: string; onChange: (url: string) => void; label?: string }) {
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch(`/api/${slug}/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        onChange(data.url);
+      } else {
+        alert(data.error || 'Error al subir la imagen');
+      }
+    } catch (err) {
+      alert('Error al conectar con el servidor para subir la imagen.');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div style={{ marginBottom: 14 }}>
+      {label && <label style={{ display: 'block', fontWeight: 600, fontSize: 12, color: '#374151', marginBottom: 6 }}>{label}</label>}
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        {value ? (
+          <img src={value} alt="Preview" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', border: '1px solid #e5e7eb' }} onError={e => (e.currentTarget.style.display = 'none')} />
+        ) : (
+          <div style={{ width: 44, height: 44, borderRadius: 8, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}><ImageIcon size={20} /></div>
+        )}
+        <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder="URL de la imagen o sube un archivo" style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none' }} />
+        <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" style={{ display: 'none' }} />
+        <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: uploading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: '#334155' }}>
+          {uploading ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Upload size={14} />}
+          {uploading ? 'Subiendo...' : 'Subir Imagen'}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function AdminPage({ params }: { params: Promise<{ slug: string }> }) {
   const [slug, setSlug] = useState('');
@@ -284,7 +335,7 @@ export default function AdminPage({ params }: { params: Promise<{ slug: string }
     { key: 'productos', label: 'Productos & Menú', icon: <Package size={16} /> },
     { key: 'mesas', label: 'Mesas & Capacidad', icon: <Layout size={16} /> },
     { key: 'pedidos', label: 'Pedidos (Kanban)', icon: <ClipboardList size={16} /> },
-    { key: 'promociones', label: 'Promociones', icon: <Sparkles size={16} /> },
+    { key: 'promociones', label: 'Promociones Citiox', icon: <Sparkles size={16} /> },
     { key: 'canales', label: 'Canales Activos', icon: <Radio size={16} /> },
   ];
 
@@ -325,9 +376,12 @@ export default function AdminPage({ params }: { params: Promise<{ slug: string }
               </button>
             ))}
           </nav>
-          <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-            <a href={`/${slug}`} target="_blank" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>↗</span> Ver landing pública
+          <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <a href={`/${slug}/perfil`} target="_blank" style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <User size={14} /> Mi Perfil de Usuario
+            </a>
+            <a href={`/${slug}`} target="_blank" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <ExternalLink size={14} /> Ver landing pública
             </a>
           </div>
         </div>
@@ -344,6 +398,9 @@ export default function AdminPage({ params }: { params: Promise<{ slug: string }
               </p>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
+              <a href={`/${slug}/perfil`} target="_blank" style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '8px 16px', textDecoration: 'none', fontSize: 13, color: '#374151', fontWeight: 600 }}>
+                <User size={14} /> Perfil
+              </a>
               <button onClick={loadAll} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '8px 16px', cursor: 'pointer', fontSize: 13, color: '#374151', fontWeight: 600 }}>
                 <RefreshCw size={14} /> Recargar datos
               </button>
@@ -409,23 +466,15 @@ export default function AdminPage({ params }: { params: Promise<{ slug: string }
               <div style={{ background: '#fff', borderRadius: 16, padding: 28, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', marginBottom: 24 }}>
                 <h3 style={{ margin: '0 0 20px', fontWeight: 700, color: '#1f2937', fontSize: 18 }}>Identidad Visual & Branding</h3>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, marginBottom: 20 }}>
                   <div>
                     <label style={{ display: 'block', fontWeight: 600, fontSize: 13, color: '#374151', marginBottom: 6 }}>Nombre del Negocio</label>
                     <input type="text" value={identidadForm.nombre} onChange={e => setIdentidadForm(f => ({ ...f, nombre: e.target.value }))} style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
                   </div>
-                  <div>
-                    <label style={{ display: 'block', fontWeight: 600, fontSize: 13, color: '#374151', marginBottom: 6 }}>URL del Logo</label>
-                    <input type="text" value={identidadForm.logoUrl} onChange={e => setIdentidadForm(f => ({ ...f, logoUrl: e.target.value }))} placeholder="https://..." style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
-                  </div>
+                  
+                  {/* Logo Image Uploader */}
+                  <ImageUploaderInput slug={slug} label="Logo del Negocio (Subir Imagen o URL)" value={identidadForm.logoUrl} onChange={url => setIdentidadForm(f => ({ ...f, logoUrl: url }))} />
                 </div>
-
-                {identidadForm.logoUrl && (
-                  <div style={{ marginBottom: 20, padding: 12, background: '#f8fafc', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <img src={identidadForm.logoUrl} alt="Vista previa Logo" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover' }} onError={e => (e.currentTarget.style.display = 'none')} />
-                    <span style={{ fontSize: 12, color: '#6b7280' }}>Vista previa del logo cargado</span>
-                  </div>
-                )}
 
                 <h4 style={{ margin: '20px 0 12px', fontWeight: 700, color: '#1f2937', fontSize: 15 }}>Paleta de Colores Corporativa</h4>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
@@ -445,7 +494,7 @@ export default function AdminPage({ params }: { params: Promise<{ slug: string }
                 </div>
 
                 <h4 style={{ margin: '20px 0 12px', fontWeight: 700, color: '#1f2937', fontSize: 15 }}>Banner Principal (Hero Landing)</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 16 }}>
                   <div>
                     <label style={{ display: 'block', fontWeight: 600, fontSize: 13, color: '#374151', marginBottom: 6 }}>Título Principal (Hero)</label>
                     <input type="text" value={identidadForm.heroTitulo} onChange={e => setIdentidadForm(f => ({ ...f, heroTitulo: e.target.value }))} placeholder="Ej: La Parrilla Citiox" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
@@ -455,6 +504,7 @@ export default function AdminPage({ params }: { params: Promise<{ slug: string }
                     <input type="text" value={identidadForm.heroSubtitulo} onChange={e => setIdentidadForm(f => ({ ...f, heroSubtitulo: e.target.value }))} placeholder="Ej: Los mejores cortes a la parrilla..." style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
                   </div>
                 </div>
+                <ImageUploaderInput slug={slug} label="Imagen del Banner Principal (Subir Imagen o URL)" value={identidadForm.bannerUrl} onChange={url => setIdentidadForm(f => ({ ...f, bannerUrl: url }))} />
 
                 <h4 style={{ margin: '20px 0 12px', fontWeight: 700, color: '#1f2937', fontSize: 15 }}>Información de Contacto y Operación</h4>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 20 }}>
@@ -632,13 +682,13 @@ export default function AdminPage({ params }: { params: Promise<{ slug: string }
             </div>
           )}
 
-          {/* ── PROMOCIONES TAB ────────────────────────────────────────────── */}
+          {/* ── PROMOCIONES TAB (Módulo Oficial Citiox) ────────────────────── */}
           {tab === 'promociones' && (
             <div style={{ animation: 'fadeIn 0.3s ease' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
                 <button onClick={() => { setPromoForm({ id: '', titulo: '', descripcion: '', precioPromo: '', precioAnterior: '', imagenUrl: '', estado: 'publicada' }); setShowPromoModal(true); }}
                   style={{ background: cp, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 20px', fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Plus size={16} /> Crear Promoción / Banner
+                  <Plus size={16} /> Crear Promoción Citiox
                 </button>
               </div>
 
@@ -665,7 +715,7 @@ export default function AdminPage({ params }: { params: Promise<{ slug: string }
                     </div>
                   </div>
                 ))}
-                {promotions.length === 0 && <p style={{ color: '#9ca3af', gridColumn: '1/-1', textAlign: 'center', padding: 40 }}>Sin promociones registradas. Haz clic en "Crear Promoción".</p>}
+                {promotions.length === 0 && <p style={{ color: '#9ca3af', gridColumn: '1/-1', textAlign: 'center', padding: 40 }}>Sin promociones registradas. Haz clic en "Crear Promoción Citiox".</p>}
               </div>
             </div>
           )}
@@ -706,7 +756,7 @@ export default function AdminPage({ params }: { params: Promise<{ slug: string }
         </div>
       </div>
 
-      {/* ── MODAL PRODUCTO ──────────────────────────────────────────────── */}
+      {/* ── MODAL PRODUCTO (Con Subida de Imagen) ───────────────────────── */}
       {showProductModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
           <div style={{ background: '#fff', borderRadius: 20, padding: 28, width: '100%', maxWidth: 480, boxShadow: '0 20px 60px rgba(0,0,0,0.3)', animation: 'fadeIn 0.25s ease' }}>
@@ -736,11 +786,11 @@ export default function AdminPage({ params }: { params: Promise<{ slug: string }
                   </select>
                 </div>
               </div>
-              <div>
-                <label style={{ display: 'block', fontWeight: 600, fontSize: 12, color: '#374151', marginBottom: 4 }}>URL de Imagen</label>
-                <input type="text" value={productForm.imagenUrl} onChange={e => setProductForm(f => ({ ...f, imagenUrl: e.target.value }))} placeholder="https://..." style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
-              </div>
-              <button onClick={saveProduct} style={{ width: '100%', background: cp, color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 8 }}>
+
+              {/* Subida de Imagen del Producto */}
+              <ImageUploaderInput slug={slug} label="Imagen del Producto (Subir o URL)" value={productForm.imagenUrl} onChange={url => setProductForm(f => ({ ...f, imagenUrl: url }))} />
+
+              <button onClick={saveProduct} style={{ width: '100%', background: cp, color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 4 }}>
                 Guardar Producto
               </button>
             </div>
@@ -794,12 +844,12 @@ export default function AdminPage({ params }: { params: Promise<{ slug: string }
         </div>
       )}
 
-      {/* ── MODAL PROMOCIÓN ────────────────────────────────────────────── */}
+      {/* ── MODAL PROMOCIÓN (Con Subida de Imagen) ──────────────────────── */}
       {showPromoModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
-          <div style={{ background: '#fff', borderRadius: 20, padding: 28, width: '100%', maxWidth: 440, animation: 'fadeIn 0.25s ease' }}>
+          <div style={{ background: '#fff', borderRadius: 20, padding: 28, width: '100%', maxWidth: 460, animation: 'fadeIn 0.25s ease' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-              <h3 style={{ margin: 0, fontWeight: 900, fontSize: 18, color: '#1f2937' }}>{promoForm.id ? 'Editar Promoción' : 'Nueva Promoción'}</h3>
+              <h3 style={{ margin: 0, fontWeight: 900, fontSize: 18, color: '#1f2937' }}>{promoForm.id ? 'Editar Promoción' : 'Nueva Promoción Citiox'}</h3>
               <button onClick={() => setShowPromoModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}><X size={16} /></button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -821,10 +871,10 @@ export default function AdminPage({ params }: { params: Promise<{ slug: string }
                   <input type="number" step="0.01" value={promoForm.precioAnterior} onChange={e => setPromoForm(f => ({ ...f, precioAnterior: e.target.value }))} placeholder="35.00" style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
                 </div>
               </div>
-              <div>
-                <label style={{ display: 'block', fontWeight: 600, fontSize: 12, color: '#374151', marginBottom: 4 }}>URL Imagen Banner</label>
-                <input type="text" value={promoForm.imagenUrl} onChange={e => setPromoForm(f => ({ ...f, imagenUrl: e.target.value }))} placeholder="https://..." style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
-              </div>
+
+              {/* Subida de Imagen de Promoción */}
+              <ImageUploaderInput slug={slug} label="Imagen del Banner Promocional (Subir o URL)" value={promoForm.imagenUrl} onChange={url => setPromoForm(f => ({ ...f, imagenUrl: url }))} />
+
               <button onClick={savePromo} style={{ width: '100%', background: cp, color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 4 }}>
                 Guardar Promoción
               </button>
