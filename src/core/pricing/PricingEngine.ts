@@ -1,142 +1,138 @@
-// src/core/pricing/PricingEngine.ts
-// Motor de Cálculo de Precios y Costos Adicionales Basado en Reglas Declarativas
+/**
+ * @file PricingEngine.ts
+ * @module core/pricing
+ * @description Adaptador del motor de precios para Citiox Enterprise vNext.
+ * @responsibility Envolver la lógica actual de cálculo de subtotales, reglas de empaque por producto (NOT_REQUIRED, OPTIONAL, REQUIRED, SPECIAL), costo delivery GPS por distancia (Haversine/Zonas), descuentos y total final bajo la interfaz del ServiceRegistry.
+ * @dependencies RuntimeLogger
+ * @status Stable (Core Runtime - v1.0)
+ */
 
-import { calculateDeliveryCost, DeliveryConfig } from '../delivery/DeliveryPricing';
+import { RuntimeLogger } from '../observability/RuntimeLogger';
 
-export interface OrderItemInput {
+export type PackagingRequirement = 'NOT_REQUIRED' | 'OPTIONAL' | 'REQUIRED' | 'SPECIAL';
+
+export interface PricingItem {
   productId: string;
-  nombreProducto: string;
-  precioUnitario: number;
-  cantidad: number;
-  categoriaKey?: string;
+  name: string;
+  unitPrice: number;
+  quantity: number;
+  takeawayQty?: number;
+  packagingRequirement?: PackagingRequirement;
 }
 
-export interface PackagingConfig {
-  enabled: boolean;
-  type: 'FREE' | 'FLAT' | 'PER_PRODUCT';
-  amount: number;
-}
-
-export interface PricingInput {
-  items: OrderItemInput[];
-  deliveryType: 'TABLE_ORDER' | 'DELIVERY_ORDER' | 'PICKUP_ORDER' | 'MESA' | 'DOMICILIO' | 'RETIRO';
+export interface CalculatePricingInput {
+  items: PricingItem[];
+  deliveryType: 'PICKUP_ORDER' | 'DELIVERY_ORDER' | 'TABLE_ORDER';
+  packagingUnitPrice?: number;
+  distanceKm?: number;
+  deliveryConfig?: {
+    enabled?: boolean;
+    baseCost?: number;
+    costPerKm?: number;
+    zones?: Array<{ minKm: number; maxKm: number; cost: number }>;
+  };
   discountAmount?: number;
-  serviceFee?: number;
-  deliveryConfig?: DeliveryConfig;
-  packagingConfig?: PackagingConfig;
-  originCoords?: { lat: number; lng: number };
-  destinationCoords?: { lat: number; lng: number };
 }
 
-export interface PricingCalculationResult {
+export interface PricingResult {
   subtotal: number;
   packagingCost: number;
+  totalTakeawayUnits: number;
   deliveryCost: number;
   discountAmount: number;
-  serviceFee: number;
   total: number;
-  breakdown: {
-    itemCount: number;
-    itemsTotal: number;
-    packagingType: string;
-    packagingAmountPerItem: number;
-    distanceKm?: number;
-    appliedDeliveryZone?: any;
-    ruleLogs: string[];
-  };
 }
 
 export class PricingEngine {
-  public static calculate(input: PricingInput): PricingCalculationResult {
-    const ruleLogs: string[] = [];
+  private logger = RuntimeLogger.getInstance();
 
-    // 1. Subtotal de productos
+  public static calculateHaversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    return new PricingEngine().calculateHaversineDistance(lat1, lon1, lat2, lon2);
+  }
+
+  public static calculate(input: any): PricingResult {
+    return new PricingEngine().calculate(input);
+  }
+
+  /**
+   * Fórmula Haversine para calcular distancia en Km entre dos coordenadas GPS.
+   */
+  public calculateHaversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Radio de la Tierra en km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Math.round(R * c * 100) / 100;
+  }
+
+  /**
+   * Calcula el resumen financiero total aplicando empaque por producto y delivery dinámico.
+   */
+  public calculate(input: CalculatePricingInput): PricingResult {
+    const packagingUnitPrice = input.packagingUnitPrice ?? 0.25;
     let subtotal = 0;
-    let totalItemsCount = 0;
+    let totalTakeawayUnits = 0;
 
     for (const item of input.items) {
-      subtotal += item.precioUnitario * item.cantidad;
-      totalItemsCount += item.cantidad;
-    }
-    subtotal = Math.round(subtotal * 100) / 100;
-    ruleLogs.push(`Subtotal calculado para ${totalItemsCount} items: $${subtotal.toFixed(2)}`);
+      subtotal += item.unitPrice * item.quantity;
 
-    // 2. Costo de Empaque (Packaging)
-    let packagingCost = 0;
-    const pkgConfig = input.packagingConfig || { enabled: false, type: 'FREE', amount: 0 };
-    
-    // El empaque se aplica para pedidos para llevar / retiro / delivery
-    const isTakeAway = ['PICKUP_ORDER', 'RETIRO', 'DELIVERY_ORDER', 'DOMICILIO'].includes(input.deliveryType);
-    
-    if (isTakeAway && pkgConfig.enabled) {
-      if (pkgConfig.type === 'FLAT') {
-        packagingCost = pkgConfig.amount;
-        ruleLogs.push(`Empaque tarifa fija (FLAT): $${packagingCost.toFixed(2)}`);
-      } else if (pkgConfig.type === 'PER_PRODUCT') {
-        packagingCost = pkgConfig.amount * totalItemsCount;
-        ruleLogs.push(`Empaque por producto (${totalItemsCount} x $${pkgConfig.amount}): $${packagingCost.toFixed(2)}`);
-      } else {
-        ruleLogs.push(`Empaque sin costo (FREE)`);
+      const req = item.packagingRequirement || 'OPTIONAL';
+      if (req === 'NOT_REQUIRED') {
+        // Cero empaque
+      } else if (req === 'REQUIRED') {
+        totalTakeawayUnits += item.quantity;
+      } else if (req === 'OPTIONAL') {
+        totalTakeawayUnits += Math.min(item.quantity, item.takeawayQty || 0);
+      } else if (req === 'SPECIAL') {
+        totalTakeawayUnits += item.quantity * 1.5; // Coeficiente especial
       }
-    } else {
-      ruleLogs.push(`Empaque omitido (Consumo en local o empaque desactivado)`);
     }
-    packagingCost = Math.round(packagingCost * 100) / 100;
 
-    // 3. Costo de Delivery por distancia
+    const packagingCost = totalTakeawayUnits * packagingUnitPrice;
+
+    // Cálculo dinámico de Delivery
     let deliveryCost = 0;
-    let distanceKm = 0;
-    let appliedZone = null;
+    if (input.deliveryType === 'DELIVERY_ORDER') {
+      const dist = input.distanceKm || 0;
+      const cfg = input.deliveryConfig || {
+        enabled: true,
+        baseCost: 1.50,
+        costPerKm: 0.25,
+        zones: [
+          { minKm: 0, maxKm: 3, cost: 1.50 },
+          { minKm: 3, maxKm: 5, cost: 2.50 },
+          { minKm: 5, maxKm: 10, cost: 4.00 }
+        ]
+      };
 
-    const isDelivery = ['DELIVERY_ORDER', 'DOMICILIO'].includes(input.deliveryType);
-    if (isDelivery && input.deliveryConfig?.enabled) {
-      if (input.originCoords && input.destinationCoords) {
-        const result = calculateDeliveryCost(
-          input.originCoords.lat,
-          input.originCoords.lng,
-          input.destinationCoords.lat,
-          input.destinationCoords.lng,
-          input.deliveryConfig
-        );
-        deliveryCost = result.deliveryCost;
-        distanceKm = result.distanceKm;
-        appliedZone = result.appliedZone;
-        ruleLogs.push(`Delivery por distancia (${distanceKm} km): $${deliveryCost.toFixed(2)}`);
+      if (cfg.zones && Array.isArray(cfg.zones) && cfg.zones.length > 0) {
+        const matchedZone = cfg.zones.find(z => dist >= z.minKm && dist < z.maxKm);
+        if (matchedZone) {
+          deliveryCost = matchedZone.cost;
+        } else {
+          deliveryCost = Math.round(((cfg.baseCost || 1.5) + (dist * (cfg.costPerKm || 0.25))) * 100) / 100;
+        }
       } else {
-        deliveryCost = input.deliveryConfig.baseCost || 0;
-        ruleLogs.push(`Delivery tarifa base por defecto: $${deliveryCost.toFixed(2)}`);
+        deliveryCost = Math.round(((cfg.baseCost || 1.5) + (dist * (cfg.costPerKm || 0.25))) * 100) / 100;
       }
     }
-    deliveryCost = Math.round(deliveryCost * 100) / 100;
 
-    // 4. Descuentos y Tarifa de Servicio
-    const discountAmount = Math.max(0, input.discountAmount || 0);
-    const serviceFee = Math.max(0, input.serviceFee || 0);
+    const discountAmount = input.discountAmount || 0;
+    const total = Math.max(0, subtotal + packagingCost + deliveryCost - discountAmount);
 
-    if (discountAmount > 0) ruleLogs.push(`Descuento aplicado: -$${discountAmount.toFixed(2)}`);
-    if (serviceFee > 0) ruleLogs.push(`Cargo por servicio aplicado: +$${serviceFee.toFixed(2)}`);
-
-    // 5. Total Final
-    const totalRaw = subtotal + packagingCost + deliveryCost + serviceFee - discountAmount;
-    const total = Math.max(0, Math.round(totalRaw * 100) / 100);
-    ruleLogs.push(`Total final calculado: $${total.toFixed(2)}`);
-
-    return {
-      subtotal,
-      packagingCost,
-      deliveryCost,
-      discountAmount,
-      serviceFee,
-      total,
-      breakdown: {
-        itemCount: totalItemsCount,
-        itemsTotal: subtotal,
-        packagingType: pkgConfig.type,
-        packagingAmountPerItem: pkgConfig.amount,
-        distanceKm,
-        appliedDeliveryZone: appliedZone,
-        ruleLogs
-      }
+    const result: PricingResult = {
+      subtotal: Math.round(subtotal * 100) / 100,
+      packagingCost: Math.round(packagingCost * 100) / 100,
+      totalTakeawayUnits,
+      deliveryCost: Math.round(deliveryCost * 100) / 100,
+      discountAmount: Math.round(discountAmount * 100) / 100,
+      total: Math.round(total * 100) / 100
     };
+
+    this.logger.info(`[PricingEngine] Cálculo completado: Subtotal=$${result.subtotal}, Empaque=$${result.packagingCost}, Delivery=$${result.deliveryCost}, Total=$${result.total}`);
+    return result;
   }
 }
