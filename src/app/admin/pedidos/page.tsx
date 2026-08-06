@@ -77,6 +77,9 @@ function PedidosContent() {
     // Visor de comprobante
     const [previewEvidenceUrl, setPreviewEvidenceUrl] = useState<string | null>(null);
 
+    // Modal Tomar Pedido (POS / Caja)
+    const [showNewOrderModal, setShowNewOrderModal] = useState(false);
+
     const fetchOrders = async () => {
         try {
             const res = await fetch('/api/admin/pedidos');
@@ -130,69 +133,53 @@ function PedidosContent() {
         }
     };
 
-    const handleUpdateStatus = async (id: string, newStatus: string) => {
-        const targetOrder = orders.find(o => o.id === id);
-
-        // Al aprobar/confirmar pago y pasar a producción, abrir modal de fecha y hora
-        if (newStatus === 'PREPARACION' && targetOrder) {
-            openDateModalForOrder(targetOrder);
-            return;
-        }
-
+    const handleUpdateStatus = async (orderId: string, newStatus: string) => {
+        setUpdatingState(orderId);
         try {
-            setUpdatingState(id);
             const res = await fetch('/api/admin/pedidos', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, estado: newStatus })
+                body: JSON.stringify({ id: orderId, estado: newStatus })
             });
 
             if (res.ok) {
-                const updated = await res.json();
-                setOrders(prev => prev.map(o => o.id === id ? { ...o, ...updated } : o));
-                if (selectedOrder?.id === id) {
-                    setSelectedOrder(prev => prev ? { ...prev, ...updated } : null);
+                const updatedOrder = await res.json();
+                setOrders(prev => prev.map(o => o.id === orderId ? updatedOrder : o));
+                if (selectedOrder && selectedOrder.id === orderId) {
+                    setSelectedOrder(updatedOrder);
                 }
-            } else {
-                alert("No se pudo actualizar el estado.");
             }
         } catch (e) {
-            console.error(e);
+            console.error('[UPDATE_ORDER_STATUS_ERROR]', e);
         } finally {
             setUpdatingState(null);
         }
     };
 
     const handleConfirmApprovalWithDate = async () => {
-        if (!confirmDateModalOrder || !modalDateTime) {
-            alert("Por favor ingresa la fecha y hora de entrega.");
-            return;
-        }
+        if (!confirmDateModalOrder) return;
+        setSubmittingModal(true);
         try {
-            setSubmittingModal(true);
-            const isoDate = new Date(modalDateTime).toISOString();
             const res = await fetch('/api/admin/pedidos', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     id: confirmDateModalOrder.id,
                     estado: 'PREPARACION',
-                    fechaEntrega: isoDate
+                    fechaEntrega: modalDateTime,
+                    franjaHoraria: modalTimeSlot || 'Confirmado por Caja'
                 })
             });
-
             if (res.ok) {
-                const updated = await res.json();
-                setOrders(prev => prev.map(o => o.id === confirmDateModalOrder.id ? { ...o, ...updated } : o));
-                if (selectedOrder?.id === confirmDateModalOrder.id) {
-                    setSelectedOrder(prev => prev ? { ...prev, ...updated } : null);
+                const updatedOrder = await res.json();
+                setOrders(prev => prev.map(o => o.id === confirmDateModalOrder.id ? updatedOrder : o));
+                if (selectedOrder && selectedOrder.id === confirmDateModalOrder.id) {
+                    setSelectedOrder(updatedOrder);
                 }
                 setConfirmDateModalOrder(null);
-            } else {
-                alert("Error al confirmar el pedido con la fecha de entrega.");
             }
         } catch (e) {
-            console.error("Error approving order with date:", e);
+            console.error('[CONFIRM_APPROVAL_ERROR]', e);
         } finally {
             setSubmittingModal(false);
         }
@@ -209,16 +196,21 @@ function PedidosContent() {
             case 'PAGO_CONFIRMADO':
             case 'RECIBIDO':
             case 'PENDIENTE':
+            case 'WAITING_CONFIRMATION':
+            case 'NUEVA':
                 return { label: 'Aprobar y Enviar a Preparación', status: 'PREPARACION', color: 'bg-emerald-600 hover:bg-emerald-700' };
             case 'EN_PREPARACION':
             case 'PREPARACION':
+            case 'CONFIRMED':
                 return { label: 'Marcar Listo para Entrega', status: 'LISTO', color: 'bg-cyan-600 hover:bg-cyan-700' };
             case 'LISTO':
-                if (order.tipoEntrega === 'DOMICILIO') {
+            case 'READY':
+                if (order.tipoEntrega === 'DOMICILIO' || order.tipoEntrega === 'DELIVERY_ORDER') {
                     return { label: 'Enviar a Domicilio (En Ruta)', status: 'RUTA', color: 'bg-indigo-600 hover:bg-indigo-700' };
                 }
                 return { label: 'Entregar Pedido', status: 'ENTREGADO', color: 'bg-emerald-600 hover:bg-emerald-700' };
             case 'RUTA':
+            case 'ON_ROUTE':
                 return { label: 'Marcar como Entregado', status: 'ENTREGADO', color: 'bg-emerald-600 hover:bg-emerald-700' };
             default:
                 return null;
@@ -226,19 +218,22 @@ function PedidosContent() {
     };
 
     const getStatusBadge = (order: Order) => {
+        if (order.estado === 'WAITING_CONFIRMATION' || order.estado === 'NUEVA') {
+            return <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 rounded-full text-[9px] font-black uppercase tracking-wider border border-amber-300">⌛ Por Confirmar en Caja</span>;
+        }
         if (order.estado === 'PAGO_EN_REVISION') {
             return <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 rounded-full text-[9px] font-black uppercase tracking-wider border border-amber-300">⌛ Comprobante por Verificar</span>;
         }
         if (order.estado === 'PENDIENTE_PAGO') {
             return <span className="px-2.5 py-0.5 bg-slate-100 text-slate-700 rounded-full text-[9px] font-black uppercase tracking-wider">💳 Pendiente de Pago</span>;
         }
-        if (['PREPARACION', 'EN_PREPARACION'].includes(order.estado)) {
+        if (['PREPARACION', 'EN_PREPARACION', 'CONFIRMED'].includes(order.estado)) {
             return <span className="px-2.5 py-0.5 bg-orange-100 text-orange-800 rounded-full text-[9px] font-black uppercase tracking-wider">🔥 En Producción</span>;
         }
-        if (['LISTO', 'RUTA'].includes(order.estado)) {
+        if (['LISTO', 'READY', 'RUTA', 'ON_ROUTE'].includes(order.estado)) {
             return <span className="px-2.5 py-0.5 bg-cyan-100 text-cyan-800 rounded-full text-[9px] font-black uppercase tracking-wider">🛵 Listo / Ruta</span>;
         }
-        if (order.estado === 'ENTREGADO') {
+        if (['ENTREGADO', 'COMPLETED'].includes(order.estado)) {
             return <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[9px] font-black uppercase tracking-wider">🎉 Entregado</span>;
         }
         return <span className="px-2.5 py-0.5 bg-slate-100 text-slate-600 rounded-full text-[9px] font-black uppercase tracking-wider">{order.estado}</span>;
@@ -248,13 +243,21 @@ function PedidosContent() {
         <div className="space-y-6 text-left">
 
             {/* Header */}
-            <div>
-                <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none italic uppercase">
-                    Pedidos & Producción
-                </h1>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1.5">
-                    Revisa comprobantes, aprueba pagos y asigna la hora de entrega
-                </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none italic uppercase">
+                        Pedidos & Producción
+                    </h1>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1.5">
+                        Revisa comprobantes, aprueba ventas y envía comandas a cocina
+                    </p>
+                </div>
+                <button
+                    onClick={() => setShowNewOrderModal(true)}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition-all cursor-pointer"
+                >
+                    <ClipboardList className="size-4" /> + Tomar Pedido (POS / Caja)
+                </button>
             </div>
 
             {/* Pestañas (Tabs) */}
@@ -639,6 +642,280 @@ function PedidosContent() {
                     </div>
                 </div>
             )}
+
+            {/* Modal para Tomar Nuevo Pedido (POS / Caja) */}
+            {showNewOrderModal && (
+                <NewOrderModal
+                    onClose={() => setShowNewOrderModal(false)}
+                    onCreated={() => {
+                        fetchOrders();
+                        setShowNewOrderModal(false);
+                    }}
+                />
+            )}
+        </div>
+    );
+}
+
+function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+    const [nombreCliente, setNombreCliente] = useState('Cliente Presencial');
+    const [telefonoCliente, setTelefonoCliente] = useState('');
+    const [tipoEntrega, setTipoEntrega] = useState<'PICKUP_ORDER' | 'DELIVERY_ORDER' | 'TABLE_ORDER'>('PICKUP_ORDER');
+    const [direccionCliente, setDireccionCliente] = useState('');
+    const [mesaCode, setMesaCode] = useState('Mesa 01');
+    const [descuento, setDescuento] = useState<number>(0);
+    const [autoConfirm, setAutoConfirm] = useState(true);
+
+    const [products, setProducts] = useState<any[]>([]);
+    const [cart, setCart] = useState<{ [productId: string]: number }>({});
+    const [loadingProducts, setLoadingProducts] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+
+    useEffect(() => {
+        async function loadData() {
+            try {
+                const resP = await fetch('/api/admin/productos');
+                if (resP.ok) {
+                    const dP = await resP.json();
+                    setProducts(Array.isArray(dP) ? dP : []);
+                }
+            } catch (e) {
+                console.error('Error cargando productos:', e);
+            } finally {
+                setLoadingProducts(false);
+            }
+        }
+        loadData();
+    }, []);
+
+    const updateQty = (id: string, delta: number) => {
+        setCart(prev => {
+            const current = prev[id] || 0;
+            const next = Math.max(0, current + delta);
+            if (next === 0) {
+                const copy = { ...prev };
+                delete copy[id];
+                return copy;
+            }
+            return { ...prev, [id]: next };
+        });
+    };
+
+    const selectedItems = Object.entries(cart).map(([id, qty]) => {
+        const p = products.find(prod => prod.id === id);
+        return {
+            productoId: id,
+            nombreProducto: p?.nombre || 'Producto',
+            precioUnitario: p?.precio || 0,
+            cantidad: qty
+        };
+    }).filter(i => i.cantidad > 0);
+
+    const subtotal = selectedItems.reduce((acc, i) => acc + (i.precioUnitario * i.cantidad), 0);
+    const total = Math.max(0, subtotal - descuento);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (selectedItems.length === 0) {
+            alert('Selecciona al menos un producto');
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            const res = await fetch('/api/admin/pedidos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombreCliente,
+                    telefonoCliente: telefonoCliente || '0999999999',
+                    direccionCliente: tipoEntrega === 'DELIVERY_ORDER' ? direccionCliente : null,
+                    tipoEntrega,
+                    mesaCode: tipoEntrega === 'TABLE_ORDER' ? mesaCode : null,
+                    descuentoAmount: descuento,
+                    autoConfirm,
+                    items: selectedItems
+                })
+            });
+
+            if (res.ok) {
+                onCreated();
+            } else {
+                const errData = await res.json();
+                alert(errData.error || 'Error al registrar pedido');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error de conexión');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[250] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
+                    <div>
+                        <h2 className="text-xl font-black text-slate-900 italic uppercase">Tomar Pedido (POS / Caja)</h2>
+                        <p className="text-xs text-slate-500 font-semibold">Selecciona productos y datos para ingresar una venta directa</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400">
+                        <X className="size-5" />
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+                    {/* Datos Cliente & Tipo Entrega */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Nombre Cliente</label>
+                            <input
+                                type="text"
+                                value={nombreCliente}
+                                onChange={e => setNombreCliente(e.target.value)}
+                                className="w-full p-3 border border-slate-200 rounded-xl text-sm font-semibold outline-none"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Teléfono</label>
+                            <input
+                                type="text"
+                                value={telefonoCliente}
+                                onChange={e => setTelefonoCliente(e.target.value)}
+                                placeholder="099..."
+                                className="w-full p-3 border border-slate-200 rounded-xl text-sm font-semibold outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Tipo de Entrega</label>
+                            <select
+                                value={tipoEntrega}
+                                onChange={e => setTipoEntrega(e.target.value as any)}
+                                className="w-full p-3 border border-slate-200 rounded-xl text-sm font-bold bg-slate-50 outline-none"
+                            >
+                                <option value="PICKUP_ORDER">Para Llevar (Pickup)</option>
+                                <option value="TABLE_ORDER">Consumo en Mesa</option>
+                                <option value="DELIVERY_ORDER">Domicilio (Delivery)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {tipoEntrega === 'TABLE_ORDER' && (
+                        <div>
+                            <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Número / Identificador de Mesa</label>
+                            <input
+                                type="text"
+                                value={mesaCode}
+                                onChange={e => setMesaCode(e.target.value)}
+                                placeholder="Mesa 01"
+                                className="w-full p-3 border border-slate-200 rounded-xl text-sm font-semibold outline-none"
+                            />
+                        </div>
+                    )}
+
+                    {tipoEntrega === 'DELIVERY_ORDER' && (
+                        <div>
+                            <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Dirección de Entrega</label>
+                            <input
+                                type="text"
+                                value={direccionCliente}
+                                onChange={e => setDireccionCliente(e.target.value)}
+                                placeholder="Calle principal y secundaria"
+                                className="w-full p-3 border border-slate-200 rounded-xl text-sm font-semibold outline-none"
+                                required
+                            />
+                        </div>
+                    )}
+
+                    {/* Catálogo de Productos */}
+                    <div>
+                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Catálogo de Productos</h3>
+                        {loadingProducts ? (
+                            <div className="p-8 text-center text-slate-400">
+                                <Loader2 className="size-6 animate-spin mx-auto mb-2" />
+                                Cargando catálogo de productos...
+                            </div>
+                        ) : products.length === 0 ? (
+                            <div className="p-8 bg-slate-50 rounded-2xl text-center text-slate-500 text-xs">
+                                No tienes productos creados en tu catálogo. Créalos primero en la sección "Productos".
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto p-1">
+                                {products.map(prod => {
+                                    const qty = cart[prod.id] || 0;
+                                    return (
+                                        <div key={prod.id} className="p-3 border border-slate-200 rounded-2xl flex items-center justify-between bg-slate-50 hover:bg-white transition-all">
+                                            <div>
+                                                <p className="font-bold text-sm text-slate-900">{prod.nombre}</p>
+                                                <p className="text-xs font-black text-emerald-600">${parseFloat(prod.precio).toFixed(2)}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateQty(prod.id, -1)}
+                                                    className="w-7 h-7 flex items-center justify-center font-black text-slate-600 hover:bg-slate-100 rounded-lg text-sm"
+                                                >
+                                                    -
+                                                </button>
+                                                <span className="w-6 text-center text-xs font-black text-slate-900">{qty}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateQty(prod.id, 1)}
+                                                    className="w-7 h-7 flex items-center justify-center font-black text-slate-600 hover:bg-slate-100 rounded-lg text-sm"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Opciones de Confirmación */}
+                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold text-slate-900">Enviar a Cocina al Crear</p>
+                            <p className="text-[10px] text-slate-500">Si está activo, el pedido entra directamente en preparación (KDS)</p>
+                        </div>
+                        <input
+                            type="checkbox"
+                            checked={autoConfirm}
+                            onChange={e => setAutoConfirm(e.target.checked)}
+                            className="size-5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                        />
+                    </div>
+                </form>
+
+                {/* Footer Modal */}
+                <div className="p-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+                    <div>
+                        <p className="text-xs text-slate-400 font-bold uppercase">Total Estimado</p>
+                        <p className="text-2xl font-black text-slate-900">${total.toFixed(2)}</p>
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-5 py-3 border border-slate-200 text-slate-600 rounded-2xl text-xs font-bold uppercase"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleSubmit}
+                            disabled={submitting || selectedItems.length === 0}
+                            className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase shadow-lg shadow-emerald-600/20 disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                        >
+                            {submitting ? <Loader2 className="size-4 animate-spin" /> : 'Confirmar Pedido'}
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

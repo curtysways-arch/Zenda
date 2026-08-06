@@ -191,3 +191,108 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+
+export async function POST(req: Request) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+    const negocioId = (session.user as any).negocioId;
+    if (!negocioId) {
+        return NextResponse.json({ error: 'Sin negocio asociado' }, { status: 400 });
+    }
+
+    try {
+        const body = await req.json();
+        const { 
+            nombreCliente, telefonoCliente, direccionCliente, referenciaCliente, 
+            tipoEntrega, items, autoConfirm, descuentoAmount, mesaCode 
+        } = body;
+
+        if (!items || !Array.isArray(items) || items.length === 0) {
+            return NextResponse.json({ error: 'Debe incluir al menos un producto' }, { status: 400 });
+        }
+
+        const negocio = await prisma.negocio.findUnique({ where: { id: negocioId } });
+        if (!negocio) {
+            return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
+        }
+
+        const config = (negocio.configuracion as any) || {};
+        const { PricingEngine } = await import('@/core/pricing/PricingEngine');
+
+        const pricingResult = PricingEngine.calculate({
+            items: items.map((i: any) => ({
+                productId: i.productoId || i.id,
+                nombreProducto: i.nombreProducto || i.nombre,
+                precioUnitario: parseFloat(i.precioUnitario || i.precio || 0),
+                cantidad: parseInt(i.cantidad || 1, 10)
+            })),
+            deliveryType: tipoEntrega || 'PICKUP_ORDER',
+            discountAmount: parseFloat(descuentoAmount || 0),
+            deliveryConfig: config.deliveryConfig || { enabled: true, baseCost: 1.50, costPerKm: 0.25 },
+            packagingConfig: config.packagingConfig || { enabled: true, type: 'PER_PRODUCT', amount: 0.25 }
+        });
+
+        const txResult = await prisma.$transaction(async (tx) => {
+            const lastOrder = await (tx as any).pedido.findFirst({
+                where: { negocioId },
+                orderBy: { numeroPedido: 'desc' },
+                select: { numeroPedido: true }
+            });
+            const nextNumber = lastOrder ? lastOrder.numeroPedido + 1 : 1;
+
+            const estadoInicial = autoConfirm ? 'EN_PREPARACION' : 'WAITING_CONFIRMATION';
+
+            const newOrder = await (tx as any).pedido.create({
+                data: {
+                    negocioId,
+                    numeroPedido: nextNumber,
+                    tipoEntrega: tipoEntrega || 'PICKUP_ORDER',
+                    nombreCliente: nombreCliente || 'Cliente Caja',
+                    telefonoCliente: telefonoCliente || '0999999999',
+                    direccionCliente: direccionCliente || null,
+                    referenciaCliente: referenciaCliente || (mesaCode ? `Mesa: ${mesaCode}` : null),
+                    fechaEntrega: new Date(),
+                    franjaHoraria: 'Inmediata',
+                    subtotal: pricingResult.subtotal,
+                    costoEnvio: pricingResult.deliveryCost,
+                    total: pricingResult.total,
+                    estado: estadoInicial,
+                    extraInfo: {
+                        origin: 'POS_CAJA',
+                        mesaCode: mesaCode || null,
+                        packagingCost: pricingResult.packagingCost,
+                        discountAmount: pricingResult.discountAmount,
+                        pricingBreakdown: pricingResult
+                    },
+                    items: {
+                        create: items.map((i: any) => ({
+                            productoId: i.productoId || i.id,
+                            nombreProducto: i.nombreProducto || i.nombre,
+                            precioUnitario: parseFloat(i.precioUnitario || i.precio || 0),
+                            cantidad: parseInt(i.cantidad || 1, 10)
+                        }))
+                    }
+                },
+                include: { items: true }
+            });
+
+            return newOrder;
+        });
+
+        if (autoConfirm) {
+            try {
+                const { coreEventBus } = require('@/core/events/EventBus');
+                await coreEventBus.emit('ORDER_CONFIRMED', negocioId, txResult, txResult.id);
+            } catch (e) {
+                console.error('[POST_PEDIDOS_EVENT_ERROR]', e);
+            }
+        }
+
+        return NextResponse.json({ success: true, order: txResult });
+    } catch (e: any) {
+        console.error('[API_PEDIDOS_POST]', e);
+        return NextResponse.json({ error: e.message || 'Error creando pedido' }, { status: 500 });
+    }
+}
