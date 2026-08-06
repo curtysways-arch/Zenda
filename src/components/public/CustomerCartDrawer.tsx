@@ -468,16 +468,26 @@ export default function CustomerCartDrawer({
               </div>
               <div className="flex justify-between text-slate-600">
                 <span>Total:</span>
-                <span className="font-bold text-emerald-600">${total.toFixed(2)}</span>
+                <span className="font-bold text-emerald-600">${(Number(total) || 0).toFixed(2)}</span>
               </div>
             </div>
 
+            {/* Botón de seguimiento — navega a la página de tracking */}
+            {createdOrder?.id && (
+              <a
+                href={`/${slug}/pedidos/${createdOrder.id}`}
+                className="w-full py-3.5 rounded-xl font-black text-sm uppercase tracking-wider text-white shadow-md active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 no-underline"
+                style={{ backgroundColor: primaryColor }}
+              >
+                🛵 Seguir mi pedido en vivo
+              </a>
+            )}
+
             <button
               onClick={onClose}
-              className="w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-md active:scale-95 transition-all cursor-pointer"
-              style={{ backgroundColor: primaryColor }}
+              className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-500 border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
             >
-              Entendido / Cerrar
+              Volver al menú
             </button>
           </div>
         )}
