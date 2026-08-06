@@ -1,5 +1,5 @@
 // src/app/api/[slug]/tables/[id]/route.ts
-// Actualización del estado de una mesa específica (DISPONIBLE | OCUPADA | RESERVADA)
+// Actualización y eliminación de una mesa específica
 
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
@@ -12,12 +12,7 @@ export async function PUT(
 ) {
   const { slug, id } = await params;
   const body = await req.json();
-  const { estado } = body;
-
-  const VALID_STATES = ['DISPONIBLE', 'OCUPADA', 'RESERVADA'];
-  if (!VALID_STATES.includes(estado)) {
-    return NextResponse.json({ error: `Estado inválido: ${estado}. Opciones: ${VALID_STATES.join(', ')}` }, { status: 400 });
-  }
+  const { estado, name, capacity } = body;
 
   const negocio = await prisma.negocio.findUnique({ where: { slug } });
   if (!negocio) return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
@@ -27,12 +22,32 @@ export async function PUT(
   });
   if (!table) return NextResponse.json({ error: 'Mesa no encontrada' }, { status: 404 });
 
+  const updateData: any = { updatedAt: new Date() };
+  if (estado) updateData.estado = estado;
+  if (name) updateData.name = name;
+  if (capacity) updateData.capacity = parseInt(capacity);
+
   const updated = await (prisma as any).operableResource.update({
     where: { id },
-    data: { estado, updatedAt: new Date() }
+    data: updateData
   });
 
   return NextResponse.json({ success: true, table: updated });
+}
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ slug: string; id: string }> }
+) {
+  const { slug, id } = await params;
+  const negocio = await prisma.negocio.findUnique({ where: { slug } });
+  if (!negocio) return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
+
+  await (prisma as any).operableResource.deleteMany({
+    where: { id, negocioId: negocio.id, category: 'TABLE' }
+  });
+
+  return NextResponse.json({ success: true, deletedId: id });
 }
 
 export async function GET(

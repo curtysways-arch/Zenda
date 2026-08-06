@@ -1,9 +1,9 @@
 // src/app/api/[slug]/catalogue/route.ts
-// API genérica del catálogo de productos y categorías para el panel admin
-// Reutilizable para cualquier negocio con capability: catalog
+// API genérica del catálogo de productos y categorías para el panel admin (CRUD completo)
 
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +24,7 @@ export async function GET(
 
   const [categories, products] = await Promise.all([
     (prisma as any).categoriaProducto.findMany({
-      where: { negocioId: negocio.id, activo: true },
+      where: { negocioId: negocio.id },
       orderBy: { orden: 'asc' }
     }),
     (prisma as any).producto.findMany({
@@ -49,30 +49,34 @@ export async function POST(
   if (!negocio) return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
 
   if (type === 'category') {
+    if (!data.nombre) return NextResponse.json({ error: 'Nombre de categoría requerido' }, { status: 400 });
     const cat = await (prisma as any).categoriaProducto.create({
       data: {
+        id: crypto.randomUUID(),
         negocioId: negocio.id,
         nombre: data.nombre,
         orden: data.orden || 0,
-        activo: true,
-        updatedAt: new Date()
+        activo: true
       }
     });
     return NextResponse.json({ success: true, category: cat });
   }
 
   if (type === 'product') {
+    if (!data.nombre || data.precio === undefined) {
+      return NextResponse.json({ error: 'Nombre y precio son requeridos' }, { status: 400 });
+    }
     const prod = await (prisma as any).producto.create({
       data: {
+        id: crypto.randomUUID(),
         negocioId: negocio.id,
         nombre: data.nombre,
         descripcion: data.descripcion || null,
-        precio: data.precio || 0,
+        precio: parseFloat(data.precio),
         imagenUrl: data.imagenUrl || null,
         activo: data.activo !== false,
         orden: data.orden || 0,
-        categoriaId: data.categoriaId || null,
-        updatedAt: new Date()
+        categoriaId: data.categoriaId || null
       }
     });
     return NextResponse.json({ success: true, product: prod });
@@ -89,24 +93,64 @@ export async function PUT(
   const body = await req.json();
   const { type, id, ...data } = body;
 
+  if (!id) return NextResponse.json({ error: 'Se requiere id' }, { status: 400 });
+
   const negocio = await prisma.negocio.findUnique({ where: { slug } });
   if (!negocio) return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
 
   if (type === 'product') {
-    const prod = await (prisma as any).producto.updateMany({
+    const updateData: any = { ...data, updatedAt: new Date() };
+    if (updateData.precio !== undefined) updateData.precio = parseFloat(updateData.precio);
+    
+    await (prisma as any).producto.updateMany({
       where: { id, negocioId: negocio.id },
-      data: { ...data, updatedAt: new Date() }
+      data: updateData
     });
-    return NextResponse.json({ success: true, updated: prod.count });
+    const updatedProd = await (prisma as any).producto.findUnique({ where: { id }, include: { categoria: true } });
+    return NextResponse.json({ success: true, product: updatedProd });
   }
 
   if (type === 'category') {
-    const cat = await (prisma as any).categoriaProducto.updateMany({
+    await (prisma as any).categoriaProducto.updateMany({
       where: { id, negocioId: negocio.id },
       data: { ...data, updatedAt: new Date() }
     });
-    return NextResponse.json({ success: true, updated: cat.count });
+    const updatedCat = await (prisma as any).categoriaProducto.findUnique({ where: { id } });
+    return NextResponse.json({ success: true, category: updatedCat });
   }
 
   return NextResponse.json({ error: 'type inválido.' }, { status: 400 });
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  const { slug } = await params;
+  const { searchParams } = new URL(req.url);
+  const type = searchParams.get('type');
+  const id = searchParams.get('id');
+
+  if (!type || !id) {
+    return NextResponse.json({ error: 'Se requieren parámetros type e id' }, { status: 400 });
+  }
+
+  const negocio = await prisma.negocio.findUnique({ where: { slug } });
+  if (!negocio) return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
+
+  if (type === 'product') {
+    await (prisma as any).producto.deleteMany({
+      where: { id, negocioId: negocio.id }
+    });
+    return NextResponse.json({ success: true, deletedId: id });
+  }
+
+  if (type === 'category') {
+    await (prisma as any).categoriaProducto.deleteMany({
+      where: { id, negocioId: negocio.id }
+    });
+    return NextResponse.json({ success: true, deletedId: id });
+  }
+
+  return NextResponse.json({ error: 'type inválido' }, { status: 400 });
 }
