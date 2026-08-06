@@ -114,6 +114,7 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
     if (capabilities.orders) {
       items.push({ name: 'Pedidos', href: '/admin/pedidos', icon: Package, section: 'GESTIÓN OPERATIVA', badge: pendingOrders > 0 ? pendingOrders : undefined });
     }
+    items.push({ name: 'Caja & Finanzas', href: '/admin/caja', icon: Wallet, section: 'GESTIÓN OPERATIVA' });
     if (capabilities.dispatch) {
       items.push({ name: 'Despacho', href: '/admin/despacho', icon: Truck, section: 'GESTIÓN OPERATIVA' });
     }

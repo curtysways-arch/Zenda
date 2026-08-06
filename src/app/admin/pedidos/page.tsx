@@ -676,6 +676,7 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
     const [nombreCliente, setNombreCliente] = useState('Cliente Presencial');
     const [telefonoCliente, setTelefonoCliente] = useState('');
     const [tipoEntrega, setTipoEntrega] = useState<'PICKUP_ORDER' | 'DELIVERY_ORDER' | 'TABLE_ORDER'>('PICKUP_ORDER');
+    const [metodoPago, setMetodoPago] = useState<'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA' | 'MIXTO' | 'OTRO'>('EFECTIVO');
     const [direccionCliente, setDireccionCliente] = useState('');
     const [mesaCode, setMesaCode] = useState('Mesa 01');
     const [descuento, setDescuento] = useState<number>(0);
@@ -871,6 +872,7 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                     telefonoCliente: telefonoCliente || '0999999999',
                     direccionCliente: tipoEntrega === 'DELIVERY_ORDER' ? direccionCliente : null,
                     tipoEntrega,
+                    metodoPago,
                     mesaCode: tipoEntrega === 'TABLE_ORDER' ? mesaCode : null,
                     descuentoAmount: descuento,
                     autoConfirm,
@@ -1217,6 +1219,35 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
 
                 {/* Footer Resumen & Total */}
                 <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50 space-y-3">
+                    {/* Selector de Método de Pago Obligatorio */}
+                    <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider mb-1">
+                            Método de Pago Obligatorio *
+                        </label>
+                        <div className="grid grid-cols-3 gap-1 bg-white p-1 rounded-xl border border-slate-200 text-[10px] font-black uppercase">
+                            {[
+                                { id: 'EFECTIVO', label: '💵 Efectivo' },
+                                { id: 'TRANSFERENCIA', label: '🏦 Transf.' },
+                                { id: 'TARJETA', label: '💳 Tarjeta' },
+                                { id: 'MIXTO', label: '🔀 Mixto' },
+                                { id: 'OTRO', label: '📝 Otro' }
+                            ].map(mp => (
+                                <button
+                                    key={mp.id}
+                                    type="button"
+                                    onClick={() => setMetodoPago(mp.id as any)}
+                                    className={`py-1.5 px-1 rounded-lg transition-all text-center ${
+                                        metodoPago === mp.id
+                                            ? 'bg-emerald-600 text-white shadow-sm'
+                                            : 'text-slate-600 hover:bg-slate-100'
+                                    }`}
+                                >
+                                    {mp.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     <div className="space-y-1 text-xs font-semibold text-slate-500">
                         <div className="flex justify-between">
                             <span>Subtotal Productos:</span>

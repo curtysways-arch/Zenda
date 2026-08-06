@@ -143,9 +143,18 @@ export default function AdminCocinaPage() {
 function KDSCard({ order, onAdvance, nextLabel, btnColor }: { order: KDSOrder; onAdvance: () => void; nextLabel: string; btnColor: string }) {
   const minsAgo = Math.floor((Date.now() - new Date(order.createdAt).getTime()) / (1000 * 60));
   const isUrgent = minsAgo > 10;
+  const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
+
+  const toggleCheck = (idx: number) => {
+    setCheckedItems(prev => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
+  const totalItemsCount = order.items?.length || 0;
+  const checkedCount = Object.values(checkedItems).filter(Boolean).length;
+  const allChecked = totalItemsCount > 0 && checkedCount === totalItemsCount;
 
   return (
-    <div className={`bg-white border-2 rounded-2xl p-4 shadow-sm space-y-3 ${isUrgent ? 'border-rose-400' : 'border-slate-100'}`}>
+    <div className={`bg-white border-2 rounded-2xl p-4 shadow-sm space-y-3 transition-all ${isUrgent ? 'border-rose-400' : allChecked ? 'border-emerald-400 bg-emerald-50/20' : 'border-slate-100'}`}>
       <div className="flex justify-between items-center">
         <span className="font-black text-lg text-slate-900">#{order.numeroPedido}</span>
         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${isUrgent ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-600'}`}>
@@ -159,16 +168,38 @@ function KDSCard({ order, onAdvance, nextLabel, btnColor }: { order: KDSOrder; o
         </span>
       )}
 
-      <div className="space-y-1.5 border-t border-slate-100 pt-3">
-        {order.items?.map((item: any, idx: number) => (
-          <div key={idx} className="flex justify-between text-xs font-semibold text-slate-800">
-            <span>{item.cantidad}x {item.nombreProducto || item.producto?.nombre}</span>
-          </div>
-        ))}
+      {/* Checklist Individual de Ítems */}
+      <div className="space-y-2 border-t border-slate-100 pt-3">
+        {order.items?.map((item: any, idx: number) => {
+          const isChecked = Boolean(checkedItems[idx]);
+          return (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => toggleCheck(idx)}
+              className={`w-full flex items-center justify-between text-left p-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                isChecked
+                  ? 'bg-emerald-100/60 border-emerald-300 text-emerald-950 line-through opacity-80'
+                  : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-sm">{isChecked ? '☑' : '☐'}</span>
+                <span>{item.cantidad}x {item.nombreProducto || item.producto?.nombre}</span>
+              </div>
+              {isChecked && <span className="text-[9px] font-black uppercase text-emerald-700">Preparado</span>}
+            </button>
+          );
+        })}
       </div>
 
-      <button onClick={onAdvance} className={`w-full py-2 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1 shadow-sm hover:opacity-90 ${btnColor}`}>
-        {nextLabel} <ChevronRight className="size-4" />
+      <button
+        onClick={onAdvance}
+        className={`w-full py-2.5 text-white text-xs font-black uppercase tracking-wider rounded-xl flex items-center justify-center gap-1 shadow-sm hover:opacity-90 cursor-pointer transition-all ${
+          allChecked ? 'bg-emerald-600 shadow-emerald-600/30' : btnColor
+        }`}
+      >
+        {allChecked ? '✅ Toda la orden lista → LISTA' : nextLabel} <ChevronRight className="size-4" />
       </button>
     </div>
   );
