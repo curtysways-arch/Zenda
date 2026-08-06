@@ -71,11 +71,13 @@ export const PINCHO_LISTO_BLUEPRINT_MANIFEST: BlueprintManifest = {
   id: 'PINCHO_LISTO',
   version: '1.0.0',
   name: 'Blueprint Fast Food / PinchoListo',
-  description: 'Producción ultrarrápida para comida rápida y despacho express',
+  description: 'Producción ultrarrápida para comida rápida y despacho express consolidado en RestaurantCapability',
   capabilities: [
-    { id: 'pincho_listo', version: '1.0.0', enabled: true, configuration: { expressMode: true }, dependencies: [] }
+    { id: 'restaurant', version: '1.0.0', enabled: true, configuration: { expressMode: true, fastFulfillment: true }, dependencies: [] }
   ],
   defaultConfiguration: {
+    expressMode: true,
+    fastFulfillment: true,
     averagePrepTimeMinutes: 8,
     expressDispatchEnabled: true
   }
