@@ -80,7 +80,7 @@ export async function POST(
         }
 
         const tipoNegocio = (negocio as any).tipoNegocio || 'PRODUCTOS';
-        if (!hasAccess && tipoNegocio !== 'PRODUCTOS') {
+        if (!hasAccess && tipoNegocio !== 'PRODUCTOS' && tipoNegocio !== 'SHOE_CARE') {
             return NextResponse.json({
                 error: "No encontramos reservas con ese número. Verifica que sea el número con el que agendaste tu cita."
             }, { status: 404 });
