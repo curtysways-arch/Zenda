@@ -695,30 +695,12 @@ export default async function PublicNegocioPage({
 
     const reviews = allReviews.filter((r: any) => r.comment && r.comment.trim() !== '');
 
-    // --- Estadísticas globales de calificaciones y clientes ---
-    let totalOpiniones = 0;
-    let promedioOpiniones = 5.0;
+    // --- Estadísticas globales de calificaciones y clientes (basadas en opiniones escritas) ---
+    let totalOpiniones = reviews.length;
+    let promedioOpiniones = reviews.length > 0 
+        ? reviews.reduce((acc: number, r: any) => acc + r.stars, 0) / reviews.length 
+        : 5.0;
     let totalClientes = 0;
-
-    try {
-        const stats = await prisma.rating.aggregate({
-            where: {
-                appointment: { negocioId: negocio.id },
-                raterRole: 'client',
-                stars: { gt: 0 }
-            },
-            _count: {
-                stars: true
-            },
-            _avg: {
-                stars: true
-            }
-        });
-        totalOpiniones = stats._count?.stars || 0;
-        promedioOpiniones = stats._avg?.stars !== null && stats._avg?.stars !== undefined ? Number(stats._avg.stars) : 5.0;
-    } catch (e) {
-        console.error("Error calculating rating stats:", e);
-    }
 
     try {
         totalClientes = await prisma.cliente.count({
@@ -1459,19 +1441,21 @@ export default async function PublicNegocioPage({
                     <div className="flex items-center gap-4">
                         <div className="flex flex-col shrink-0">
                             <span className="text-5xl font-black leading-none" style={{ color: primaryColor }}>
-                                {allReviews.length > 0 ? (allReviews.reduce((acc: number, r: any) => acc + r.stars, 0) / allReviews.length).toFixed(1) : '5.0'}
+                                {reviews.length > 0 ? (reviews.reduce((acc: number, r: any) => acc + r.stars, 0) / reviews.length).toFixed(1) : '5.0'}
                             </span>
                             <div className="flex gap-0.5 mt-1.5">
                                 {Array.from({ length: 5 }).map((_: any, i: number) => (
                                     <span key={i} className="text-amber-400 text-[14px]">&#9733;</span>
                                 ))}
                             </div>
-                            <span className="text-[9px] font-bold text-slate-400 mt-1">Basado en {allReviews.length} opiniones</span>
+                            <span className="text-[9px] font-bold text-slate-400 mt-1">
+                                Basado en {reviews.length} {reviews.length === 1 ? 'opinión' : 'opiniones'}
+                            </span>
                         </div>
                         <div className="flex-1 space-y-1">
                             {[5, 4, 3, 2, 1].map((star: number) => {
-                                const count = allReviews.filter((r: any) => r.stars === star).length;
-                                const pct = allReviews.length > 0 ? (count / allReviews.length) * 100 : (star === 5 ? 100 : 0);
+                                const count = reviews.filter((r: any) => r.stars === star).length;
+                                const pct = reviews.length > 0 ? (count / reviews.length) * 100 : (star === 5 ? 100 : 0);
                                 return (
                                     <div key={star} className="flex items-center gap-1.5">
                                         <span className="text-[9px] font-bold text-slate-500 w-2">{star}</span>
@@ -1489,12 +1473,12 @@ export default async function PublicNegocioPage({
 
                 {/* Reviews list */}
                 <div className="overflow-y-auto flex-1 px-5 pb-5 mt-3 space-y-3">
-                    {allReviews.length === 0 ? (
+                    {reviews.length === 0 ? (
                         <div className="py-10 text-center">
                             <p className="text-slate-400 text-xs font-semibold">Aún no hay opiniones registradas.</p>
                         </div>
                     ) : (
-                        allReviews.map((r: any, idx: number) => {
+                        reviews.map((r: any, idx: number) => {
                             const nombre = r.appointment?.cliente?.nombre || 'Cliente';
                             const inicial = nombre.charAt(0).toUpperCase();
                             const apellidoInicial = nombre.split(' ')[1]?.charAt(0).toUpperCase() || '';
