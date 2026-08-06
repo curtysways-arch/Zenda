@@ -126,11 +126,24 @@ export default async function NegocioLayout({
     const headerTextSecondaryInput = headerBgLuma < 0.5 ? '#cbd5e1' : '#475569';
     const headerBorderInput = headerBgLuma < 0.5 ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
 
-    // Fondo blanco sólido (#ffffff) permanente en todas las pantallas
-    const navBgInput = '#ffffff';
-    const navActiveInput = primaryInput || theme.primaryColor || '#0f172a';
-    const navInactiveInput = '#64748b';
-    const navBorderInput = '#e2e8f0';
+    // Autodetección de tema claro/oscuro para la barra de navegación inferior (Mobile Navigation)
+    const mainBgHex = ((negocio as any).colorNeutral && (negocio as any).colorNeutral !== '#FFF5F5') 
+        ? (negocio as any).colorNeutral 
+        : (theme.backgroundColor || '#ffffff');
+    const mainBgRgb = hexToRgb(mainBgHex) || { r: 255, g: 255, b: 255 };
+    const mainBgLuma = (0.2126 * mainBgRgb.r + 0.7152 * mainBgRgb.g + 0.0722 * mainBgRgb.b) / 255;
+    
+    const isDarkTheme = mainBgLuma < 0.5 || headerBgLuma < 0.5;
+
+    const navBgInput = isDarkTheme 
+        ? ((negocio as any).colorNeutral && (negocio as any).colorNeutral !== '#ffffff' && (negocio as any).colorNeutral !== '#FFF5F5'
+            ? (negocio as any).colorNeutral
+            : (headerBgInput !== '#ffffff' ? headerBgInput : (theme.surfaceSecondary || '#0f172a')))
+        : '#ffffff';
+
+    const navActiveInput = primaryInput || theme.primaryColor || '#7c3aed';
+    const navInactiveInput = isDarkTheme ? '#94a3b8' : '#64748b';
+    const navBorderInput = isDarkTheme ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0';
 
     return (
         <>
