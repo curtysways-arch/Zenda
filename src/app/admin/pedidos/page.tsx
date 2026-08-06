@@ -658,6 +658,11 @@ function PedidosContent() {
     );
 }
 
+interface CartEntry {
+    qty: number;
+    takeawayQty: number;
+}
+
 function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
     const [nombreCliente, setNombreCliente] = useState('Cliente Presencial');
     const [telefonoCliente, setTelefonoCliente] = useState('');
@@ -666,28 +671,34 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
     const [mesaCode, setMesaCode] = useState('Mesa 01');
     const [descuento, setDescuento] = useState<number>(0);
     const [autoConfirm, setAutoConfirm] = useState(true);
-    const [paraLlevarEmpaque, setParaLlevarEmpaque] = useState(true);
 
-    // Mapa & Coordenadas
+    // Negocio & Delivery Config
+    const [bizLat, setBizLat] = useState<number>(-0.180653);
+    const [bizLng, setBizLng] = useState<number>(-78.467838);
+    const [deliveryConfig, setDeliveryConfig] = useState<any>(null);
+    const [packagingAmount, setPackagingAmount] = useState<number>(0.25);
+
+    // Mapa & Coordenadas Cliente
     const [showMapModal, setShowMapModal] = useState(false);
     const [lat, setLat] = useState<number | null>(-0.180653);
     const [lng, setLng] = useState<number | null>(-78.467838);
 
-    // Productos y Categorías
+    // Productos, Categorías y Carrito
     const [products, setProducts] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [selectedCatId, setSelectedCatId] = useState<string>('ALL');
     const [searchQuery, setSearchQuery] = useState('');
-    const [cart, setCart] = useState<{ [productId: string]: number }>({});
+    const [cart, setCart] = useState<{ [productId: string]: CartEntry }>({});
     const [loadingProducts, setLoadingProducts] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         async function loadData() {
             try {
-                const [resP, resC] = await Promise.all([
+                const [resP, resC, resN] = await Promise.all([
                     fetch('/api/admin/productos'),
-                    fetch('/api/admin/categorias')
+                    fetch('/api/admin/categorias'),
+                    fetch('/api/negocio')
                 ]);
                 if (resP.ok) {
                     const dP = await resP.json();
@@ -697,8 +708,21 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                     const dC = await resC.json();
                     setCategories(Array.isArray(dC) ? dC : []);
                 }
+                if (resN.ok) {
+                    const nData = await resN.json();
+                    if (nData.latitud) setBizLat(parseFloat(nData.latitud));
+                    if (nData.longitud) setBizLng(parseFloat(nData.longitud));
+                    let cfg: any = {};
+                    if (typeof nData.configuracion === 'string') {
+                        try { cfg = JSON.parse(nData.configuracion); } catch { cfg = {}; }
+                    } else {
+                        cfg = nData.configuracion || {};
+                    }
+                    if (cfg.deliveryConfig) setDeliveryConfig(cfg.deliveryConfig);
+                    if (cfg.packagingConfig?.amount) setPackagingAmount(parseFloat(cfg.packagingConfig.amount));
+                }
             } catch (e) {
-                console.error('Error cargando catálogo:', e);
+                console.error('Error cargando catálogo y negocio:', e);
             } finally {
                 setLoadingProducts(false);
             }
@@ -706,45 +730,114 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
         loadData();
     }, []);
 
-    // Auto-activar empaque al cambiar a PICKUP_ORDER
+    // Fórmula de Haversine para calcular distancia en Km entre 2 coordenadas
+    function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+        const R = 6371; // Radio de la Tierra en km
+        const dLat = ((lat2 - lat1) * Math.PI) / 180;
+        const dLon = ((lon2 - lon1) * Math.PI) / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return Math.round(R * c * 100) / 100;
+    }
+
+    const distanceKm = (lat && lng && bizLat && bizLng) ? calculateDistance(bizLat, bizLng, lat, lng) : 0;
+
+    // Cálculo dinámico de tarifa de envío según distancia y zonas
+    const computedDeliveryCost = (() => {
+        if (tipoEntrega !== 'DELIVERY_ORDER') return 0;
+        const cfg = deliveryConfig || { 
+            enabled: true, 
+            baseCost: 1.5, 
+            costPerKm: 0.25, 
+            zones: [
+                { minKm: 0, maxKm: 3, cost: 1.50 },
+                { minKm: 3, maxKm: 5, cost: 2.50 },
+                { minKm: 5, maxKm: 10, cost: 4.00 }
+            ]
+        };
+        if (cfg.zones && Array.isArray(cfg.zones) && cfg.zones.length > 0) {
+            const matchedZone = cfg.zones.find((z: any) => distanceKm >= z.minKm && distanceKm < z.maxKm);
+            if (matchedZone) return matchedZone.cost;
+        }
+        return Math.round(((cfg.baseCost || 1.5) + (distanceKm * (cfg.costPerKm || 0.25))) * 100) / 100;
+    })();
+
+    // Cambio de modo de entrega
     const handleDeliveryTypeChange = (type: 'PICKUP_ORDER' | 'DELIVERY_ORDER' | 'TABLE_ORDER') => {
         setTipoEntrega(type);
-        if (type === 'PICKUP_ORDER') {
-            setParaLlevarEmpaque(true);
-        }
+        setCart(prev => {
+            const updated = { ...prev };
+            Object.keys(updated).forEach(id => {
+                const entry = updated[id];
+                if (type === 'PICKUP_ORDER' || type === 'DELIVERY_ORDER') {
+                    updated[id] = { ...entry, takeawayQty: entry.qty };
+                } else {
+                    updated[id] = { ...entry, takeawayQty: 0 };
+                }
+            });
+            return updated;
+        });
     };
 
+    // Actualizar cantidad total de producto
     const updateQty = (id: string, delta: number) => {
         setCart(prev => {
-            const current = prev[id] || 0;
-            const next = Math.max(0, current + delta);
-            if (next === 0) {
+            const current = prev[id] || { qty: 0, takeawayQty: 0 };
+            const nextQty = Math.max(0, current.qty + delta);
+            if (nextQty === 0) {
                 const copy = { ...prev };
                 delete copy[id];
                 return copy;
             }
-            return { ...prev, [id]: next };
+
+            // Si incrementamos y es PICKUP o DELIVERY, auto-incrementamos takeaway
+            let nextTakeaway = current.takeawayQty;
+            if (delta > 0 && (tipoEntrega === 'PICKUP_ORDER' || tipoEntrega === 'DELIVERY_ORDER')) {
+                nextTakeaway += delta;
+            }
+            nextTakeaway = Math.min(nextQty, Math.max(0, nextTakeaway));
+
+            return {
+                ...prev,
+                [id]: { qty: nextQty, takeawayQty: nextTakeaway }
+            };
         });
     };
 
-    const selectedItems = Object.entries(cart).map(([id, qty]) => {
+    // Actualizar cantidad específica para llevar por producto
+    const updateTakeawayQty = (id: string, delta: number) => {
+        setCart(prev => {
+            const current = prev[id];
+            if (!current) return prev;
+            const nextTakeaway = Math.min(current.qty, Math.max(0, current.takeawayQty + delta));
+            return {
+                ...prev,
+                [id]: { ...current, takeawayQty: nextTakeaway }
+            };
+        });
+    };
+
+    const selectedItems = Object.entries(cart).map(([id, entry]) => {
         const p = products.find(prod => prod.id === id);
         return {
             productoId: id,
             nombreProducto: p?.nombre || 'Producto',
             precioUnitario: p?.precio || 0,
-            cantidad: qty,
+            cantidad: entry.qty,
+            takeawayQty: entry.takeawayQty,
             imagenUrl: p?.imagenUrl
         };
     }).filter(i => i.cantidad > 0);
 
     const subtotal = selectedItems.reduce((acc, i) => acc + (i.precioUnitario * i.cantidad), 0);
     const totalItemsCount = selectedItems.reduce((acc, i) => acc + i.cantidad, 0);
+    const totalTakeawayUnits = selectedItems.reduce((acc, i) => acc + i.takeawayQty, 0);
 
-    // Cálculos de adicionales
-    const packagingCost = paraLlevarEmpaque ? (totalItemsCount * 0.25) : 0;
-    const deliveryCost = tipoEntrega === 'DELIVERY_ORDER' ? 2.50 : 0;
-    const grandTotal = Math.max(0, subtotal + packagingCost + deliveryCost - descuento);
+    // Costos de Empaque y Envío
+    const packagingCost = totalTakeawayUnits * packagingAmount;
+    const grandTotal = Math.max(0, subtotal + packagingCost + computedDeliveryCost - descuento);
 
     // Filtrado de productos
     const filteredProducts = products.filter(p => {
@@ -772,7 +865,12 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                     mesaCode: tipoEntrega === 'TABLE_ORDER' ? mesaCode : null,
                     descuentoAmount: descuento,
                     autoConfirm,
-                    items: selectedItems
+                    items: selectedItems.map(i => ({
+                        productoId: i.productoId,
+                        nombreProducto: i.takeawayQty > 0 ? `${i.nombreProducto} (${i.takeawayQty} para llevar)` : i.nombreProducto,
+                        precioUnitario: i.precioUnitario,
+                        cantidad: i.cantidad
+                    }))
                 })
             });
 
@@ -867,7 +965,8 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                     ) : (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
                             {filteredProducts.map(prod => {
-                                const qty = cart[prod.id] || 0;
+                                const cartEntry = cart[prod.id] || { qty: 0, takeawayQty: 0 };
+                                const qty = cartEntry.qty;
                                 return (
                                     <div
                                         key={prod.id}
@@ -923,7 +1022,7 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
             </div>
 
             {/* DERECHA: Resumen de Venta & Caja (35% width) */}
-            <div className="w-full xl:w-[420px] bg-white flex flex-col h-full overflow-hidden shadow-2xl">
+            <div className="w-full xl:w-[440px] bg-white flex flex-col h-full overflow-hidden shadow-2xl">
                 
                 {/* Header Resumen */}
                 <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
@@ -994,7 +1093,7 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
 
                     {tipoEntrega === 'DELIVERY_ORDER' && (
                         <div className="space-y-2">
-                            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Dirección & Mapa</label>
+                            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Dirección & Cálculo GPS</label>
                             <input
                                 type="text"
                                 value={direccionCliente}
@@ -1008,29 +1107,10 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                                 className="w-full py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
                             >
                                 <Navigation className="size-3.5 text-indigo-600" /> 
-                                {lat ? '📍 Ubicación seleccionada en Mapa' : 'Seleccionar Ubicación en Mapa'}
+                                {lat ? `📍 Mapa (${distanceKm} km - Tarifa: $${computedDeliveryCost.toFixed(2)})` : 'Seleccionar Ubicación en Mapa'}
                             </button>
                         </div>
                     )}
-
-                    {/* Checkbox de Empaque Para Llevar */}
-                    <div 
-                        onClick={() => setParaLlevarEmpaque(!paraLlevarEmpaque)}
-                        className={`p-3 rounded-2xl border cursor-pointer flex items-center justify-between transition-all ${
-                            paraLlevarEmpaque 
-                                ? 'bg-amber-50 border-amber-300 text-amber-900' 
-                                : 'bg-slate-50 border-slate-200 text-slate-600'
-                        }`}
-                    >
-                        <div className="flex items-center gap-2.5">
-                            {paraLlevarEmpaque ? <CheckSquare className="size-4 text-amber-600" /> : <Square className="size-4 text-slate-400" />}
-                            <div>
-                                <p className="text-xs font-black uppercase">Empaque Para Llevar</p>
-                                <p className="text-[10px] opacity-75">+ $0.25 por producto empacado</p>
-                            </div>
-                        </div>
-                        <span className="text-xs font-black">${packagingCost.toFixed(2)}</span>
-                    </div>
 
                     {/* Datos del Cliente */}
                     <div className="grid grid-cols-2 gap-2">
@@ -1056,24 +1136,68 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                         </div>
                     </div>
 
-                    {/* Lista del Carrito */}
+                    {/* Lista del Carrito con Asignación Individual de Empaque "Para Llevar" */}
                     <div>
-                        <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Detalle de Productos</label>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Detalle de Productos & Empaque</label>
                         {selectedItems.length === 0 ? (
                             <div className="p-6 border border-dashed border-slate-200 rounded-2xl text-center text-xs text-slate-400">
                                 Haz clic en los productos del catálogo para añadirlos a la orden.
                             </div>
                         ) : (
-                            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                            <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
                                 {selectedItems.map(item => (
-                                    <div key={item.productoId} className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs">
-                                        <div>
-                                            <p className="font-bold text-slate-900">{item.nombreProducto}</p>
-                                            <p className="text-[10px] text-slate-400 font-bold">${item.precioUnitario.toFixed(2)} c/u</p>
+                                    <div key={item.productoId} className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-bold text-xs text-slate-900">{item.nombreProducto}</p>
+                                                <p className="text-[10px] text-slate-400 font-semibold">${item.precioUnitario.toFixed(2)} c/u</p>
+                                            </div>
+                                            <span className="font-black text-slate-900 text-xs">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className="font-black text-slate-700">x{item.cantidad}</span>
-                                            <span className="font-black text-slate-900">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
+
+                                        {/* Controles de Cantidad y Asignación Para Llevar Individual */}
+                                        <div className="flex items-center justify-between pt-2 border-t border-slate-200 text-xs">
+                                            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-0.5">
+                                                <span className="text-[9px] font-black text-slate-400 px-1">Cant:</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateQty(item.productoId, -1)}
+                                                    className="w-5 h-5 flex items-center justify-center font-black bg-slate-100 hover:bg-slate-200 rounded-md text-slate-700 text-xs"
+                                                >
+                                                    -
+                                                </button>
+                                                <span className="w-5 text-center font-black text-slate-900 text-xs">{item.cantidad}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateQty(item.productoId, 1)}
+                                                    className="w-5 h-5 flex items-center justify-center font-black bg-slate-100 hover:bg-slate-200 rounded-md text-slate-700 text-xs"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+
+                                            {/* Empaque Para Llevar por Producto */}
+                                            <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 p-0.5 rounded-xl text-amber-900">
+                                                <ShoppingBag className="size-3 text-amber-600 ml-1" />
+                                                <span className="text-[9px] font-black uppercase">Llevar:</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateTakeawayQty(item.productoId, -1)}
+                                                    disabled={item.takeawayQty === 0}
+                                                    className="w-5 h-5 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded-md text-amber-950 text-xs cursor-pointer"
+                                                >
+                                                    -
+                                                </button>
+                                                <span className="w-4 text-center font-black text-xs text-amber-950">{item.takeawayQty}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateTakeawayQty(item.productoId, 1)}
+                                                    disabled={item.takeawayQty >= item.cantidad}
+                                                    className="w-5 h-5 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded-md text-amber-950 text-xs cursor-pointer"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -1089,16 +1213,16 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                             <span>Subtotal Productos:</span>
                             <span className="font-bold text-slate-800">${subtotal.toFixed(2)}</span>
                         </div>
-                        {paraLlevarEmpaque && (
+                        {totalTakeawayUnits > 0 && (
                             <div className="flex justify-between text-amber-700">
-                                <span>Costo Empaque:</span>
+                                <span>Empaque ({totalTakeawayUnits} para llevar):</span>
                                 <span className="font-bold">+${packagingCost.toFixed(2)}</span>
                             </div>
                         )}
                         {tipoEntrega === 'DELIVERY_ORDER' && (
                             <div className="flex justify-between text-indigo-700">
-                                <span>Costo Delivery:</span>
-                                <span className="font-bold">+${deliveryCost.toFixed(2)}</span>
+                                <span>Delivery GPS ({distanceKm} km):</span>
+                                <span className="font-bold">+${computedDeliveryCost.toFixed(2)}</span>
                             </div>
                         )}
                         <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-200">
@@ -1128,7 +1252,8 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                     setLat(newLat);
                     setLng(newLng);
                     setShowMapModal(false);
-                    setDireccionCliente(`Ubicación seleccionada en Mapa (${newLat.toFixed(4)}, ${newLng.toFixed(4)})`);
+                    const calculatedDist = calculateDistance(bizLat, bizLng, newLat, newLng);
+                    setDireccionCliente(`Ubicación GPS (${calculatedDist} km) - Lat: ${newLat.toFixed(4)}, Lng: ${newLng.toFixed(4)}`);
                 }}
             />
         </div>
