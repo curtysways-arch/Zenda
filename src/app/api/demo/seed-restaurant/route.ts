@@ -30,13 +30,14 @@ export async function GET() {
             password: hashedPassword,
             nombre: 'Admin La Parrilla',
             role: 'ADMIN_NEGOCIO',
-            negocioId: existing.id
+            negocioId: existing.id,
+            updatedAt: new Date()
           }
         });
       } else {
         await (prisma as any).usuario.update({
           where: { email: demoAdminEmail },
-          data: { negocioId: existing.id, role: 'ADMIN_NEGOCIO', password: hashedPassword }
+          data: { negocioId: existing.id, role: 'ADMIN_NEGOCIO', password: hashedPassword, updatedAt: new Date() }
         });
       }
 
@@ -266,13 +267,14 @@ export async function GET() {
           password: hashedPassword,
           nombre: 'Admin La Parrilla',
           role: 'ADMIN_NEGOCIO',
-          negocioId: businessId
+          negocioId: businessId,
+          updatedAt: new Date()
         }
       });
     } else {
       await (prisma as any).usuario.update({
         where: { email: demoAdminEmail },
-        data: { negocioId: businessId, role: 'ADMIN_NEGOCIO', password: hashedPassword }
+        data: { negocioId: businessId, role: 'ADMIN_NEGOCIO', password: hashedPassword, updatedAt: new Date() }
       });
     }
 
