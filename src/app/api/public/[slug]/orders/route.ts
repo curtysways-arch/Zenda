@@ -72,10 +72,16 @@ export async function POST(
 
     try {
         const body = await request.json();
-        const { 
-            deliveryType, clientName, clientPhone, clientAddress, 
-            clientReference, lat, lng, deliveryDate, timeSlot, items 
-        } = body;
+        const deliveryType = body.deliveryType || body.tipoEntrega || 'DOMICILIO';
+        const clientName = body.clientName || body.nombreCliente;
+        const clientPhone = body.clientPhone || body.telefonoCliente;
+        const clientAddress = body.clientAddress || body.direccionCliente;
+        const clientReference = body.clientReference || body.referenciaCliente;
+        const lat = body.lat !== undefined ? body.lat : body.latitud;
+        const lng = body.lng !== undefined ? body.lng : body.longitud;
+        const deliveryDate = body.deliveryDate || body.fechaEntrega;
+        const timeSlot = body.timeSlot || body.franjaHoraria || 'ASAP';
+        const items = body.items;
 
         // Validaciones básicas
         if (!clientName || !clientPhone || !items || !Array.isArray(items) || items.length === 0) {

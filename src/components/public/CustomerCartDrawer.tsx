@@ -3,7 +3,7 @@
  * @module components/public
  * @description Drawer lateral y modal de checkout para pedidos del cliente (FASE 5D).
  * @responsibility Renderizar desglose de pedido ("Mi Pedido"), selección de entrega, formulario de checkout
- *   con GPS, y enviar la orden a /api/public/[slug]/orders (conectado con RestaurantOrderFlowAdapter -> OrderRuntime -> KDS).
+ *   con GPS, y enviar la orden a /api/public/[slug]/orders con compatibilidad total de parámetros y UI 100% visible en PC/Móvil.
  * @dependencies lucide-react, CartContext, MapSelectionModal
  * @status Stable (FASE 5D - Customer Ordering Experience)
  */
@@ -12,8 +12,8 @@
 
 import React, { useState } from 'react';
 import {
-  ShoppingBag, X, Plus, Minus, Trash2, MapPin, Truck, Store, Utensils,
-  Clock, ArrowRight, Loader2, CheckCircle2, ChevronRight, User, Phone, Navigation
+  ShoppingBag, X, Plus, Minus, MapPin, Truck, Store, Utensils,
+  ArrowRight, Loader2, CheckCircle2, ChevronRight, Navigation
 } from 'lucide-react';
 import { useCart } from '@/core/context/CartContext';
 import MapSelectionModal from './MapSelectionModal';
@@ -47,7 +47,6 @@ export default function CustomerCartDrawer({
     setCustomerData,
     setItemQuantity,
     decrementQuantity,
-    removeFromCart,
     clearCart,
   } = useCart();
 
@@ -93,13 +92,22 @@ export default function CustomerCartDrawer({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          // Parámetros en español y en inglés para máxima compatibilidad
+          deliveryType,
           tipoEntrega: deliveryType,
+          clientName: customerData.nombre,
           nombreCliente: customerData.nombre,
+          clientPhone: customerData.telefono,
           telefonoCliente: customerData.telefono,
+          clientAddress: deliveryType === 'DOMICILIO' ? customerData.direccion : undefined,
           direccionCliente: deliveryType === 'DOMICILIO' ? customerData.direccion : undefined,
+          clientReference: deliveryType === 'DOMICILIO' ? customerData.referencia : undefined,
           referenciaCliente: deliveryType === 'DOMICILIO' ? customerData.referencia : undefined,
+          lat: deliveryType === 'DOMICILIO' ? customerData.lat : undefined,
           latitud: deliveryType === 'DOMICILIO' ? customerData.lat : undefined,
+          lng: deliveryType === 'DOMICILIO' ? customerData.lng : undefined,
           longitud: deliveryType === 'DOMICILIO' ? customerData.lng : undefined,
+          timeSlot: customerData.horaEntrega || 'ASAP',
           franjaHoraria: customerData.horaEntrega || 'ASAP',
           subtotal,
           costoEnvio: deliveryCost,
@@ -110,8 +118,10 @@ export default function CustomerCartDrawer({
           },
           items: cart.map(i => ({
             productId: i.product.id,
+            productoId: i.product.id,
             nombreProducto: i.product.nombre,
             precioUnitario: i.product.precio,
+            precio: i.product.precio,
             cantidad: i.quantity,
           })),
         }),
@@ -126,7 +136,7 @@ export default function CustomerCartDrawer({
         if (onOrderSuccess) onOrderSuccess(order);
       } else {
         const err = await res.json();
-        setErrorMessage(err.error || 'No se pudo procesar el pedido.');
+        setErrorMessage(err.error || err.message || 'No se pudo procesar el pedido.');
       }
     } catch (e: any) {
       console.error('[CartDrawer] Error enviando pedido:', e);
@@ -137,17 +147,17 @@ export default function CustomerCartDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex justify-end animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[9999] flex justify-end h-[100dvh] overflow-hidden animate-in fade-in duration-200">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      {/* Drawer Container */}
-      <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col z-10 text-slate-900 overflow-hidden">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 backdrop-blur-md">
+      {/* Drawer Container (Flexbox estricto de altura completa) */}
+      <div className="relative w-full max-w-md bg-white h-[100dvh] max-h-[100dvh] shadow-2xl flex flex-col z-10 text-slate-900 overflow-hidden">
+        {/* Header (Fijo arriba) */}
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/90 backdrop-blur-md shrink-0">
           <div className="flex items-center gap-2">
             <ShoppingBag className="w-5 h-5" style={{ color: primaryColor }} />
             <h2 className="font-black text-lg text-slate-900 tracking-tight">
@@ -164,7 +174,7 @@ export default function CustomerCartDrawer({
 
         {/* ── PASO 1: CARRO ("Mi Pedido") ── */}
         {step === 'cart' && (
-          <div className="flex-1 flex flex-col justify-between overflow-hidden">
+          <div className="flex-1 flex flex-col justify-between overflow-hidden min-h-0">
             {cart.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400 space-y-4">
                 <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-300">
@@ -184,8 +194,8 @@ export default function CustomerCartDrawer({
               </div>
             ) : (
               <>
-                {/* Lista de Items */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-4 divide-y divide-slate-100">
+                {/* Lista de Items con Scroll Interno */}
+                <div className="flex-1 overflow-y-auto min-h-0 p-6 space-y-4 divide-y divide-slate-100">
                   {cart.map((item) => (
                     <div key={item.product.id} className="pt-3 first:pt-0 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -227,9 +237,9 @@ export default function CustomerCartDrawer({
                   ))}
                 </div>
 
-                {/* Resumen Financiero + Botón Continuar (con pb-24 en móvil para librar barra fija) */}
-                <div className="p-6 pb-24 sm:pb-6 bg-slate-50 border-t border-slate-100 space-y-4">
-                  <div className="space-y-2 text-xs text-slate-600 font-medium">
+                {/* Resumen Financiero + Botón Continuar (Fijo al fondo) */}
+                <div className="shrink-0 p-5 pb-16 sm:pb-6 bg-slate-50 border-t border-slate-100 space-y-3 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+                  <div className="space-y-1.5 text-xs text-slate-600 font-medium">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
                       <span className="font-bold text-slate-900">${subtotal.toFixed(2)}</span>
@@ -240,7 +250,7 @@ export default function CustomerCartDrawer({
                         <span className="font-bold text-slate-900">${deliveryCost.toFixed(2)}</span>
                       </div>
                     )}
-                    <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-200">
+                    <div className="flex justify-between text-base font-black text-slate-900 pt-1.5 border-t border-slate-200">
                       <span>Total</span>
                       <span style={{ color: primaryColor }}>${total.toFixed(2)}</span>
                     </div>
@@ -248,7 +258,7 @@ export default function CustomerCartDrawer({
 
                   <button
                     onClick={handleNextToCheckout}
-                    className="w-full py-4 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
+                    className="w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
                     style={{ backgroundColor: primaryColor }}
                   >
                     <span>Continuar Pedido ({totalItemsCount} items)</span>
@@ -262,8 +272,9 @@ export default function CustomerCartDrawer({
 
         {/* ── PASO 2: CHECKOUT (Formulario de Datos) ── */}
         {step === 'checkout' && (
-          <form onSubmit={handleSubmitOrder} className="flex-1 flex flex-col justify-between overflow-hidden">
-            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          <form onSubmit={handleSubmitOrder} className="flex-1 flex flex-col justify-between overflow-hidden min-h-0">
+            {/* Cuerpo del Formulario con Scroll Interno */}
+            <div className="flex-1 overflow-y-auto min-h-0 p-6 space-y-4">
               {/* Selección Método de Entrega */}
               <div>
                 <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">
@@ -273,7 +284,7 @@ export default function CustomerCartDrawer({
                   <button
                     type="button"
                     onClick={() => setDeliveryType('DOMICILIO')}
-                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
+                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
                       deliveryType === 'DOMICILIO'
                         ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
                         : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -285,7 +296,7 @@ export default function CustomerCartDrawer({
                   <button
                     type="button"
                     onClick={() => setDeliveryType('RETIRO')}
-                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
+                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
                       deliveryType === 'RETIRO'
                         ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
                         : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -297,7 +308,7 @@ export default function CustomerCartDrawer({
                   <button
                     type="button"
                     onClick={() => setDeliveryType('MESA')}
-                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all ${
+                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
                       deliveryType === 'MESA'
                         ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
                         : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -318,7 +329,7 @@ export default function CustomerCartDrawer({
                     required
                     value={customerData.nombre}
                     onChange={(e) => setCustomerData({ nombre: e.target.value })}
-                    placeholder="Ej: Carlos Gómez"
+                    placeholder="Ej: Carlos Caicedo"
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white transition-colors"
                   />
                 </div>
@@ -391,14 +402,14 @@ export default function CustomerCartDrawer({
               )}
 
               {errorMessage && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-bold">
-                  {errorMessage}
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-bold animate-pulse">
+                  ⚠️ {errorMessage}
                 </div>
               )}
             </div>
 
-            {/* Total + Botón Confirmar */}
-            <div className="p-6 pb-24 sm:pb-6 bg-slate-50 border-t border-slate-100 space-y-4">
+            {/* Total + Botón Confirmar (Fijo al fondo) */}
+            <div className="shrink-0 p-5 pb-16 sm:pb-6 bg-slate-50 border-t border-slate-100 space-y-3 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
               <div className="flex justify-between text-base font-black text-slate-900">
                 <span>Total A Pagar</span>
                 <span style={{ color: primaryColor }}>${total.toFixed(2)}</span>
@@ -415,7 +426,7 @@ export default function CustomerCartDrawer({
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 py-4 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+                  className="flex-1 py-3.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
                   style={{ backgroundColor: primaryColor }}
                 >
                   {submitting ? (
@@ -434,7 +445,7 @@ export default function CustomerCartDrawer({
 
         {/* ── PASO 3: EXITO DE PEDIDO ── */}
         {step === 'success' && (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-5 animate-in zoom-in-95 duration-200">
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-5 animate-in zoom-in-95 duration-200 overflow-y-auto">
             <div className="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-lg">
               <CheckCircle2 className="w-10 h-10" />
             </div>
@@ -463,7 +474,7 @@ export default function CustomerCartDrawer({
 
             <button
               onClick={onClose}
-              className="w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-md active:scale-95 transition-all"
+              className="w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-md active:scale-95 transition-all cursor-pointer"
               style={{ backgroundColor: primaryColor }}
             >
               Entendido / Cerrar
