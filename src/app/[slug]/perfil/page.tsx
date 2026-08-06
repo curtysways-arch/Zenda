@@ -67,7 +67,7 @@ const formatFechaNacimientoUTC = (dateInput: Date | string | null) => {
 
 export default function MiPerfilPage() {
     const params = useParams();
-    const slug = params.slug as string;
+    const slug = (params.slug as string) || (typeof window !== 'undefined' && window.location.pathname.startsWith('/demo-lavado') ? 'demo-lavado' : 'lavado');
     const router = useRouter();
 
     const [loading, setLoading] = useState(true);
