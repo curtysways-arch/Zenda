@@ -328,7 +328,7 @@ function PedidosContent() {
                                         <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                                             <div className="text-left sm:text-right">
                                                 <span className="text-[9px] font-black uppercase text-slate-400 block tracking-widest">Total</span>
-                                                <span className="text-lg font-black text-slate-950">${order.total.toFixed(2)}</span>
+                                                <span className="text-lg font-black text-slate-950">${(Number(order.total) || 0).toFixed(2)}</span>
                                             </div>
 
                                             {nextAction ? (
@@ -412,7 +412,7 @@ function PedidosContent() {
                                         <FileText className="size-5 text-emerald-600" /> Comprobante de Pago Subido
                                     </span>
                                     <span className="text-xs font-bold text-emerald-800 font-mono bg-white/80 px-2.5 py-1 rounded-lg border border-emerald-200">
-                                        ${selectedOrder.payment?.monto ? selectedOrder.payment.monto.toFixed(2) : selectedOrder.total.toFixed(2)}
+                                        ${(Number(selectedOrder.payment?.monto || selectedOrder.total) || 0).toFixed(2)}
                                     </span>
                                 </div>
                                 <button
@@ -505,7 +505,7 @@ function PedidosContent() {
                                             <span className="font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md mr-1.5">{item.cantidad}x</span>
                                             <span className="text-slate-900 font-bold">{item.nombreProducto}</span>
                                         </div>
-                                        <span className="font-black text-slate-950">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
+                                        <span className="font-black text-slate-950">${((Number(item.precioUnitario) || 0) * item.cantidad).toFixed(2)}</span>
                                     </div>
                                 ))}
                             </div>
@@ -516,17 +516,17 @@ function PedidosContent() {
                             <div className="space-y-2 text-xs font-bold text-slate-600">
                                 <div className="flex justify-between">
                                     <span>Subtotal</span>
-                                    <span>${selectedOrder.subtotal.toFixed(2)}</span>
+                                    <span>${(Number(selectedOrder.subtotal) || 0).toFixed(2)}</span>
                                 </div>
                                 {selectedOrder.tipoEntrega === 'DOMICILIO' && (
                                     <div className="flex justify-between">
                                         <span>Costo de Envío</span>
-                                        <span>${selectedOrder.costoEnvio.toFixed(2)}</span>
+                                        <span>${(Number(selectedOrder.costoEnvio) || 0).toFixed(2)}</span>
                                     </div>
                                 )}
                                 <div className="flex justify-between text-base font-black text-slate-950 pt-2.5 border-t border-slate-100">
                                     <span>Total A Pagar</span>
-                                    <span className="text-orange-600">${selectedOrder.total.toFixed(2)}</span>
+                                    <span className="text-orange-600">${(Number(selectedOrder.total) || 0).toFixed(2)}</span>
                                 </div>
                             </div>
 
@@ -983,7 +983,7 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                                                 )}
                                             </div>
                                             <h4 className="font-bold text-xs text-white line-clamp-1 mb-1">{prod.nombre}</h4>
-                                            <p className="text-emerald-400 font-black text-sm mb-3">${parseFloat(prod.precio).toFixed(2)}</p>
+                                            <p className="text-emerald-400 font-black text-sm mb-3">${(Number(prod.precio) || 0).toFixed(2)}</p>
                                         </div>
 
                                         {/* Botones de incremento / decremento */}
@@ -1099,7 +1099,7 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                                 className="w-full py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
                             >
                                 <Navigation className="size-3.5 text-indigo-600" /> 
-                                {lat ? `📍 Mapa (${distanceKm} km - Tarifa: $${computedDeliveryCost.toFixed(2)})` : 'Seleccionar Ubicación en Mapa'}
+                                {lat ? `📍 Mapa (${distanceKm} km - Tarifa: $${(Number(computedDeliveryCost) || 0).toFixed(2)})` : 'Seleccionar Ubicación en Mapa'}
                             </button>
                         </div>
                     )}
@@ -1142,9 +1142,9 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <p className="font-bold text-xs text-slate-900">{item.nombreProducto}</p>
-                                                <p className="text-[10px] text-slate-400 font-semibold">${item.precioUnitario.toFixed(2)} c/u</p>
+                                                <p className="text-[10px] text-slate-400 font-semibold">${(Number(item.precioUnitario) || 0).toFixed(2)} c/u</p>
                                             </div>
-                                            <span className="font-black text-slate-900 text-xs">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
+                                            <span className="font-black text-slate-900 text-xs">${((Number(item.precioUnitario) || 0) * item.cantidad).toFixed(2)}</span>
                                         </div>
 
                                         {/* Controles de Cantidad y Asignación Para Llevar Individual */}
@@ -1203,23 +1203,23 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                     <div className="space-y-1 text-xs font-semibold text-slate-500">
                         <div className="flex justify-between">
                             <span>Subtotal Productos:</span>
-                            <span className="font-bold text-slate-800">${subtotal.toFixed(2)}</span>
+                            <span className="font-bold text-slate-800">${(Number(subtotal) || 0).toFixed(2)}</span>
                         </div>
                         {totalTakeawayUnits > 0 && (
                             <div className="flex justify-between text-amber-700">
                                 <span>Empaque ({totalTakeawayUnits} para llevar):</span>
-                                <span className="font-bold">+${packagingCost.toFixed(2)}</span>
+                                <span className="font-bold">+${(Number(packagingCost) || 0).toFixed(2)}</span>
                             </div>
                         )}
                         {tipoEntrega === 'DELIVERY_ORDER' && (
                             <div className="flex justify-between text-indigo-700">
                                 <span>Delivery GPS ({distanceKm} km):</span>
-                                <span className="font-bold">+${computedDeliveryCost.toFixed(2)}</span>
+                                <span className="font-bold">+${(Number(computedDeliveryCost) || 0).toFixed(2)}</span>
                             </div>
                         )}
                         <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-200">
                             <span>TOTAL A COBRAR:</span>
-                            <span className="text-xl text-emerald-600">${grandTotal.toFixed(2)}</span>
+                            <span className="text-xl text-emerald-600">${(Number(grandTotal) || 0).toFixed(2)}</span>
                         </div>
                     </div>
 
