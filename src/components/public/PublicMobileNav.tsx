@@ -80,10 +80,10 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
         visible: true
     });
 
-    // 2. Tab Secundario: "Mis Citas" (RESERVA) vs "Mis Pedidos / Órdenes" (PRODUCTOS / SHOE_CARE) vs "Reservas" (SPORTS_COURTS)
+    // 2. Tab Secundario: "Agenda" (RESERVA) vs "Mis Pedidos / Órdenes" (PRODUCTOS / SHOE_CARE) vs "Reservas" (SPORTS_COURTS)
     if (canAppointments) {
         tabs.push({
-            label: 'Mis Citas',
+            label: 'Agenda',
             icon: Calendar,
             href: `/${slug}/mis-reservas`,
             active: pathname.includes('/mis-reservas') && activeTabParam !== 'academia',
@@ -162,18 +162,18 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
                                 className="relative flex flex-col items-center justify-center flex-1 h-full -translate-y-4 pointer-events-auto"
                             >
                                 <div 
-                                    className="size-14 rounded-full flex items-center justify-center shadow-lg border-2 active:scale-95 transition-transform"
+                                    className="size-14 rounded-full flex items-center justify-center shadow-xl border-2 active:scale-95 transition-transform"
                                     style={{
-                                        backgroundColor: 'var(--primary, #7c3aed)',
-                                        borderColor: 'rgba(255,255,255,0.4)',
-                                        boxShadow: '0 4px 14px rgba(0, 0, 0, 0.3)'
+                                        backgroundColor: '#0f172a',
+                                        borderColor: 'color-mix(in srgb, var(--primary, #ec4899), transparent 30%)',
+                                        boxShadow: '0 6px 20px rgba(0, 0, 0, 0.4)'
                                     }}
                                 >
-                                    <CentralIcon size={24} style={{ color: 'var(--text-on-primary, #ffffff)' }} />
+                                    <CentralIcon size={24} style={{ color: 'var(--primary, #ec4899)' }} />
                                 </div>
                                 <span 
                                     className="text-[9px] font-black uppercase tracking-widest leading-none mt-1.5"
-                                    style={{ color: 'var(--nav-active, var(--primary, #7c3aed))' }}
+                                    style={{ color: 'var(--nav-active, #ffffff)' }}
                                 >
                                     {tab.label}
                                 </span>
