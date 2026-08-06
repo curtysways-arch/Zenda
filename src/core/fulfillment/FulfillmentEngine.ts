@@ -243,6 +243,31 @@ export class FulfillmentEngine {
     return Array.from(this.tickets.values()).find(t => t.orderId === orderId);
   }
 
+  /**
+   * Método de compatibilidad para llamadores de versiones anteriores.
+   */
+  public createTicket(orderId: string, businessId: string, channelString?: string): FulfillmentTicket {
+    const channel: FulfillmentChannel = (channelString === 'RESTAURANT' || !channelString) ? 'DELIVERY' : (channelString as FulfillmentChannel);
+    const ticketId = `flf-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const pipeline = this.getDefaultPipeline(channel);
+    const now = new Date().toISOString();
+
+    const ticket: FulfillmentTicket = {
+      ticketId,
+      orderId,
+      businessId,
+      channel,
+      currentStage: pipeline[0] || 'ACCEPTED',
+      pipeline,
+      status: 'IN_PROGRESS',
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.tickets.set(ticketId, ticket);
+    return ticket;
+  }
+
   public getTickets(businessId?: string): FulfillmentTicket[] {
     const all = Array.from(this.tickets.values());
     return businessId ? all.filter(t => t.businessId === businessId) : all;

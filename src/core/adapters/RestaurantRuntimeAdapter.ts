@@ -182,10 +182,10 @@ export class RestaurantRuntimeAdapter {
     const orderState = this.toLegacyOrderState(pedido);
     const confirmedState = await this.orderRuntime.transitionOrder(orderState, 'CONFIRMED');
 
-    const fulfillmentTicket = this.fulfillmentEngine.createTicket(
+    const fulfillmentTicket = await this.fulfillmentEngine.beginFulfillment(
       pedido.id,
       pedido.negocioId,
-      'RESTAURANT'
+      pedido.tipoEntrega === 'RETIRO' ? 'PICKUP' : pedido.tipoEntrega === 'MESA' ? 'TABLE_SERVICE' : 'DELIVERY'
     );
 
     let deliveryTask: DeliveryTask | undefined;
