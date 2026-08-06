@@ -152,7 +152,7 @@ export async function POST(req: Request) {
                 fecha: now,
                 horaInicio: now.toISOString().substring(11, 16),
                 horaFin: now.toISOString().substring(11, 16),
-                status: 'COMPLETED',
+                estado: 'COMPLETED',
                 total: parseFloat(monto),
                 extraInfo: {
                     financialMovement: true,
