@@ -182,32 +182,13 @@ export default function MiPerfilPage() {
                 setStep('profile');
                 fetchReservas();
             } else {
-                // Verificar si hay sesión guardada en localStorage
-                const savedPhone = localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone');
-                const savedName = localStorage.getItem('pinchos_client_name') || localStorage.getItem('user_name') || 'Cliente';
-                if (savedPhone) {
-                    setTelefono(savedPhone);
-                    setCliente({ telefono: savedPhone, nombre: savedName });
-                    setStep('profile');
-                    fetchReservas();
-                } else {
-                    setCliente(null);
-                    setStep('phone');
-                }
-            }
-        } catch (error) {
-            console.error("Error al cargar perfil:", error);
-            const savedPhone = localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone');
-            const savedName = localStorage.getItem('pinchos_client_name') || localStorage.getItem('user_name') || 'Cliente';
-            if (savedPhone) {
-                setTelefono(savedPhone);
-                setCliente({ telefono: savedPhone, nombre: savedName });
-                setStep('profile');
-                fetchReservas();
-            } else {
                 setCliente(null);
                 setStep('phone');
             }
+        } catch (error) {
+            console.error("Error al cargar perfil:", error);
+            setCliente(null);
+            setStep('phone');
         } finally {
             setLoading(false);
         }

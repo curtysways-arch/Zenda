@@ -103,12 +103,12 @@ export async function POST(
                             : `/${slug}/mis-cursos`
         });
 
-        // Guardar token en cookie segura httpOnly por 24 horas
+        // Guardar token en cookie segura httpOnly por 30 días
         response.cookies.set("customer_token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
-            maxAge: 60 * 60 * 24, // 24 horas
+            maxAge: 60 * 60 * 24 * 30, // 30 días
             path: "/",
         });
         // Cookie de señal para el cliente JS (no httpOnly) — indica que hay sesión activa
@@ -116,7 +116,7 @@ export async function POST(
             httpOnly: false,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
-            maxAge: 60 * 60 * 24,
+            maxAge: 60 * 60 * 24 * 30, // 30 días
             path: "/",
         });
 
