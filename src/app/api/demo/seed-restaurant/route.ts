@@ -20,9 +20,9 @@ export async function GET() {
       const hashedPassword = await bcrypt.hash('CitioxDemo2026!', 10);
       const demoAdminEmail = 'demo.restaurante@citiox.com';
 
-      let demoUser = await prisma.usuario.findUnique({ where: { email: demoAdminEmail } });
+      let demoUser = await (prisma as any).usuario.findUnique({ where: { email: demoAdminEmail } });
       if (!demoUser) {
-        await prisma.usuario.create({
+        await (prisma as any).usuario.create({
           data: {
             id: crypto.randomUUID(),
             email: demoAdminEmail,
@@ -33,7 +33,7 @@ export async function GET() {
           }
         });
       } else {
-        await prisma.usuario.update({
+        await (prisma as any).usuario.update({
           where: { email: demoAdminEmail },
           data: { negocioId: existing.id, role: 'ADMIN_NEGOCIO', password: hashedPassword }
         });
@@ -257,9 +257,9 @@ export async function GET() {
     const hashedPassword = await bcrypt.hash('CitioxDemo2026!', 10);
     const demoAdminEmail = 'demo.restaurante@citiox.com';
 
-    let demoUser = await prisma.usuario.findUnique({ where: { email: demoAdminEmail } });
+    let demoUser = await (prisma as any).usuario.findUnique({ where: { email: demoAdminEmail } });
     if (!demoUser) {
-      demoUser = await prisma.usuario.create({
+      demoUser = await (prisma as any).usuario.create({
         data: {
           id: crypto.randomUUID(),
           email: demoAdminEmail,
@@ -270,7 +270,7 @@ export async function GET() {
         }
       });
     } else {
-      await prisma.usuario.update({
+      await (prisma as any).usuario.update({
         where: { email: demoAdminEmail },
         data: { negocioId: businessId, role: 'ADMIN_NEGOCIO', password: hashedPassword }
       });
