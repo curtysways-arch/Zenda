@@ -811,10 +811,10 @@ export default async function PublicNegocioPage({
             <section className="px-6 mb-6">
                 <div className="relative w-full aspect-[16/13] xs:aspect-[16/11] sm:aspect-[16/10] max-h-[380px] rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-100/50">
                     <HeroCarousel images={displayImages} baseClass="absolute inset-0 w-full h-full object-cover" opacityActive="opacity-100" />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/30 to-black/55" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/35 to-black/70 z-10 pointer-events-none" />
                     
                     {/* Contenido integrado en la imagen */}
-                    <div className="absolute inset-0 p-4 flex flex-col justify-between items-center text-center">
+                    <div className="absolute inset-0 p-4 z-20 flex flex-col justify-between items-center text-center">
                         
                         {/* Bloque Medio: Centrado verticalmente */}
                         <div className="flex-1 flex flex-col items-center justify-center space-y-2.5">

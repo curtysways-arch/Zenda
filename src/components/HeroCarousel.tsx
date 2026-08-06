@@ -71,7 +71,7 @@ export default function HeroCarousel({
                         src={img}
                         alt={`Fondo ${index + 1}`}
                         className={`${baseClass} ${opacityActive} transition-opacity duration-1000 ease-in-out ${
-                            isActive ? 'z-10 opacity-100 scale-105' : 'z-0 opacity-100 scale-100'
+                            isActive ? 'z-1 opacity-100 scale-105' : 'z-0 opacity-0 scale-100'
                         }`}
                     />
                 );
