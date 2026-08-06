@@ -141,8 +141,12 @@ export default async function PublicNegocioPage({
             initialProducts = prods;
             initialCategories = cats;
         } catch (_) {}
-        const { default: RestaurantLanding } = await import('@/modules/restaurant/components/RestaurantLanding');
-        return <RestaurantLanding negocio={negocio} initialProducts={initialProducts} initialCategories={initialCategories} />;
+        const { resolveExperiencePack } = await import('@/core/experiences/ExperienceRegistry');
+        const pack = resolveExperiencePack('RESTAURANT', ['catalog', 'orders']);
+        if (pack) {
+            const { default: RestaurantLanding } = await import('@/modules/restaurant/components/RestaurantLanding');
+            return <RestaurantLanding negocio={negocio} initialProducts={initialProducts} initialCategories={initialCategories} />;
+        }
     }
 
     if (negocio.tipoNegocio === 'SPORTS_COURTS' || (negocio.configuracion as any)?.tipoNegocio === 'SPORTS_COURTS' || slug.includes('canchas')) {

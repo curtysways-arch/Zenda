@@ -44,7 +44,7 @@ export default async function AdminDashboard() {
         return <ShoeCareBackoffice negocio={negocioObj} />;
     }
 
-    if (activeType === 'PRODUCTOS') {
+    if (activeType === 'PRODUCTOS' || activeType === 'RESTAURANT') {
         return <ProductsDashboard negocioId={negocioId} role={role} />;
     }
 
