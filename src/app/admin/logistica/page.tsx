@@ -92,12 +92,12 @@ interface Assignment {
   horaAsignacion: string;
   horaSalida?: string;
   horaCompletado?: string;
-  resource: {
+  resource?: {
     id: string;
     name: string;
     avatar?: string;
     estado: DriverEstado;
-  };
+  } | null;
 }
 
 // ─── BADGES ──────────────────────────────────────────────────────────────────
@@ -914,9 +914,11 @@ function KanbanCard({ assignment, onUpdate }: { assignment: Assignment; onUpdate
 
       <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
         <div className="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center text-xs font-bold text-slate-600">
-          {assignment.resource.name.charAt(0)}
+          {(assignment.resource?.name || assignment.clienteNombre || 'R').charAt(0).toUpperCase()}
         </div>
-        <span className="text-xs font-semibold text-slate-700 flex-1">{assignment.resource.name}</span>
+        <span className="text-xs font-semibold text-slate-700 flex-1">
+          {assignment.resource?.name || 'Pendiente de Asignación'}
+        </span>
       </div>
 
       {next && (
@@ -1053,10 +1055,22 @@ export default function LogisticaPage() {
         fetch('/api/logistics/resources?includeInactive=true'),
         fetch('/api/logistics/assignments'),
       ]);
-      if (driversRes.ok) setDrivers(await driversRes.json());
-      if (assignmentsRes.ok) setAssignments(await assignmentsRes.json());
+      if (driversRes.ok) {
+        const dData = await driversRes.json();
+        setDrivers(Array.isArray(dData) ? dData : []);
+      } else {
+        setDrivers([]);
+      }
+      if (assignmentsRes.ok) {
+        const aData = await assignmentsRes.json();
+        setAssignments(Array.isArray(aData) ? aData : []);
+      } else {
+        setAssignments([]);
+      }
     } catch (error) {
       console.error('Error loading logistics data:', error);
+      setDrivers([]);
+      setAssignments([]);
     } finally {
       setLoading(false);
     }
