@@ -89,7 +89,7 @@ export default function ProductQuantityCard({
           {/* Precio */}
           <div className="flex items-center justify-between">
             <span className="text-2xl font-black" style={{ color: primaryColor }}>
-              ${product.precio.toFixed(2)}
+              ${(Number(product.precio) || 0).toFixed(2)}
             </span>
           </div>
 

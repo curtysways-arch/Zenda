@@ -210,7 +210,7 @@ export default function CustomerCartDrawer({
                         <div className="min-w-0 flex-1">
                           <h4 className="font-bold text-slate-900 text-sm truncate">{item.product.nombre}</h4>
                           <span className="text-xs font-black text-slate-500">
-                            ${(item.product.precio * item.quantity).toFixed(2)}
+                            ${((Number(item.product.precio) || 0) * item.quantity).toFixed(2)}
                           </span>
                         </div>
                       </div>

@@ -187,8 +187,8 @@ export function CartProvider({
     });
   };
 
-  const subtotal = cart.reduce((sum, item) => sum + item.product.precio * item.quantity, 0);
-  const effectiveDeliveryCost = deliveryType === 'DOMICILIO' ? deliveryCost : 0;
+  const subtotal = cart.reduce((sum, item) => sum + (Number(item.product.precio) || 0) * item.quantity, 0);
+  const effectiveDeliveryCost = deliveryType === 'DOMICILIO' ? (Number(deliveryCost) || 0) : 0;
   const total = subtotal + effectiveDeliveryCost;
   const totalItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
