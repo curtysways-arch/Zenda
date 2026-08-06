@@ -20,6 +20,7 @@ export type BusinessModule =
 const MODULES_BY_TYPE: Record<string, BusinessModule[]> = {
     RESERVA: ['APPOINTMENTS', 'SERVICES', 'LOYALTY', 'COUPONS'],
     PRODUCTOS: ['CATALOG', 'ORDERS', 'DELIVERY', 'LOYALTY', 'COUPONS'],
+    RESTAURANT: ['CATALOG', 'ORDERS', 'DELIVERY', 'LOYALTY', 'COUPONS'],  // alias de PRODUCTOS
     SHOE_CARE: ['ORDERS', 'DELIVERY', 'SERVICES', 'LOYALTY', 'COUPONS'],
     SPORTS_COURTS: ['RESERVATIONS', 'ACADEMY', 'ACADEMIA', 'LOYALTY', 'COUPONS'],
     ACADEMIA: ['ACADEMY', 'ACADEMIA', 'COUPONS']
@@ -30,6 +31,7 @@ const MODULES_BY_TYPE: Record<string, BusinessModule[]> = {
  */
 export function resolveBusinessModules(tipoNegocio?: string | null): BusinessModule[] {
     if (!tipoNegocio) {
+        // Sin tipoNegocio se asume Reserva, pero se puede sobrescribir por businessConfig
         return MODULES_BY_TYPE['RESERVA'];
     }
 
@@ -40,7 +42,7 @@ export function resolveBusinessModules(tipoNegocio?: string | null): BusinessMod
     }
 
     // Heurísticas de fallback si tipoNegocio contiene palabras clave
-    if (normalizedType.includes('PRODUCT') || normalizedType.includes('TIENDA') || normalizedType.includes('ECOMMERCE') || normalizedType.includes('COMIDA')) {
+    if (normalizedType.includes('PRODUCT') || normalizedType.includes('TIENDA') || normalizedType.includes('ECOMMERCE') || normalizedType.includes('COMIDA') || normalizedType.includes('RESTAUR') || normalizedType.includes('FOOD') || normalizedType.includes('DELIVERY')) {
         return MODULES_BY_TYPE['PRODUCTOS'];
     }
     if (normalizedType.includes('LAVADO') || normalizedType.includes('SNEAKER') || normalizedType.includes('CALZADO') || normalizedType.includes('SHOE')) {

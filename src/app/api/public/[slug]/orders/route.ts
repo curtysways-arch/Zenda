@@ -37,8 +37,13 @@ export async function GET(
             return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
         }
 
-        // 🟢 Validación de Módulo
-        if (!hasModule(negocio.tipoNegocio, 'ORDERS')) {
+        // 🟢 Validación de Módulo (bypass para negocios Enterprise Runtime)
+        const negocioConfigGet = (typeof negocio.configuracion === 'string'
+            ? (() => { try { return JSON.parse(negocio.configuracion as string); } catch { return {}; } })()
+            : (negocio.configuracion as any)) || {};
+        const isEnterpriseGet = negocioConfigGet.useEnterpriseRuntime || negocioConfigGet.enterpriseRuntime;
+
+        if (!isEnterpriseGet && !hasModule(negocio.tipoNegocio, 'ORDERS')) {
             return NextResponse.json({ error: 'MODULE_NOT_AVAILABLE', message: 'El módulo de pedidos no está disponible para este negocio.' }, { status: 403 });
         }
 
@@ -100,8 +105,13 @@ export async function POST(
             return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
         }
 
-        // 🟢 Validación de Módulo
-        if (!hasModule(negocio.tipoNegocio, 'ORDERS')) {
+        // 🟢 Validación de Módulo (bypass para negocios Enterprise Runtime)
+        const negocioConfig = (typeof negocio.configuracion === 'string'
+            ? (() => { try { return JSON.parse(negocio.configuracion as string); } catch { return {}; } })()
+            : (negocio.configuracion as any)) || {};
+        const isEnterprise = negocioConfig.useEnterpriseRuntime || negocioConfig.enterpriseRuntime;
+
+        if (!isEnterprise && !hasModule(negocio.tipoNegocio, 'ORDERS')) {
             return NextResponse.json({ error: 'MODULE_NOT_AVAILABLE', message: 'El módulo de pedidos no está disponible para este negocio.' }, { status: 403 });
         }
 

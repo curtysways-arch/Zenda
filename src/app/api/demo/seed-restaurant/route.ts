@@ -82,6 +82,7 @@ export async function GET() {
         id: businessId,
         nombre: manifest.businessName,
         slug: DEMO_SLUG,
+        tipoNegocio: 'PRODUCTOS', // Restaurante/Delivery → módulo ORDERS habilitado
         whatsapp: manifest.contacto.whatsapp,
         emailContacto: manifest.contacto.emailContacto,
         direccion: manifest.contacto.direccion,
