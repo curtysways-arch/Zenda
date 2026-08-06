@@ -1,0 +1,143 @@
+{
+  "schemaVersion": "3.0.0",
+  "businessName": "La Parrilla Citiox",
+  "slug": "parrilla-citiox-demo",
+  "blueprint": "RESTAURANT",
+  "isDemo": true,
+  "branding": {
+    "colorPrimario": "#c2410c",
+    "colorSecundario": "#1c0a00",
+    "colorTerciario": "#fbbf24",
+    "colorNeutral": "#fef3c7",
+    "colorTexto": "#ffffff",
+    "heroTitulo": "Sabor que se siente",
+    "heroSubtitulo": "Parrillas artesanales, cortes premium y la mejor experiencia gastronómica de la ciudad."
+  },
+  "contacto": {
+    "whatsapp": "+593991234567",
+    "emailContacto": "demo@parrilla-citiox.com",
+    "direccion": "Av. Principal 123, Quito",
+    "ciudad": "Quito",
+    "horarioApertura": "11:00",
+    "horarioCierre": "22:00"
+  },
+  "plan": "GROWTH",
+  "channels": {
+    "TABLE": true,
+    "QR_ORDER": true,
+    "WAITER": true,
+    "KDS": true,
+    "DELIVERY": true,
+    "PICKUP": true,
+    "POS": true
+  },
+  "capabilities": {
+    "catalog": true,
+    "orders": true,
+    "tables": true,
+    "kitchen": true,
+    "payments": true,
+    "delivery": true,
+    "reports": true,
+    "customers": true,
+    "promotions": false
+  },
+  "initialResources": {
+    "tables": 20,
+    "tableCapacity": 4
+  },
+  "catalog": {
+    "categories": [
+      {
+        "id": "cat-parrilladas",
+        "nombre": "Parrilladas",
+        "orden": 1,
+        "emoji": "🥩"
+      },
+      {
+        "id": "cat-hamburguesas",
+        "nombre": "Hamburguesas",
+        "orden": 2,
+        "emoji": "🍔"
+      },
+      {
+        "id": "cat-bebidas",
+        "nombre": "Bebidas",
+        "orden": 3,
+        "emoji": "🥤"
+      }
+    ],
+    "products": [
+      {
+        "nombre": "Parrillada Familiar",
+        "descripcion": "Selección de carnes premium para 4 personas. Incluye chorizos, costillas, pollo y acompañamientos.",
+        "precio": 38.00,
+        "categoriaKey": "cat-parrilladas",
+        "imagenUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=400"
+      },
+      {
+        "nombre": "Parrillada Personal",
+        "descripcion": "Corte de lomo fino + chorizo artesanal. Servido con papas y ensalada.",
+        "precio": 16.50,
+        "categoriaKey": "cat-parrilladas",
+        "imagenUrl": "https://images.unsplash.com/photo-1558030006-450675393462?w=400"
+      },
+      {
+        "nombre": "Churrasco Argentino",
+        "descripcion": "200g de churrasco a la parrilla con chimichurri casero y papas fritas.",
+        "precio": 14.00,
+        "categoriaKey": "cat-parrilladas",
+        "imagenUrl": "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=400"
+      },
+      {
+        "nombre": "Costillas BBQ",
+        "descripcion": "Rack de costillas de cerdo glaseadas en salsa BBQ artesanal. Para 2 personas.",
+        "precio": 24.00,
+        "categoriaKey": "cat-parrilladas",
+        "imagenUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?w=400"
+      },
+      {
+        "nombre": "Hamburguesa Clásica",
+        "descripcion": "180g de carne angus, lechuga, tomate, cebolla caramelizada y salsa especial.",
+        "precio": 8.50,
+        "categoriaKey": "cat-hamburguesas",
+        "imagenUrl": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400"
+      },
+      {
+        "nombre": "Hamburguesa Especial",
+        "descripcion": "Doble carne angus, queso cheddar, tocino crujiente, pepinillos y salsa BBQ.",
+        "precio": 12.00,
+        "categoriaKey": "cat-hamburguesas",
+        "imagenUrl": "https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=400"
+      },
+      {
+        "nombre": "Smash Burger",
+        "descripcion": "Dos pattys aplastados al estilo smash, queso americano derretido y salsa especial.",
+        "precio": 10.50,
+        "categoriaKey": "cat-hamburguesas",
+        "imagenUrl": "https://images.unsplash.com/photo-1550317138-10000687a72b?w=400"
+      },
+      {
+        "nombre": "Coca Cola",
+        "descripcion": "Lata fría 330ml.",
+        "precio": 2.00,
+        "categoriaKey": "cat-bebidas",
+        "imagenUrl": "https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400"
+      },
+      {
+        "nombre": "Jugo Natural",
+        "descripcion": "Jugo de frutas frescas de temporada. Disponible en mora, maracuyá y naranja.",
+        "precio": 3.50,
+        "categoriaKey": "cat-bebidas",
+        "imagenUrl": "https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400"
+      },
+      {
+        "nombre": "Agua Mineral",
+        "descripcion": "Agua mineral 500ml con o sin gas.",
+        "precio": 1.50,
+        "categoriaKey": "cat-bebidas",
+        "imagenUrl": "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=400"
+      }
+    ]
+  }
+}

@@ -128,6 +128,23 @@ export default async function PublicNegocioPage({
         return <ShoeCareLanding negocio={negocio} reviews={realReviews} paginasPersonalizadas={paginas} />;
     }
 
+    // ── Blueprint RESTAURANT dispatch ─────────────────────────────────────────
+    const blueprintId = (negocio.configuracion as any)?.blueprintId;
+    if (blueprintId === 'RESTAURANT') {
+        let initialProducts: any[] = [];
+        let initialCategories: any[] = [];
+        try {
+            const [prods, cats] = await Promise.all([
+                (prisma as any).producto.findMany({ where: { negocioId: negocio.id, activo: true }, orderBy: { orden: 'asc' }, include: { categoria: true } }),
+                (prisma as any).categoriaProducto.findMany({ where: { negocioId: negocio.id, activo: true }, orderBy: { orden: 'asc' } })
+            ]);
+            initialProducts = prods;
+            initialCategories = cats;
+        } catch (_) {}
+        const { default: RestaurantLanding } = await import('@/modules/restaurant/components/RestaurantLanding');
+        return <RestaurantLanding negocio={negocio} initialProducts={initialProducts} initialCategories={initialCategories} />;
+    }
+
     if (negocio.tipoNegocio === 'SPORTS_COURTS' || (negocio.configuracion as any)?.tipoNegocio === 'SPORTS_COURTS' || slug.includes('canchas')) {
         let paginasCanchas: any[] = [];
         try {
