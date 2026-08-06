@@ -63,7 +63,7 @@ export async function GET(req: Request) {
 
         // Filter by cashier if parameter passed
         const filteredPayments = cashierParam
-            ? payments.filter(p => ((p.Appointment as any)?.extraInfo as any)?.cashier === cashierParam)
+            ? payments.filter(p => p.notas?.includes(cashierParam) || p.referencia?.includes(cashierParam))
             : payments;
 
         // Financial Metrics Breakdown
@@ -121,7 +121,7 @@ export async function GET(req: Request) {
                 fecha: p.fecha,
                 clienteNombre: p.Appointment?.cliente?.nombre || 'Cliente Presencial',
                 servicioNombre: p.Appointment?.service?.nombre || 'Venta POS / Pedido',
-                cashier: ((p.Appointment as any)?.extraInfo as any)?.cashier || 'Cajero Principal'
+                cashier: 'Cajero Principal'
             }))
         });
     } catch (error) {
@@ -143,34 +143,53 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Faltan parámetros requeridos (action, monto)' }, { status: 400 });
         }
 
-        // Create virtual appointment container for movement
         const now = new Date();
-        const fakeAppt = await prisma.appointment.create({
-            data: {
-                id: `appt-fin-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-                negocioId,
-                fecha: now,
-                horaInicio: now.toISOString().substring(11, 16),
-                horaFin: now.toISOString().substring(11, 16),
-                estado: 'COMPLETED',
-                total: parseFloat(monto),
-                extraInfo: {
-                    financialMovement: true,
-                    movementType: action,
-                    cashier: (session.user as any).name || (session.user as any).email || 'Cajero'
-                }
-            }
+        const cashierName = (session.user as any).name || (session.user as any).email || 'Cajero';
+        const refCode = action === 'ADD_EXPENSE' ? `GASTO: ${concepto || 'Egreso de caja'}` : `INGRESO_MANUAL: ${concepto || 'Ingreso manual de caja'}`;
+
+        // Find existing appointment for business or create container if necessary
+        let apptId: string | null = null;
+        const existingAppt = await prisma.appointment.findFirst({
+            where: { negocioId },
+            select: { id: true }
         });
 
-        const refCode = action === 'ADD_EXPENSE' ? `GASTO: ${concepto || 'Egreso de caja'}` : `INGRESO_MANUAL: ${concepto || 'Ingreso manual de caja'}`;
+        if (existingAppt) {
+            apptId = existingAppt.id;
+        } else {
+            const service = await prisma.service.findFirst({ where: { negocioId }, select: { id: true } });
+            const cliente = await prisma.cliente.findFirst({ where: { negocioId }, select: { id: true } });
+            if (service && cliente) {
+                const fakeAppt = await prisma.appointment.create({
+                    data: {
+                        id: `appt-fin-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+                        negocioId,
+                        clienteId: cliente.id,
+                        serviceId: service.id,
+                        fecha: now,
+                        horaInicio: now.toISOString().substring(11, 16),
+                        horaFin: now.toISOString().substring(11, 16),
+                        estado: 'COMPLETED',
+                        total: parseFloat(monto),
+                        updatedAt: now
+                    }
+                });
+                apptId = fakeAppt.id;
+            }
+        }
+
+        if (!apptId) {
+            return NextResponse.json({ error: 'No se encontró cita ni servicio base para vincular el pago' }, { status: 400 });
+        }
 
         const payment = await prisma.pagoReserva.create({
             data: {
                 id: `pago-fin-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-                appointmentId: fakeAppt.id,
+                appointmentId: apptId,
                 monto: parseFloat(monto),
                 metodo,
                 referencia: refCode,
+                notas: `Registrado por: ${cashierName}`,
                 fecha: now
             }
         });
