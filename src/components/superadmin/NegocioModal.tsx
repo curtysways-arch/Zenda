@@ -1106,7 +1106,8 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
                                                 setFormData(prev => ({ ...prev, businessTypeId: foundBt.id }));
                                             }
                                         }}
-                                        className="w-full px-6 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-2xl outline-none focus:border-emerald-500/30 text-sm font-bold !text-slate-900 dark:!text-white italic"
+                                        className="w-full px-6 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-2xl outline-none focus:border-emerald-500/30 text-sm font-bold italic"
+                                        style={{ color: '#1e293b' }}
                                     >
                                         {dbBusinessTypes.length > 0 ? (
                                             dbBusinessTypes.map(bt => (
