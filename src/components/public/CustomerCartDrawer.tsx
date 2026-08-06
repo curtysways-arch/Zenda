@@ -137,7 +137,7 @@ export default function CustomerCartDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-[150] flex justify-end animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[9999] flex justify-end animate-in fade-in duration-200">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity"
@@ -156,7 +156,7 @@ export default function CustomerCartDrawer({
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-200/70 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors"
+            className="w-8 h-8 rounded-full bg-slate-200/70 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -176,7 +176,7 @@ export default function CustomerCartDrawer({
                 </div>
                 <button
                   onClick={onClose}
-                  className="px-6 py-2.5 rounded-xl font-bold text-xs text-white shadow-md active:scale-95 transition-all"
+                  className="px-6 py-2.5 rounded-xl font-bold text-xs text-white shadow-md active:scale-95 transition-all cursor-pointer"
                   style={{ backgroundColor: primaryColor }}
                 >
                   Explorar Menú
@@ -210,7 +210,7 @@ export default function CustomerCartDrawer({
                         <button
                           type="button"
                           onClick={() => decrementQuantity(item.product.id)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:bg-white transition-colors"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:bg-white transition-colors cursor-pointer"
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
@@ -218,7 +218,7 @@ export default function CustomerCartDrawer({
                         <button
                           type="button"
                           onClick={() => setItemQuantity(item.product, item.quantity + 1)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:bg-white transition-colors"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:bg-white transition-colors cursor-pointer"
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
@@ -227,8 +227,8 @@ export default function CustomerCartDrawer({
                   ))}
                 </div>
 
-                {/* Resumen Financiero + Botón Continuar */}
-                <div className="p-6 bg-slate-50 border-t border-slate-100 space-y-4">
+                {/* Resumen Financiero + Botón Continuar (con pb-24 en móvil para librar barra fija) */}
+                <div className="p-6 pb-24 sm:pb-6 bg-slate-50 border-t border-slate-100 space-y-4">
                   <div className="space-y-2 text-xs text-slate-600 font-medium">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
@@ -248,7 +248,7 @@ export default function CustomerCartDrawer({
 
                   <button
                     onClick={handleNextToCheckout}
-                    className="w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
+                    className="w-full py-4 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
                     style={{ backgroundColor: primaryColor }}
                   >
                     <span>Continuar Pedido ({totalItemsCount} items)</span>
@@ -398,7 +398,7 @@ export default function CustomerCartDrawer({
             </div>
 
             {/* Total + Botón Confirmar */}
-            <div className="p-6 bg-slate-50 border-t border-slate-100 space-y-4">
+            <div className="p-6 pb-24 sm:pb-6 bg-slate-50 border-t border-slate-100 space-y-4">
               <div className="flex justify-between text-base font-black text-slate-900">
                 <span>Total A Pagar</span>
                 <span style={{ color: primaryColor }}>${total.toFixed(2)}</span>
@@ -408,14 +408,14 @@ export default function CustomerCartDrawer({
                 <button
                   type="button"
                   onClick={() => setStep('cart')}
-                  className="py-3 px-4 rounded-xl font-bold text-xs bg-slate-200 text-slate-700 hover:bg-slate-300 transition-colors"
+                  className="py-3 px-4 rounded-xl font-bold text-xs bg-slate-200 text-slate-700 hover:bg-slate-300 transition-colors cursor-pointer"
                 >
                   Atrás
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 py-3.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                  className="flex-1 py-4 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
                   style={{ backgroundColor: primaryColor }}
                 >
                   {submitting ? (

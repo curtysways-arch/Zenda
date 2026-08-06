@@ -220,35 +220,22 @@ function RestaurantLandingContent({
         </div>
       </div>
 
-      {/* Floating Bar Carrito */}
+      {/* Floating Bar Carrito (Móvil y Desktop) */}
       {totalItemsCount > 0 && !showCartDrawer && (
-        <div style={{ position: 'fixed', bottom: 20, left: 0, right: 0, zIndex: 100, display: 'flex', justifyContent: 'center', padding: '0 20px', pointerEvents: 'none' }}>
+        <div className="fixed bottom-20 sm:bottom-6 left-0 right-0 z-[100] flex justify-center px-4 pointer-events-none">
           <button
             onClick={() => setShowCartDrawer(true)}
+            className="pointer-events-auto w-full max-w-md sm:max-w-lg text-white border-0 rounded-2xl py-3.5 px-6 font-extrabold text-base flex items-center justify-between shadow-2xl cursor-pointer hover:scale-[1.02] active:scale-95 transition-all"
             style={{
-              pointerEvents: 'auto',
-              margin: '0 auto',
-              width: '100%',
-              maxWidth: 440,
-              background: cp,
-              color: '#fff',
-              border: 'none',
-              borderRadius: 20,
-              padding: '14px 24px',
-              fontWeight: 800,
-              fontSize: 15,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              boxShadow: `0 12px 36px ${cp}60`,
+              backgroundColor: cp,
+              boxShadow: `0 12px 36px ${cp}80`,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <ShoppingBag size={22} />
+            <div className="flex items-center gap-2.5">
+              <ShoppingBag className="w-5 h-5" />
               <span>Ver Mi Pedido ({totalItemsCount} items)</span>
             </div>
-            <span style={{ fontSize: 16, fontWeight: 900 }}>${total.toFixed(2)}</span>
+            <span className="text-base font-black">${total.toFixed(2)}</span>
           </button>
         </div>
       )}
