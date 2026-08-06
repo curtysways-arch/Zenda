@@ -4,8 +4,9 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { 
     Clock, ChefHat, PackageCheck, Bike, CheckCircle2, AlertCircle, 
-    Loader2, Search, MapPin, Phone, Calendar, ClipboardList, ExternalLink, X, FileText, Image as ImageIcon, Check, Ban, ArrowLeft
+    Loader2, Search, MapPin, Phone, Calendar, ClipboardList, ExternalLink, X, FileText, Image as ImageIcon, Check, Ban, ArrowLeft, ShoppingBag, Utensils, CheckSquare, Square, Layers, Navigation
 } from 'lucide-react';
+import MapSelectionModal from '@/components/public/MapSelectionModal';
 
 interface OrderItem {
     id: string;
@@ -665,8 +666,18 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
     const [mesaCode, setMesaCode] = useState('Mesa 01');
     const [descuento, setDescuento] = useState<number>(0);
     const [autoConfirm, setAutoConfirm] = useState(true);
+    const [paraLlevarEmpaque, setParaLlevarEmpaque] = useState(true);
 
+    // Mapa & Coordenadas
+    const [showMapModal, setShowMapModal] = useState(false);
+    const [lat, setLat] = useState<number | null>(-0.180653);
+    const [lng, setLng] = useState<number | null>(-78.467838);
+
+    // Productos y Categorías
     const [products, setProducts] = useState<any[]>([]);
+    const [categories, setCategories] = useState<any[]>([]);
+    const [selectedCatId, setSelectedCatId] = useState<string>('ALL');
+    const [searchQuery, setSearchQuery] = useState('');
     const [cart, setCart] = useState<{ [productId: string]: number }>({});
     const [loadingProducts, setLoadingProducts] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -674,19 +685,34 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
     useEffect(() => {
         async function loadData() {
             try {
-                const resP = await fetch('/api/admin/productos');
+                const [resP, resC] = await Promise.all([
+                    fetch('/api/admin/productos'),
+                    fetch('/api/admin/categorias')
+                ]);
                 if (resP.ok) {
                     const dP = await resP.json();
                     setProducts(Array.isArray(dP) ? dP : []);
                 }
+                if (resC.ok) {
+                    const dC = await resC.json();
+                    setCategories(Array.isArray(dC) ? dC : []);
+                }
             } catch (e) {
-                console.error('Error cargando productos:', e);
+                console.error('Error cargando catálogo:', e);
             } finally {
                 setLoadingProducts(false);
             }
         }
         loadData();
     }, []);
+
+    // Auto-activar empaque al cambiar a PICKUP_ORDER
+    const handleDeliveryTypeChange = (type: 'PICKUP_ORDER' | 'DELIVERY_ORDER' | 'TABLE_ORDER') => {
+        setTipoEntrega(type);
+        if (type === 'PICKUP_ORDER') {
+            setParaLlevarEmpaque(true);
+        }
+    };
 
     const updateQty = (id: string, delta: number) => {
         setCart(prev => {
@@ -707,17 +733,29 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
             productoId: id,
             nombreProducto: p?.nombre || 'Producto',
             precioUnitario: p?.precio || 0,
-            cantidad: qty
+            cantidad: qty,
+            imagenUrl: p?.imagenUrl
         };
     }).filter(i => i.cantidad > 0);
 
     const subtotal = selectedItems.reduce((acc, i) => acc + (i.precioUnitario * i.cantidad), 0);
-    const total = Math.max(0, subtotal - descuento);
+    const totalItemsCount = selectedItems.reduce((acc, i) => acc + i.cantidad, 0);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    // Cálculos de adicionales
+    const packagingCost = paraLlevarEmpaque ? (totalItemsCount * 0.25) : 0;
+    const deliveryCost = tipoEntrega === 'DELIVERY_ORDER' ? 2.50 : 0;
+    const grandTotal = Math.max(0, subtotal + packagingCost + deliveryCost - descuento);
+
+    // Filtrado de productos
+    const filteredProducts = products.filter(p => {
+        const matchCat = selectedCatId === 'ALL' || p.categoriaId === selectedCatId;
+        const matchSearch = p.nombre.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchCat && matchSearch;
+    });
+
+    const handleSubmit = async () => {
         if (selectedItems.length === 0) {
-            alert('Selecciona al menos un producto');
+            alert('Selecciona al menos un producto para tomar el pedido');
             return;
         }
 
@@ -742,7 +780,7 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                 onCreated();
             } else {
                 const errData = await res.json();
-                alert(errData.error || 'Error al registrar pedido');
+                alert(errData.error || 'Error al registrar el pedido');
             }
         } catch (err) {
             console.error(err);
@@ -753,169 +791,346 @@ function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated:
     };
 
     return (
-        <div className="fixed inset-0 z-[250] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
-                {/* Modal Header */}
-                <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
-                    <div>
-                        <h2 className="text-xl font-black text-slate-900 italic uppercase">Tomar Pedido (POS / Caja)</h2>
-                        <p className="text-xs text-slate-500 font-semibold">Selecciona productos y datos para ingresar una venta directa</p>
+        <div className="fixed inset-0 z-[250] bg-slate-950/90 backdrop-blur-md flex flex-col xl:flex-row overflow-hidden animate-in fade-in duration-200 text-slate-900">
+            
+            {/* IZQUIERDA: Catálogo de Productos y Categorías (65% width) */}
+            <div className="flex-1 flex flex-col h-full overflow-hidden border-r border-slate-800 bg-slate-900 text-white">
+                
+                {/* Header Superior del Catálogo */}
+                <div className="p-4 sm:p-6 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/80 backdrop-blur">
+                    <div className="flex items-center gap-3">
+                        <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
+                            <ArrowLeft className="size-6 text-white" />
+                        </button>
+                        <div>
+                            <h2 className="text-xl font-black italic uppercase tracking-wider text-white flex items-center gap-2">
+                                <ClipboardList className="size-5 text-emerald-400" /> POS Caja Citiox
+                            </h2>
+                            <p className="text-xs text-slate-400 font-semibold">Terminal de Ventas & Comandas Directas</p>
+                        </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400">
+
+                    {/* Buscador de Productos */}
+                    <div className="relative w-full sm:w-72">
+                        <Search className="absolute left-3 top-3 size-4 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Buscar producto..."
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-all"
+                        />
+                    </div>
+                </div>
+
+                {/* Bar de Categorías */}
+                <div className="p-3 sm:px-6 border-b border-slate-800 bg-slate-950/50 flex gap-2 overflow-x-auto scrollbar-none">
+                    <button
+                        onClick={() => setSelectedCatId('ALL')}
+                        className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all shrink-0 ${
+                            selectedCatId === 'ALL'
+                                ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
+                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                        }`}
+                    >
+                        ⚡ Todos ({products.length})
+                    </button>
+                    {categories.map(cat => {
+                        const catProductsCount = products.filter(p => p.categoriaId === cat.id).length;
+                        return (
+                            <button
+                                key={cat.id}
+                                onClick={() => setSelectedCatId(cat.id)}
+                                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all shrink-0 ${
+                                    selectedCatId === cat.id
+                                        ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
+                                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                                }`}
+                            >
+                                {cat.nombre} ({catProductsCount})
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Grid de Productos */}
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-950/40">
+                    {loadingProducts ? (
+                        <div className="p-12 text-center text-slate-500">
+                            <Loader2 className="size-8 animate-spin mx-auto mb-3 text-emerald-400" />
+                            Cargando catálogo de productos...
+                        </div>
+                    ) : filteredProducts.length === 0 ? (
+                        <div className="p-12 text-center text-slate-500 font-medium">
+                            No se encontraron productos en esta categoría.
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+                            {filteredProducts.map(prod => {
+                                const qty = cart[prod.id] || 0;
+                                return (
+                                    <div
+                                        key={prod.id}
+                                        className={`p-3.5 rounded-2xl border transition-all flex flex-col justify-between relative group ${
+                                            qty > 0 
+                                                ? 'bg-emerald-950/20 border-emerald-500/50 shadow-md shadow-emerald-900/20' 
+                                                : 'bg-slate-900 border-slate-800 hover:border-slate-700'
+                                        }`}
+                                    >
+                                        <div>
+                                            <div className="w-full h-24 rounded-xl bg-slate-800 mb-3 overflow-hidden flex items-center justify-center relative">
+                                                {prod.imagenUrl ? (
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    <img src={prod.imagenUrl} alt={prod.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                                ) : (
+                                                    <Utensils className="size-8 text-slate-600" />
+                                                )}
+                                                {qty > 0 && (
+                                                    <span className="absolute top-2 right-2 bg-emerald-500 text-slate-950 font-black text-xs px-2 py-0.5 rounded-lg shadow-md">
+                                                        x{qty}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <h4 className="font-bold text-xs text-white line-clamp-1 mb-1">{prod.nombre}</h4>
+                                            <p className="text-emerald-400 font-black text-sm mb-3">${parseFloat(prod.precio).toFixed(2)}</p>
+                                        </div>
+
+                                        {/* Botones de incremento / decremento */}
+                                        <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                                            <button
+                                                type="button"
+                                                onClick={() => updateQty(prod.id, -1)}
+                                                disabled={qty === 0}
+                                                className="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 rounded-lg font-black text-xs text-white transition-colors flex justify-center items-center cursor-pointer"
+                                            >
+                                                -
+                                            </button>
+                                            <span className="w-6 text-center text-xs font-black text-white">{qty}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateQty(prod.id, 1)}
+                                                className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg font-black text-xs text-white transition-colors flex justify-center items-center cursor-pointer"
+                                            >
+                                                +
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* DERECHA: Resumen de Venta & Caja (35% width) */}
+            <div className="w-full xl:w-[420px] bg-white flex flex-col h-full overflow-hidden shadow-2xl">
+                
+                {/* Header Resumen */}
+                <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                    <div>
+                        <h3 className="font-black text-base text-slate-900 uppercase italic">Resumen de Venta</h3>
+                        <p className="text-[11px] text-slate-500 font-bold">{totalItemsCount} productos seleccionados</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
                         <X className="size-5" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-                    {/* Datos Cliente & Tipo Entrega */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Nombre Cliente</label>
-                            <input
-                                type="text"
-                                value={nombreCliente}
-                                onChange={e => setNombreCliente(e.target.value)}
-                                className="w-full p-3 border border-slate-200 rounded-xl text-sm font-semibold outline-none"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Teléfono</label>
-                            <input
-                                type="text"
-                                value={telefonoCliente}
-                                onChange={e => setTelefonoCliente(e.target.value)}
-                                placeholder="099..."
-                                className="w-full p-3 border border-slate-200 rounded-xl text-sm font-semibold outline-none"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Tipo de Entrega</label>
-                            <select
-                                value={tipoEntrega}
-                                onChange={e => setTipoEntrega(e.target.value as any)}
-                                className="w-full p-3 border border-slate-200 rounded-xl text-sm font-bold bg-slate-50 outline-none"
+                <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5">
+                    
+                    {/* Selector de Tipo de Entrega */}
+                    <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Modo de Entrega</label>
+                        <div className="grid grid-cols-3 gap-1.5 bg-slate-100 p-1 rounded-2xl">
+                            <button
+                                type="button"
+                                onClick={() => handleDeliveryTypeChange('TABLE_ORDER')}
+                                className={`py-2 px-1 rounded-xl text-[10px] font-black uppercase transition-all flex flex-col items-center gap-1 ${
+                                    tipoEntrega === 'TABLE_ORDER'
+                                        ? 'bg-slate-900 text-white shadow-md'
+                                        : 'text-slate-600 hover:bg-slate-200'
+                                }`}
                             >
-                                <option value="PICKUP_ORDER">Para Llevar (Pickup)</option>
-                                <option value="TABLE_ORDER">Consumo en Mesa</option>
-                                <option value="DELIVERY_ORDER">Domicilio (Delivery)</option>
-                            </select>
+                                <Utensils className="size-3.5" /> En Mesa
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleDeliveryTypeChange('PICKUP_ORDER')}
+                                className={`py-2 px-1 rounded-xl text-[10px] font-black uppercase transition-all flex flex-col items-center gap-1 ${
+                                    tipoEntrega === 'PICKUP_ORDER'
+                                        ? 'bg-slate-900 text-white shadow-md'
+                                        : 'text-slate-600 hover:bg-slate-200'
+                                }`}
+                            >
+                                <ShoppingBag className="size-3.5" /> Para Llevar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleDeliveryTypeChange('DELIVERY_ORDER')}
+                                className={`py-2 px-1 rounded-xl text-[10px] font-black uppercase transition-all flex flex-col items-center gap-1 ${
+                                    tipoEntrega === 'DELIVERY_ORDER'
+                                        ? 'bg-slate-900 text-white shadow-md'
+                                        : 'text-slate-600 hover:bg-slate-200'
+                                }`}
+                            >
+                                <Bike className="size-3.5" /> Domicilio
+                            </button>
                         </div>
                     </div>
 
+                    {/* Campos según tipo de entrega */}
                     {tipoEntrega === 'TABLE_ORDER' && (
                         <div>
-                            <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Número / Identificador de Mesa</label>
+                            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1">Mesa</label>
                             <input
                                 type="text"
                                 value={mesaCode}
                                 onChange={e => setMesaCode(e.target.value)}
-                                placeholder="Mesa 01"
-                                className="w-full p-3 border border-slate-200 rounded-xl text-sm font-semibold outline-none"
+                                placeholder="Ej. Mesa 01"
+                                className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-bold bg-slate-50 outline-none focus:border-slate-900"
                             />
                         </div>
                     )}
 
                     {tipoEntrega === 'DELIVERY_ORDER' && (
-                        <div>
-                            <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Dirección de Entrega</label>
+                        <div className="space-y-2">
+                            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Dirección & Mapa</label>
                             <input
                                 type="text"
                                 value={direccionCliente}
                                 onChange={e => setDireccionCliente(e.target.value)}
-                                placeholder="Calle principal y secundaria"
-                                className="w-full p-3 border border-slate-200 rounded-xl text-sm font-semibold outline-none"
-                                required
+                                placeholder="Dirección principal y secundaria..."
+                                className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 outline-none focus:border-slate-900"
                             />
+                            <button
+                                type="button"
+                                onClick={() => setShowMapModal(true)}
+                                className="w-full py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                            >
+                                <Navigation className="size-3.5 text-indigo-600" /> 
+                                {lat ? '📍 Ubicación seleccionada en Mapa' : 'Seleccionar Ubicación en Mapa'}
+                            </button>
                         </div>
                     )}
 
-                    {/* Catálogo de Productos */}
-                    <div>
-                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Catálogo de Productos</h3>
-                        {loadingProducts ? (
-                            <div className="p-8 text-center text-slate-400">
-                                <Loader2 className="size-6 animate-spin mx-auto mb-2" />
-                                Cargando catálogo de productos...
+                    {/* Checkbox de Empaque Para Llevar */}
+                    <div 
+                        onClick={() => setParaLlevarEmpaque(!paraLlevarEmpaque)}
+                        className={`p-3 rounded-2xl border cursor-pointer flex items-center justify-between transition-all ${
+                            paraLlevarEmpaque 
+                                ? 'bg-amber-50 border-amber-300 text-amber-900' 
+                                : 'bg-slate-50 border-slate-200 text-slate-600'
+                        }`}
+                    >
+                        <div className="flex items-center gap-2.5">
+                            {paraLlevarEmpaque ? <CheckSquare className="size-4 text-amber-600" /> : <Square className="size-4 text-slate-400" />}
+                            <div>
+                                <p className="text-xs font-black uppercase">Empaque Para Llevar</p>
+                                <p className="text-[10px] opacity-75">+ $0.25 por producto empacado</p>
                             </div>
-                        ) : products.length === 0 ? (
-                            <div className="p-8 bg-slate-50 rounded-2xl text-center text-slate-500 text-xs">
-                                No tienes productos creados en tu catálogo. Créalos primero en la sección "Productos".
+                        </div>
+                        <span className="text-xs font-black">${packagingCost.toFixed(2)}</span>
+                    </div>
+
+                    {/* Datos del Cliente */}
+                    <div className="grid grid-cols-2 gap-2">
+                        <div>
+                            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1">Nombre Cliente</label>
+                            <input
+                                type="text"
+                                value={nombreCliente}
+                                onChange={e => setNombreCliente(e.target.value)}
+                                className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 outline-none focus:border-slate-900"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1">Teléfono</label>
+                            <input
+                                type="text"
+                                value={telefonoCliente}
+                                onChange={e => setTelefonoCliente(e.target.value)}
+                                placeholder="099..."
+                                className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 outline-none focus:border-slate-900"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Lista del Carrito */}
+                    <div>
+                        <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Detalle de Productos</label>
+                        {selectedItems.length === 0 ? (
+                            <div className="p-6 border border-dashed border-slate-200 rounded-2xl text-center text-xs text-slate-400">
+                                Haz clic en los productos del catálogo para añadirlos a la orden.
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto p-1">
-                                {products.map(prod => {
-                                    const qty = cart[prod.id] || 0;
-                                    return (
-                                        <div key={prod.id} className="p-3 border border-slate-200 rounded-2xl flex items-center justify-between bg-slate-50 hover:bg-white transition-all">
-                                            <div>
-                                                <p className="font-bold text-sm text-slate-900">{prod.nombre}</p>
-                                                <p className="text-xs font-black text-emerald-600">${parseFloat(prod.precio).toFixed(2)}</p>
-                                            </div>
-                                            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-1">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => updateQty(prod.id, -1)}
-                                                    className="w-7 h-7 flex items-center justify-center font-black text-slate-600 hover:bg-slate-100 rounded-lg text-sm"
-                                                >
-                                                    -
-                                                </button>
-                                                <span className="w-6 text-center text-xs font-black text-slate-900">{qty}</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => updateQty(prod.id, 1)}
-                                                    className="w-7 h-7 flex items-center justify-center font-black text-slate-600 hover:bg-slate-100 rounded-lg text-sm"
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
+                            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                {selectedItems.map(item => (
+                                    <div key={item.productoId} className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-xs">
+                                        <div>
+                                            <p className="font-bold text-slate-900">{item.nombreProducto}</p>
+                                            <p className="text-[10px] text-slate-400 font-bold">${item.precioUnitario.toFixed(2)} c/u</p>
                                         </div>
-                                    );
-                                })}
+                                        <div className="flex items-center gap-3">
+                                            <span className="font-black text-slate-700">x{item.cantidad}</span>
+                                            <span className="font-black text-slate-900">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </div>
+                </div>
 
-                    {/* Opciones de Confirmación */}
-                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
-                        <div>
-                            <p className="text-xs font-bold text-slate-900">Enviar a Cocina al Crear</p>
-                            <p className="text-[10px] text-slate-500">Si está activo, el pedido entra directamente en preparación (KDS)</p>
+                {/* Footer Resumen & Total */}
+                <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50 space-y-3">
+                    <div className="space-y-1 text-xs font-semibold text-slate-500">
+                        <div className="flex justify-between">
+                            <span>Subtotal Productos:</span>
+                            <span className="font-bold text-slate-800">${subtotal.toFixed(2)}</span>
                         </div>
-                        <input
-                            type="checkbox"
-                            checked={autoConfirm}
-                            onChange={e => setAutoConfirm(e.target.checked)}
-                            className="size-5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                        />
+                        {paraLlevarEmpaque && (
+                            <div className="flex justify-between text-amber-700">
+                                <span>Costo Empaque:</span>
+                                <span className="font-bold">+${packagingCost.toFixed(2)}</span>
+                            </div>
+                        )}
+                        {tipoEntrega === 'DELIVERY_ORDER' && (
+                            <div className="flex justify-between text-indigo-700">
+                                <span>Costo Delivery:</span>
+                                <span className="font-bold">+${deliveryCost.toFixed(2)}</span>
+                            </div>
+                        )}
+                        <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-200">
+                            <span>TOTAL A COBRAR:</span>
+                            <span className="text-xl text-emerald-600">${grandTotal.toFixed(2)}</span>
+                        </div>
                     </div>
-                </form>
 
-                {/* Footer Modal */}
-                <div className="p-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
-                    <div>
-                        <p className="text-xs text-slate-400 font-bold uppercase">Total Estimado</p>
-                        <p className="text-2xl font-black text-slate-900">${total.toFixed(2)}</p>
-                    </div>
-                    <div className="flex gap-3">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-5 py-3 border border-slate-200 text-slate-600 rounded-2xl text-xs font-bold uppercase"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleSubmit}
-                            disabled={submitting || selectedItems.length === 0}
-                            className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase shadow-lg shadow-emerald-600/20 disabled:opacity-50 flex items-center gap-2 cursor-pointer"
-                        >
-                            {submitting ? <Loader2 className="size-4 animate-spin" /> : 'Confirmar Pedido'}
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={submitting || selectedItems.length === 0}
+                        className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/20 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+                    >
+                        {submitting ? <Loader2 className="size-4 animate-spin" /> : <><ChefHat className="size-4" /> Confirmar Venta & Enviar a Cocina</>}
+                    </button>
                 </div>
             </div>
+
+            {/* Modal de Mapa para Delivery */}
+            <MapSelectionModal
+                isOpen={showMapModal}
+                onClose={() => setShowMapModal(false)}
+                initialLat={lat}
+                initialLng={lng}
+                onConfirmLocation={(newLat, newLng) => {
+                    setLat(newLat);
+                    setLng(newLng);
+                    setShowMapModal(false);
+                    setDireccionCliente(`Ubicación seleccionada en Mapa (${newLat.toFixed(4)}, ${newLng.toFixed(4)})`);
+                }}
+            />
         </div>
     );
 }
