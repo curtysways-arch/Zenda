@@ -111,10 +111,11 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
     }
 
     // 3. Tab Central: Servicios / Catálogo
+    const isServicesModule = hasModule(tipoNegocio, 'SERVICES') || tipoNegocio === 'SPA' || tipoNegocio === 'RESERVA' || slug.includes('symechas');
     tabs.push({
-        label: hasModule(tipoNegocio, 'SERVICES') ? 'Servicios' : 'Catálogo',
+        label: isServicesModule ? 'Servicios' : 'Catálogo',
         icon: Sparkles,
-        href: `/${slug}#servicios`,
+        href: isServicesModule ? `/${slug}/servicios` : `/${slug}#catalogo`,
         active: pathname.includes('/servicios'),
         isCentral: true,
         visible: true
@@ -163,8 +164,8 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
                                 <div 
                                     className="size-14 rounded-full flex items-center justify-center shadow-lg border-2 active:scale-95 transition-transform"
                                     style={{
-                                        backgroundColor: 'var(--nav-active, var(--primary, #7c3aed))',
-                                        borderColor: 'rgba(255,255,255,0.35)',
+                                        backgroundColor: 'var(--primary, #7c3aed)',
+                                        borderColor: 'rgba(255,255,255,0.4)',
                                         boxShadow: '0 4px 14px rgba(0, 0, 0, 0.3)'
                                     }}
                                 >
