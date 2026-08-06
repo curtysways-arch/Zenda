@@ -16,6 +16,29 @@ export async function GET() {
     // ── 1. Idempotencia: verificar si ya existe el negocio ─────────────────────
     const existing = await prisma.negocio.findUnique({ where: { slug: DEMO_SLUG } });
     if (existing) {
+      const bcrypt = require('bcryptjs');
+      const hashedPassword = await bcrypt.hash('CitioxDemo2026!', 10);
+      const demoAdminEmail = 'demo.restaurante@citiox.com';
+
+      let demoUser = await prisma.usuario.findUnique({ where: { email: demoAdminEmail } });
+      if (!demoUser) {
+        await prisma.usuario.create({
+          data: {
+            id: crypto.randomUUID(),
+            email: demoAdminEmail,
+            password: hashedPassword,
+            nombre: 'Admin La Parrilla',
+            role: 'ADMIN_NEGOCIO',
+            negocioId: existing.id
+          }
+        });
+      } else {
+        await prisma.usuario.update({
+          where: { email: demoAdminEmail },
+          data: { negocioId: existing.id, role: 'ADMIN_NEGOCIO', password: hashedPassword }
+        });
+      }
+
       const productCount = await (prisma as any).producto.count({ where: { negocioId: existing.id } });
       const tableCount = await (prisma as any).operableResource.count({ where: { negocioId: existing.id, category: 'TABLE' } });
       const orderCount = await (prisma as any).pedido.count({ where: { negocioId: existing.id } });
@@ -24,6 +47,11 @@ export async function GET() {
         status: 'ALREADY_EXISTS',
         negocioId: existing.id,
         slug: existing.slug,
+        credentials: {
+          email: demoAdminEmail,
+          password: 'CitioxDemo2026!',
+          role: 'ADMIN_NEGOCIO'
+        },
         stats: { productCount, tableCount, orderCount, clientCount }
       });
     }
@@ -224,11 +252,40 @@ export async function GET() {
       });
     }
 
+    // ── 8. Crear Usuario Administrador de la Demo ──────────────────────────────
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash('CitioxDemo2026!', 10);
+    const demoAdminEmail = 'demo.restaurante@citiox.com';
+
+    let demoUser = await prisma.usuario.findUnique({ where: { email: demoAdminEmail } });
+    if (!demoUser) {
+      demoUser = await prisma.usuario.create({
+        data: {
+          id: crypto.randomUUID(),
+          email: demoAdminEmail,
+          password: hashedPassword,
+          nombre: 'Admin La Parrilla',
+          role: 'ADMIN_NEGOCIO',
+          negocioId: businessId
+        }
+      });
+    } else {
+      await prisma.usuario.update({
+        where: { email: demoAdminEmail },
+        data: { negocioId: businessId, role: 'ADMIN_NEGOCIO', password: hashedPassword }
+      });
+    }
+
     return NextResponse.json({
       status: 'SEEDED',
       negocioId: businessId,
       slug: DEMO_SLUG,
       message: `Demo "${manifest.businessName}" creada exitosamente desde el manifest declarativo.`,
+      credentials: {
+        email: demoAdminEmail,
+        password: 'CitioxDemo2026!',
+        role: 'ADMIN_NEGOCIO'
+      },
       stats: {
         categories: manifest.catalog.categories.length,
         products: manifest.catalog.products.length,
@@ -241,7 +298,7 @@ export async function GET() {
         mesa: `/${DEMO_SLUG}/mesa/01`,
         cocina: `/${DEMO_SLUG}/cocina`,
         mesero: `/${DEMO_SLUG}/mesero`,
-        admin: `/${DEMO_SLUG}/admin`
+        admin: `/admin`
       }
     });
 
