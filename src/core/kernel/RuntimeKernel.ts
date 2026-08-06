@@ -2,19 +2,20 @@
  * @file RuntimeKernel.ts
  * @module core/kernel
  * @description Orquestador agnóstico del ciclo de vida de Citiox Enterprise Core.
- * @responsibility Administrar los estados del Runtime (STARTING, RUNNING, DEGRADED, STOPPING, STOPPED, FAILED), inicializar contexto y ejecutar capacidades respetando startupPriority e interfaces puras.
- * @dependencies Capability contract, BusinessRuntimeContext, RuntimeLogger, FeatureFlagProvider, CapabilityRegistry, ServiceRegistry, VersionedEventBus
+ * @responsibility Administrar los estados del Runtime (STARTING, RUNNING, DEGRADED, STOPPING, STOPPED, FAILED), inicializar contexto, instanciar DeliveryEngine, PricingEngine y NotificationRuntime y ejecutar capacidades respetando startupPriority.
+ * @dependencies Capability contract, BusinessRuntimeContext, RuntimeLogger, FeatureFlagProvider, CapabilityRegistry, ServiceRegistry, VersionedEventBus, DeliveryEngine, NotificationRuntime
  * @status Stable (Core Foundation - v1.0)
  */
 
 import { Capability, CapabilityStatus } from '../contracts/Capability';
 import { BusinessRuntimeContext } from './BusinessRuntimeContext';
-import { RuntimeContext } from './RuntimeContext';
 import { FeatureFlagProvider } from './FeatureFlagProvider';
 import { RuntimeLogger } from '../observability/RuntimeLogger';
 import { CapabilityRegistry } from '../registries/CapabilityRegistry';
 import { ServiceRegistry } from '../registries/ServiceRegistry';
 import { VersionedEventBus } from '../events/EventBus';
+import { DeliveryEngine } from '../delivery/DeliveryEngine';
+import { NotificationRuntime } from '../notifications/NotificationRuntime';
 
 export type RuntimeState = 'STARTING' | 'RUNNING' | 'DEGRADED' | 'STOPPING' | 'STOPPED' | 'FAILED';
 
@@ -26,6 +27,16 @@ export class RuntimeKernel {
   private serviceRegistry = new ServiceRegistry();
   private eventBus = new VersionedEventBus();
   private context?: BusinessRuntimeContext;
+
+  private deliveryEngine: DeliveryEngine;
+  private notificationRuntime: NotificationRuntime;
+
+  constructor() {
+    this.deliveryEngine = new DeliveryEngine(this.eventBus);
+    this.notificationRuntime = new NotificationRuntime(this.eventBus);
+    this.serviceRegistry.register('deliveryEngine', () => this.deliveryEngine);
+    this.serviceRegistry.register('notificationRuntime', () => this.notificationRuntime);
+  }
 
   public getState(): RuntimeState {
     return this.state;
@@ -43,6 +54,14 @@ export class RuntimeKernel {
     return this.eventBus;
   }
 
+  public getDeliveryEngine(): DeliveryEngine {
+    return this.deliveryEngine;
+  }
+
+  public getNotificationRuntime(): NotificationRuntime {
+    return this.notificationRuntime;
+  }
+
   /**
    * Inicializa el RuntimeKernel para un contexto de negocio determinado.
    */
@@ -57,7 +76,6 @@ export class RuntimeKernel {
     this.logger.info(`[RuntimeKernel] Iniciando kernel para negocio ${runtimeContext.slug} (Blueprint: ${runtimeContext.blueprint})...`);
 
     try {
-      // Notificar evento de sistema
       await this.eventBus.publish({
         eventId: `evt-boot-${Date.now()}`,
         name: 'runtime.started',

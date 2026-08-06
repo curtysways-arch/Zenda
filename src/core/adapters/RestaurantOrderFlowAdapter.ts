@@ -1,11 +1,11 @@
 /**
  * @file RestaurantOrderFlowAdapter.ts
  * @module core/adapters
- * @description Adaptador condicional del flujo de pedidos de restaurante (FASE 5C).
+ * @description Adaptador condicional del flujo de pedidos de restaurante (FASE 5C/5E).
  * @responsibility Si Enterprise Runtime está activo para el negocio, canalizar la orden hacia
- *   RestaurantRuntimeAdapter y OrderRuntime. Si está inactivo (legacy), mantener el flujo tradicional sin alterar.
+ *   RestaurantRuntimeAdapter y OrderRuntime utilizando las instancias compartidas del kernel del negocio.
  * @dependencies BusinessRuntimeResolver, RestaurantRuntimeAdapter, VersionedEventBus, RuntimeLogger
- * @status Experimental (FASE 5C - UI Integration)
+ * @status Stable (FASE 5E - Enterprise Integration)
  */
 
 import { BusinessRuntimeResolver, ResolvedBusinessRuntime } from '../runtime/BusinessRuntimeResolver';
@@ -45,14 +45,14 @@ export class RestaurantOrderFlowAdapter {
     this.logger.info(`[RestaurantOrderFlowAdapter] Flujo ENTERPRISE activado para negocio ${negocio.slug || negocio.id}`);
 
     const bus = sharedEventBus || runtime.kernel?.getEventBus() || new VersionedEventBus();
-    const adapter = new RestaurantRuntimeAdapter(bus);
+    const adapter = new RestaurantRuntimeAdapter(bus, runtime.kernel);
     const runtimeResult = await adapter.processNewOrder(pedidoData);
 
     return {
       isEnterprise: true,
       businessRuntime: runtime,
       runtimeResult,
-      legacyAllowed: true, // Se mantiene guardado en Prisma como almacenamiento principal de BD
+      legacyAllowed: true,
     };
   }
 
@@ -81,7 +81,7 @@ export class RestaurantOrderFlowAdapter {
     );
 
     const bus = sharedEventBus || runtime.kernel?.getEventBus() || new VersionedEventBus();
-    const adapter = new RestaurantRuntimeAdapter(bus);
+    const adapter = new RestaurantRuntimeAdapter(bus, runtime.kernel);
 
     let runtimeResult: RestaurantRuntimeResult;
     const isConfirmation = ['CONFIRMED', 'PREPARACION', 'EN_PREPARACION', 'RECIBIDO'].includes(nuevoEstado);

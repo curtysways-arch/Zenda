@@ -1,9 +1,9 @@
 // src/app/api/[slug]/admin-orders/route.ts
-// API admin para gestión de pedidos (Kanban) con capability: orders
-// Lectura de todos los pedidos del día + actualización de estado
+// API admin para gestión de pedidos (Kanban) conectada al Enterprise Runtime (FASE 5E)
 
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { RestaurantOrderFlowAdapter } from '@/core/adapters/RestaurantOrderFlowAdapter';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,19 +30,21 @@ export async function GET(
     orderBy: { createdAt: 'asc' }
   });
 
-  // Stats del día
-  const totalVentas = orders
-    .filter((o: any) => !['CANCELADO', 'PENDIENTE_PAGO'].includes(o.estado))
-    .reduce((sum: number, o: any) => sum + (o.total || 0), 0);
-
-  const pedidosActivos = orders.filter((o: any) => 
-    !['ENTREGADO', 'CANCELADO'].includes(o.estado)
-  ).length;
+  // Mapeo de estados legacy a nombres unificados
+  const stats = {
+    totalVentas: orders
+      .filter((o: any) => !['CANCELADO', 'PENDIENTE_PAGO'].includes(o.estado))
+      .reduce((sum: number, o: any) => sum + (o.total || 0), 0),
+    pedidosActivos: orders.filter((o: any) => 
+      !['ENTREGADO', 'CANCELADO'].includes(o.estado)
+    ).length,
+    totalOrders: orders.length
+  };
 
   return NextResponse.json({ 
     success: true, 
     orders,
-    stats: { totalVentas, pedidosActivos, totalOrders: orders.length }
+    stats
   });
 }
 
@@ -54,18 +56,41 @@ export async function PUT(
   const body = await req.json();
   const { id, estado } = body;
 
-  const VALID_STATES = ['PENDIENTE_PAGO', 'PAGO_CONFIRMADO', 'EN_PREPARACION', 'LISTO', 'ENTREGADO', 'CANCELADO'];
-  if (!VALID_STATES.includes(estado)) {
-    return NextResponse.json({ error: `Estado inválido: ${estado}` }, { status: 400 });
-  }
-
   const negocio = await prisma.negocio.findUnique({ where: { slug } });
   if (!negocio) return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
 
-  const updated = await (prisma as any).pedido.updateMany({
-    where: { id, negocioId: negocio.id },
-    data: { estado, updatedAt: new Date() }
+  const currentOrder = await (prisma as any).pedido.findFirst({
+    where: { id, negocioId: negocio.id }
   });
 
-  return NextResponse.json({ success: true, updated: updated.count });
+  if (!currentOrder) {
+    return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 });
+  }
+
+  // Mapeo de alias de estados
+  let targetState = estado;
+  if (estado === 'PAGO_CONFIRMADO') targetState = 'CONFIRMED';
+  if (estado === 'EN_PREPARACION') targetState = 'PREPARING';
+  if (estado === 'LISTO') targetState = 'READY';
+  if (estado === 'ENTREGADO') targetState = 'DELIVERED';
+
+  // Procesar mediante RestaurantOrderFlowAdapter (Pasa por OrderRuntime + FulfillmentEngine + NotificationRuntime)
+  const adapterResult = await RestaurantOrderFlowAdapter.processOrderStatusChange(
+    negocio,
+    currentOrder,
+    targetState
+  );
+
+  // Actualizar también la base de datos local para backward compatibility
+  const updated = await (prisma as any).pedido.update({
+    where: { id },
+    data: { estado: targetState, updatedAt: new Date() }
+  });
+
+  return NextResponse.json({
+    success: true,
+    pedido: updated,
+    isEnterprise: adapterResult.isEnterprise,
+    runtimeResult: adapterResult.runtimeResult,
+  });
 }
