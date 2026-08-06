@@ -2,15 +2,25 @@
  * @file BackwardCompatibilityAdapter.ts
  * @module core/adapters
  * @description Adaptador puro de traducción entre la arquitectura legacy y Citiox Enterprise vNext.
- * @responsibility Traducir objetos de negocio antiguos (tipoNegocio, configuracion JSON) a BusinessRuntimeContext y mapear eventos legacy a versioned envelopes sin incluir lógica de negocio.
- * @dependencies BusinessRuntimeContext, EventEnvelope
- * @status Experimental (Core Foundation - v1.0)
+ * @responsibility Traducir objetos de negocio antiguos (tipoNegocio, configuracion JSON) a BusinessRuntimeContext, mapear a BlueprintManifests y mapear eventos legacy a versioned envelopes sin incluir lógica de negocio.
+ * @dependencies BusinessRuntimeContext, EventEnvelope, BlueprintManifests
+ * @status Stable (Core Adapters - v1.0)
  */
 
 import { BusinessRuntimeContext } from '../kernel/BusinessRuntimeContext';
 import { EventEnvelope } from '../events/EventBus';
+import { BlueprintManifest } from '../blueprints/BlueprintComposer';
+import { ALL_BLUEPRINT_MANIFESTS, RESTAURANT_BLUEPRINT_MANIFEST } from '../blueprints/BlueprintManifests';
 
 export class BackwardCompatibilityAdapter {
+  /**
+   * Obtiene el BlueprintManifest correspondiente a un tipo de negocio legacy.
+   */
+  public static toBlueprintManifest(legacyType: string): BlueprintManifest {
+    const key = (legacyType || 'RESTAURANT').toUpperCase();
+    return ALL_BLUEPRINT_MANIFESTS[key] || ALL_BLUEPRINT_MANIFESTS['RESTAURANT'] || RESTAURANT_BLUEPRINT_MANIFEST;
+  }
+
   /**
    * Traduce la entidad de negocio de la BD legacy a un BusinessRuntimeContext puro.
    */
@@ -22,22 +32,9 @@ export class BackwardCompatibilityAdapter {
       cfg = legacyBusiness.configuracion || {};
     }
 
-    const activeCapabilities: string[] = [];
     const tipo = legacyBusiness.tipoNegocio || 'RESTAURANT';
-
-    // Mapeo automático de capacidades legacy según tipo de negocio
-    if (tipo === 'RESTAURANT' || tipo === 'PRODUCTOS') {
-      activeCapabilities.push('orders', 'pricing', 'catalog', 'pickup', 'delivery');
-      if (tipo === 'RESTAURANT') {
-        activeCapabilities.push('kitchen', 'tables', 'takeOrders');
-      }
-    } else if (tipo === 'RESERVA' || tipo === 'SPA') {
-      activeCapabilities.push('appointments', 'catalog', 'services');
-    } else if (tipo === 'SPORTS_COURTS') {
-      activeCapabilities.push('courts', 'appointments');
-    } else if (tipo === 'SHOE_CARE' || tipo === 'ordenes-servicio') {
-      activeCapabilities.push('services', 'orders');
-    }
+    const manifest = this.toBlueprintManifest(tipo);
+    const activeCapabilities = manifest.capabilities.filter(c => c.enabled).map(c => c.id);
 
     return {
       businessId: legacyBusiness.id || 'demo-biz-id',
@@ -45,7 +42,7 @@ export class BackwardCompatibilityAdapter {
       slug: legacyBusiness.slug || 'demo-slug',
       blueprint: tipo,
       activeCapabilities,
-      configuration: cfg,
+      configuration: { ...manifest.defaultConfiguration, ...cfg },
       permissions: ['ADMIN', 'STAFF', 'MESERO', 'DRIVER']
     };
   }
@@ -55,7 +52,7 @@ export class BackwardCompatibilityAdapter {
    */
   public static toEventEnvelope(legacyEvent: string, businessId: string, data: any): EventEnvelope {
     return {
-      eventId: `evt-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      eventId: `evt-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       name: legacyEvent.toLowerCase().replace('_', '.'),
       version: 'v1',
       timestamp: new Date().toISOString(),
