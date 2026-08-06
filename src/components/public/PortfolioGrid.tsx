@@ -1,15 +1,17 @@
 'use client';
 
+import { useState } from 'react';
 import { 
     ArrowLeftRight, Image as ImageIcon, 
     Sparkles, User, Calendar,
-    Share2, MapPin
+    Share2, MapPin, ZoomIn
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import ResultInteraction from './ResultInteraction';
+import ImageZoomModal from './ImageZoomModal';
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -22,6 +24,27 @@ interface PortfolioGridProps {
 }
 
 export default function PortfolioGrid({ items, slug, primaryColor }: PortfolioGridProps) {
+    const [zoomState, setZoomState] = useState<{
+        isOpen: boolean;
+        images: { url: string; label?: string }[];
+        initialIndex: number;
+        title?: string;
+    }>({
+        isOpen: false,
+        images: [],
+        initialIndex: 0,
+        title: ''
+    });
+
+    const openZoom = (images: { url: string; label?: string }[], initialIndex = 0, title = '') => {
+        setZoomState({
+            isOpen: true,
+            images,
+            initialIndex,
+            title
+        });
+    };
+
     const handleShare = async (item: any) => {
         const shareData = {
             title: item.title,
@@ -83,15 +106,31 @@ export default function PortfolioGrid({ items, slug, primaryColor }: PortfolioGr
                     <div className="relative aspect-square bg-slate-50">
                         {item.type === 'BEFORE_AFTER' ? (
                             <div className="flex w-full h-full relative">
-                                <div className="w-1/2 h-full relative border-r border-white/10 overflow-hidden">
-                                    <img src={item.beforeImage} className="w-full h-full object-cover grayscale-[0.2]" alt="Antes" />
-                                    <div className="absolute top-3 left-3 px-2 py-1 bg-black/40 backdrop-blur-md text-[8px] font-black text-white uppercase tracking-widest rounded border border-white/10">Antes</div>
+                                <div 
+                                    className="w-1/2 h-full relative border-r border-white/10 overflow-hidden cursor-zoom-in group/img"
+                                    onClick={() => openZoom([
+                                        { url: item.beforeImage, label: 'Antes' },
+                                        { url: item.afterImage, label: 'Después' }
+                                    ], 0, item.title)}
+                                >
+                                    <img src={item.beforeImage} className="w-full h-full object-cover grayscale-[0.2] transition-transform duration-500 group-hover/img:scale-105" alt="Antes" />
+                                    <div className="absolute top-3 left-3 px-2 py-1 bg-black/40 backdrop-blur-md text-[8px] font-black text-white uppercase tracking-widest rounded border border-white/10 flex items-center gap-1">
+                                        <ZoomIn size={10} /> Antes
+                                    </div>
                                 </div>
-                                <div className="w-1/2 h-full relative overflow-hidden">
-                                    <img src={item.afterImage} className="w-full h-full object-cover" alt="Después" />
-                                    <div className="absolute top-3 right-3 px-2 py-1 bg-white/90 backdrop-blur-md text-[8px] font-black text-slate-900 uppercase tracking-widest rounded shadow-md">Después</div>
+                                <div 
+                                    className="w-1/2 h-full relative overflow-hidden cursor-zoom-in group/img"
+                                    onClick={() => openZoom([
+                                        { url: item.beforeImage, label: 'Antes' },
+                                        { url: item.afterImage, label: 'Después' }
+                                    ], 1, item.title)}
+                                >
+                                    <img src={item.afterImage} className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105" alt="Después" />
+                                    <div className="absolute top-3 right-3 px-2 py-1 bg-white/90 backdrop-blur-md text-[8px] font-black text-slate-900 uppercase tracking-widest rounded shadow-md flex items-center gap-1">
+                                        <ZoomIn size={10} /> Después
+                                    </div>
                                 </div>
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-10 rounded-full bg-white shadow-xl flex items-center justify-center text-slate-900 z-10 group-hover:scale-110 transition-transform duration-500">
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-10 rounded-full bg-white shadow-xl flex items-center justify-center text-slate-900 z-10 group-hover:scale-110 transition-transform duration-500 pointer-events-none">
                                     <ArrowLeftRight size={16} />
                                 </div>
                             </div>
@@ -99,14 +138,22 @@ export default function PortfolioGrid({ items, slug, primaryColor }: PortfolioGr
                             <div className="w-full h-full relative overflow-hidden">
                                 <div className="flex h-full overflow-x-auto snap-x snap-mandatory hide-scrollbar">
                                     {(item.gallery || []).map((imgUrl: string, idx: number) => (
-                                        <div key={idx} className="w-full h-full shrink-0 snap-center relative">
-                                            <img src={imgUrl} className="w-full h-full object-cover" alt={`Gallery ${idx + 1}`} />
+                                        <div 
+                                            key={idx} 
+                                            className="w-full h-full shrink-0 snap-center relative cursor-zoom-in group/img"
+                                            onClick={() => openZoom(
+                                                (item.gallery || []).map((url: string, i: number) => ({ url, label: `Foto ${i + 1}` })),
+                                                idx,
+                                                item.title
+                                            )}
+                                        >
+                                            <img src={imgUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105" alt={`Gallery ${idx + 1}`} />
                                             <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/20 pointer-events-none" />
                                         </div>
                                     ))}
                                 </div>
                                 {(item.gallery || []).length > 1 && (
-                                    <div className="absolute top-3 right-3 px-3 py-1.5 bg-black/40 backdrop-blur-md text-white rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 border border-white/10 shadow-md">
+                                    <div className="absolute top-3 right-3 px-3 py-1.5 bg-black/40 backdrop-blur-md text-white rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 border border-white/10 shadow-md pointer-events-none">
                                         <ImageIcon size={12} /> {item.gallery.length} Fotos
                                     </div>
                                 )}
@@ -151,6 +198,15 @@ export default function PortfolioGrid({ items, slug, primaryColor }: PortfolioGr
                     </div>
                 </div>
             ))}
+
+            {/* Modal de Zoom de Imágenes */}
+            <ImageZoomModal
+                isOpen={zoomState.isOpen}
+                onClose={() => setZoomState(prev => ({ ...prev, isOpen: false }))}
+                images={zoomState.images}
+                initialIndex={zoomState.initialIndex}
+                title={zoomState.title}
+            />
         </div>
     );
 }
