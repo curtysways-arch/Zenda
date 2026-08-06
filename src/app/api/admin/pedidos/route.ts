@@ -95,6 +95,31 @@ export async function PUT(req: Request) {
             }
         });
 
+        // FASE 5C: Invocación del Enterprise Runtime (si está habilitado para el negocio)
+        try {
+            const { RestaurantOrderFlowAdapter } = await import('@/core/adapters/RestaurantOrderFlowAdapter');
+            await RestaurantOrderFlowAdapter.processOrderStatusChange(
+                pedido.negocio,
+                {
+                    id: pedidoActualizado.id,
+                    negocioId: pedidoActualizado.negocioId,
+                    numeroPedido: pedidoActualizado.numeroPedido,
+                    estado: pedidoActualizado.estado,
+                    tipoEntrega: pedidoActualizado.tipoEntrega,
+                    nombreCliente: pedidoActualizado.nombreCliente,
+                    telefonoCliente: pedidoActualizado.telefonoCliente,
+                    subtotal: pedidoActualizado.subtotal,
+                    costoEnvio: pedidoActualizado.costoEnvio,
+                    total: pedidoActualizado.total,
+                    extraInfo: pedidoActualizado.extraInfo,
+                    items: pedidoActualizado.items || []
+                },
+                estado || pedidoActualizado.estado
+            );
+        } catch (rErr) {
+            console.error('[ADMIN_PEDIDOS_RUNTIME_FLOW_ERROR]', rErr);
+        }
+
         // Si la caja confirma el pedido (CONFIRMED, PREPARACION, EN_PREPARACION), emitir evento desacoplado CoreEventBus
         const isConfirmation = estado && ['CONFIRMED', 'PREPARACION', 'EN_PREPARACION'].includes(estado);
         if (isConfirmation) {

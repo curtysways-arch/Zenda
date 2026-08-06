@@ -22,8 +22,15 @@ export async function GET(
     return NextResponse.json({ error: 'CAPABILITY_NOT_ENABLED', message: 'kitchen capability no está activa.' }, { status: 403 });
   }
 
-  // Pedidos activos que la cocina debe atender
-  const ACTIVE_KITCHEN_STATES = ['PENDIENTE_PAGO', 'PAGO_CONFIRMADO', 'EN_PREPARACION', 'LISTO'];
+  // FASE 5C: Resolver si Enterprise Runtime está activo para el negocio
+  const { BusinessRuntimeResolver } = await import('@/core/runtime/BusinessRuntimeResolver');
+  const runtimeInfo = await BusinessRuntimeResolver.resolve(negocio);
+
+  // Pedidos activos que la cocina debe atender (Soporte Enterprise + Legacy)
+  const ACTIVE_KITCHEN_STATES = runtimeInfo.isEnterprise
+    ? ['WAITING_ACCEPTANCE', 'RECIBIDO', 'CONFIRMED', 'PAGO_CONFIRMADO', 'EN_PREPARACION', 'PREPARING', 'LISTO', 'READY']
+    : ['PENDIENTE_PAGO', 'PAGO_CONFIRMADO', 'RECIBIDO', 'CONFIRMED', 'EN_PREPARACION', 'LISTO'];
+
   const orders = await (prisma as any).pedido.findMany({
     where: {
       negocioId: negocio.id,
@@ -33,5 +40,10 @@ export async function GET(
     orderBy: { createdAt: 'asc' }
   });
 
-  return NextResponse.json({ success: true, orders });
+  return NextResponse.json({
+    success: true,
+    orders,
+    isEnterprise: runtimeInfo.isEnterprise,
+    blueprint: runtimeInfo.blueprint
+  });
 }

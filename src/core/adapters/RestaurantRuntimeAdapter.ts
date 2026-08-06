@@ -104,9 +104,18 @@ export class RestaurantRuntimeAdapter {
   // Guard: ¿Está habilitado el runtime para restaurantes?
   // ──────────────────────────────────────────────────────────
 
-  private isEnabled(): boolean {
-    return this.featureFlags.isEnabled('runtime.enabled')
-      && this.featureFlags.isEnabled('runtime.capabilities');
+  private isEnabled(pedido?: LegacyPedido): boolean {
+    const globalEnabled = this.featureFlags.isEnabled('runtime.enabled');
+    if (globalEnabled) return true;
+
+    if (pedido?.extraInfo) {
+      const extra = typeof pedido.extraInfo === 'string'
+        ? (() => { try { return JSON.parse(pedido.extraInfo); } catch { return {}; } })()
+        : pedido.extraInfo;
+      if (extra.useEnterpriseRuntime || extra.enterpriseRuntime) return true;
+    }
+
+    return false;
   }
 
   // ──────────────────────────────────────────────────────────
@@ -163,7 +172,7 @@ export class RestaurantRuntimeAdapter {
   // ──────────────────────────────────────────────────────────
 
   public async processNewOrder(pedido: LegacyPedido): Promise<RestaurantRuntimeResult> {
-    if (!this.isEnabled()) {
+    if (!this.isEnabled(pedido)) {
       return { processed: false, orderState: this.toLegacyOrderState(pedido), skippedReason: 'Runtime deshabilitado' };
     }
 
@@ -191,7 +200,7 @@ export class RestaurantRuntimeAdapter {
   // ──────────────────────────────────────────────────────────
 
   public async processOrderConfirmed(pedido: LegacyPedido): Promise<RestaurantRuntimeResult> {
-    if (!this.isEnabled()) {
+    if (!this.isEnabled(pedido)) {
       return { processed: false, orderState: this.toLegacyOrderState(pedido), skippedReason: 'Runtime deshabilitado' };
     }
 
@@ -248,7 +257,7 @@ export class RestaurantRuntimeAdapter {
     nuevoEstado: string,
     reason?: string
   ): Promise<RestaurantRuntimeResult> {
-    if (!this.isEnabled()) {
+    if (!this.isEnabled(pedido)) {
       return { processed: false, orderState: this.toLegacyOrderState(pedido), skippedReason: 'Runtime deshabilitado' };
     }
 

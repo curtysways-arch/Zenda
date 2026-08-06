@@ -47,6 +47,7 @@ interface Order {
     total: number;
     estado: string;
     notas?: string | null;
+    extraInfo?: any;
     createdAt: string;
     items: OrderItem[];
     payment?: OrderPayment | null;
@@ -219,25 +220,16 @@ function PedidosContent() {
     };
 
     const getStatusBadge = (order: Order) => {
-        if (order.estado === 'WAITING_CONFIRMATION' || order.estado === 'NUEVA') {
-            return <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 rounded-full text-[9px] font-black uppercase tracking-wider border border-amber-300">⌛ Por Confirmar en Caja</span>;
-        }
-        if (order.estado === 'PAGO_EN_REVISION') {
-            return <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 rounded-full text-[9px] font-black uppercase tracking-wider border border-amber-300">⌛ Comprobante por Verificar</span>;
-        }
-        if (order.estado === 'PENDIENTE_PAGO') {
-            return <span className="px-2.5 py-0.5 bg-slate-100 text-slate-700 rounded-full text-[9px] font-black uppercase tracking-wider">💳 Pendiente de Pago</span>;
-        }
-        if (['PREPARACION', 'EN_PREPARACION', 'CONFIRMED'].includes(order.estado)) {
-            return <span className="px-2.5 py-0.5 bg-orange-100 text-orange-800 rounded-full text-[9px] font-black uppercase tracking-wider">🔥 En Producción</span>;
-        }
-        if (['LISTO', 'READY', 'RUTA', 'ON_ROUTE'].includes(order.estado)) {
-            return <span className="px-2.5 py-0.5 bg-cyan-100 text-cyan-800 rounded-full text-[9px] font-black uppercase tracking-wider">🛵 Listo / Ruta</span>;
-        }
-        if (['ENTREGADO', 'COMPLETED'].includes(order.estado)) {
-            return <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[9px] font-black uppercase tracking-wider">🎉 Entregado</span>;
-        }
-        return <span className="px-2.5 py-0.5 bg-slate-100 text-slate-600 rounded-full text-[9px] font-black uppercase tracking-wider">{order.estado}</span>;
+        const isEnterprise = Boolean((order as any).isEnterprise || (order.extraInfo as any)?.useEnterpriseRuntime || (order.extraInfo as any)?.enterpriseRuntime);
+        const { OrderStatusPresenter } = require('@/core/adapters/OrderStatusPresenter');
+        const display = OrderStatusPresenter.present(order.estado, isEnterprise);
+
+        return (
+            <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${display.bgColor} ${display.textColor} flex items-center gap-1 border-current/20`}>
+                <span className={`size-1.5 rounded-full ${isEnterprise ? 'bg-purple-500 animate-pulse' : 'bg-slate-400'}`}></span>
+                {display.label} {isEnterprise ? '(Enterprise)' : ''}
+            </span>
+        );
     };
 
     return (

@@ -45,5 +45,30 @@ export async function PUT(
     include: { items: true }
   });
 
+  // FASE 5C: Notificar transiciones a través del RestaurantOrderFlowAdapter
+  try {
+    const { RestaurantOrderFlowAdapter } = await import('@/core/adapters/RestaurantOrderFlowAdapter');
+    await RestaurantOrderFlowAdapter.processOrderStatusChange(
+      negocio,
+      {
+        id: updated.id,
+        negocioId: updated.negocioId,
+        numeroPedido: updated.numeroPedido,
+        estado: updated.estado,
+        tipoEntrega: updated.tipoEntrega,
+        nombreCliente: updated.nombreCliente,
+        telefonoCliente: updated.telefonoCliente,
+        subtotal: updated.subtotal,
+        costoEnvio: updated.costoEnvio,
+        total: updated.total,
+        extraInfo: updated.extraInfo,
+        items: updated.items || []
+      },
+      nuevoEstado
+    );
+  } catch (err) {
+    console.error('[KITCHEN_ORDER_FLOW_ERROR]', err);
+  }
+
   return NextResponse.json({ success: true, order: updated, previousState: order.estado, newState: nuevoEstado });
 }

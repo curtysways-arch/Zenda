@@ -276,6 +276,31 @@ export async function POST(
         const order = txResult.newOrder;
         const payment = txResult.initialPayment;
 
+        // FASE 5C: Invocación desatendida del Enterprise Runtime (si está habilitado para el negocio)
+        try {
+            const { RestaurantOrderFlowAdapter } = await import('@/core/adapters/RestaurantOrderFlowAdapter');
+            await RestaurantOrderFlowAdapter.processNewOrder(negocio, {
+                id: order.id,
+                negocioId: negocio.id,
+                numeroPedido: order.numeroPedido,
+                estado: order.estado,
+                tipoEntrega: order.tipoEntrega,
+                nombreCliente: order.nombreCliente,
+                telefonoCliente: order.telefonoCliente,
+                direccionCliente: order.direccionCliente,
+                referenciaCliente: order.referenciaCliente,
+                latitud: order.latitud,
+                longitud: order.longitud,
+                subtotal: order.subtotal,
+                costoEnvio: order.costoEnvio,
+                total: order.total,
+                extraInfo: order.extraInfo,
+                items: order.items || itemsToCreate
+            });
+        } catch (runtimeErr) {
+            console.error('[PUBLIC_ORDERS_RUNTIME_FLOW_ERROR]', runtimeErr);
+        }
+
         // Notificaciones en segundo plano
         try {
             const { whatsappService } = require('@/lib/whatsapp');

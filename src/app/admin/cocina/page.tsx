@@ -18,6 +18,7 @@ interface KDSOrder {
 export default function AdminCocinaPage() {
   const [orders, setOrders] = useState<KDSOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isEnterprise, setIsEnterprise] = useState(false);
   const [slug, setSlug] = useState('');
 
   useEffect(() => {
@@ -48,6 +49,7 @@ export default function AdminCocinaPage() {
       if (res.ok) {
         const data = await res.json();
         setOrders(data.orders || []);
+        setIsEnterprise(Boolean(data.isEnterprise));
       }
     } finally {
       setLoading(false);
@@ -64,9 +66,9 @@ export default function AdminCocinaPage() {
     fetchKDS();
   }
 
-  const pendientes = orders.filter(o => o.estado === 'PAGO_CONFIRMADO');
-  const enPreparacion = orders.filter(o => o.estado === 'EN_PREPARACION');
-  const listos = orders.filter(o => o.estado === 'LISTO');
+  const pendientes = orders.filter(o => ['WAITING_ACCEPTANCE', 'PAGO_CONFIRMADO', 'RECIBIDO'].includes(o.estado));
+  const enPreparacion = orders.filter(o => ['CONFIRMED', 'PREPARACION', 'EN_PREPARACION', 'PREPARING'].includes(o.estado));
+  const listos = orders.filter(o => ['LISTO', 'READY'].includes(o.estado));
 
   if (loading) return (
     <div className="p-8 flex items-center justify-center min-h-[500px]">
@@ -78,10 +80,20 @@ export default function AdminCocinaPage() {
     <div className="p-8 max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-            <ChefHat className="text-amber-500 size-7" />
-            Kitchen Display System (KDS Cocina)
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+              <ChefHat className="text-amber-500 size-7" />
+              Kitchen Display System (KDS Cocina)
+            </h1>
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full border flex items-center gap-1.5 ${
+              isEnterprise 
+                ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300' 
+                : 'bg-slate-100 text-slate-600 border-slate-200'
+            }`}>
+              <span className={`size-2 rounded-full ${isEnterprise ? 'bg-purple-600 animate-pulse' : 'bg-slate-400'}`}></span>
+              Modo: {isEnterprise ? '● Enterprise Runtime' : '● Legacy'}
+            </span>
+          </div>
           <p className="text-sm text-slate-500 mt-1">Gestión de comandas activas en tiempo real con actualización automática de 8 segundos</p>
         </div>
         <button onClick={fetchKDS} className="bg-white border border-slate-200 px-4 py-2 rounded-xl text-xs font-bold text-slate-700 flex items-center gap-2 hover:bg-slate-50">

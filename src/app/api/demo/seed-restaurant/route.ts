@@ -72,7 +72,9 @@ export async function GET() {
       currency: 'USD',
       language: 'es',
       provisionedAt: now.toISOString(),
-      isDemo: true
+      isDemo: true,
+      useEnterpriseRuntime: true,
+      enterpriseRuntime: true
     };
 
     await prisma.negocio.create({
