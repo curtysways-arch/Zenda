@@ -328,7 +328,13 @@ function PedidosContent() {
                                         <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                                             <div className="text-left sm:text-right">
                                                 <span className="text-[9px] font-black uppercase text-slate-400 block tracking-widest">Total</span>
-                                                <span className="text-lg font-black text-slate-950">${(Number(order.total) || 0).toFixed(2)}</span>
+                                                <span className="text-lg font-black text-slate-950">
+                                                    ${(() => {
+                                                        const sub = (order.items || []).reduce((s: number, it: any) => s + (Number(it.precioUnitario) || 0) * (it.cantidad || 1), 0);
+                                                        const tot = Number(order.total) > 0 ? Number(order.total) : (sub + (Number(order.costoEnvio) || 0));
+                                                        return tot.toFixed(2);
+                                                    })()}
+                                                </span>
                                             </div>
 
                                             {nextAction ? (
@@ -513,22 +519,33 @@ function PedidosContent() {
 
                         {/* Totales y Botón de Acción Principal */}
                         <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm space-y-4">
-                            <div className="space-y-2 text-xs font-bold text-slate-600">
-                                <div className="flex justify-between">
-                                    <span>Subtotal</span>
-                                    <span>${(Number(selectedOrder.subtotal) || 0).toFixed(2)}</span>
-                                </div>
-                                {selectedOrder.tipoEntrega === 'DOMICILIO' && (
-                                    <div className="flex justify-between">
-                                        <span>Costo de Envío</span>
-                                        <span>${(Number(selectedOrder.costoEnvio) || 0).toFixed(2)}</span>
+                            {(() => {
+                                const sub = Number(selectedOrder.subtotal) > 0 
+                                    ? Number(selectedOrder.subtotal) 
+                                    : (selectedOrder.items || []).reduce((s: number, it: any) => s + (Number(it.precioUnitario) || 0) * (it.cantidad || 1), 0);
+                                const envio = Number(selectedOrder.costoEnvio) || 0;
+                                const tot = Number(selectedOrder.total) > 0 
+                                    ? Number(selectedOrder.total) 
+                                    : (sub + envio);
+                                return (
+                                    <div className="space-y-2 text-xs font-bold text-slate-600">
+                                        <div className="flex justify-between">
+                                            <span>Subtotal</span>
+                                            <span>${sub.toFixed(2)}</span>
+                                        </div>
+                                        {selectedOrder.tipoEntrega === 'DOMICILIO' && (
+                                            <div className="flex justify-between">
+                                                <span>Costo de Envío</span>
+                                                <span>${envio.toFixed(2)}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between text-base font-black text-slate-950 pt-2.5 border-t border-slate-100">
+                                            <span>Total A Pagar</span>
+                                            <span className="text-orange-600">${tot.toFixed(2)}</span>
+                                        </div>
                                     </div>
-                                )}
-                                <div className="flex justify-between text-base font-black text-slate-950 pt-2.5 border-t border-slate-100">
-                                    <span>Total A Pagar</span>
-                                    <span className="text-orange-600">${(Number(selectedOrder.total) || 0).toFixed(2)}</span>
-                                </div>
-                            </div>
+                                );
+                            })()}
 
                             {getNextAction(selectedOrder) && (
                                 <button
