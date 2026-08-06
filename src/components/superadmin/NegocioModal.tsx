@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import PhoneInput from "../ui/PhoneInput";
 import ImageUploader from "../ui/ImageUploader";
 import { clsx } from "clsx";
+import BusinessProvisioningWizard from './wizard/BusinessProvisioningWizard';
 
 interface NegocioModalProps {
     isOpen: boolean;
@@ -145,51 +146,91 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
     const [mounted, setMounted] = useState(false);
     const [planes, setPlanes] = useState<any[]>([]);
     const [dbBusinessTypes, setDbBusinessTypes] = useState<any[]>([]);
-
-    // Estados para navegación del Wizard
-    const [creationMode, setCreationMode] = useState<"none" | "fast" | "assisted">("none");
+    const [creationMode, setCreationMode] = useState<any>("none");
     const [step, setStep] = useState(1);
     
     // Estado final de éxito
     const [creadoExitosamente, setCreadoExitosamente] = useState(false);
     const [negocioCreadoInfo, setNegocioCreadoInfo] = useState<any>(null);
 
-    // Formulario unificado
-    const [formData, setFormData] = useState({
-        // Info Básica
-        nombre: "",
-        slug: "",
-        whatsapp: "",
-        propietario: "",
-        emailContacto: "",
-        direccion: "",
-        ciudad: "",
-        horarioApertura: "08:00",
-        horarioCierre: "22:00",
-        precioHora: "0",
-        estado: "ACTIVO",
-        plan_id: "",
-        plan_status: "trial",
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
-        // Admin
+    if (!isOpen || !mounted) return null;
+
+    // Renderizar el Wizard Maestro Universal para nuevos negocios
+    if (!isEdit) {
+        if (creadoExitosamente && negocioCreadoInfo) {
+            return createPortal(
+                <div className="fixed inset-0 z-[999999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center space-y-6 text-white">
+                        <div className="size-16 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
+                            <Check strokeWidth={3} className="w-8 h-8" />
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-xl font-black italic">¡Negocio Aprovisionado!</h3>
+                            <p className="text-xs text-slate-400">El negocio <span className="text-emerald-400 font-bold">{negocioCreadoInfo.slug}</span> ha sido instanciado exitosamente.</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onClose();
+                                router.refresh();
+                            }}
+                            className="w-full py-4 bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-emerald-400"
+                        >
+                            Finalizar e ir a Citiox Studio
+                        </button>
+                    </div>
+                </div>,
+                document.body
+            );
+        }
+
+        return createPortal(
+            <div className="fixed inset-0 z-[999999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+                <BusinessProvisioningWizard
+                    onClose={onClose}
+                    onSuccess={(info) => {
+                        setNegocioCreadoInfo(info);
+                        setCreadoExitosamente(true);
+                    }}
+                />
+            </div>,
+            document.body
+        );
+    }
+
+    // Formulario unificado para edición de negocio existente
+    const [formData, setFormData] = useState({
+        nombre: negocio?.nombre || "",
+        slug: negocio?.slug || "",
+        whatsapp: negocio?.whatsapp || "",
+        propietario: negocio?.propietario || "",
+        emailContacto: negocio?.emailContacto || "",
+        direccion: negocio?.direccion || "",
+        ciudad: negocio?.ciudad || "",
+        horarioApertura: negocio?.horarioApertura || "08:00",
+        horarioCierre: negocio?.horarioCierre || "22:00",
+        precioHora: "0",
+        estado: negocio?.estado || "ACTIVO",
+        plan_id: "",
+        plan_status: "active",
         adminEmail: "",
         adminPassword: "",
         adminNombre: "",
-
-        // Branding
         tipoNegocio: "Canchas Deportivas & Clubes",
         businessTypeId: "",
         businessProfileId: "",
-        logoUrl: "",
-        bannerUrl: "",
+        logoUrl: negocio?.logoUrl || "",
+        bannerUrl: negocio?.bannerUrl || "",
         bannerUrls: [] as string[],
-        colorPrimario: "#1dc95c",
-        colorSecundario: "#112117",
+        colorPrimario: negocio?.colorPrimario || "#1dc95c",
+        colorSecundario: negocio?.colorSecundario || "#112117",
         heroTitulo: "",
         heroSubtitulo: "",
-        moduloTorneos: false, // Portafolio de trabajos
-        
-        // Demo
+        moduloTorneos: false,
         crearDemo: false
     });
 

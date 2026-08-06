@@ -14,6 +14,8 @@ async function isSuperAdmin() {
     return true;
 }
 
+import { ProvisioningEngine } from "@/core/provisioning/ProvisioningEngine";
+
 export async function POST(req: Request) {
     if (!await isSuperAdmin()) {
         return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -21,6 +23,12 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
+
+        // Si el payload viene del Universal Provisioning Wizard (Wizard v3.0)
+        if (body.generalInfo || body.mode) {
+            const result = await ProvisioningEngine.provisionBusiness(body);
+            return NextResponse.json(result);
+        }
         const {
             nombre,
             slug,
