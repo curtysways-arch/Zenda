@@ -104,7 +104,7 @@ export default function MesaQRPage({ params }: { params: Promise<{ slug: string;
 
         {/* Informative Note Badge */}
         <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
-          <Info size={16} style={{ color: cp, shrink: 0 }} />
+          <Info size={16} style={{ color: cp, flexShrink: 0 }} />
           <p style={{ fontSize: 11, fontWeight: 600, margin: 0, color: 'rgba(255,255,255,0.8)', lineHeight: 1.3 }}>
             Consulta las opciones y precios de nuestro menú. Tu mesero tomará tu orden directamente en tu mesa.
           </p>
@@ -112,9 +112,9 @@ export default function MesaQRPage({ params }: { params: Promise<{ slug: string;
       </div>
 
       {/* Search Input & Category Filters */}
-      <div style={{ padding: '16px 20px', spaceY: 12 }}>
+      <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         {/* Search */}
-        <div style={{ position: 'relative', marginBottom: 12 }}>
+        <div style={{ position: 'relative', marginBottom: 4 }}>
           <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
           <input
             type="text"
@@ -166,7 +166,7 @@ export default function MesaQRPage({ params }: { params: Promise<{ slug: string;
               boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
               display: 'flex',
               flexDirection: 'column',
-              justify: 'space-between'
+              justifyContent: 'space-between'
             }}
           >
             {product.imagenUrl && (
@@ -184,7 +184,7 @@ export default function MesaQRPage({ params }: { params: Promise<{ slug: string;
                 )}
               </div>
             )}
-            <div style={{ padding: 18, flex: 1, display: 'flex', flexDirection: 'column', justify: 'space-between' }}>
+            <div style={{ padding: 18, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
                 <h3 style={{ color: '#0f172a', fontWeight: 900, fontSize: 16, margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '-0.01em' }}>
                   {product.nombre}
@@ -195,7 +195,7 @@ export default function MesaQRPage({ params }: { params: Promise<{ slug: string;
                   </p>
                 )}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justify: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: 12, marginTop: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: 12, marginTop: 6 }}>
                 <span style={{ color: '#94a3b8', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                   Precio
                 </span>

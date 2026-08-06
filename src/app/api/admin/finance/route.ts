@@ -63,7 +63,7 @@ export async function GET(req: Request) {
 
         // Filter by cashier if parameter passed
         const filteredPayments = cashierParam
-            ? payments.filter(p => (p.Appointment?.extraInfo as any)?.cashier === cashierParam)
+            ? payments.filter(p => ((p.Appointment as any)?.extraInfo as any)?.cashier === cashierParam)
             : payments;
 
         // Financial Metrics Breakdown
@@ -121,7 +121,7 @@ export async function GET(req: Request) {
                 fecha: p.fecha,
                 clienteNombre: p.Appointment?.cliente?.nombre || 'Cliente Presencial',
                 servicioNombre: p.Appointment?.service?.nombre || 'Venta POS / Pedido',
-                cashier: (p.Appointment?.extraInfo as any)?.cashier || 'Cajero Principal'
+                cashier: ((p.Appointment as any)?.extraInfo as any)?.cashier || 'Cajero Principal'
             }))
         });
     } catch (error) {
@@ -137,7 +137,7 @@ export async function POST(req: Request) {
 
         const negocioId = (session.user as any).negocioId;
         const body = await req.json();
-        const { action, monto, concepto, metodo = 'EFECTIVO', dineroContado } = body;
+        const { action, monto, concepto, metodo = 'EFECTIVO' } = body;
 
         if (!action || !monto) {
             return NextResponse.json({ error: 'Faltan parámetros requeridos (action, monto)' }, { status: 400 });
@@ -149,10 +149,11 @@ export async function POST(req: Request) {
             data: {
                 id: `appt-fin-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
                 negocioId,
-                date: now,
-                startTime: now.toISOString().substring(11, 16),
-                endTime: now.toISOString().substring(11, 16),
+                fecha: now,
+                horaInicio: now.toISOString().substring(11, 16),
+                horaFin: now.toISOString().substring(11, 16),
                 status: 'COMPLETED',
+                total: parseFloat(monto),
                 extraInfo: {
                     financialMovement: true,
                     movementType: action,
