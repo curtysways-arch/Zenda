@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import * as admin from 'firebase-admin';
+let admin: any = null;
+try { admin = require('firebase-admin'); } catch {}
 import { initFirebaseAdmin } from "@/lib/notifications";
 
 async function getAdminNegocioId() {

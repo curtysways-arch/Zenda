@@ -1,26 +1,16 @@
-import prisma from './prisma';
-import * as admin from 'firebase-admin';
-import { sendWhatsAppMessage } from '@/lib/whatsapp-client';
-import { whatsappService } from './whatsapp';
-
-
-// Función auxiliar para obtener configuración global (usada para Firebase Admin)
-async function getGlobalConfig(clave: string): Promise<string | null> {
-    try {
-        const config = await prisma.globalConfig.findUnique({
-            where: { clave }
-        });
-        return config?.valor || null;
-    } catch {
-        return null;
-    }
+let adminModule: any = null;
+try {
+    adminModule = require('firebase-admin');
+} catch {
+    // firebase-admin is optional
 }
 
 // Variable to track initialization promise
 let firebaseInitPromise: Promise<void> | null = null;
 
 export async function initFirebaseAdmin() {
-    if (admin.apps.length > 0) return;
+    if (!adminModule) return;
+    if (adminModule.apps && adminModule.apps.length > 0) return;
     if (firebaseInitPromise) return firebaseInitPromise;
 
     firebaseInitPromise = (async () => {
@@ -78,8 +68,8 @@ export async function initFirebaseAdmin() {
                     console.warn('Firebase Private Key no tiene formato PEM válido');
                 }
 
-                admin.initializeApp({
-                    credential: admin.credential.cert({
+                adminModule.initializeApp({
+                    credential: adminModule.credential.cert({
                         projectId,
                         clientEmail,
                         privateKey,
@@ -183,7 +173,7 @@ export class FirebasePushProvider implements INotificationProvider {
                 token: payload.to,
             };
 
-            const response = await admin.messaging().send(message);
+            const response = await adminModule.messaging().send(message);
             return { success: true, messageId: response };
         } catch (error) {
             console.error('Firebase Push error:', error);

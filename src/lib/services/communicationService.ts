@@ -2,7 +2,8 @@ import prisma from '../prisma';
 import { sseEmitter, NotificationService } from '../notifications/notificationService';
 import { whatsappService } from '../whatsapp';
 import nodemailer from 'nodemailer';
-import * as admin from 'firebase-admin';
+let admin: any = null;
+try { admin = require('firebase-admin'); } catch {}
 import { initFirebaseAdmin } from '../notifications';
 
 export interface TargetingFilters {
