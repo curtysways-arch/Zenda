@@ -1,106 +1,250 @@
 /**
  * @file FulfillmentEngine.ts
  * @module core/fulfillment
- * @description Motor universal de cumplimiento por etapas declarativas para Citiox Enterprise vNext.
- * @responsibility Ejecutar pipelines de cumplimiento por etapas definidos por el Blueprint sin contener lógica específica de industria.
- * @dependencies VersionedEventBus, RuntimeLogger
- * @status Stable (Core Runtime - v1.0)
+ * @description Orquestador Maestro de Cadenas y Pipelines de Cumplimiento (Fulfillment) para Citiox Enterprise vNext.
+ * @responsibility Definir y ejecutar el pipeline de cumplimiento por Blueprint (ACCEPTED -> PRODUCTION/KITCHEN -> STAGE -> COMPLETED).
+ *   Soporta entregas en mesa, retiro, despacho local por repartidor/vehículo, couriers externos y entregas digitales.
+ * @dependencies VersionedEventBus, RuntimeLogger, DispatchEngine
+ * @status Stable (Core Fulfillment - v1.0)
  */
 
 import { VersionedEventBus, EventEnvelope } from '../events/EventBus';
 import { RuntimeLogger } from '../observability/RuntimeLogger';
+import { DispatchEngine, DispatchTask } from '../dispatch/DispatchEngine';
 
-export interface FulfillmentPipelineConfig {
-  blueprintId: string;
-  stages: string[]; // e.g. ['CONFIRMED', 'PREPARING', 'READY', 'WAITING_DISPATCH']
-}
+export type FulfillmentChannel =
+  | 'TABLE_SERVICE'
+  | 'PICKUP'
+  | 'DELIVERY'
+  | 'SHIPPING'
+  | 'DIGITAL'
+  | 'ONSITE';
+
+export type FulfillmentStage =
+  | 'ACCEPTED'
+  | 'KITCHEN'
+  | 'PRODUCTION'
+  | 'READY'
+  | 'DISPATCH'
+  | 'TABLE_SERVICE'
+  | 'PICKUP'
+  | 'SERVICE'
+  | 'DIGITAL_DELIVERY'
+  | 'COMPLETED'
+  | 'CANCELLED';
 
 export interface FulfillmentTicket {
   ticketId: string;
   orderId: string;
   businessId: string;
-  blueprintId: string;
-  currentStage: string;
-  history: Array<{ stage: string; timestamp: string }>;
+  channel: FulfillmentChannel;
+  currentStage: FulfillmentStage;
+  pipeline: FulfillmentStage[];
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  dispatchTaskId?: string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export class FulfillmentEngine {
+  private static instance: FulfillmentEngine;
   private logger = RuntimeLogger.getInstance();
-  private pipelines = new Map<string, FulfillmentPipelineConfig>();
+  private tickets = new Map<string, FulfillmentTicket>();
+  private dispatchEngine = DispatchEngine.getInstance();
 
-  constructor(private eventBus: VersionedEventBus) {
-    // Pipelines por defecto registradas
-    this.registerPipeline({
-      blueprintId: 'RESTAURANT',
-      stages: ['CONFIRMED', 'PREPARING', 'READY', 'WAITING_DISPATCH']
-    });
-    this.registerPipeline({
-      blueprintId: 'LAUNDRY',
-      stages: ['RECEIVED', 'WASHING', 'DRYING', 'IRONING', 'READY']
-    });
-    this.registerPipeline({
-      blueprintId: 'SPA',
-      stages: ['BOOKED', 'IN_SERVICE', 'FINISHED']
+  constructor(private eventBus?: VersionedEventBus) {
+    if (eventBus) {
+      this.subscribeToEvents(eventBus);
+    }
+  }
+
+  public static getInstance(eventBus?: VersionedEventBus): FulfillmentEngine {
+    if (!FulfillmentEngine.instance) {
+      FulfillmentEngine.instance = new FulfillmentEngine(eventBus);
+    }
+    return FulfillmentEngine.instance;
+  }
+
+  public setEventBus(eventBus: VersionedEventBus): void {
+    this.eventBus = eventBus;
+    this.subscribeToEvents(eventBus);
+  }
+
+  private subscribeToEvents(eventBus: VersionedEventBus): void {
+    // Escuchar evento desacoplado dispatch.completed emitido por DispatchEngine
+    eventBus.subscribe('dispatch.completed', async (envelope: EventEnvelope) => {
+      const dispatchTask = envelope.payload as DispatchTask;
+      if (dispatchTask?.fulfillmentTicketId) {
+        this.logger.info(
+          `[FulfillmentEngine] Evento dispatch.completed recibido para ticket ${dispatchTask.fulfillmentTicketId}. Avanzando a COMPLETED.`
+        );
+        await this.completeFulfillment(dispatchTask.fulfillmentTicketId);
+      }
     });
   }
 
-  public registerPipeline(config: FulfillmentPipelineConfig): void {
-    this.pipelines.set(config.blueprintId, config);
-    this.logger.info(`[FulfillmentEngine] Pipeline registrado para Blueprint: ${config.blueprintId} (${config.stages.join(' -> ')})`);
+  /**
+   * Obtener pipeline por defecto según el canal de cumplimiento.
+   */
+  public getDefaultPipeline(channel: FulfillmentChannel): FulfillmentStage[] {
+    switch (channel) {
+      case 'DELIVERY':
+        return ['ACCEPTED', 'KITCHEN', 'READY', 'DISPATCH', 'COMPLETED'];
+      case 'TABLE_SERVICE':
+        return ['ACCEPTED', 'KITCHEN', 'READY', 'TABLE_SERVICE', 'COMPLETED'];
+      case 'PICKUP':
+        return ['ACCEPTED', 'KITCHEN', 'READY', 'PICKUP', 'COMPLETED'];
+      case 'SHIPPING':
+        return ['ACCEPTED', 'PRODUCTION', 'READY', 'DISPATCH', 'COMPLETED'];
+      case 'DIGITAL':
+        return ['ACCEPTED', 'DIGITAL_DELIVERY', 'COMPLETED'];
+      case 'ONSITE':
+      default:
+        return ['ACCEPTED', 'SERVICE', 'COMPLETED'];
+    }
   }
 
-  public createTicket(orderId: string, businessId: string, blueprintId: string): FulfillmentTicket {
-    const pipeline = this.pipelines.get(blueprintId) || {
-      blueprintId,
-      stages: ['CONFIRMED', 'PROCESSING', 'READY']
-    };
-
-    const initialStage = pipeline.stages[0] || 'CONFIRMED';
+  /**
+   * Iniciar la cadena de cumplimiento para una orden.
+   */
+  public async beginFulfillment(
+    orderId: string,
+    businessId: string,
+    channel: FulfillmentChannel = 'DELIVERY',
+    customPipeline?: FulfillmentStage[],
+    metadata?: Record<string, any>
+  ): Promise<FulfillmentTicket> {
+    const ticketId = `flf-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const pipeline = customPipeline || this.getDefaultPipeline(channel);
     const now = new Date().toISOString();
 
     const ticket: FulfillmentTicket = {
-      ticketId: `tkt-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      ticketId,
       orderId,
       businessId,
-      blueprintId,
-      currentStage: initialStage,
-      history: [{ stage: initialStage, timestamp: now }]
+      channel,
+      currentStage: pipeline[0] || 'ACCEPTED',
+      pipeline,
+      status: 'IN_PROGRESS',
+      metadata,
+      createdAt: now,
+      updatedAt: now,
     };
 
-    this.logger.info(`[FulfillmentEngine] Ticket de cumplimiento creado: ${ticket.ticketId} (Mesa/Pedido: ${orderId}, Etapa inicial: ${initialStage})`);
+    this.tickets.set(ticketId, ticket);
+    this.logger.info(`[FulfillmentEngine] Inciado ticket de cumplimiento ${ticketId} (Orden ${orderId}, Canal ${channel})`);
+
+    if (this.eventBus) {
+      const envelope: EventEnvelope = {
+        eventId: `evt-flf-start-${Date.now()}`,
+        name: 'fulfillment.started',
+        version: 'v1',
+        timestamp: now,
+        correlationId: `corr-flf-${ticketId}`,
+        businessId,
+        source: 'FulfillmentEngine',
+        payload: ticket,
+      };
+      await this.eventBus.publish(envelope);
+    }
+
     return ticket;
   }
 
-  public async advanceStage(ticket: FulfillmentTicket): Promise<FulfillmentTicket> {
-    const pipeline = this.pipelines.get(ticket.blueprintId);
-    if (!pipeline) throw new Error(`[FulfillmentEngine] No existe pipeline para blueprint ${ticket.blueprintId}`);
+  /**
+   * Avanzar la etapa del pipeline de cumplimiento.
+   */
+  public async advanceStage(ticketId: string, nextStage: FulfillmentStage): Promise<FulfillmentTicket> {
+    const ticket = this.tickets.get(ticketId);
+    if (!ticket) throw new Error(`[FulfillmentEngine] Ticket de cumplimiento ${ticketId} no encontrado.`);
 
-    const currentIndex = pipeline.stages.indexOf(ticket.currentStage);
-    if (currentIndex === -1 || currentIndex >= pipeline.stages.length - 1) {
-      throw new Error(`[FulfillmentEngine] El ticket ${ticket.ticketId} ya se encuentra en la etapa final: ${ticket.currentStage}`);
+    const now = new Date().toISOString();
+    ticket.currentStage = nextStage;
+    ticket.updatedAt = now;
+
+    this.logger.info(`[FulfillmentEngine] Ticket ${ticketId} avanzó a la etapa: ${nextStage}`);
+
+    // Si la etapa es DISPATCH y canal es DELIVERY/SHIPPING, delegar la creación de la tarea a DispatchEngine
+    if (nextStage === 'DISPATCH' && (ticket.channel === 'DELIVERY' || ticket.channel === 'SHIPPING')) {
+      const dispatchTask = await this.dispatchEngine.createDispatchTask({
+        fulfillmentTicketId: ticketId,
+        orderId: ticket.orderId,
+        businessId: ticket.businessId,
+        channel: ticket.channel,
+        customer: ticket.metadata?.customer || { name: 'Cliente', phone: '' },
+        address: ticket.metadata?.address || '',
+        lat: ticket.metadata?.lat,
+        lng: ticket.metadata?.lng,
+        instructions: ticket.metadata?.instructions,
+      });
+      ticket.dispatchTaskId = dispatchTask.taskId;
     }
 
-    const nextStage = pipeline.stages[currentIndex + 1];
-    const now = new Date().toISOString();
+    // Emitir evento de cambio de etapa
+    if (this.eventBus) {
+      const envelope: EventEnvelope = {
+        eventId: `evt-flf-stage-${Date.now()}`,
+        name: 'fulfillment.stage_changed',
+        version: 'v1',
+        timestamp: now,
+        correlationId: `corr-flf-${ticketId}`,
+        businessId: ticket.businessId,
+        source: 'FulfillmentEngine',
+        payload: { ticket, stage: nextStage },
+      };
+      await this.eventBus.publish(envelope);
+    }
 
-    ticket.currentStage = nextStage;
-    ticket.history.push({ stage: nextStage, timestamp: now });
+    // Si la etapa llega a COMPLETED o etapas finales de auto-cierre (TABLE_SERVICE, PICKUP sin dispatch), completar
+    if (nextStage === 'COMPLETED') {
+      await this.completeFulfillment(ticketId);
+    }
 
-    this.logger.info(`[FulfillmentEngine] Ticket ${ticket.ticketId} avanzado a etapa: ${nextStage}`);
-
-    // Emitir evento de fulfillment
-    const envelope: EventEnvelope = {
-      eventId: `evt-ful-${Date.now()}`,
-      name: `fulfillment.${nextStage.toLowerCase()}`,
-      version: 'v1',
-      timestamp: now,
-      correlationId: `corr-tkt-${ticket.ticketId}`,
-      businessId: ticket.businessId,
-      source: 'FulfillmentEngine',
-      payload: ticket
-    };
-
-    await this.eventBus.publish(envelope);
     return ticket;
+  }
+
+  /**
+   * Completar la cadena de cumplimiento y emitir fulfillment.completed.
+   */
+  public async completeFulfillment(ticketId: string): Promise<FulfillmentTicket> {
+    const ticket = this.tickets.get(ticketId);
+    if (!ticket) throw new Error(`[FulfillmentEngine] Ticket de cumplimiento ${ticketId} no encontrado.`);
+
+    const now = new Date().toISOString();
+    ticket.currentStage = 'COMPLETED';
+    ticket.status = 'COMPLETED';
+    ticket.updatedAt = now;
+
+    this.logger.info(`[FulfillmentEngine] Ticket de cumplimiento ${ticketId} completado (Orden ${ticket.orderId}).`);
+
+    if (this.eventBus) {
+      const envelope: EventEnvelope = {
+        eventId: `evt-flf-comp-${Date.now()}`,
+        name: 'fulfillment.completed',
+        version: 'v1',
+        timestamp: now,
+        correlationId: `corr-flf-${ticketId}`,
+        businessId: ticket.businessId,
+        source: 'FulfillmentEngine',
+        payload: ticket,
+      };
+      await this.eventBus.publish(envelope);
+    }
+
+    return ticket;
+  }
+
+  public getTicket(ticketId: string): FulfillmentTicket | undefined {
+    return this.tickets.get(ticketId);
+  }
+
+  public getTicketByOrder(orderId: string): FulfillmentTicket | undefined {
+    return Array.from(this.tickets.values()).find(t => t.orderId === orderId);
+  }
+
+  public getTickets(businessId?: string): FulfillmentTicket[] {
+    const all = Array.from(this.tickets.values());
+    return businessId ? all.filter(t => t.businessId === businessId) : all;
   }
 }

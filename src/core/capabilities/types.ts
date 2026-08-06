@@ -22,6 +22,7 @@ export const CAPABILITY_REGISTRY = {
   PAYMENTS: 'payments',
   QR_ORDERING: 'qr_ordering',
   CUSTOMERS: 'customers',
+  DISPATCH: 'dispatch',
 } as const;
 
 export type CapabilityKey = typeof CAPABILITY_REGISTRY[keyof typeof CAPABILITY_REGISTRY];
@@ -47,4 +48,5 @@ export interface BusinessCapabilities {
   payments?: boolean;
   qr_ordering?: boolean;
   customers?: boolean;
+  dispatch?: boolean;
 }

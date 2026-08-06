@@ -73,6 +73,7 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
             tables: Boolean(caps.tables),
             kitchen: Boolean(caps.kitchen),
             delivery: Boolean(caps.delivery),
+            dispatch: Boolean(caps.dispatch || caps.delivery || caps.orders || data.tipoNegocio === 'PRODUCTOS' || data.tipoNegocio === 'RESTAURANT'),
             appointments: Boolean(caps.appointments || data.tipoNegocio === 'RESERVA' || data.tipoNegocio === 'SPA'),
             courts: Boolean(caps.courts || data.tipoNegocio === 'SPORTS_COURTS'),
             services: Boolean(caps.services || data.tipoNegocio === 'SHOE_CARE' || data.tipoNegocio === 'ordenes-servicio'),
@@ -112,6 +113,9 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
     // Core Operational Capabilities
     if (capabilities.orders) {
       items.push({ name: 'Pedidos', href: '/admin/pedidos', icon: Package, section: 'GESTIÓN OPERATIVA', badge: pendingOrders > 0 ? pendingOrders : undefined });
+    }
+    if (capabilities.dispatch) {
+      items.push({ name: 'Despacho', href: '/admin/despacho', icon: Truck, section: 'GESTIÓN OPERATIVA' });
     }
     if (capabilities.tables) {
       items.push({ name: 'Mesas', href: '/admin/mesas', icon: Layout, section: 'GESTIÓN OPERATIVA' });
