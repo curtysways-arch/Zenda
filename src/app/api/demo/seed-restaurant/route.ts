@@ -5,6 +5,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import manifest from '@/core/templates/manifests/restaurant-demo.manifest.json';
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +17,7 @@ export async function GET() {
     // ── 1. Idempotencia: verificar si ya existe el negocio ─────────────────────
     const existing = await prisma.negocio.findUnique({ where: { slug: DEMO_SLUG } });
     if (existing) {
-      const bcrypt = require('bcryptjs');
+
       const hashedPassword = await bcrypt.hash('CitioxDemo2026!', 10);
       const demoAdminEmail = 'demo.restaurante@citiox.com';
 
@@ -253,7 +254,6 @@ export async function GET() {
     }
 
     // ── 8. Crear Usuario Administrador de la Demo ──────────────────────────────
-    const bcrypt = require('bcryptjs');
     const hashedPassword = await bcrypt.hash('CitioxDemo2026!', 10);
     const demoAdminEmail = 'demo.restaurante@citiox.com';
 
