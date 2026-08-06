@@ -9,6 +9,7 @@ export type BusinessModuleType =
   | 'VETERINARY'
   | 'SPORTS_COURTS'
   | 'FOOD_DELIVERY'
+  | 'RESTAURANT'
   | 'SHOE_CARE'
   | 'LAUNDRY'
   | 'TECH_REPAIR'

@@ -192,19 +192,20 @@ export async function POST(
                 data: {
                     negocioId: negocio.id,
                     numeroPedido: nextOrderNumber,
-                    tipoEntrega: deliveryType,
+                    tipoEntrega: deliveryType || (body.channel === 'DELIVERY' ? 'DOMICILIO' : 'RETIRO'),
                     nombreCliente: clientName,
-                    telefonoCliente: formatToEcuadorPhone(clientPhone),
+                    telefonoCliente: formatToEcuadorPhone(clientPhone || '0999999999'),
                     direccionCliente: clientAddress || null,
-                    referenciaCliente: clientReference || null,
+                    referenciaCliente: clientReference || (body.tableCode ? `Mesa: ${body.tableCode}` : null),
                     latitud: lat || null,
                     longitud: lng || null,
                     fechaEntrega: dateToDeliver,
-                    franjaHoraria: timeSlot,
+                    franjaHoraria: timeSlot || 'Inmediata',
                     subtotal,
                     costoEnvio,
                     total,
-                    estado: 'PENDIENTE_PAGO',
+                    estado: body.channel === 'TABLE' ? 'NUEVA' : 'PENDIENTE_PAGO',
+                    extraInfo: body.extraInfo || (body.channel ? { channel: body.channel, tableCode: body.tableCode, kitchenStatus: 'NUEVA' } : null),
                     items: {
                         create: itemsToCreate
                     }
@@ -319,5 +320,53 @@ export async function POST(
     } catch (error) {
         console.error('[ORDERS_POST_API] Error creating order:', error);
         return NextResponse.json({ error: 'Ocurrió un error al procesar el pedido. Inténtalo de nuevo.' }, { status: 500 });
+    }
+}
+
+export async function PATCH(
+    request: Request,
+    { params }: { params: Promise<{ slug: string }> }
+) {
+    const { slug } = await params;
+    try {
+        const body = await request.json();
+        const { orderId, estado, kitchenStatus } = body;
+
+        if (!orderId || (!estado && !kitchenStatus)) {
+            return NextResponse.json({ error: 'orderId y estado son requeridos' }, { status: 400 });
+        }
+
+        const negocio = await prisma.negocio.findUnique({ where: { slug } });
+        if (!negocio) {
+            return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
+        }
+
+        const order = await (prisma as any).pedido.findFirst({
+            where: { id: orderId, negocioId: negocio.id }
+        });
+
+        if (!order) {
+            return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 });
+        }
+
+        const currentExtra = typeof order.extraInfo === 'string' ? JSON.parse(order.extraInfo || '{}') : (order.extraInfo || {});
+        const updatedExtra = {
+            ...currentExtra,
+            kitchenStatus: kitchenStatus || estado || currentExtra.kitchenStatus
+        };
+
+        const updatedOrder = await (prisma as any).pedido.update({
+            where: { id: orderId },
+            data: {
+                estado: estado || order.estado,
+                extraInfo: updatedExtra,
+                updatedAt: new Date()
+            }
+        });
+
+        return NextResponse.json({ success: true, order: updatedOrder });
+    } catch (e: any) {
+        console.error('[ORDERS_PATCH_API]', e);
+        return NextResponse.json({ error: e.message || 'Error actualizando comanda' }, { status: 500 });
     }
 }

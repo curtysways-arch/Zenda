@@ -98,6 +98,54 @@ export const TEMPLATE_REGISTRY: Record<string, BusinessTemplateManifest> = {
       { nombre: 'Restauración y Repintado de Cuero', precio: 60000, categoria: 'Restauración' },
     ],
   },
+
+  RESTAURANT_STANDARD: {
+    id: 'restaurant_standard',
+    templateVersion: '1.0.0',
+    name: '🍽️ Restaurante, Bar & Cafetería',
+    description: 'Comanda interactiva para meseros, pantalla KDS de cocina, pedidos QR a mesa y delivery integrado.',
+    badge: 'Completo',
+    icon: 'Utensils',
+    module: 'RESTAURANT',
+    profile: 'RestaurantExperience',
+    capabilities: {
+      orders: true,
+      products: true,
+      categories: true,
+      tables: true,
+      waiters: true,
+      kitchen: true,
+      delivery: true,
+      pickup: true,
+      payments: true,
+      inventory: true,
+      customers: true,
+      qr_ordering: true
+    },
+    settings: {
+      orderWorkflow: {
+        customStatuses: ['NUEVA', 'CONFIRMADA', 'EN_COCINA', 'PREPARANDO', 'LISTA', 'ENTREGADA', 'PAGADA', 'FINALIZADA'],
+      },
+      labels: {
+        resourceNameSingular: 'Mesa',
+        resourceNamePlural: 'Mesas',
+        itemNameSingular: 'Comanda',
+      },
+      channels: {
+        availableInTable: true,
+        availableInDelivery: true,
+        availableInPickup: true,
+        availableInWaiter: true
+      }
+    },
+    suggestedColors: { primaryColor: '#ea580c', secondaryColor: '#7c2d12' },
+    initialResources: [
+      { name: 'Mesa 1', resourceType: 'INFRASTRUCTURE', category: 'TABLE', capacity: 4, active: true },
+      { name: 'Mesa 2', resourceType: 'INFRASTRUCTURE', category: 'TABLE', capacity: 2, active: true },
+      { name: 'Mesa 3 (Terraza)', resourceType: 'INFRASTRUCTURE', category: 'TABLE', capacity: 6, active: true },
+    ],
+    initialServices: [],
+  },
 };
 
 export function getTemplateManifest(templateId: string): BusinessTemplateManifest {

@@ -21,6 +21,15 @@ export interface BusinessSettingsData {
     allowTakeaway?: boolean;
     deliveryRadiusKm?: number;
   };
+  orderWorkflow?: {
+    customStatuses: string[];
+  };
+  channels?: {
+    availableInTable?: boolean;
+    availableInDelivery?: boolean;
+    availableInPickup?: boolean;
+    availableInWaiter?: boolean;
+  };
   serviceSettings?: {
     requiresItemPhotos: boolean;
     customStatuses: string[];

@@ -12,21 +12,39 @@ export const CAPABILITY_REGISTRY = {
   MEMBERSHIPS: 'memberships',
   GIFTCARDS: 'giftcards',
   AI_ASSISTANT: 'ai_assistant',
-  DELIVERY: 'delivery',           // ✅ Módulo de Logística Transversal
+  DELIVERY: 'delivery',
+  TABLES: 'tables',
+  WAITERS: 'waiters',
+  KITCHEN: 'kitchen',
+  PRODUCTS: 'products',
+  CATEGORIES: 'categories',
+  PICKUP: 'pickup',
+  PAYMENTS: 'payments',
+  QR_ORDERING: 'qr_ordering',
+  CUSTOMERS: 'customers',
 } as const;
 
 export type CapabilityKey = typeof CAPABILITY_REGISTRY[keyof typeof CAPABILITY_REGISTRY];
 
 export interface BusinessCapabilities {
-  booking?: boolean;     // Activa el BookingEngine (Agendamiento/Canchas/Turnos)
-  orders?: boolean;      // Activa el OrderEngine (Catálogo/Menú/Comanda)
-  service?: boolean;     // Activa el ServiceEngine (Recibir -> Procesar -> Entregar)
-  inventory?: boolean;   // Control de Stock e Insumos
-  crm?: boolean;         // Historial extendido de clientes
-  academy?: boolean;     // Cursos y capacitaciones
+  booking?: boolean;
+  orders?: boolean;
+  service?: boolean;
+  inventory?: boolean;
+  crm?: boolean;
+  academy?: boolean;
   subscriptions?: boolean;
   memberships?: boolean;
   giftcards?: boolean;
   ai_assistant?: boolean;
-  delivery?: boolean;    // ✅ Activa el Módulo de Logística Transversal (retiros y entregas)
+  delivery?: boolean;
+  tables?: boolean;
+  waiters?: boolean;
+  kitchen?: boolean;
+  products?: boolean;
+  categories?: boolean;
+  pickup?: boolean;
+  payments?: boolean;
+  qr_ordering?: boolean;
+  customers?: boolean;
 }

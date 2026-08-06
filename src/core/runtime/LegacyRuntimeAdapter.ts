@@ -13,12 +13,18 @@ export class LegacyRuntimeAdapter {
     const tipo = (negocio?.tipoNegocio || config.tipoNegocio || 'RESERVA').toUpperCase();
     const isShoeCare = tipo === 'SHOE_CARE' || negocio?.slug === 'lavado';
     const isSports = tipo === 'SPORTS_COURTS' || (negocio?.slug || '').includes('canchas');
+    const isRestaurant = tipo === 'RESTAURANT' || tipo === 'FOOD_DELIVERY' || Boolean(rawCaps.kitchen || rawCaps.tables);
 
     const capabilities: Record<string, boolean> = {
       booking: Boolean(rawCaps.booking ?? (isSports || tipo === 'RESERVA')),
       service: Boolean(rawCaps.service ?? isShoeCare),
-      orders: Boolean(rawCaps.orders ?? tipo === 'PRODUCTOS'),
-      delivery: Boolean(rawCaps.delivery ?? config.capabilities?.delivery ?? isShoeCare),
+      orders: Boolean(rawCaps.orders ?? (tipo === 'PRODUCTOS' || isRestaurant)),
+      delivery: Boolean(rawCaps.delivery ?? config.capabilities?.delivery ?? (isShoeCare || isRestaurant)),
+      tables: Boolean(rawCaps.tables ?? isRestaurant),
+      waiters: Boolean(rawCaps.waiters ?? isRestaurant),
+      kitchen: Boolean(rawCaps.kitchen ?? isRestaurant),
+      pickup: Boolean(rawCaps.pickup ?? isRestaurant),
+      qr_ordering: Boolean(rawCaps.qr_ordering ?? isRestaurant),
       inventory: Boolean(rawCaps.inventory ?? true),
       crm: Boolean(rawCaps.crm ?? true),
     };
@@ -28,6 +34,8 @@ export class LegacyRuntimeAdapter {
     if (capabilities['service']) modules.push('SERVICE');
     if (capabilities['orders']) modules.push('ORDERS');
     if (capabilities['delivery']) modules.push('DELIVERY');
+    if (capabilities['kitchen']) modules.push('KITCHEN');
+    if (capabilities['tables']) modules.push('TABLES');
 
     return {
       blueprint: {
@@ -46,38 +54,43 @@ export class LegacyRuntimeAdapter {
         workflow: {
           id: `wf_${tipo}`,
           name: `Workflow ${tipo}`,
-          statuses: isShoeCare
-            ? ['RECIBIDO', 'EN_LAVADO', 'LISTO', 'ENTREGADO']
-            : ['PENDIENTE', 'CONFIRMADO', 'COMPLETADO', 'CANCELADO']
+          statuses: isRestaurant
+            ? ['NUEVA', 'CONFIRMADA', 'EN_COCINA', 'PREPARANDO', 'LISTA', 'ENTREGADA', 'PAGADA', 'FINALIZADA']
+            : isShoeCare
+              ? ['RECIBIDO', 'EN_LAVADO', 'LISTO', 'ENTREGADO']
+              : ['PENDIENTE', 'CONFIRMADO', 'COMPLETADO', 'CANCELADO']
         },
         resources: negocio?.services || [],
         plans: ['STARTER', 'GROWTH', 'PRO'],
         settings: config,
-        roles: ['ADMINISTRADOR', 'RECEPCION', 'CLIENTE'],
+        roles: isRestaurant
+          ? ['ADMINISTRADOR', 'CAJERO', 'MESERO', 'COCINA', 'DELIVERY', 'CLIENTE']
+          : ['ADMINISTRADOR', 'RECEPCION', 'CLIENTE'],
         permissions: ['READ', 'WRITE', 'DELETE']
       },
       experience: {
         landing: {
-          component: isShoeCare ? 'ShoeCareLanding' : (isSports ? 'CanchaPublicLanding' : 'DefaultLanding'),
-          theme: negocio?.landingThemeId || config.landingThemeId || 'modern'
+          component: isRestaurant ? 'RestaurantLanding' : (isShoeCare ? 'ShoeCareLanding' : (isSports ? 'CanchaPublicLanding' : 'DefaultLanding')),
+          theme: negocio?.landingThemeId || config.landingThemeId || (isRestaurant ? 'RestaurantTheme' : 'modern')
         },
         admin: {
-          component: 'AdminSidebarLayout',
+          component: isRestaurant ? 'SidebarKitchen' : 'AdminSidebarLayout',
           layoutType: negocio?.adminThemeId || config.adminThemeId || 'SIDEBAR'
         },
         dashboard: {
-          layoutType: isShoeCare ? 'KANBAN' : (isSports ? 'CALENDAR' : 'CARDS')
+          layoutType: isRestaurant ? 'KitchenDashboard' : (isShoeCare ? 'KANBAN' : (isSports ? 'CALENDAR' : 'CARDS'))
         },
         navigation: {
-          items: ['INICIO', 'RESERVAS', 'SERVICIOS', 'CLIENTES', 'CONFIGURACION']
+          items: isRestaurant
+            ? ['INICIO', 'COCINA', 'MESAS', 'MESEROS', 'PEDIDOS', 'LOGISTICA', 'PRODUCTOS', 'CONFIGURACION']
+            : ['INICIO', 'RESERVAS', 'SERVICIOS', 'CLIENTES', 'CONFIGURACION']
         },
-        forms: { pack: 'MINIMAL_ROUNDED' },
-        cards: { pack: 'GLASS' },
-        tables: { pack: 'COMPACT' },
+        forms: { pack: isRestaurant ? 'KitchenForms' : 'MINIMAL_ROUNDED' },
+        cards: { pack: isRestaurant ? 'KitchenCards' : 'GLASS' },
+        tables: { pack: isRestaurant ? 'KitchenTables' : 'COMPACT' },
         widgets: { pack: 'DEFAULT' },
         theme: {
-          primaryColor: negocio?.colorPrimario || '#7c3aed',
-          secondaryColor: negocio?.colorSecundario || '#4f46e5',
+          primaryColor: negocio?.colorPrimario || (isRestaurant ? '#ea580c' : '#7c3aed'),
           fontHeading: 'Inter',
           fontBody: 'Inter'
         },
