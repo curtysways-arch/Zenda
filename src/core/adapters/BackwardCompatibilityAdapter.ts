@@ -40,7 +40,7 @@ export class BackwardCompatibilityAdapter {
       businessId: legacyBusiness.id || 'demo-biz-id',
       tenantId: legacyBusiness.tenantId || 'tenant-default',
       slug: legacyBusiness.slug || 'demo-slug',
-      blueprint: tipo,
+      blueprint: manifest.id, // ID canónico del Blueprint, no el string legacy
       activeCapabilities,
       configuration: { ...manifest.defaultConfiguration, ...cfg },
       permissions: ['ADMIN', 'STAFF', 'MESERO', 'DRIVER']
