@@ -43,7 +43,7 @@ export async function PUT(req: Request) {
 
     try {
         const body = await req.json();
-        const { id, estado, franjaHoraria, fechaEntrega, notas } = body;
+        const { id, estado, franjaHoraria, fechaEntrega, notas, subtotal, costoEnvio, costoEmpaque, descuento, total, pricingBreakdown } = body;
 
         if (!id) {
             return NextResponse.json({ error: 'El ID es obligatorio' }, { status: 400 });
@@ -65,6 +65,22 @@ export async function PUT(req: Request) {
         if (fechaEntrega) updateData.fechaEntrega = new Date(fechaEntrega);
         if (notas !== undefined) updateData.notas = notas;
 
+        // Actualizaciones financieras de Caja via PricingEngine
+        if (subtotal !== undefined) updateData.subtotal = parseFloat(subtotal);
+        if (costoEnvio !== undefined) updateData.costoEnvio = parseFloat(costoEnvio);
+        if (total !== undefined) updateData.total = parseFloat(total);
+
+        // Guardar desglose de auditoría en extraInfo
+        if (pricingBreakdown || costoEmpaque !== undefined || descuento !== undefined) {
+            const currentExtra = (pedido.extraInfo as any) || {};
+            updateData.extraInfo = {
+                ...currentExtra,
+                packagingCost: costoEmpaque ?? currentExtra.packagingCost ?? 0,
+                discountAmount: descuento ?? currentExtra.discountAmount ?? 0,
+                pricingBreakdown: pricingBreakdown || currentExtra.pricingBreakdown
+            };
+        }
+
         const pedidoActualizado = await (prisma as any).pedido.update({
             where: { id },
             data: updateData,
@@ -78,6 +94,17 @@ export async function PUT(req: Request) {
                 }
             }
         });
+
+        // Si la caja confirma el pedido (CONFIRMED, PREPARACION, EN_PREPARACION), emitir evento desacoplado CoreEventBus
+        const isConfirmation = estado && ['CONFIRMED', 'PREPARACION', 'EN_PREPARACION'].includes(estado);
+        if (isConfirmation) {
+            try {
+                const { coreEventBus } = require('@/core/events/EventBus');
+                await coreEventBus.emit('ORDER_CONFIRMED', negocioId, pedidoActualizado, id);
+            } catch (evErr) {
+                console.error('[CORE_EVENT_ORDER_CONFIRMED_ERROR]', evErr);
+            }
+        }
 
         // Si se aprueba el pedido a PREPARACION o RECIBIDO, sincronizar el estado del pago a CONFIRMADO
         if (estado && ['PREPARACION', 'EN_PREPARACION', 'RECIBIDO'].includes(estado) && pedido.payment) {

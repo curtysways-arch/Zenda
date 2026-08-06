@@ -52,10 +52,10 @@ interface Order {
 }
 
 const TAB_STATES = {
-    nuevos: ['RECIBIDO', 'PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PAGO_CONFIRMADO', 'PENDIENTE'],
-    preparacion: ['EN_PREPARACION', 'PREPARACION'],
-    listos: ['LISTO', 'RUTA'],
-    historial: ['ENTREGADO', 'CANCELADO', 'RECHAZADO']
+    nuevos: ['RECIBIDO', 'PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PAGO_CONFIRMADO', 'PENDIENTE', 'WAITING_CONFIRMATION', 'NUEVA'],
+    preparacion: ['EN_PREPARACION', 'PREPARACION', 'CONFIRMED'],
+    listos: ['LISTO', 'READY', 'RUTA', 'ON_ROUTE'],
+    historial: ['ENTREGADO', 'COMPLETED', 'CANCELADO', 'RECHAZADO']
 };
 
 function PedidosContent() {

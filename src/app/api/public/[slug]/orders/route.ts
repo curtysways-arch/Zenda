@@ -142,7 +142,7 @@ export async function POST(
             return R * c;
         };
 
-        // Configuración de envío y monto mínimo
+        // Configuración de envío y empaque
         const config = (negocio.configuracion as any) || {};
 
         // Validar monto mínimo en productos
@@ -153,20 +153,31 @@ export async function POST(
             }, { status: 400 });
         }
 
-        let costoEnvio = 0;
-        if (deliveryType === 'DOMICILIO') {
-            const baseCost = config.costoEnvio !== undefined ? parseFloat(config.costoEnvio) : 1.50;
-            if (lat && lng) {
-                const latNegocio = config.latitudNegocio !== undefined ? parseFloat(config.latitudNegocio) : -0.180653;
-                const lngNegocio = config.longitudNegocio !== undefined ? parseFloat(config.longitudNegocio) : -78.467838;
-                const distance = getDistanceFromLatLonInKm(latNegocio, lngNegocio, parseFloat(lat), parseFloat(lng));
-                const kmCost = distance * (config.costoEnvioPorKm !== undefined ? parseFloat(config.costoEnvioPorKm) : 0.25);
-                costoEnvio = parseFloat((baseCost + kmCost).toFixed(2));
-            } else {
-                costoEnvio = baseCost;
-            }
-        }
-        const total = subtotal + costoEnvio;
+        // Usar PricingEngine para cálculo desglosado
+        const { PricingEngine } = await import('@/core/pricing/PricingEngine');
+        const latNegocio = config.latitudNegocio !== undefined ? parseFloat(config.latitudNegocio) : -0.180653;
+        const lngNegocio = config.longitudNegocio !== undefined ? parseFloat(config.longitudNegocio) : -78.467838;
+
+        const pricingResult = PricingEngine.calculate({
+            items: itemsToCreate.map(i => ({
+                productId: i.productoId,
+                nombreProducto: i.nombreProducto,
+                precioUnitario: i.precioUnitario,
+                cantidad: i.cantidad
+            })),
+            deliveryType: deliveryType || (body.channel === 'DELIVERY' ? 'DOMICILIO' : 'RETIRO'),
+            deliveryConfig: config.deliveryConfig || {
+                enabled: true,
+                baseCost: config.costoEnvio !== undefined ? parseFloat(config.costoEnvio) : 1.50,
+                costPerKm: config.costoEnvioPorKm !== undefined ? parseFloat(config.costoEnvioPorKm) : 0.25
+            },
+            packagingConfig: config.packagingConfig || { enabled: true, type: 'PER_PRODUCT', amount: 0.25 },
+            originCoords: { lat: latNegocio, lng: lngNegocio },
+            destinationCoords: lat && lng ? { lat: parseFloat(lat), lng: parseFloat(lng) } : undefined
+        });
+
+        const costoEnvio = pricingResult.deliveryCost;
+        const total = pricingResult.total;
 
         // Resolver fecha de entrega
         let dateToDeliver = new Date();
@@ -187,7 +198,7 @@ export async function POST(
 
             const nextOrderNumber = lastOrder ? lastOrder.numeroPedido + 1 : 1;
 
-            // Crear el pedido
+            // Crear el pedido con desglose de precios en extraInfo
             const newOrder = await (tx as any).pedido.create({
                 data: {
                     negocioId: negocio.id,
@@ -201,11 +212,17 @@ export async function POST(
                     longitud: lng || null,
                     fechaEntrega: dateToDeliver,
                     franjaHoraria: timeSlot || 'Inmediata',
-                    subtotal,
-                    costoEnvio,
-                    total,
-                    estado: body.channel === 'TABLE' ? 'NUEVA' : 'PENDIENTE_PAGO',
-                    extraInfo: body.extraInfo || (body.channel ? { channel: body.channel, tableCode: body.tableCode, kitchenStatus: 'NUEVA' } : null),
+                    subtotal: pricingResult.subtotal,
+                    costoEnvio: pricingResult.deliveryCost,
+                    total: pricingResult.total,
+                    estado: 'WAITING_CONFIRMATION',
+                    extraInfo: {
+                        ...(body.extraInfo || {}),
+                        channel: body.channel || 'WEB',
+                        tableCode: body.tableCode || null,
+                        packagingCost: pricingResult.packagingCost,
+                        pricingBreakdown: pricingResult
+                    },
                     items: {
                         create: itemsToCreate
                     }
