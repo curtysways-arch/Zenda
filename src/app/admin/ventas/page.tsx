@@ -43,7 +43,7 @@ function VentasContent() {
   const [referenciaCliente, setReferenciaCliente] = useState('');
   const [mesaCode, setMesaCode] = useState('POS-Virtual');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [pagarInmediato, setPagarInmediato] = useState(false);
+  const [pagarInmediato, setPagarInmediato] = useState(true);
 
   // Business & Delivery GPS Config
   const [bizLat, setBizLat] = useState<number>(-0.180653);
