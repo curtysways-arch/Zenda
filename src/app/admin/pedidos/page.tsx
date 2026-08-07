@@ -1,7 +1,7 @@
 'use client';
 // src/app/admin/pedidos/page.tsx
 // Módulo de Pedidos en Caja (POS Citiox Enterprise)
-// Selección de empaque no activa por defecto por producto + Corrección de scroll y margen móvil.
+// Layout 100% Pantalla Completa (Viewport Height Lock): Sin Scrollbar de Página en 100% Zoom.
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -163,7 +163,6 @@ function PedidosContent() {
   })();
 
   // Cart Steppers & Controls
-  // NOTA: takeawayQty NUNCA se activa solo. Permanece en 0 a menos que el usuario lo cambie expresamente.
   const updateQty = (id: string, delta: number) => {
     setCart(prev => {
       const current = prev[id] || { qty: 0, takeawayQty: 0 };
@@ -181,7 +180,6 @@ function PedidosContent() {
     });
   };
 
-  // Selector específico de cantidad de empaque para llevar por producto
   const updateTakeawayQty = (id: string, delta: number) => {
     setCart(prev => {
       const current = prev[id];
@@ -277,7 +275,7 @@ function PedidosContent() {
   };
 
   return (
-    <div className="-m-5 md:-m-8 mb-0 md:-mb-10 bg-[#faf8f5] text-slate-900 flex flex-col font-sans p-3 sm:p-4 pb-28 md:pb-6 min-h-screen overflow-y-auto">
+    <div className="-m-5 md:-m-8 -mb-40 md:-mb-10 bg-[#faf8f5] text-slate-900 flex flex-col font-sans p-2.5 sm:p-3 h-[calc(100vh-42px)] overflow-hidden">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         * { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -285,38 +283,38 @@ function PedidosContent() {
         .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
-      {/* ─── MAIN POS CONTENT GRID (Izquierda: Catálogo | Derecha: Orden Actual) ─── */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-4 items-stretch">
+      {/* ─── MAIN POS CONTENT GRID ─── */}
+      <div className="flex-1 flex flex-col lg:flex-row gap-3 items-stretch h-full overflow-hidden">
 
-        {/* ─── CATÁLOGO DE PRODUCTOS (65% - 70% Width) ────────────────────────── */}
-        <div className="flex-1 w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-4 flex flex-col justify-between">
-          <div className="space-y-4">
-            
-            {/* Header del Catálogo & Buscador */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        {/* ─── CATÁLOGO DE PRODUCTOS (65% - 70% Width - Fixed Height with Internal Scroll) ─── */}
+        <div className="flex-1 w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-3 flex flex-col justify-between h-full overflow-hidden">
+          
+          {/* Header & Categories (Fixed Shrink 0) */}
+          <div className="shrink-0 space-y-2.5 border-b border-slate-100 pb-2.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               
               {/* Título & Pestañas de Categorías */}
-              <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-                <span className="text-sm font-black text-slate-900 flex items-center gap-1.5 mr-2 shrink-0">
-                  <Utensils className="w-4 h-4 text-[#ea580c]" /> Menú de Productos
+              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+                <span className="text-xs font-black text-slate-900 flex items-center gap-1 mr-1 shrink-0">
+                  <Utensils className="w-3.5 h-3.5 text-[#ea580c]" /> Menú de Productos
                 </span>
 
                 <button
                   onClick={() => setSelectedCatId('ALL')}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                  className={`px-3 py-1 rounded-xl text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 shrink-0 transition-all cursor-pointer ${
                     selectedCatId === 'ALL'
                       ? 'bg-[#ea580c] text-white shadow-md shadow-[#ea580c]/20'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
-                  <Flame className="w-3.5 h-3.5" /> TODOS
+                  <Flame className="w-3 h-3" /> TODOS
                 </button>
 
                 {categories.map(cat => (
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCatId(cat.id)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold uppercase tracking-wider shrink-0 transition-all cursor-pointer ${
+                    className={`px-3 py-1 rounded-xl text-[10px] font-extrabold uppercase tracking-wider shrink-0 transition-all cursor-pointer ${
                       selectedCatId === cat.id
                         ? 'bg-[#ea580c] text-white shadow-md shadow-[#ea580c]/20'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -326,24 +324,24 @@ function PedidosContent() {
                   </button>
                 ))}
 
-                <button className="px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 bg-slate-100 text-slate-600 border border-slate-200">
+                <button className="px-2.5 py-1 rounded-xl text-[10px] font-bold shrink-0 bg-slate-100 text-slate-600 border border-slate-200">
                   + EXTRAS
                 </button>
               </div>
 
               {/* Buscador & Vistas */}
-              <div className="flex items-center gap-2 shrink-0">
-                <div className="relative w-44 sm:w-52">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <div className="flex items-center gap-1.5 shrink-0">
+                <div className="relative w-40 sm:w-48">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
                   <input
                     id="pos-search-input"
                     type="text"
-                    placeholder="Buscar productos..."
+                    placeholder="Buscar..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="w-full pl-8 pr-10 py-1.5 rounded-xl text-xs font-semibold bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 outline-none focus:border-[#ea580c]"
+                    className="w-full pl-7 pr-9 py-1 rounded-xl text-[11px] font-semibold bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 outline-none focus:border-[#ea580c]"
                   />
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[8px] font-bold text-slate-400 px-1 bg-slate-200 rounded">
+                  <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[8px] font-bold text-slate-400 px-1 bg-slate-200 rounded">
                     Ctrl+K
                   </span>
                 </div>
@@ -351,7 +349,7 @@ function PedidosContent() {
                 <select
                   value={sortOption}
                   onChange={e => setSortOption(e.target.value)}
-                  className="px-2 py-1.5 rounded-xl text-xs font-bold bg-slate-50 border border-slate-200 text-slate-700 outline-none cursor-pointer"
+                  className="px-2 py-1 rounded-xl text-[10px] font-bold bg-slate-50 border border-slate-200 text-slate-700 outline-none cursor-pointer"
                 >
                   <option value="populares">Más vendidos ∨</option>
                   <option value="precio_asc">Menor precio</option>
@@ -361,129 +359,131 @@ function PedidosContent() {
                 <div className="flex p-0.5 rounded-xl bg-slate-100 border border-slate-200">
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`p-1.5 rounded-lg text-xs transition-all ${viewMode === 'grid' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}
+                    className={`p-1 rounded-lg text-xs transition-all ${viewMode === 'grid' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}
                   >
-                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <LayoutGrid className="w-3 h-3" />
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`p-1.5 rounded-lg text-xs transition-all ${viewMode === 'list' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}
+                    className={`p-1 rounded-lg text-xs transition-all ${viewMode === 'list' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400'}`}
                   >
-                    <List className="w-3.5 h-3.5" />
+                    <List className="w-3 h-3" />
                   </button>
                 </div>
               </div>
             </div>
-
-            {/* Grid de Productos (4 Columnas con Scroll Interno) */}
-            <div className="max-h-[calc(100vh-170px)] overflow-y-auto pr-1">
-              {loadingProducts ? (
-                <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-                  <Loader2 className="w-8 h-8 animate-spin text-[#ea580c] mb-3" />
-                  <p className="text-xs font-bold uppercase tracking-wider">Cargando menú de productos...</p>
-                </div>
-              ) : filteredProducts.length === 0 ? (
-                <div className="text-center py-20 text-slate-400">
-                  <Utensils className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm font-bold">No se encontraron productos en esta categoría</p>
-                </div>
-              ) : (
-                <div className={viewMode === 'grid' ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3" : "space-y-2.5"}>
-                  {filteredProducts.map((product) => {
-                    const cartEntry = cart[product.id] || { qty: 0, takeawayQty: 0 };
-                    const qty = cartEntry.qty;
-
-                    return (
-                      <div
-                        key={product.id}
-                        className="bg-white rounded-2xl border border-slate-200 overflow-hidden p-2 transition-all duration-200 hover:shadow-md flex flex-col justify-between group relative"
-                      >
-                        {/* Imagen & Badge Popular */}
-                        <div className="relative w-full h-20 sm:h-24 rounded-xl overflow-hidden bg-slate-100 mb-1.5">
-                          <img
-                            src={product.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500'}
-                            alt={product.nombre}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                          {product.popular && (
-                            <span className="absolute top-1 right-1 bg-emerald-600 text-white font-extrabold text-[8px] uppercase px-1.5 py-0.5 rounded shadow-sm">
-                              Popular
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Título y Precio */}
-                        <div className="space-y-0.5 mb-1.5">
-                          <h3 className="font-extrabold text-[11px] text-slate-900 line-clamp-1">{product.nombre}</h3>
-                          <p className="font-black text-[11px] text-[#ea580c]">
-                            ${(Number(product.precio) || 0).toFixed(2)}
-                          </p>
-                        </div>
-
-                        {/* Stepper Controls ([-  0  +]) */}
-                        <div className="flex items-center justify-between p-0.5 rounded-xl bg-[#fff7ed] border border-[#ffedd5]">
-                          <button
-                            onClick={() => updateQty(product.id, -1)}
-                            disabled={qty === 0}
-                            className="w-6 h-5 rounded-lg font-black text-xs bg-white text-[#ea580c] hover:bg-[#ffedd5] flex items-center justify-center transition-all disabled:opacity-30 shadow-sm cursor-pointer"
-                          >
-                            -
-                          </button>
-                          <span className="font-extrabold text-xs px-1 text-[#ea580c]">{qty}</span>
-                          <button
-                            onClick={() => updateQty(product.id, 1)}
-                            className="w-6 h-5 rounded-lg font-black text-xs bg-white text-[#ea580c] hover:bg-[#ffedd5] flex items-center justify-center transition-all shadow-sm cursor-pointer"
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
           </div>
 
-          {/* Expander Bottom */}
-          <div className="text-center pt-2 pb-1 border-t border-slate-100 mt-2">
-            <button className="px-4 py-1.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 shadow-sm">
-              Ver más productos <ChevronDown className="w-3.5 h-3.5" />
+          {/* Grid de Productos (Flex-1 con Scroll Interno) */}
+          <div className="flex-1 overflow-y-auto pr-1 py-1 custom-scrollbar">
+            {loadingProducts ? (
+              <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                <Loader2 className="w-7 h-7 animate-spin text-[#ea580c] mb-2" />
+                <p className="text-[11px] font-bold uppercase tracking-wider">Cargando menú de productos...</p>
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="text-center py-16 text-slate-400">
+                <Utensils className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                <p className="text-xs font-bold">No se encontraron productos en esta categoría</p>
+              </div>
+            ) : (
+              <div className={viewMode === 'grid' ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-2.5" : "space-y-2"}>
+                {filteredProducts.map((product) => {
+                  const cartEntry = cart[product.id] || { qty: 0, takeawayQty: 0 };
+                  const qty = cartEntry.qty;
+
+                  return (
+                    <div
+                      key={product.id}
+                      className="bg-white rounded-xl border border-slate-200 overflow-hidden p-2 transition-all duration-200 hover:shadow-md flex flex-col justify-between group relative"
+                    >
+                      {/* Imagen & Badge Popular */}
+                      <div className="relative w-full h-20 sm:h-24 rounded-lg overflow-hidden bg-slate-100 mb-1.5">
+                        <img
+                          src={product.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500'}
+                          alt={product.nombre}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        {product.popular && (
+                          <span className="absolute top-1 right-1 bg-emerald-600 text-white font-extrabold text-[8px] uppercase px-1.5 py-0.5 rounded shadow-sm">
+                            Popular
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Título y Precio */}
+                      <div className="space-y-0.5 mb-1.5">
+                        <h3 className="font-extrabold text-[11px] text-slate-900 line-clamp-1">{product.nombre}</h3>
+                        <p className="font-black text-[11px] text-[#ea580c]">
+                          ${(Number(product.precio) || 0).toFixed(2)}
+                        </p>
+                      </div>
+
+                      {/* Stepper Controls ([-  0  +]) */}
+                      <div className="flex items-center justify-between p-0.5 rounded-lg bg-[#fff7ed] border border-[#ffedd5]">
+                        <button
+                          onClick={() => updateQty(product.id, -1)}
+                          disabled={qty === 0}
+                          className="w-6 h-5 rounded font-black text-xs bg-white text-[#ea580c] hover:bg-[#ffedd5] flex items-center justify-center transition-all disabled:opacity-30 shadow-sm cursor-pointer"
+                        >
+                          -
+                        </button>
+                        <span className="font-extrabold text-xs px-1 text-[#ea580c]">{qty}</span>
+                        <button
+                          onClick={() => updateQty(product.id, 1)}
+                          className="w-6 h-5 rounded font-black text-xs bg-white text-[#ea580c] hover:bg-[#ffedd5] flex items-center justify-center transition-all shadow-sm cursor-pointer"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Bar Footer (Fixed Shrink 0) */}
+          <div className="shrink-0 text-center pt-1.5 border-t border-slate-100">
+            <button className="px-3 py-1 rounded-lg border border-slate-200 text-slate-600 text-[10px] font-bold inline-flex items-center gap-1 bg-white hover:bg-slate-50 shadow-sm">
+              Ver más productos <ChevronDown className="w-3 h-3" />
             </button>
           </div>
         </div>
 
-        {/* ─── ORDEN ACTUAL & CHECKOUT (Compacto & 100% Completo en Pantalla) ────────────────── */}
-        <div className="w-full lg:w-[360px] xl:w-[420px] bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5 space-y-2.5 shrink-0 flex flex-col justify-between">
-          <div className="space-y-2.5">
+        {/* ─── ORDEN ACTUAL & CHECKOUT (Fixed Height Lock - 100% Screen View) ────────────────── */}
+        <div className="w-full lg:w-[360px] xl:w-[410px] bg-white rounded-2xl border border-slate-200 shadow-sm p-3 flex flex-col justify-between h-full overflow-hidden shrink-0">
+          
+          {/* Top Form Controls (Fixed Shrink 0) */}
+          <div className="shrink-0 space-y-2">
             
             {/* Header Orden Actual */}
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <ShoppingBag className="w-4 h-4 text-[#ea580c]" />
+            <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+              <div className="flex items-center gap-1.5">
+                <ShoppingBag className="w-3.5 h-3.5 text-[#ea580c]" />
                 <h2 className="font-extrabold text-xs text-slate-900 uppercase tracking-wider">Orden Actual</h2>
-                <span className="px-2 py-0.5 rounded-full text-xs font-black bg-[#ea580c]/10 text-[#ea580c]">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ea580c]/10 text-[#ea580c]">
                   {totalItemsCount}
                 </span>
               </div>
               <button
                 onClick={clearCart}
-                className="text-xs font-bold text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-1 cursor-pointer"
+                className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-1 cursor-pointer"
               >
-                <Trash2 className="w-3.5 h-3.5" /> Vaciar
+                <Trash2 className="w-3 h-3" /> Vaciar
               </button>
             </div>
 
             {/* Tipo de Entrega Switcher */}
             <div>
-              <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1">Tipo de Entrega</label>
-              <div className="grid grid-cols-3 gap-1 p-0.5 rounded-xl bg-slate-100 border border-slate-200">
+              <label className="block text-[8px] font-black uppercase text-slate-400 tracking-wider mb-0.5">Tipo de Entrega</label>
+              <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg bg-slate-100 border border-slate-200">
                 <button
                   type="button"
                   onClick={() => setTipoEntrega('TABLE_ORDER')}
-                  className={`py-1 px-1 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                  className={`py-1 px-0.5 rounded-md text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                     tipoEntrega === 'TABLE_ORDER'
-                      ? 'bg-[#ea580c] text-white shadow-md'
+                      ? 'bg-[#ea580c] text-white shadow-sm'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -492,9 +492,9 @@ function PedidosContent() {
                 <button
                   type="button"
                   onClick={() => setTipoEntrega('PICKUP_ORDER')}
-                  className={`py-1 px-1 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                  className={`py-1 px-0.5 rounded-md text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                     tipoEntrega === 'PICKUP_ORDER'
-                      ? 'bg-[#ea580c] text-white shadow-md'
+                      ? 'bg-[#ea580c] text-white shadow-sm'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -503,9 +503,9 @@ function PedidosContent() {
                 <button
                   type="button"
                   onClick={() => setTipoEntrega('DELIVERY_ORDER')}
-                  className={`py-1 px-1 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                  className={`py-1 px-0.5 rounded-md text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                     tipoEntrega === 'DELIVERY_ORDER'
-                      ? 'bg-[#ea580c] text-white shadow-md'
+                      ? 'bg-[#ea580c] text-white shadow-sm'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -516,30 +516,30 @@ function PedidosContent() {
 
             {/* Dirección de Entrega Card */}
             {tipoEntrega === 'DELIVERY_ORDER' && (
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+              <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
                 <div className="flex items-start justify-between">
-                  <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Dirección de Entrega</span>
+                  <span className="text-[8px] font-black uppercase tracking-wider text-slate-400">Dirección de Entrega</span>
                   <button
                     onClick={() => setShowMapModal(true)}
-                    className="text-[11px] font-bold text-[#ea580c] hover:underline cursor-pointer"
+                    className="text-[10px] font-bold text-[#ea580c] hover:underline cursor-pointer"
                   >
                     Cambiar
                   </button>
                 </div>
 
                 <div className="space-y-0.5">
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 shrink-0 text-[#ea580c]" />
-                    <p className="font-extrabold text-[11px] text-slate-900 line-clamp-1">{direccionCliente}</p>
+                  <div className="flex items-center gap-1">
+                    <MapPin className="w-3 h-3 shrink-0 text-[#ea580c]" />
+                    <p className="font-extrabold text-[10px] text-slate-900 line-clamp-1">{direccionCliente}</p>
                   </div>
-                  <p className="text-[9px] text-slate-400 pl-5">{referenciaCliente}</p>
+                  <p className="text-[8px] text-slate-400 pl-4">{referenciaCliente}</p>
                 </div>
 
                 <div className="flex items-center justify-between pt-1 border-t border-slate-200 text-xs">
-                  <span className="text-slate-500 flex items-center gap-1 text-[9px]">
+                  <span className="text-slate-500 flex items-center gap-1 text-[8px]">
                     📍 {distanceKm} km de distancia
                   </span>
-                  <span className="font-black px-1.5 py-0.5 rounded bg-[#ea580c]/10 text-[#ea580c] text-[9px]">
+                  <span className="font-black px-1.5 py-0.5 rounded bg-[#ea580c]/10 text-[#ea580c] text-[8px]">
                     Tarifa: ${computedDeliveryCost.toFixed(2)}
                   </span>
                 </div>
@@ -549,163 +549,164 @@ function PedidosContent() {
             {/* Mesa Input */}
             {tipoEntrega === 'TABLE_ORDER' && (
               <div>
-                <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-0.5">Mesa / Ubicación</label>
+                <label className="block text-[8px] font-black uppercase text-slate-400 tracking-wider mb-0.5">Mesa / Ubicación</label>
                 <input
                   type="text"
                   value={mesaCode}
                   onChange={e => setMesaCode(e.target.value)}
-                  className="w-full px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-50 border border-slate-200 text-slate-900 outline-none"
+                  className="w-full px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-50 border border-slate-200 text-slate-900 outline-none"
                   placeholder="Ej. Mesa 01"
                 />
               </div>
             )}
 
             {/* Cliente Inputs */}
-            <div className="space-y-1">
-              <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Cliente</label>
+            <div className="space-y-0.5">
+              <label className="block text-[8px] font-black uppercase text-slate-400 tracking-wider">Cliente</label>
               <div className="grid grid-cols-2 gap-1.5">
                 <input
                   type="text"
                   value={nombreCliente}
                   onChange={e => setNombreCliente(e.target.value)}
-                  className="w-full px-2 py-1 rounded-xl text-xs font-bold bg-slate-50 border border-slate-200 text-slate-900 outline-none"
+                  className="w-full px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-50 border border-slate-200 text-slate-900 outline-none"
                   placeholder="Nombre Cliente"
                 />
                 <div className="relative">
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs">🇪🇨</span>
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px]">🇪🇨</span>
                   <input
                     type="text"
                     value={telefonoCliente}
                     onChange={e => setTelefonoCliente(e.target.value)}
-                    className="w-full pl-6 pr-2 py-1 rounded-xl text-xs font-bold bg-slate-50 border border-slate-200 text-slate-900 outline-none"
+                    className="w-full pl-6 pr-2 py-1 rounded-lg text-[11px] font-bold bg-slate-50 border border-slate-200 text-slate-900 outline-none"
                     placeholder="099 123 4567"
                   />
                 </div>
               </div>
             </div>
-
-            {/* Tabla de Productos en Carrito + Selección de Empaque por Ítem */}
-            <div className="space-y-1">
-              <div className="flex justify-between text-[9px] font-black uppercase tracking-wider text-slate-400 px-1">
-                <span>Producto</span>
-                <span className="mr-5">Cant.</span>
-                <span>Precio</span>
-              </div>
-
-              {selectedItems.length === 0 ? (
-                <div className="p-4 border border-dashed border-slate-200 rounded-xl text-center text-xs text-slate-400">
-                  Selecciona productos del menú para armar la orden.
-                </div>
-              ) : (
-                <div className="space-y-1.5 max-h-36 xl:max-h-44 overflow-y-auto pr-1">
-                  {selectedItems.map(item => (
-                    <div
-                      key={item.productoId}
-                      className="p-2 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5"
-                    >
-                      {/* Fila Principal: Foto, Nombre, Cantidad, Precio y Eliminar */}
-                      <div className="flex items-center justify-between gap-1.5">
-                        {/* Thumbnail & Nombre */}
-                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                          <img
-                            src={item.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=100'}
-                            alt={item.nombreProducto}
-                            className="w-7 h-7 rounded-md object-cover shrink-0"
-                          />
-                          <div className="min-w-0">
-                            <p className="font-extrabold text-[11px] text-slate-900 truncate">{item.nombreProducto}</p>
-                            <p className="text-[8px] text-slate-400 font-semibold">${item.precioUnitario.toFixed(2)} c/u</p>
-                          </div>
-                        </div>
-
-                        {/* Stepper Cantidad General */}
-                        <div className="flex items-center gap-1 px-1 py-0.5 rounded-lg border border-slate-200 bg-white">
-                          <button
-                            onClick={() => updateQty(item.productoId, -1)}
-                            className="w-3.5 h-3.5 flex items-center justify-center font-black text-xs text-slate-600 hover:text-rose-500"
-                          >
-                            -
-                          </button>
-                          <span className="font-extrabold text-[11px] w-3 text-center text-slate-900">{item.cantidad}</span>
-                          <button
-                            onClick={() => updateQty(item.productoId, 1)}
-                            className="w-3.5 h-3.5 flex items-center justify-center font-black text-xs text-slate-600 hover:text-emerald-600"
-                          >
-                            +
-                          </button>
-                        </div>
-
-                        {/* Total & Delete */}
-                        <div className="flex items-center gap-1 shrink-0">
-                          <span className="font-black text-[11px] text-slate-900">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
-                          <button
-                            onClick={() => removeItem(item.productoId)}
-                            className="text-slate-400 hover:text-rose-500 p-0.5 cursor-pointer"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Fila Secundaria: Selección manual de Empaque para este Producto */}
-                      <div className="flex items-center justify-between pt-1 border-t border-slate-200/80 text-[9px]">
-                        <span className="text-slate-500 font-semibold">¿Empaque para Llevar?</span>
-                        <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 px-1 py-0.5 rounded-md text-amber-900">
-                          <ShoppingBag className="w-2.5 h-2.5 text-amber-600" />
-                          <span className="font-extrabold uppercase text-[8px]">Empaque:</span>
-                          <button
-                            type="button"
-                            onClick={() => updateTakeawayQty(item.productoId, -1)}
-                            disabled={item.takeawayQty === 0}
-                            className="w-3.5 h-3.5 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[9px] cursor-pointer"
-                          >
-                            -
-                          </button>
-                          <span className="w-2.5 text-center font-black text-[9px] text-amber-950">{item.takeawayQty}</span>
-                          <button
-                            type="button"
-                            onClick={() => updateTakeawayQty(item.productoId, 1)}
-                            disabled={item.takeawayQty >= item.cantidad}
-                            className="w-3.5 h-3.5 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[9px] cursor-pointer"
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
 
-          <div className="space-y-2 pt-1">
+          {/* Tabla de Productos en Carrito (Flex-1 con Scroll Interno) */}
+          <div className="flex-1 my-1.5 overflow-hidden flex flex-col">
+            <div className="flex justify-between text-[8px] font-black uppercase tracking-wider text-slate-400 px-1 mb-1 shrink-0">
+              <span>Producto</span>
+              <span className="mr-5">Cant.</span>
+              <span>Precio</span>
+            </div>
+
+            {selectedItems.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center p-3 border border-dashed border-slate-200 rounded-lg text-center text-xs text-slate-400">
+                Selecciona productos del menú.
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto space-y-1 pr-1 custom-scrollbar min-h-[60px] max-h-[140px] xl:max-h-[180px]">
+                {selectedItems.map(item => (
+                  <div
+                    key={item.productoId}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-slate-50 space-y-1"
+                  >
+                    {/* Fila Principal: Foto, Nombre, Cantidad, Precio y Eliminar */}
+                    <div className="flex items-center justify-between gap-1.5">
+                      {/* Thumbnail & Nombre */}
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <img
+                          src={item.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=100'}
+                          alt={item.nombreProducto}
+                          className="w-6 h-6 rounded object-cover shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <p className="font-extrabold text-[10px] text-slate-900 truncate">{item.nombreProducto}</p>
+                          <p className="text-[8px] text-slate-400 font-semibold">${item.precioUnitario.toFixed(2)} c/u</p>
+                        </div>
+                      </div>
+
+                      {/* Stepper Cantidad General */}
+                      <div className="flex items-center gap-0.5 px-1 py-0.5 rounded border border-slate-200 bg-white">
+                        <button
+                          onClick={() => updateQty(item.productoId, -1)}
+                          className="w-3 h-3 flex items-center justify-center font-black text-[10px] text-slate-600 hover:text-rose-500"
+                        >
+                          -
+                        </button>
+                        <span className="font-extrabold text-[10px] w-3 text-center text-slate-900">{item.cantidad}</span>
+                        <button
+                          onClick={() => updateQty(item.productoId, 1)}
+                          className="w-3 h-3 flex items-center justify-center font-black text-[10px] text-slate-600 hover:text-emerald-600"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      {/* Total & Delete */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="font-black text-[10px] text-slate-900">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
+                        <button
+                          onClick={() => removeItem(item.productoId)}
+                          className="text-slate-400 hover:text-rose-500 p-0.5 cursor-pointer"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Fila Secundaria: Selección manual de Empaque para este Producto */}
+                    <div className="flex items-center justify-between pt-0.5 border-t border-slate-200/80 text-[8px]">
+                      <span className="text-slate-500 font-semibold">¿Empaque para Llevar?</span>
+                      <div className="flex items-center gap-0.5 bg-amber-50 border border-amber-200 px-1 py-0.5 rounded text-amber-900">
+                        <ShoppingBag className="w-2.5 h-2.5 text-amber-600" />
+                        <span className="font-extrabold uppercase text-[7px]">Empaque:</span>
+                        <button
+                          type="button"
+                          onClick={() => updateTakeawayQty(item.productoId, -1)}
+                          disabled={item.takeawayQty === 0}
+                          className="w-3 h-3 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[8px] cursor-pointer"
+                        >
+                          -
+                        </button>
+                        <span className="w-2.5 text-center font-black text-[8px] text-amber-950">{item.takeawayQty}</span>
+                        <button
+                          type="button"
+                          onClick={() => updateTakeawayQty(item.productoId, 1)}
+                          disabled={item.takeawayQty >= item.cantidad}
+                          className="w-3 h-3 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[8px] cursor-pointer"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Totals & Submit Action (Fixed Shrink 0) */}
+          <div className="shrink-0 space-y-1.5 pt-1 border-t border-slate-100">
             {/* Totales & Subtotales */}
-            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-              <div className="flex justify-between text-[11px] text-slate-500 font-semibold">
+            <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 space-y-0.5">
+              <div className="flex justify-between text-[10px] text-slate-500 font-semibold">
                 <span>Subtotal productos</span>
                 <span className="font-bold text-slate-900">${subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-[11px] text-slate-500 font-semibold">
+              <div className="flex justify-between text-[10px] text-slate-500 font-semibold">
                 <span>Empaque ({totalTakeawayUnits} productos) ℹ️</span>
                 <span className="font-bold text-slate-900">${packagingCost.toFixed(2)}</span>
               </div>
               {tipoEntrega === 'DELIVERY_ORDER' && (
-                <div className="flex justify-between text-[11px] text-slate-500 font-semibold">
+                <div className="flex justify-between text-[10px] text-slate-500 font-semibold">
                   <span>Entrega ({distanceKm} km)</span>
                   <span className="font-bold text-slate-900">${computedDeliveryCost.toFixed(2)}</span>
                 </div>
               )}
               
-              <div className="pt-1 border-t border-slate-200 flex justify-between items-center">
-                <span className="font-black text-xs text-slate-900 uppercase tracking-wider">TOTAL A COBRAR</span>
-                <span className="font-black text-lg text-emerald-600">${grandTotal.toFixed(2)}</span>
+              <div className="pt-0.5 border-t border-slate-200 flex justify-between items-center">
+                <span className="font-black text-[11px] text-slate-900 uppercase tracking-wider">TOTAL A COBRAR</span>
+                <span className="font-black text-base text-emerald-600">${grandTotal.toFixed(2)}</span>
               </div>
             </div>
 
             {/* Método de Pago Selector */}
             <div>
-              <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1">Método de Pago</label>
+              <label className="block text-[8px] font-black uppercase text-slate-400 tracking-wider mb-0.5">Método de Pago</label>
               <div className="grid grid-cols-3 gap-1">
                 {[
                   { id: 'EFECTIVO', label: '💵 Efectivo' },
@@ -718,7 +719,7 @@ function PedidosContent() {
                     key={pm.id}
                     type="button"
                     onClick={() => setMetodoPago(pm.id as any)}
-                    className={`py-1 px-1 rounded-lg text-[9px] font-bold border transition-all text-center cursor-pointer ${
+                    className={`py-1 px-0.5 rounded-md text-[8px] font-bold border transition-all text-center cursor-pointer ${
                       metodoPago === pm.id
                         ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
                         : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -734,7 +735,7 @@ function PedidosContent() {
             <button
               onClick={handleSubmitOrder}
               disabled={submitting || selectedItems.length === 0}
-              className="w-full py-2.5 rounded-xl font-black text-xs uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 rounded-xl font-black text-[11px] uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center gap-1.5"
             >
               {submitting ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -745,7 +746,7 @@ function PedidosContent() {
                 </>
               )}
             </button>
-            <p className="text-[8px] text-center text-slate-400 font-semibold">
+            <p className="text-[7.5px] text-center text-slate-400 font-semibold">
               Se enviará a cocina después de confirmar la orden
             </p>
           </div>
