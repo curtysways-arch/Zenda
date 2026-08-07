@@ -493,6 +493,55 @@ function VentasContent() {
               </div>
             </div>
 
+            {/* Dirección de Entrega & Mapa GPS (Si es a Domicilio) */}
+            {tipoEntrega === 'DELIVERY_ORDER' && (
+              <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                <div className="flex items-start justify-between">
+                  <span className="text-[8px] font-black uppercase tracking-wider text-slate-400">Dirección de Entrega GPS</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowMapModal(true)}
+                    className="text-[10px] font-bold text-[#ea580c] hover:underline cursor-pointer flex items-center gap-0.5"
+                  >
+                    <MapPin className="w-3 h-3" /> Ubicar en Mapa
+                  </button>
+                </div>
+
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1">
+                    <MapPin className="w-3 h-3 shrink-0 text-[#ea580c]" />
+                    <p className="font-extrabold text-[10px] text-slate-900 line-clamp-1">{direccionCliente}</p>
+                  </div>
+                  {referenciaCliente && (
+                    <p className="text-[8px] text-slate-400 pl-4">{referenciaCliente}</p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between pt-1 border-t border-slate-200/80 text-xs">
+                  <span className="text-slate-500 flex items-center gap-1 text-[8px]">
+                    📍 {distanceKm} km de distancia
+                  </span>
+                  <span className="font-black px-1.5 py-0.5 rounded bg-[#ea580c]/10 text-[#ea580c] text-[8px]">
+                    Tarifa: ${computedDeliveryCost.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Mesa Input (Si es En Mesa) */}
+            {tipoEntrega === 'TABLE_ORDER' && (
+              <div>
+                <label className="block text-[8px] font-black uppercase text-slate-400 tracking-wider mb-0.5">Mesa / Ubicación</label>
+                <input
+                  type="text"
+                  value={mesaCode}
+                  onChange={e => setMesaCode(e.target.value)}
+                  className="w-full px-2 py-1 rounded-lg text-xs font-bold bg-slate-50 border border-slate-200 text-slate-900 outline-none"
+                  placeholder="Ej. Mesa 01"
+                />
+              </div>
+            )}
+
             {/* Cliente Input */}
             <div className="space-y-0.5">
               <label className="block text-[8px] font-black uppercase text-slate-400 tracking-wider">Cliente & Referencia</label>
@@ -619,6 +668,12 @@ function VentasContent() {
                 <span>Empaque ({totalTakeawayUnits} uds)</span>
                 <span className="font-bold text-slate-900">${packagingCost.toFixed(2)}</span>
               </div>
+              {tipoEntrega === 'DELIVERY_ORDER' && (
+                <div className="flex justify-between text-[10px] text-[#ea580c] font-semibold">
+                  <span>Envío a domicilio ({distanceKm} km)</span>
+                  <span className="font-bold">${computedDeliveryCost.toFixed(2)}</span>
+                </div>
+              )}
               <div className="pt-0.5 border-t border-slate-200 flex justify-between items-center">
                 <span className="font-black text-[11px] text-slate-900 uppercase tracking-wider">TOTAL A COBRAR</span>
                 <span className="font-black text-base text-emerald-600">${grandTotal.toFixed(2)}</span>
