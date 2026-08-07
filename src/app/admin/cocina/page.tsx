@@ -122,7 +122,6 @@ export default function AdminCocinaPage() {
           ))}
           {enPreparacion.length === 0 && <p className="text-xs text-slate-400 text-center py-12">No hay platos preparándose actualmente en cocina</p>}
         </div>
-      </div>div>
       </div>
     </div>
   );
