@@ -10,7 +10,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Truck, CheckCircle, XCircle, Navigation, MapPin, Phone,
   Clock, ShieldAlert, PackageCheck, AlertCircle, RefreshCw, Power, DollarSign,
-  Map, Sparkles
+  Map, Sparkles, Store, Building2, ExternalLink
 } from 'lucide-react';
 
 interface DbOrder {
@@ -29,7 +29,15 @@ interface DbOrder {
   paymentStatus?: string;
   createdAt: string;
   extraInfo?: any;
+  negocio?: {
+    id: string;
+    nombre: string;
+    slug: string;
+    logoUrl?: string;
+    direccion?: string;
+  };
   items: Array<{
+    id?: string;
     nombreProducto: string;
     cantidad: number;
     precioUnitario: number;
