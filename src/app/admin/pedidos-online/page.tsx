@@ -484,15 +484,20 @@ export default function PedidosOnlinePage() {
                 {isDelivery && (
                   <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 text-xs space-y-1">
                     <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block">Estado de Logística & Repartidor</span>
-                    {pedido.estado === 'REPARTIDOR_EN_LOCAL' ? (
+                    {pedido.estado === 'ENTREGADO_A_REPARTIDOR' ? (
+                      <div className="flex items-center gap-1.5 text-emerald-800 font-extrabold bg-emerald-50 p-1.5 rounded-lg border border-emerald-200">
+                        <Bike className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>📦 Paquete Entregado a {pedido.extraInfo?.assignedDriverName || 'Marco Proaño'} (Esperando inicio de ruta por repartidor)</span>
+                      </div>
+                    ) : pedido.estado === 'REPARTIDOR_EN_LOCAL' ? (
                       <div className="flex items-center gap-1.5 text-emerald-700 font-extrabold bg-emerald-50 p-1.5 rounded-lg border border-emerald-200 animate-pulse">
                         <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
                         <span>📍 ¡REPARTIDOR EN EL LOCAL! ({pedido.extraInfo?.assignedDriverName || 'Marco Proaño'})</span>
                       </div>
-                    ) : pedido.estado === 'REPARTIDOR_ASIGNADO' ? (
+                    ) : pedido.estado === 'REPARTIDOR_ASIGNADO' || pedido.extraInfo?.assignedDriverId ? (
                       <div className="flex items-center gap-1.5 text-amber-800 font-extrabold bg-amber-50 p-1.5 rounded-lg border border-amber-200">
                         <Bike className="w-4 h-4 text-amber-600 shrink-0" />
-                        <span>🛵 Repartidor Asignado: {pedido.extraInfo?.assignedDriverName || 'Marco Proaño'} (En camino al local)</span>
+                        <span>🛵 Repartidor Asignado: {pedido.extraInfo?.assignedDriverName || 'Marco Proaño'}</span>
                       </div>
                     ) : pedido.estado === 'EN_RUTA' || pedido.estado === 'EN_CAMINO' ? (
                       <div className="flex items-center gap-1.5 text-blue-700 font-extrabold bg-blue-50 p-1.5 rounded-lg border border-blue-200">
