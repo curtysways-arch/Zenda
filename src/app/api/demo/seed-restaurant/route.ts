@@ -232,7 +232,9 @@ export async function GET() {
           total,
           estado: estadoPedido,
           notas: tipoEntrega === 'MESA' ? `Mesa: ${mesaName}` : null,
-          extraInfo: tipoEntrega === 'MESA' ? { tableName: mesaName, tableNumber: tableNum } : null,
+          extraInfo: tipoEntrega === 'MESA' 
+            ? { tableName: mesaName, tableNumber: tableNum, origin: 'MESA', channel: 'MESA' }
+            : { origin: 'POS_CAJA', channel: 'POS' },
           createdAt: fechaPedido,
           updatedAt: fechaPedido,
           items: {
@@ -256,6 +258,40 @@ export async function GET() {
         }
       });
     }
+
+    // Crear 2 Pedidos Demo Exclusivos para Landing Web
+    await (prisma as any).pedido.create({
+      data: {
+        id: crypto.randomUUID(),
+        negocioId: businessId,
+        numeroPedido: 99,
+        tipoEntrega: 'DELIVERY_ORDER',
+        nombreCliente: 'Sofía Benítez (Landing Web)',
+        telefonoCliente: '+593998765432',
+        direccionCliente: 'Av. 6 de Diciembre y Orellana, Quito',
+        referenciaCliente: 'Frente al parque, apto 402',
+        fechaEntrega: new Date(),
+        franjaHoraria: 'Inmediata',
+        subtotal: 24.50,
+        costoEnvio: 2.50,
+        total: 27.00,
+        estado: 'PENDIENTE',
+        extraInfo: { channel: 'WEB', origin: 'LANDING_WEB' },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        items: {
+          create: [
+            {
+              id: crypto.randomUUID(),
+              productoId: productIds[0],
+              nombreProducto: manifest.catalog.products[0]?.nombre || 'Parrillada Familiar',
+              precioUnitario: 24.50,
+              cantidad: 1
+            }
+          ]
+        }
+      }
+    });
 
     // ── 8. Crear Usuario Administrador de la Demo ──────────────────────────────
     const hashedPassword = await bcrypt.hash('CitioxDemo2026!', 10);

@@ -90,27 +90,21 @@ export default function PedidosOnlinePage() {
 
   const isPosOrTableOrder = (p: any): boolean => {
     const extra = typeof p.extraInfo === 'string' ? JSON.parse(p.extraInfo || '{}') : (p.extraInfo || {});
+
+    // 1. Si el canal es explícitamente WEB / LANDING_WEB, es un pedido online legítimo
+    const channel = String(extra.channel || extra.canal || '').toUpperCase();
+    const origin = String(extra.origin || extra.source || '').toUpperCase();
     
-    // 1. Tipo de entrega de mesa
-    if (p.tipoEntrega === 'TABLE_ORDER' || p.tipoEntrega === 'MESA') return true;
+    const isExplicitWeb = channel === 'WEB' || channel === 'LANDING_WEB' || origin === 'LANDING_WEB' || origin === 'PUBLIC_CATALOG' || extra.isWebOrder === true;
 
-    // 2. Origen explícito en extraInfo
-    const origin = (extra.origin || extra.canal || extra.source || '').toUpperCase();
-    if (['POS', 'POS_CAJA', 'POS_VENTAS', 'CAJA', 'MOSTRADOR', 'MESA', 'SEED'].includes(origin)) return true;
+    if (isExplicitWeb) {
+      // Verificar que no sea de mesa
+      if (p.tipoEntrega === 'TABLE_ORDER' || p.tipoEntrega === 'MESA') return true;
+      return false; // Aceptado en Pedidos Online
+    }
 
-    // 3. mesaCode o tableCode en extraInfo o raíz
-    const mesaCode = String(extra.mesaCode || p.mesaCode || extra.tableCode || extra.tableName || '').toUpperCase();
-    if (mesaCode && (mesaCode.includes('POS') || mesaCode.includes('MESA'))) return true;
-
-    // 4. Nombre de cliente asociado a POS/Caja
-    const nombre = (p.nombreCliente || '').toUpperCase();
-    if (nombre.includes('CLIENTE POS') || nombre.includes('CLIENTE CAJA') || nombre.includes('POS VENTA') || nombre === 'POS') return true;
-
-    // 5. Referencia de cliente asociada a Mesa/POS/Caja
-    const ref = (p.referenciaCliente || '').toUpperCase();
-    if (ref.includes('MESA:') || ref.includes('POS') || ref.includes('CAJA')) return true;
-
-    return false;
+    // 2. Cualquier otra orden (POS, Caja, Mesas, Seeder histórico de métricas) se EXCLUYE de Pedidos Online
+    return true;
   };
 
   const fetchOnlineOrders = async () => {
