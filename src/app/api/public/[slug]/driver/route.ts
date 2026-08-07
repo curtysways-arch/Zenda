@@ -42,14 +42,25 @@ export async function GET(
       console.warn('[API Driver GET Kernel Resolver Warning]:', err);
     }
 
-    // Obtener pedidos de delivery aceptados/en preparación activos desde la BD para repartidores
+    // Obtener pedidos de delivery activos de todos los negocios asociados al repartidor
     const dbDeliveryOrders = await (prisma as any).pedido.findMany({
       where: {
-        negocioId: negocio.id,
         tipoEntrega: { in: ['DELIVERY_ORDER', 'DOMICILIO', 'DELIVERY'] },
         estado: { in: ['EN_PREPARACION', 'ACEPTADO', 'LISTO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA'] }
       },
-      include: { items: true, payment: true },
+      include: {
+        items: true,
+        payment: true,
+        negocio: {
+          select: {
+            id: true,
+            nombre: true,
+            slug: true,
+            logoUrl: true,
+            direccion: true
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' }
     });
 

@@ -350,37 +350,67 @@ export default function DriverAppPage() {
                               <Navigation className="w-3 h-3 text-amber-400" /> {distanceStr}
                             </span>
                           </div>
+                          <div className="flex items-center gap-1.5 text-xs font-extrabold text-amber-300 mt-1">
+                            <Store className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                            <span className="truncate">{order.negocio?.nombre || 'Restaurante Citiox'}</span>
+                          </div>
                         </div>
                         <div className="bg-amber-400 text-slate-950 px-2.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1 shadow-md">
                           <DollarSign className="w-3.5 h-3.5" /> Ganancia: ${deliveryFee}
                         </div>
                       </div>
 
-                      {/* Detalles de Dirección, Distancia y Contenido de Mochila */}
-                      <div className="space-y-1.5 text-xs text-slate-300 bg-slate-950/70 p-3 rounded-xl border border-amber-500/20">
-                        <div className="flex items-start gap-1.5">
-                          <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                          <div>
-                            <span className="font-semibold">{order.direccionCliente || 'Dirección de Entrega'}</span>
-                            {order.referenciaCliente && (
-                              <p className="text-[10px] text-slate-400 font-medium">Ref: {order.referenciaCliente}</p>
-                            )}
+                      {/* Detalles de Dirección, Recogida, Distancia y Contenido de Mochila */}
+                      <div className="space-y-2 text-xs text-slate-300 bg-slate-950/70 p-3 rounded-xl border border-amber-500/20">
+                        {/* Dirección de Recogida */}
+                        <div className="flex items-start justify-between gap-1 pb-1.5 border-b border-slate-800">
+                          <div className="flex items-start gap-1.5 truncate">
+                            <Building2 className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
+                            <div>
+                              <span className="text-[10px] font-black uppercase text-orange-400 block">Recogida (Local):</span>
+                              <span className="font-semibold text-slate-200">{order.negocio?.direccion || 'Local del Restaurante'}</span>
+                            </div>
+                          </div>
+                          {order.negocio?.direccion && (
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.negocio.direccion)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-orange-400 hover:underline font-bold shrink-0 text-[10px] flex items-center gap-0.5"
+                            >
+                              GPS Local <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          )}
+                        </div>
+
+                        {/* Dirección de Entrega */}
+                        <div className="flex items-start justify-between gap-1">
+                          <div className="flex items-start gap-1.5">
+                            <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                            <div>
+                              <span className="text-[10px] font-black uppercase text-emerald-400 block">Entrega (Cliente):</span>
+                              <span className="font-semibold text-slate-200">{order.direccionCliente || 'Dirección de Entrega'}</span>
+                              {order.referenciaCliente && (
+                                <p className="text-[10px] text-slate-400 font-medium">Ref: {order.referenciaCliente}</p>
+                              )}
+                            </div>
                           </div>
                         </div>
 
                         {itemsSummary && (
-                          <div className="flex items-start gap-1.5 text-[11px] text-slate-300 pt-1 border-t border-slate-800">
+                          <div className="flex items-start gap-1.5 text-[11px] text-slate-300 pt-1.5 border-t border-slate-800">
                             <PackageCheck className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
                             <span className="line-clamp-2">Paquete: <strong>{itemsSummary}</strong></span>
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800">
+                        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1.5 border-t border-slate-800 font-bold">
                           <div className="flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5 text-amber-400" />
-                            <span>Prep. Cocina: <strong>{getCountdownString(extra?.estimatedReadyAt)}</strong></span>
+                            <span>Cocina: <strong>{getCountdownString(extra?.estimatedReadyAt)}</strong></span>
                           </div>
-                          <span className="text-emerald-400 font-bold">📍 {distanceStr}</span>
+                          <span className="text-amber-300">📍 Recogida: ~1.2 km</span>
+                          <span className="text-emerald-400">🏁 Entrega: {distanceStr}</span>
                         </div>
                       </div>
 
@@ -411,10 +441,12 @@ export default function DriverAppPage() {
 
         return (
           <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-            <div className="bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-amber-500/40 space-y-5 relative text-left">
+            <div className="bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-amber-500/40 space-y-4 relative text-left">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div>
-                  <span className="text-xs font-black uppercase text-amber-400">Revisión de Carrera</span>
+                  <span className="text-xs font-black uppercase text-amber-400 flex items-center gap-1">
+                    <Store className="w-3.5 h-3.5 text-amber-400" /> {selectedOrderForDetail.negocio?.nombre || 'Restaurante Citiox'}
+                  </span>
                   <h3 className="text-lg font-black text-white">Pedido #{selectedOrderForDetail.codigo || selectedOrderForDetail.id.slice(-6).toUpperCase()}</h3>
                 </div>
                 <button
@@ -430,58 +462,68 @@ export default function DriverAppPage() {
                 <span className="text-base font-black">+${deliveryFee}</span>
               </div>
 
-              <div className="space-y-3 text-xs text-slate-300">
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1.5">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-bold text-white">{selectedOrderForDetail.direccionCliente || 'Dirección de entrega'}</span>
-                      {selectedOrderForDetail.referenciaCliente && (
-                        <p className="text-[11px] text-slate-400 mt-0.5">Ref: {selectedOrderForDetail.referenciaCliente}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-[11px]">
-                    <span className="text-slate-400">Distancia estimada:</span>
-                    <span className="font-black text-amber-300">📍 {distanceStr}</span>
-                  </div>
-                </div>
-
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1.5">
-                  <span className="text-[10px] font-black uppercase text-slate-400 block">Detalle de Productos en Paquete:</span>
-                  <p className="font-bold text-slate-200">{itemsSummary || 'Sin productos registrados'}</p>
-                </div>
-
-                {/* Mapa de Ubicación de Entrega */}
-                <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-2">
+              <div className="space-y-2.5 text-xs text-slate-300">
+                {/* Punto 1: Recogida en Local */}
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-1">
-                      <Map className="w-3.5 h-3.5 text-orange-400" /> Mapa de Ubicación:
+                    <span className="text-[10px] font-black uppercase text-orange-400 tracking-wider flex items-center gap-1">
+                      <Building2 className="w-3.5 h-3.5 text-orange-400" /> 1. Recogida en Local (Restaurante):
+                    </span>
+                    {selectedOrderForDetail.negocio?.direccion && (
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedOrderForDetail.negocio.direccion)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-orange-400 hover:underline text-[10px] font-bold flex items-center gap-1"
+                      >
+                        <span>GPS Local</span>
+                        <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
+                    )}
+                  </div>
+                  <p className="font-bold text-slate-100 text-xs">{selectedOrderForDetail.negocio?.direccion || 'Local del Restaurante'}</p>
+                </div>
+
+                {/* Punto 2: Entrega a Cliente */}
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase text-emerald-400 tracking-wider flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5 text-emerald-400" /> 2. Entrega a Destino (Cliente):
                     </span>
                     {selectedOrderForDetail.direccionCliente && (
                       <a
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedOrderForDetail.direccionCliente)}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-orange-400 hover:underline text-[10px] font-bold flex items-center gap-1"
+                        className="text-emerald-400 hover:underline text-[10px] font-bold flex items-center gap-1"
                       >
-                        <span>Abrir GPS</span>
-                        <Navigation className="w-3 h-3" />
+                        <span>GPS Cliente</span>
+                        <ExternalLink className="w-2.5 h-2.5" />
                       </a>
                     )}
                   </div>
+                  <p className="font-bold text-slate-100 text-xs">{selectedOrderForDetail.direccionCliente || 'Sin dirección registrada'}</p>
+                  {selectedOrderForDetail.referenciaCliente && (
+                    <p className="text-[10px] text-slate-400 font-medium">Ref: {selectedOrderForDetail.referenciaCliente}</p>
+                  )}
+                </div>
 
-                  <div className="h-28 w-full rounded-xl bg-slate-900 border border-slate-800/80 relative overflow-hidden flex items-center justify-center">
-                    <div className="absolute inset-0 bg-[radial-gradient(#ea580c_1.5px,transparent_1.5px)] [background-size:14px_14px] opacity-25" />
-                    <div className="relative z-10 flex flex-col items-center gap-1.5 p-2 text-center">
-                      <div className="w-9 h-9 rounded-full bg-orange-600 text-white flex items-center justify-center shadow-lg animate-bounce">
-                        <MapPin className="w-5 h-5" />
-                      </div>
-                      <span className="text-[10px] font-extrabold text-amber-300 bg-slate-950/90 px-2.5 py-0.5 rounded-full border border-amber-500/30 truncate max-w-[280px]">
-                        📍 {selectedOrderForDetail.direccionCliente || 'Ubicación de Destino'}
-                      </span>
-                    </div>
+                {/* Desglose de Distancias */}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center">
+                    <span className="text-[10px] font-bold text-slate-400 block">Distancia a Recoger:</span>
+                    <span className="font-black text-amber-300">📍 ~1.2 km</span>
                   </div>
+                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center">
+                    <span className="text-[10px] font-bold text-slate-400 block">Distancia a Entregar:</span>
+                    <span className="font-black text-emerald-300">🏁 {distanceStr}</span>
+                  </div>
+                </div>
+
+                {/* Detalle de Productos */}
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
+                  <span className="text-[10px] font-black uppercase text-slate-400 block">Detalle de Productos en Paquete:</span>
+                  <p className="font-bold text-slate-200 text-xs">{itemsSummary || 'Sin productos registrados'}</p>
                 </div>
               </div>
 
@@ -526,15 +568,19 @@ export default function DriverAppPage() {
                 key={order.id}
                 className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4 relative"
               >
-                {/* Header Card */}
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <div>
+                {/* Header Card con Nombre del Negocio */}
+                <div className="border-b border-slate-800 pb-3 space-y-1">
+                  <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-400 font-bold">Pedido #{order.codigo || order.id.slice(-6).toUpperCase()}</span>
-                    <h3 className="font-extrabold text-white text-base">{order.nombreCliente}</h3>
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                      {order.estado}
+                    </span>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                    {order.estado}
-                  </span>
+                  <div className="flex items-center gap-1.5 text-amber-300 font-extrabold text-sm">
+                    <Store className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>{order.negocio?.nombre || 'Restaurante Citiox'}</span>
+                  </div>
+                  <h3 className="font-extrabold text-white text-xs">Cliente: {order.nombreCliente}</h3>
                 </div>
 
                 {/* Contador Regresivo de Despacho / Llegada */}
@@ -571,12 +617,35 @@ export default function DriverAppPage() {
                   </div>
                 )}
 
-                {/* Datos del Cliente & Mapa */}
-                <div className="space-y-2 text-xs text-slate-300 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                {/* Datos del Negocio (Recogida) & Datos del Cliente (Entrega) */}
+                <div className="space-y-2.5 text-xs text-slate-300 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+                  {/* Punto 1: Recogida */}
+                  <div className="flex items-start justify-between gap-1 pb-2 border-b border-slate-800">
+                    <div className="flex items-start gap-2">
+                      <Building2 className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-[10px] font-black uppercase text-orange-400 block">1. Recogida (Restaurante):</span>
+                        <span className="font-semibold text-slate-200">{order.negocio?.direccion || 'Local del Restaurante'}</span>
+                      </div>
+                    </div>
+                    {order.negocio?.direccion && (
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.negocio.direccion)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-orange-400 hover:underline text-[10px] font-bold shrink-0 flex items-center gap-0.5"
+                      >
+                        <Map className="w-3 h-3" /> GPS Local
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Punto 2: Entrega */}
                   <div className="flex items-start justify-between gap-1">
                     <div className="flex items-start gap-2">
-                      <MapPin className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+                      <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                       <div>
+                        <span className="text-[10px] font-black uppercase text-emerald-400 block">2. Entrega (Cliente):</span>
                         <span className="font-semibold text-slate-200">{order.direccionCliente || 'Sin dirección registrada'}</span>
                         {order.referenciaCliente && (
                           <p className="text-[10px] text-slate-400 font-medium mt-0.5">Ref: {order.referenciaCliente}</p>
@@ -588,9 +657,9 @@ export default function DriverAppPage() {
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.direccionCliente)}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-orange-400 hover:underline text-[10px] font-bold shrink-0 flex items-center gap-0.5"
+                        className="text-emerald-400 hover:underline text-[10px] font-bold shrink-0 flex items-center gap-0.5"
                       >
-                        <Map className="w-3 h-3" /> GPS
+                        <Map className="w-3 h-3" /> GPS Cliente
                       </a>
                     )}
                   </div>
