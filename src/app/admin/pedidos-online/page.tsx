@@ -558,7 +558,7 @@ export default function PedidosOnlinePage() {
                             fetch('/api/admin/pedidos', {
                               method: 'PUT',
                               headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ id: pedido.id, estado: 'EN_RUTA' })
+                              body: JSON.stringify({ id: pedido.id, estado: 'ENTREGADO_A_REPARTIDOR' })
                             })
                             .then(() => fetchOnlineOrders())
                             .finally(() => setProcessingId(null));

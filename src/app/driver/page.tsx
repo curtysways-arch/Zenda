@@ -452,14 +452,9 @@ export default function DriverAppPage() {
                   <p className="font-bold text-slate-200">{itemsSummary || 'Sin productos registrados'}</p>
                 </div>
 
-                <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-950 text-xs space-y-1">
-                  <div className="flex justify-between items-center font-bold text-slate-300">
-                    <span>🔒 COBRO AL CLIENTE:</span>
-                    <span className="text-amber-400 font-black text-[11px]">Se revela al iniciar ruta</span>
-                  </div>
-                  <p className="text-[10px] text-slate-500">
-                    Los detalles del valor a cobrar en destino se habilitarán una vez que el repartidor recoja el producto e inicie el trayecto de entrega.
-                  </p>
+                <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex justify-between items-center text-xs font-bold">
+                  <span className="text-slate-400">Distancia estimada de entrega:</span>
+                  <span className="text-amber-400 font-black">📍 {distanceStr}</span>
                 </div>
               </div>
 
@@ -484,25 +479,17 @@ export default function DriverAppPage() {
         );
       })()}
 
-      {/* SECCIÓN 2: MIS PEDIDOS ACEPTADOS EN CURSO */}
-      <div className="p-4 max-w-md mx-auto space-y-4">
-        <h2 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center justify-between">
-          <span>Mis Entregas en Curso ({myAssignedOrders.length})</span>
-          {status === 'DISPONIBLE' && (
+      {/* SECCIÓN 2: GESTIÓN DE MIS PEDIDOS ACEPTADOS EN CURSO (ÚNICAMENTE SI HAY CARRERA ACTIVA) */}
+      {hasActiveOrder && (
+        <div className="p-4 max-w-md mx-auto space-y-4">
+          <h2 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center justify-between">
+            <span>Mi Entrega en Curso ({myAssignedOrders.length})</span>
             <span className="text-xs text-emerald-400 flex items-center gap-1 font-bold animate-pulse">
               ● Monitoreando GPS
             </span>
-          )}
-        </h2>
+          </h2>
 
-        {myAssignedOrders.length === 0 ? (
-          <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-8 text-center text-slate-500 space-y-3">
-            <PackageCheck className="w-12 h-12 mx-auto text-slate-700" />
-            <p className="font-bold text-sm text-slate-400">No tienes entregas activas en curso.</p>
-            <p className="text-xs text-slate-600">Revisa la Bolsa de Pedidos o mantente DISPONIBLE.</p>
-          </div>
-        ) : (
-          myAssignedOrders.map((order) => {
+          {myAssignedOrders.map((order) => {
             const isCashOnDelivery = order.paymentStatus !== 'PAGADO' && order.paymentStatus !== 'PAID';
             const deliveryFee = Number(order.costoEnvio || 2.50).toFixed(2);
             const totalToCollect = isCashOnDelivery ? Number(order.total).toFixed(2) : '0.00';
@@ -661,9 +648,9 @@ export default function DriverAppPage() {
                 )}
               </div>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
     </div>
   );
 }
