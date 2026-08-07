@@ -26,10 +26,8 @@ export async function GET(
   const { BusinessRuntimeResolver } = await import('@/core/runtime/BusinessRuntimeResolver');
   const runtimeInfo = await BusinessRuntimeResolver.resolve(negocio);
 
-  // Pedidos activos que la cocina debe atender (solo pendientes de preparación)
-  const ACTIVE_KITCHEN_STATES = runtimeInfo.isEnterprise
-    ? ['WAITING_ACCEPTANCE', 'RECIBIDO', 'CONFIRMED', 'PAGO_CONFIRMADO', 'EN_PREPARACION', 'PREPARING']
-    : ['PENDIENTE_PAGO', 'PAGO_CONFIRMADO', 'RECIBIDO', 'CONFIRMED', 'EN_PREPARACION', 'PENDIENTE'];
+  // Pedidos exclusivamente en preparación para pantalla KDS de cocina
+  const ACTIVE_KITCHEN_STATES = ['EN_PREPARACION', 'PREPARING', 'CONFIRMED', 'PREPARACION'];
 
   const orders = await (prisma as any).pedido.findMany({
     where: {
