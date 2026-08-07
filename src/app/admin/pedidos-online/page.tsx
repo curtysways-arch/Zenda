@@ -151,9 +151,18 @@ export default function PedidosOnlinePage() {
     }
   };
 
-  const pendingOrders = pedidos.filter(p => p.estado === 'PENDIENTE' || p.estado === 'PENDING');
-  const preparingOrders = pedidos.filter(p => p.estado === 'EN_PREPARACION' || p.estado === 'ACEPTADO');
-  const completedOrders = pedidos.filter(p => p.estado === 'ENTREGADO' || p.estado === 'FINALIZADO' || p.estado === 'CANCELADO');
+  const isPendingState = (st: string) => 
+    ['PENDIENTE', 'PENDING', 'WAITING_CONFIRMATION', 'POR_CONFIRMAR'].includes((st || '').toUpperCase());
+
+  const isPreparingOrActiveState = (st: string) => 
+    ['EN_PREPARACION', 'PREPARANDO', 'ACEPTADO', 'RECIBIDO', 'LISTO', 'REPARTIDOR_ASIGNADO', 'EN_CAMINO', 'EN_RUTA', 'DESPACHADO', 'DRIVER_ASSIGNED'].includes((st || '').toUpperCase());
+
+  const isCompletedState = (st: string) => 
+    ['ENTREGADO', 'FINALIZADO', 'COMPLETADO', 'CANCELADO', 'RECHAZADO'].includes((st || '').toUpperCase());
+
+  const pendingOrders = pedidos.filter(p => isPendingState(p.estado));
+  const preparingOrders = pedidos.filter(p => isPreparingOrActiveState(p.estado));
+  const completedOrders = pedidos.filter(p => isCompletedState(p.estado));
 
   const displayedOrders = pedidos.filter(p => {
     const matchSearch = !searchQuery || 
@@ -164,9 +173,9 @@ export default function PedidosOnlinePage() {
 
     if (!matchSearch) return false;
 
-    if (filterState === 'PENDING') return p.estado === 'PENDIENTE' || p.estado === 'PENDING';
-    if (filterState === 'PREPARING') return p.estado === 'EN_PREPARACION' || p.estado === 'ACEPTADO';
-    if (filterState === 'COMPLETED') return p.estado === 'ENTREGADO' || p.estado === 'FINALIZADO' || p.estado === 'CANCELADO';
+    if (filterState === 'PENDING') return isPendingState(p.estado);
+    if (filterState === 'PREPARING') return isPreparingOrActiveState(p.estado);
+    if (filterState === 'COMPLETED') return isCompletedState(p.estado);
     return true;
   });
 
@@ -240,7 +249,7 @@ export default function PedidosOnlinePage() {
           }`}
         >
           <PackageCheck className="w-4 h-4 text-amber-200" />
-          En Preparación en Cocina
+          En Preparación / En Camino
           <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-[10px] font-bold">
             {preparingOrders.length}
           </span>
