@@ -27,18 +27,27 @@ export async function GET(
       return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
     }
 
-    const resolved = await BusinessRuntimeResolver.resolve(negocio);
-    const deliveryEngine = resolved.kernel!.getDeliveryEngine();
+    let drivers: any[] = [];
+    let tasks: any[] = [];
+    try {
+      const resolved = await BusinessRuntimeResolver.resolve(negocio);
+      if (resolved?.kernel) {
+        const deliveryEngine = resolved.kernel.getDeliveryEngine();
+        if (deliveryEngine) {
+          drivers = deliveryEngine.getDrivers() || [];
+          tasks = deliveryEngine.getAllTasks(negocio.id) || [];
+        }
+      }
+    } catch (err) {
+      console.warn('[API Driver GET Kernel Resolver Warning]:', err);
+    }
 
-    const drivers = deliveryEngine.getDrivers();
-    const tasks = deliveryEngine.getAllTasks(negocio.id);
-
-    // Obtener pedidos de delivery activos desde la BD para sincronización en tiempo real
+    // Obtener pedidos de delivery aceptados/en preparación activos desde la BD para repartidores
     const dbDeliveryOrders = await (prisma as any).pedido.findMany({
       where: {
         negocioId: negocio.id,
         tipoEntrega: { in: ['DELIVERY_ORDER', 'DOMICILIO', 'DELIVERY'] },
-        estado: { in: ['PENDIENTE', 'PENDING', 'WAITING_CONFIRMATION', 'POR_CONFIRMAR', 'EN_PREPARACION', 'ACEPTADO', 'LISTO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA'] }
+        estado: { in: ['EN_PREPARACION', 'ACEPTADO', 'LISTO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA'] }
       },
       include: { items: true, payment: true },
       orderBy: { createdAt: 'desc' }
@@ -76,8 +85,15 @@ export async function POST(
     const body = await request.json();
     const { action, driverId, name, phone, vehicleType, status, taskId, orderId, nextState } = body;
 
-    const resolved = await BusinessRuntimeResolver.resolve(negocio);
-    const deliveryEngine = resolved.kernel!.getDeliveryEngine();
+    let deliveryEngine: any = null;
+    try {
+      const resolved = await BusinessRuntimeResolver.resolve(negocio);
+      if (resolved?.kernel) {
+        deliveryEngine = resolved.kernel.getDeliveryEngine();
+      }
+    } catch (err) {
+      console.warn('[API Driver POST Kernel Resolver Warning]:', err);
+    }
 
     // 1. Registro / Actualización de repartidor
     if (action === 'REGISTER_OR_UPDATE_DRIVER') {
@@ -85,18 +101,20 @@ export async function POST(
         return NextResponse.json({ error: 'driverId y name son requeridos.' }, { status: 400 });
       }
 
-      deliveryEngine.registerDriver({
-        driverId,
-        name,
-        phone: phone || '',
-        vehicleType: vehicleType || 'MOTO',
-        status: status || 'DISPONIBLE',
-      });
+      if (deliveryEngine) {
+        deliveryEngine.registerDriver({
+          driverId,
+          name,
+          phone: phone || '',
+          vehicleType: vehicleType || 'MOTO',
+          status: status || 'DISPONIBLE',
+        });
+      }
 
       return NextResponse.json({
         success: true,
         message: 'Repartidor actualizado.',
-        driver: deliveryEngine.getDriver(driverId),
+        driver: deliveryEngine ? deliveryEngine.getDriver(driverId) : { driverId, name, status: status || 'DISPONIBLE' },
       });
     }
 
@@ -106,11 +124,14 @@ export async function POST(
         return NextResponse.json({ error: 'driverId y status son requeridos.' }, { status: 400 });
       }
 
-      deliveryEngine.setDriverStatus(driverId, status);
+      if (deliveryEngine) {
+        deliveryEngine.setDriverStatus(driverId, status);
+      }
+
       return NextResponse.json({
         success: true,
         message: `Estado actualizado a ${status}`,
-        driver: deliveryEngine.getDriver(driverId),
+        driver: deliveryEngine ? deliveryEngine.getDriver(driverId) : { driverId, status },
       });
     }
 

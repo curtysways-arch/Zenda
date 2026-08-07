@@ -190,7 +190,7 @@ export default function DriverAppPage() {
   const openUnassignedOrders = availableDbOrders.filter(o => {
     const extra = parseExtraInfo(o.extraInfo);
     return !extra.assignedDriverId && 
-      ['PENDIENTE', 'PENDING', 'WAITING_CONFIRMATION', 'POR_CONFIRMAR', 'EN_PREPARACION', 'ACEPTADO', 'LISTO'].includes(o.estado);
+      ['EN_PREPARACION', 'ACEPTADO', 'LISTO'].includes(o.estado);
   });
 
   // Calcular cuenta regresiva
