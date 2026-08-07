@@ -56,9 +56,10 @@ function VentasContent() {
   const [lat, setLat] = useState<number | null>(-0.180653);
   const [lng, setLng] = useState<number | null>(-78.467838);
 
-  // Products, Categories & Cart
+  // Products, Categories, Tables & Cart
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [tables, setTables] = useState<any[]>([]);
   const [selectedCatId, setSelectedCatId] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState<string>('populares');
@@ -102,6 +103,24 @@ function VentasContent() {
           }
           if (cfg.deliveryConfig) setDeliveryConfig(cfg.deliveryConfig);
           if (cfg.packagingConfig?.amount) setPackagingAmount(parseFloat(cfg.packagingConfig.amount));
+
+          // Load tables for current business
+          if (nData.slug) {
+            try {
+              const resT = await fetch(`/api/${nData.slug}/tables`);
+              if (resT.ok) {
+                const dT = await resT.json();
+                if (dT.tables && Array.isArray(dT.tables)) {
+                  setTables(dT.tables);
+                  if (dT.tables.length > 0 && mesaCode === 'POS-Virtual') {
+                    setMesaCode(dT.tables[0].name);
+                  }
+                }
+              }
+            } catch (errT) {
+              console.error('Error loading tables:', errT);
+            }
+          }
         }
       } catch (e) {
         console.error('Error loading catalogue:', e);
@@ -453,36 +472,41 @@ function VentasContent() {
               </button>
             </div>
 
-            {/* Tipo de Entrega Switcher */}
+            {/* Tipo de Entrega Switcher (Para Llevar, Mesa, Domicilio) */}
             <div>
               <label className="block text-[8px] font-black uppercase text-slate-400 tracking-wider mb-0.5">Tipo de Entrega</label>
               <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg bg-slate-100 border border-slate-200">
                 <button
                   type="button"
                   onClick={() => setTipoEntrega('PICKUP_ORDER')}
-                  className={`py-1 px-0.5 rounded-md text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                  className={`py-1 px-0.5 rounded-md text-[10px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                     tipoEntrega === 'PICKUP_ORDER'
                       ? 'bg-[#ea580c] text-white shadow-sm'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <ShoppingBag className="w-3 h-3" /> Mostrador
+                  <ShoppingBag className="w-3 h-3" /> Para Llevar
                 </button>
                 <button
                   type="button"
-                  onClick={() => setTipoEntrega('TABLE_ORDER')}
-                  className={`py-1 px-0.5 rounded-md text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                  onClick={() => {
+                    setTipoEntrega('TABLE_ORDER');
+                    if (tables.length > 0 && (!mesaCode || mesaCode === 'POS-Virtual')) {
+                      setMesaCode(tables[0].name);
+                    }
+                  }}
+                  className={`py-1 px-0.5 rounded-md text-[10px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                     tipoEntrega === 'TABLE_ORDER'
                       ? 'bg-[#ea580c] text-white shadow-sm'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <Utensils className="w-3 h-3" /> En Mesa
+                  <Utensils className="w-3 h-3" /> Mesa
                 </button>
                 <button
                   type="button"
                   onClick={() => setTipoEntrega('DELIVERY_ORDER')}
-                  className={`py-1 px-0.5 rounded-md text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                  className={`py-1 px-0.5 rounded-md text-[10px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                     tipoEntrega === 'DELIVERY_ORDER'
                       ? 'bg-[#ea580c] text-white shadow-sm'
                       : 'text-slate-600 hover:text-slate-900'
@@ -528,17 +552,78 @@ function VentasContent() {
               </div>
             )}
 
-            {/* Mesa Input (Si es En Mesa) */}
+            {/* Selector Interactivo de Mesas (Si es Mesa) */}
             {tipoEntrega === 'TABLE_ORDER' && (
-              <div>
-                <label className="block text-[8px] font-black uppercase text-slate-400 tracking-wider mb-0.5">Mesa / Ubicación</label>
-                <input
-                  type="text"
-                  value={mesaCode}
-                  onChange={e => setMesaCode(e.target.value)}
-                  className="w-full px-2 py-1 rounded-lg text-xs font-bold bg-slate-50 border border-slate-200 text-slate-900 outline-none"
-                  placeholder="Ej. Mesa 01"
-                />
+              <div className="p-2 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-amber-900 flex items-center gap-1">
+                    <Utensils className="w-3 h-3 text-amber-600" /> Selección de Mesa
+                  </span>
+                  <span className="text-[9px] font-extrabold text-amber-800 bg-amber-200/60 px-1.5 py-0.5 rounded">
+                    Mesa Activa: {mesaCode || 'Ninguna'}
+                  </span>
+                </div>
+
+                {/* Botones de Mesas Reales */}
+                {tables.length > 0 ? (
+                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 max-h-28 overflow-y-auto pr-0.5 custom-scrollbar">
+                    {tables.map(tbl => {
+                      const isSelected = mesaCode === tbl.name;
+                      const isOccupied = tbl.estado === 'OCUPADA';
+                      return (
+                        <button
+                          key={tbl.id}
+                          type="button"
+                          onClick={() => setMesaCode(tbl.name)}
+                          className={`p-1.5 rounded-lg border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                            isSelected
+                              ? 'bg-amber-600 text-white border-amber-700 shadow-md scale-[1.02]'
+                              : isOccupied
+                              ? 'bg-amber-100 text-amber-950 border-amber-300 hover:bg-amber-200'
+                              : 'bg-white text-slate-800 border-amber-200 hover:bg-amber-50'
+                          }`}
+                        >
+                          <span className="font-black text-[10px] truncate w-full">{tbl.name}</span>
+                          <span className={`text-[7px] font-bold uppercase tracking-tighter ${
+                            isSelected ? 'text-amber-100' : isOccupied ? 'text-amber-800' : 'text-emerald-600'
+                          }`}>
+                            {isSelected ? '✓ Seleccionada' : tbl.estado || 'Disponible'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <p className="text-[9px] text-amber-900 font-semibold">Selecciona o escribe el número de mesa:</p>
+                    <div className="grid grid-cols-4 gap-1">
+                      {['Mesa 01', 'Mesa 02', 'Mesa 03', 'Mesa 04', 'Mesa 05', 'Mesa 06', 'Mesa 07', 'Mesa 08'].map(m => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setMesaCode(m)}
+                          className={`py-1 px-1 rounded border text-[9px] font-extrabold cursor-pointer ${
+                            mesaCode === m ? 'bg-amber-600 text-white border-amber-700' : 'bg-white text-slate-800 border-amber-200'
+                          }`}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Input manual por si desean agregar un identificador libre (ej. Terraza 2) */}
+                <div className="pt-1 border-t border-amber-200/60 flex items-center gap-1.5">
+                  <span className="text-[8px] font-black text-amber-900 uppercase shrink-0">O escribir mesa:</span>
+                  <input
+                    type="text"
+                    value={mesaCode}
+                    onChange={e => setMesaCode(e.target.value)}
+                    className="w-full bg-white rounded-md px-2 py-0.5 border border-amber-200 text-[10px] font-extrabold text-amber-950 outline-none focus:border-amber-500"
+                    placeholder="Ej. Barra, Terraza 2..."
+                  />
+                </div>
               </div>
             )}
 
