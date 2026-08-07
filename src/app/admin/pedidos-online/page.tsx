@@ -26,6 +26,7 @@ interface Pedido {
   subtotal: number;
   costoEnvio?: number;
   createdAt: string;
+  extraInfo?: any;
   items: Array<{
     id: string;
     nombreProducto: string;
@@ -42,10 +43,42 @@ export default function PedidosOnlinePage() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const openWhatsApp = (phone: string, nombre: string, orderId: string) => {
+  // Estados de Alerta Sonora y Pantalla Completa
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [alertOrder, setAlertOrder] = useState<Pedido | null>(null);
+  const [acknowledgedIds, setAcknowledgedIds] = useState<Set<string>>(new Set());
+
+  // Estados del Modal de Revisión y Tiempo de Despacho
+  const [reviewingOrder, setReviewingOrder] = useState<Pedido | null>(null);
+  const [selectedPrepTime, setSelectedPrepTime] = useState<number>(20);
+  const [itemsAvailability, setItemsAvailability] = useState<Record<string, boolean>>({});
+
+  // Sintetizador Web Audio API para la alarma sonora
+  const triggerAlarmSound = () => {
+    if (!soundEnabled) return;
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.4, ctx.currentTime);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.35);
+    } catch (e) {
+      console.warn('Audio play error:', e);
+    }
+  };
+
+  const openWhatsApp = (phone: string, nombre: string, orderId: string, customMsg?: string) => {
     const cleanPhone = phone.replace(/\D/g, '');
     const formattedPhone = cleanPhone.startsWith('0') ? `593${cleanPhone.slice(1)}` : cleanPhone;
-    const message = encodeURIComponent(`Hola ${nombre}, te saludamos de tu restaurante. Confirmamos que recibimos tu pedido #${orderId} de la tienda online y ya está en preparación! 🛵💨`);
+    const message = encodeURIComponent(customMsg || `Hola ${nombre}, te saludamos de tu restaurante. Confirmamos que recibimos tu pedido #${orderId} de la tienda online y ya está en preparación! 🛵💨`);
     window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
   };
 
@@ -113,9 +146,19 @@ export default function PedidosOnlinePage() {
       const res = await fetch('/api/admin/pedidos');
       if (res.ok) {
         const data = await res.json();
-        // Filtrar estrictamente únicamente pedidos online (excluir POS, Caja, Mesas)
         const onlineOnly = (Array.isArray(data) ? data : []).filter((p: Pedido) => !isPosOrTableOrder(p));
         setPedidos(onlineOnly);
+
+        // Detectar si hay un nuevo pedido PENDIENTE para disparar la Alerta Fullscreen
+        const newUnack = onlineOnly.find((p: Pedido) => 
+          (p.estado === 'PENDIENTE' || p.estado === 'WAITING_CONFIRMATION') && 
+          !acknowledgedIds.has(p.id)
+        );
+
+        if (newUnack && alertOrder?.id !== newUnack.id) {
+          setAlertOrder(newUnack);
+          triggerAlarmSound();
+        }
       }
     } catch (e) {
       console.error('Error fetching online orders:', e);
@@ -126,22 +169,53 @@ export default function PedidosOnlinePage() {
 
   useEffect(() => {
     fetchOnlineOrders();
-    const interval = setInterval(fetchOnlineOrders, 15000); // Polling cada 15s
+    const interval = setInterval(fetchOnlineOrders, 8000); // Polling cada 8s
     return () => clearInterval(interval);
-  }, []);
+  }, [acknowledgedIds, soundEnabled, alertOrder]);
 
-  const handleUpdateStatus = async (id: string, newStatus: string) => {
-    setProcessingId(id);
+  const handleOpenReview = (pedido: Pedido) => {
+    // Si estaba la alerta sonar sonando, la cerramos
+    if (alertOrder?.id === pedido.id) {
+      setAcknowledgedIds(prev => new Set(prev).add(pedido.id));
+      setAlertOrder(null);
+    }
+    setReviewingOrder(pedido);
+    setSelectedPrepTime(20);
+    const initialAvail: Record<string, boolean> = {};
+    pedido.items.forEach(item => {
+      initialAvail[item.id] = true;
+    });
+    setItemsAvailability(initialAvail);
+  };
+
+  const handleConfirmAcceptOrder = async () => {
+    if (!reviewingOrder) return;
+    setProcessingId(reviewingOrder.id);
     try {
       const res = await fetch('/api/admin/pedidos', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, estado: newStatus })
+        body: JSON.stringify({
+          id: reviewingOrder.id,
+          estado: 'EN_PREPARACION',
+          prepTimeMinutes: selectedPrepTime,
+          extraInfoUpdates: {
+            itemsAvailability
+          }
+        })
       });
       if (res.ok) {
-        setPedidos(prev => prev.map(p => p.id === id ? { ...p, estado: newStatus } : p));
+        setPedidos(prev => prev.map(p => p.id === reviewingOrder.id ? { ...p, estado: 'EN_PREPARACION' } : p));
+        // Enviar notificación a WhatsApp del cliente
+        openWhatsApp(
+          reviewingOrder.telefonoCliente,
+          reviewingOrder.nombreCliente,
+          reviewingOrder.codigo || reviewingOrder.id.slice(-6),
+          `Hola ${reviewingOrder.nombreCliente}, tu pedido #${reviewingOrder.codigo || reviewingOrder.id.slice(-6)} de la tienda web ha sido ACEPTADO! 👨‍🍳 Tiempo estimado de entrega: ${selectedPrepTime} minutos.`
+        );
+        setReviewingOrder(null);
       } else {
-        alert('Error al actualizar estado del pedido');
+        alert('Error al aceptar el pedido');
       }
     } catch (e) {
       console.error(e);
@@ -155,7 +229,7 @@ export default function PedidosOnlinePage() {
     ['PENDIENTE', 'PENDING', 'WAITING_CONFIRMATION', 'POR_CONFIRMAR'].includes((st || '').toUpperCase());
 
   const isPreparingOrActiveState = (st: string) => 
-    ['EN_PREPARACION', 'PREPARANDO', 'ACEPTADO', 'RECIBIDO', 'LISTO', 'REPARTIDOR_ASIGNADO', 'EN_CAMINO', 'EN_RUTA', 'DESPACHADO', 'DRIVER_ASSIGNED'].includes((st || '').toUpperCase());
+    ['EN_PREPARACION', 'PREPARANDO', 'ACEPTADO', 'RECIBIDO', 'LISTO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA', 'DESPACHADO', 'DRIVER_ASSIGNED'].includes((st || '').toUpperCase());
 
   const isCompletedState = (st: string) => 
     ['ENTREGADO', 'FINALIZADO', 'COMPLETADO', 'CANCELADO', 'RECHAZADO'].includes((st || '').toUpperCase());
@@ -163,6 +237,16 @@ export default function PedidosOnlinePage() {
   const pendingOrders = pedidos.filter(p => isPendingState(p.estado));
   const preparingOrders = pedidos.filter(p => isPreparingOrActiveState(p.estado));
   const completedOrders = pedidos.filter(p => isCompletedState(p.estado));
+
+  // Detectar pedidos a domicilio aceptados sin repartidor asignado tras > 3 minutos
+  const unassignedTimeoutOrders = preparingOrders.filter(p => {
+    if (p.tipoEntrega !== 'DELIVERY_ORDER') return false;
+    const extra = typeof p.extraInfo === 'string' ? JSON.parse(p.extraInfo || '{}') : (p.extraInfo || {});
+    if (extra.assignedDriverId) return false;
+    const createdAtTime = new Date(p.createdAt).getTime();
+    const elapsedMinutes = (Date.now() - createdAtTime) / (1000 * 60);
+    return elapsedMinutes > 3;
+  });
 
   const displayedOrders = pedidos.filter(p => {
     const matchSearch = !searchQuery || 
@@ -398,12 +482,12 @@ export default function PedidosOnlinePage() {
                   {isPending ? (
                     <>
                       <button
-                        onClick={() => handleUpdateStatus(pedido.id, 'EN_PREPARACION')}
+                        onClick={() => handleOpenReview(pedido)}
                         disabled={processingId === pedido.id}
                         className="flex-1 py-2 rounded-xl font-black text-xs uppercase bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1 cursor-pointer transition-all disabled:opacity-50"
                       >
                         {processingId === pedido.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-4 h-4" />}
-                        Aceptar y Enviar Cocina
+                        Revisar y Asignar Tiempo
                       </button>
                       <button
                         onClick={() => handlePrintTicket(pedido)}
@@ -413,7 +497,15 @@ export default function PedidosOnlinePage() {
                         <Printer className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleUpdateStatus(pedido.id, 'CANCELADO')}
+                        onClick={() => {
+                          if (confirm('¿Deseas rechazar este pedido?')) {
+                            fetch('/api/admin/pedidos', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ id: pedido.id, estado: 'CANCELADO' })
+                            }).then(() => fetchOnlineOrders());
+                          }
+                        }}
                         disabled={processingId === pedido.id}
                         className="p-2 rounded-xl font-bold text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 cursor-pointer transition-all disabled:opacity-50"
                         title="Rechazar pedido"
@@ -438,6 +530,150 @@ export default function PedidosOnlinePage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* BANNER DE ALERTA POR TIMEOUT DE REPARTIDORES (>3 MIN SINO SE HA TOMADO) */}
+      {unassignedTimeoutOrders.length > 0 && (
+        <div className="bg-gradient-to-r from-rose-600 to-red-700 text-white p-4 rounded-2xl shadow-xl flex items-center justify-between gap-3 animate-pulse border-2 border-red-400">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-white/20 text-white font-black">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="font-black text-sm uppercase">¡ALERTA DE REPARTIDORES UNASSIGNED!</h4>
+              <p className="text-xs font-semibold text-rose-100">
+                Hay {unassignedTimeoutOrders.length} pedido(s) a domicilio en preparación sin repartidor asignado tras más de 3 minutos.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 1: ALERTA FULLSCREEN CON SONIDO DE NUEVO PEDIDO ENTRANTE */}
+      {alertOrder && (
+        <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-[#ea580c] space-y-5 text-center relative overflow-hidden">
+            <div className="bg-gradient-to-r from-[#ea580c] to-amber-500 text-white py-3 px-4 -mx-6 -mt-6 mb-2 flex items-center justify-between">
+              <span className="font-black text-xs uppercase flex items-center gap-1.5 animate-pulse">
+                <Sparkles className="w-4 h-4" /> ¡NUEVO PEDIDO WEB ENTRANTE!
+              </span>
+              <button
+                onClick={() => setSoundEnabled(!soundEnabled)}
+                className="px-2.5 py-1 bg-black/20 hover:bg-black/30 text-white rounded-lg text-[10px] font-black cursor-pointer"
+              >
+                {soundEnabled ? '🔊 Sonido Alarma ON' : '🔇 Mute'}
+              </button>
+            </div>
+
+            <div className="size-20 mx-auto rounded-full bg-orange-100 text-[#ea580c] flex items-center justify-center font-black animate-bounce shadow-xl">
+              <Globe className="w-10 h-10" />
+            </div>
+
+            <div>
+              <span className="text-xs font-black uppercase tracking-wider text-slate-400">Código de Pedido</span>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight">#{alertOrder.codigo || alertOrder.id.slice(-6).toUpperCase()}</h2>
+              <p className="text-sm font-extrabold text-[#ea580c] mt-1">{alertOrder.nombreCliente} • {alertOrder.telefonoCliente}</p>
+            </div>
+
+            <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs text-slate-700 font-bold justify-between flex items-center">
+              <span>{alertOrder.items.length} producto(s) en pedido:</span>
+              <span className="text-base font-black text-[#ea580c]">${Number(alertOrder.total).toFixed(2)}</span>
+            </div>
+
+            <div className="pt-2 flex gap-3">
+              <button
+                onClick={() => handleOpenReview(alertOrder)}
+                className="flex-1 py-3.5 bg-[#ea580c] hover:bg-orange-700 text-white font-black text-sm uppercase rounded-2xl shadow-xl shadow-orange-600/30 cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <Check className="w-5 h-5" /> Atender Pedido Ahora
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: REVISIÓN DE PEDIDO & SELECCIÓN DE TIEMPO DE DESPACHO */}
+      {reviewingOrder && (
+        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 relative">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <span className="text-[10px] font-black uppercase text-[#ea580c]">Revisión & Confirmación de Cocina</span>
+                <h3 className="text-lg font-black text-slate-900">Pedido #{reviewingOrder.codigo || reviewingOrder.id.slice(-6).toUpperCase()}</h3>
+              </div>
+              <button
+                onClick={() => setReviewingOrder(null)}
+                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Selector de Tiempo de Preparación */}
+            <div className="space-y-2">
+              <label className="block text-xs font-black uppercase text-slate-600 tracking-wider">
+                ⏰ Tiempo Estimado de Preparación / Entrega
+              </label>
+              <div className="grid grid-cols-5 gap-2">
+                {[15, 20, 30, 45, 60].map(mins => (
+                  <button
+                    key={mins}
+                    type="button"
+                    onClick={() => setSelectedPrepTime(mins)}
+                    className={`py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      selectedPrepTime === mins
+                        ? 'bg-[#ea580c] text-white shadow-md shadow-orange-600/20 scale-[1.05]'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    {mins} min
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Ajuste de Disponibilidad de Ítems */}
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <label className="block text-xs font-black uppercase text-slate-600 tracking-wider">
+                📦 Disponibilidad de Productos en Cocina
+              </label>
+              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                {reviewingOrder.items.map(item => {
+                  const isAvailable = itemsAvailability[item.id] ?? true;
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between p-2 rounded-xl border border-slate-200 bg-slate-50 text-xs"
+                    >
+                      <span className="font-bold text-slate-800">{item.cantidad}x {item.nombreProducto}</span>
+                      <button
+                        type="button"
+                        onClick={() => setItemsAvailability(prev => ({ ...prev, [item.id]: !isAvailable }))}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase transition-all cursor-pointer ${
+                          isAvailable ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                        }`}
+                      >
+                        {isAvailable ? 'Disponible 🟢' : 'Agotado 🔴'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Botón de Confirmación */}
+            <div className="pt-3 border-t border-slate-100">
+              <button
+                onClick={handleConfirmAcceptOrder}
+                disabled={processingId === reviewingOrder.id}
+                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase rounded-xl shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+              >
+                {processingId === reviewingOrder.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                Confirmar y Enviar a Cocina / Repartidores ({selectedPrepTime} min)
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

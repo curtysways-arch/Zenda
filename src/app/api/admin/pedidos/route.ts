@@ -43,7 +43,7 @@ export async function PUT(req: Request) {
 
     try {
         const body = await req.json();
-        const { id, estado, franjaHoraria, fechaEntrega, notas, subtotal, costoEnvio, costoEmpaque, descuento, total, pricingBreakdown } = body;
+        const { id, estado, franjaHoraria, fechaEntrega, notas, subtotal, costoEnvio, costoEmpaque, descuento, total, pricingBreakdown, prepTimeMinutes, extraInfoUpdates } = body;
 
         if (!id) {
             return NextResponse.json({ error: 'El ID es obligatorio' }, { status: 400 });
@@ -70,16 +70,25 @@ export async function PUT(req: Request) {
         if (costoEnvio !== undefined) updateData.costoEnvio = parseFloat(costoEnvio);
         if (total !== undefined) updateData.total = parseFloat(total);
 
-        // Guardar desglose de auditoría en extraInfo
+        // Guardar desglose de auditoría, prepTimeMinutes y extraInfoUpdates en extraInfo
+        const currentExtra = (pedido.extraInfo as any) || {};
+        const newExtraInfo = {
+            ...currentExtra,
+            ...(extraInfoUpdates || {}),
+            ...(prepTimeMinutes ? { 
+                prepTimeMinutes: parseInt(prepTimeMinutes, 10),
+                acceptedAt: new Date().toISOString(),
+                estimatedReadyAt: new Date(Date.now() + parseInt(prepTimeMinutes, 10) * 60 * 1000).toISOString()
+            } : {})
+        };
+
         if (pricingBreakdown || costoEmpaque !== undefined || descuento !== undefined) {
-            const currentExtra = (pedido.extraInfo as any) || {};
-            updateData.extraInfo = {
-                ...currentExtra,
-                packagingCost: costoEmpaque ?? currentExtra.packagingCost ?? 0,
-                discountAmount: descuento ?? currentExtra.discountAmount ?? 0,
-                pricingBreakdown: pricingBreakdown || currentExtra.pricingBreakdown
-            };
+            newExtraInfo.packagingCost = costoEmpaque ?? currentExtra.packagingCost ?? 0;
+            newExtraInfo.discountAmount = descuento ?? currentExtra.discountAmount ?? 0;
+            newExtraInfo.pricingBreakdown = pricingBreakdown || currentExtra.pricingBreakdown;
         }
+
+        updateData.extraInfo = newExtraInfo;
 
         const pedidoActualizado = await (prisma as any).pedido.update({
             where: { id },

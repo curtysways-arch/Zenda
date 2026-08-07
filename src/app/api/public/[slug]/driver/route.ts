@@ -33,6 +33,17 @@ export async function GET(
     const drivers = deliveryEngine.getDrivers();
     const tasks = deliveryEngine.getAllTasks(negocio.id);
 
+    // Obtener pedidos de delivery activos desde la BD para sincronización en tiempo real
+    const dbDeliveryOrders = await (prisma as any).pedido.findMany({
+      where: {
+        negocioId: negocio.id,
+        tipoEntrega: 'DELIVERY_ORDER',
+        estado: { in: ['EN_PREPARACION', 'ACEPTADO', 'LISTO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'EN_CAMINO', 'EN_RUTA'] }
+      },
+      include: { items: true, payment: true },
+      orderBy: { createdAt: 'desc' }
+    });
+
     const driverTasks = driverId
       ? tasks.filter(t => t.driverId === driverId)
       : tasks;
@@ -42,6 +53,7 @@ export async function GET(
       drivers,
       tasks: driverTasks,
       pendingQueue: tasks.filter(t => t.state === 'WAITING_DISPATCH'),
+      availableDbOrders: dbDeliveryOrders,
     });
   } catch (e: any) {
     console.error('[API Driver GET Error]:', e);
@@ -62,7 +74,7 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { action, driverId, name, phone, vehicleType, status, taskId, nextState } = body;
+    const { action, driverId, name, phone, vehicleType, status, taskId, orderId, nextState } = body;
 
     const resolved = await BusinessRuntimeResolver.resolve(negocio);
     const deliveryEngine = resolved.kernel!.getDeliveryEngine();
@@ -102,17 +114,49 @@ export async function POST(
       });
     }
 
-    // 3. Aceptar pedido
+    // 3. Aceptar pedido por repartidor
     if (action === 'ACCEPT_TASK') {
-      if (!taskId || !driverId) {
-        return NextResponse.json({ error: 'taskId y driverId son requeridos.' }, { status: 400 });
+      const targetId = orderId || taskId;
+      if (!targetId || !driverId) {
+        return NextResponse.json({ error: 'orderId/taskId y driverId son requeridos.' }, { status: 400 });
       }
 
-      const updatedTask = await deliveryEngine.updateDeliveryState(taskId, 'ASSIGNED');
-      return NextResponse.json({ success: true, task: updatedTask });
+      // Actualizar pedido en la BD a REPARTIDOR_ASIGNADO
+      const updatedOrder = await (prisma as any).pedido.update({
+        where: { id: targetId },
+        data: {
+          estado: 'REPARTIDOR_ASIGNADO',
+          extraInfo: {
+            assignedDriverId: driverId,
+            driverAcceptedAt: new Date().toISOString()
+          }
+        }
+      });
+
+      return NextResponse.json({ success: true, order: updatedOrder });
     }
 
-    // 4. Rechazar pedido (regresa a la cola WAITING_DISPATCH)
+    // 4. Marcar Llegada al Restaurante por repartidor
+    if (action === 'MARK_ARRIVED') {
+      const targetId = orderId || taskId;
+      if (!targetId) {
+        return NextResponse.json({ error: 'orderId/taskId es requerido.' }, { status: 400 });
+      }
+
+      const updatedOrder = await (prisma as any).pedido.update({
+        where: { id: targetId },
+        data: {
+          estado: 'REPARTIDOR_EN_LOCAL',
+          extraInfo: {
+            driverArrivedAt: new Date().toISOString()
+          }
+        }
+      });
+
+      return NextResponse.json({ success: true, order: updatedOrder });
+    }
+
+    // 5. Rechazar pedido (regresa a la cola WAITING_DISPATCH)
     if (action === 'REJECT_TASK') {
       if (!taskId || !driverId) {
         return NextResponse.json({ error: 'taskId y driverId son requeridos.' }, { status: 400 });
@@ -126,14 +170,27 @@ export async function POST(
       });
     }
 
-    // 5. Cambio de estado de entrega (PICKED_UP, ON_ROUTE, DELIVERED)
+    // 6. Cambio de estado de entrega (ON_ROUTE, DELIVERED, etc.)
     if (action === 'UPDATE_DELIVERY_STATE') {
-      if (!taskId || !nextState) {
-        return NextResponse.json({ error: 'taskId y nextState son requeridos.' }, { status: 400 });
+      const targetId = orderId || taskId;
+      if (!targetId || !nextState) {
+        return NextResponse.json({ error: 'orderId/taskId y nextState son requeridos.' }, { status: 400 });
       }
 
-      const updatedTask = await deliveryEngine.updateDeliveryState(taskId, nextState);
-      return NextResponse.json({ success: true, task: updatedTask });
+      const dbStatusMap: Record<string, string> = {
+        'ON_ROUTE': 'EN_CAMINO',
+        'DELIVERED': 'ENTREGADO',
+        'PICKED_UP': 'ENTREGADO_A_REPARTIDOR'
+      };
+
+      const newDbStatus = dbStatusMap[nextState] || nextState;
+
+      const updatedOrder = await (prisma as any).pedido.update({
+        where: { id: targetId },
+        data: { estado: newDbStatus }
+      });
+
+      return NextResponse.json({ success: true, order: updatedOrder });
     }
 
     return NextResponse.json({ error: 'Acción no válida.' }, { status: 400 });
