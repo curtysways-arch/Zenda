@@ -88,18 +88,39 @@ export default function PedidosOnlinePage() {
     setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
   };
 
+  const isPosOrTableOrder = (p: any): boolean => {
+    const extra = typeof p.extraInfo === 'string' ? JSON.parse(p.extraInfo || '{}') : (p.extraInfo || {});
+    
+    // 1. Tipo de entrega de mesa
+    if (p.tipoEntrega === 'TABLE_ORDER' || p.tipoEntrega === 'MESA') return true;
+
+    // 2. Origen explícito en extraInfo
+    const origin = (extra.origin || extra.canal || extra.source || '').toUpperCase();
+    if (['POS', 'POS_CAJA', 'POS_VENTAS', 'CAJA', 'MOSTRADOR', 'MESA', 'SEED'].includes(origin)) return true;
+
+    // 3. mesaCode o tableCode en extraInfo o raíz
+    const mesaCode = String(extra.mesaCode || p.mesaCode || extra.tableCode || extra.tableName || '').toUpperCase();
+    if (mesaCode && (mesaCode.includes('POS') || mesaCode.includes('MESA'))) return true;
+
+    // 4. Nombre de cliente asociado a POS/Caja
+    const nombre = (p.nombreCliente || '').toUpperCase();
+    if (nombre.includes('CLIENTE POS') || nombre.includes('CLIENTE CAJA') || nombre.includes('POS VENTA') || nombre === 'POS') return true;
+
+    // 5. Referencia de cliente asociada a Mesa/POS/Caja
+    const ref = (p.referenciaCliente || '').toUpperCase();
+    if (ref.includes('MESA:') || ref.includes('POS') || ref.includes('CAJA')) return true;
+
+    return false;
+  };
+
   const fetchOnlineOrders = async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/admin/pedidos');
       if (res.ok) {
         const data = await res.json();
-        // Filtrar únicamente pedidos online (excluir mesas y POS explícito)
-        const onlineOnly = (Array.isArray(data) ? data : []).filter((p: Pedido) => {
-          const isTable = p.tipoEntrega === 'TABLE_ORDER' || (p as any).mesaCode?.startsWith('Mesa');
-          const isPos = (p as any).mesaCode === 'POS' || (p as any).mesaCode === 'POS-Virtual';
-          return !isTable && !isPos;
-        });
+        // Filtrar estrictamente únicamente pedidos online (excluir POS, Caja, Mesas)
+        const onlineOnly = (Array.isArray(data) ? data : []).filter((p: Pedido) => !isPosOrTableOrder(p));
         setPedidos(onlineOnly);
       }
     } catch (e) {
