@@ -534,7 +534,7 @@ export default function DriverAppPage() {
                   </span>
                 </div>
 
-                {/* Tarjeta Financiera de Cobro (Visible ÚNICAMENTE en Ruta de Entrega) */}
+                {/* Tarjeta Financiera de Cobro (Visible directamente al estar En Ruta) */}
                 {['EN_CAMINO', 'EN_RUTA', 'DELIVERED', 'ENTREGADO'].includes(order.estado) ? (
                   <div className={`p-3.5 rounded-xl border space-y-1.5 text-xs ${
                     isCashOnDelivery 
@@ -549,22 +549,11 @@ export default function DriverAppPage() {
                       <span>TU GANANCIA DE ENVÍO:</span>
                       <span className="text-emerald-400 text-xs font-black">+${deliveryFee}</span>
                     </div>
-                    <p className="text-[10px] font-medium text-slate-400">
-                      {isCashOnDelivery 
-                        ? 'Cobras la suma total en efectivo al cliente al llegar al destino. Conservas tu envío y entregas el saldo del producto.' 
-                        : 'El cliente ya pagó online.'}
-                    </p>
                   </div>
                 ) : (
-                  <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-950/90 text-xs space-y-1.5">
-                    <div className="flex justify-between items-center font-bold text-slate-300">
-                      <span>🔒 COBRO AL CLIENTE:</span>
-                      <span className="text-amber-400 font-black text-[11px]">Se revela al iniciar ruta</span>
-                    </div>
-                    <div className="flex justify-between items-center text-[11px] font-bold border-t border-slate-800 pt-1.5 text-slate-400">
-                      <span>TU GANANCIA DE ENVÍO:</span>
-                      <span className="text-emerald-400 text-xs font-black">+${deliveryFee}</span>
-                    </div>
+                  <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-950/90 text-xs flex justify-between items-center font-bold">
+                    <span className="text-slate-400">TU GANANCIA DE ENVÍO:</span>
+                    <span className="text-emerald-400 text-sm font-black">+${deliveryFee}</span>
                   </div>
                 )}
 
@@ -622,22 +611,37 @@ export default function DriverAppPage() {
                   </button>
                 )}
 
-                {(order.estado === 'REPARTIDOR_EN_LOCAL' || order.estado === 'ENTREGADO_A_REPARTIDOR') && (
-                  <div className="space-y-2">
-                    <div className="p-2.5 bg-amber-500/20 border border-amber-500/30 rounded-xl text-amber-300 text-xs font-extrabold text-center flex items-center justify-center gap-2 animate-pulse">
-                      <Clock className="w-4 h-4 text-amber-400" />
-                      <span>📍 Llegaste al Local • Esperando o recogiendo paquete</span>
+                {(order.estado === 'REPARTIDOR_EN_LOCAL' || order.estado === 'ENTREGADO_A_REPARTIDOR') && (() => {
+                  const isHandedOver = order.estado === 'ENTREGADO_A_REPARTIDOR';
+                  return (
+                    <div className="space-y-2">
+                      <div className={`p-2.5 rounded-xl text-xs font-extrabold text-center flex items-center justify-center gap-2 border ${
+                        isHandedOver 
+                          ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 animate-pulse' 
+                          : 'bg-amber-500/20 border-amber-500/30 text-amber-300 animate-pulse'
+                      }`}>
+                        <Clock className="w-4 h-4 text-amber-400" />
+                        <span>
+                          {isHandedOver 
+                            ? '📦 Paquete Entregado por Restaurante • ¡Listo para salir!' 
+                            : '⏳ En el local • Esperando confirmación de entrega por el negocio...'}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleUpdateState(order.id, 'ON_ROUTE')}
+                        disabled={!isHandedOver || actionLoading === order.id}
+                        className={`w-full py-3.5 rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl transition-all ${
+                          isHandedOver
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white cursor-pointer active:scale-95'
+                            : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60'
+                        }`}
+                      >
+                        <Navigation className="w-4 h-4" />
+                        <span>{isHandedOver ? '🛵 INICIAR ENTREGA' : '⏳ ESPERANDO ENTREGA DEL NEGOCIO'}</span>
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleUpdateState(order.id, 'ON_ROUTE')}
-                      disabled={actionLoading === order.id}
-                      className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95 transition-all"
-                    >
-                      <Navigation className="w-4 h-4" />
-                      <span>🛵 INICIAR ENTREGA</span>
-                    </button>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {(order.estado === 'EN_CAMINO' || order.estado === 'EN_RUTA') && (
                   <div className="space-y-2">
