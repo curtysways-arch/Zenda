@@ -159,7 +159,7 @@ const VehicleIcon = ({ tipo }: { tipo?: string }) => {
   return <Footprints className="w-4 h-4" />;
 };
 
-// ─── MODAL NUEVA INVITACIÓN ───────────────────────────────────────────────────
+// ─── MODAL NUEVO / INVITAR REPARTIDOR ────────────────────────────────────────
 function InviteDriverModal({
   onClose,
   onSave,
@@ -167,11 +167,14 @@ function InviteDriverModal({
   onClose: () => void;
   onSave: () => void;
 }) {
+  const [mode, setMode] = useState<'DIRECT' | 'INVITE'>('DIRECT');
   const [countryCode, setCountryCode] = useState('+593'); // 🇪🇨 Ecuador por defecto
   const [form, setForm] = useState({
     nombre: '',
     telefono: '',
     tipoVehiculo: 'MOTO',
+    placa: '',
+    documento: '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -189,15 +192,51 @@ function InviteDriverModal({
     { code: '+34', flag: '🇪🇸', name: 'España (+34)' },
   ];
 
-  const handleCreateInvite = async () => {
-    if (!form.nombre.trim() || !form.telefono.trim()) {
-      setError('Nombre y teléfono son requeridos');
+  const handleCreateDirect = async () => {
+    if (!form.nombre.trim()) {
+      setError('El nombre completo es obligatorio');
       return;
     }
     setSaving(true);
     setError('');
 
-    // Combinar el código de país con el número si no viene ya con código
+    const fullPhone = form.telefono.trim()
+      ? (form.telefono.startsWith('+') ? form.telefono : `${countryCode}${form.telefono.trim()}`)
+      : '';
+
+    try {
+      const res = await fetch('/api/logistics/resources', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.nombre.trim(),
+          telefono: fullPhone,
+          tipoVehiculo: form.tipoVehiculo,
+          placa: form.placa.trim(),
+          documento: form.documento.trim(),
+          autoApprove: true,
+          estado: 'DISPONIBLE'
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error creando repartidor');
+      onSave();
+      onClose();
+    } catch (e: any) {
+      setError(e.message || 'Error al registrar repartidor');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCreateInvite = async () => {
+    if (!form.nombre.trim() || !form.telefono.trim()) {
+      setError('Nombre y teléfono son requeridos para la invitación');
+      return;
+    }
+    setSaving(true);
+    setError('');
+
     const fullPhone = form.telefono.startsWith('+')
       ? form.telefono
       : `${countryCode}${form.telefono.trim()}`;
@@ -269,31 +308,61 @@ function InviteDriverModal({
 
   return (
     <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-        <div className="flex items-center justify-between p-5 border-b">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div className="flex items-center justify-between p-5 border-b bg-slate-50">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Invitar Repartidor</h2>
-            <p className="text-xs text-slate-500">Genera un enlace seguro de registro mediante OTP</p>
+            <h2 className="text-lg font-bold text-slate-900">Nuevo Repartidor</h2>
+            <p className="text-xs text-slate-500">Registra un repartidor o envía un enlace de auto-registro</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg">
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-lg">
             <XCircle className="w-5 h-5 text-slate-400" />
           </button>
         </div>
 
-        <div className="p-5 space-y-4">
+        {/* Modal Mode Selector Tabs */}
+        <div className="flex border-b bg-slate-100 p-1.5 gap-1">
+          <button
+            type="button"
+            onClick={() => setMode('DIRECT')}
+            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+              mode === 'DIRECT'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            🚀 Registro Directo
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('INVITE')}
+            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+              mode === 'INVITE'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            📱 Enlace WhatsApp
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1">Nombre completo *</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+              Nombre Completo del Repartidor *
+            </label>
             <input
               type="text"
               value={form.nombre}
               onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
               placeholder="Ej: Juan García"
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 font-semibold"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1">Teléfono WhatsApp *</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+              Teléfono WhatsApp {mode === 'INVITE' ? '*' : '(Opcional)'}
+            </label>
             <div className="flex gap-2">
               <select
                 value={countryCode}
@@ -311,13 +380,15 @@ function InviteDriverModal({
                 value={form.telefono}
                 onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))}
                 placeholder="099 888 7777"
-                className="flex-1 px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="flex-1 px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 font-semibold"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Tipo de transporte</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+              Tipo de Transporte
+            </label>
             <div className="grid grid-cols-4 gap-2">
               {[
                 { val: 'MOTO', label: 'Moto', icon: Bike },
@@ -329,9 +400,9 @@ function InviteDriverModal({
                   key={val}
                   type="button"
                   onClick={() => setForm(f => ({ ...f, tipoVehiculo: val }))}
-                  className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 text-xs font-semibold transition-all ${
+                  className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 text-xs font-bold transition-all cursor-pointer ${
                     form.tipoVehiculo === val
-                      ? 'border-purple-500 bg-purple-50 text-purple-700'
+                      ? 'border-purple-600 bg-purple-50 text-purple-700'
                       : 'border-slate-200 text-slate-500 hover:border-slate-300'
                   }`}
                 >
@@ -342,6 +413,31 @@ function InviteDriverModal({
             </div>
           </div>
 
+          {mode === 'DIRECT' && (
+            <div className="grid grid-cols-2 gap-3 pt-1 border-t border-slate-100">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Placa Vehículo</label>
+                <input
+                  type="text"
+                  value={form.placa}
+                  onChange={e => setForm(f => ({ ...f, placa: e.target.value }))}
+                  placeholder="Ej. ABC-1234"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-semibold uppercase"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Cédula / DNI</label>
+                <input
+                  type="text"
+                  value={form.documento}
+                  onChange={e => setForm(f => ({ ...f, documento: e.target.value }))}
+                  placeholder="Ej. 1712345678"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-semibold"
+                />
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="flex items-center gap-2 p-3 bg-rose-50 rounded-lg text-rose-700 text-sm">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -350,19 +446,19 @@ function InviteDriverModal({
           )}
         </div>
 
-        <div className="flex gap-3 p-5 border-t">
+        <div className="flex gap-3 p-5 border-t bg-slate-50">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50"
+            className="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-white text-xs uppercase"
           >
             Cancelar
           </button>
           <button
-            onClick={handleCreateInvite}
+            onClick={mode === 'DIRECT' ? handleCreateDirect : handleCreateInvite}
             disabled={saving}
-            className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 disabled:opacity-50 transition-colors shadow-md"
+            className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-xl font-black text-xs uppercase tracking-wider hover:bg-purple-700 disabled:opacity-50 transition-colors shadow-md cursor-pointer"
           >
-            {saving ? 'Generando...' : 'Crear Enlace'}
+            {saving ? 'Guardando...' : mode === 'DIRECT' ? '✅ Crear Repartidor' : '📱 Crear Enlace'}
           </button>
         </div>
       </div>
@@ -1048,6 +1144,7 @@ export default function LogisticaPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showCreateDriverModal, setShowCreateDriverModal] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -1108,12 +1205,20 @@ export default function LogisticaPage() {
               <button
                 onClick={loadData}
                 className="p-2.5 border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-50 transition-colors"
+                title="Actualizar datos"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
               <button
+                onClick={() => setShowCreateDriverModal(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 transition-colors shadow-md cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                Nuevo Repartidor
+              </button>
+              <button
                 onClick={() => setShowAssignModal(true)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-md"
+                className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-md cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 Nueva Asignación
@@ -1142,7 +1247,7 @@ export default function LogisticaPage() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all relative ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all relative cursor-pointer ${
                   activeTab === tab.key
                     ? 'bg-purple-50 text-purple-700 font-bold'
                     : 'text-slate-500 hover:bg-slate-100'
@@ -1190,6 +1295,13 @@ export default function LogisticaPage() {
           </>
         )}
       </div>
+
+      {showCreateDriverModal && (
+        <InviteDriverModal
+          onClose={() => setShowCreateDriverModal(false)}
+          onSave={loadData}
+        />
+      )}
 
       {showAssignModal && (
         <AssignDriverModal
