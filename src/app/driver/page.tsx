@@ -256,139 +256,148 @@ export default function DriverAppPage() {
         </button>
       </div>
 
-      {/* Selector de Estado de Disponibilidad */}
-      <div className="p-4 max-w-md mx-auto">
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-3">
-          <label className="block text-xs font-black uppercase text-slate-400 tracking-wider">
-            Mi Disponibilidad Actual
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={() => handleStatusChange('DISPONIBLE')}
-              className={`py-3 px-2 rounded-xl text-xs font-black flex flex-col items-center gap-1 transition-all ${
-                status === 'DISPONIBLE'
-                  ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
-                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-              }`}
-            >
-              <CheckCircle className="w-4 h-4" />
-              <span>DISPONIBLE</span>
-            </button>
-            <button
-              onClick={() => handleStatusChange('DESCANSO')}
-              className={`py-3 px-2 rounded-xl text-xs font-black flex flex-col items-center gap-1 transition-all ${
-                status === 'DESCANSO'
-                  ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
-                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-              }`}
-            >
-              <Clock className="w-4 h-4" />
-              <span>DESCANSO</span>
-            </button>
-            <button
-              onClick={() => handleStatusChange('DESCONECTADO')}
-              className={`py-3 px-2 rounded-xl text-xs font-black flex flex-col items-center gap-1 transition-all ${
-                status === 'DESCONECTADO'
-                  ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20'
-                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-              }`}
-            >
-              <Power className="w-4 h-4" />
-              <span>OFFLINE</span>
-            </button>
+      {/* CONDITIONAL VISTA 1: VENTANA EXCLUSIVA DE GESTIÓN DE CARRERA ACTIVA */}
+      {hasActiveOrder ? (
+        <div className="p-4 max-w-md mx-auto space-y-4">
+          <div className="bg-emerald-950/40 border border-emerald-500/40 p-3.5 rounded-2xl flex items-center justify-between shadow-lg">
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-emerald-500 animate-ping" />
+              <span className="text-xs font-black uppercase text-emerald-300 tracking-wider">Gestión de Carrera Activa</span>
+            </div>
+            <span className="text-[10px] font-extrabold text-slate-400">1 Pedido en Curso</span>
           </div>
         </div>
-      </div>
-
-      {/* AVISO DE LIMITACIÓN DE 1 PEDIDO A LA VEZ */}
-      {hasActiveOrder && (
-        <div className="p-4 max-w-md mx-auto -mb-2">
-          <div className="bg-amber-950/60 border border-amber-500/50 p-3 rounded-2xl flex items-center gap-2.5 text-amber-200 text-xs font-bold shadow-lg">
-            <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0" />
-            <span>Tienes 1 carrera en curso. Debes completarla antes de aceptar nuevos servicios.</span>
-          </div>
-        </div>
-      )}
-
-      {/* SECCIÓN 1: PEDIDOS DISPONIBLES EN BOLSA DE TRABAJO */}
-      {status === 'DISPONIBLE' && openUnassignedOrders.length > 0 && (
-        <div className="p-4 max-w-md mx-auto space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-black uppercase text-amber-400 tracking-wider flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-amber-400 animate-spin" />
-              Bolsa de Pedidos Disponibles ({openUnassignedOrders.length})
-            </h2>
-          </div>
-
-          {openUnassignedOrders.map(order => {
-            const deliveryFee = Number(order.costoEnvio || 2.50).toFixed(2);
-            const extra = parseExtraInfo(order.extraInfo);
-            const itemsSummary = (order.items || []).map(i => `${i.cantidad}x ${i.nombreProducto}`).join(', ');
-            const distanceStr = getDistanceString(order);
-
-            return (
-              <div
-                key={order.id}
-                className="bg-gradient-to-br from-slate-900 to-amber-950/40 border border-amber-500/40 rounded-2xl p-4 shadow-xl space-y-3 relative overflow-hidden"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-black text-sm text-white">#{order.codigo || order.id.slice(-6).toUpperCase()}</span>
-                      <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <Navigation className="w-3 h-3 text-amber-400" /> {distanceStr}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="bg-amber-400 text-slate-950 px-2.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1 shadow-md">
-                    <DollarSign className="w-3.5 h-3.5" /> Ganancia: ${deliveryFee}
-                  </div>
-                </div>
-
-                {/* Detalles de Dirección, Distancia y Contenido de Mochila */}
-                <div className="space-y-1.5 text-xs text-slate-300 bg-slate-950/70 p-3 rounded-xl border border-amber-500/20">
-                  <div className="flex items-start gap-1.5">
-                    <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold">{order.direccionCliente || 'Dirección de Entrega'}</span>
-                      {order.referenciaCliente && (
-                        <p className="text-[10px] text-slate-400 font-medium">Ref: {order.referenciaCliente}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {itemsSummary && (
-                    <div className="flex items-start gap-1.5 text-[11px] text-slate-300 pt-1 border-t border-slate-800">
-                      <PackageCheck className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                      <span className="line-clamp-2">Paquete: <strong>{itemsSummary}</strong></span>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Prep. Cocina: <strong>{getCountdownString(extra?.estimatedReadyAt)}</strong></span>
-                    </div>
-                    <span className="text-emerald-400 font-bold">📍 {distanceStr}</span>
-                  </div>
-                </div>
-
+      ) : (
+        /* VISTA 2: MODO BÚSQUEDA / BOLSA DE TRABAJO (SOLO SI NO HAY CARRERA ACTIVA) */
+        <>
+          {/* Selector de Estado de Disponibilidad */}
+          <div className="p-4 max-w-md mx-auto">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-3">
+              <label className="block text-xs font-black uppercase text-slate-400 tracking-wider">
+                Mi Disponibilidad Actual
+              </label>
+              <div className="grid grid-cols-3 gap-2">
                 <button
-                  onClick={() => setSelectedOrderForDetail(order)}
-                  disabled={hasActiveOrder}
-                  className={`w-full py-3 text-xs font-black uppercase rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all ${
-                    hasActiveOrder 
-                      ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-amber-500/20 cursor-pointer active:scale-95'
+                  onClick={() => handleStatusChange('DISPONIBLE')}
+                  className={`py-3 px-2 rounded-xl text-xs font-black flex flex-col items-center gap-1 transition-all ${
+                    status === 'DISPONIBLE'
+                      ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
+                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                   }`}
                 >
-                  <Navigation className="w-4 h-4" />
-                  {hasActiveOrder ? '⚠️ Finaliza tu pedido activo primero' : `👁️ Ver Detalles y Ruta ($${deliveryFee})`}
+                  <CheckCircle className="w-4 h-4" />
+                  <span>DISPONIBLE</span>
+                </button>
+                <button
+                  onClick={() => handleStatusChange('DESCANSO')}
+                  className={`py-3 px-2 rounded-xl text-xs font-black flex flex-col items-center gap-1 transition-all ${
+                    status === 'DESCANSO'
+                      ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
+                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                  }`}
+                >
+                  <Clock className="w-4 h-4" />
+                  <span>DESCANSO</span>
+                </button>
+                <button
+                  onClick={() => handleStatusChange('DESCONECTADO')}
+                  className={`py-3 px-2 rounded-xl text-xs font-black flex flex-col items-center gap-1 transition-all ${
+                    status === 'DESCONECTADO'
+                      ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20'
+                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                  }`}
+                >
+                  <Power className="w-4 h-4" />
+                  <span>OFFLINE</span>
                 </button>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          </div>
+
+          {/* PEDIDOS DISPONIBLES EN BOLSA DE TRABAJO */}
+          {status === 'DISPONIBLE' && (
+            <div className="p-4 max-w-md mx-auto space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-black uppercase text-amber-400 tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-amber-400 animate-spin" />
+                  Bolsa de Pedidos Disponibles ({openUnassignedOrders.length})
+                </h2>
+              </div>
+
+              {openUnassignedOrders.length === 0 ? (
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-slate-500 space-y-2">
+                  <PackageCheck className="w-10 h-10 mx-auto text-slate-700" />
+                  <p className="font-bold text-xs text-slate-400">No hay pedidos disponibles en este momento.</p>
+                  <p className="text-[11px] text-slate-600">Nuevos pedidos aparecerán aquí cuando los restaurantes los acepten.</p>
+                </div>
+              ) : (
+                openUnassignedOrders.map(order => {
+                  const deliveryFee = Number(order.costoEnvio || 2.50).toFixed(2);
+                  const extra = parseExtraInfo(order.extraInfo);
+                  const itemsSummary = (order.items || []).map(i => `${i.cantidad}x ${i.nombreProducto}`).join(', ');
+                  const distanceStr = getDistanceString(order);
+
+                  return (
+                    <div
+                      key={order.id}
+                      className="bg-gradient-to-br from-slate-900 to-amber-950/40 border border-amber-500/40 rounded-2xl p-4 shadow-xl space-y-3 relative overflow-hidden"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-black text-sm text-white">#{order.codigo || order.id.slice(-6).toUpperCase()}</span>
+                            <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <Navigation className="w-3 h-3 text-amber-400" /> {distanceStr}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="bg-amber-400 text-slate-950 px-2.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1 shadow-md">
+                          <DollarSign className="w-3.5 h-3.5" /> Ganancia: ${deliveryFee}
+                        </div>
+                      </div>
+
+                      {/* Detalles de Dirección, Distancia y Contenido de Mochila */}
+                      <div className="space-y-1.5 text-xs text-slate-300 bg-slate-950/70 p-3 rounded-xl border border-amber-500/20">
+                        <div className="flex items-start gap-1.5">
+                          <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                          <div>
+                            <span className="font-semibold">{order.direccionCliente || 'Dirección de Entrega'}</span>
+                            {order.referenciaCliente && (
+                              <p className="text-[10px] text-slate-400 font-medium">Ref: {order.referenciaCliente}</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {itemsSummary && (
+                          <div className="flex items-start gap-1.5 text-[11px] text-slate-300 pt-1 border-t border-slate-800">
+                            <PackageCheck className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                            <span className="line-clamp-2">Paquete: <strong>{itemsSummary}</strong></span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800">
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Prep. Cocina: <strong>{getCountdownString(extra?.estimatedReadyAt)}</strong></span>
+                          </div>
+                          <span className="text-emerald-400 font-bold">📍 {distanceStr}</span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setSelectedOrderForDetail(order)}
+                        className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs uppercase rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95"
+                      >
+                        <Navigation className="w-4 h-4" />
+                        <span>👁️ Ver Detalles y Ruta (${deliveryFee})</span>
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {/* MODAL DE REVISIÓN DE DETALLES DE CARRERA (PRE-ACEPTACIÓN) */}
