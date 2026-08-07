@@ -443,15 +443,13 @@ export default function DriverAppPage() {
                   <p className="font-bold text-slate-200">{itemsSummary || 'Sin productos registrados'}</p>
                 </div>
 
-                <div className={`p-3 rounded-xl border space-y-1 ${
-                  isCashOnDelivery ? 'bg-amber-950/40 border-amber-500/40 text-amber-200' : 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200'
-                }`}>
-                  <div className="flex justify-between items-center font-black">
-                    <span>COBRO AL CLIENTE:</span>
-                    <span>{isCashOnDelivery ? `💰 EFECTIVO: $${totalToCollect}` : '💳 PAGADO ONLINE ($0.00)'}</span>
+                <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-950 text-xs space-y-1">
+                  <div className="flex justify-between items-center font-bold text-slate-300">
+                    <span>🔒 COBRO AL CLIENTE:</span>
+                    <span className="text-amber-400 font-black text-[11px]">Se revela al iniciar ruta</span>
                   </div>
-                  <p className="text-[10px] text-slate-400">
-                    {isCashOnDelivery ? 'Cobras el valor total en efectivo al entregar al cliente.' : 'El pedido ya fue pagado online por el cliente.'}
+                  <p className="text-[10px] text-slate-500">
+                    Los detalles del valor a cobrar en destino se habilitarán una vez que el repartidor recoja el producto e inicie el trayecto de entrega.
                   </p>
                 </div>
               </div>
@@ -527,26 +525,39 @@ export default function DriverAppPage() {
                   </span>
                 </div>
 
-                {/* Tarjeta Financiera de Cobro / Ganancias */}
-                <div className={`p-3.5 rounded-xl border space-y-1.5 text-xs ${
-                  isCashOnDelivery 
-                    ? 'bg-amber-950/40 border-amber-500/40 text-amber-200' 
-                    : 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200'
-                }`}>
-                  <div className="flex justify-between items-center font-black">
-                    <span>COBRO AL CLIENTE:</span>
-                    <span className="text-sm">{isCashOnDelivery ? `💰 EFECTIVO: $${totalToCollect}` : '💳 $0.00 (PAGADO ONLINE)'}</span>
+                {/* Tarjeta Financiera de Cobro (Visible ÚNICAMENTE en Ruta de Entrega) */}
+                {['EN_CAMINO', 'EN_RUTA', 'DELIVERED', 'ENTREGADO'].includes(order.estado) ? (
+                  <div className={`p-3.5 rounded-xl border space-y-1.5 text-xs ${
+                    isCashOnDelivery 
+                      ? 'bg-amber-950/40 border-amber-500/40 text-amber-200' 
+                      : 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200'
+                  }`}>
+                    <div className="flex justify-between items-center font-black">
+                      <span>COBRO AL CLIENTE EN DESTINO:</span>
+                      <span className="text-sm">{isCashOnDelivery ? `💰 EFECTIVO: $${totalToCollect}` : '💳 $0.00 (PAGADO ONLINE)'}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[11px] font-bold border-t border-slate-800 pt-1.5">
+                      <span>TU GANANCIA DE ENVÍO:</span>
+                      <span className="text-emerald-400 text-xs font-black">+${deliveryFee}</span>
+                    </div>
+                    <p className="text-[10px] font-medium text-slate-400">
+                      {isCashOnDelivery 
+                        ? 'Cobras la suma total en efectivo al cliente al llegar al destino. Conservas tu envío y entregas el saldo del producto.' 
+                        : 'El cliente ya pagó online.'}
+                    </p>
                   </div>
-                  <div className="flex justify-between items-center text-[11px] font-bold border-t border-slate-800 pt-1.5">
-                    <span>TU GANANCIA DE ENVÍO:</span>
-                    <span className="text-emerald-400 text-xs font-black">+${deliveryFee}</span>
+                ) : (
+                  <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-950/90 text-xs space-y-1.5">
+                    <div className="flex justify-between items-center font-bold text-slate-300">
+                      <span>🔒 COBRO AL CLIENTE:</span>
+                      <span className="text-amber-400 font-black text-[11px]">Se revela al iniciar ruta</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[11px] font-bold border-t border-slate-800 pt-1.5 text-slate-400">
+                      <span>TU GANANCIA DE ENVÍO:</span>
+                      <span className="text-emerald-400 text-xs font-black">+${deliveryFee}</span>
+                    </div>
                   </div>
-                  <p className="text-[10px] font-medium text-slate-400">
-                    {isCashOnDelivery 
-                      ? ' Cobras la suma total en efectivo al cliente. Conservas tu envío y entregas el saldo del producto al restaurante.' 
-                      : ' El cliente ya pagó online. Recibes el costo de envío del restaurante al entregar.'}
-                  </p>
-                </div>
+                )}
 
                 {/* Datos del Cliente & Mapa */}
                 <div className="space-y-2 text-xs text-slate-300 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
