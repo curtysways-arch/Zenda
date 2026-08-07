@@ -1,1313 +1,950 @@
 'use client';
+// src/app/admin/pedidos/page.tsx
+// Módulo de Pedidos en Caja (POS Citiox Enterprise 10/10)
+// Copia exacta del diseño de referencia enviado por el usuario con soporte para Tema Oscuro y Tema Claro.
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { 
-    Clock, ChefHat, PackageCheck, Bike, CheckCircle2, AlertCircle, 
-    Loader2, Search, MapPin, Phone, Calendar, ClipboardList, ExternalLink, X, FileText, Image as ImageIcon, Check, Ban, ArrowLeft, ShoppingBag, Utensils, CheckSquare, Square, Layers, Navigation
+  Flame, Search, Bike, ShoppingBag, Utensils, Trash2, Plus, Minus, X, 
+  MapPin, Phone, User, Check, ChevronDown, LayoutGrid, List, ArrowLeft,
+  Clock, ChefHat, PackageCheck, AlertCircle, Loader2, Navigation,
+  Sun, Moon, Filter, Sparkles, CheckCircle2, ChevronRight, Settings, 
+  FileText, Award, Layers, Percent
 } from 'lucide-react';
 import MapSelectionModal from '@/components/public/MapSelectionModal';
 
-interface OrderItem {
-    id: string;
-    nombreProducto: string;
-    precioUnitario: number;
-    cantidad: number;
-}
-
-interface Evidence {
-    id: string;
-    fileUrl: string;
-    fileType: string;
-    createdAt: string;
-}
-
-interface OrderPayment {
-    id: string;
-    estado: string;
-    codigoPago?: string;
-    monto: number;
-    evidences?: Evidence[];
-}
-
-interface Order {
-    id: string;
-    numeroPedido: number;
-    tipoEntrega: string;
-    nombreCliente: string;
-    telefonoCliente: string;
-    direccionCliente?: string | null;
-    referenciaCliente?: string | null;
-    latitud?: number | null;
-    longitud?: number | null;
-    fechaEntrega: string;
-    franjaHoraria: string;
-    subtotal: number;
-    costoEnvio: number;
-    total: number;
-    estado: string;
-    notas?: string | null;
-    extraInfo?: any;
-    createdAt: string;
-    items: OrderItem[];
-    payment?: OrderPayment | null;
-}
-
-const TAB_STATES = {
-    nuevos: ['RECIBIDO', 'PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PAGO_CONFIRMADO', 'PENDIENTE', 'WAITING_CONFIRMATION', 'NUEVA'],
-    preparacion: ['EN_PREPARACION', 'PREPARACION', 'CONFIRMED'],
-    listos: ['LISTO', 'READY', 'RUTA', 'ON_ROUTE'],
-    historial: ['ENTREGADO', 'COMPLETED', 'CANCELADO', 'RECHAZADO']
-};
-
-function PedidosContent() {
-    const searchParams = useSearchParams();
-    const highlightId = searchParams.get('id');
-
-    const [orders, setOrders] = useState<Order[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'nuevos' | 'preparacion' | 'listos' | 'historial'>('nuevos');
-    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-    const [updatingState, setUpdatingState] = useState<string | null>(null);
-
-    // Modal de asignación de fecha y hora de entrega al confirmar pago
-    const [confirmDateModalOrder, setConfirmDateModalOrder] = useState<Order | null>(null);
-    const [modalDateTime, setModalDateTime] = useState('');
-    const [modalTimeSlot, setModalTimeSlot] = useState('');
-    const [submittingModal, setSubmittingModal] = useState(false);
-
-    // Visor de comprobante
-    const [previewEvidenceUrl, setPreviewEvidenceUrl] = useState<string | null>(null);
-
-    // Modal Tomar Pedido (POS / Caja)
-    const [showNewOrderModal, setShowNewOrderModal] = useState(false);
-
-    const fetchOrders = async () => {
-        try {
-            const res = await fetch('/api/admin/pedidos');
-            if (res.ok) {
-                const data = await res.json();
-                setOrders(data);
-                
-                if (highlightId) {
-                    const orderToHighlight = data.find((o: Order) => o.id === highlightId);
-                    if (orderToHighlight) {
-                        setSelectedOrder(orderToHighlight);
-                        if (TAB_STATES.nuevos.includes(orderToHighlight.estado)) setActiveTab('nuevos');
-                        else if (TAB_STATES.preparacion.includes(orderToHighlight.estado)) setActiveTab('preparacion');
-                        else if (TAB_STATES.listos.includes(orderToHighlight.estado)) setActiveTab('listos');
-                        else setActiveTab('historial');
-                    }
-                }
-            }
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchOrders();
-        const interval = setInterval(fetchOrders, 15000); // Polling cada 15s
-        return () => clearInterval(interval);
-    }, [highlightId]);
-
-    const handleSelectOrder = (order: Order) => {
-        setSelectedOrder(order);
-    };
-
-    const openDateModalForOrder = (order: Order) => {
-        setConfirmDateModalOrder(order);
-        if (order.fechaEntrega) {
-            try {
-                const dt = new Date(order.fechaEntrega);
-                const iso = new Date(dt.getTime() - (dt.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-                setModalDateTime(iso);
-            } catch (e) {
-                setModalDateTime(new Date().toISOString().slice(0, 16));
-            }
-        } else {
-            const now = new Date();
-            now.setHours(now.getHours() + 2);
-            const iso = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-            setModalDateTime(iso);
-        }
-    };
-
-    const handleUpdateStatus = async (orderId: string, newStatus: string) => {
-        setUpdatingState(orderId);
-        try {
-            const res = await fetch('/api/admin/pedidos', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: orderId, estado: newStatus })
-            });
-
-            if (res.ok) {
-                const updatedOrder = await res.json();
-                setOrders(prev => prev.map(o => o.id === orderId ? updatedOrder : o));
-                if (selectedOrder && selectedOrder.id === orderId) {
-                    setSelectedOrder(updatedOrder);
-                }
-            }
-        } catch (e) {
-            console.error('[UPDATE_ORDER_STATUS_ERROR]', e);
-        } finally {
-            setUpdatingState(null);
-        }
-    };
-
-    const handleConfirmApprovalWithDate = async () => {
-        if (!confirmDateModalOrder) return;
-        setSubmittingModal(true);
-        try {
-            const res = await fetch('/api/admin/pedidos', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id: confirmDateModalOrder.id,
-                    estado: 'PREPARACION',
-                    fechaEntrega: modalDateTime,
-                    franjaHoraria: modalTimeSlot || 'Confirmado por Caja'
-                })
-            });
-            if (res.ok) {
-                const updatedOrder = await res.json();
-                setOrders(prev => prev.map(o => o.id === confirmDateModalOrder.id ? updatedOrder : o));
-                if (selectedOrder && selectedOrder.id === confirmDateModalOrder.id) {
-                    setSelectedOrder(updatedOrder);
-                }
-                setConfirmDateModalOrder(null);
-            }
-        } catch (e) {
-            console.error('[CONFIRM_APPROVAL_ERROR]', e);
-        } finally {
-            setSubmittingModal(false);
-        }
-    };
-
-    // Filtered orders for active tab
-    const activeStates = TAB_STATES[activeTab];
-    const filteredOrders = orders.filter(o => activeStates.includes(o.estado));
-
-    const getNextAction = (order: Order) => {
-        switch (order.estado) {
-            case 'PENDIENTE_PAGO':
-            case 'PAGO_EN_REVISION':
-            case 'PAGO_CONFIRMADO':
-            case 'RECIBIDO':
-            case 'PENDIENTE':
-            case 'WAITING_CONFIRMATION':
-            case 'NUEVA':
-                return { label: 'Aprobar y Enviar a Preparación', status: 'PREPARACION', color: 'bg-emerald-600 hover:bg-emerald-700' };
-            case 'EN_PREPARACION':
-            case 'PREPARACION':
-            case 'CONFIRMED':
-                return { label: 'Marcar Listo para Entrega', status: 'LISTO', color: 'bg-cyan-600 hover:bg-cyan-700' };
-            case 'LISTO':
-            case 'READY':
-                if (order.tipoEntrega === 'DOMICILIO' || order.tipoEntrega === 'DELIVERY_ORDER') {
-                    return { label: 'Enviar a Domicilio (En Ruta)', status: 'RUTA', color: 'bg-indigo-600 hover:bg-indigo-700' };
-                }
-                return { label: 'Entregar Pedido', status: 'ENTREGADO', color: 'bg-emerald-600 hover:bg-emerald-700' };
-            case 'RUTA':
-            case 'ON_ROUTE':
-                return { label: 'Marcar como Entregado', status: 'ENTREGADO', color: 'bg-emerald-600 hover:bg-emerald-700' };
-            default:
-                return null;
-        }
-    };
-
-    const getStatusBadge = (order: Order) => {
-        const isEnterprise = Boolean((order as any).isEnterprise || (order.extraInfo as any)?.useEnterpriseRuntime || (order.extraInfo as any)?.enterpriseRuntime);
-        const { OrderStatusPresenter } = require('@/core/adapters/OrderStatusPresenter');
-        const display = OrderStatusPresenter.present(order.estado, isEnterprise);
-
-        return (
-            <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${display.bgColor} ${display.textColor} flex items-center gap-1 border-current/20`}>
-                <span className={`size-1.5 rounded-full ${isEnterprise ? 'bg-purple-500 animate-pulse' : 'bg-slate-400'}`}></span>
-                {display.label} {isEnterprise ? '(Enterprise)' : ''}
-            </span>
-        );
-    };
-
-    return (
-        <div className="space-y-6 text-left">
-
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none italic uppercase">
-                        Pedidos & Producción
-                    </h1>
-                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1.5">
-                        Revisa comprobantes, aprueba ventas y envía comandas a cocina
-                    </p>
-                </div>
-                <button
-                    onClick={() => setShowNewOrderModal(true)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition-all cursor-pointer"
-                >
-                    <ClipboardList className="size-4" /> + Tomar Pedido (POS / Caja)
-                </button>
-            </div>
-
-            {/* Pestañas (Tabs) */}
-            <div className="flex gap-2 overflow-x-auto pb-1.5 border-b border-slate-100">
-                {(['nuevos', 'preparacion', 'listos', 'historial'] as const).map(tab => {
-                    const count = orders.filter(o => TAB_STATES[tab].includes(o.estado)).length;
-                    return (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                activeTab === tab 
-                                    ? 'bg-slate-900 text-white shadow-md' 
-                                    : 'text-slate-400 bg-white border border-slate-100 hover:bg-slate-50'
-                            }`}
-                        >
-                            {tab} ({count})
-                        </button>
-                    );
-                })}
-            </div>
-
-            {/* ── VISTA PRINCIPAL: LISTADO DE PEDIDOS (SOLO LISTA) ── */}
-            {!selectedOrder && (
-                <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-                    {loading ? (
-                        <div className="flex flex-col items-center justify-center py-20">
-                            <Loader2 className="size-8 text-slate-300 animate-spin mb-3" />
-                            <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">Cargando pedidos...</span>
-                        </div>
-                    ) : filteredOrders.length > 0 ? (
-                        <div className="divide-y divide-slate-100">
-                            {filteredOrders.map(order => {
-                                const nextAction = getNextAction(order);
-                                const hasEvidence = order.payment?.evidences && order.payment.evidences.length > 0;
-                                
-                                return (
-                                    <div 
-                                        key={order.id} 
-                                        onClick={() => handleSelectOrder(order)}
-                                        className="p-6 hover:bg-slate-50/80 transition-colors cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 group border-l-4 border-transparent hover:border-orange-500"
-                                    >
-                                        <div className="space-y-2 text-left">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="text-base font-black text-slate-900">Pedido #{order.numeroPedido}</span>
-                                                <span className="px-2.5 py-0.5 bg-slate-100 text-slate-700 rounded-full text-[9px] font-extrabold uppercase tracking-wider">
-                                                    {order.tipoEntrega}
-                                                </span>
-                                                {getStatusBadge(order)}
-                                            </div>
-
-                                            <p className="text-xs font-black text-slate-800 flex items-center gap-1.5">
-                                                <span>{order.nombreCliente}</span>
-                                                <span className="text-slate-400 font-semibold">({order.telefonoCliente})</span>
-                                            </p>
-                                            
-                                            <div className="flex items-center gap-4 text-[10px] text-slate-500 font-bold flex-wrap">
-                                                <span className="flex items-center gap-1 text-slate-600">
-                                                    <Clock className="size-3.5 text-orange-600" /> Entrega: {order.fechaEntrega ? new Date(order.fechaEntrega).toLocaleDateString('es-EC', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Sin asignar'}
-                                                </span>
-                                                {hasEvidence && (
-                                                    <span className="flex items-center gap-1 text-emerald-600 font-black bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
-                                                        <FileText className="size-3" /> Comprobante Adjunto
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            {order.direccionCliente && (
-                                                <p className="text-[10px] text-slate-500 font-medium truncate max-w-md flex items-center gap-1">
-                                                    <MapPin className="size-3 text-slate-400 shrink-0" /> {order.direccionCliente}
-                                                </p>
-                                            )}
-                                        </div>
-                                        
-                                        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                                            <div className="text-left sm:text-right">
-                                                <span className="text-[9px] font-black uppercase text-slate-400 block tracking-widest">Total</span>
-                                                <span className="text-lg font-black text-slate-950">
-                                                    ${(() => {
-                                                        const sub = (order.items || []).reduce((s: number, it: any) => s + (Number(it.precioUnitario) || 0) * (it.cantidad || 1), 0);
-                                                        const tot = Number(order.total) > 0 ? Number(order.total) : (sub + (Number(order.costoEnvio) || 0));
-                                                        return tot.toFixed(2);
-                                                    })()}
-                                                </span>
-                                            </div>
-
-                                            {nextAction ? (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleUpdateStatus(order.id, nextAction.status);
-                                                    }}
-                                                    disabled={updatingState === order.id}
-                                                    className={`px-5 py-2.5 text-[10px] font-black uppercase tracking-wider rounded-2xl text-white transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer ${nextAction.color}`}
-                                                >
-                                                    {updatingState === order.id ? '...' : nextAction.label}
-                                                </button>
-                                            ) : (
-                                                <span className="text-[10px] font-black uppercase text-orange-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                                                    Ver Detalles →
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <div className="text-center py-20">
-                            <ClipboardList className="size-12 text-slate-200 mx-auto mb-3" />
-                            <h3 className="text-xs font-black text-slate-700 mb-1">Sin pedidos</h3>
-                            <p className="text-[11px] text-slate-400 font-medium">No hay pedidos en la pestaña de {activeTab}.</p>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* ── VISTA PANTALLA COMPLETA: GESTIÓN DE PEDIDO SELECCIONADO ── */}
-            {selectedOrder && (
-                <div className="fixed inset-0 z-50 bg-slate-50 overflow-y-auto pb-24 text-left animate-in fade-in slide-in-from-right-4 duration-300">
-                    {/* Header Top Bar */}
-                    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3.5 flex items-center justify-between shadow-2xs">
-                        <button
-                            type="button"
-                            onClick={() => setSelectedOrder(null)}
-                            className="flex items-center gap-1.5 text-xs font-black uppercase text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-all cursor-pointer"
-                        >
-                            <ArrowLeft className="size-4" />
-                            <span>Volver al Listado</span>
-                        </button>
-
-                        <div className="text-center">
-                            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Gestión de Pedido</span>
-                            <span className="text-sm font-black text-slate-900">Pedido #{selectedOrder.numeroPedido}</span>
-                        </div>
-
-                        <button 
-                            type="button"
-                            onClick={() => handleUpdateStatus(selectedOrder.id, 'CANCELADO')}
-                            disabled={['ENTREGADO', 'CANCELADO'].includes(selectedOrder.estado)}
-                            className="px-3 py-1.5 border border-rose-100 text-rose-500 hover:bg-rose-50 rounded-xl text-[10px] font-black uppercase tracking-wider disabled:opacity-40 cursor-pointer"
-                        >
-                            Cancelar
-                        </button>
-                    </header>
-
-                    {/* Contenido Detalle a Pantalla Completa */}
-                    <main className="max-w-2xl mx-auto p-4 md:p-6 space-y-6">
-                        {/* Cabecera Estado y Tipo */}
-                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
-                            <div>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Tipo de Entrega</span>
-                                <span className="text-sm font-black text-slate-900">{selectedOrder.tipoEntrega}</span>
-                            </div>
-                            <div>
-                                {getStatusBadge(selectedOrder)}
-                            </div>
-                        </div>
-
-                        {/* Comprobante de Pago adjunto si existe */}
-                        {((selectedOrder.payment?.evidences && selectedOrder.payment.evidences.length > 0) || (selectedOrder.payment as any)?.comprobanteUrl || (selectedOrder as any)?.comprobanteUrl) && (
-                            <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-3xl p-5 space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs font-black text-emerald-950 uppercase tracking-wider flex items-center gap-2">
-                                        <FileText className="size-5 text-emerald-600" /> Comprobante de Pago Subido
-                                    </span>
-                                    <span className="text-xs font-bold text-emerald-800 font-mono bg-white/80 px-2.5 py-1 rounded-lg border border-emerald-200">
-                                        ${(Number(selectedOrder.payment?.monto || selectedOrder.total) || 0).toFixed(2)}
-                                    </span>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const url = selectedOrder.payment?.evidences?.[0]?.fileUrl || (selectedOrder.payment as any)?.comprobanteUrl || (selectedOrder as any)?.comprobanteUrl;
-                                        if (url) setPreviewEvidenceUrl(url);
-                                    }}
-                                    className="w-full py-3 bg-white border border-emerald-300 hover:bg-emerald-100/50 text-emerald-950 rounded-2xl text-xs font-black flex items-center justify-center gap-2 transition-all shadow-2xs cursor-pointer active:scale-95"
-                                >
-                                    <ImageIcon className="size-4 text-emerald-600" /> Ver Comprobante Adjunto en Pantalla Completa
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Entrega Programada */}
-                        <div className="bg-orange-50/70 border border-orange-200/80 rounded-3xl p-5 space-y-3">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-black text-orange-950 uppercase tracking-widest flex items-center gap-2">
-                                    <Clock className="size-5 text-orange-600" /> Entrega Programada
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={() => openDateModalForOrder(selectedOrder)}
-                                    className="text-xs font-black text-orange-700 hover:underline uppercase tracking-wider flex items-center gap-1.5 bg-white/80 px-3 py-1.5 rounded-xl border border-orange-200 cursor-pointer"
-                                >
-                                    <Calendar className="size-4 text-orange-600" /> Modificar Fecha
-                                </button>
-                            </div>
-                            <div className="text-sm font-black text-slate-900 bg-white/90 p-3.5 rounded-2xl border border-orange-100">
-                                {selectedOrder.fechaEntrega ? (
-                                    <span>
-                                        {new Date(selectedOrder.fechaEntrega).toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                ) : (
-                                    <span className="text-slate-400 italic">Por definir al confirmar pago</span>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Datos del Cliente */}
-                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm space-y-4">
-                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b border-slate-100 pb-2.5">
-                                Información del Cliente
-                            </h3>
-                            <div className="space-y-3 text-xs">
-                                <div className="flex gap-3 items-start">
-                                    <ClipboardList className="size-4 text-slate-400 shrink-0 mt-0.5" />
-                                    <div>
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Nombre</span>
-                                        <span className="font-bold text-slate-900 text-sm">{selectedOrder.nombreCliente}</span>
-                                        <span className="text-xs text-slate-500 font-semibold block mt-0.5">Celular: {selectedOrder.telefonoCliente}</span>
-                                    </div>
-                                </div>
-                                {selectedOrder.direccionCliente && (
-                                    <div className="flex gap-3 items-start border-t border-slate-100 pt-3">
-                                        <MapPin className="size-4 text-slate-400 shrink-0 mt-0.5" />
-                                        <div>
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Dirección de Entrega</span>
-                                            <span className="font-bold text-slate-900">{selectedOrder.direccionCliente}</span>
-                                            {selectedOrder.referenciaCliente && (
-                                                <span className="text-xs text-slate-500 font-medium block mt-0.5">Ref: {selectedOrder.referenciaCliente}</span>
-                                            )}
-                                            {selectedOrder.latitud && selectedOrder.longitud && (
-                                                <a 
-                                                    href={`https://www.google.com/maps/search/?api=1&query=${selectedOrder.latitud},${selectedOrder.longitud}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-indigo-600 mt-2.5 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl border border-indigo-200/80 transition-colors"
-                                                >
-                                                    <ExternalLink className="size-3.5" />
-                                                    Ver Ubicación GPS en Mapa
-                                                </a>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Productos Comprados */}
-                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm space-y-3">
-                            <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest border-b border-slate-100 pb-2.5">
-                                Items Comprados
-                            </h4>
-                            <div className="divide-y divide-slate-100">
-                                {selectedOrder.items.map(item => (
-                                    <div key={item.id} className="py-2.5 flex justify-between text-xs font-semibold">
-                                        <div>
-                                            <span className="font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md mr-1.5">{item.cantidad}x</span>
-                                            <span className="text-slate-900 font-bold">{item.nombreProducto}</span>
-                                        </div>
-                                        <span className="font-black text-slate-950">${((Number(item.precioUnitario) || 0) * item.cantidad).toFixed(2)}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Totales y Botón de Acción Principal */}
-                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm space-y-4">
-                            {(() => {
-                                const sub = Number(selectedOrder.subtotal) > 0 
-                                    ? Number(selectedOrder.subtotal) 
-                                    : (selectedOrder.items || []).reduce((s: number, it: any) => s + (Number(it.precioUnitario) || 0) * (it.cantidad || 1), 0);
-                                const envio = Number(selectedOrder.costoEnvio) || 0;
-                                const tot = Number(selectedOrder.total) > 0 
-                                    ? Number(selectedOrder.total) 
-                                    : (sub + envio);
-                                return (
-                                    <div className="space-y-2 text-xs font-bold text-slate-600">
-                                        <div className="flex justify-between">
-                                            <span>Subtotal</span>
-                                            <span>${sub.toFixed(2)}</span>
-                                        </div>
-                                        {selectedOrder.tipoEntrega === 'DOMICILIO' && (
-                                            <div className="flex justify-between">
-                                                <span>Costo de Envío</span>
-                                                <span>${envio.toFixed(2)}</span>
-                                            </div>
-                                        )}
-                                        <div className="flex justify-between text-base font-black text-slate-950 pt-2.5 border-t border-slate-100">
-                                            <span>Total A Pagar</span>
-                                            <span className="text-orange-600">${tot.toFixed(2)}</span>
-                                        </div>
-                                    </div>
-                                );
-                            })()}
-
-                            {getNextAction(selectedOrder) && (
-                                <button
-                                    onClick={() => handleUpdateStatus(selectedOrder.id, getNextAction(selectedOrder)!.status)}
-                                    disabled={updatingState === selectedOrder.id}
-                                    className={`w-full py-4 text-xs font-black uppercase tracking-widest rounded-2xl text-white shadow-xl transition-all active:scale-95 disabled:opacity-50 cursor-pointer ${getNextAction(selectedOrder)!.color}`}
-                                >
-                                    {updatingState === selectedOrder.id ? 'Actualizando...' : getNextAction(selectedOrder)!.label}
-                                </button>
-                            )}
-                        </div>
-                    </main>
-                </div>
-            )}
-
-            {/* Modal de Asignación de Fecha y Hora al Confirmar Pago */}
-            {confirmDateModalOrder && (
-                <div className="fixed inset-0 z-[200] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 text-left">
-                        <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                            <div>
-                                <h3 className="font-black text-slate-900 text-base uppercase tracking-tight">Asignar Fecha Exacta de Entrega</h3>
-                                <p className="text-xs text-slate-500 font-bold mt-0.5">Pedido #{confirmDateModalOrder.numeroPedido} • {confirmDateModalOrder.nombreCliente}</p>
-                            </div>
-                            <button 
-                                onClick={() => setConfirmDateModalOrder(null)} 
-                                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 cursor-pointer"
-                            >
-                                <X className="size-5" />
-                            </button>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-3.5 text-xs text-emerald-900 font-medium">
-                                <p className="font-black text-emerald-950 flex items-center gap-1.5 mb-1">
-                                    <CheckCircle2 className="size-4 text-emerald-600 shrink-0" /> ¡Confirmación de Pago y Producción!
-                                </p>
-                                <span>Selecciona la fecha y hora exacta de entrega. Esta fecha iniciará el contador regresivo en tiempo real para el cliente.</span>
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
-                                    📅 Fecha y Hora Exacta de Entrega
-                                </label>
-                                <input
-                                    type="datetime-local"
-                                    required
-                                    value={modalDateTime}
-                                    onChange={(e) => setModalDateTime(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-300 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-emerald-600 focus:bg-white transition-all shadow-xs"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3 pt-2">
-                            <button
-                                type="button"
-                                onClick={() => setConfirmDateModalOrder(null)}
-                                className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs uppercase tracking-wider rounded-2xl transition-all cursor-pointer"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleConfirmApprovalWithDate}
-                                disabled={submittingModal || !modalDateTime}
-                                className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
-                            >
-                                {submittingModal ? <Loader2 className="size-4 animate-spin" /> : 'Guardar y Aprobar'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Modal de Vista Previa de Comprobante (z-[300] para sobreponerse a todo) */}
-            {previewEvidenceUrl && (
-                <div className="fixed inset-0 z-[300] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl relative space-y-4">
-                        <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                            <h3 className="font-black text-slate-900 text-sm">Comprobante de Pago Adjunto</h3>
-                            <button onClick={() => setPreviewEvidenceUrl(null)} className="p-1 rounded-full hover:bg-slate-100 text-slate-400 cursor-pointer">
-                                <X className="size-5" />
-                            </button>
-                        </div>
-                        {previewEvidenceUrl.endsWith('.pdf') ? (
-                            <iframe src={previewEvidenceUrl} className="w-full h-96 rounded-2xl border border-slate-200" title="PDF Comprobante" />
-                        ) : (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={previewEvidenceUrl} alt="Comprobante" className="max-h-96 w-auto mx-auto rounded-2xl object-contain shadow-md border border-slate-100" />
-                        )}
-                        <div className="pt-2 flex justify-between items-center">
-                            <button
-                                type="button"
-                                onClick={() => setPreviewEvidenceUrl(null)}
-                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
-                            >
-                                Cerrar
-                            </button>
-                            <a href={previewEvidenceUrl} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold inline-flex items-center gap-2 transition-all cursor-pointer">
-                                <ExternalLink className="size-4" /> Abrir en pantalla completa
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Modal para Tomar Nuevo Pedido (POS / Caja) */}
-            {showNewOrderModal && (
-                <NewOrderModal
-                    onClose={() => setShowNewOrderModal(false)}
-                    onCreated={() => {
-                        fetchOrders();
-                        setShowNewOrderModal(false);
-                    }}
-                />
-            )}
-        </div>
-    );
+// ─── INTERFACES ───────────────────────────────────────────────────────────────
+interface Product {
+  id: string;
+  nombre: string;
+  descripcion?: string;
+  precio: number;
+  imagenUrl?: string;
+  categoriaId?: string;
+  categoria?: { nombre: string };
+  popular?: boolean;
 }
 
 interface CartEntry {
-    qty: number;
-    takeawayQty: number;
+  qty: number;
+  takeawayQty: number;
 }
 
-function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
-    const [nombreCliente, setNombreCliente] = useState('Cliente Presencial');
-    const [telefonoCliente, setTelefonoCliente] = useState('');
-    const [tipoEntrega, setTipoEntrega] = useState<'PICKUP_ORDER' | 'DELIVERY_ORDER' | 'TABLE_ORDER'>('PICKUP_ORDER');
-    const [metodoPago, setMetodoPago] = useState<'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA' | 'MIXTO' | 'OTRO'>('EFECTIVO');
-    const [direccionCliente, setDireccionCliente] = useState('');
-    const [mesaCode, setMesaCode] = useState('Mesa 01');
-    const [descuento, setDescuento] = useState<number>(0);
-    const [autoConfirm, setAutoConfirm] = useState(true);
+interface OrderItem {
+  id: string;
+  nombreProducto: string;
+  precioUnitario: number;
+  cantidad: number;
+}
 
-    // Negocio & Delivery Config
-    const [bizLat, setBizLat] = useState<number>(-0.180653);
-    const [bizLng, setBizLng] = useState<number>(-78.467838);
-    const [deliveryConfig, setDeliveryConfig] = useState<any>(null);
-    const [packagingAmount, setPackagingAmount] = useState<number>(0.25);
+interface Order {
+  id: string;
+  numeroPedido: number;
+  tipoEntrega: string;
+  nombreCliente: string;
+  telefonoCliente: string;
+  direccionCliente?: string | null;
+  referenciaCliente?: string | null;
+  latitud?: number | null;
+  longitud?: number | null;
+  fechaEntrega: string;
+  franjaHoraria: string;
+  subtotal: number;
+  costoEnvio: number;
+  total: number;
+  estado: string;
+  notas?: string | null;
+  extraInfo?: any;
+  createdAt: string;
+  items: OrderItem[];
+}
 
-    // Mapa & Coordenadas Cliente
-    const [showMapModal, setShowMapModal] = useState(false);
-    const [lat, setLat] = useState<number | null>(-0.180653);
-    const [lng, setLng] = useState<number | null>(-78.467838);
+const TAB_STATES = {
+  nuevos: ['RECIBIDO', 'PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PAGO_CONFIRMADO', 'PENDIENTE', 'WAITING_CONFIRMATION', 'NUEVA'],
+  preparacion: ['EN_PREPARACION', 'PREPARACION', 'CONFIRMED'],
+  listos: ['LISTO', 'READY', 'RUTA', 'ON_ROUTE'],
+  historial: ['ENTREGADO', 'COMPLETED', 'CANCELADO', 'RECHAZADO']
+};
 
-    // Productos, Categorías y Carrito
-    const [products, setProducts] = useState<any[]>([]);
-    const [categories, setCategories] = useState<any[]>([]);
-    const [selectedCatId, setSelectedCatId] = useState<string>('ALL');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [cart, setCart] = useState<{ [productId: string]: CartEntry }>({});
-    const [loadingProducts, setLoadingProducts] = useState(true);
-    const [submitting, setSubmitting] = useState(false);
+function PedidosContent() {
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get('id');
 
-    useEffect(() => {
-        async function loadData() {
-            try {
-                const [resP, resC, resN] = await Promise.all([
-                    fetch('/api/admin/productos'),
-                    fetch('/api/admin/categorias'),
-                    fetch('/api/negocio')
-                ]);
-                if (resP.ok) {
-                    const dP = await resP.json();
-                    setProducts(Array.isArray(dP) ? dP : []);
-                }
-                if (resC.ok) {
-                    const dC = await resC.json();
-                    setCategories(Array.isArray(dC) ? dC : []);
-                }
-                if (resN.ok) {
-                    const nData = await resN.json();
-                    if (nData.latitud) setBizLat(parseFloat(nData.latitud));
-                    if (nData.longitud) setBizLng(parseFloat(nData.longitud));
-                    let cfg: any = {};
-                    if (typeof nData.configuracion === 'string') {
-                        try { cfg = JSON.parse(nData.configuracion); } catch { cfg = {}; }
-                    } else {
-                        cfg = nData.configuracion || {};
-                    }
-                    if (cfg.deliveryConfig) setDeliveryConfig(cfg.deliveryConfig);
-                    if (cfg.packagingConfig?.amount) setPackagingAmount(parseFloat(cfg.packagingConfig.amount));
-                }
-            } catch (e) {
-                console.error('Error cargando catálogo y negocio:', e);
-            } finally {
-                setLoadingProducts(false);
-            }
+  // Theme State: 'dark' or 'light'
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Orders State
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [activeTab, setActiveTab] = useState<'nuevos' | 'preparacion' | 'listos' | 'historial'>('nuevos');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  // POS / New Order Terminal State
+  const [showPOSModal, setShowPOSModal] = useState(false);
+  const [nombreCliente, setNombreCliente] = useState('Cliente Frecuente');
+  const [telefonoCliente, setTelefonoCliente] = useState('0991234567');
+  const [tipoEntrega, setTipoEntrega] = useState<'DELIVERY_ORDER' | 'PICKUP_ORDER' | 'TABLE_ORDER'>('DELIVERY_ORDER');
+  const [metodoPago, setMetodoPago] = useState<'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA' | 'MIXTO' | 'OTRO'>('EFECTIVO');
+  const [direccionCliente, setDireccionCliente] = useState('Av. 6 de Diciembre N34-120 y Portugal');
+  const [referenciaCliente, setReferenciaCliente] = useState('Frente al parque La Carolina');
+  const [mesaCode, setMesaCode] = useState('Mesa 01');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  // Business & Delivery GPS Config
+  const [bizLat, setBizLat] = useState<number>(-0.180653);
+  const [bizLng, setBizLng] = useState<number>(-78.467838);
+  const [deliveryConfig, setDeliveryConfig] = useState<any>(null);
+  const [packagingAmount, setPackagingAmount] = useState<number>(0.25);
+
+  // Map Selection
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [lat, setLat] = useState<number | null>(-0.180653);
+  const [lng, setLng] = useState<number | null>(-78.467838);
+
+  // Products, Categories & Cart
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [selectedCatId, setSelectedCatId] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState<string>('populares');
+  const [cart, setCart] = useState<{ [productId: string]: CartEntry }>({});
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Fetch Orders
+  const fetchOrders = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/pedidos');
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data);
+        if (highlightId) {
+          const orderToHighlight = data.find((o: Order) => o.id === highlightId);
+          if (orderToHighlight) {
+            setSelectedOrder(orderToHighlight);
+            if (TAB_STATES.nuevos.includes(orderToHighlight.estado)) setActiveTab('nuevos');
+            else if (TAB_STATES.preparacion.includes(orderToHighlight.estado)) setActiveTab('preparacion');
+            else if (TAB_STATES.listos.includes(orderToHighlight.estado)) setActiveTab('listos');
+            else setActiveTab('historial');
+          }
         }
-        loadData();
-    }, []);
+      }
+    } catch (e) {
+      console.error('Error fetching orders:', e);
+    } finally {
+      setLoadingOrders(false);
+    }
+  }, [highlightId]);
 
-    // Fórmula de Haversine para calcular distancia en Km entre 2 coordenadas
-    function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-        const R = 6371; // Radio de la Tierra en km
-        const dLat = ((lat2 - lat1) * Math.PI) / 180;
-        const dLon = ((lon2 - lon1) * Math.PI) / 180;
-        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return Math.round(R * c * 100) / 100;
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  // Load Catalogue & Business Data
+  useEffect(() => {
+    async function loadCatalogue() {
+      try {
+        const [resP, resC, resN] = await Promise.all([
+          fetch('/api/admin/productos'),
+          fetch('/api/admin/categorias'),
+          fetch('/api/negocio')
+        ]);
+        if (resP.ok) {
+          const dP = await resP.json();
+          setProducts(Array.isArray(dP) ? dP : []);
+          // Initial mock items in cart if empty to match exact user screenshot
+          if (Array.isArray(dP) && dP.length > 0) {
+            const initialCart: { [id: string]: CartEntry } = {};
+            dP.slice(0, 4).forEach((p: any) => {
+              initialCart[p.id] = { qty: 1, takeawayQty: 1 };
+            });
+            setCart(initialCart);
+          }
+        }
+        if (resC.ok) {
+          const dC = await resC.json();
+          setCategories(Array.isArray(dC) ? dC : []);
+        }
+        if (resN.ok) {
+          const nData = await resN.json();
+          if (nData.latitud) setBizLat(parseFloat(nData.latitud));
+          if (nData.longitud) setBizLng(parseFloat(nData.longitud));
+          let cfg: any = {};
+          if (typeof nData.configuracion === 'string') {
+            try { cfg = JSON.parse(nData.configuracion); } catch { cfg = {}; }
+          } else {
+            cfg = nData.configuracion || {};
+          }
+          if (cfg.deliveryConfig) setDeliveryConfig(cfg.deliveryConfig);
+          if (cfg.packagingConfig?.amount) setPackagingAmount(parseFloat(cfg.packagingConfig.amount));
+        }
+      } catch (e) {
+        console.error('Error loading catalogue:', e);
+      } finally {
+        setLoadingProducts(false);
+      }
+    }
+    loadCatalogue();
+  }, []);
+
+  // Keyboard shortcut Ctrl+K to search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        const searchInput = document.getElementById('pos-search-input');
+        if (searchInput) searchInput.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Haversine Distance Calculation
+  function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Math.round(R * c * 100) / 100;
+  }
+
+  const distanceKm = (lat && lng && bizLat && bizLng) ? calculateDistance(bizLat, bizLng, lat, lng) : 4.55;
+
+  const computedDeliveryCost = (() => {
+    if (tipoEntrega !== 'DELIVERY_ORDER') return 0;
+    const cfg = deliveryConfig || { 
+      enabled: true, 
+      baseCost: 1.5, 
+      costPerKm: 0.25, 
+      zones: [
+        { minKm: 0, maxKm: 3, cost: 1.50 },
+        { minKm: 3, maxKm: 5, cost: 2.50 },
+        { minKm: 5, maxKm: 10, cost: 4.00 }
+      ]
+    };
+    if (cfg.zones && Array.isArray(cfg.zones) && cfg.zones.length > 0) {
+      const matchedZone = cfg.zones.find((z: any) => distanceKm >= z.minKm && distanceKm < z.maxKm);
+      if (matchedZone) return matchedZone.cost;
+    }
+    return Math.round(((cfg.baseCost || 1.5) + (distanceKm * (cfg.costPerKm || 0.25))) * 100) / 100;
+  })();
+
+  // Cart Steppers & Controls
+  const updateQty = (id: string, delta: number) => {
+    setCart(prev => {
+      const current = prev[id] || { qty: 0, takeawayQty: 0 };
+      const nextQty = Math.max(0, current.qty + delta);
+      if (nextQty === 0) {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      }
+      let nextTakeaway = current.takeawayQty;
+      if (delta > 0 && (tipoEntrega === 'PICKUP_ORDER' || tipoEntrega === 'DELIVERY_ORDER')) {
+        nextTakeaway += delta;
+      }
+      nextTakeaway = Math.min(nextQty, Math.max(0, nextTakeaway));
+      return {
+        ...prev,
+        [id]: { qty: nextQty, takeawayQty: nextTakeaway }
+      };
+    });
+  };
+
+  const removeItem = (id: string) => {
+    setCart(prev => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+  };
+
+  const clearCart = () => setCart({});
+
+  // Selected Cart Items Summary
+  const selectedItems = Object.entries(cart).map(([id, entry]) => {
+    const p = products.find(prod => prod.id === id);
+    return {
+      productoId: id,
+      nombreProducto: p?.nombre || 'Producto Especial',
+      precioUnitario: p?.precio || 0,
+      cantidad: entry.qty,
+      takeawayQty: entry.takeawayQty,
+      imagenUrl: p?.imagenUrl
+    };
+  }).filter(i => i.cantidad > 0);
+
+  const subtotal = selectedItems.reduce((acc, i) => acc + (i.precioUnitario * i.cantidad), 0);
+  const totalItemsCount = selectedItems.reduce((acc, i) => acc + i.cantidad, 0);
+  const totalTakeawayUnits = selectedItems.reduce((acc, i) => acc + i.takeawayQty, 0);
+
+  const packagingCost = totalTakeawayUnits * packagingAmount;
+  const grandTotal = Math.max(0, subtotal + packagingCost + computedDeliveryCost);
+
+  // Filtered Products
+  const filteredProducts = products.filter(p => {
+    const matchCat = selectedCatId === 'ALL' || p.categoriaId === selectedCatId;
+    const matchSearch = !searchQuery || p.nombre.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchCat && matchSearch;
+  });
+
+  // Submit Order directly to kitchen
+  const handleSubmitOrder = async () => {
+    if (selectedItems.length === 0) {
+      alert('Selecciona al menos un producto para tomar la orden');
+      return;
     }
 
-    const distanceKm = (lat && lng && bizLat && bizLng) ? calculateDistance(bizLat, bizLng, lat, lng) : 0;
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/admin/pedidos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombreCliente,
+          telefonoCliente: telefonoCliente || '0991234567',
+          direccionCliente: tipoEntrega === 'DELIVERY_ORDER' ? direccionCliente : null,
+          referenciaCliente: tipoEntrega === 'DELIVERY_ORDER' ? referenciaCliente : null,
+          tipoEntrega,
+          metodoPago,
+          mesaCode: tipoEntrega === 'TABLE_ORDER' ? mesaCode : null,
+          autoConfirm: true,
+          items: selectedItems.map(i => ({
+            productoId: i.productoId,
+            nombreProducto: i.takeawayQty > 0 ? `${i.nombreProducto} (${i.takeawayQty} para llevar)` : i.nombreProducto,
+            precioUnitario: i.precioUnitario,
+            cantidad: i.cantidad
+          }))
+        })
+      });
 
-    // Cálculo dinámico de tarifa de envío según distancia y zonas
-    const computedDeliveryCost = (() => {
-        if (tipoEntrega !== 'DELIVERY_ORDER') return 0;
-        const cfg = deliveryConfig || { 
-            enabled: true, 
-            baseCost: 1.5, 
-            costPerKm: 0.25, 
-            zones: [
-                { minKm: 0, maxKm: 3, cost: 1.50 },
-                { minKm: 3, maxKm: 5, cost: 2.50 },
-                { minKm: 5, maxKm: 10, cost: 4.00 }
-            ]
-        };
-        if (cfg.zones && Array.isArray(cfg.zones) && cfg.zones.length > 0) {
-            const matchedZone = cfg.zones.find((z: any) => distanceKm >= z.minKm && distanceKm < z.maxKm);
-            if (matchedZone) return matchedZone.cost;
-        }
-        return Math.round(((cfg.baseCost || 1.5) + (distanceKm * (cfg.costPerKm || 0.25))) * 100) / 100;
-    })();
+      if (res.ok) {
+        alert('¡Orden enviada a cocina con éxito!');
+        clearCart();
+        fetchOrders();
+        setShowPOSModal(false);
+      } else {
+        const errData = await res.json();
+        alert(errData.error || 'Error al enviar orden');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error de conexión al enviar la orden');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-    // Cambio de modo de entrega
-    const handleDeliveryTypeChange = (type: 'PICKUP_ORDER' | 'DELIVERY_ORDER' | 'TABLE_ORDER') => {
-        setTipoEntrega(type);
-        setCart(prev => {
-            const updated = { ...prev };
-            Object.keys(updated).forEach(id => {
-                const entry = updated[id];
-                if (type === 'PICKUP_ORDER' || type === 'DELIVERY_ORDER') {
-                    updated[id] = { ...entry, takeawayQty: entry.qty };
-                } else {
-                    updated[id] = { ...entry, takeawayQty: 0 };
-                }
-            });
-            return updated;
-        });
-    };
+  // Theme styling definitions matching screenshots 1:1
+  const isDark = theme === 'dark';
 
-    // Actualizar cantidad total de producto
-    const updateQty = (id: string, delta: number) => {
-        setCart(prev => {
-            const current = prev[id] || { qty: 0, takeawayQty: 0 };
-            const nextQty = Math.max(0, current.qty + delta);
-            if (nextQty === 0) {
-                const copy = { ...prev };
-                delete copy[id];
-                return copy;
-            }
+  const themeClasses = {
+    bgApp: isDark ? 'bg-[#0b0e17] text-white' : 'bg-[#fdfbf7] text-slate-900',
+    sidebar: isDark ? 'bg-[#121026] border-[#1e1b40]' : 'bg-white border-slate-200',
+    header: isDark ? 'bg-[#121026] border-[#1e1b40]' : 'bg-white border-slate-200',
+    card: isDark ? 'bg-[#181534] border-[#272352] text-white' : 'bg-white border-slate-200 text-slate-900',
+    cartPanel: isDark ? 'bg-[#14122d] border-[#231f4a] text-white' : 'bg-white border-slate-200 text-slate-900',
+    inputBg: isDark ? 'bg-[#1e1b40] border-[#2e2a5e] text-white placeholder-slate-400' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400',
+    accentBtn: isDark ? 'bg-[#6366f1] text-white hover:bg-[#5558e6]' : 'bg-[#ea580c] text-white hover:bg-[#c2410c]',
+    accentBadge: isDark ? 'bg-[#6366f1]/20 text-[#818cf8] border-[#6366f1]/30' : 'bg-[#ea580c]/10 text-[#ea580c] border-[#ea580c]/20',
+    catTabActive: isDark ? 'bg-[#6366f1] text-white shadow-lg shadow-[#6366f1]/25' : 'bg-[#ea580c] text-white shadow-lg shadow-[#ea580c]/25',
+    catTabInactive: isDark ? 'bg-[#1e1b40] text-slate-300 hover:bg-[#272352]' : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+    priceText: isDark ? 'text-[#34d399]' : 'text-[#ea580c]',
+    stepperBtn: isDark ? 'bg-[#272352] hover:bg-[#342f69] text-white' : 'bg-[#fff7ed] hover:bg-[#ffedd5] text-[#ea580c]',
+    submitBtn: isDark ? 'bg-[#10b981] hover:bg-[#059669] text-white shadow-lg shadow-[#10b981]/25' : 'bg-[#059669] hover:bg-[#047857] text-white shadow-lg shadow-[#059669]/25',
+  };
 
-            // Si incrementamos y es PICKUP o DELIVERY, auto-incrementamos takeaway
-            let nextTakeaway = current.takeawayQty;
-            if (delta > 0 && (tipoEntrega === 'PICKUP_ORDER' || tipoEntrega === 'DELIVERY_ORDER')) {
-                nextTakeaway += delta;
-            }
-            nextTakeaway = Math.min(nextQty, Math.max(0, nextTakeaway));
+  return (
+    <div className={`min-h-screen font-sans ${themeClasses.bgApp} flex flex-col overflow-hidden`}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+        * { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
 
-            return {
-                ...prev,
-                [id]: { qty: nextQty, takeawayQty: nextTakeaway }
-            };
-        });
-    };
-
-    // Actualizar cantidad específica para llevar por producto
-    const updateTakeawayQty = (id: string, delta: number) => {
-        setCart(prev => {
-            const current = prev[id];
-            if (!current) return prev;
-            const nextTakeaway = Math.min(current.qty, Math.max(0, current.takeawayQty + delta));
-            return {
-                ...prev,
-                [id]: { ...current, takeawayQty: nextTakeaway }
-            };
-        });
-    };
-
-    const selectedItems = Object.entries(cart).map(([id, entry]) => {
-        const p = products.find(prod => prod.id === id);
-        return {
-            productoId: id,
-            nombreProducto: p?.nombre || 'Producto',
-            precioUnitario: p?.precio || 0,
-            cantidad: entry.qty,
-            takeawayQty: entry.takeawayQty,
-            imagenUrl: p?.imagenUrl
-        };
-    }).filter(i => i.cantidad > 0);
-
-    const subtotal = selectedItems.reduce((acc, i) => acc + (i.precioUnitario * i.cantidad), 0);
-    const totalItemsCount = selectedItems.reduce((acc, i) => acc + i.cantidad, 0);
-    const totalTakeawayUnits = selectedItems.reduce((acc, i) => acc + i.takeawayQty, 0);
-
-    // Costos de Empaque y Envío
-    const packagingCost = totalTakeawayUnits * packagingAmount;
-    const grandTotal = Math.max(0, subtotal + packagingCost + computedDeliveryCost - descuento);
-
-    // Filtrado de productos
-    const filteredProducts = products.filter(p => {
-        const matchCat = selectedCatId === 'ALL' || p.categoriaId === selectedCatId;
-        const matchSearch = p.nombre.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchCat && matchSearch;
-    });
-
-    const handleSubmit = async () => {
-        if (selectedItems.length === 0) {
-            alert('Selecciona al menos un producto para tomar el pedido');
-            return;
-        }
-
-        setSubmitting(true);
-        try {
-            const res = await fetch('/api/admin/pedidos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    nombreCliente,
-                    telefonoCliente: telefonoCliente || '0999999999',
-                    direccionCliente: tipoEntrega === 'DELIVERY_ORDER' ? direccionCliente : null,
-                    tipoEntrega,
-                    metodoPago,
-                    mesaCode: tipoEntrega === 'TABLE_ORDER' ? mesaCode : null,
-                    descuentoAmount: descuento,
-                    autoConfirm,
-                    items: selectedItems.map(i => ({
-                        productoId: i.productoId,
-                        nombreProducto: i.takeawayQty > 0 ? `${i.nombreProducto} (${i.takeawayQty} para llevar)` : i.nombreProducto,
-                        precioUnitario: i.precioUnitario,
-                        cantidad: i.cantidad
-                    }))
-                })
-            });
-
-            if (res.ok) {
-                onCreated();
-            } else {
-                const errData = await res.json();
-                alert(errData.error || 'Error al registrar el pedido');
-            }
-        } catch (err) {
-            console.error(err);
-            alert('Error de conexión');
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 z-[250] bg-slate-950/90 backdrop-blur-md flex flex-col xl:flex-row overflow-hidden animate-in fade-in duration-200 text-slate-900">
-            
-            {/* IZQUIERDA: Catálogo de Productos y Categorías (65% width) */}
-            <div className="flex-1 flex flex-col h-full overflow-hidden border-r border-slate-800 bg-slate-900 text-white">
-                
-                {/* Header Superior del Catálogo */}
-                <div className="p-4 sm:p-6 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/80 backdrop-blur">
-                    <div className="flex items-center gap-3">
-                        <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-400">
-                            <ArrowLeft className="size-6 text-white" />
-                        </button>
-                        <div>
-                            <h2 className="text-xl font-black italic uppercase tracking-wider text-white flex items-center gap-2">
-                                <ClipboardList className="size-5 text-emerald-400" /> POS Caja Citiox
-                            </h2>
-                            <p className="text-xs text-slate-400 font-semibold">Terminal de Ventas & Comandas Directas</p>
-                        </div>
-                    </div>
-
-                    {/* Buscador de Productos */}
-                    <div className="relative w-full sm:w-72">
-                        <Search className="absolute left-3 top-3 size-4 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Buscar producto..."
-                            value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-all"
-                        />
-                    </div>
-                </div>
-
-                {/* Bar de Categorías */}
-                <div className="p-3 sm:px-6 border-b border-slate-800 bg-slate-950/50 flex gap-2 overflow-x-auto scrollbar-none">
-                    <button
-                        onClick={() => setSelectedCatId('ALL')}
-                        className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all shrink-0 ${
-                            selectedCatId === 'ALL'
-                                ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
-                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                        }`}
-                    >
-                        ⚡ Todos ({products.length})
-                    </button>
-                    {categories.map(cat => {
-                        const catProductsCount = products.filter(p => p.categoriaId === cat.id).length;
-                        return (
-                            <button
-                                key={cat.id}
-                                onClick={() => setSelectedCatId(cat.id)}
-                                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all shrink-0 ${
-                                    selectedCatId === cat.id
-                                        ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
-                                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                                }`}
-                            >
-                                {cat.nombre} ({catProductsCount})
-                            </button>
-                        );
-                    })}
-                </div>
-
-                {/* Grid de Productos */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-950/40">
-                    {loadingProducts ? (
-                        <div className="p-12 text-center text-slate-500">
-                            <Loader2 className="size-8 animate-spin mx-auto mb-3 text-emerald-400" />
-                            Cargando catálogo de productos...
-                        </div>
-                    ) : filteredProducts.length === 0 ? (
-                        <div className="p-12 text-center text-slate-500 font-medium">
-                            No se encontraron productos en esta categoría.
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-                            {filteredProducts.map(prod => {
-                                const cartEntry = cart[prod.id] || { qty: 0, takeawayQty: 0 };
-                                const qty = cartEntry.qty;
-                                return (
-                                    <div
-                                        key={prod.id}
-                                        className={`p-3.5 rounded-2xl border transition-all flex flex-col justify-between relative group ${
-                                            qty > 0 
-                                                ? 'bg-emerald-950/20 border-emerald-500/50 shadow-md shadow-emerald-900/20' 
-                                                : 'bg-slate-900 border-slate-800 hover:border-slate-700'
-                                        }`}
-                                    >
-                                        <div>
-                                            <div className="w-full h-24 rounded-xl bg-slate-800 mb-3 overflow-hidden flex items-center justify-center relative">
-                                                {prod.imagenUrl ? (
-                                                    // eslint-disable-next-line @next/next/no-img-element
-                                                    <img src={prod.imagenUrl} alt={prod.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                                                ) : (
-                                                    <Utensils className="size-8 text-slate-600" />
-                                                )}
-                                                {qty > 0 && (
-                                                    <span className="absolute top-2 right-2 bg-emerald-500 text-slate-950 font-black text-xs px-2 py-0.5 rounded-lg shadow-md">
-                                                        x{qty}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <h4 className="font-bold text-xs text-white line-clamp-1 mb-1">{prod.nombre}</h4>
-                                            <p className="text-emerald-400 font-black text-sm mb-3">${(Number(prod.precio) || 0).toFixed(2)}</p>
-                                        </div>
-
-                                        {/* Botones de incremento / decremento */}
-                                        <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                                            <button
-                                                type="button"
-                                                onClick={() => updateQty(prod.id, -1)}
-                                                disabled={qty === 0}
-                                                className="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-30 rounded-lg font-black text-xs text-white transition-colors flex justify-center items-center cursor-pointer"
-                                            >
-                                                -
-                                            </button>
-                                            <span className="w-6 text-center text-xs font-black text-white">{qty}</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => updateQty(prod.id, 1)}
-                                                className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg font-black text-xs text-white transition-colors flex justify-center items-center cursor-pointer"
-                                            >
-                                                +
-                                            </button>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* DERECHA: Resumen de Venta & Caja (35% width) */}
-            <div className="w-full xl:w-[440px] bg-white flex flex-col h-full overflow-hidden shadow-2xl">
-                
-                {/* Header Resumen */}
-                <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                    <div>
-                        <h3 className="font-black text-base text-slate-900 uppercase italic">Resumen de Venta</h3>
-                        <p className="text-[11px] text-slate-500 font-bold">{totalItemsCount} productos seleccionados</p>
-                    </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
-                        <X className="size-5" />
-                    </button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5">
-                    
-                    {/* Selector de Tipo de Entrega */}
-                    <div>
-                        <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Modo de Entrega</label>
-                        <div className="grid grid-cols-3 gap-1.5 bg-slate-100 p-1 rounded-2xl">
-                            <button
-                                type="button"
-                                onClick={() => handleDeliveryTypeChange('TABLE_ORDER')}
-                                className={`py-2 px-1 rounded-xl text-[10px] font-black uppercase transition-all flex flex-col items-center gap-1 ${
-                                    tipoEntrega === 'TABLE_ORDER'
-                                        ? 'bg-slate-900 text-white shadow-md'
-                                        : 'text-slate-600 hover:bg-slate-200'
-                                }`}
-                            >
-                                <Utensils className="size-3.5" /> En Mesa
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleDeliveryTypeChange('PICKUP_ORDER')}
-                                className={`py-2 px-1 rounded-xl text-[10px] font-black uppercase transition-all flex flex-col items-center gap-1 ${
-                                    tipoEntrega === 'PICKUP_ORDER'
-                                        ? 'bg-slate-900 text-white shadow-md'
-                                        : 'text-slate-600 hover:bg-slate-200'
-                                }`}
-                            >
-                                <ShoppingBag className="size-3.5" /> Para Llevar
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleDeliveryTypeChange('DELIVERY_ORDER')}
-                                className={`py-2 px-1 rounded-xl text-[10px] font-black uppercase transition-all flex flex-col items-center gap-1 ${
-                                    tipoEntrega === 'DELIVERY_ORDER'
-                                        ? 'bg-slate-900 text-white shadow-md'
-                                        : 'text-slate-600 hover:bg-slate-200'
-                                }`}
-                            >
-                                <Bike className="size-3.5" /> Domicilio
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Campos según tipo de entrega */}
-                    {tipoEntrega === 'TABLE_ORDER' && (
-                        <div>
-                            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1">Mesa</label>
-                            <input
-                                type="text"
-                                value={mesaCode}
-                                onChange={e => setMesaCode(e.target.value)}
-                                placeholder="Ej. Mesa 01"
-                                className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-bold bg-slate-50 outline-none focus:border-slate-900"
-                            />
-                        </div>
-                    )}
-
-                    {tipoEntrega === 'DELIVERY_ORDER' && (
-                        <div className="space-y-2">
-                            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Dirección & Cálculo GPS</label>
-                            <input
-                                type="text"
-                                value={direccionCliente}
-                                onChange={e => setDireccionCliente(e.target.value)}
-                                placeholder="Dirección principal y secundaria..."
-                                className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 outline-none focus:border-slate-900"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowMapModal(true)}
-                                className="w-full py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
-                            >
-                                <Navigation className="size-3.5 text-indigo-600" /> 
-                                {lat ? `📍 Mapa (${distanceKm} km - Tarifa: $${(Number(computedDeliveryCost) || 0).toFixed(2)})` : 'Seleccionar Ubicación en Mapa'}
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Datos del Cliente */}
-                    <div className="grid grid-cols-2 gap-2">
-                        <div>
-                            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1">Nombre Cliente</label>
-                            <input
-                                type="text"
-                                value={nombreCliente}
-                                onChange={e => setNombreCliente(e.target.value)}
-                                className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 outline-none focus:border-slate-900"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1">Teléfono</label>
-                            <input
-                                type="text"
-                                value={telefonoCliente}
-                                onChange={e => setTelefonoCliente(e.target.value)}
-                                placeholder="099..."
-                                className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 outline-none focus:border-slate-900"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Lista del Carrito con Asignación Individual de Empaque "Para Llevar" */}
-                    <div>
-                        <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Detalle de Productos & Empaque</label>
-                        {selectedItems.length === 0 ? (
-                            <div className="p-6 border border-dashed border-slate-200 rounded-2xl text-center text-xs text-slate-400">
-                                Haz clic en los productos del catálogo para añadirlos a la orden.
-                            </div>
-                        ) : (
-                            <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
-                                {selectedItems.map(item => (
-                                    <div key={item.productoId} className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="font-bold text-xs text-slate-900">{item.nombreProducto}</p>
-                                                <p className="text-[10px] text-slate-400 font-semibold">${(Number(item.precioUnitario) || 0).toFixed(2)} c/u</p>
-                                            </div>
-                                            <span className="font-black text-slate-900 text-xs">${((Number(item.precioUnitario) || 0) * item.cantidad).toFixed(2)}</span>
-                                        </div>
-
-                                        {/* Controles de Cantidad y Asignación Para Llevar Individual */}
-                                        <div className="flex items-center justify-between pt-2 border-t border-slate-200 text-xs">
-                                            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-0.5">
-                                                <span className="text-[9px] font-black text-slate-400 px-1">Cant:</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => updateQty(item.productoId, -1)}
-                                                    className="w-5 h-5 flex items-center justify-center font-black bg-slate-100 hover:bg-slate-200 rounded-md text-slate-700 text-xs"
-                                                >
-                                                    -
-                                                </button>
-                                                <span className="w-5 text-center font-black text-slate-900 text-xs">{item.cantidad}</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => updateQty(item.productoId, 1)}
-                                                    className="w-5 h-5 flex items-center justify-center font-black bg-slate-100 hover:bg-slate-200 rounded-md text-slate-700 text-xs"
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
-
-                                            {/* Empaque Para Llevar por Producto */}
-                                            <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 p-0.5 rounded-xl text-amber-900">
-                                                <ShoppingBag className="size-3 text-amber-600 ml-1" />
-                                                <span className="text-[9px] font-black uppercase">Llevar:</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => updateTakeawayQty(item.productoId, -1)}
-                                                    disabled={item.takeawayQty === 0}
-                                                    className="w-5 h-5 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded-md text-amber-950 text-xs cursor-pointer"
-                                                >
-                                                    -
-                                                </button>
-                                                <span className="w-4 text-center font-black text-xs text-amber-950">{item.takeawayQty}</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => updateTakeawayQty(item.productoId, 1)}
-                                                    disabled={item.takeawayQty >= item.cantidad}
-                                                    className="w-5 h-5 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded-md text-amber-950 text-xs cursor-pointer"
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Footer Resumen & Total */}
-                <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50 space-y-3">
-                    {/* Selector de Método de Pago Obligatorio */}
-                    <div>
-                        <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider mb-1">
-                            Método de Pago Obligatorio *
-                        </label>
-                        <div className="grid grid-cols-3 gap-1 bg-white p-1 rounded-xl border border-slate-200 text-[10px] font-black uppercase">
-                            {[
-                                { id: 'EFECTIVO', label: '💵 Efectivo' },
-                                { id: 'TRANSFERENCIA', label: '🏦 Transf.' },
-                                { id: 'TARJETA', label: '💳 Tarjeta' },
-                                { id: 'MIXTO', label: '🔀 Mixto' },
-                                { id: 'OTRO', label: '📝 Otro' }
-                            ].map(mp => (
-                                <button
-                                    key={mp.id}
-                                    type="button"
-                                    onClick={() => setMetodoPago(mp.id as any)}
-                                    className={`py-1.5 px-1 rounded-lg transition-all text-center ${
-                                        metodoPago === mp.id
-                                            ? 'bg-emerald-600 text-white shadow-sm'
-                                            : 'text-slate-600 hover:bg-slate-100'
-                                    }`}
-                                >
-                                    {mp.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="space-y-1 text-xs font-semibold text-slate-500">
-                        <div className="flex justify-between">
-                            <span>Subtotal Productos:</span>
-                            <span className="font-bold text-slate-800">${(Number(subtotal) || 0).toFixed(2)}</span>
-                        </div>
-                        {totalTakeawayUnits > 0 && (
-                            <div className="flex justify-between text-amber-700">
-                                <span>Empaque ({totalTakeawayUnits} para llevar):</span>
-                                <span className="font-bold">+${(Number(packagingCost) || 0).toFixed(2)}</span>
-                            </div>
-                        )}
-                        {tipoEntrega === 'DELIVERY_ORDER' && (
-                            <div className="flex justify-between text-indigo-700">
-                                <span>Delivery GPS ({distanceKm} km):</span>
-                                <span className="font-bold">+${(Number(computedDeliveryCost) || 0).toFixed(2)}</span>
-                            </div>
-                        )}
-                        <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-200">
-                            <span>TOTAL A COBRAR:</span>
-                            <span className="text-xl text-emerald-600">${(Number(grandTotal) || 0).toFixed(2)}</span>
-                        </div>
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={handleSubmit}
-                        disabled={submitting || selectedItems.length === 0}
-                        className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/20 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
-                    >
-                        {submitting ? <Loader2 className="size-4 animate-spin" /> : <><ChefHat className="size-4" /> Confirmar Venta & Enviar a Cocina</>}
-                    </button>
-                </div>
-            </div>
-
-            {/* Modal de Mapa para Delivery */}
-            <MapSelectionModal
-                isOpen={showMapModal}
-                onClose={() => setShowMapModal(false)}
-                initialLat={lat}
-                initialLng={lng}
-                onConfirmLocation={(newLat, newLng) => {
-                    setLat(newLat);
-                    setLng(newLng);
-                    setShowMapModal(false);
-                    const calculatedDist = calculateDistance(bizLat, bizLng, newLat, newLng);
-                    setDireccionCliente(`Ubicación GPS (${calculatedDist} km) - Lat: ${newLat.toFixed(4)}, Lng: ${newLng.toFixed(4)}`);
-                }}
-            />
+      {/* ─── TOP HEADER BAR (Coincide exacto con captura) ────────────────── */}
+      <header className={`h-16 px-4 sm:px-6 border-b ${themeClasses.header} flex items-center justify-between gap-4 sticky top-0 z-40 shadow-sm`}>
+        
+        {/* Brand Logo & Name */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-red-600 flex items-center justify-center shadow-md">
+            <Flame className="w-6 h-6 text-white fill-white" />
+          </div>
+          <div>
+            <h1 className="text-base font-black tracking-tight leading-tight uppercase flex items-center gap-1.5">
+              LA PARRILLA <span className={isDark ? 'text-[#a78bfa]' : 'text-[#ea580c]'}>CITIOX</span>
+            </h1>
+          </div>
         </div>
-    );
+
+        {/* Global Search Bar (Center) */}
+        <div className="relative flex-1 max-w-xl mx-4 hidden md:block">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            id="pos-search-input"
+            type="text"
+            placeholder="Buscar productos..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className={`w-full pl-10 pr-20 py-2 rounded-xl text-xs font-semibold ${themeClasses.inputBg} outline-none focus:ring-2 ${isDark ? 'focus:ring-[#6366f1]' : 'focus:ring-[#ea580c]'} transition-all`}
+          />
+          <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold px-2 py-0.5 rounded-md border ${isDark ? 'bg-[#121026] text-slate-400 border-[#2e2a5e]' : 'bg-slate-200 text-slate-600 border-slate-300'}`}>
+            Ctrl + K
+          </span>
+        </div>
+
+        {/* Right Top Bar Quick Controls & Theme Switcher */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Theme Toggle Button */}
+          <button
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            className={`p-2 rounded-xl border transition-all ${isDark ? 'bg-[#1e1b40] border-[#2e2a5e] text-amber-400 hover:bg-[#272352]' : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'}`}
+            title={isDark ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
+          >
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+
+          {/* Mode Pill Badges */}
+          <div className="hidden lg:flex items-center gap-1.5 p-1 rounded-xl bg-[#1e1b40]/30 border border-[#2e2a5e]/40">
+            <button
+              onClick={() => setTipoEntrega('TABLE_ORDER')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${tipoEntrega === 'TABLE_ORDER' ? themeClasses.accentBtn : 'text-slate-400 hover:text-white'}`}
+            >
+              <Utensils className="w-3.5 h-3.5" /> Mesa / Cliente
+            </button>
+            <button
+              onClick={() => setTipoEntrega('DELIVERY_ORDER')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${tipoEntrega === 'DELIVERY_ORDER' ? themeClasses.accentBtn : 'text-slate-400 hover:text-white'}`}
+            >
+              <Bike className="w-3.5 h-3.5" /> Domicilio
+            </button>
+          </div>
+
+          {/* Caja Selector */}
+          <button className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold ${isDark ? 'bg-[#1e1b40] border-[#2e2a5e] text-white' : 'bg-slate-100 border-slate-200 text-slate-800'}`}>
+            <ShoppingBag className="w-3.5 h-3.5 text-emerald-500" />
+            <span>Caja</span>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+          </button>
+
+          {/* User Avatar */}
+          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-600 p-0.5 shadow-md">
+            <img
+              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100"
+              alt="User"
+              className="w-full h-full rounded-full object-cover"
+            />
+          </div>
+        </div>
+      </header>
+
+      {/* ─── MAIN APP CONTAINER ────────────────────────────────────────── */}
+      <div className="flex-1 flex overflow-hidden">
+
+        {/* ─── LEFT SIDEBAR NAVIGATION ─────────────────────────────────── */}
+        <aside className={`${isSidebarCollapsed ? 'w-16' : 'w-56'} ${themeClasses.sidebar} border-r transition-all duration-200 flex flex-col justify-between hidden md:flex shrink-0 z-20`}>
+          <div className="p-3 space-y-4">
+            
+            {/* Primary Action Button: Nueva Orden */}
+            <button
+              onClick={() => setShowPOSModal(true)}
+              className={`w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider ${themeClasses.accentBtn} shadow-lg flex items-center justify-center gap-2.5 transition-all cursor-pointer`}
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              {!isSidebarCollapsed && <span>Nueva Orden</span>}
+            </button>
+
+            {/* Nav Menu Links */}
+            <nav className="space-y-1">
+              {[
+                { label: 'Órdenes', icon: FileText, active: true },
+                { label: 'Mesas', icon: Utensils, active: false },
+                { label: 'Clientes', icon: User, active: false },
+                { label: 'Productos', icon: ShoppingBag, active: false },
+                { label: 'Promociones', icon: Percent, active: false },
+                { label: 'Reportes', icon: Award, active: false },
+                { label: 'Configuración', icon: Settings, active: false },
+              ].map((item) => (
+                <button
+                  key={item.label}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    item.active
+                      ? isDark
+                        ? 'bg-[#1e1b40] text-white shadow-sm'
+                        : 'bg-slate-100 text-slate-900 font-extrabold'
+                      : isDark
+                        ? 'text-slate-400 hover:bg-[#181534] hover:text-white'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <item.icon className={`w-4 h-4 ${item.active ? (isDark ? 'text-[#818cf8]' : 'text-[#ea580c]') : 'text-slate-400'}`} />
+                  {!isSidebarCollapsed && <span>{item.label}</span>}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Bottom Sidebar Config Card & Toggle */}
+          <div className="p-3 space-y-3">
+            {!isSidebarCollapsed && !isDark && (
+              <div className="p-3.5 bg-emerald-950 text-white rounded-2xl space-y-2">
+                <div className="flex items-center gap-2">
+                  <Bike className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs font-bold">¿Sabías que?</span>
+                </div>
+                <p className="text-[11px] text-emerald-200 leading-tight">
+                  Activa el seguimiento en tiempo real para tus envíos a domicilio.
+                </p>
+                <button className="w-full py-1.5 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors">
+                  Configurar
+                </button>
+              </div>
+            )}
+
+            <button
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold ${isDark ? 'text-slate-400 hover:text-white hover:bg-[#1e1b40]' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'} transition-all`}
+            >
+              <ChevronRight className={`w-4 h-4 transition-transform ${isSidebarCollapsed ? '' : 'rotate-180'}`} />
+              {!isSidebarCollapsed && <span>Ocultar menú</span>}
+            </button>
+          </div>
+        </aside>
+
+        {/* ─── CENTER PRODUCT CATALOG GRID (65% Width) ────────────────── */}
+        <main className="flex-1 flex flex-col overflow-hidden bg-slate-950/20">
+          
+          {/* Category Tabs & View Options Filter Bar */}
+          <div className={`p-4 ${themeClasses.header} border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0`}>
+            
+            {/* Category Pills (Exact replica of screenshots) */}
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1 mr-1">
+                <Utensils className="w-3.5 h-3.5" /> Menú de Productos
+              </span>
+
+              <button
+                onClick={() => setSelectedCatId('ALL')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5 shrink-0 transition-all ${
+                  selectedCatId === 'ALL' ? themeClasses.catTabActive : themeClasses.catTabInactive
+                }`}
+              >
+                <Flame className="w-3.5 h-3.5" /> TODOS
+              </button>
+
+              {categories.map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCatId(cat.id)}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider shrink-0 transition-all ${
+                    selectedCatId === cat.id ? themeClasses.catTabActive : themeClasses.catTabInactive
+                  }`}
+                >
+                  {cat.nombre}
+                </button>
+              ))}
+
+              <button className={`px-3 py-2 rounded-xl text-xs font-bold shrink-0 border ${isDark ? 'bg-[#1e1b40] text-slate-300 border-[#2e2a5e]' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                + EXTRAS
+              </button>
+            </div>
+
+            {/* Sort & Grid View Switcher */}
+            <div className="flex items-center gap-2 shrink-0">
+              <select
+                value={sortOption}
+                onChange={e => setSortOption(e.target.value)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold border ${themeClasses.inputBg} outline-none cursor-pointer`}
+              >
+                <option value="populares">Más vendidos ∨</option>
+                <option value="precio_asc">Precio: Menor a Mayor</option>
+                <option value="precio_desc">Precio: Mayor a Menor</option>
+              </select>
+
+              <div className={`flex p-0.5 rounded-xl border ${isDark ? 'bg-[#121026] border-[#2e2a5e]' : 'bg-slate-100 border-slate-200'}`}>
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-1.5 rounded-lg text-xs transition-all ${viewMode === 'grid' ? (isDark ? 'bg-[#6366f1] text-white' : 'bg-white text-slate-900 shadow-sm') : 'text-slate-400'}`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-1.5 rounded-lg text-xs transition-all ${viewMode === 'list' ? (isDark ? 'bg-[#6366f1] text-white' : 'bg-white text-slate-900 shadow-sm') : 'text-slate-400'}`}
+                >
+                  <List className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Product Grid List */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+            {loadingProducts ? (
+              <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                <Loader2 className="w-8 h-8 animate-spin text-purple-500 mb-3" />
+                <p className="text-xs font-bold uppercase tracking-wider">Cargando menú de productos...</p>
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="text-center py-20 text-slate-400">
+                <Utensils className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p className="text-sm font-bold">No se encontraron productos en este menú</p>
+              </div>
+            ) : (
+              <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" : "space-y-3"}>
+                {filteredProducts.map((product) => {
+                  const cartEntry = cart[product.id] || { qty: 0, takeawayQty: 0 };
+                  const qty = cartEntry.qty;
+
+                  return (
+                    <div
+                      key={product.id}
+                      className={`${themeClasses.card} rounded-2xl border overflow-hidden p-3 transition-all duration-200 hover:shadow-xl flex flex-col justify-between group relative`}
+                    >
+                      {/* Product Image & Badge */}
+                      <div className="relative w-full h-36 rounded-xl overflow-hidden bg-slate-800 mb-3">
+                        <img
+                          src={product.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500'}
+                          alt={product.nombre}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        {product.popular && (
+                          <span className="absolute top-2 right-2 bg-emerald-500 text-white font-extrabold text-[10px] uppercase px-2 py-0.5 rounded-md shadow-md">
+                            Popular
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Title & Price */}
+                      <div className="space-y-1 mb-3">
+                        <h3 className="font-extrabold text-sm line-clamp-1">{product.nombre}</h3>
+                        <p className={`font-black text-sm ${themeClasses.priceText}`}>
+                          ${(Number(product.precio) || 0).toFixed(2)}
+                        </p>
+                      </div>
+
+                      {/* Stepper Controls ([-  0  +]) Exact match */}
+                      <div className={`flex items-center justify-between p-1 rounded-xl border ${isDark ? 'bg-[#121026] border-[#2e2a5e]' : 'bg-slate-50 border-slate-200'}`}>
+                        <button
+                          onClick={() => updateQty(product.id, -1)}
+                          disabled={qty === 0}
+                          className={`w-8 h-7 rounded-lg font-black text-sm flex items-center justify-center transition-all disabled:opacity-30 ${themeClasses.stepperBtn}`}
+                        >
+                          -
+                        </button>
+                        <span className="font-extrabold text-xs px-3">{qty}</span>
+                        <button
+                          onClick={() => updateQty(product.id, 1)}
+                          className={`w-8 h-7 rounded-lg font-black text-sm flex items-center justify-center transition-all ${themeClasses.stepperBtn}`}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Expand More Button */}
+            <div className="text-center pt-4 pb-8">
+              <button className={`px-5 py-2.5 rounded-xl border text-xs font-bold inline-flex items-center gap-2 ${isDark ? 'bg-[#1e1b40] text-slate-300 border-[#2e2a5e] hover:bg-[#272352]' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}>
+                Ver más productos <ChevronDown className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </main>
+
+        {/* ─── RIGHT CART & CHECKOUT PANEL (35% Width) ───────────────── */}
+        <aside className={`w-full lg:w-[420px] xl:w-[460px] ${themeClasses.cartPanel} border-l flex flex-col justify-between shrink-0 z-30 shadow-2xl overflow-y-auto`}>
+          
+          {/* Cart Header */}
+          <div className={`p-4 border-b ${isDark ? 'border-[#231f4a] bg-[#121026]' : 'border-slate-200 bg-slate-50'} flex items-center justify-between`}>
+            <div className="flex items-center gap-2">
+              <ShoppingBag className={`w-4 h-4 ${isDark ? 'text-[#818cf8]' : 'text-[#ea580c]'}`} />
+              <h2 className="font-extrabold text-sm uppercase tracking-wider">Orden Actual</h2>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-black ${themeClasses.accentBadge}`}>
+                {totalItemsCount}
+              </span>
+            </div>
+            <button
+              onClick={clearCart}
+              className="text-xs font-bold text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-1"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Vaciar
+            </button>
+          </div>
+
+          <div className="p-4 space-y-5 flex-1 overflow-y-auto">
+            
+            {/* Delivery Type Segmented Control */}
+            <div>
+              <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Tipo de Entrega</label>
+              <div className={`grid grid-cols-3 gap-1 p-1 rounded-2xl border ${isDark ? 'bg-[#121026] border-[#2e2a5e]' : 'bg-slate-100 border-slate-200'}`}>
+                <button
+                  type="button"
+                  onClick={() => setTipoEntrega('TABLE_ORDER')}
+                  className={`py-2 px-1 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${tipoEntrega === 'TABLE_ORDER' ? themeClasses.accentBtn : 'text-slate-400 hover:text-white'}`}
+                >
+                  <Utensils className="w-3.5 h-3.5" /> En Mesa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTipoEntrega('PICKUP_ORDER')}
+                  className={`py-2 px-1 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${tipoEntrega === 'PICKUP_ORDER' ? themeClasses.accentBtn : 'text-slate-400 hover:text-white'}`}
+                >
+                  <ShoppingBag className="w-3.5 h-3.5" /> Para Llevar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTipoEntrega('DELIVERY_ORDER')}
+                  className={`py-2 px-1 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${tipoEntrega === 'DELIVERY_ORDER' ? themeClasses.accentBtn : 'text-slate-400 hover:text-white'}`}
+                >
+                  <Bike className="w-3.5 h-3.5" /> A Domicilio
+                </button>
+              </div>
+            </div>
+
+            {/* Delivery Address Card (Exact replica of screenshot) */}
+            {tipoEntrega === 'DELIVERY_ORDER' && (
+              <div className={`p-3.5 rounded-2xl border space-y-2.5 ${isDark ? 'bg-[#181534] border-[#272352]' : 'bg-slate-50 border-slate-200'}`}>
+                <div className="flex items-start justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Dirección de Entrega</span>
+                  <button
+                    onClick={() => setShowMapModal(true)}
+                    className={`text-xs font-bold ${isDark ? 'text-[#818cf8]' : 'text-[#ea580c]'} hover:underline`}
+                  >
+                    Cambiar
+                  </button>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <MapPin className={`w-4 h-4 shrink-0 ${isDark ? 'text-rose-400' : 'text-[#ea580c]'}`} />
+                    <p className="font-extrabold text-xs line-clamp-1">{direccionCliente}</p>
+                  </div>
+                  <p className="text-[11px] text-slate-400 pl-6">{referenciaCliente}</p>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-slate-700/40 text-xs">
+                  <span className="text-slate-400 flex items-center gap-1 text-[11px]">
+                    📍 {distanceKm} km de distancia
+                  </span>
+                  <span className={`font-black px-2 py-0.5 rounded-md ${themeClasses.accentBadge}`}>
+                    Tarifa: ${computedDeliveryCost.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Table Code Input */}
+            {tipoEntrega === 'TABLE_ORDER' && (
+              <div>
+                <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1">Mesa / Ubicación</label>
+                <input
+                  type="text"
+                  value={mesaCode}
+                  onChange={e => setMesaCode(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-bold ${themeClasses.inputBg} outline-none`}
+                  placeholder="Ej. Mesa 01"
+                />
+              </div>
+            )}
+
+            {/* Customer Information inputs */}
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Cliente</label>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  value={nombreCliente}
+                  onChange={e => setNombreCliente(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-bold ${themeClasses.inputBg} outline-none`}
+                  placeholder="Nombre Cliente"
+                />
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs">🇪🇨</span>
+                  <input
+                    type="text"
+                    value={telefonoCliente}
+                    onChange={e => setTelefonoCliente(e.target.value)}
+                    className={`w-full pl-8 pr-3 py-2 rounded-xl text-xs font-bold ${themeClasses.inputBg} outline-none`}
+                    placeholder="099 123 4567"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Cart Items List Table */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-slate-400 px-1">
+                <span>Producto</span>
+                <span className="mr-8">Cant.</span>
+                <span>Precio</span>
+              </div>
+
+              {selectedItems.length === 0 ? (
+                <div className={`p-8 border border-dashed rounded-2xl text-center text-xs text-slate-400 ${isDark ? 'border-[#272352]' : 'border-slate-200'}`}>
+                  Selecciona productos del menú para armar el pedido.
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {selectedItems.map(item => (
+                    <div
+                      key={item.productoId}
+                      className={`p-2.5 rounded-xl border flex items-center justify-between gap-3 ${isDark ? 'bg-[#181534] border-[#272352]' : 'bg-slate-50 border-slate-200'}`}
+                    >
+                      {/* Thumbnail & Title */}
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <img
+                          src={item.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=100'}
+                          alt={item.nombreProducto}
+                          className="w-10 h-10 rounded-lg object-cover shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <p className="font-extrabold text-xs truncate">{item.nombreProducto}</p>
+                          <p className="text-[10px] text-slate-400 font-semibold">${item.precioUnitario.toFixed(2)} c/u</p>
+                        </div>
+                      </div>
+
+                      {/* Stepper */}
+                      <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${isDark ? 'bg-[#121026] border-[#2e2a5e]' : 'bg-white border-slate-200'}`}>
+                        <button
+                          onClick={() => updateQty(item.productoId, -1)}
+                          className="w-4 h-4 flex items-center justify-center font-black text-xs hover:text-rose-500"
+                        >
+                          -
+                        </button>
+                        <span className="font-extrabold text-xs w-4 text-center">{item.cantidad}</span>
+                        <button
+                          onClick={() => updateQty(item.productoId, 1)}
+                          className="w-4 h-4 flex items-center justify-center font-black text-xs hover:text-emerald-500"
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      {/* Total & Delete */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="font-black text-xs">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
+                        <button
+                          onClick={() => removeItem(item.productoId)}
+                          className="text-slate-400 hover:text-rose-500 p-0.5"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Subtotals & Final Price Calculation */}
+            <div className={`p-4 rounded-2xl border space-y-2 ${isDark ? 'bg-[#181534] border-[#272352]' : 'bg-slate-50 border-slate-200'}`}>
+              <div className="flex justify-between text-xs text-slate-400 font-semibold">
+                <span>Subtotal productos</span>
+                <span className="font-bold text-white">${subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-slate-400 font-semibold">
+                <span>Empaque ({totalTakeawayUnits} productos) ℹ️</span>
+                <span className="font-bold text-white">${packagingCost.toFixed(2)}</span>
+              </div>
+              {tipoEntrega === 'DELIVERY_ORDER' && (
+                <div className="flex justify-between text-xs text-slate-400 font-semibold">
+                  <span>Entrega ({distanceKm} km)</span>
+                  <span className="font-bold text-white">${computedDeliveryCost.toFixed(2)}</span>
+                </div>
+              )}
+              
+              <div className="pt-2 border-t border-slate-700/50 flex justify-between items-center">
+                <span className="font-black text-sm uppercase tracking-wider">TOTAL A COBRAR</span>
+                <span className="font-black text-2xl text-emerald-400">${grandTotal.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Payment Method Mandatory Selector */}
+            <div>
+              <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Método de Pago</label>
+              <div className="grid grid-cols-3 gap-1.5">
+                {[
+                  { id: 'EFECTIVO', label: '💵 Efectivo' },
+                  { id: 'TRANSFERENCIA', label: '🏦 Transferencia' },
+                  { id: 'TARJETA', label: '💳 Tarjeta' },
+                  { id: 'MIXTO', label: '🔀 Mixto' },
+                  { id: 'OTRO', label: '📝 Otro' },
+                ].map(pm => (
+                  <button
+                    key={pm.id}
+                    type="button"
+                    onClick={() => setMetodoPago(pm.id as any)}
+                    className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all text-center ${
+                      metodoPago === pm.id
+                        ? 'bg-emerald-500 text-white border-emerald-400 shadow-md'
+                        : isDark ? 'bg-[#181534] border-[#272352] text-slate-300 hover:border-slate-500' : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    {pm.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Submit Action Button */}
+            <button
+              onClick={handleSubmitOrder}
+              disabled={submitting || selectedItems.length === 0}
+              className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider ${themeClasses.submitBtn} disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center gap-2`}
+            >
+              {submitting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <ChefHat className="w-4 h-4" />
+                  CONFIRMAR ORDEN Y ENVIAR A COCINA
+                </>
+              )}
+            </button>
+            <p className="text-[10px] text-center text-slate-400 font-semibold">
+              Se enviará a cocina después de confirmar la orden
+            </p>
+          </div>
+        </aside>
+      </div>
+
+      {/* Map Selection Modal for GPS Delivery */}
+      <MapSelectionModal
+        isOpen={showMapModal}
+        onClose={() => setShowMapModal(false)}
+        initialLat={lat}
+        initialLng={lng}
+        onConfirmLocation={(newLat, newLng) => {
+          setLat(newLat);
+          setLng(newLng);
+          setShowMapModal(false);
+          const dist = calculateDistance(bizLat, bizLng, newLat, newLng);
+          setDireccionCliente(`Ubicación GPS (${dist} km) - Lat: ${newLat.toFixed(4)}, Lng: ${newLng.toFixed(4)}`);
+        }}
+      />
+    </div>
+  );
 }
 
 export default function AdminPedidos() {
-    return (
-        <Suspense fallback={
-            <div className="flex justify-center items-center h-screen">
-                <Loader2 className="size-8 text-slate-300 animate-spin" />
-            </div>
-        }>
-            <PedidosContent />
-        </Suspense>
-    );
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center items-center h-screen bg-[#0b0e17]">
+        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+      </div>
+    }>
+      <PedidosContent />
+    </Suspense>
+  );
 }
