@@ -177,11 +177,12 @@ export async function POST(
         const pricingResult = PricingEngine.calculate({
             items: itemsToCreate.map(i => ({
                 productId: i.productoId,
-                nombreProducto: i.nombreProducto,
+                name: i.nombreProducto,
+                unitPrice: i.precioUnitario,
                 precioUnitario: i.precioUnitario,
-                cantidad: i.cantidad
+                quantity: i.cantidad
             })),
-            deliveryType: deliveryType || (body.channel === 'DELIVERY' ? 'DOMICILIO' : 'RETIRO'),
+            deliveryType: deliveryType === 'DOMICILIO' || deliveryType === 'DELIVERY_ORDER' ? 'DELIVERY_ORDER' : 'PICKUP_ORDER',
             deliveryConfig: config.deliveryConfig || {
                 enabled: true,
                 baseCost: config.costoEnvio !== undefined ? parseFloat(config.costoEnvio) : 1.50,

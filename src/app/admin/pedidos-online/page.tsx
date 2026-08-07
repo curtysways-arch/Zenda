@@ -382,10 +382,13 @@ export default function PedidosOnlinePage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {displayedOrders.map(pedido => {
-            const isDelivery = pedido.tipoEntrega === 'DELIVERY_ORDER';
+            const isDelivery = ['DELIVERY_ORDER', 'DOMICILIO', 'DELIVERY'].includes((pedido.tipoEntrega || '').toUpperCase());
             const isPending = pedido.estado === 'PENDIENTE' || pedido.estado === 'PENDING';
             const isPreparing = pedido.estado === 'EN_PREPARACION' || pedido.estado === 'ACEPTADO';
             const isPaid = pedido.paymentStatus === 'PAGADO' || pedido.payment?.status === 'PAID';
+
+            const itemsSum = (pedido.items || []).reduce((acc, item) => acc + (Number(item.precioUnitario || 0) * Number(item.cantidad || 1)), 0);
+            const totalToDisplay = Number(pedido.total) > 0 ? Number(pedido.total) : (itemsSum + Number(pedido.costoEnvio || 0));
 
             return (
               <div
@@ -473,7 +476,7 @@ export default function PedidosOnlinePage() {
                   ))}
                   <div className="pt-2 mt-2 border-t border-slate-100 flex justify-between items-center font-black text-xs text-slate-900">
                     <span>TOTAL A COBRAR:</span>
-                    <span className="text-[#ea580c] text-base font-black">${(Number(pedido.total) || 0).toFixed(2)}</span>
+                    <span className="text-[#ea580c] text-base font-black">${totalToDisplay.toFixed(2)}</span>
                   </div>
                 </div>
 
@@ -551,47 +554,52 @@ export default function PedidosOnlinePage() {
       )}
 
       {/* MODAL 1: ALERTA FULLSCREEN CON SONIDO DE NUEVO PEDIDO ENTRANTE */}
-      {alertOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-[#ea580c] space-y-5 text-center relative overflow-hidden">
-            <div className="bg-gradient-to-r from-[#ea580c] to-amber-500 text-white py-3 px-4 -mx-6 -mt-6 mb-2 flex items-center justify-between">
-              <span className="font-black text-xs uppercase flex items-center gap-1.5 animate-pulse">
-                <Sparkles className="w-4 h-4" /> ¡NUEVO PEDIDO WEB ENTRANTE!
-              </span>
-              <button
-                onClick={() => setSoundEnabled(!soundEnabled)}
-                className="px-2.5 py-1 bg-black/20 hover:bg-black/30 text-white rounded-lg text-[10px] font-black cursor-pointer"
-              >
-                {soundEnabled ? '🔊 Sonido Alarma ON' : '🔇 Mute'}
-              </button>
-            </div>
+      {alertOrder && (() => {
+        const alertItemsSum = (alertOrder.items || []).reduce((acc, item) => acc + (Number(item.precioUnitario || 0) * Number(item.cantidad || 1)), 0);
+        const alertTotalVal = Number(alertOrder.total) > 0 ? Number(alertOrder.total) : (alertItemsSum + Number(alertOrder.costoEnvio || 0));
 
-            <div className="size-20 mx-auto rounded-full bg-orange-100 text-[#ea580c] flex items-center justify-center font-black animate-bounce shadow-xl">
-              <Globe className="w-10 h-10" />
-            </div>
+        return (
+          <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-[#ea580c] space-y-5 text-center relative overflow-hidden">
+              <div className="bg-gradient-to-r from-[#ea580c] to-amber-500 text-white py-3 px-4 -mx-6 -mt-6 mb-2 flex items-center justify-between">
+                <span className="font-black text-xs uppercase flex items-center gap-1.5 animate-pulse">
+                  <Sparkles className="w-4 h-4" /> ¡NUEVO PEDIDO WEB ENTRANTE!
+                </span>
+                <button
+                  onClick={() => setSoundEnabled(!soundEnabled)}
+                  className="px-2.5 py-1 bg-black/20 hover:bg-black/30 text-white rounded-lg text-[10px] font-black cursor-pointer"
+                >
+                  {soundEnabled ? '🔊 Sonido Alarma ON' : '🔇 Mute'}
+                </button>
+              </div>
 
-            <div>
-              <span className="text-xs font-black uppercase tracking-wider text-slate-400">Código de Pedido</span>
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">#{alertOrder.codigo || alertOrder.id.slice(-6).toUpperCase()}</h2>
-              <p className="text-sm font-extrabold text-[#ea580c] mt-1">{alertOrder.nombreCliente} • {alertOrder.telefonoCliente}</p>
-            </div>
+              <div className="size-20 mx-auto rounded-full bg-orange-100 text-[#ea580c] flex items-center justify-center font-black animate-bounce shadow-xl">
+                <Globe className="w-10 h-10" />
+              </div>
 
-            <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs text-slate-700 font-bold justify-between flex items-center">
-              <span>{alertOrder.items.length} producto(s) en pedido:</span>
-              <span className="text-base font-black text-[#ea580c]">${Number(alertOrder.total).toFixed(2)}</span>
-            </div>
+              <div>
+                <span className="text-xs font-black uppercase tracking-wider text-slate-400">Código de Pedido</span>
+                <h2 className="text-3xl font-black text-slate-900 tracking-tight">#{alertOrder.codigo || alertOrder.id.slice(-6).toUpperCase()}</h2>
+                <p className="text-sm font-extrabold text-[#ea580c] mt-1">{alertOrder.nombreCliente} • {alertOrder.telefonoCliente}</p>
+              </div>
 
-            <div className="pt-2 flex gap-3">
-              <button
-                onClick={() => handleOpenReview(alertOrder)}
-                className="flex-1 py-3.5 bg-[#ea580c] hover:bg-orange-700 text-white font-black text-sm uppercase rounded-2xl shadow-xl shadow-orange-600/30 cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                <Check className="w-5 h-5" /> Atender Pedido Ahora
-              </button>
+              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs text-slate-700 font-bold justify-between flex items-center">
+                <span>{alertOrder.items.length} producto(s) en pedido:</span>
+                <span className="text-base font-black text-[#ea580c]">${alertTotalVal.toFixed(2)}</span>
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  onClick={() => handleOpenReview(alertOrder)}
+                  className="flex-1 py-3.5 bg-[#ea580c] hover:bg-orange-700 text-white font-black text-sm uppercase rounded-2xl shadow-xl shadow-orange-600/30 cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                  <Check className="w-5 h-5" /> Atender Pedido Ahora
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* MODAL 2: REVISIÓN DE PEDIDO & SELECCIÓN DE TIEMPO DE DESPACHO */}
       {reviewingOrder && (

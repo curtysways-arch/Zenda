@@ -844,7 +844,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         <div className="flex items-center gap-3">
                             <div className="text-right space-y-0.5">
                                 <span className="text-[9px] font-black uppercase tracking-widest text-orange-900/70 block">Monto a Transferir</span>
-                                <span className="text-2xl font-black text-slate-900 tracking-tight">${createdOrder.total.toFixed(2)}</span>
+                                <span className="text-2xl font-black text-slate-900 tracking-tight">${(Number(createdOrder?.total) || 0).toFixed(2)}</span>
                             </div>
                             <div className="size-11 bg-orange-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-600/30 shrink-0">
                                 <Wallet className="size-6" />
@@ -1036,7 +1036,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         </div>
                         <div className="flex justify-between items-center pt-2 border-t border-slate-200">
                             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total</span>
-                            <span className="text-base font-black text-orange-600">${createdOrder.total.toFixed(2)}</span>
+                            <span className="text-base font-black text-orange-600">${(Number(createdOrder?.total) || 0).toFixed(2)}</span>
                         </div>
                     </div>
 

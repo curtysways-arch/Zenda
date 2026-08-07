@@ -26,8 +26,9 @@ conn.on("ready", async () => {
   try {
     await exec(`cd /opt/Zenda && git checkout -- . && git pull origin main 2>&1`, "PASO 1: Pull del código");
     await exec(`cd /opt/Zenda && npx prisma generate 2>&1 && DATABASE_URL="${DB_URL}" npx prisma db push --accept-data-loss 2>&1`, "PASO 1.5: Generar Prisma Client y Sincronizar BD PostgreSQL");
-    await exec(`cd /opt/Zenda && rm -rf .next && DATABASE_URL="${DB_URL}" npm run build 2>&1`, "PASO 2: Clean & Build Next.js");
-    await exec(`cd /opt/Zenda && pm2 restart zenda-app --update-env 2>&1 && sleep 5`, "PASO 3: Reiniciar PM2");
+    await exec(`pm2 stop zenda-app 2>&1`, "PASO 2A: Detener PM2 temporalmente");
+    await exec(`cd /opt/Zenda && rm -rf .next && DATABASE_URL="${DB_URL}" npm run build 2>&1`, "PASO 2B: Clean & Build Next.js");
+    await exec(`cd /opt/Zenda && pm2 start zenda-app --update-env 2>&1 && sleep 5`, "PASO 3: Iniciar PM2");
     await exec(`curl -s "http://127.0.0.1:3000/api/demo/seed-restaurant"`, "PASO 4: Ejecutar Seeder de Restaurante Demo");
 
     console.log("\n=== PRUEBAS DE ENDPOINTS DE GESTIÓN Y ADMINISTRACIÓN ===");

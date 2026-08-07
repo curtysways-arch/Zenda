@@ -37,7 +37,7 @@ export async function GET(
     const dbDeliveryOrders = await (prisma as any).pedido.findMany({
       where: {
         negocioId: negocio.id,
-        tipoEntrega: 'DELIVERY_ORDER',
+        tipoEntrega: { in: ['DELIVERY_ORDER', 'DOMICILIO', 'DELIVERY'] },
         estado: { in: ['EN_PREPARACION', 'ACEPTADO', 'LISTO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'EN_CAMINO', 'EN_RUTA'] }
       },
       include: { items: true, payment: true },

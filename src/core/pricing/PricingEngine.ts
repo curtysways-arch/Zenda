@@ -77,7 +77,8 @@ export class PricingEngine {
     let totalTakeawayUnits = 0;
 
     for (const item of input.items) {
-      subtotal += item.unitPrice * item.quantity;
+      const price = item.unitPrice ?? (item as any).precioUnitario ?? 0;
+      subtotal += price * item.quantity;
 
       const req = item.packagingRequirement || 'OPTIONAL';
       if (req === 'NOT_REQUIRED') {
