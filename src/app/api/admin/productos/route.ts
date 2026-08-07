@@ -26,6 +26,13 @@ export async function GET() {
     }
 }
 
+function parseNumeric(val: any, fallback = 0): number {
+    if (val === undefined || val === null || val === '') return fallback;
+    const str = String(val).replace(',', '.').trim();
+    const num = parseFloat(str);
+    return isNaN(num) ? fallback : num;
+}
+
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -48,22 +55,22 @@ export async function POST(req: Request) {
             data: {
                 nombre,
                 descripcion,
-                precio: parseFloat(precio),
+                precio: parseNumeric(precio, 0),
                 imagenUrl: imagenUrl || null,
-                activo: activo !== undefined ? activo : true,
-                stock: stock !== undefined && stock !== null && stock !== '' ? parseInt(stock) : null,
-                orden: orden || 0,
+                activo: activo !== undefined ? Boolean(activo) : true,
+                stock: stock !== undefined && stock !== null && stock !== '' ? parseInt(String(stock)) : null,
+                orden: parseNumeric(orden, 0),
                 llevaEmpaque: llevaEmpaque !== undefined ? Boolean(llevaEmpaque) : true,
-                precioEmpaque: precioEmpaque !== undefined && precioEmpaque !== null && precioEmpaque !== '' ? parseFloat(precioEmpaque) : 0.25,
+                precioEmpaque: parseNumeric(precioEmpaque, 0.25),
                 categoriaId: categoriaId || null,
                 negocioId
             }
         });
 
         return NextResponse.json(nuevoProducto);
-    } catch (e) {
+    } catch (e: any) {
         console.error('[API_PRODUCTOS_POST]', e);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: e?.message || 'Internal Server Error' }, { status: 500 });
     }
 }
 
@@ -93,21 +100,21 @@ export async function PUT(req: Request) {
             data: {
                 nombre,
                 descripcion,
-                precio: parseFloat(precio),
+                precio: parseNumeric(precio, 0),
                 imagenUrl: imagenUrl || null,
-                activo: activo !== undefined ? activo : true,
-                stock: stock !== undefined && stock !== null && stock !== '' ? parseInt(stock) : null,
-                orden: orden || 0,
+                activo: activo !== undefined ? Boolean(activo) : true,
+                stock: stock !== undefined && stock !== null && stock !== '' ? parseInt(String(stock)) : null,
+                orden: parseNumeric(orden, 0),
                 llevaEmpaque: llevaEmpaque !== undefined ? Boolean(llevaEmpaque) : true,
-                precioEmpaque: precioEmpaque !== undefined && precioEmpaque !== null && precioEmpaque !== '' ? parseFloat(precioEmpaque) : 0.25,
+                precioEmpaque: parseNumeric(precioEmpaque, 0.25),
                 categoriaId: categoriaId || null
             }
         });
 
         return NextResponse.json(prodActualizado);
-    } catch (e) {
+    } catch (e: any) {
         console.error('[API_PRODUCTOS_PUT]', e);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: e?.message || 'Internal Server Error' }, { status: 500 });
     }
 }
 

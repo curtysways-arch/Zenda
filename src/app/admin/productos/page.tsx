@@ -165,18 +165,24 @@ export default function AdminProductos() {
             const isEdit = !!editingProduct;
             const method = isEdit ? 'PUT' : 'POST';
             
+            const parseNum = (val: string, fallback = 0) => {
+                const clean = String(val || '').replace(',', '.').trim();
+                const num = parseFloat(clean);
+                return isNaN(num) ? fallback : num;
+            };
+
             const payload = {
                 id: editingProduct?.id,
-                nombre,
+                nombre: nombre.trim(),
                 descripcion: descripcion.trim() || null,
-                precio: parseFloat(precio),
+                precio: parseNum(precio, 0),
                 imagenUrl: imagenUrl || null,
                 activo,
                 stock: stock.trim() !== '' ? parseInt(stock) : null,
                 orden: orden || 0,
                 categoriaId: categoriaId || null,
                 llevaEmpaque,
-                precioEmpaque: parseFloat(precioEmpaque) || 0.25
+                precioEmpaque: parseNum(precioEmpaque, 0.25)
             };
 
             const res = await fetch('/api/admin/productos', {
@@ -189,11 +195,12 @@ export default function AdminProductos() {
                 fetchData();
                 setIsOpen(false);
             } else {
-                alert("Ocurrió un error al guardar el producto.");
+                const errData = await res.json().catch(() => ({}));
+                alert(errData.error || "Ocurrió un error al guardar el producto.");
             }
         } catch (e) {
             console.error(e);
-            alert("Error de conexión.");
+            alert("Error de conexión al guardar el producto.");
         } finally {
             setSaving(false);
         }
