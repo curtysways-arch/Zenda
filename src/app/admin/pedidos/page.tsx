@@ -375,8 +375,8 @@ function PedidosContent() {
               </div>
             </div>
 
-            {/* Grid de Productos (4 Columnas) */}
-            <div>
+            {/* Grid de Productos (4 Columnas con Scroll Interno) */}
+            <div className="max-h-[calc(100vh-170px)] overflow-y-auto pr-1">
               {loadingProducts ? (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                   <Loader2 className="w-8 h-8 animate-spin text-[#ea580c] mb-3" />
@@ -388,7 +388,7 @@ function PedidosContent() {
                   <p className="text-sm font-bold">No se encontraron productos en esta categoría</p>
                 </div>
               ) : (
-                <div className={viewMode === 'grid' ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3.5" : "space-y-2.5"}>
+                <div className={viewMode === 'grid' ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3" : "space-y-2.5"}>
                   {filteredProducts.map((product) => {
                     const cartEntry = cart[product.id] || { qty: 0, takeawayQty: 0 };
                     const qty = cartEntry.qty;
@@ -396,43 +396,43 @@ function PedidosContent() {
                     return (
                       <div
                         key={product.id}
-                        className="bg-white rounded-2xl border border-slate-200 overflow-hidden p-2 sm:p-3 transition-all duration-200 hover:shadow-md flex flex-col justify-between group relative"
+                        className="bg-white rounded-2xl border border-slate-200 overflow-hidden p-2 transition-all duration-200 hover:shadow-md flex flex-col justify-between group relative"
                       >
                         {/* Imagen & Badge Popular */}
-                        <div className="relative w-full h-24 sm:h-32 rounded-xl overflow-hidden bg-slate-100 mb-2">
+                        <div className="relative w-full h-20 sm:h-24 rounded-xl overflow-hidden bg-slate-100 mb-1.5">
                           <img
                             src={product.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500'}
                             alt={product.nombre}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                           {product.popular && (
-                            <span className="absolute top-1.5 right-1.5 bg-emerald-600 text-white font-extrabold text-[8px] sm:text-[9px] uppercase px-1.5 py-0.5 rounded-md shadow-sm">
+                            <span className="absolute top-1 right-1 bg-emerald-600 text-white font-extrabold text-[8px] uppercase px-1.5 py-0.5 rounded shadow-sm">
                               Popular
                             </span>
                           )}
                         </div>
 
                         {/* Título y Precio */}
-                        <div className="space-y-0.5 mb-2">
-                          <h3 className="font-extrabold text-[11px] sm:text-xs text-slate-900 line-clamp-1">{product.nombre}</h3>
-                          <p className="font-black text-[11px] sm:text-xs text-[#ea580c]">
+                        <div className="space-y-0.5 mb-1.5">
+                          <h3 className="font-extrabold text-[11px] text-slate-900 line-clamp-1">{product.nombre}</h3>
+                          <p className="font-black text-[11px] text-[#ea580c]">
                             ${(Number(product.precio) || 0).toFixed(2)}
                           </p>
                         </div>
 
                         {/* Stepper Controls ([-  0  +]) */}
-                        <div className="flex items-center justify-between p-1 rounded-xl bg-[#fff7ed] border border-[#ffedd5]">
+                        <div className="flex items-center justify-between p-0.5 rounded-xl bg-[#fff7ed] border border-[#ffedd5]">
                           <button
                             onClick={() => updateQty(product.id, -1)}
                             disabled={qty === 0}
-                            className="w-6 sm:w-7 h-5 sm:h-6 rounded-lg font-black text-xs bg-white text-[#ea580c] hover:bg-[#ffedd5] flex items-center justify-center transition-all disabled:opacity-30 shadow-sm cursor-pointer"
+                            className="w-6 h-5 rounded-lg font-black text-xs bg-white text-[#ea580c] hover:bg-[#ffedd5] flex items-center justify-center transition-all disabled:opacity-30 shadow-sm cursor-pointer"
                           >
                             -
                           </button>
                           <span className="font-extrabold text-xs px-1 text-[#ea580c]">{qty}</span>
                           <button
                             onClick={() => updateQty(product.id, 1)}
-                            className="w-6 sm:w-7 h-5 sm:h-6 rounded-lg font-black text-xs bg-white text-[#ea580c] hover:bg-[#ffedd5] flex items-center justify-center transition-all shadow-sm cursor-pointer"
+                            className="w-6 h-5 rounded-lg font-black text-xs bg-white text-[#ea580c] hover:bg-[#ffedd5] flex items-center justify-center transition-all shadow-sm cursor-pointer"
                           >
                             +
                           </button>
