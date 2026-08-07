@@ -498,25 +498,24 @@ export default function DriverAppPage() {
                   </button>
                 )}
 
-                {order.estado === 'REPARTIDOR_EN_LOCAL' && (
-                  <div className="p-3 bg-amber-500/20 border border-amber-500/30 rounded-xl text-amber-300 text-xs font-extrabold text-center flex items-center justify-center gap-2">
-                    <Clock className="w-4 h-4 text-amber-400 animate-pulse" />
-                    <span>En el Local • Esperando entrega del paquete por Cocina</span>
+                {(order.estado === 'REPARTIDOR_EN_LOCAL' || order.estado === 'ENTREGADO_A_REPARTIDOR') && (
+                  <div className="space-y-2">
+                    <div className="p-2.5 bg-amber-500/20 border border-amber-500/30 rounded-xl text-amber-300 text-xs font-extrabold text-center flex items-center justify-center gap-2 animate-pulse">
+                      <Clock className="w-4 h-4 text-amber-400" />
+                      <span>📍 Llegaste al Local • Esperando o recogiendo paquete</span>
+                    </div>
+                    <button
+                      onClick={() => handleUpdateState(order.id, 'ON_ROUTE')}
+                      disabled={actionLoading === order.id}
+                      className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95 transition-all"
+                    >
+                      <Navigation className="w-4 h-4" />
+                      <span>🚀 Paquete Recibido • Iniciar Ruta al Cliente</span>
+                    </button>
                   </div>
                 )}
 
-                {order.estado === 'ENTREGADO_A_REPARTIDOR' && (
-                  <button
-                    onClick={() => handleUpdateState(order.id, 'ON_ROUTE')}
-                    disabled={actionLoading === order.id}
-                    className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95 transition-all"
-                  >
-                    <Navigation className="w-4 h-4" />
-                    <span>🛵 Iniciar Ruta de Entrega al Cliente</span>
-                  </button>
-                )}
-
-                {order.estado === 'EN_CAMINO' || order.estado === 'EN_RUTA' ? (
+                {(order.estado === 'EN_CAMINO' || order.estado === 'EN_RUTA') && (
                   <button
                     onClick={() => handleUpdateState(order.id, 'DELIVERED')}
                     disabled={actionLoading === order.id}
@@ -525,7 +524,7 @@ export default function DriverAppPage() {
                     <CheckCircle className="w-4 h-4" />
                     <span>✅ Confirmar Entregado al Cliente</span>
                   </button>
-                ) : null}
+                )}
               </div>
             );
           })

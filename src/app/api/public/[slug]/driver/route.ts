@@ -142,13 +142,20 @@ export async function POST(
         return NextResponse.json({ error: 'orderId/taskId y driverId son requeridos.' }, { status: 400 });
       }
 
-      // Actualizar pedido en la BD a REPARTIDOR_ASIGNADO
+      const currentOrder = await (prisma as any).pedido.findUnique({ where: { id: targetId } });
+      let currentExtra = {};
+      if (currentOrder?.extraInfo) {
+        currentExtra = typeof currentOrder.extraInfo === 'string' ? JSON.parse(currentOrder.extraInfo) : currentOrder.extraInfo;
+      }
+
       const updatedOrder = await (prisma as any).pedido.update({
         where: { id: targetId },
         data: {
           estado: 'REPARTIDOR_ASIGNADO',
           extraInfo: {
+            ...currentExtra,
             assignedDriverId: driverId,
+            assignedDriverName: name || 'Marco Proaño',
             driverAcceptedAt: new Date().toISOString()
           }
         }
@@ -164,11 +171,18 @@ export async function POST(
         return NextResponse.json({ error: 'orderId/taskId es requerido.' }, { status: 400 });
       }
 
+      const currentOrder = await (prisma as any).pedido.findUnique({ where: { id: targetId } });
+      let currentExtra = {};
+      if (currentOrder?.extraInfo) {
+        currentExtra = typeof currentOrder.extraInfo === 'string' ? JSON.parse(currentOrder.extraInfo) : currentOrder.extraInfo;
+      }
+
       const updatedOrder = await (prisma as any).pedido.update({
         where: { id: targetId },
         data: {
           estado: 'REPARTIDOR_EN_LOCAL',
           extraInfo: {
+            ...currentExtra,
             driverArrivedAt: new Date().toISOString()
           }
         }
@@ -177,7 +191,34 @@ export async function POST(
       return NextResponse.json({ success: true, order: updatedOrder });
     }
 
-    // 5. Rechazar pedido (regresa a la cola WAITING_DISPATCH)
+    // 5. Actualizar estado de entrega (ON_ROUTE -> EN_RUTA, DELIVERED -> ENTREGADO)
+    if (action === 'UPDATE_DELIVERY_STATE') {
+      const targetId = orderId || taskId;
+      if (!targetId || !nextState) {
+        return NextResponse.json({ error: 'orderId/taskId y nextState son requeridos.' }, { status: 400 });
+      }
+
+      const currentOrder = await (prisma as any).pedido.findUnique({ where: { id: targetId } });
+      let currentExtra = {};
+      if (currentOrder?.extraInfo) {
+        currentExtra = typeof currentOrder.extraInfo === 'string' ? JSON.parse(currentOrder.extraInfo) : currentOrder.extraInfo;
+      }
+
+      const dbState = nextState === 'ON_ROUTE' ? 'EN_RUTA' : nextState === 'DELIVERED' ? 'ENTREGADO' : nextState;
+
+      const updatedOrder = await (prisma as any).pedido.update({
+        where: { id: targetId },
+        data: {
+          estado: dbState,
+          extraInfo: {
+            ...currentExtra,
+            stateUpdatedAt: new Date().toISOString()
+          }
+        }
+      });
+
+      return NextResponse.json({ success: true, order: updatedOrder });
+    }
     if (action === 'REJECT_TASK') {
       if (!taskId || !driverId) {
         return NextResponse.json({ error: 'taskId y driverId son requeridos.' }, { status: 400 });
