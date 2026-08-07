@@ -510,20 +510,26 @@ export default function DriverAppPage() {
                       className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95 transition-all"
                     >
                       <Navigation className="w-4 h-4" />
-                      <span>🚀 Paquete Recibido • Iniciar Ruta al Cliente</span>
+                      <span>🛵 INICIAR ENTREGA</span>
                     </button>
                   </div>
                 )}
 
                 {(order.estado === 'EN_CAMINO' || order.estado === 'EN_RUTA') && (
-                  <button
-                    onClick={() => handleUpdateState(order.id, 'DELIVERED')}
-                    disabled={actionLoading === order.id}
-                    className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95 transition-all"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    <span>✅ Confirmar Entregado al Cliente</span>
-                  </button>
+                  <div className="space-y-2">
+                    <div className="p-2.5 bg-blue-500/20 border border-blue-500/30 rounded-xl text-blue-300 text-xs font-extrabold text-center flex items-center justify-center gap-2">
+                      <Navigation className="w-4 h-4 text-blue-400 animate-pulse" />
+                      <span>🚀 En Ruta • Viajando a la dirección del cliente</span>
+                    </div>
+                    <button
+                      onClick={() => handleUpdateState(order.id, 'DELIVERED')}
+                      disabled={actionLoading === order.id}
+                      className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95 transition-all"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      <span>✅ Confirmar Entregado al Cliente</span>
+                    </button>
+                  </div>
                 )}
               </div>
             );
