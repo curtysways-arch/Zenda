@@ -452,9 +452,36 @@ export default function DriverAppPage() {
                   <p className="font-bold text-slate-200">{itemsSummary || 'Sin productos registrados'}</p>
                 </div>
 
-                <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex justify-between items-center text-xs font-bold">
-                  <span className="text-slate-400">Distancia estimada de entrega:</span>
-                  <span className="text-amber-400 font-black">📍 {distanceStr}</span>
+                {/* Mapa de Ubicación de Entrega */}
+                <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider flex items-center gap-1">
+                      <Map className="w-3.5 h-3.5 text-orange-400" /> Mapa de Ubicación:
+                    </span>
+                    {selectedOrderForDetail.direccionCliente && (
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedOrderForDetail.direccionCliente)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-orange-400 hover:underline text-[10px] font-bold flex items-center gap-1"
+                      >
+                        <span>Abrir GPS</span>
+                        <Navigation className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+
+                  <div className="h-28 w-full rounded-xl bg-slate-900 border border-slate-800/80 relative overflow-hidden flex items-center justify-center">
+                    <div className="absolute inset-0 bg-[radial-gradient(#ea580c_1.5px,transparent_1.5px)] [background-size:14px_14px] opacity-25" />
+                    <div className="relative z-10 flex flex-col items-center gap-1.5 p-2 text-center">
+                      <div className="w-9 h-9 rounded-full bg-orange-600 text-white flex items-center justify-center shadow-lg animate-bounce">
+                        <MapPin className="w-5 h-5" />
+                      </div>
+                      <span className="text-[10px] font-extrabold text-amber-300 bg-slate-950/90 px-2.5 py-0.5 rounded-full border border-amber-500/30 truncate max-w-[280px]">
+                        📍 {selectedOrderForDetail.direccionCliente || 'Ubicación de Destino'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
