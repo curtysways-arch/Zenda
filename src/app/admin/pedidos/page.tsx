@@ -585,93 +585,89 @@ function PedidosContent() {
             </div>
           </div>
 
-          {/* Tabla de Productos en Carrito (Flex-1 con Scroll Interno) */}
-          <div className="flex-1 my-1.5 overflow-hidden flex flex-col">
-            <div className="flex justify-between text-[8px] font-black uppercase tracking-wider text-slate-400 px-1 mb-1 shrink-0">
+          {/* Tabla de Productos en Carrito (Flex-1 Amplio con Scroll Interno) */}
+          <div className="flex-1 my-1 overflow-hidden flex flex-col min-h-[140px]">
+            <div className="flex justify-between text-[9px] font-black uppercase tracking-wider text-slate-400 px-1 mb-1 shrink-0">
               <span>Producto</span>
-              <span className="mr-5">Cant.</span>
+              <span className="mr-4">Empaque / Cant.</span>
               <span>Precio</span>
             </div>
 
             {selectedItems.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center p-3 border border-dashed border-slate-200 rounded-lg text-center text-xs text-slate-400">
-                Selecciona productos del menú.
+              <div className="flex-1 flex items-center justify-center p-3 border border-dashed border-slate-200 rounded-xl text-center text-xs text-slate-400">
+                Selecciona productos del menú para armar la orden.
               </div>
             ) : (
-              <div className="flex-1 overflow-y-auto space-y-1 pr-1 custom-scrollbar min-h-[60px] max-h-[140px] xl:max-h-[180px]">
+              <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar max-h-[220px] xl:max-h-[280px]">
                 {selectedItems.map(item => (
                   <div
                     key={item.productoId}
-                    className="p-1.5 rounded-lg border border-slate-200 bg-slate-50 space-y-1"
+                    className="p-1.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-1.5 hover:bg-slate-100/80 transition-colors"
                   >
-                    {/* Fila Principal: Foto, Nombre, Cantidad, Precio y Eliminar */}
-                    <div className="flex items-center justify-between gap-1.5">
-                      {/* Thumbnail & Nombre */}
-                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                        <img
-                          src={item.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=100'}
-                          alt={item.nombreProducto}
-                          className="w-6 h-6 rounded object-cover shrink-0"
-                        />
-                        <div className="min-w-0">
-                          <p className="font-extrabold text-[10px] text-slate-900 truncate">{item.nombreProducto}</p>
-                          <p className="text-[8px] text-slate-400 font-semibold">${item.precioUnitario.toFixed(2)} c/u</p>
-                        </div>
-                      </div>
-
-                      {/* Stepper Cantidad General */}
-                      <div className="flex items-center gap-0.5 px-1 py-0.5 rounded border border-slate-200 bg-white">
-                        <button
-                          onClick={() => updateQty(item.productoId, -1)}
-                          className="w-3 h-3 flex items-center justify-center font-black text-[10px] text-slate-600 hover:text-rose-500"
-                        >
-                          -
-                        </button>
-                        <span className="font-extrabold text-[10px] w-3 text-center text-slate-900">{item.cantidad}</span>
-                        <button
-                          onClick={() => updateQty(item.productoId, 1)}
-                          className="w-3 h-3 flex items-center justify-center font-black text-[10px] text-slate-600 hover:text-emerald-600"
-                        >
-                          +
-                        </button>
-                      </div>
-
-                      {/* Total & Delete */}
-                      <div className="flex items-center gap-1 shrink-0">
-                        <span className="font-black text-[10px] text-slate-900">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
-                        <button
-                          onClick={() => removeItem(item.productoId)}
-                          className="text-slate-400 hover:text-rose-500 p-0.5 cursor-pointer"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
+                    {/* Thumbnail & Nombre */}
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                      <img
+                        src={item.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=100'}
+                        alt={item.nombreProducto}
+                        className="w-7 h-7 rounded-md object-cover shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <p className="font-extrabold text-[11px] text-slate-900 truncate">{item.nombreProducto}</p>
+                        <p className="text-[8px] text-slate-400 font-semibold">${item.precioUnitario.toFixed(2)} c/u</p>
                       </div>
                     </div>
 
-                    {/* Fila Secundaria: Selección manual de Empaque para este Producto */}
-                    <div className="flex items-center justify-between pt-0.5 border-t border-slate-200/80 text-[8px]">
-                      <span className="text-slate-500 font-semibold">¿Empaque para Llevar?</span>
-                      <div className="flex items-center gap-0.5 bg-amber-50 border border-amber-200 px-1 py-0.5 rounded text-amber-900">
+                    {/* Controles de Empaque & Cantidad Inline */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {/* Botón rápido de Empaque por Ítem */}
+                      <div className="flex items-center gap-0.5 bg-amber-50 border border-amber-200 px-1 py-0.5 rounded-md text-amber-900">
                         <ShoppingBag className="w-2.5 h-2.5 text-amber-600" />
-                        <span className="font-extrabold uppercase text-[7px]">Empaque:</span>
                         <button
                           type="button"
                           onClick={() => updateTakeawayQty(item.productoId, -1)}
                           disabled={item.takeawayQty === 0}
-                          className="w-3 h-3 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[8px] cursor-pointer"
+                          className="w-3 h-3 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[9px] cursor-pointer"
                         >
                           -
                         </button>
-                        <span className="w-2.5 text-center font-black text-[8px] text-amber-950">{item.takeawayQty}</span>
+                        <span className="w-2 text-center font-black text-[9px] text-amber-950">{item.takeawayQty}</span>
                         <button
                           type="button"
                           onClick={() => updateTakeawayQty(item.productoId, 1)}
                           disabled={item.takeawayQty >= item.cantidad}
-                          className="w-3 h-3 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[8px] cursor-pointer"
+                          className="w-3 h-3 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[9px] cursor-pointer"
                         >
                           +
                         </button>
                       </div>
+
+                      {/* Stepper Cantidad General */}
+                      <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-md border border-slate-200 bg-white">
+                        <button
+                          onClick={() => updateQty(item.productoId, -1)}
+                          className="w-3.5 h-3.5 flex items-center justify-center font-black text-[10px] text-slate-600 hover:text-rose-500"
+                        >
+                          -
+                        </button>
+                        <span className="font-extrabold text-[10px] w-2.5 text-center text-slate-900">{item.cantidad}</span>
+                        <button
+                          onClick={() => updateQty(item.productoId, 1)}
+                          className="w-3.5 h-3.5 flex items-center justify-center font-black text-[10px] text-slate-600 hover:text-emerald-600"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Total & Delete */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="font-black text-[11px] text-slate-900">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
+                      <button
+                        onClick={() => removeItem(item.productoId)}
+                        className="text-slate-400 hover:text-rose-500 p-0.5 cursor-pointer"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
                     </div>
                   </div>
                 ))}
