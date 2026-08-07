@@ -172,16 +172,26 @@ export default function DriverAppPage() {
     }
   };
 
-  // Mis pedidos aceptados vs Pedidos disponibles en bolsa de trabajo
-  const myAssignedOrders = availableDbOrders.filter(o => 
-    o.extraInfo?.assignedDriverId === driverId || 
-    ['REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA'].includes(o.estado)
-  );
+  const parseExtraInfo = (extra: any) => {
+    if (!extra) return {};
+    if (typeof extra === 'string') {
+      try { return JSON.parse(extra); } catch { return {}; }
+    }
+    return extra;
+  };
 
-  const openUnassignedOrders = availableDbOrders.filter(o => 
-    !o.extraInfo?.assignedDriverId && 
-    ['EN_PREPARACION', 'ACEPTADO', 'LISTO'].includes(o.estado)
-  );
+  // Mis pedidos aceptados vs Pedidos disponibles en bolsa de trabajo
+  const myAssignedOrders = availableDbOrders.filter(o => {
+    const extra = parseExtraInfo(o.extraInfo);
+    return extra.assignedDriverId === driverId || 
+      ['REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA'].includes(o.estado);
+  });
+
+  const openUnassignedOrders = availableDbOrders.filter(o => {
+    const extra = parseExtraInfo(o.extraInfo);
+    return !extra.assignedDriverId && 
+      ['PENDIENTE', 'PENDING', 'WAITING_CONFIRMATION', 'POR_CONFIRMAR', 'EN_PREPARACION', 'ACEPTADO', 'LISTO'].includes(o.estado);
+  });
 
   // Calcular cuenta regresiva
   const getCountdownString = (estimatedReadyAt?: string) => {
