@@ -65,10 +65,8 @@ export default function AdminCocinaPage() {
     });
     fetchKDS();
   }
-
-  const pendientes = orders.filter(o => ['WAITING_ACCEPTANCE', 'PAGO_CONFIRMADO', 'RECIBIDO'].includes(o.estado));
+  const pendientes = orders.filter(o => ['WAITING_ACCEPTANCE', 'PAGO_CONFIRMADO', 'RECIBIDO', 'PENDIENTE'].includes(o.estado));
   const enPreparacion = orders.filter(o => ['CONFIRMED', 'PREPARACION', 'EN_PREPARACION', 'PREPARING'].includes(o.estado));
-  const listos = orders.filter(o => ['LISTO', 'READY'].includes(o.estado));
 
   if (loading) return (
     <div className="p-8 flex items-center justify-center min-h-[500px]">
@@ -94,47 +92,37 @@ export default function AdminCocinaPage() {
               Modo: {isEnterprise ? '● Enterprise Runtime' : '● Legacy'}
             </span>
           </div>
-          <p className="text-sm text-slate-500 mt-1">Gestión de comandas activas en tiempo real con actualización automática de 8 segundos</p>
+          <p className="text-sm text-slate-500 mt-1">Comandas activas pendientes de preparación en cocina (Actualización en tiempo real)</p>
         </div>
         <button onClick={fetchKDS} className="bg-white border border-slate-200 px-4 py-2 rounded-xl text-xs font-bold text-slate-700 flex items-center gap-2 hover:bg-slate-50">
           <RefreshCw className="size-4" /> Recargar
         </button>
       </div>
 
-      {/* 3 Columns KDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* 2 Columns Focused KDS: Pendientes + En Preparación */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Column 1: PENDIENTES / POR INICIAR */}
-        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
           <div className="flex justify-between items-center border-b border-slate-200 pb-3">
-            <span className="font-extrabold text-xs text-amber-600 uppercase tracking-wider">⏳ PENDIENTES ({pendientes.length})</span>
+            <span className="font-extrabold text-xs text-amber-600 uppercase tracking-wider">⏳ COMANDAS PENDIENTES ({pendientes.length})</span>
           </div>
           {pendientes.map(order => (
-            <KDSCard key={order.id} order={order} onAdvance={() => advanceOrder(order.id)} nextLabel="Iniciar Cocina" btnColor="bg-blue-600" />
+            <KDSCard key={order.id} order={order} onAdvance={() => advanceOrder(order.id)} nextLabel="Iniciar Preparación" btnColor="bg-blue-600" />
           ))}
-          {pendientes.length === 0 && <p className="text-xs text-slate-400 text-center py-8">Sin comanda pendiente</p>}
+          {pendientes.length === 0 && <p className="text-xs text-slate-400 text-center py-12">No hay comandas pendientes de iniciar</p>}
         </div>
 
         {/* Column 2: EN PREPARACIÓN */}
-        <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-4 space-y-4">
+        <div className="bg-blue-50/40 border border-blue-100 rounded-2xl p-5 space-y-4">
           <div className="flex justify-between items-center border-b border-blue-100 pb-3">
-            <span className="font-extrabold text-xs text-blue-600 uppercase tracking-wider">🔥 EN COCINA ({enPreparacion.length})</span>
+            <span className="font-extrabold text-xs text-blue-600 uppercase tracking-wider">🍳 EN COCINA PREPARANDO ({enPreparacion.length})</span>
           </div>
           {enPreparacion.map(order => (
-            <KDSCard key={order.id} order={order} onAdvance={() => advanceOrder(order.id)} nextLabel="Marcar Listo" btnColor="bg-emerald-600" />
+            <KDSCard key={order.id} order={order} onAdvance={() => advanceOrder(order.id)} nextLabel="Marcar Listo y Despachar" btnColor="bg-emerald-600" />
           ))}
-          {enPreparacion.length === 0 && <p className="text-xs text-slate-400 text-center py-8">Sin comanda en preparación</p>}
+          {enPreparacion.length === 0 && <p className="text-xs text-slate-400 text-center py-12">No hay platos preparándose actualmente en cocina</p>}
         </div>
-
-        {/* Column 3: LISTO */}
-        <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 space-y-4">
-          <div className="flex justify-between items-center border-b border-emerald-100 pb-3">
-            <span className="font-extrabold text-xs text-emerald-600 uppercase tracking-wider">✅ LISTO EN BARRA ({listos.length})</span>
-          </div>
-          {listos.map(order => (
-            <KDSCard key={order.id} order={order} onAdvance={() => advanceOrder(order.id)} nextLabel="Entregar Pedido" btnColor="bg-slate-700" />
-          ))}
-          {listos.length === 0 && <p className="text-xs text-slate-400 text-center py-8">Sin comanda lista</p>}
-        </div>
+      </div>div>
       </div>
     </div>
   );

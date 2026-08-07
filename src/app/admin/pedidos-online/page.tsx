@@ -480,6 +480,39 @@ export default function PedidosOnlinePage() {
                   </div>
                 </div>
 
+                {/* Estado del Repartidor en Delivery Web */}
+                {isDelivery && (
+                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 text-xs space-y-1">
+                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block">Estado de Logística & Repartidor</span>
+                    {pedido.estado === 'REPARTIDOR_EN_LOCAL' ? (
+                      <div className="flex items-center gap-1.5 text-emerald-700 font-extrabold bg-emerald-50 p-1.5 rounded-lg border border-emerald-200 animate-pulse">
+                        <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>📍 ¡REPARTIDOR EN EL LOCAL! ({pedido.extraInfo?.assignedDriverName || 'Marco Proaño'})</span>
+                      </div>
+                    ) : pedido.estado === 'REPARTIDOR_ASIGNADO' ? (
+                      <div className="flex items-center gap-1.5 text-amber-800 font-extrabold bg-amber-50 p-1.5 rounded-lg border border-amber-200">
+                        <Bike className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span>🛵 Repartidor Asignado: {pedido.extraInfo?.assignedDriverName || 'Marco Proaño'} (En camino al local)</span>
+                      </div>
+                    ) : pedido.estado === 'EN_RUTA' || pedido.estado === 'EN_CAMINO' ? (
+                      <div className="flex items-center gap-1.5 text-blue-700 font-extrabold bg-blue-50 p-1.5 rounded-lg border border-blue-200">
+                        <Bike className="w-4 h-4 text-blue-600 shrink-0" />
+                        <span>🚀 En camino al cliente ({pedido.extraInfo?.assignedDriverName || 'Marco Proaño'})</span>
+                      </div>
+                    ) : pedido.estado === 'ENTREGADO' || pedido.estado === 'COMPLETADO' ? (
+                      <div className="flex items-center gap-1.5 text-emerald-700 font-extrabold bg-emerald-50 p-1.5 rounded-lg border border-emerald-200">
+                        <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>✅ Entregado al Cliente por {pedido.extraInfo?.assignedDriverName || 'Repartidor'}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-slate-500 font-semibold bg-slate-100 p-1.5 rounded-lg">
+                        <Clock className="w-4 h-4 text-slate-400 shrink-0" />
+                        <span>⚠️ Buscando repartidor en la red...</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Actions Bar */}
                 <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5">
                   {isPending ? (
@@ -517,16 +550,37 @@ export default function PedidosOnlinePage() {
                       </button>
                     </>
                   ) : (
-                    <div className="w-full flex items-center justify-between gap-2">
-                      <button
-                        onClick={() => handlePrintTicket(pedido)}
-                        className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors"
-                      >
-                        <Printer className="w-3.5 h-3.5" /> Ticket
-                      </button>
-                      <span className="text-[10px] font-black uppercase px-2 py-1 rounded-lg bg-slate-100 text-slate-700">
-                        Estado: {pedido.estado}
-                      </span>
+                    <div className="w-full space-y-2">
+                      {isDelivery && ['EN_PREPARACION', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'LISTO'].includes(pedido.estado) && (
+                        <button
+                          onClick={() => {
+                            setProcessingId(pedido.id);
+                            fetch('/api/admin/pedidos', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ id: pedido.id, estado: 'EN_RUTA' })
+                            })
+                            .then(() => fetchOnlineOrders())
+                            .finally(() => setProcessingId(null));
+                          }}
+                          disabled={processingId === pedido.id}
+                          className="w-full py-2.5 rounded-xl font-black text-xs uppercase bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5 cursor-pointer transition-all disabled:opacity-50"
+                        >
+                          {processingId === pedido.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bike className="w-4 h-4" />}
+                          📦 Entregar Producto a Repartidor
+                        </button>
+                      )}
+                      <div className="flex items-center justify-between gap-2">
+                        <button
+                          onClick={() => handlePrintTicket(pedido)}
+                          className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors"
+                        >
+                          <Printer className="w-3.5 h-3.5" /> Ticket
+                        </button>
+                        <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">
+                          Estado: {pedido.estado}
+                        </span>
+                      </div>
                     </div>
                   )}
                 </div>

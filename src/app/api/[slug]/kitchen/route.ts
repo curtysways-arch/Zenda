@@ -26,10 +26,10 @@ export async function GET(
   const { BusinessRuntimeResolver } = await import('@/core/runtime/BusinessRuntimeResolver');
   const runtimeInfo = await BusinessRuntimeResolver.resolve(negocio);
 
-  // Pedidos activos que la cocina debe atender (Soporte Enterprise + Legacy)
+  // Pedidos activos que la cocina debe atender (solo pendientes de preparación)
   const ACTIVE_KITCHEN_STATES = runtimeInfo.isEnterprise
-    ? ['WAITING_ACCEPTANCE', 'RECIBIDO', 'CONFIRMED', 'PAGO_CONFIRMADO', 'EN_PREPARACION', 'PREPARING', 'LISTO', 'READY']
-    : ['PENDIENTE_PAGO', 'PAGO_CONFIRMADO', 'RECIBIDO', 'CONFIRMED', 'EN_PREPARACION', 'LISTO'];
+    ? ['WAITING_ACCEPTANCE', 'RECIBIDO', 'CONFIRMED', 'PAGO_CONFIRMADO', 'EN_PREPARACION', 'PREPARING']
+    : ['PENDIENTE_PAGO', 'PAGO_CONFIRMADO', 'RECIBIDO', 'CONFIRMED', 'EN_PREPARACION', 'PENDIENTE'];
 
   const orders = await (prisma as any).pedido.findMany({
     where: {
