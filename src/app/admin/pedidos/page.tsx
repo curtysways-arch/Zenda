@@ -1,7 +1,7 @@
 'use client';
 // src/app/admin/pedidos/page.tsx
 // Módulo de Pedidos en Caja (POS Citiox Enterprise)
-// Vista Completa Borde a Borde (Edge-to-Edge Sin Márgenes Externos) en Tema Claro.
+// Selección de empaque no activa por defecto por producto + Corrección de scroll y margen móvil.
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -83,8 +83,9 @@ function PedidosContent() {
           setProducts(Array.isArray(dP) ? dP : []);
           if (Array.isArray(dP) && dP.length > 0) {
             const initialCart: { [id: string]: CartEntry } = {};
-            dP.slice(0, 4).forEach((p: any) => {
-              initialCart[p.id] = { qty: 1, takeawayQty: 1 };
+            dP.slice(0, 3).forEach((p: any) => {
+              // Empaque NUNCA activo por defecto (takeawayQty = 0)
+              initialCart[p.id] = { qty: 1, takeawayQty: 0 };
             });
             setCart(initialCart);
           }
@@ -162,6 +163,7 @@ function PedidosContent() {
   })();
 
   // Cart Steppers & Controls
+  // NOTA: takeawayQty NUNCA se activa solo. Permanece en 0 a menos que el usuario lo cambie expresamente.
   const updateQty = (id: string, delta: number) => {
     setCart(prev => {
       const current = prev[id] || { qty: 0, takeawayQty: 0 };
@@ -171,14 +173,23 @@ function PedidosContent() {
         delete copy[id];
         return copy;
       }
-      let nextTakeaway = current.takeawayQty;
-      if (delta > 0 && (tipoEntrega === 'PICKUP_ORDER' || tipoEntrega === 'DELIVERY_ORDER')) {
-        nextTakeaway += delta;
-      }
-      nextTakeaway = Math.min(nextQty, Math.max(0, nextTakeaway));
+      const nextTakeaway = Math.min(current.takeawayQty, nextQty);
       return {
         ...prev,
         [id]: { qty: nextQty, takeawayQty: nextTakeaway }
+      };
+    });
+  };
+
+  // Selector específico de cantidad de empaque para llevar por producto
+  const updateTakeawayQty = (id: string, delta: number) => {
+    setCart(prev => {
+      const current = prev[id];
+      if (!current) return prev;
+      const nextTakeaway = Math.min(current.qty, Math.max(0, current.takeawayQty + delta));
+      return {
+        ...prev,
+        [id]: { ...current, takeawayQty: nextTakeaway }
       };
     });
   };
@@ -243,7 +254,7 @@ function PedidosContent() {
           autoConfirm: true,
           items: selectedItems.map(i => ({
             productoId: i.productoId,
-            nombreProducto: i.takeawayQty > 0 ? `${i.nombreProducto} (${i.takeawayQty} para llevar)` : i.nombreProducto,
+            nombreProducto: i.takeawayQty > 0 ? `${i.nombreProducto} (${i.takeawayQty} con empaque)` : i.nombreProducto,
             precioUnitario: i.precioUnitario,
             cantidad: i.cantidad
           }))
@@ -266,7 +277,7 @@ function PedidosContent() {
   };
 
   return (
-    <div className="-m-5 md:-m-8 -mb-40 md:-mb-10 bg-[#faf8f5] text-slate-900 flex flex-col font-sans p-3 sm:p-4 min-h-[calc(100vh-20px)]">
+    <div className="-m-5 md:-m-8 mb-0 md:-mb-10 bg-[#faf8f5] text-slate-900 flex flex-col font-sans p-3 sm:p-4 pb-28 md:pb-6 min-h-screen overflow-y-auto">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         * { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -573,7 +584,7 @@ function PedidosContent() {
               </div>
             </div>
 
-            {/* Tabla de Productos en Carrito */}
+            {/* Tabla de Productos en Carrito + Selección de Empaque por Ítem */}
             <div className="space-y-1.5">
               <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-slate-400 px-1">
                 <span>Producto</span>
@@ -586,51 +597,80 @@ function PedidosContent() {
                   Selecciona productos del menú para armar la orden.
                 </div>
               ) : (
-                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                   {selectedItems.map(item => (
                     <div
                       key={item.productoId}
-                      className="p-2 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-2"
+                      className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2"
                     >
-                      {/* Thumbnail & Nombre */}
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <img
-                          src={item.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=100'}
-                          alt={item.nombreProducto}
-                          className="w-8 h-8 rounded-lg object-cover shrink-0"
-                        />
-                        <div className="min-w-0">
-                          <p className="font-extrabold text-xs text-slate-900 truncate">{item.nombreProducto}</p>
-                          <p className="text-[9px] text-slate-400 font-semibold">${item.precioUnitario.toFixed(2)} c/u</p>
+                      {/* Fila Principal: Foto, Nombre, Cantidad, Precio y Eliminar */}
+                      <div className="flex items-center justify-between gap-2">
+                        {/* Thumbnail & Nombre */}
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <img
+                            src={item.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=100'}
+                            alt={item.nombreProducto}
+                            className="w-8 h-8 rounded-lg object-cover shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <p className="font-extrabold text-xs text-slate-900 truncate">{item.nombreProducto}</p>
+                            <p className="text-[9px] text-slate-400 font-semibold">${item.precioUnitario.toFixed(2)} c/u</p>
+                          </div>
+                        </div>
+
+                        {/* Stepper Cantidad General */}
+                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-slate-200 bg-white">
+                          <button
+                            onClick={() => updateQty(item.productoId, -1)}
+                            className="w-3.5 h-3.5 flex items-center justify-center font-black text-xs text-slate-600 hover:text-rose-500"
+                          >
+                            -
+                          </button>
+                          <span className="font-extrabold text-xs w-3 text-center text-slate-900">{item.cantidad}</span>
+                          <button
+                            onClick={() => updateQty(item.productoId, 1)}
+                            className="w-3.5 h-3.5 flex items-center justify-center font-black text-xs text-slate-600 hover:text-emerald-600"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        {/* Total & Delete */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="font-black text-xs text-slate-900">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
+                          <button
+                            onClick={() => removeItem(item.productoId)}
+                            className="text-slate-400 hover:text-rose-500 p-0.5 cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
 
-                      {/* Stepper */}
-                      <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-slate-200 bg-white">
-                        <button
-                          onClick={() => updateQty(item.productoId, -1)}
-                          className="w-3.5 h-3.5 flex items-center justify-center font-black text-xs text-slate-600 hover:text-rose-500"
-                        >
-                          -
-                        </button>
-                        <span className="font-extrabold text-xs w-3 text-center text-slate-900">{item.cantidad}</span>
-                        <button
-                          onClick={() => updateQty(item.productoId, 1)}
-                          className="w-3.5 h-3.5 flex items-center justify-center font-black text-xs text-slate-600 hover:text-emerald-600"
-                        >
-                          +
-                        </button>
-                      </div>
-
-                      {/* Total & Delete */}
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="font-black text-xs text-slate-900">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
-                        <button
-                          onClick={() => removeItem(item.productoId)}
-                          className="text-slate-400 hover:text-rose-500 p-0.5 cursor-pointer"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
+                      {/* Fila Secundaria: Selección manual de Empaque para este Producto (NO predeterminado) */}
+                      <div className="flex items-center justify-between pt-1.5 border-t border-slate-200/80 text-[10px]">
+                        <span className="text-slate-500 font-semibold">¿Requiere Empaque para Llevar?</span>
+                        <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-lg text-amber-900">
+                          <ShoppingBag className="w-3 h-3 text-amber-600" />
+                          <span className="font-extrabold uppercase text-[9px]">Empaque:</span>
+                          <button
+                            type="button"
+                            onClick={() => updateTakeawayQty(item.productoId, -1)}
+                            disabled={item.takeawayQty === 0}
+                            className="w-4 h-4 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[10px] cursor-pointer"
+                          >
+                            -
+                          </button>
+                          <span className="w-3 text-center font-black text-[10px] text-amber-950">{item.takeawayQty}</span>
+                          <button
+                            type="button"
+                            onClick={() => updateTakeawayQty(item.productoId, 1)}
+                            disabled={item.takeawayQty >= item.cantidad}
+                            className="w-4 h-4 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[10px] cursor-pointer"
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
