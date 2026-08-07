@@ -552,78 +552,29 @@ function VentasContent() {
               </div>
             )}
 
-            {/* Selector Interactivo de Mesas (Si es Mesa) */}
+            {/* Selector Dropdown de Mesas (Si es Mesa) */}
             {tipoEntrega === 'TABLE_ORDER' && (
-              <div className="p-2 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-black uppercase tracking-wider text-amber-900 flex items-center gap-1">
-                    <Utensils className="w-3 h-3 text-amber-600" /> Selección de Mesa
-                  </span>
-                  <span className="text-[9px] font-extrabold text-amber-800 bg-amber-200/60 px-1.5 py-0.5 rounded">
-                    Mesa Activa: {mesaCode || 'Ninguna'}
-                  </span>
-                </div>
-
-                {/* Botones de Mesas Reales */}
-                {tables.length > 0 ? (
-                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 max-h-28 overflow-y-auto pr-0.5 custom-scrollbar">
-                    {tables.map(tbl => {
-                      const isSelected = mesaCode === tbl.name;
-                      const isOccupied = tbl.estado === 'OCUPADA';
-                      return (
-                        <button
-                          key={tbl.id}
-                          type="button"
-                          onClick={() => setMesaCode(tbl.name)}
-                          className={`p-1.5 rounded-lg border text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
-                            isSelected
-                              ? 'bg-amber-600 text-white border-amber-700 shadow-md scale-[1.02]'
-                              : isOccupied
-                              ? 'bg-amber-100 text-amber-950 border-amber-300 hover:bg-amber-200'
-                              : 'bg-white text-slate-800 border-amber-200 hover:bg-amber-50'
-                          }`}
-                        >
-                          <span className="font-black text-[10px] truncate w-full">{tbl.name}</span>
-                          <span className={`text-[7px] font-bold uppercase tracking-tighter ${
-                            isSelected ? 'text-amber-100' : isOccupied ? 'text-amber-800' : 'text-emerald-600'
-                          }`}>
-                            {isSelected ? '✓ Seleccionada' : tbl.estado || 'Disponible'}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    <p className="text-[9px] text-amber-900 font-semibold">Selecciona o escribe el número de mesa:</p>
-                    <div className="grid grid-cols-4 gap-1">
-                      {['Mesa 01', 'Mesa 02', 'Mesa 03', 'Mesa 04', 'Mesa 05', 'Mesa 06', 'Mesa 07', 'Mesa 08'].map(m => (
-                        <button
-                          key={m}
-                          type="button"
-                          onClick={() => setMesaCode(m)}
-                          className={`py-1 px-1 rounded border text-[9px] font-extrabold cursor-pointer ${
-                            mesaCode === m ? 'bg-amber-600 text-white border-amber-700' : 'bg-white text-slate-800 border-amber-200'
-                          }`}
-                        >
-                          {m}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Input manual por si desean agregar un identificador libre (ej. Terraza 2) */}
-                <div className="pt-1 border-t border-amber-200/60 flex items-center gap-1.5">
-                  <span className="text-[8px] font-black text-amber-900 uppercase shrink-0">O escribir mesa:</span>
-                  <input
-                    type="text"
-                    value={mesaCode}
-                    onChange={e => setMesaCode(e.target.value)}
-                    className="w-full bg-white rounded-md px-2 py-0.5 border border-amber-200 text-[10px] font-extrabold text-amber-950 outline-none focus:border-amber-500"
-                    placeholder="Ej. Barra, Terraza 2..."
-                  />
-                </div>
+              <div>
+                <label className="block text-[8px] font-black uppercase text-amber-900 tracking-wider mb-0.5 flex items-center gap-1">
+                  <Utensils className="w-3 h-3 text-amber-600" /> Seleccionar Mesa
+                </label>
+                <select
+                  value={mesaCode}
+                  onChange={e => setMesaCode(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-lg text-xs font-extrabold bg-amber-50/80 border border-amber-300 text-amber-950 outline-none focus:border-amber-500 cursor-pointer shadow-sm"
+                >
+                  {tables.length > 0 ? (
+                    tables.map(tbl => (
+                      <option key={tbl.id} value={tbl.name}>
+                        {tbl.name} {tbl.estado === 'OCUPADA' ? '(Ocupada)' : '(Disponible)'}
+                      </option>
+                    ))
+                  ) : (
+                    ['Mesa 01', 'Mesa 02', 'Mesa 03', 'Mesa 04', 'Mesa 05', 'Mesa 06', 'Mesa 07', 'Mesa 08', 'Mesa 09', 'Mesa 10'].map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))
+                  )}
+                </select>
               </div>
             )}
 
@@ -645,6 +596,32 @@ function VentasContent() {
                   className="w-full px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-50 border border-slate-200 text-slate-900 outline-none"
                   placeholder="099 123 4567"
                 />
+              </div>
+            </div>
+
+            {/* Forma de Pago Selector */}
+            <div className="space-y-0.5">
+              <label className="block text-[8px] font-black uppercase text-slate-400 tracking-wider">Forma de Pago</label>
+              <div className="grid grid-cols-4 gap-1">
+                {[
+                  { id: 'EFECTIVO', label: 'Efectivo', icon: '💵' },
+                  { id: 'TRANSFERENCIA', label: 'Transf.', icon: '🏦' },
+                  { id: 'TARJETA', label: 'Tarjeta', icon: '💳' },
+                  { id: 'MIXTO', label: 'Mixto', icon: '⚖️' }
+                ].map(m => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setMetodoPago(m.id as any)}
+                    className={`py-1 px-0.5 rounded-md text-[9px] font-extrabold transition-all cursor-pointer flex items-center justify-center gap-0.5 ${
+                      metodoPago === m.id
+                        ? 'bg-slate-900 text-white shadow-sm'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    <span>{m.icon}</span> {m.label}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
