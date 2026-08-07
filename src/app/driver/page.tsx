@@ -21,6 +21,8 @@ interface DbOrder {
   telefonoCliente: string;
   direccionCliente?: string;
   referenciaCliente?: string;
+  latitud?: number;
+  longitud?: number;
   estado: string;
   total: number;
   costoEnvio?: number;
@@ -55,7 +57,7 @@ export default function DriverAppPage() {
   // Cargar estado inicial y registrar repartidor
   useEffect(() => {
     registerDriver();
-    const interval = setInterval(fetchDriverData, 5000);
+    const interval = setInterval(fetchDriverData, 4000); // Polling cada 4s
     return () => clearInterval(interval);
   }, []);
 
@@ -193,6 +195,29 @@ export default function DriverAppPage() {
       ['EN_PREPARACION', 'ACEPTADO', 'LISTO'].includes(o.estado);
   });
 
+  // Calcular distancia en Km entre local y cliente
+  const getDistanceString = (order: DbOrder) => {
+    const extra = parseExtraInfo(order.extraInfo);
+    const breakdownDist = extra?.pricingBreakdown?.distanceKm;
+    if (typeof breakdownDist === 'number' && breakdownDist > 0) {
+      return `${breakdownDist.toFixed(1)} km`;
+    }
+    if (order.latitud && order.longitud) {
+      const R = 6371;
+      const lat1 = -0.180653;
+      const lon1 = -78.467838;
+      const dLat = ((order.latitud - lat1) * Math.PI) / 180;
+      const dLon = ((order.longitud - lon1) * Math.PI) / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) * Math.cos((order.latitud * Math.PI) / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const dist = Math.round(R * c * 10) / 10;
+      return `${dist > 0 ? dist : 2.5} km`;
+    }
+    return '2.8 km aprox.';
+  };
+
   // Calcular cuenta regresiva
   const getCountdownString = (estimatedReadyAt?: string) => {
     if (!estimatedReadyAt) return '15:00 min';
@@ -219,7 +244,7 @@ export default function DriverAppPage() {
 
         <button
           onClick={fetchDriverData}
-          className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+          className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
           title="Refrescar datos"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -282,6 +307,10 @@ export default function DriverAppPage() {
 
           {openUnassignedOrders.map(order => {
             const deliveryFee = Number(order.costoEnvio || 2.50).toFixed(2);
+            const extra = parseExtraInfo(order.extraInfo);
+            const itemsSummary = (order.items || []).map(i => `${i.cantidad}x ${i.nombreProducto}`).join(', ');
+            const distanceStr = getDistanceString(order);
+
             return (
               <div
                 key={order.id}
@@ -289,22 +318,44 @@ export default function DriverAppPage() {
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="font-black text-sm text-white">#{order.codigo || order.id.slice(-6).toUpperCase()}</span>
-                    <h3 className="font-extrabold text-amber-300 text-xs mt-0.5">{order.nombreCliente}</h3>
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-sm text-white">#{order.codigo || order.id.slice(-6).toUpperCase()}</span>
+                      <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <Navigation className="w-3 h-3 text-amber-400" /> {distanceStr}
+                      </span>
+                    </div>
+                    <h3 className="font-extrabold text-amber-300 text-xs mt-1">{order.nombreCliente}</h3>
                   </div>
-                  <div className="bg-amber-400 text-slate-950 px-2.5 py-1 rounded-xl text-xs font-black flex items-center gap-1 shadow-md">
+                  <div className="bg-amber-400 text-slate-950 px-2.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1 shadow-md">
                     <DollarSign className="w-3.5 h-3.5" /> Ganancia: ${deliveryFee}
                   </div>
                 </div>
 
-                <div className="space-y-1 text-xs text-slate-300 bg-slate-950/60 p-2.5 rounded-xl border border-amber-500/20">
+                {/* Detalles de Dirección, Distancia y Contenido de Mochila */}
+                <div className="space-y-1.5 text-xs text-slate-300 bg-slate-950/70 p-3 rounded-xl border border-amber-500/20">
                   <div className="flex items-start gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                    <span>{order.direccionCliente || 'Retiro en Local / Dirección por confirmar'}</span>
+                    <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-semibold">{order.direccionCliente || 'Dirección de Entrega'}</span>
+                      {order.referenciaCliente && (
+                        <p className="text-[10px] text-slate-400 font-medium">Ref: {order.referenciaCliente}</p>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
-                    <Clock className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Llegada estimada a local: <strong>{getCountdownString(order.extraInfo?.estimatedReadyAt)}</strong></span>
+
+                  {itemsSummary && (
+                    <div className="flex items-start gap-1.5 text-[11px] text-slate-300 pt-1 border-t border-slate-800">
+                      <PackageCheck className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                      <span className="line-clamp-2">Paquete: <strong>{itemsSummary}</strong></span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Prep. Cocina: <strong>{getCountdownString(extra?.estimatedReadyAt)}</strong></span>
+                    </div>
+                    <span className="text-emerald-400 font-bold">📍 {distanceStr}</span>
                   </div>
                 </div>
 
@@ -398,7 +449,12 @@ export default function DriverAppPage() {
                   <div className="flex items-start justify-between gap-1">
                     <div className="flex items-start gap-2">
                       <MapPin className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
-                      <span className="font-semibold text-slate-200">{order.direccionCliente || 'Sin dirección registrada'}</span>
+                      <div>
+                        <span className="font-semibold text-slate-200">{order.direccionCliente || 'Sin dirección registrada'}</span>
+                        {order.referenciaCliente && (
+                          <p className="text-[10px] text-slate-400 font-medium mt-0.5">Ref: {order.referenciaCliente}</p>
+                        )}
+                      </div>
                     </div>
                     {order.direccionCliente && (
                       <a
@@ -411,11 +467,22 @@ export default function DriverAppPage() {
                       </a>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <a href={`tel:${order.telefonoCliente}`} className="font-bold text-emerald-400 hover:underline">
-                      {order.telefonoCliente}
-                    </a>
+
+                  {(order.items || []).length > 0 && (
+                    <div className="flex items-start gap-1.5 text-[11px] text-slate-300 pt-1.5 border-t border-slate-800">
+                      <PackageCheck className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                      <span className="line-clamp-2">Paquete: <strong>{(order.items || []).map(i => `${i.cantidad}x ${i.nombreProducto}`).join(', ')}</strong></span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-1.5 border-t border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <a href={`tel:${order.telefonoCliente}`} className="font-bold text-emerald-400 hover:underline">
+                        {order.telefonoCliente}
+                      </a>
+                    </div>
+                    <span className="text-[11px] font-bold text-amber-400">📍 Distancia: {getDistanceString(order)}</span>
                   </div>
                 </div>
 
