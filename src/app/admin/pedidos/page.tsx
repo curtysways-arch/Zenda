@@ -453,12 +453,12 @@ function PedidosContent() {
           </div>
         </div>
 
-        {/* ─── ORDEN ACTUAL & CHECKOUT (30% - 35% Width) ────────────────── */}
-        <div className="w-full lg:w-[360px] xl:w-[400px] bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-4 shrink-0 flex flex-col justify-between">
-          <div className="space-y-4">
+        {/* ─── ORDEN ACTUAL & CHECKOUT (Compacto & 100% Completo en Pantalla) ────────────────── */}
+        <div className="w-full lg:w-[360px] xl:w-[420px] bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5 space-y-2.5 shrink-0 flex flex-col justify-between">
+          <div className="space-y-2.5">
             
             {/* Header Orden Actual */}
-            <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <ShoppingBag className="w-4 h-4 text-[#ea580c]" />
                 <h2 className="font-extrabold text-xs text-slate-900 uppercase tracking-wider">Orden Actual</h2>
@@ -476,52 +476,52 @@ function PedidosContent() {
 
             {/* Tipo de Entrega Switcher */}
             <div>
-              <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5">Tipo de Entrega</label>
-              <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200">
+              <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1">Tipo de Entrega</label>
+              <div className="grid grid-cols-3 gap-1 p-0.5 rounded-xl bg-slate-100 border border-slate-200">
                 <button
                   type="button"
                   onClick={() => setTipoEntrega('TABLE_ORDER')}
-                  className={`py-1.5 px-1 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                  className={`py-1 px-1 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                     tipoEntrega === 'TABLE_ORDER'
                       ? 'bg-[#ea580c] text-white shadow-md'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <Utensils className="w-3.5 h-3.5" /> En Mesa
+                  <Utensils className="w-3 h-3" /> En Mesa
                 </button>
                 <button
                   type="button"
                   onClick={() => setTipoEntrega('PICKUP_ORDER')}
-                  className={`py-1.5 px-1 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                  className={`py-1 px-1 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                     tipoEntrega === 'PICKUP_ORDER'
                       ? 'bg-[#ea580c] text-white shadow-md'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <ShoppingBag className="w-3.5 h-3.5" /> Para Llevar
+                  <ShoppingBag className="w-3 h-3" /> Para Llevar
                 </button>
                 <button
                   type="button"
                   onClick={() => setTipoEntrega('DELIVERY_ORDER')}
-                  className={`py-1.5 px-1 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                  className={`py-1 px-1 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                     tipoEntrega === 'DELIVERY_ORDER'
                       ? 'bg-[#ea580c] text-white shadow-md'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <Bike className="w-3.5 h-3.5" /> A Domicilio
+                  <Bike className="w-3 h-3" /> A Domicilio
                 </button>
               </div>
             </div>
 
             {/* Dirección de Entrega Card */}
             {tipoEntrega === 'DELIVERY_ORDER' && (
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
                 <div className="flex items-start justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Dirección de Entrega</span>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Dirección de Entrega</span>
                   <button
                     onClick={() => setShowMapModal(true)}
-                    className="text-xs font-bold text-[#ea580c] hover:underline cursor-pointer"
+                    className="text-[11px] font-bold text-[#ea580c] hover:underline cursor-pointer"
                   >
                     Cambiar
                   </button>
@@ -530,16 +530,16 @@ function PedidosContent() {
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 shrink-0 text-[#ea580c]" />
-                    <p className="font-extrabold text-xs text-slate-900 line-clamp-1">{direccionCliente}</p>
+                    <p className="font-extrabold text-[11px] text-slate-900 line-clamp-1">{direccionCliente}</p>
                   </div>
-                  <p className="text-[10px] text-slate-400 pl-5">{referenciaCliente}</p>
+                  <p className="text-[9px] text-slate-400 pl-5">{referenciaCliente}</p>
                 </div>
 
-                <div className="flex items-center justify-between pt-1.5 border-t border-slate-200 text-xs">
-                  <span className="text-slate-500 flex items-center gap-1 text-[10px]">
+                <div className="flex items-center justify-between pt-1 border-t border-slate-200 text-xs">
+                  <span className="text-slate-500 flex items-center gap-1 text-[9px]">
                     📍 {distanceKm} km de distancia
                   </span>
-                  <span className="font-black px-1.5 py-0.5 rounded bg-[#ea580c]/10 text-[#ea580c] text-[10px]">
+                  <span className="font-black px-1.5 py-0.5 rounded bg-[#ea580c]/10 text-[#ea580c] text-[9px]">
                     Tarifa: ${computedDeliveryCost.toFixed(2)}
                   </span>
                 </div>
@@ -549,35 +549,35 @@ function PedidosContent() {
             {/* Mesa Input */}
             {tipoEntrega === 'TABLE_ORDER' && (
               <div>
-                <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1">Mesa / Ubicación</label>
+                <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-0.5">Mesa / Ubicación</label>
                 <input
                   type="text"
                   value={mesaCode}
                   onChange={e => setMesaCode(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-50 border border-slate-200 text-slate-900 outline-none"
+                  className="w-full px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-50 border border-slate-200 text-slate-900 outline-none"
                   placeholder="Ej. Mesa 01"
                 />
               </div>
             )}
 
             {/* Cliente Inputs */}
-            <div className="space-y-1.5">
-              <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Cliente</label>
-              <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider">Cliente</label>
+              <div className="grid grid-cols-2 gap-1.5">
                 <input
                   type="text"
                   value={nombreCliente}
                   onChange={e => setNombreCliente(e.target.value)}
-                  className="w-full px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-50 border border-slate-200 text-slate-900 outline-none"
+                  className="w-full px-2 py-1 rounded-xl text-xs font-bold bg-slate-50 border border-slate-200 text-slate-900 outline-none"
                   placeholder="Nombre Cliente"
                 />
                 <div className="relative">
-                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs">🇪🇨</span>
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs">🇪🇨</span>
                   <input
                     type="text"
                     value={telefonoCliente}
                     onChange={e => setTelefonoCliente(e.target.value)}
-                    className="w-full pl-7 pr-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-50 border border-slate-200 text-slate-900 outline-none"
+                    className="w-full pl-6 pr-2 py-1 rounded-xl text-xs font-bold bg-slate-50 border border-slate-200 text-slate-900 outline-none"
                     placeholder="099 123 4567"
                   />
                 </div>
@@ -585,48 +585,48 @@ function PedidosContent() {
             </div>
 
             {/* Tabla de Productos en Carrito + Selección de Empaque por Ítem */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-slate-400 px-1">
+            <div className="space-y-1">
+              <div className="flex justify-between text-[9px] font-black uppercase tracking-wider text-slate-400 px-1">
                 <span>Producto</span>
-                <span className="mr-6">Cant.</span>
+                <span className="mr-5">Cant.</span>
                 <span>Precio</span>
               </div>
 
               {selectedItems.length === 0 ? (
-                <div className="p-5 border border-dashed border-slate-200 rounded-xl text-center text-xs text-slate-400">
+                <div className="p-4 border border-dashed border-slate-200 rounded-xl text-center text-xs text-slate-400">
                   Selecciona productos del menú para armar la orden.
                 </div>
               ) : (
-                <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                <div className="space-y-1.5 max-h-36 xl:max-h-44 overflow-y-auto pr-1">
                   {selectedItems.map(item => (
                     <div
                       key={item.productoId}
-                      className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2"
+                      className="p-2 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5"
                     >
                       {/* Fila Principal: Foto, Nombre, Cantidad, Precio y Eliminar */}
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center justify-between gap-1.5">
                         {/* Thumbnail & Nombre */}
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
                           <img
                             src={item.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=100'}
                             alt={item.nombreProducto}
-                            className="w-8 h-8 rounded-lg object-cover shrink-0"
+                            className="w-7 h-7 rounded-md object-cover shrink-0"
                           />
                           <div className="min-w-0">
-                            <p className="font-extrabold text-xs text-slate-900 truncate">{item.nombreProducto}</p>
-                            <p className="text-[9px] text-slate-400 font-semibold">${item.precioUnitario.toFixed(2)} c/u</p>
+                            <p className="font-extrabold text-[11px] text-slate-900 truncate">{item.nombreProducto}</p>
+                            <p className="text-[8px] text-slate-400 font-semibold">${item.precioUnitario.toFixed(2)} c/u</p>
                           </div>
                         </div>
 
                         {/* Stepper Cantidad General */}
-                        <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-slate-200 bg-white">
+                        <div className="flex items-center gap-1 px-1 py-0.5 rounded-lg border border-slate-200 bg-white">
                           <button
                             onClick={() => updateQty(item.productoId, -1)}
                             className="w-3.5 h-3.5 flex items-center justify-center font-black text-xs text-slate-600 hover:text-rose-500"
                           >
                             -
                           </button>
-                          <span className="font-extrabold text-xs w-3 text-center text-slate-900">{item.cantidad}</span>
+                          <span className="font-extrabold text-[11px] w-3 text-center text-slate-900">{item.cantidad}</span>
                           <button
                             onClick={() => updateQty(item.productoId, 1)}
                             className="w-3.5 h-3.5 flex items-center justify-center font-black text-xs text-slate-600 hover:text-emerald-600"
@@ -636,37 +636,37 @@ function PedidosContent() {
                         </div>
 
                         {/* Total & Delete */}
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="font-black text-xs text-slate-900">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span className="font-black text-[11px] text-slate-900">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
                           <button
                             onClick={() => removeItem(item.productoId)}
                             className="text-slate-400 hover:text-rose-500 p-0.5 cursor-pointer"
                           >
-                            <X className="w-3.5 h-3.5" />
+                            <X className="w-3 h-3" />
                           </button>
                         </div>
                       </div>
 
-                      {/* Fila Secundaria: Selección manual de Empaque para este Producto (NO predeterminado) */}
-                      <div className="flex items-center justify-between pt-1.5 border-t border-slate-200/80 text-[10px]">
-                        <span className="text-slate-500 font-semibold">¿Requiere Empaque para Llevar?</span>
-                        <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-lg text-amber-900">
-                          <ShoppingBag className="w-3 h-3 text-amber-600" />
-                          <span className="font-extrabold uppercase text-[9px]">Empaque:</span>
+                      {/* Fila Secundaria: Selección manual de Empaque para este Producto */}
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-200/80 text-[9px]">
+                        <span className="text-slate-500 font-semibold">¿Empaque para Llevar?</span>
+                        <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 px-1 py-0.5 rounded-md text-amber-900">
+                          <ShoppingBag className="w-2.5 h-2.5 text-amber-600" />
+                          <span className="font-extrabold uppercase text-[8px]">Empaque:</span>
                           <button
                             type="button"
                             onClick={() => updateTakeawayQty(item.productoId, -1)}
                             disabled={item.takeawayQty === 0}
-                            className="w-4 h-4 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[10px] cursor-pointer"
+                            className="w-3.5 h-3.5 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[9px] cursor-pointer"
                           >
                             -
                           </button>
-                          <span className="w-3 text-center font-black text-[10px] text-amber-950">{item.takeawayQty}</span>
+                          <span className="w-2.5 text-center font-black text-[9px] text-amber-950">{item.takeawayQty}</span>
                           <button
                             type="button"
                             onClick={() => updateTakeawayQty(item.productoId, 1)}
                             disabled={item.takeawayQty >= item.cantidad}
-                            className="w-4 h-4 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[10px] cursor-pointer"
+                            className="w-3.5 h-3.5 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[9px] cursor-pointer"
                           >
                             +
                           </button>
@@ -679,33 +679,33 @@ function PedidosContent() {
             </div>
           </div>
 
-          <div className="space-y-3 pt-2">
+          <div className="space-y-2 pt-1">
             {/* Totales & Subtotales */}
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-              <div className="flex justify-between text-xs text-slate-500 font-semibold">
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+              <div className="flex justify-between text-[11px] text-slate-500 font-semibold">
                 <span>Subtotal productos</span>
                 <span className="font-bold text-slate-900">${subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-xs text-slate-500 font-semibold">
+              <div className="flex justify-between text-[11px] text-slate-500 font-semibold">
                 <span>Empaque ({totalTakeawayUnits} productos) ℹ️</span>
                 <span className="font-bold text-slate-900">${packagingCost.toFixed(2)}</span>
               </div>
               {tipoEntrega === 'DELIVERY_ORDER' && (
-                <div className="flex justify-between text-xs text-slate-500 font-semibold">
+                <div className="flex justify-between text-[11px] text-slate-500 font-semibold">
                   <span>Entrega ({distanceKm} km)</span>
                   <span className="font-bold text-slate-900">${computedDeliveryCost.toFixed(2)}</span>
                 </div>
               )}
               
-              <div className="pt-1.5 border-t border-slate-200 flex justify-between items-center">
+              <div className="pt-1 border-t border-slate-200 flex justify-between items-center">
                 <span className="font-black text-xs text-slate-900 uppercase tracking-wider">TOTAL A COBRAR</span>
-                <span className="font-black text-xl text-emerald-600">${grandTotal.toFixed(2)}</span>
+                <span className="font-black text-lg text-emerald-600">${grandTotal.toFixed(2)}</span>
               </div>
             </div>
 
             {/* Método de Pago Selector */}
             <div>
-              <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5">Método de Pago</label>
+              <label className="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1">Método de Pago</label>
               <div className="grid grid-cols-3 gap-1">
                 {[
                   { id: 'EFECTIVO', label: '💵 Efectivo' },
@@ -718,7 +718,7 @@ function PedidosContent() {
                     key={pm.id}
                     type="button"
                     onClick={() => setMetodoPago(pm.id as any)}
-                    className={`py-1.5 px-1 rounded-lg text-[10px] font-bold border transition-all text-center cursor-pointer ${
+                    className={`py-1 px-1 rounded-lg text-[9px] font-bold border transition-all text-center cursor-pointer ${
                       metodoPago === pm.id
                         ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
                         : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -734,18 +734,18 @@ function PedidosContent() {
             <button
               onClick={handleSubmitOrder}
               disabled={submitting || selectedItems.length === 0}
-              className="w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-2.5 rounded-xl font-black text-xs uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center gap-1.5"
             >
               {submitting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
                 <>
-                  <ChefHat className="w-4 h-4" />
+                  <ChefHat className="w-3.5 h-3.5" />
                   CONFIRMAR ORDEN Y ENVIAR A COCINA
                 </>
               )}
             </button>
-            <p className="text-[9px] text-center text-slate-400 font-semibold">
+            <p className="text-[8px] text-center text-slate-400 font-semibold">
               Se enviará a cocina después de confirmar la orden
             </p>
           </div>
