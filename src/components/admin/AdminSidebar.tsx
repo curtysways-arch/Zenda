@@ -112,7 +112,8 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
 
     // Core Operational Capabilities
     if (capabilities.orders) {
-      items.push({ name: 'Pedidos', href: '/admin/pedidos', icon: Package, section: 'GESTIÓN OPERATIVA', badge: pendingOrders > 0 ? pendingOrders : undefined });
+      items.push({ name: 'Ventas', href: '/admin/ventas', icon: Store, section: 'GESTIÓN OPERATIVA' });
+      items.push({ name: 'Pedidos Online', href: '/admin/pedidos-online', icon: Package, section: 'GESTIÓN OPERATIVA', badge: pendingOrders > 0 ? pendingOrders : undefined });
     }
     items.push({ name: 'Caja & Finanzas', href: '/admin/caja', icon: Wallet, section: 'GESTIÓN OPERATIVA' });
     if (capabilities.dispatch) {

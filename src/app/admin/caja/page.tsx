@@ -315,6 +315,24 @@ export default function CajaDashboardPage() {
                     </div>
                 </div>
 
+                {/* Sección Única de Órdenes Pendientes de Cobro (estadoFinanciero === PENDIENTE) */}
+                <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-base font-black text-slate-900 uppercase tracking-tight flex items-center gap-2 italic">
+                                <Wallet className="text-amber-600 size-5" /> Órdenes Pendientes de Cobro
+                            </h3>
+                            <p className="text-xs text-slate-500 font-semibold">Órdenes abiertas o entregadas que requieren cobro en Caja (POS, Mesas, Delivery contra entrega)</p>
+                        </div>
+                        <span className="text-xs font-black bg-amber-100 text-amber-800 px-3 py-1 rounded-full">
+                            Filtro Financiero: PENDIENTE
+                        </span>
+                    </div>
+
+                    {/* Pending Collection List */}
+                    <PendingCollectionOrdersList onCollectionSuccess={fetchFinanceData} />
+                </div>
+
                 {/* Lista de Transacciones & Movimientos de Caja */}
                 <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
                     <div className="flex items-center justify-between">
@@ -447,3 +465,135 @@ export default function CajaDashboardPage() {
         </div>
     );
 }
+
+function PendingCollectionOrdersList({ onCollectionSuccess }: { onCollectionSuccess: () => void }) {
+    const [pendingOrders, setPendingOrders] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [processingId, setProcessingId] = useState<string | null>(null);
+    const [selectedMethod, setSelectedMethod] = useState<'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA'>('EFECTIVO');
+
+    const fetchPendingOrders = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch('/api/admin/pedidos');
+            if (res.ok) {
+                const data = await res.json();
+                // Regla de Caja: Filtrar ÚNICAMENTE órdenes con estadoFinanciero === 'PENDIENTE'
+                const pending = (Array.isArray(data) ? data : []).filter((p: any) => {
+                    const isPaid = p.paymentStatus === 'PAGADO' || p.payment?.status === 'PAID';
+                    return !isPaid && p.estado !== 'CANCELADO';
+                });
+                setPendingOrders(pending);
+            }
+        } catch (e) {
+            console.error('Error cargando órdenes pendientes en caja:', e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchPendingOrders();
+    }, []);
+
+    const handleCollectOrder = async (orderId: string) => {
+        setProcessingId(orderId);
+        try {
+            const res = await fetch('/api/admin/pedidos', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: orderId,
+                    paymentStatus: 'PAGADO',
+                    metodoPago: selectedMethod
+                })
+            });
+            if (res.ok) {
+                setPendingOrders(prev => prev.filter(o => o.id !== orderId));
+                onCollectionSuccess();
+            } else {
+                alert('Error registrando cobro en Caja');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error de conexión');
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-8 text-slate-400 text-xs font-bold gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-emerald-600" /> Cargando órdenes pendientes de cobrar...
+            </div>
+        );
+    }
+
+    if (pendingOrders.length === 0) {
+        return (
+            <div className="p-6 bg-slate-50 border border-dashed border-slate-200 rounded-2xl text-center text-xs font-bold text-slate-400">
+                ✅ No hay órdenes pendientes de cobro en este momento. Todas las ventas están al día.
+            </div>
+        );
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            {pendingOrders.map(order => (
+                <div
+                    key={order.id}
+                    className="p-3.5 bg-amber-50/50 border border-amber-200 rounded-2xl flex flex-col justify-between space-y-3"
+                >
+                    <div className="flex items-center justify-between border-b border-amber-100 pb-2">
+                        <div>
+                            <span className="font-black text-xs text-slate-900">
+                                #{order.codigo || order.id.slice(-6).toUpperCase()}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-semibold ml-2">
+                                ({order.mesaCode || order.tipoEntrega || 'Venta POS'})
+                            </span>
+                        </div>
+                        <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-amber-200 text-amber-900">
+                            {order.estado}
+                        </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="font-extrabold text-xs text-slate-900">{order.nombreCliente || 'Cliente'}</p>
+                            <p className="text-[10px] text-slate-400 font-semibold">{order.items?.length || 0} productos</p>
+                        </div>
+                        <p className="text-base font-black text-emerald-700">${(Number(order.total) || 0).toFixed(2)}</p>
+                    </div>
+
+                    {/* Selector de Método de Pago & Botón Cobrar */}
+                    <div className="pt-2 border-t border-amber-100 flex items-center gap-2">
+                        <select
+                            value={selectedMethod}
+                            onChange={e => setSelectedMethod(e.target.value as any)}
+                            className="text-[10px] font-bold bg-white border border-amber-200 rounded-lg px-1.5 py-1 text-slate-700 outline-none cursor-pointer"
+                        >
+                            <option value="EFECTIVO">💵 Efectivo</option>
+                            <option value="TRANSFERENCIA">🏦 Transferencia</option>
+                            <option value="TARJETA">💳 Tarjeta</option>
+                        </select>
+
+                        <button
+                            onClick={() => handleCollectOrder(order.id)}
+                            disabled={processingId === order.id}
+                            className="flex-1 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-wider shadow-sm flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 transition-all"
+                        >
+                            {processingId === order.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                                '💵 Cobrar en Caja'
+                            )}
+                        </button>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
+
