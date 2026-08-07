@@ -20,6 +20,8 @@ interface Product {
     activo: boolean;
     stock?: number | null;
     orden: number;
+    llevaEmpaque?: boolean;
+    precioEmpaque?: number;
     categoriaId?: string | null;
     categoria?: { id: string; nombre: string } | null;
 }
@@ -55,6 +57,8 @@ export default function AdminProductos() {
     const [stock, setStock] = useState('');
     const [orden, setOrden] = useState(0);
     const [categoriaId, setCategoriaId] = useState('');
+    const [llevaEmpaque, setLlevaEmpaque] = useState(true);
+    const [precioEmpaque, setPrecioEmpaque] = useState('0.25');
     const [saving, setSaving] = useState(false);
 
     const handleQuickCreateCategory = async (e: React.FormEvent) => {
@@ -132,6 +136,8 @@ export default function AdminProductos() {
         setStock('');
         setOrden(products.length);
         setCategoriaId(categories.length > 0 ? categories[0].id : '');
+        setLlevaEmpaque(true);
+        setPrecioEmpaque('0.25');
         setIsOpen(true);
     };
 
@@ -145,6 +151,8 @@ export default function AdminProductos() {
         setStock(p.stock !== null && p.stock !== undefined ? p.stock.toString() : '');
         setOrden(p.orden);
         setCategoriaId(p.categoriaId || '');
+        setLlevaEmpaque(p.llevaEmpaque !== undefined ? p.llevaEmpaque : true);
+        setPrecioEmpaque(p.precioEmpaque !== undefined && p.precioEmpaque !== null ? p.precioEmpaque.toString() : '0.25');
         setIsOpen(true);
     };
 
@@ -166,7 +174,9 @@ export default function AdminProductos() {
                 activo,
                 stock: stock.trim() !== '' ? parseInt(stock) : null,
                 orden: orden || 0,
-                categoriaId: categoriaId || null
+                categoriaId: categoriaId || null,
+                llevaEmpaque,
+                precioEmpaque: parseFloat(precioEmpaque) || 0.25
             };
 
             const res = await fetch('/api/admin/productos', {
@@ -518,6 +528,49 @@ export default function AdminProductos() {
                                                 <span className="text-[10px] font-bold text-slate-700">{activo ? 'Activo' : 'Inactivo'}</span>
                                             </label>
                                         </div>
+                                    </div>
+
+                                    {/* Sección Configuración de Empaque para Llevar */}
+                                    <div className="p-3 bg-amber-50/60 rounded-2xl border border-amber-200/80 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <ShoppingBag className="size-4 text-amber-600" />
+                                                <span className="text-[10px] font-black text-amber-900 uppercase tracking-wider">
+                                                    ¿Lleva Empaque para Llevar?
+                                                </span>
+                                            </div>
+                                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={llevaEmpaque}
+                                                    onChange={e => setLlevaEmpaque(e.target.checked)}
+                                                    className="hidden"
+                                                />
+                                                {llevaEmpaque ? (
+                                                    <ToggleRight className="size-8 text-amber-600 stroke-[1.5]" />
+                                                ) : (
+                                                    <ToggleLeft className="size-8 text-slate-300 stroke-[1.5]" />
+                                                )}
+                                                <span className="text-[10px] font-bold text-amber-900">{llevaEmpaque ? 'Sí' : 'No'}</span>
+                                            </label>
+                                        </div>
+
+                                        {llevaEmpaque && (
+                                            <div className="pt-2 border-t border-amber-200/60">
+                                                <label className="block text-[10px] font-black text-amber-900 uppercase tracking-wider mb-1.5">
+                                                    Precio del Empaque ($)
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    placeholder="0.25"
+                                                    value={precioEmpaque}
+                                                    onChange={e => setPrecioEmpaque(e.target.value)}
+                                                    className="w-full bg-white rounded-xl px-4 py-2.5 border border-amber-200 text-xs font-extrabold text-amber-950 outline-none focus:border-amber-500"
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

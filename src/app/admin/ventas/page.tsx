@@ -22,6 +22,8 @@ interface Product {
   categoriaId?: string;
   categoria?: { nombre: string };
   popular?: boolean;
+  llevaEmpaque?: boolean;
+  precioEmpaque?: number;
 }
 
 interface CartEntry {
@@ -196,7 +198,7 @@ function VentasContent() {
 
   const clearCart = () => setCart({});
 
-  // Selected Cart Items Summary
+  // Selected Cart Items Summary (incorporando llevaEmpaque y precioEmpaque por producto)
   const selectedItems = Object.entries(cart).map(([id, entry]) => {
     const p = products.find(prod => prod.id === id);
     return {
@@ -204,7 +206,9 @@ function VentasContent() {
       nombreProducto: p?.nombre || 'Producto Especial',
       precioUnitario: p?.precio || 0,
       cantidad: entry.qty,
-      takeawayQty: entry.takeawayQty,
+      takeawayQty: p?.llevaEmpaque === false ? 0 : entry.takeawayQty,
+      llevaEmpaque: p?.llevaEmpaque !== false,
+      precioEmpaque: p?.precioEmpaque ?? 0.25,
       imagenUrl: p?.imagenUrl
     };
   }).filter(i => i.cantidad > 0);
@@ -213,7 +217,8 @@ function VentasContent() {
   const totalItemsCount = selectedItems.reduce((acc, i) => acc + i.cantidad, 0);
   const totalTakeawayUnits = selectedItems.reduce((acc, i) => acc + i.takeawayQty, 0);
 
-  const packagingCost = totalTakeawayUnits * packagingAmount;
+  // Cálculo de empaque sumando el precio individual configurado por producto
+  const packagingCost = selectedItems.reduce((acc, i) => acc + (i.takeawayQty * i.precioEmpaque), 0);
   const grandTotal = Math.max(0, subtotal + packagingCost + computedDeliveryCost);
 
   // Filtered Products
@@ -544,26 +549,30 @@ function VentasContent() {
 
                     {/* Controles de Empaque & Cantidad Inline */}
                     <div className="flex items-center gap-1 shrink-0">
-                      <div className="flex items-center gap-0.5 bg-amber-50 border border-amber-200 px-1 py-0.5 rounded-md text-amber-900">
-                        <ShoppingBag className="w-2.5 h-2.5 text-amber-600" />
-                        <button
-                          type="button"
-                          onClick={() => updateTakeawayQty(item.productoId, -1)}
-                          disabled={item.takeawayQty === 0}
-                          className="w-3 h-3 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[9px] cursor-pointer"
-                        >
-                          -
-                        </button>
-                        <span className="w-2 text-center font-black text-[9px] text-amber-950">{item.takeawayQty}</span>
-                        <button
-                          type="button"
-                          onClick={() => updateTakeawayQty(item.productoId, 1)}
-                          disabled={item.takeawayQty >= item.cantidad}
-                          className="w-3 h-3 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[9px] cursor-pointer"
-                        >
-                          +
-                        </button>
-                      </div>
+                      {item.llevaEmpaque ? (
+                        <div className="flex items-center gap-0.5 bg-amber-50 border border-amber-200 px-1 py-0.5 rounded-md text-amber-900" title={`Precio empaque: $${item.precioEmpaque.toFixed(2)}`}>
+                          <ShoppingBag className="w-2.5 h-2.5 text-amber-600" />
+                          <button
+                            type="button"
+                            onClick={() => updateTakeawayQty(item.productoId, -1)}
+                            disabled={item.takeawayQty === 0}
+                            className="w-3 h-3 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[9px] cursor-pointer"
+                          >
+                            -
+                          </button>
+                          <span className="w-2 text-center font-black text-[9px] text-amber-950">{item.takeawayQty}</span>
+                          <button
+                            type="button"
+                            onClick={() => updateTakeawayQty(item.productoId, 1)}
+                            disabled={item.takeawayQty >= item.cantidad}
+                            className="w-3 h-3 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[9px] cursor-pointer"
+                          >
+                            +
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-[8px] font-extrabold text-slate-400 px-1">Sin Empaque</span>
+                      )}
 
                       <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-md border border-slate-200 bg-white">
                         <button

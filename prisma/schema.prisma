@@ -2595,6 +2595,9 @@ model Producto {
   activo      Boolean            @default(true)
   stock       Int?               // Opcional para control de stock
   orden       Int                @default(0)
+  llevaEmpaque Boolean           @default(true)
+  precioEmpaque Float            @default(0.25)
+  extraInfo   Json?
   negocioId   String
   categoriaId String?
   negocio     Negocio            @relation(fields: [negocioId], references: [id], onDelete: Cascade)

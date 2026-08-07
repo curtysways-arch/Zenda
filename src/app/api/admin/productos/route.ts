@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        const { nombre, descripcion, precio, imagenUrl, activo, stock, orden, categoriaId } = body;
+        const { nombre, descripcion, precio, imagenUrl, activo, stock, orden, categoriaId, llevaEmpaque, precioEmpaque } = body;
         
         if (!nombre || precio === undefined) {
             return NextResponse.json({ error: 'El nombre y precio son obligatorios' }, { status: 400 });
@@ -53,6 +53,8 @@ export async function POST(req: Request) {
                 activo: activo !== undefined ? activo : true,
                 stock: stock !== undefined && stock !== null && stock !== '' ? parseInt(stock) : null,
                 orden: orden || 0,
+                llevaEmpaque: llevaEmpaque !== undefined ? Boolean(llevaEmpaque) : true,
+                precioEmpaque: precioEmpaque !== undefined && precioEmpaque !== null && precioEmpaque !== '' ? parseFloat(precioEmpaque) : 0.25,
                 categoriaId: categoriaId || null,
                 negocioId
             }
@@ -74,7 +76,7 @@ export async function PUT(req: Request) {
 
     try {
         const body = await req.json();
-        const { id, nombre, descripcion, precio, imagenUrl, activo, stock, orden, categoriaId } = body;
+        const { id, nombre, descripcion, precio, imagenUrl, activo, stock, orden, categoriaId, llevaEmpaque, precioEmpaque } = body;
         
         if (!id || !nombre || precio === undefined) {
             return NextResponse.json({ error: 'El ID, nombre y precio son obligatorios' }, { status: 400 });
@@ -96,6 +98,8 @@ export async function PUT(req: Request) {
                 activo: activo !== undefined ? activo : true,
                 stock: stock !== undefined && stock !== null && stock !== '' ? parseInt(stock) : null,
                 orden: orden || 0,
+                llevaEmpaque: llevaEmpaque !== undefined ? Boolean(llevaEmpaque) : true,
+                precioEmpaque: precioEmpaque !== undefined && precioEmpaque !== null && precioEmpaque !== '' ? parseFloat(precioEmpaque) : 0.25,
                 categoriaId: categoriaId || null
             }
         });
