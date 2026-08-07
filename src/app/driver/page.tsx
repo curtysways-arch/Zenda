@@ -48,6 +48,8 @@ export default function DriverAppPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [nowTime, setNowTime] = useState<number>(Date.now());
 
+  const [selectedOrderForDetail, setSelectedOrderForDetail] = useState<DbOrder | null>(null);
+
   // Reloj en tiempo real para los contadores
   useEffect(() => {
     const timer = setInterval(() => setNowTime(Date.now()), 1000);
@@ -126,6 +128,7 @@ export default function DriverAppPage() {
           driverId,
         }),
       });
+      setSelectedOrderForDetail(null);
       fetchDriverData();
     } catch (e) {
       console.error('Error aceptando pedido:', e);
@@ -194,6 +197,8 @@ export default function DriverAppPage() {
     return !extra.assignedDriverId && 
       ['EN_PREPARACION', 'ACEPTADO', 'LISTO'].includes(o.estado);
   });
+
+  const hasActiveOrder = myAssignedOrders.length > 0;
 
   // Calcular distancia en Km entre local y cliente
   const getDistanceString = (order: DbOrder) => {
@@ -295,6 +300,16 @@ export default function DriverAppPage() {
         </div>
       </div>
 
+      {/* AVISO DE LIMITACIÓN DE 1 PEDIDO A LA VEZ */}
+      {hasActiveOrder && (
+        <div className="p-4 max-w-md mx-auto -mb-2">
+          <div className="bg-amber-950/60 border border-amber-500/50 p-3 rounded-2xl flex items-center gap-2.5 text-amber-200 text-xs font-bold shadow-lg">
+            <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0" />
+            <span>Tienes 1 carrera en curso. Debes completarla antes de aceptar nuevos servicios.</span>
+          </div>
+        </div>
+      )}
+
       {/* SECCIÓN 1: PEDIDOS DISPONIBLES EN BOLSA DE TRABAJO */}
       {status === 'DISPONIBLE' && openUnassignedOrders.length > 0 && (
         <div className="p-4 max-w-md mx-auto space-y-3">
@@ -324,7 +339,6 @@ export default function DriverAppPage() {
                         <Navigation className="w-3 h-3 text-amber-400" /> {distanceStr}
                       </span>
                     </div>
-                    <h3 className="font-extrabold text-amber-300 text-xs mt-1">{order.nombreCliente}</h3>
                   </div>
                   <div className="bg-amber-400 text-slate-950 px-2.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1 shadow-md">
                     <DollarSign className="w-3.5 h-3.5" /> Ganancia: ${deliveryFee}
@@ -360,18 +374,108 @@ export default function DriverAppPage() {
                 </div>
 
                 <button
-                  onClick={() => handleAcceptOrder(order.id)}
-                  disabled={actionLoading === order.id}
-                  className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black text-xs uppercase rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95"
+                  onClick={() => setSelectedOrderForDetail(order)}
+                  disabled={hasActiveOrder}
+                  className={`w-full py-3 text-xs font-black uppercase rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all ${
+                    hasActiveOrder 
+                      ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-amber-500/20 cursor-pointer active:scale-95'
+                  }`}
                 >
-                  <CheckCircle className="w-4 h-4" />
-                  Tomar este Pedido (${deliveryFee})
+                  <Navigation className="w-4 h-4" />
+                  {hasActiveOrder ? '⚠️ Finaliza tu pedido activo primero' : `👁️ Ver Detalles y Ruta ($${deliveryFee})`}
                 </button>
               </div>
             );
           })}
         </div>
       )}
+
+      {/* MODAL DE REVISIÓN DE DETALLES DE CARRERA (PRE-ACEPTACIÓN) */}
+      {selectedOrderForDetail && (() => {
+        const deliveryFee = Number(selectedOrderForDetail.costoEnvio || 2.50).toFixed(2);
+        const extra = parseExtraInfo(selectedOrderForDetail.extraInfo);
+        const itemsSummary = (selectedOrderForDetail.items || []).map(i => `${i.cantidad}x ${i.nombreProducto}`).join(', ');
+        const distanceStr = getDistanceString(selectedOrderForDetail);
+        const isCashOnDelivery = selectedOrderForDetail.paymentStatus !== 'PAGADO' && selectedOrderForDetail.paymentStatus !== 'PAID';
+        const totalToCollect = isCashOnDelivery ? Number(selectedOrderForDetail.total).toFixed(2) : '0.00';
+
+        return (
+          <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+            <div className="bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-amber-500/40 space-y-5 relative text-left">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                  <span className="text-xs font-black uppercase text-amber-400">Revisión de Carrera</span>
+                  <h3 className="text-lg font-black text-white">Pedido #{selectedOrderForDetail.codigo || selectedOrderForDetail.id.slice(-6).toUpperCase()}</h3>
+                </div>
+                <button
+                  onClick={() => setSelectedOrderForDetail(null)}
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="bg-amber-400 text-slate-950 p-3 rounded-2xl flex items-center justify-between font-black text-sm shadow-md">
+                <span>TU GANANCIA DE ENVÍO:</span>
+                <span className="text-base font-black">+${deliveryFee}</span>
+              </div>
+
+              <div className="space-y-3 text-xs text-slate-300">
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1.5">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-white">{selectedOrderForDetail.direccionCliente || 'Dirección de entrega'}</span>
+                      {selectedOrderForDetail.referenciaCliente && (
+                        <p className="text-[11px] text-slate-400 mt-0.5">Ref: {selectedOrderForDetail.referenciaCliente}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-[11px]">
+                    <span className="text-slate-400">Distancia estimada:</span>
+                    <span className="font-black text-amber-300">📍 {distanceStr}</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1.5">
+                  <span className="text-[10px] font-black uppercase text-slate-400 block">Detalle de Productos en Paquete:</span>
+                  <p className="font-bold text-slate-200">{itemsSummary || 'Sin productos registrados'}</p>
+                </div>
+
+                <div className={`p-3 rounded-xl border space-y-1 ${
+                  isCashOnDelivery ? 'bg-amber-950/40 border-amber-500/40 text-amber-200' : 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200'
+                }`}>
+                  <div className="flex justify-between items-center font-black">
+                    <span>COBRO AL CLIENTE:</span>
+                    <span>{isCashOnDelivery ? `💰 EFECTIVO: $${totalToCollect}` : '💳 PAGADO ONLINE ($0.00)'}</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    {isCashOnDelivery ? 'Cobras el valor total en efectivo al entregar al cliente.' : 'El pedido ya fue pagado online por el cliente.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 space-y-2">
+                <button
+                  onClick={() => handleAcceptOrder(selectedOrderForDetail.id)}
+                  disabled={actionLoading === selectedOrderForDetail.id || hasActiveOrder}
+                  className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black text-xs uppercase rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <CheckCircle className="w-5 h-5" />
+                  {hasActiveOrder ? '⚠️ Ya tienes 1 entrega activa' : `🟢 ACEPTAR ESTA CARRERA (Ganancia $${deliveryFee})`}
+                </button>
+                <button
+                  onClick={() => setSelectedOrderForDetail(null)}
+                  className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs uppercase rounded-2xl transition-colors cursor-pointer"
+                >
+                  Volver a la Bolsa
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* SECCIÓN 2: MIS PEDIDOS ACEPTADOS EN CURSO */}
       <div className="p-4 max-w-md mx-auto space-y-4">
