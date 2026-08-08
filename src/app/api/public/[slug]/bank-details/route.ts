@@ -64,6 +64,25 @@ export async function GET(
         const soloPagoPrevio = !isPinchos && (config.soloPagoPrevio ?? extraConfig.soloPagoPrevio ?? true);
         const permiteContraentrega = isPinchos || (config.permiteContraentrega ?? extraConfig.permiteContraentrega ?? false);
 
+        const defaultCuentas = Array.isArray(extraConfig.cuentas) && extraConfig.cuentas.length > 0
+            ? extraConfig.cuentas
+            : [
+                {
+                    id: 'acc_main',
+                    banco: method.banco,
+                    titular: method.titular,
+                    numeroCuenta: method.numeroCuenta,
+                    tipoCuenta: method.tipoCuenta,
+                    identificacion: method.identificacion,
+                    instructions: method.instructions,
+                    qrImageUrl: method.qrImageUrl
+                }
+            ];
+
+        const metodosContraentrega = Array.isArray(extraConfig.metodosContraentrega)
+            ? extraConfig.metodosContraentrega
+            : ['EFECTIVO', 'TRANSFERENCIA'];
+
         return NextResponse.json({
             success: true,
             method: {
@@ -76,7 +95,9 @@ export async function GET(
                 customName: method.customName,
                 qrImageUrl: method.qrImageUrl,
                 soloPagoPrevio,
-                permiteContraentrega
+                permiteContraentrega,
+                metodosContraentrega,
+                cuentas: defaultCuentas
             }
         });
     } catch (error) {

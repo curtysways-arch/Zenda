@@ -11,7 +11,7 @@ import {
   LayoutDashboard, CalendarDays, Dribbble, Sparkles, Settings, Users, LogOut,
   MessageSquare, Building2, BarChart3, Trophy, Tags, Lock, Layout, Package,
   GraduationCap, Contact, Scissors, Store, ShieldCheck, Bell, Briefcase, Utensils,
-  Truck, Wallet, LucideIcon
+  Truck, Wallet, CreditCard, LucideIcon
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -163,6 +163,7 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
 
     // Settings & Configuration (Universal)
     items.push({ name: 'Configuración', href: '/admin/config', icon: Settings, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    items.push({ name: 'Métodos de Pago', href: '/admin/metodos-pago', icon: CreditCard, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     items.push({ name: 'Perfil de Negocio', href: '/admin/perfil', icon: Building2, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     items.push({ name: 'Mi Plan', href: '/admin/plan', icon: Package, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     items.push({ name: 'Super Panel', href: '/superadmin', icon: ShieldCheck, section: 'CONFIGURACIÓN', roles: ['SUPERADMIN'] });

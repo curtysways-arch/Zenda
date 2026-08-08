@@ -205,6 +205,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
     // Draft Checkout State para Negocios con Pago Previo Obligatorio
     const [draftCheckoutPayload, setDraftCheckoutPayload] = useState<any>(null);
     const [draftPaymentCode, setDraftPaymentCode] = useState<string>('');
+    const [selectedBankIndex, setSelectedBankIndex] = useState<number>(0);
 
     // Estado para Pedido Activo y Contador Regresivo
     const [activeOrder, setActiveOrder] = useState<any | null>(null);
@@ -913,72 +914,105 @@ export default function ProductsStoreClient({ negocio }: Props) {
                     </div>
 
                     {/* Tarjeta 2: Datos para la Transferencia */}
-                    <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md space-y-4 text-left">
-                        <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                            <div className="flex items-center gap-3">
-                                <div className="size-10 bg-slate-900 text-white rounded-full flex items-center justify-center font-black shadow-xs shrink-0">
-                                    <Building2 className="size-5" />
-                                </div>
-                                <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Datos para la Transferencia</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl">
-                                <span className="text-xs font-black text-orange-700 uppercase tracking-wider">{bankConfig?.banco || 'BANCO PICHINCHA'}</span>
-                                <div className="size-5 bg-amber-400 text-slate-950 font-black rounded flex items-center justify-center text-[9px] shadow-2xs">
-                                    P
-                                </div>
-                            </div>
-                        </div>
+                    {(() => {
+                        const cuentasList = Array.isArray(bankConfig?.cuentas) && bankConfig.cuentas.length > 0 ? bankConfig.cuentas : [bankConfig || {}];
+                        const activeBankAcc = cuentasList[selectedBankIndex] || cuentasList[0] || {};
 
-                        <div className="grid grid-cols-2 gap-4 pt-1">
-                            <div className="flex items-center gap-3">
-                                <div className="size-8 bg-orange-100/70 text-orange-700 rounded-full flex items-center justify-center shrink-0">
-                                    <User className="size-4" />
+                        return (
+                            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md space-y-4 text-left">
+                                <div className="flex justify-between items-center border-b border-slate-100 pb-3 flex-wrap gap-2">
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-10 bg-slate-900 text-white rounded-full flex items-center justify-center font-black shadow-xs shrink-0">
+                                            <Building2 className="size-5" />
+                                        </div>
+                                        <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Datos para la Transferencia</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl">
+                                        <span className="text-xs font-black text-orange-700 uppercase tracking-wider">{activeBankAcc.banco || 'BANCO PICHINCHA'}</span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">TITULAR</span>
-                                    <span className="text-xs font-black text-slate-900">{bankConfig?.titular || 'Poleth Caicedo'}</span>
-                                </div>
-                            </div>
 
-                            <div className="flex items-center gap-3">
-                                <div className="size-8 bg-orange-100/70 text-orange-700 rounded-full flex items-center justify-center shrink-0">
-                                    <CreditCard className="size-4" />
-                                </div>
-                                <div>
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">TIPO DE CUENTA</span>
-                                    <span className="text-xs font-black text-slate-900">{bankConfig?.tipoCuenta || 'Ahorros'}</span>
-                                </div>
-                            </div>
+                                {/* Pestañas / Tabs si hay más de una cuenta bancaria */}
+                                {cuentasList.length > 1 && (
+                                    <div className="space-y-1.5">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Selecciona el Banco a Transferir:</span>
+                                        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                                            {cuentasList.map((acc: any, idx: number) => (
+                                                <button
+                                                    key={acc.id || idx}
+                                                    type="button"
+                                                    onClick={() => setSelectedBankIndex(idx)}
+                                                    className={`px-3.5 py-2 rounded-2xl text-xs font-black transition-all shrink-0 cursor-pointer ${
+                                                        selectedBankIndex === idx 
+                                                            ? 'bg-orange-600 text-white shadow-md' 
+                                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                    }`}
+                                                >
+                                                    🏦 {acc.banco}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
-                            <div className="flex items-center gap-3">
-                                <div className="size-8 bg-orange-100/70 text-orange-700 rounded-full flex items-center justify-center shrink-0">
-                                    <Hash className="size-4" />
-                                </div>
-                                <div>
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">NÚMERO DE CUENTA</span>
-                                    <span className="text-xs font-mono font-black text-slate-900 select-all">{bankConfig?.numeroCuenta || '2213913435'}</span>
-                                </div>
-                            </div>
+                                <div className="grid grid-cols-2 gap-4 pt-1">
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-8 bg-orange-100/70 text-orange-700 rounded-full flex items-center justify-center shrink-0">
+                                            <User className="size-4" />
+                                        </div>
+                                        <div>
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">TITULAR</span>
+                                            <span className="text-xs font-black text-slate-900">{activeBankAcc.titular || 'Titular de Cuenta'}</span>
+                                        </div>
+                                    </div>
 
-                            <div className="flex items-center gap-3">
-                                <div className="size-8 bg-orange-100/70 text-orange-700 rounded-full flex items-center justify-center shrink-0">
-                                    <FileText className="size-4" />
-                                </div>
-                                <div>
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">IDENTIFICACIÓN / RUC</span>
-                                    <span className="text-xs font-mono font-black text-slate-900">{bankConfig?.identificacion || '1792345678001'}</span>
-                                </div>
-                            </div>
-                        </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-8 bg-orange-100/70 text-orange-700 rounded-full flex items-center justify-center shrink-0">
+                                            <CreditCard className="size-4" />
+                                        </div>
+                                        <div>
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">TIPO DE CUENTA</span>
+                                            <span className="text-xs font-black text-slate-900">{activeBankAcc.tipoCuenta || 'Ahorros'}</span>
+                                        </div>
+                                    </div>
 
-                        {/* Código QR opcional */}
-                        {bankConfig?.qrImageUrl && (
-                            <div className="pt-3 text-center border-t border-slate-100">
-                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Escanea el código QR de Pago</span>
-                                <img src={bankConfig.qrImageUrl} alt="QR de Pago" className="w-36 h-36 mx-auto rounded-2xl border border-slate-200 shadow-md object-contain bg-white p-2" />
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-8 bg-orange-100/70 text-orange-700 rounded-full flex items-center justify-center shrink-0">
+                                            <Hash className="size-4" />
+                                        </div>
+                                        <div>
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">NÚMERO DE CUENTA</span>
+                                            <span className="text-xs font-mono font-black text-slate-900 select-all">{activeBankAcc.numeroCuenta || '0000000000'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-8 bg-orange-100/70 text-orange-700 rounded-full flex items-center justify-center shrink-0">
+                                            <FileText className="size-4" />
+                                        </div>
+                                        <div>
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">IDENTIFICACIÓN / RUC</span>
+                                            <span className="text-xs font-mono font-black text-slate-900">{activeBankAcc.identificacion || '0000000000001'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {activeBankAcc.instructions && (
+                                    <div className="p-3 bg-orange-50/70 border border-orange-200/60 rounded-2xl text-[11px] text-orange-950 font-medium">
+                                        💡 {activeBankAcc.instructions}
+                                    </div>
+                                )}
+
+                                {/* Código QR opcional */}
+                                {activeBankAcc.qrImageUrl && (
+                                    <div className="pt-3 text-center border-t border-slate-100">
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Escanea el código QR de Pago</span>
+                                        <img src={activeBankAcc.qrImageUrl} alt="QR de Pago" className="w-36 h-36 mx-auto rounded-2xl border border-slate-200 shadow-md object-contain bg-white p-2" />
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
+                        );
+                    })()}
 
                     {/* Formulario de Carga de Comprobante con Estilo Dashed */}
                     <form onSubmit={handleUploadEvidenceSubmit} className="space-y-4 pt-1">

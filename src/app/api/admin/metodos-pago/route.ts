@@ -60,12 +60,33 @@ export async function GET(req: Request) {
     const extraConfig = (typeof method.extraConfig === 'object' && method.extraConfig) ? (method.extraConfig as any) : {};
     const isPinchos = method.negocioId === 'pinchos' || (method as any).negocio?.slug === 'pinchos';
 
+    const defaultCuentas = Array.isArray(extraConfig.cuentas) && extraConfig.cuentas.length > 0
+      ? extraConfig.cuentas
+      : [
+          {
+            id: 'acc_main',
+            banco: method.banco || 'Banco Pichincha',
+            titular: method.titular || '',
+            numeroCuenta: method.numeroCuenta || '',
+            tipoCuenta: method.tipoCuenta || 'Ahorros',
+            identificacion: method.identificacion || '',
+            instructions: method.instructions || '',
+            qrImageUrl: method.qrImageUrl || null
+          }
+        ];
+
+    const metodosContraentrega = Array.isArray(extraConfig.metodosContraentrega)
+      ? extraConfig.metodosContraentrega
+      : ['EFECTIVO', 'TRANSFERENCIA'];
+
     return NextResponse.json({
       success: true,
       method: {
         ...method,
         soloPagoPrevio: extraConfig.soloPagoPrevio ?? (!isPinchos),
         permiteContraentrega: extraConfig.permiteContraentrega ?? isPinchos,
+        metodosContraentrega,
+        cuentas: defaultCuentas
       }
     });
   } catch (error: any) {
@@ -88,7 +109,7 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { banco, titular, numeroCuenta, tipoCuenta, identificacion, instructions, enabled, soloPagoPrevio, permiteContraentrega } = body;
+    const { banco, titular, numeroCuenta, tipoCuenta, identificacion, instructions, enabled, soloPagoPrevio, permiteContraentrega, metodosContraentrega, cuentas } = body;
 
     let bankProvider = await prisma.paymentProvider.findUnique({
       where: { code: 'BANK_TRANSFER' }
@@ -111,10 +132,28 @@ export async function PUT(req: Request) {
     });
 
     const currentExtraConfig = (typeof currentMethod?.extraConfig === 'object' && currentMethod?.extraConfig) ? (currentMethod.extraConfig as any) : {};
+    
+    // Normalizar cuentas bancarias
+    const accountsList = Array.isArray(cuentas) && cuentas.length > 0 ? cuentas : [
+      {
+        id: 'acc_main',
+        banco: banco || currentMethod?.banco || 'Banco Pichincha',
+        titular: titular || currentMethod?.titular || '',
+        numeroCuenta: numeroCuenta || currentMethod?.numeroCuenta || '',
+        tipoCuenta: tipoCuenta || currentMethod?.tipoCuenta || 'Ahorros',
+        identificacion: identificacion || currentMethod?.identificacion || '',
+        instructions: instructions || currentMethod?.instructions || ''
+      }
+    ];
+
+    const mainAccount = accountsList[0] || {};
+
     const updatedExtraConfig = {
       ...currentExtraConfig,
-      ...(soloPagoPrevio !== undefined ? { soloPagoPrevio: Boolean(soloPagoPrevio) } : {}),
-      ...(permiteContraentrega !== undefined ? { permiteContraentrega: Boolean(permiteContraentrega) } : {})
+      soloPagoPrevio: soloPagoPrevio !== undefined ? Boolean(soloPagoPrevio) : (currentExtraConfig.soloPagoPrevio ?? true),
+      permiteContraentrega: permiteContraentrega !== undefined ? Boolean(permiteContraentrega) : (currentExtraConfig.permiteContraentrega ?? false),
+      metodosContraentrega: Array.isArray(metodosContraentrega) ? metodosContraentrega : (currentExtraConfig.metodosContraentrega || ['EFECTIVO', 'TRANSFERENCIA']),
+      cuentas: accountsList
     };
 
     const updatedMethod = await prisma.paymentMethod.upsert({
@@ -122,12 +161,12 @@ export async function PUT(req: Request) {
         id: body.id || currentMethod?.id || 'pm_placeholder_id'
       },
       update: {
-        banco,
-        titular,
-        numeroCuenta,
-        tipoCuenta,
-        identificacion,
-        instructions,
+        banco: mainAccount.banco || banco || 'Banco Pichincha',
+        titular: mainAccount.titular || titular || '',
+        numeroCuenta: mainAccount.numeroCuenta || numeroCuenta || '',
+        tipoCuenta: mainAccount.tipoCuenta || tipoCuenta || 'Ahorros',
+        identificacion: mainAccount.identificacion || identificacion || '',
+        instructions: mainAccount.instructions || instructions || '',
         extraConfig: updatedExtraConfig,
         ...(enabled !== undefined ? { enabled } : {})
       },
@@ -135,17 +174,26 @@ export async function PUT(req: Request) {
         negocioId,
         providerId: bankProvider.id,
         enabled: enabled ?? true,
-        banco,
-        titular,
-        numeroCuenta,
-        tipoCuenta,
-        identificacion,
-        instructions,
+        banco: mainAccount.banco || banco || 'Banco Pichincha',
+        titular: mainAccount.titular || titular || '',
+        numeroCuenta: mainAccount.numeroCuenta || numeroCuenta || '',
+        tipoCuenta: mainAccount.tipoCuenta || tipoCuenta || 'Ahorros',
+        identificacion: mainAccount.identificacion || identificacion || '',
+        instructions: mainAccount.instructions || instructions || '',
         extraConfig: updatedExtraConfig
       }
     });
 
-    return NextResponse.json({ success: true, method: updatedMethod });
+    return NextResponse.json({
+      success: true,
+      method: {
+        ...updatedMethod,
+        soloPagoPrevio: updatedExtraConfig.soloPagoPrevio,
+        permiteContraentrega: updatedExtraConfig.permiteContraentrega,
+        metodosContraentrega: updatedExtraConfig.metodosContraentrega,
+        cuentas: updatedExtraConfig.cuentas
+      }
+    });
   } catch (error: any) {
     console.error('Error PUT /api/admin/metodos-pago:', error);
     return NextResponse.json({ error: 'Error al actualizar métodos de pago' }, { status: 500 });
