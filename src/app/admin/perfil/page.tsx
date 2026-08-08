@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Building2, Save, MapPin, Phone, Clock, DollarSign, Image as ImageIcon, Loader2, CheckCircle2, CreditCard, AlertCircle, Instagram, Facebook, Globe, Mail, Link2, ExternalLink, Settings, Sparkles, MessageCircle } from 'lucide-react';
 import GalleryAdmin from '@/components/admin/GalleryAdmin';
-import BannerGalleryAdmin from '@/components/admin/BannerGalleryAdmin';
 import FeatureGate from '@/components/ui/FeatureGate';
 import Link from 'next/link';
 import ImageUploader from '@/components/ui/ImageUploader';
@@ -590,26 +589,6 @@ export default function NegocioConfigPage() {
                             </div>
                         </div>
                     </div>
-                </div>
-
-
-
-                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 p-10">
-                    <h3 className="font-black text-gray-900 uppercase tracking-widest text-[10px] flex items-center gap-2 mb-8">
-                        <ImageIcon size={14} className="text-emerald-500" />
-                        Imágenes de Portada (Carrusel)
-                    </h3>
-                    <BannerGalleryAdmin
-                        onPrimaryChange={(url) => {
-                            setNegocio((prev: any) => ({
-                                ...prev,
-                                configuracion: {
-                                    ...(prev?.configuracion as any || {}),
-                                    bannerUrl: url || undefined
-                                }
-                            }));
-                        }}
-                    />
                 </div>
 
                 <div className="flex justify-end">

@@ -92,14 +92,45 @@ export default function ProductsStoreClient({ negocio }: Props) {
         return () => clearInterval(interval);
     }, [bannerList.length]);
 
+    // Helper para parsear cualquier string de hora (ej: "11:00 AM", "10:00 PM", "22:00") a minutos desde medianoche
+    const parseTimeToMinutes = (timeStr: string): number | null => {
+        if (!timeStr) return null;
+        const match = timeStr.trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/i);
+        if (!match) return null;
+        let hours = parseInt(match[1], 10);
+        const minutes = parseInt(match[2], 10);
+        const mer = match[3] ? match[3].toUpperCase() : null;
+
+        if (mer === 'PM' && hours < 12) hours += 12;
+        if (mer === 'AM' && hours === 12) hours = 0;
+
+        return hours * 60 + minutes;
+    };
+
+    // Helper para determinar si los minutos actuales están dentro del rango de atención
+    const isTimeWithinRange = (currentMinutes: number, openMinutes: number, closeMinutes: number): boolean => {
+        if (closeMinutes > openMinutes) {
+            // Horario regular del mismo día (ej: 11:00 a 22:00)
+            return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+        } else if (closeMinutes < openMinutes) {
+            // Horario nocturno que cruza medianoche (ej: 18:00 a 02:00)
+            return currentMinutes >= openMinutes || currentMinutes < closeMinutes;
+        }
+        return true;
+    };
+
     // Verificar si el local está cerrado
     const getStoreStatus = () => {
         if (config.cerradoManual === true || config.cerrado === true || config.fueradeServicio === true) {
             return { isClosed: true, reason: 'El local está cerrado en este momento por disposición del comercio.' };
         }
+
+        const now = new Date();
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+        // 1. Evaluar objeto de horarios estructurados si existe
         if (config.horarios && typeof config.horarios === 'object') {
             const days = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
-            const now = new Date();
             const currentDayKey = days[now.getDay()];
             const todaySchedule = config.horarios[currentDayKey];
 
@@ -108,18 +139,38 @@ export default function ProductsStoreClient({ negocio }: Props) {
                     return { isClosed: true, reason: `Hoy no hay atención. Horarios: ${config.horarioAtencion || 'ver detalles'}` };
                 }
                 if (todaySchedule.apertura && todaySchedule.cierre) {
-                    const [hA, mA] = todaySchedule.apertura.split(':').map(Number);
-                    const [hC, mC] = todaySchedule.cierre.split(':').map(Number);
-                    const currentMinutes = now.getHours() * 60 + now.getMinutes();
-                    const openMinutes = hA * 60 + mA;
-                    const closeMinutes = hC * 60 + mC;
+                    const openMinutes = parseTimeToMinutes(todaySchedule.apertura);
+                    const closeMinutes = parseTimeToMinutes(todaySchedule.cierre);
 
-                    if (currentMinutes < openMinutes || currentMinutes > closeMinutes) {
-                        return { isClosed: true, reason: `Fuera de horario. Atención hoy: ${todaySchedule.apertura} a ${todaySchedule.cierre}` };
+                    if (openMinutes !== null && closeMinutes !== null) {
+                        if (!isTimeWithinRange(currentMinutes, openMinutes, closeMinutes)) {
+                            return { isClosed: true, reason: `Fuera de horario. Atención hoy: ${todaySchedule.apertura} a ${todaySchedule.cierre}` };
+                        }
+                        return { isClosed: false, reason: '' };
                     }
                 }
             }
         }
+
+        // 2. Fallback: Evaluar el texto libre del horario (ej: "Lunes a Domingo: 11:00 AM - 10:00 PM")
+        const horarioTexto = config.horarioAtencion || 'Lunes a Domingo: 11:00 AM - 10:00 PM';
+        if (horarioTexto) {
+            const matches = Array.from(horarioTexto.matchAll(/(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/gi));
+            if (matches.length >= 2) {
+                const openMinutes = parseTimeToMinutes(matches[0][0]);
+                let closeMinutes = parseTimeToMinutes(matches[1][0]);
+
+                if (openMinutes !== null && closeMinutes !== null) {
+                    if (closeMinutes < openMinutes && !matches[1][3]) {
+                        closeMinutes += 12 * 60;
+                    }
+                    if (!isTimeWithinRange(currentMinutes, openMinutes, closeMinutes)) {
+                        return { isClosed: true, reason: `Fuera de horario de atención (${horarioTexto}).` };
+                    }
+                }
+            }
+        }
+
         return { isClosed: false, reason: '' };
     };
 
