@@ -63,12 +63,68 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const secondaryColor = negocio.colorSecundario || '#112117';
     const config: any = negocio.configuracion || {};
 
-    // Obtener la imagen de portada real subida por el negocio
-    const bannerFromImagenes = (negocio as any).imagenes?.find((i: any) => i.tipo === 'BANNER' || i.esBanner)?.url;
-    const bannerFromConfig = config.bannerUrl || config.banner_url || (negocio as any).bannerUrl;
-    const bannerImage = bannerFromImagenes || bannerFromConfig || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=687';
+    // Obtener todas las imágenes de portada/banner del negocio para el slider
+    const imagenesBannerList = (negocio as any).imagenes?.filter((i: any) => (i.tipo === 'BANNER' || i.esBanner) && i.url)?.map((i: any) => i.url) || [];
+    const configBannersList = (config.banners || []).map((b: any) => typeof b === 'string' ? b : b?.url).filter(Boolean);
+    const singleBanner = config.bannerUrl || config.banner_url || (negocio as any).bannerUrl;
 
-    const hasCustomBanner = !!(bannerFromImagenes || bannerFromConfig);
+    const rawBannerList = Array.from(new Set([
+        ...imagenesBannerList,
+        ...configBannersList,
+        ...(singleBanner ? [singleBanner] : [])
+    ])).filter(Boolean);
+
+    const bannerList = rawBannerList.length > 0 ? rawBannerList : [
+        'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=1200',
+        'https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1200',
+        'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200'
+    ];
+
+    const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+
+    useEffect(() => {
+        if (bannerList.length <= 1) return;
+        const interval = setInterval(() => {
+            setCurrentBannerIndex((prev) => (prev + 1) % bannerList.length);
+        }, 4500);
+        return () => clearInterval(interval);
+    }, [bannerList.length]);
+
+    // Verificar si el local está cerrado
+    const getStoreStatus = () => {
+        if (config.cerradoManual === true || config.cerrado === true || config.fueradeServicio === true) {
+            return { isClosed: true, reason: 'El local está cerrado en este momento por disposición del comercio.' };
+        }
+        if (config.horarios && typeof config.horarios === 'object') {
+            const days = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+            const now = new Date();
+            const currentDayKey = days[now.getDay()];
+            const todaySchedule = config.horarios[currentDayKey];
+
+            if (todaySchedule) {
+                if (todaySchedule.activo === false || todaySchedule.cerrado === true) {
+                    return { isClosed: true, reason: `Hoy no hay atención. Horarios: ${config.horarioAtencion || 'ver detalles'}` };
+                }
+                if (todaySchedule.apertura && todaySchedule.cierre) {
+                    const [hA, mA] = todaySchedule.apertura.split(':').map(Number);
+                    const [hC, mC] = todaySchedule.cierre.split(':').map(Number);
+                    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                    const openMinutes = hA * 60 + mA;
+                    const closeMinutes = hC * 60 + mC;
+
+                    if (currentMinutes < openMinutes || currentMinutes > closeMinutes) {
+                        return { isClosed: true, reason: `Fuera de horario. Atención hoy: ${todaySchedule.apertura} a ${todaySchedule.cierre}` };
+                    }
+                }
+            }
+        }
+        return { isClosed: false, reason: '' };
+    };
+
+    const storeStatus = getStoreStatus();
+    const isStoreClosed = storeStatus.isClosed;
+
+    const hasCustomBanner = bannerList.length > 0;
     const hasCustomTitle = !!((negocio as any).heroTitulo || config.heroTitulo);
 
     const heroTitle = (negocio as any).heroTitulo || config.heroTitulo || 'Los mejores pinchos para asar';
@@ -346,6 +402,10 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
     // Cart Operations
     const addToCart = (product: Product) => {
+        if (isStoreClosed) {
+            alert('El local se encuentra cerrado en este momento. No es posible añadir productos al carrito.');
+            return;
+        }
         const existing = cart.find(item => item.product.id === product.id);
         let newCart: CartItem[] = [];
         if (existing) {
@@ -1246,11 +1306,16 @@ export default function ProductsStoreClient({ negocio }: Props) {
                 <>
                     {/* ── HERO PRINCIPAL OSCURO ── */}
                     <div className="relative w-full bg-[#120800] overflow-hidden">
-                        {/* Imagen de fondo con overlay oscuro */}
-                        <div 
-                            className="absolute inset-0 bg-cover bg-center opacity-50"
-                            style={{ backgroundImage: `url('${bannerImage}')` }}
-                        />
+                        {/* Carrusel de imágenes de portada con transición suave */}
+                        {bannerList.map((url, idx) => (
+                            <div 
+                                key={idx}
+                                className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${
+                                    idx === currentBannerIndex ? 'opacity-50 z-0' : 'opacity-0 -z-10'
+                                }`}
+                                style={{ backgroundImage: `url('${url}')` }}
+                            />
+                        ))}
                         <div className="absolute inset-0 bg-gradient-to-t from-[#120800] via-[#120800]/60 to-[#120800]/20" />
                         <div className="absolute inset-0 bg-gradient-to-r from-[#120800]/80 via-transparent to-[#120800]/30" />
 
@@ -1277,30 +1342,54 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 {heroSub}
                             </p>
 
-                            {/* CTAs del Hero */}
-                            <div className="flex gap-3 flex-wrap">
-                                <button
-                                    onClick={() => {
-                                        setDeliveryType('DOMICILIO');
-                                        document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' });
-                                    }}
-                                    className="flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-xl active:scale-95 transition-all"
-                                    style={{ backgroundColor: primaryColor }}
-                                >
-                                    <span>🛵</span>
-                                    <span>Pedir a Domicilio</span>
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setDeliveryType('RETIRO');
-                                        document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' });
-                                    }}
-                                    className="flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider text-white/90 border border-white/30 bg-white/10 backdrop-blur-sm active:scale-95 transition-all hover:bg-white/20"
-                                >
-                                    <span>🏪</span>
-                                    <span>Retirar en Local</span>
-                                </button>
+                            {/* ── CARD DE HORARIO DE ATENCIÓN Y ESTADO DEL LOCAL ── */}
+                            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4.5 mb-2 text-white shadow-2xl">
+                                <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`w-3 h-3 rounded-full animate-pulse ${isStoreClosed ? 'bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.8)]' : 'bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)]'}`} />
+                                        <span className={`font-black text-xs uppercase tracking-wider ${isStoreClosed ? 'text-red-300' : 'text-emerald-300'}`}>
+                                            {isStoreClosed ? '🔴 Local Cerrado' : '🟢 Abierto Ahora'}
+                                        </span>
+                                    </div>
+                                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-white/90 px-2.5 py-1 rounded-full bg-white/10 border border-white/15">
+                                        {isStoreClosed ? 'Pedidos Pausados' : 'Pedidos Inmediatos'}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-start gap-2.5 text-xs text-white/90">
+                                    <Clock className="w-4 h-4 mt-0.5 shrink-0" style={{ color: primaryColor }} />
+                                    <div>
+                                        <p className="font-bold text-white text-xs">Horario de Atención:</p>
+                                        <p className="text-white/80 font-medium text-xs mt-0.5">
+                                            {config.horarioAtencion || 'Lunes a Domingo: 11:00 AM - 10:00 PM'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {isStoreClosed && (
+                                    <div className="mt-3 pt-2.5 border-t border-white/15 flex items-center gap-2 text-red-200 text-xs font-bold">
+                                        <Lock className="w-4 h-4 shrink-0 text-red-400" />
+                                        <span>El menú y los pedidos se desbloquean al abrir el local.</span>
+                                    </div>
+                                )}
                             </div>
+
+                            {/* Indicadores de Banner (Dots) */}
+                            {bannerList.length > 1 && (
+                                <div className="flex items-center gap-1.5 mt-3">
+                                    {bannerList.map((_, idx) => (
+                                        <button
+                                            key={idx}
+                                            type="button"
+                                            onClick={() => setCurrentBannerIndex(idx)}
+                                            className={`h-1.5 rounded-full transition-all duration-300 ${
+                                                idx === currentBannerIndex ? 'w-6 bg-white' : 'w-2 bg-white/40 hover:bg-white/70'
+                                            }`}
+                                            title={`Ver banner ${idx + 1}`}
+                                        />
+                                    ))}
+                                </div>
+                            )}
 
                             {/* 3 badges informativos */}
                             <div className="flex gap-4 mt-6 pt-5 border-t border-white/10 flex-wrap">
@@ -1416,6 +1505,21 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         </div>
                     )}
 
+                    {/* BANNER DE AVISO CUANDO EL LOCAL ESTÁ CERRADO */}
+                    {isStoreClosed && (
+                        <div className="mx-4 mt-4 p-4 rounded-3xl bg-gradient-to-r from-red-950 via-slate-900 to-rose-950 text-white border border-red-800/60 shadow-xl flex items-center gap-3">
+                            <div className="size-10 rounded-2xl bg-red-500/20 text-red-400 flex items-center justify-center shrink-0 border border-red-500/30">
+                                <Lock className="size-5 animate-bounce text-red-400" />
+                            </div>
+                            <div className="text-left">
+                                <h4 className="text-xs font-black uppercase tracking-wider text-red-300">🔴 Menú Bloqueado - Local Cerrado</h4>
+                                <p className="text-[11px] text-slate-300 font-medium mt-0.5">
+                                    {storeStatus.reason || 'El establecimiento no recibe pedidos en este momento.'}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Categorías (Filtros) */}
                     {categories.length > 0 && (
                         <div className="px-6 mt-4">
@@ -1515,7 +1619,16 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                                 <div className="flex justify-between items-center mt-auto pt-2">
                                                     <span className="text-sm font-black text-slate-900">${p.precio.toFixed(2)}</span>
                                                     
-                                                    {inCart ? (
+                                                    {isStoreClosed ? (
+                                                        <button 
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); alert('El local se encuentra cerrado en este momento.'); }}
+                                                            className="px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider text-red-500 bg-red-50 border border-red-100 flex items-center gap-1 opacity-85 cursor-not-allowed"
+                                                        >
+                                                            <Lock className="size-3" />
+                                                            <span>Cerrado</span>
+                                                        </button>
+                                                    ) : inCart ? (
                                                         <div className="flex items-center bg-slate-100 rounded-xl p-0.5 gap-1.5 border border-slate-200">
                                                             <button 
                                                                 type="button"
@@ -2020,13 +2133,23 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
                         {/* CTA */}
                         <div className="px-4 pb-6 space-y-2">
-                            <button
-                                onClick={() => { setShowCartDrawer(false); setStep('checkout'); }}
-                                className="w-full py-4 rounded-2xl text-white font-black text-sm uppercase tracking-widest shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                                style={{ backgroundColor: primaryColor }}
-                            >
-                                ⚡ Confirmar Pedido (${cartTotal.toFixed(2)})
-                            </button>
+                            {isStoreClosed ? (
+                                <button
+                                    disabled
+                                    className="w-full py-4 rounded-2xl bg-slate-200 text-slate-500 font-black text-xs uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2 border border-slate-300"
+                                >
+                                    <Lock className="size-4 text-red-500" />
+                                    <span>Local Cerrado - Pedidos Desactivados</span>
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => { setShowCartDrawer(false); setStep('checkout'); }}
+                                    className="w-full py-4 rounded-2xl text-white font-black text-sm uppercase tracking-widest shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                    style={{ backgroundColor: primaryColor }}
+                                >
+                                    ⚡ Confirmar Pedido (${cartTotal.toFixed(2)})
+                                </button>
+                            )}
                             <button
                                 onClick={() => setShowCartDrawer(false)}
                                 className="w-full py-3 rounded-2xl text-slate-600 font-black text-xs uppercase tracking-wider bg-slate-100 hover:bg-slate-200 active:scale-[0.98] transition-all"
@@ -2113,6 +2236,18 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 <span className="text-xs font-black uppercase tracking-wider text-slate-400">Cantidad</span>
                                 {(() => {
                                     const itemInCart = cart.find(item => item.product.id === zoomProduct.id);
+                                    if (isStoreClosed) {
+                                        return (
+                                            <button 
+                                                type="button"
+                                                disabled
+                                                className="h-12 px-6 rounded-2xl text-xs font-black uppercase tracking-wider text-red-500 bg-red-50 border border-red-200 opacity-80 cursor-not-allowed flex items-center gap-2"
+                                            >
+                                                <Lock className="size-4" />
+                                                <span>Local Cerrado</span>
+                                            </button>
+                                        );
+                                    }
                                     return itemInCart ? (
                                         <div className="flex items-center bg-slate-100/90 rounded-2xl p-1.5 gap-4 border border-slate-200 shadow-2xs">
                                             <button 
@@ -2140,6 +2275,12 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                             className="h-12 px-6 rounded-2xl text-xs font-black uppercase tracking-wider text-white shadow-xl hover:shadow-2xl active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                                             style={{ backgroundColor: primaryColor }}
                                         >
+                                            <Plus className="size-4 stroke-[2.5]" />
+                                            <span>Agregar al Carrito</span>
+                                        </button>
+                                    );
+                                })()}
+                            </div>                                     >
                                             <Plus className="size-4 stroke-[2.5]" />
                                             <span>Agregar al Carrito</span>
                                         </button>
