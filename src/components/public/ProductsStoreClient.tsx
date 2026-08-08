@@ -1306,8 +1306,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col pb-24 md:pb-12 text-slate-800 md:pt-[76px]" style={{ '--primary-color': primaryColor } as any}>
-            {/* Header */}
-            <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 py-4 flex items-center justify-between shadow-sm">
+            {/* Header móvil (En Desktop se usa la barra unificada PublicDesktopNav) */}
+            <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 py-4 flex items-center justify-between shadow-sm md:hidden">
                 <div className="flex items-center gap-3">
                     {step === 'checkout' && (
                         <button onClick={() => setStep('catalog')} className="p-1 rounded-lg text-slate-500 active:scale-95 transition-transform">

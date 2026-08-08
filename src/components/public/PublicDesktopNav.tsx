@@ -110,8 +110,21 @@ export default function PublicDesktopNav({
         : (hasModule(tipoNegocio, 'RESERVATIONS') ? 'Reservar Cancha' : 'Reservar Cita');
 
     const buttonHref = canOrders 
-        ? `/${slug}` 
+        ? `/${slug}#catalogo` 
         : `/${slug}#servicios`;
+
+    const handleCatalogClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        if (canOrders && pathname === `/${slug}`) {
+            const el = document.getElementById('catalogo') || document.getElementById('menu') || document.getElementById('productos');
+            if (el) {
+                e.preventDefault();
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                e.preventDefault();
+                window.scrollTo({ top: 380, behavior: 'smooth' });
+            }
+        }
+    };
 
     return (
         <nav 
@@ -174,7 +187,8 @@ export default function PublicDesktopNav({
                 {/* CTA Button */}
                 <Link
                     href={buttonHref}
-                    className="flex-shrink-0 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
+                    onClick={handleCatalogClick}
+                    className="flex-shrink-0 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
                     style={{ backgroundColor: 'var(--primary)' }}
                 >
                     {buttonText}

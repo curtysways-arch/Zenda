@@ -102,8 +102,8 @@ function RestaurantLandingContent({
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'multiply', opacity: 0.6 }}
         />
 
-        {/* Nav */}
-        <nav style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
+        {/* Nav (Móvil únicamente) */}
+        <nav className="md:hidden" style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {negocio.logoUrl && (
               // eslint-disable-next-line @next/next/no-img-element
@@ -169,7 +169,7 @@ function RestaurantLandingContent({
       )}
 
       {/* Menú de Productos con [-] N [+] */}
-      <div id="menu" style={{ padding: '32px 24px' }}>
+      <div id="catalogo" style={{ padding: '32px 24px' }}>
         <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#fff', fontSize: 32, fontWeight: 900, margin: '0 0 8px' }}>
           Nuestro Menú
         </h2>
