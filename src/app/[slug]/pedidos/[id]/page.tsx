@@ -52,8 +52,21 @@ export default async function OrderDetailPage({ params }: Props) {
     if (!negocio) notFound();
 
     const order = await (prisma as any).pedido.findFirst({
-        where: { id, negocioId: negocio.id },
-        include: { items: true }
+        where: {
+            negocioId: negocio.id,
+            OR: [
+                { id },
+                ...(isNaN(Number(id)) ? [] : [{ numeroPedido: Number(id) }])
+            ]
+        },
+        include: {
+            items: true,
+            payment: {
+                include: {
+                    evidences: { orderBy: { createdAt: 'desc' }, take: 1 }
+                }
+            }
+        }
     });
     if (!order) notFound();
 

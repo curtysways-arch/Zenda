@@ -24,11 +24,13 @@ export class PaymentService {
         negocioId: string;
         monto: number;
         methodId?: string;
+        estado?: PaymentStatus;
     }, dbClient?: any) {
         const db = dbClient || prisma;
-        const { pedidoId, negocioId, monto, methodId } = params;
+        const { pedidoId, negocioId, monto, methodId, estado } = params;
 
         const codigoPago = this.generatePaymentCode('PINCHOS');
+        const estadoInicial = estado || 'PENDIENTE';
 
         const payment = await db.orderPayment.create({
             data: {
@@ -37,13 +39,13 @@ export class PaymentService {
                 methodId: methodId || null,
                 monto,
                 moneda: 'USD',
-                estado: 'PENDIENTE',
+                estado: estadoInicial,
                 codigoPago,
                 history: {
                     create: {
                         estadoAnterior: null,
-                        estadoNuevo: 'PENDIENTE',
-                        observacion: 'Pago generado en estado pendiente.',
+                        estadoNuevo: estadoInicial,
+                        observacion: `Pago generado en estado ${estadoInicial}.`,
                         responsableNombre: 'SISTEMA'
                     }
                 }
@@ -108,7 +110,7 @@ export class PaymentService {
         });
 
         const estadoAnterior = currentPayment.estado;
-        const nuevoEstado: PaymentStatus = 'COMPROBANTE_ENVIADO';
+        const nuevoEstado: PaymentStatus = 'COMPROBANTE_RECIBIDO';
 
         // 5. Actualizar estado del pago y del pedido en transacción
         const updatedPayment = await prisma.$transaction(async (tx) => {
@@ -133,10 +135,10 @@ export class PaymentService {
                 }
             });
 
-            // Actualizar estado del Pedido a PAGO_EN_REVISION
+            // Mantener/Asegurar estado del Pedido como PENDIENTE
             await tx.pedido.update({
                 where: { id: currentPayment.pedidoId },
-                data: { estado: 'PAGO_EN_REVISION' }
+                data: { estado: 'PENDIENTE' }
             });
 
             return paymentUpdated;
@@ -205,15 +207,15 @@ export class PaymentService {
                 }
             });
 
-            let nuevoEstadoPedido: OrderStatus = 'PENDIENTE_PAGO';
+            let nuevoEstadoPedido: OrderStatus = 'PENDIENTE';
 
             if (newStatus === 'CONFIRMADO') {
-                // Al confirmar pago, el pedido entra AUTOMÁTICAMENTE a producción (EN_PREPARACION)
+                // Al confirmar pago, el pedido pasa a ACEPTADO y luego EN_PREPARACION
                 nuevoEstadoPedido = 'EN_PREPARACION';
             } else if (newStatus === 'RECHAZADO') {
-                nuevoEstadoPedido = 'PENDIENTE_PAGO';
-            } else if (newStatus === 'EN_REVISION' || newStatus === 'COMPROBANTE_ENVIADO') {
-                nuevoEstadoPedido = 'PAGO_EN_REVISION';
+                nuevoEstadoPedido = 'PENDIENTE';
+            } else if (newStatus === 'EN_REVISION' || newStatus === 'COMPROBANTE_ENVIADO' || newStatus === 'COMPROBANTE_RECIBIDO') {
+                nuevoEstadoPedido = 'PENDIENTE';
             }
 
             await tx.pedido.update({
@@ -262,13 +264,16 @@ export class PaymentService {
     }
 
     /**
-     * GUARD ESTRICTO: Impide pasar a produccion (EN_PREPARACION, LISTO, EN_RUTA, ENTREGADO) si no hay pago CONFIRMADO.
+     * GUARD ESTRICTO: Impide pasar a produccion si no hay pago CONFIRMADO (excepto CONTRA_ENTREGA).
      */
     static async guardOrderProduction(pedidoId: string, targetState: OrderStatus) {
         const productionStates: OrderStatus[] = [
             'EN_PREPARACION',
+            'PREPARACION',
             'LISTO',
             'EN_RUTA',
+            'EN_CAMINO',
+            'ESPERANDO_CLIENTE',
             'ENTREGADO'
         ];
 
@@ -276,6 +281,11 @@ export class PaymentService {
             const payment = await prisma.orderPayment.findUnique({
                 where: { pedidoId }
             });
+
+            if (payment && payment.estado === 'CONTRA_ENTREGA') {
+                // Contra entrega no requiere pago confirmado previo
+                return;
+            }
 
             if (!payment || payment.estado !== 'CONFIRMADO') {
                 throw new Error(

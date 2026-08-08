@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 import { 
   Globe, PackageCheck, Bike, ShoppingBag, Check, X, Clock, MapPin, Phone,
   User, Loader2, AlertCircle, RefreshCw, ChevronRight, DollarSign, Filter,
-  MessageCircle, Printer, ExternalLink, Sparkles
+  MessageCircle, Printer, ExternalLink, Sparkles, Eye
 } from 'lucide-react';
 
 interface Pedido {
@@ -121,6 +121,15 @@ export default function PedidosOnlinePage() {
     setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
   };
 
+  const isPendingState = (st: string) => 
+    ['PENDIENTE', 'PENDING', 'WAITING_CONFIRMATION', 'POR_CONFIRMAR', 'PAGO_EN_REVISION', 'PENDIENTE_PAGO', 'COMPROBANTE_ENVIADO'].includes((st || '').toUpperCase());
+
+  const isPreparingOrActiveState = (st: string) => 
+    ['EN_PREPARACION', 'PREPARANDO', 'ACEPTADO', 'RECIBIDO', 'LISTO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA', 'ESPERANDO_CLIENTE', 'DESPACHADO', 'DRIVER_ASSIGNED'].includes((st || '').toUpperCase());
+
+  const isCompletedState = (st: string) => 
+    ['ENTREGADO', 'FINALIZADO', 'COMPLETADO', 'CANCELADO', 'RECHAZADO'].includes((st || '').toUpperCase());
+
   const isPosOrTableOrder = (p: any): boolean => {
     const extra = typeof p.extraInfo === 'string' ? JSON.parse(p.extraInfo || '{}') : (p.extraInfo || {});
 
@@ -131,12 +140,17 @@ export default function PedidosOnlinePage() {
     const isExplicitWeb = channel === 'WEB' || channel === 'LANDING_WEB' || origin === 'LANDING_WEB' || origin === 'PUBLIC_CATALOG' || extra.isWebOrder === true;
 
     if (isExplicitWeb) {
-      // Verificar que no sea de mesa
       if (p.tipoEntrega === 'TABLE_ORDER' || p.tipoEntrega === 'MESA') return true;
       return false; // Aceptado en Pedidos Online
     }
 
-    // 2. Cualquier otra orden (POS, Caja, Mesas, Seeder histórico de métricas) se EXCLUYE de Pedidos Online
+    // Si viene con tipoEntrega web (DOMICILIO, RETIRO, DELIVERY_ORDER, PICKUP_ORDER), incluirlo
+    const tDelivery = (p.tipoEntrega || '').toUpperCase();
+    if (tDelivery === 'DOMICILIO' || tDelivery === 'RETIRO' || tDelivery === 'DELIVERY_ORDER' || tDelivery === 'PICKUP_ORDER') {
+      return false;
+    }
+
+    // 2. Cualquier otra orden (POS, Caja, Mesas) se EXCLUYE de Pedidos Online
     return true;
   };
 
@@ -151,7 +165,7 @@ export default function PedidosOnlinePage() {
 
         // Detectar si hay un nuevo pedido PENDIENTE para disparar la Alerta Fullscreen
         const newUnack = onlineOnly.find((p: Pedido) => 
-          (p.estado === 'PENDIENTE' || p.estado === 'WAITING_CONFIRMATION') && 
+          isPendingState(p.estado) && 
           !acknowledgedIds.has(p.id)
         );
 
@@ -167,25 +181,17 @@ export default function PedidosOnlinePage() {
     }
   };
 
-  useEffect(() => {
-    fetchOnlineOrders();
-    const interval = setInterval(fetchOnlineOrders, 8000); // Polling cada 8s
-    return () => clearInterval(interval);
-  }, [acknowledgedIds, soundEnabled, alertOrder]);
-
   const handleOpenReview = (pedido: Pedido) => {
-    // Si estaba la alerta sonar sonando, la cerramos
+    setReviewingOrder(pedido);
     if (alertOrder?.id === pedido.id) {
-      setAcknowledgedIds(prev => new Set(prev).add(pedido.id));
       setAlertOrder(null);
     }
-    setReviewingOrder(pedido);
-    setSelectedPrepTime(20);
-    const initialAvail: Record<string, boolean> = {};
-    pedido.items.forEach(item => {
-      initialAvail[item.id] = true;
+    setAcknowledgedIds(prev => new Set(prev).add(pedido.id));
+    const initAvail: Record<string, boolean> = {};
+    (pedido.items || []).forEach(item => {
+      initAvail[item.id] = true;
     });
-    setItemsAvailability(initialAvail);
+    setItemsAvailability(initAvail);
   };
 
   const handleConfirmAcceptOrder = async () => {
@@ -198,41 +204,95 @@ export default function PedidosOnlinePage() {
         body: JSON.stringify({
           id: reviewingOrder.id,
           estado: 'EN_PREPARACION',
-          prepTimeMinutes: selectedPrepTime,
-          extraInfoUpdates: {
-            itemsAvailability
-          }
+          estimatedDeliveryTime: selectedPrepTime,
+          itemsAvailability
         })
       });
       if (res.ok) {
-        setPedidos(prev => prev.map(p => p.id === reviewingOrder.id ? { ...p, estado: 'EN_PREPARACION' } : p));
-        // Enviar notificación a WhatsApp del cliente
         openWhatsApp(
           reviewingOrder.telefonoCliente,
           reviewingOrder.nombreCliente,
-          reviewingOrder.codigo || reviewingOrder.id.slice(-6),
-          `Hola ${reviewingOrder.nombreCliente}, tu pedido #${reviewingOrder.codigo || reviewingOrder.id.slice(-6)} de la tienda web ha sido ACEPTADO! 👨‍🍳 Tiempo estimado de entrega: ${selectedPrepTime} minutos.`
+          reviewingOrder.codigo || reviewingOrder.id.slice(-6).toUpperCase(),
+          `¡Hola ${reviewingOrder.nombreCliente}! Tu pedido #${reviewingOrder.codigo || reviewingOrder.id.slice(-6).toUpperCase()} ha sido ACEPTADO y está en preparación (Tiempo est. ${selectedPrepTime} min). 🍳🔥`
         );
-        setReviewingOrder(null);
-      } else {
-        alert('Error al aceptar el pedido');
       }
     } catch (e) {
-      console.error(e);
-      alert('Error de conexión');
+      console.error('Error accepting order:', e);
     } finally {
       setProcessingId(null);
+      setReviewingOrder(null);
+      fetchOnlineOrders();
     }
   };
 
-  const isPendingState = (st: string) => 
-    ['PENDIENTE', 'PENDING', 'WAITING_CONFIRMATION', 'POR_CONFIRMAR'].includes((st || '').toUpperCase());
+  const handleConfirmPayment = async (pedido: Pedido) => {
+    setProcessingId(pedido.id);
+    try {
+      if (pedido.payment?.id) {
+        const res = await fetch('/api/admin/payments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            paymentId: pedido.payment.id,
+            newStatus: 'CONFIRMADO',
+            observacion: 'Pago verificado y confirmado por el negocio.'
+          })
+        });
+        if (res.ok) {
+          openWhatsApp(
+            pedido.telefonoCliente,
+            pedido.nombreCliente,
+            pedido.codigo || pedido.id.slice(-6).toUpperCase(),
+            `¡Hola ${pedido.nombreCliente}! Confirmamos que recibimos tu pago para el pedido #${pedido.codigo || pedido.id.slice(-6).toUpperCase()}. Tu pedido ya fue ACEPTADO e ingresó a producción! 🍳🔥`
+          );
+        }
+      } else {
+        await fetch('/api/admin/pedidos', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: pedido.id, estado: 'EN_PREPARACION' })
+        });
+      }
+    } catch (e) {
+      console.error('Error al confirmar pago:', e);
+    } finally {
+      setProcessingId(null);
+      fetchOnlineOrders();
+    }
+  };
 
-  const isPreparingOrActiveState = (st: string) => 
-    ['EN_PREPARACION', 'PREPARANDO', 'ACEPTADO', 'RECIBIDO', 'LISTO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA', 'DESPACHADO', 'DRIVER_ASSIGNED'].includes((st || '').toUpperCase());
+  const handleRejectPayment = async (pedido: Pedido) => {
+    const reason = prompt('Motivo del rechazo del comprobante de pago:', 'El comprobante no es legible o la transferencia no coincide');
+    if (reason === null) return;
 
-  const isCompletedState = (st: string) => 
-    ['ENTREGADO', 'FINALIZADO', 'COMPLETADO', 'CANCELADO', 'RECHAZADO'].includes((st || '').toUpperCase());
+    setProcessingId(pedido.id);
+    try {
+      if (pedido.payment?.id) {
+        const res = await fetch('/api/admin/payments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            paymentId: pedido.payment.id,
+            newStatus: 'RECHAZADO',
+            motivoRechazo: reason
+          })
+        });
+        if (res.ok) {
+          openWhatsApp(
+            pedido.telefonoCliente,
+            pedido.nombreCliente,
+            pedido.codigo || pedido.id.slice(-6).toUpperCase(),
+            `Hola ${pedido.nombreCliente}, tu comprobante de pago para el pedido #${pedido.codigo || pedido.id.slice(-6).toUpperCase()} no pudo ser verificado. Motivo: ${reason}. Por favor adjunta un nuevo comprobante o ponte en contacto con nosotros.`
+          );
+        }
+      }
+    } catch (e) {
+      console.error('Error al rechazar pago:', e);
+    } finally {
+      setProcessingId(null);
+      fetchOnlineOrders();
+    }
+  };
 
   const pendingOrders = pedidos.filter(p => isPendingState(p.estado));
   const preparingOrders = pedidos.filter(p => isPreparingOrActiveState(p.estado));
@@ -385,7 +445,9 @@ export default function PedidosOnlinePage() {
             const isDelivery = ['DELIVERY_ORDER', 'DOMICILIO', 'DELIVERY'].includes((pedido.tipoEntrega || '').toUpperCase());
             const isPending = pedido.estado === 'PENDIENTE' || pedido.estado === 'PENDING';
             const isPreparing = pedido.estado === 'EN_PREPARACION' || pedido.estado === 'ACEPTADO';
-            const isPaid = pedido.paymentStatus === 'PAGADO' || pedido.payment?.status === 'PAID';
+
+            const pStatus = (pedido.payment?.estado || pedido.paymentStatus || '').toUpperCase();
+            const evidenceUrl = pedido.payment?.evidences?.[0]?.fileUrl;
 
             const itemsSum = (pedido.items || []).reduce((acc, item) => acc + (Number(item.precioUnitario || 0) * Number(item.cantidad || 1)), 0);
             const totalToDisplay = Number(pedido.total) > 0 ? Number(pedido.total) : (itemsSum + Number(pedido.costoEnvio || 0));
@@ -419,11 +481,28 @@ export default function PedidosOnlinePage() {
                     </p>
                   </div>
 
-                  <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider ${
-                    isPaid ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-amber-100 text-amber-900 border border-amber-200'
-                  }`}>
-                    {isPaid ? '💵 Pagado Online' : '💰 Pago al Recibir'}
-                  </span>
+                  {/* Dual Badge: Payment Status */}
+                  {pStatus === 'COMPROBANTE_RECIBIDO' || pStatus === 'COMPROBANTE_ENVIADO' || pStatus === 'EN_REVISION' ? (
+                    <span className="px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-amber-400 text-amber-950 border border-amber-500 animate-pulse shadow-sm">
+                      🟡 PAGO PENDIENTE VERIFICACIÓN
+                    </span>
+                  ) : pStatus === 'CONFIRMADO' || pStatus === 'PAGADO' ? (
+                    <span className="px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      ✅ PAGO CONFIRMADO
+                    </span>
+                  ) : pStatus === 'RECHAZADO' ? (
+                    <span className="px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-rose-100 text-rose-800 border border-rose-300">
+                      🔴 PAGO RECHAZADO
+                    </span>
+                  ) : pStatus === 'CONTRA_ENTREGA' ? (
+                    <span className="px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      🟢 CONTRA ENTREGA
+                    </span>
+                  ) : (
+                    <span className="px-2 py-1 rounded-lg text-[9px] font-black uppercase bg-slate-100 text-slate-700 border border-slate-200">
+                      💰 PAGO PENDIENTE
+                    </span>
+                  )}
                 </div>
 
                 {/* Info Cliente */}
@@ -480,11 +559,33 @@ export default function PedidosOnlinePage() {
                   </div>
                 </div>
 
+                {/* Comprobante Adjunto Preview */}
+                {evidenceUrl && (
+                  <div className="bg-amber-50 border border-amber-200 p-2.5 rounded-xl flex items-center justify-between text-xs">
+                    <span className="font-bold text-amber-900 text-[11px] flex items-center gap-1.5">
+                      📄 Comprobante Adjunto por Cliente
+                    </span>
+                    <a
+                      href={evidenceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[10px] font-black flex items-center gap-1 shadow-sm transition-colors"
+                    >
+                      <Eye className="w-3 h-3" /> Ver Comprobante
+                    </a>
+                  </div>
+                )}
+
                 {/* Estado del Repartidor en Delivery Web */}
                 {isDelivery && (
                   <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 text-xs space-y-1">
                     <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block">Estado de Logística & Repartidor</span>
-                    {pedido.estado === 'EN_RUTA' || pedido.estado === 'EN_CAMINO' ? (
+                    {pedido.estado === 'ESPERANDO_CLIENTE' ? (
+                      <div className="flex items-center gap-1.5 text-amber-900 font-extrabold bg-amber-100 p-1.5 rounded-lg border border-amber-300 animate-pulse">
+                        <Clock className="w-4 h-4 text-amber-700 shrink-0" />
+                        <span>🔔 ¡REPARTIDOR EN DESTINO! Esperando cliente ({pedido.extraInfo?.assignedDriverName || 'Repartidor'})</span>
+                      </div>
+                    ) : pedido.estado === 'EN_RUTA' || pedido.estado === 'EN_CAMINO' ? (
                       <div className="flex items-center gap-1.5 text-blue-700 font-extrabold bg-blue-50 p-1.5 rounded-lg border border-blue-200 animate-pulse">
                         <Bike className="w-4 h-4 text-blue-600 shrink-0" />
                         <span>🚀 ¡RUTA INICIADA! En camino al cliente ({pedido.extraInfo?.assignedDriverName || 'Marco Proaño'})</span>
@@ -519,41 +620,63 @@ export default function PedidosOnlinePage() {
                 )}
 
                 {/* Actions Bar */}
-                <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5">
+                <div className="pt-2 border-t border-slate-100 space-y-2">
                   {isPending ? (
-                    <>
-                      <button
-                        onClick={() => handleOpenReview(pedido)}
-                        disabled={processingId === pedido.id}
-                        className="flex-1 py-2 rounded-xl font-black text-xs uppercase bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1 cursor-pointer transition-all disabled:opacity-50"
-                      >
-                        {processingId === pedido.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-4 h-4" />}
-                        Revisar y Asignar Tiempo
-                      </button>
-                      <button
-                        onClick={() => handlePrintTicket(pedido)}
-                        className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer transition-colors"
-                        title="Imprimir ticket"
-                      >
-                        <Printer className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (confirm('¿Deseas rechazar este pedido?')) {
-                            fetch('/api/admin/pedidos', {
-                              method: 'PUT',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ id: pedido.id, estado: 'CANCELADO' })
-                            }).then(() => fetchOnlineOrders());
-                          }
-                        }}
-                        disabled={processingId === pedido.id}
-                        className="p-2 rounded-xl font-bold text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 cursor-pointer transition-all disabled:opacity-50"
-                        title="Rechazar pedido"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </>
+                    <div className="space-y-2">
+                      {pStatus === 'COMPROBANTE_RECIBIDO' || pStatus === 'COMPROBANTE_ENVIADO' || pStatus === 'EN_REVISION' ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => handleConfirmPayment(pedido)}
+                            disabled={processingId === pedido.id}
+                            className="py-2.5 rounded-xl font-black text-xs uppercase bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1 cursor-pointer transition-all disabled:opacity-50"
+                          >
+                            {processingId === pedido.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-4 h-4" />}
+                            Confirmar Pago
+                          </button>
+                          <button
+                            onClick={() => handleRejectPayment(pedido)}
+                            disabled={processingId === pedido.id}
+                            className="py-2.5 rounded-xl font-black text-xs uppercase bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20 flex items-center justify-center gap-1 cursor-pointer transition-all disabled:opacity-50"
+                          >
+                            {processingId === pedido.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-4 h-4" />}
+                            Rechazar Pago
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleOpenReview(pedido)}
+                          disabled={processingId === pedido.id}
+                          className="w-full py-2.5 rounded-xl font-black text-xs uppercase bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1 cursor-pointer transition-all disabled:opacity-50"
+                        >
+                          {processingId === pedido.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-4 h-4" />}
+                          {pStatus === 'CONTRA_ENTREGA' ? 'Aceptar Pedido (Contra Entrega)' : 'Aceptar y Pasar a Cocina'}
+                        </button>
+                      )}
+
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
+                        <button
+                          onClick={() => handlePrintTicket(pedido)}
+                          className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors"
+                        >
+                          <Printer className="w-3.5 h-3.5" /> Ticket
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm('¿Deseas cancelar este pedido?')) {
+                              fetch('/api/admin/pedidos', {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ id: pedido.id, estado: 'CANCELADO' })
+                              }).then(() => fetchOnlineOrders());
+                            }
+                          }}
+                          disabled={processingId === pedido.id}
+                          className="px-3 py-1.5 rounded-xl font-bold text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 cursor-pointer transition-all disabled:opacity-50"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
                   ) : (
                     <div className="w-full space-y-2">
                       {isDelivery && ['EN_PREPARACION', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'LISTO'].includes(pedido.estado) && (

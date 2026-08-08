@@ -90,6 +90,13 @@ export async function PUT(req: Request) {
 
         updateData.extraInfo = newExtraInfo;
 
+        if (pedido.payment && (estado === 'EN_PREPARACION' || estado === 'RECIBIDO' || estado === 'ACEPTADO')) {
+            await (prisma as any).orderPayment.update({
+                where: { id: pedido.payment.id },
+                data: { estado: 'APROBADO' }
+            }).catch(() => {});
+        }
+
         const pedidoActualizado = await (prisma as any).pedido.update({
             where: { id },
             data: updateData,
@@ -140,15 +147,15 @@ export async function PUT(req: Request) {
             }
         }
 
-        // Si se aprueba el pedido a PREPARACION o RECIBIDO, sincronizar el estado del pago a CONFIRMADO
-        if (estado && ['PREPARACION', 'EN_PREPARACION', 'RECIBIDO'].includes(estado) && pedido.payment) {
+        // Si el pedido llega a ENTREGADO, asegurar que el pago (ej. Contra Entrega) quede CONFIRMADO
+        if (estado === 'ENTREGADO' && pedido.payment && pedido.payment.estado !== 'CONFIRMADO') {
             try {
                 await (prisma as any).orderPayment.update({
                     where: { id: pedido.payment.id },
                     data: { estado: 'CONFIRMADO' }
                 });
             } catch (pErr) {
-                console.warn('[ORDER_STATUS_SYNC_PAYMENT_ERROR]', pErr);
+                console.warn('[ORDER_DELIVERED_SYNC_PAYMENT_ERROR]', pErr);
             }
         }
 
@@ -188,10 +195,13 @@ export async function PUT(req: Request) {
                     : 'Por definir';
 
                 switch (estado) {
+                    case 'ACEPTADO':
+                        mensaje = `✅ *¡Tu pedido #${pedido.numeroPedido} ha sido ACEPTADO!*\n\nEl equipo de *${pedido.negocio.nombre}* ingresará tu pedido a preparación en breve. 🔥`;
+                        break;
                     case 'PREPARACION':
                     case 'EN_PREPARACION':
                     case 'RECIBIDO':
-                        mensaje = `✅ *¡Tu pedido #${pedido.numeroPedido} ha sido CONFIRMADO!*\n\nEn *${pedido.negocio.nombre}* ya estamos preparando tus productos con la máxima calidad. 🔥\n\n📅 *Fecha y Hora de Entrega Confirmada:* ${formattedFechaEntrega}\n\n¡Gracias por tu compra!`;
+                        mensaje = `✅ *¡Tu pedido #${pedido.numeroPedido} está en PREPARACIÓN!*\n\nEn *${pedido.negocio.nombre}* ya estamos preparando tus productos con la máxima calidad. 🔥\n\n📅 *Fecha y Hora de Entrega Confirmada:* ${formattedFechaEntrega}\n\n¡Gracias por tu compra!`;
                         break;
                     case 'LISTO':
                         mensaje = pedido.tipoEntrega === 'DOMICILIO' 
@@ -200,9 +210,14 @@ export async function PUT(req: Request) {
                         break;
                     case 'RUTA':
                     case 'EN_CAMINO':
+                    case 'EN_RUTA':
                         mensaje = `🛵 *Tu pedido #${pedido.numeroPedido} está en ruta* hacia tu domicilio. ¡El repartidor llegará en breve!`;
                         break;
+                    case 'ESPERANDO_CLIENTE':
+                        mensaje = `🛵 *¡EL REPARTIDOR HA LLEGADO!*\n\nHola ${pedido.nombreCliente}, tu repartidor ya se encuentra en tu dirección de entrega con tu pedido #${pedido.numeroPedido}. ¡Por favor sal a recibirlo! 📦✨`;
+                        break;
                     case 'ENTREGADO':
+                    case 'FINALIZADO':
                         mensaje = `🎉 *Tu pedido #${pedido.numeroPedido} ha sido entregado*. ¡Gracias por tu compra en *${pedido.negocio.nombre}*! Que lo disfrutes.`;
                         break;
                     case 'CANCELADO':

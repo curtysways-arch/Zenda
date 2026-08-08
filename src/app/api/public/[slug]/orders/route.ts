@@ -232,9 +232,10 @@ export async function POST(
                     subtotal: pricingResult.subtotal,
                     costoEnvio: pricingResult.deliveryCost,
                     total: pricingResult.total,
-                    estado: 'WAITING_CONFIRMATION',
+                    estado: 'PENDIENTE',
                     extraInfo: {
                         ...(body.extraInfo || {}),
+                        paymentMethodCode: body.paymentMethodCode || body.paymentMethod || body.metodoPago || 'TRANSFER',
                         channel: body.channel || 'WEB',
                         tableCode: body.tableCode || null,
                         packagingCost: pricingResult.packagingCost,
@@ -249,10 +250,15 @@ export async function POST(
                 }
             });
 
+            const rawMethod = (body.paymentMethodCode || body.paymentMethod || body.metodoPago || '').toUpperCase();
+            const isCash = rawMethod.includes('CASH') || rawMethod.includes('EFECTIVO') || rawMethod.includes('CONTRA_ENTREGA') || rawMethod.includes('ENTREGA');
+            const initialPaymentStatus = isCash ? 'CONTRA_ENTREGA' : 'PENDIENTE';
+
             const initialPayment = await PaymentService.createInitialPayment({
                 pedidoId: newOrder.id,
                 negocioId: negocio.id,
-                monto: total
+                monto: total,
+                estado: initialPaymentStatus as any
             }, tx);
 
             // Upsert cliente para vincular nombre y teléfono en el ámbito del negocio actual

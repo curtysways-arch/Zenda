@@ -197,7 +197,7 @@ export default function DriverAppPage() {
   const myAssignedOrders = availableDbOrders.filter(o => {
     const extra = parseExtraInfo(o.extraInfo);
     return extra.assignedDriverId === driverId || 
-      ['REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA'].includes(o.estado);
+      ['REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA', 'ESPERANDO_CLIENTE'].includes(o.estado);
   });
 
   const openUnassignedOrders = availableDbOrders.filter(o => {
@@ -739,6 +739,23 @@ export default function DriverAppPage() {
                     <div className="p-2.5 bg-blue-500/20 border border-blue-500/30 rounded-xl text-blue-300 text-xs font-extrabold text-center flex items-center justify-center gap-2">
                       <Navigation className="w-4 h-4 text-blue-400 animate-pulse" />
                       <span>🚀 En Ruta • Viajando a la dirección del cliente</span>
+                    </div>
+                    <button
+                      onClick={() => handleUpdateState(order.id, 'WAITING_CLIENT' as any)}
+                      disabled={actionLoading === order.id}
+                      className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95 transition-all"
+                    >
+                      <MapPin className="w-4 h-4" />
+                      <span>📍 Llegué al Destino (Esperando Cliente)</span>
+                    </button>
+                  </div>
+                )}
+
+                {order.estado === 'ESPERANDO_CLIENTE' && (
+                  <div className="space-y-2">
+                    <div className="p-2.5 bg-amber-500/20 border border-amber-500/30 rounded-xl text-amber-300 text-xs font-extrabold text-center flex items-center justify-center gap-2 animate-pulse">
+                      <Clock className="w-4 h-4 text-amber-400" />
+                      <span>🔔 En el Destino • Esperando que el cliente reciba</span>
                     </div>
                     <button
                       onClick={() => handleUpdateState(order.id, 'DELIVERED')}

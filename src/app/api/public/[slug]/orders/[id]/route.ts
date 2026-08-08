@@ -19,7 +19,13 @@ export async function GET(
         }
 
         const order = await (prisma as any).pedido.findFirst({
-            where: { id, negocioId: negocio.id },
+            where: {
+                negocioId: negocio.id,
+                OR: [
+                    { id: id },
+                    ...(isNaN(Number(id)) ? [] : [{ numeroPedido: Number(id) }])
+                ]
+            },
             select: {
                 id: true,
                 numeroPedido: true,
@@ -34,6 +40,23 @@ export async function GET(
                 notas: true,
                 createdAt: true,
                 updatedAt: true,
+                payment: {
+                    select: {
+                        id: true,
+                        estado: true,
+                        observaciones: true,
+                        motivoRechazo: true,
+                        evidences: {
+                            select: {
+                                id: true,
+                                fileUrl: true,
+                                createdAt: true
+                            },
+                            orderBy: { createdAt: 'desc' },
+                            take: 1
+                        }
+                    }
+                },
                 items: {
                     select: {
                         id: true,

@@ -17,7 +17,7 @@ export async function GET() {
         const count = await (prisma as any).pedido.count({
             where: {
                 negocioId,
-                estado: { in: ['RECIBIDO', 'PREPARACION', 'LISTO', 'RUTA'] }
+                estado: { in: ['PENDIENTE', 'PENDING', 'WAITING_CONFIRMATION', 'POR_CONFIRMAR', 'PAGO_EN_REVISION', 'PENDIENTE_PAGO', 'COMPROBANTE_ENVIADO', 'RECIBIDO', 'PREPARACION', 'LISTO', 'RUTA'] }
             }
         });
         return NextResponse.json({ count });

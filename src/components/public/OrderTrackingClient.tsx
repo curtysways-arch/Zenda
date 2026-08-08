@@ -86,12 +86,13 @@ function getStepIndex(orderStatus: string, paymentStatus?: string): number {
     const s = (orderStatus || '').toUpperCase();
     const p = (paymentStatus || '').toUpperCase();
 
-    if (s === 'ENTREGADO') return 5;
+    if (s === 'ENTREGADO' || s === 'FINALIZADO') return 5;
+    if (s === 'ESPERANDO_CLIENTE') return 4;
     if (s === 'RUTA' || s === 'EN_RUTA' || s === 'EN_CAMINO') return 4;
     if (s === 'LISTO') return 4;
     if (s === 'PREPARACION' || s === 'EN_PREPARACION') return 3;
-    if (s === 'RECIBIDO' && p === 'CONFIRMADO') return 2;
-    if (p === 'CONFIRMADO' || p === 'COMPROBANTE_ENVIADO') return 2;
+    if (s === 'ACEPTADO') return 2;
+    if (p === 'CONFIRMADO' || p === 'COMPROBANTE_RECIBIDO' || p === 'COMPROBANTE_ENVIADO' || p === 'CONTRA_ENTREGA') return 2;
     return 1;
 }
 
@@ -383,6 +384,21 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                     </div>
                 ) : (
                     <>
+                        {/* Banner Especial Repartidor en el Destino */}
+                        {order.estado === 'ESPERANDO_CLIENTE' && (
+                            <div className="bg-amber-400 text-slate-950 rounded-3xl p-5 shadow-lg border-2 border-amber-500 animate-pulse flex items-center gap-3.5">
+                                <div className="p-3 bg-slate-950 text-amber-400 rounded-2xl shrink-0 font-black shadow-md">
+                                    <Bike className="size-7" />
+                                </div>
+                                <div className="text-left space-y-0.5">
+                                    <h4 className="font-black text-sm uppercase tracking-tight">🛵 ¡TU REPARTIDOR HA LLEGADO!</h4>
+                                    <p className="text-xs font-bold text-slate-900 leading-snug">
+                                        El repartidor ya se encuentra afuera de tu dirección con tu pedido. Por favor acércate a recibirlo.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Visual Timeline Progress Bar en Fondo Blanco */}
                         {!isCancelled ? (
                             <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs space-y-4 text-left">
@@ -548,13 +564,24 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                 </div>
                             )}
 
-                            {/* Si está en revisión */}
-                            {(order.payment?.estado === 'COMPROBANTE_ENVIADO' || order.payment?.estado === 'PAGO_EN_REVISION') && (
+                            {/* Si está en revisión / comprobante recibido */}
+                            {(order.payment?.estado === 'COMPROBANTE_RECIBIDO' || order.payment?.estado === 'COMPROBANTE_ENVIADO' || order.payment?.estado === 'PAGO_EN_REVISION') && (
                                 <div className="p-4 bg-amber-50 text-amber-900 text-xs rounded-2xl border border-amber-200 flex items-start gap-3 font-medium">
                                     <Clock className="size-5 text-amber-600 shrink-0 mt-0.5" />
                                     <div className="leading-relaxed">
-                                        <strong className="block font-black text-amber-950">Comprobante en Verificación</strong>
-                                        <span>Tu comprobante fue recibido y está siendo validado por el comercio.</span>
+                                        <strong className="block font-black text-amber-950">Pedido recibido — esperando confirmación del pago</strong>
+                                        <span>Tu comprobante fue adjuntado exitosamente y está siendo verificado por el negocio.</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Si es contra entrega */}
+                            {order.payment?.estado === 'CONTRA_ENTREGA' && (
+                                <div className="p-4 bg-emerald-50 text-emerald-900 text-xs rounded-2xl border border-emerald-200 flex items-start gap-3 font-medium">
+                                    <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
+                                    <div className="leading-relaxed">
+                                        <strong className="block font-black text-emerald-950">🟢 Pago Contra Entrega</strong>
+                                        <span>Realizarás el pago en efectivo o POS al momento de recibir tu pedido.</span>
                                     </div>
                                 </div>
                             )}

@@ -252,6 +252,8 @@ export async function POST(
 
       const dbStatusMap: Record<string, string> = {
         'ON_ROUTE': 'EN_CAMINO',
+        'WAITING_CLIENT': 'ESPERANDO_CLIENTE',
+        'ESPERANDO_CLIENTE': 'ESPERANDO_CLIENTE',
         'DELIVERED': 'ENTREGADO',
         'PICKED_UP': 'ENTREGADO_A_REPARTIDOR'
       };

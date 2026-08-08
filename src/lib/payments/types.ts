@@ -5,23 +5,35 @@
 
 export type PaymentStatus =
     | 'PENDIENTE'
+    | 'COMPROBANTE_RECIBIDO'
     | 'COMPROBANTE_ENVIADO'
     | 'EN_REVISION'
     | 'CONFIRMADO'
     | 'RECHAZADO'
+    | 'CONTRA_ENTREGA'
     | 'EXPIRADO'
     | 'REEMBOLSADO';
 
 export type OrderStatus =
     | 'BORRADOR'
+    | 'PENDIENTE'
+    | 'WAITING_CONFIRMATION'
     | 'PENDIENTE_PAGO'
     | 'PAGO_EN_REVISION'
     | 'PAGO_CONFIRMADO'
+    | 'ACEPTADO'
+    | 'RECIBIDO'
     | 'EN_PREPARACION'
+    | 'PREPARACION'
     | 'LISTO'
+    | 'EN_CAMINO'
     | 'EN_RUTA'
+    | 'RUTA'
+    | 'ESPERANDO_CLIENTE'
     | 'ENTREGADO'
-    | 'CANCELADO';
+    | 'FINALIZADO'
+    | 'CANCELADO'
+    | 'RECHAZADO';
 
 export type PaymentProviderCode = 'BANK_TRANSFER' | 'PAYMENT_GATEWAY' | 'CASH';
 

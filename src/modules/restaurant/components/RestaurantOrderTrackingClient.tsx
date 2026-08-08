@@ -40,17 +40,30 @@ interface Props {
 }
 
 const STATE_CONFIG: Record<string, { label: string; icon: any; color: string; description: string }> = {
-    PENDING:            { label: 'Pendiente',         icon: Clock,       color: '#f59e0b', description: 'Tu pedido está en espera de confirmación.' },
-    WAITING_ACCEPTANCE: { label: 'Esperando cocina',  icon: Clock,       color: '#f59e0b', description: 'Enviando tu pedido a la cocina...' },
-    CONFIRMED:          { label: 'Confirmado',         icon: CheckCircle, color: '#10b981', description: 'La cocina aceptó tu pedido. ¡En preparación!' },
-    PREPARING:          { label: 'En preparación',    icon: ChefHat,     color: '#f97316', description: 'Tu pedido está siendo preparado con amor.' },
-    READY:              { label: 'Listo para entrega', icon: Package,     color: '#8b5cf6', description: 'Tu pedido está listo. Asignando repartidor...' },
-    ON_DELIVERY:        { label: 'En camino',          icon: Bike,        color: '#3b82f6', description: 'Tu repartidor está en camino. ¡Ya casi!' },
+    PENDING:            { label: 'Esperando',         icon: Clock,       color: '#f59e0b', description: 'Tu pedido está en espera de confirmación del negocio.' },
+    CONFIRMED:          { label: 'Aceptado',          icon: CheckCircle, color: '#10b981', description: '¡Tu pedido fue aceptado! Entrando a producción.' },
+    PREPARING:          { label: 'En preparación',    icon: ChefHat,     color: '#f97316', description: 'Tu pedido está siendo preparado en la cocina.' },
+    READY:              { label: '¡Pedido listo!',     icon: Package,     color: '#8b5cf6', description: 'Tu pedido está listo y empacado.' },
+    ON_DELIVERY:        { label: 'En camino',          icon: Bike,        color: '#3b82f6', description: 'Tu repartidor está en camino con tu pedido.' },
+    WAITING_CLIENT:     { label: '¡En el destino!',    icon: Bike,        color: '#eab308', description: '🛵 ¡El repartidor ha llegado a tu dirección! Por favor sal a recibirlo.' },
     DELIVERED:          { label: '¡Entregado!',        icon: Home,        color: '#10b981', description: '¡Tu pedido fue entregado exitosamente!' },
     CANCELLED:          { label: 'Cancelado',          icon: Clock,       color: '#ef4444', description: 'Este pedido fue cancelado.' },
 };
 
-const ORDER_STEPS = ['WAITING_ACCEPTANCE', 'CONFIRMED', 'PREPARING', 'READY', 'ON_DELIVERY', 'DELIVERED'];
+const ORDER_STEPS = ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'ON_DELIVERY', 'DELIVERED'];
+
+function normalizeState(rawState?: string): string {
+    const s = (rawState || '').toUpperCase();
+    if (['PENDIENTE', 'PENDING', 'WAITING_CONFIRMATION', 'POR_CONFIRMAR', 'PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'COMPROBANTE_ENVIADO', 'COMPROBANTE_RECIBIDO'].includes(s)) return 'PENDING';
+    if (['ACEPTADO', 'CONFIRMED', 'RECIBIDO'].includes(s)) return 'CONFIRMED';
+    if (['EN_PREPARACION', 'PREPARACION', 'PREPARANDO', 'PREPARING'].includes(s)) return 'PREPARING';
+    if (['LISTO', 'READY'].includes(s)) return 'READY';
+    if (['EN_CAMINO', 'EN_RUTA', 'RUTA', 'ON_DELIVERY', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR'].includes(s)) return 'ON_DELIVERY';
+    if (['ESPERANDO_CLIENTE', 'WAITING_CLIENT'].includes(s)) return 'WAITING_CLIENT';
+    if (['ENTREGADO', 'DELIVERED', 'FINALIZADO', 'COMPLETADO'].includes(s)) return 'DELIVERED';
+    if (['CANCELADO', 'CANCELLED', 'RECHAZADO'].includes(s)) return 'CANCELLED';
+    return 'PENDING';
+}
 
 export default function RestaurantOrderTrackingClient({ order: initialOrder, negocio, storeSlug }: Props) {
     const [order, setOrder] = useState<Order>(initialOrder);
@@ -60,12 +73,13 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
     const cp = negocio?.colorPrimario || '#c2410c';
     const cs = negocio?.colorSecundario || '#1c0a00';
 
-    const stateInfo = STATE_CONFIG[order.estado] || STATE_CONFIG['PENDING'];
+    const normState = normalizeState(order.estado);
+    const stateInfo = STATE_CONFIG[normState] || STATE_CONFIG['PENDING'];
     const StateIcon = stateInfo.icon;
 
-    const currentStepIdx = ORDER_STEPS.indexOf(order.estado);
-    const isDelivered = order.estado === 'DELIVERED';
-    const isCancelled = order.estado === 'CANCELLED';
+    const currentStepIdx = normState === 'WAITING_CLIENT' ? 4 : ORDER_STEPS.indexOf(normState);
+    const isDelivered = normState === 'DELIVERED';
+    const isCancelled = normState === 'CANCELLED';
 
     const refreshOrder = useCallback(async () => {
         setRefreshing(true);
@@ -81,10 +95,10 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
         }
     }, [order.id, storeSlug]);
 
-    // Auto-refresh cada 15s si el pedido no está en estado final
+    // Auto-refresh cada 5s para que los cambios de estado en cocina/repartidor se reflejen de inmediato
     useEffect(() => {
         if (isDelivered || isCancelled) return;
-        const interval = setInterval(refreshOrder, 15000);
+        const interval = setInterval(refreshOrder, 5000);
         return () => clearInterval(interval);
     }, [refreshOrder, isDelivered, isCancelled]);
 
