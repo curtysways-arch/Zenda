@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Store, Building2, MapPin, ExternalLink, CheckCircle, X, Navigation,
-  PackageCheck, Clock, ShieldAlert, Crosshair
+  PackageCheck, Clock, ShieldAlert, Crosshair, Route
 } from 'lucide-react';
 
 interface DbOrder {
@@ -60,10 +60,16 @@ export default function DriverOrderMapModal({
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const driverMarkerRef = useRef<any>(null);
+  const markerARef = useRef<any>(null);
+  const markerBRef = useRef<any>(null);
 
   const [mapLoaded, setMapLoaded] = useState(false);
   const [driverRealCoords, setDriverRealCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsStatus, setGpsStatus] = useState<'SOLICITANDO' | 'ACTIVO' | 'DENEGADO'>('SOLICITANDO');
+  
+  // Tiempos y distancias reales de la ruta por calles (OSRM)
+  const [routeLeg1, setRouteLeg1] = useState<{ distanceKm: string; durationMin: string } | null>(null);
+  const [routeLeg2, setRouteLeg2] = useState<{ distanceKm: string; durationMin: string } | null>(null);
 
   // Parsear extraInfo
   const parseExtraInfo = (extra: any) => {
@@ -87,7 +93,7 @@ export default function DriverOrderMapModal({
   const latB = Number(order.latitud || extra.latitudCliente || (latA - 0.015));
   const lngB = Number(order.longitud || extra.longitudCliente || (lngA - 0.012));
 
-  // 1. SOLICITAR PERMISO DE NAVEGACIÓN GPS EN TIEMPO REAL DEL DISPOSITIVO MÓVIL
+  // 1. SOLICITAR PERMISO DE UBICACIÓN MÓVIL EN TIEMPO REAL
   useEffect(() => {
     if (typeof window !== 'undefined' && 'geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -102,7 +108,6 @@ export default function DriverOrderMapModal({
         { enableHighAccuracy: true, timeout: 8000 }
       );
 
-      // Rastreador continuo de movimiento
       const watchId = navigator.geolocation.watchPosition(
         (pos) => {
           setDriverRealCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
@@ -118,7 +123,7 @@ export default function DriverOrderMapModal({
     }
   }, []);
 
-  // 2. CARGAR LEAFLET Y MONTAR MAPA EN LA SECCIÓN SUPERIOR
+  // 2. INICIALIZAR LEAFLET MAP
   useEffect(() => {
     let isCancelled = false;
 
@@ -170,16 +175,16 @@ export default function DriverOrderMapModal({
           className: 'custom-pin-a',
           html: `
             <div style="position:relative; display:flex; flex-direction:column; align-items:center;">
-              <div style="background:#2563eb; color:white; font-size:11px; font-weight:900; padding:3px 8px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.3); border:2px solid white; white-space:nowrap; margin-bottom:4px;">
-                3 min • ~1.2 km
+              <div id="badge-a-text" style="background:#2563eb; color:white; font-size:11px; font-weight:900; padding:3px 8px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.3); border:2px solid white; white-space:nowrap; margin-bottom:4px;">
+                Calculando ruta...
               </div>
               <div style="background:#2563eb; color:white; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:15px; border:3px solid white; box-shadow:0 6px 16px rgba(37,99,235,0.5);">
                 A
               </div>
             </div>
           `,
-          iconSize: [110, 65],
-          iconAnchor: [55, 63],
+          iconSize: [120, 65],
+          iconAnchor: [60, 63],
         });
 
         // Marker B (Cliente Entrega - Verde)
@@ -187,19 +192,18 @@ export default function DriverOrderMapModal({
           className: 'custom-pin-b',
           html: `
             <div style="position:relative; display:flex; flex-direction:column; align-items:center;">
-              <div style="background:#10b981; color:white; font-size:11px; font-weight:900; padding:3px 8px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.3); border:2px solid white; white-space:nowrap; margin-bottom:4px;">
-                9 min • 2.4 km
+              <div id="badge-b-text" style="background:#10b981; color:white; font-size:11px; font-weight:900; padding:3px 8px; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.3); border:2px solid white; white-space:nowrap; margin-bottom:4px;">
+                Calculando ruta...
               </div>
               <div style="background:#10b981; color:white; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:15px; border:3px solid white; box-shadow:0 6px 16px rgba(16,185,129,0.5);">
                 B
               </div>
             </div>
           `,
-          iconSize: [110, 65],
-          iconAnchor: [55, 63],
+          iconSize: [120, 65],
+          iconAnchor: [60, 63],
         });
 
-        // Coordenadas iniciales del repartidor (GPS Real o punto aproximado)
         const latDriver = driverRealCoords?.lat || (latA + 0.004);
         const lngDriver = driverRealCoords?.lng || (lngA - 0.003);
 
@@ -215,24 +219,10 @@ export default function DriverOrderMapModal({
         });
 
         driverMarkerRef.current = L.marker([latDriver, lngDriver], { icon: iconDriver }).addTo(map);
-        L.marker([latA, lngA], { icon: iconA }).addTo(map);
-        L.marker([latB, lngB], { icon: iconB }).addTo(map);
+        markerARef.current = L.marker([latA, lngA], { icon: iconA }).addTo(map);
+        markerBRef.current = L.marker([latB, lngB], { icon: iconB }).addTo(map);
 
-        // Trazar línea de ruta
-        L.polyline([[latDriver, lngDriver], [latA, lngA]], {
-          color: '#2563eb',
-          weight: 5,
-          opacity: 0.8,
-          dashArray: '6, 8',
-        }).addTo(map);
-
-        L.polyline([[latA, lngA], [latB, lngB]], {
-          color: '#10b981',
-          weight: 6,
-          opacity: 0.9,
-        }).addTo(map);
-
-        // Encuadrar vista
+        // Encuadrar vista preliminar
         const bounds = L.latLngBounds([[latDriver, lngDriver], [latA, lngA], [latB, lngB]]);
         map.fitBounds(bounds, { padding: [40, 40] });
 
@@ -254,7 +244,92 @@ export default function DriverOrderMapModal({
     };
   }, [latA, lngA, latB, lngB]);
 
-  // Actualizar marcador del repartidor cuando cambia GPS en tiempo real
+  // 3. CALCULAR RUTA REAL POR CALLES CON OSRM GRATUITO (OPEN STREET MAPS ROUTING)
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function calculateRealRoute() {
+      if (!mapLoaded || !mapInstanceRef.current) return;
+      const L = (window as any).L;
+      if (!L) return;
+
+      const latDriver = driverRealCoords?.lat || (latA + 0.004);
+      const lngDriver = driverRealCoords?.lng || (lngA - 0.003);
+
+      try {
+        // Tramo 1: Repartidor -> Punto A (Restaurante Recogida)
+        const res1 = await fetch(
+          `https://router.project-osrm.org/route/v1/driving/${lngDriver},${latDriver};${lngA},${latA}?overview=full&geometries=geojson`
+        );
+        if (res1.ok && !isCancelled) {
+          const data1 = await res1.json();
+          if (data1.routes && data1.routes.length > 0) {
+            const r1 = data1.routes[0];
+            const dist1 = (r1.distance / 1000).toFixed(1);
+            const time1 = Math.ceil(r1.duration / 60);
+
+            setRouteLeg1({ distanceKm: `${dist1} km`, durationMin: `${time1} min` });
+
+            // Trazar Polyline por calles (Azul)
+            const coords1 = r1.geometry.coordinates.map((c: [number, number]) => [c[1], c[0]]);
+            if ((mapInstanceRef.current as any).polyLeg1) {
+              mapInstanceRef.current.removeLayer((mapInstanceRef.current as any).polyLeg1);
+            }
+            const poly1 = L.polyline(coords1, {
+              color: '#2563eb',
+              weight: 6,
+              opacity: 0.85,
+              dashArray: '6, 8',
+            }).addTo(mapInstanceRef.current);
+            (mapInstanceRef.current as any).polyLeg1 = poly1;
+
+            // Actualizar Badge A
+            const badgeEl = document.getElementById('badge-a-text');
+            if (badgeEl) badgeEl.innerText = `${time1} min • ~${dist1} km`;
+          }
+        }
+
+        // Tramo 2: Punto A (Restaurante) -> Punto B (Cliente Destino)
+        const res2 = await fetch(
+          `https://router.project-osrm.org/route/v1/driving/${lngA},${latA};${lngB},${latB}?overview=full&geometries=geojson`
+        );
+        if (res2.ok && !isCancelled) {
+          const data2 = await res2.json();
+          if (data2.routes && data2.routes.length > 0) {
+            const r2 = data2.routes[0];
+            const dist2 = (r2.distance / 1000).toFixed(1);
+            const time2 = Math.ceil(r2.duration / 60);
+
+            setRouteLeg2({ distanceKm: `${dist2} km`, durationMin: `${time2} min` });
+
+            // Trazar Polyline por calles (Verde)
+            const coords2 = r2.geometry.coordinates.map((c: [number, number]) => [c[1], c[0]]);
+            if ((mapInstanceRef.current as any).polyLeg2) {
+              mapInstanceRef.current.removeLayer((mapInstanceRef.current as any).polyLeg2);
+            }
+            const poly2 = L.polyline(coords2, {
+              color: '#10b981',
+              weight: 7,
+              opacity: 0.9,
+            }).addTo(mapInstanceRef.current);
+            (mapInstanceRef.current as any).polyLeg2 = poly2;
+
+            // Actualizar Badge B
+            const badgeEl = document.getElementById('badge-b-text');
+            if (badgeEl) badgeEl.innerText = `${time2} min • ${dist2} km`;
+          }
+        }
+      } catch (err) {
+        console.warn('Error obteniendo ruta OSRM:', err);
+      }
+    }
+
+    calculateRealRoute();
+
+    return () => { isCancelled = true; };
+  }, [mapLoaded, latA, lngA, latB, lngB, driverRealCoords]);
+
+  // Actualizar marcador del repartidor en tiempo real
   useEffect(() => {
     if (driverRealCoords && driverMarkerRef.current) {
       driverMarkerRef.current.setLatLng([driverRealCoords.lat, driverRealCoords.lng]);
@@ -288,22 +363,22 @@ export default function DriverOrderMapModal({
         </button>
       </div>
 
-      {/* 2. MAPA EN LA PARTE SUPERIOR (ANTES DE LA INFORMACIÓN DE LA ORDEN) */}
+      {/* 2. MAPA EN LA PARTE SUPERIOR (UBICACIÓN ANTES DE LA INFORMACIÓN DE LA ORDEN) */}
       <div className="w-full h-[40vh] sm:h-[45vh] bg-slate-900 relative z-10 shrink-0 border-b border-slate-800 shadow-md">
         <div ref={mapDivRef} className="w-full h-full" />
         
         {!mapLoaded && (
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center text-slate-300 gap-2 z-20">
             <div className="w-7 h-7 border-3 border-amber-400 border-t-transparent rounded-full animate-spin" />
-            <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Cargando mapa GPS...</span>
+            <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Trazando ruta por calles en vivo...</span>
           </div>
         )}
 
-        {/* Badge GPS Status */}
+        {/* Badge GPS Status / Ruta por Calles */}
         <div className="absolute bottom-3 left-3 z-20 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2 text-[10px] font-extrabold shadow-lg">
-          <Crosshair className={`w-3.5 h-3.5 ${gpsStatus === 'ACTIVO' ? 'text-emerald-400 animate-pulse' : 'text-amber-400'}`} />
+          <Route className="w-3.5 h-3.5 text-emerald-400" />
           <span className="text-slate-200">
-            {gpsStatus === 'ACTIVO' ? 'GPS Móvil Activo' : 'Obteniendo GPS...'}
+            {routeLeg2 ? `Ruta por calles (${routeLeg2.distanceKm})` : 'Calculando calles OSRM...'}
           </span>
         </div>
       </div>
@@ -368,15 +443,19 @@ export default function DriverOrderMapModal({
           )}
         </div>
 
-        {/* Desglose de Distancias */}
+        {/* Desglose de Distancias Reales por Calle */}
         <div className="grid grid-cols-2 gap-3 text-xs">
           <div className="bg-slate-900/90 p-3 rounded-2xl border border-slate-800 text-center space-y-0.5 shadow-sm">
             <span className="text-[10px] font-bold text-slate-400 block">Distancia a Recoger:</span>
-            <span className="font-black text-amber-300 text-sm">📍 ~1.2 km</span>
+            <span className="font-black text-amber-300 text-sm">
+              📍 {routeLeg1 ? `${routeLeg1.distanceKm} (${routeLeg1.durationMin})` : '~1.2 km'}
+            </span>
           </div>
           <div className="bg-slate-900/90 p-3 rounded-2xl border border-slate-800 text-center space-y-0.5 shadow-sm">
             <span className="text-[10px] font-bold text-slate-400 block">Distancia a Entregar:</span>
-            <span className="font-black text-emerald-400 text-sm">🏁 2.4 km</span>
+            <span className="font-black text-emerald-400 text-sm">
+              🏁 {routeLeg2 ? `${routeLeg2.distanceKm} (${routeLeg2.durationMin})` : '2.4 km'}
+            </span>
           </div>
         </div>
 
