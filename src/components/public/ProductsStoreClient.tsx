@@ -80,6 +80,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
         'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200'
     ];
 
+    const bannerImage = bannerList[0];
+
     const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
     useEffect(() => {
@@ -2275,12 +2277,6 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                             className="h-12 px-6 rounded-2xl text-xs font-black uppercase tracking-wider text-white shadow-xl hover:shadow-2xl active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                                             style={{ backgroundColor: primaryColor }}
                                         >
-                                            <Plus className="size-4 stroke-[2.5]" />
-                                            <span>Agregar al Carrito</span>
-                                        </button>
-                                    );
-                                })()}
-                            </div>                                     >
                                             <Plus className="size-4 stroke-[2.5]" />
                                             <span>Agregar al Carrito</span>
                                         </button>
