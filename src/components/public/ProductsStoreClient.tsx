@@ -55,6 +55,8 @@ interface Props {
         configuracion?: any;
         direccion?: string | null;
         whatsapp?: string | null;
+        horarioApertura?: string | null;
+        horarioCierre?: string | null;
     };
 }
 
@@ -92,6 +94,21 @@ export default function ProductsStoreClient({ negocio }: Props) {
         return () => clearInterval(interval);
     }, [bannerList.length]);
 
+    // Helper para formatear cualquier string de hora (ej: "11:00", "23:59", "18:00") a formato legible AM/PM
+    const formatTimeLabel = (timeStr?: string | null): string => {
+        if (!timeStr) return '';
+        const match = timeStr.trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/i);
+        if (!match) return timeStr;
+        let hours = parseInt(match[1], 10);
+        const minutes = match[2];
+        const mer = match[3] ? match[3].toUpperCase() : null;
+        if (mer) return `${hours}:${minutes} ${mer}`;
+        if (hours === 0) return `12:${minutes} AM`;
+        if (hours < 12) return `${hours}:${minutes} AM`;
+        if (hours === 12) return `12:${minutes} PM`;
+        return `${hours - 12}:${minutes} PM`;
+    };
+
     // Helper para parsear cualquier string de hora (ej: "11:00 AM", "10:00 PM", "22:00") a minutos desde medianoche
     const parseTimeToMinutes = (timeStr: string): number | null => {
         if (!timeStr) return null;
@@ -128,7 +145,23 @@ export default function ProductsStoreClient({ negocio }: Props) {
         const now = new Date();
         const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-        // 1. Evaluar objeto de horarios estructurados si existe
+        // 1. Prioridad: Horarios explícitos de Apertura y Cierre configurados en el Perfil del negocio
+        if (negocio.horarioApertura && negocio.horarioCierre) {
+            const openMinutes = parseTimeToMinutes(negocio.horarioApertura);
+            const closeMinutes = parseTimeToMinutes(negocio.horarioCierre);
+
+            if (openMinutes !== null && closeMinutes !== null) {
+                if (!isTimeWithinRange(currentMinutes, openMinutes, closeMinutes)) {
+                    return {
+                        isClosed: true,
+                        reason: `Fuera de horario de atención (${formatTimeLabel(negocio.horarioApertura)} - ${formatTimeLabel(negocio.horarioCierre)}).`
+                    };
+                }
+                return { isClosed: false, reason: '' };
+            }
+        }
+
+        // 2. Evaluar objeto de horarios estructurados por día si existe
         if (config.horarios && typeof config.horarios === 'object') {
             const days = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
             const currentDayKey = days[now.getDay()];
@@ -152,8 +185,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
             }
         }
 
-        // 2. Fallback: Evaluar el texto libre del horario (ej: "Lunes a Domingo: 11:00 AM - 11:00 PM")
-        const horarioTexto = config.horarioAtencion || (config.horaLimiteMismoDia ? `Lunes a Domingo: 11:00 AM - ${config.horaLimiteMismoDia}` : 'Lunes a Domingo: 11:00 AM - 11:00 PM');
+        // 3. Fallback: Evaluar el texto libre del horario (ej: "Lunes a Domingo: 11:00 AM - 11:59 PM")
+        const horarioTexto = config.horarioAtencion || (config.horaLimiteMismoDia ? `Lunes a Domingo: 11:00 AM - ${config.horaLimiteMismoDia}` : 'Lunes a Domingo: 11:00 AM - 11:59 PM');
         if (horarioTexto) {
             const matches = Array.from(horarioTexto.matchAll(/(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/gi));
             if (matches.length >= 2) {
@@ -1414,7 +1447,9 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     <div>
                                         <p className="font-bold text-white text-xs">Horario de Atención:</p>
                                         <p className="text-white/80 font-medium text-xs mt-0.5">
-                                            {config.horarioAtencion || (config.horaLimiteMismoDia ? `Lunes a Domingo: 11:00 AM - ${config.horaLimiteMismoDia}` : 'Lunes a Domingo: 11:00 AM - 11:00 PM')}
+                                            {negocio.horarioApertura && negocio.horarioCierre
+                                                ? `Lunes a Domingo: ${formatTimeLabel(negocio.horarioApertura)} - ${formatTimeLabel(negocio.horarioCierre)}`
+                                                : config.horarioAtencion || (config.horaLimiteMismoDia ? `Lunes a Domingo: 11:00 AM - ${config.horaLimiteMismoDia}` : 'Lunes a Domingo: 11:00 AM - 11:59 PM')}
                                         </p>
                                     </div>
                                 </div>
