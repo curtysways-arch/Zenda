@@ -1331,50 +1331,6 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         </div>
                     </div>
 
-                    {/* ── TARJETAS DE TIPO DE ENTREGA ── */}
-                    <div className="px-4 pt-5 pb-2">
-                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-3">¿Cómo quieres tu pedido?</h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            {/* Card Domicilio */}
-                            <div
-                                onClick={() => { setDeliveryType('DOMICILIO'); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }); }}
-                                className={`relative rounded-3xl p-4 cursor-pointer transition-all active:scale-95 overflow-hidden border-2 ${
-                                    deliveryType === 'DOMICILIO' ? 'border-transparent shadow-lg' : 'border-slate-100 bg-white hover:border-slate-200'
-                                }`}
-                                style={deliveryType === 'DOMICILIO' ? { background: `linear-gradient(135deg, ${primaryColor}15, ${primaryColor}05)`, borderColor: primaryColor } : {}}
-                            >
-                                <div className="text-4xl mb-2">🛵</div>
-                                <h4 className="text-xs font-black text-slate-900 uppercase tracking-wide">A Domicilio</h4>
-                                <p className="text-[10px] text-slate-400 font-medium mt-0.5">Te lo llevamos hasta la puerta de tu casa.</p>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); setDeliveryType('DOMICILIO'); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }); }}
-                                    className="mt-3 w-full py-2 rounded-xl text-[10px] font-black uppercase tracking-wider text-white active:scale-95 transition-all"
-                                    style={{ backgroundColor: primaryColor }}
-                                >
-                                    Pedir Delivery
-                                </button>
-                            </div>
-
-                            {/* Card Retiro */}
-                            <div
-                                onClick={() => { setDeliveryType('RETIRO'); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }); }}
-                                className={`relative rounded-3xl p-4 cursor-pointer transition-all active:scale-95 overflow-hidden border-2 ${
-                                    deliveryType === 'RETIRO' ? 'border-transparent shadow-lg' : 'border-slate-100 bg-white hover:border-slate-200'
-                                }`}
-                                style={deliveryType === 'RETIRO' ? { background: `linear-gradient(135deg, ${primaryColor}15, ${primaryColor}05)`, borderColor: primaryColor } : {}}
-                            >
-                                <div className="text-4xl mb-2">🏪</div>
-                                <h4 className="text-xs font-black text-slate-900 uppercase tracking-wide">Retiro en Local</h4>
-                                <p className="text-[10px] text-slate-400 font-medium mt-0.5">Pasa por tu pedido en nuestro local sin hacer fila.</p>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); setDeliveryType('RETIRO'); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }); }}
-                                    className="mt-3 w-full py-2 rounded-xl text-[10px] font-black uppercase tracking-wider text-slate-900 bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all"
-                                >
-                                    Retirar Ahora
-                                </button>
-                            </div>
-                        </div>
-                    </div>
 
                     {/* Banner de Aviso de Pedido Activo / Pendiente de Aprobación (Debajo del Banner Principal) */}
                     {activeOrder && (
