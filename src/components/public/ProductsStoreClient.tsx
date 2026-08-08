@@ -1305,7 +1305,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col pb-24 md:pb-12 text-slate-800" style={{ '--primary-color': primaryColor } as any}>
+        <div className="min-h-screen bg-slate-50 flex flex-col pb-24 md:pb-12 text-slate-800 md:pt-[76px]" style={{ '--primary-color': primaryColor } as any}>
             {/* Header */}
             <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 py-4 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-3">
@@ -1807,10 +1807,10 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
                     {/* ── CARRITO FLOTANTE PREMIUM ── */}
                     {cart.length > 0 && (
-                        <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-4 pb-4">
+                        <div className="fixed bottom-[84px] md:bottom-6 left-0 right-0 z-[9990] flex justify-center px-4 pb-4 md:pb-0 pointer-events-none">
                             <button 
                                 onClick={() => setShowCartDrawer(true)}
-                                className="w-full max-w-md bg-slate-950 text-white py-3.5 px-5 rounded-2xl shadow-2xl flex items-center justify-between active:scale-[0.98] transition-all border border-white/10"
+                                className="pointer-events-auto w-full max-w-md bg-slate-950 text-white py-3.5 px-5 rounded-2xl shadow-2xl flex items-center justify-between active:scale-[0.98] transition-all border border-white/10 hover:bg-slate-900 cursor-pointer"
                             >
                                 <div className="flex items-center gap-3">
                                     <div className="relative">
