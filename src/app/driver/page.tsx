@@ -12,6 +12,7 @@ import {
   Clock, ShieldAlert, PackageCheck, AlertCircle, RefreshCw, Power, DollarSign,
   Map, Sparkles, Store, Building2, ExternalLink
 } from 'lucide-react';
+import DriverOrderMapModal from '@/components/driver/DriverOrderMapModal';
 
 interface DbOrder {
   id: string;
@@ -438,123 +439,17 @@ export default function DriverAppPage() {
         </>
       )}
 
-      {/* MODAL DE REVISIÓN DE DETALLES DE CARRERA (PRE-ACEPTACIÓN) */}
-      {selectedOrderForDetail && (() => {
-        const deliveryFee = Number(selectedOrderForDetail.costoEnvio || 2.50).toFixed(2);
-        const extra = parseExtraInfo(selectedOrderForDetail.extraInfo);
-        const itemsSummary = (selectedOrderForDetail.items || []).map(i => `${i.cantidad}x ${i.nombreProducto}`).join(', ');
-        const distanceStr = getDistanceString(selectedOrderForDetail);
-        const isCashOnDelivery = selectedOrderForDetail.paymentStatus !== 'PAGADO' && selectedOrderForDetail.paymentStatus !== 'PAID';
-        const totalToCollect = isCashOnDelivery ? Number(selectedOrderForDetail.total).toFixed(2) : '0.00';
-
-        return (
-          <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-            <div className="bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-amber-500/40 space-y-4 relative text-left">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div>
-                  <span className="text-xs font-black uppercase text-amber-400 flex items-center gap-1">
-                    <Store className="w-3.5 h-3.5 text-amber-400" /> {selectedOrderForDetail.negocio?.nombre || 'Restaurante Citiox'}
-                  </span>
-                  <h3 className="text-lg font-black text-white">Pedido #{selectedOrderForDetail.codigo || selectedOrderForDetail.id.slice(-6).toUpperCase()}</h3>
-                </div>
-                <button
-                  onClick={() => setSelectedOrderForDetail(null)}
-                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white cursor-pointer"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="bg-amber-400 text-slate-950 p-3 rounded-2xl flex items-center justify-between font-black text-sm shadow-md">
-                <span>TU GANANCIA DE ENVÍO:</span>
-                <span className="text-base font-black">+${deliveryFee}</span>
-              </div>
-
-              <div className="space-y-2.5 text-xs text-slate-300">
-                {/* Punto 1: Recogida en Local */}
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase text-orange-400 tracking-wider flex items-center gap-1">
-                      <Building2 className="w-3.5 h-3.5 text-orange-400" /> 1. Recogida en Local (Restaurante):
-                    </span>
-                    {selectedOrderForDetail.negocio?.direccion && (
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedOrderForDetail.negocio.direccion)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-orange-400 hover:underline text-[10px] font-bold flex items-center gap-1"
-                      >
-                        <span>GPS Local</span>
-                        <ExternalLink className="w-2.5 h-2.5" />
-                      </a>
-                    )}
-                  </div>
-                  <p className="font-bold text-slate-100 text-xs">{selectedOrderForDetail.negocio?.direccion || 'Local del Restaurante'}</p>
-                </div>
-
-                {/* Punto 2: Entrega a Cliente */}
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase text-emerald-400 tracking-wider flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-emerald-400" /> 2. Entrega a Destino (Cliente):
-                    </span>
-                    {selectedOrderForDetail.direccionCliente && (
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedOrderForDetail.direccionCliente)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-emerald-400 hover:underline text-[10px] font-bold flex items-center gap-1"
-                      >
-                        <span>GPS Cliente</span>
-                        <ExternalLink className="w-2.5 h-2.5" />
-                      </a>
-                    )}
-                  </div>
-                  <p className="font-bold text-slate-100 text-xs">{selectedOrderForDetail.direccionCliente || 'Sin dirección registrada'}</p>
-                  {selectedOrderForDetail.referenciaCliente && (
-                    <p className="text-[10px] text-slate-400 font-medium">Ref: {selectedOrderForDetail.referenciaCliente}</p>
-                  )}
-                </div>
-
-                {/* Desglose de Distancias */}
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center">
-                    <span className="text-[10px] font-bold text-slate-400 block">Distancia a Recoger:</span>
-                    <span className="font-black text-amber-300">📍 ~1.2 km</span>
-                  </div>
-                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-center">
-                    <span className="text-[10px] font-bold text-slate-400 block">Distancia a Entregar:</span>
-                    <span className="font-black text-emerald-300">🏁 {distanceStr}</span>
-                  </div>
-                </div>
-
-                {/* Detalle de Productos */}
-                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
-                  <span className="text-[10px] font-black uppercase text-slate-400 block">Detalle de Productos en Paquete:</span>
-                  <p className="font-bold text-slate-200 text-xs">{itemsSummary || 'Sin productos registrados'}</p>
-                </div>
-              </div>
-
-              <div className="pt-2 space-y-2">
-                <button
-                  onClick={() => handleAcceptOrder(selectedOrderForDetail.id)}
-                  disabled={actionLoading === selectedOrderForDetail.id || hasActiveOrder}
-                  className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black text-xs uppercase rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <CheckCircle className="w-5 h-5" />
-                  {hasActiveOrder ? '⚠️ Ya tienes 1 entrega activa' : `🟢 ACEPTAR ESTA CARRERA (Ganancia $${deliveryFee})`}
-                </button>
-                <button
-                  onClick={() => setSelectedOrderForDetail(null)}
-                  className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs uppercase rounded-2xl transition-colors cursor-pointer"
-                >
-                  Volver a la Bolsa
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      {/* MODAL / PANTALLA COMPLETA DE REVISIÓN DE DETALLES DE CARRERA CON MAPA INTERACTIVO Y BOTÓN FIJO */}
+      {selectedOrderForDetail && (
+        <DriverOrderMapModal
+          order={selectedOrderForDetail}
+          driverId={driverId}
+          hasActiveOrder={hasActiveOrder}
+          actionLoading={actionLoading === selectedOrderForDetail.id}
+          onAccept={handleAcceptOrder}
+          onClose={() => setSelectedOrderForDetail(null)}
+        />
+      )}
 
       {/* SECCIÓN 2: GESTIÓN DE MIS PEDIDOS ACEPTADOS EN CURSO (ÚNICAMENTE SI HAY CARRERA ACTIVA) */}
       {hasActiveOrder && (
