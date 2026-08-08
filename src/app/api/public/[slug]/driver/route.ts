@@ -57,7 +57,9 @@ export async function GET(
             nombre: true,
             slug: true,
             logoUrl: true,
-            direccion: true
+            direccion: true,
+            configuracion: true,
+            Ubicacion: true
           }
         }
       },

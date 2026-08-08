@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Store, Building2, MapPin, ExternalLink, CheckCircle, X, Navigation,
-  PackageCheck, Clock, ShieldAlert, Crosshair, Route
+  PackageCheck, Clock, ShieldAlert, Crosshair, Route, ArrowLeft
 } from 'lucide-react';
 
 interface DbOrder {
@@ -31,6 +31,13 @@ interface DbOrder {
     latitud?: number;
     longitud?: number;
     configuracion?: any;
+    Ubicacion?: Array<{
+      id: string;
+      nombre: string;
+      direccion?: string;
+      latitud?: number;
+      longitud?: number;
+    }>;
   };
   items: Array<{
     id?: string;
@@ -71,23 +78,37 @@ export default function DriverOrderMapModal({
   const [routeLeg1, setRouteLeg1] = useState<{ distanceKm: string; durationMin: string } | null>(null);
   const [routeLeg2, setRouteLeg2] = useState<{ distanceKm: string; durationMin: string } | null>(null);
 
-  // Parsear extraInfo
-  const parseExtraInfo = (extra: any) => {
-    if (!extra) return {};
-    if (typeof extra === 'string') {
-      try { return JSON.parse(extra); } catch { return {}; }
+  // Parsear extraInfo y configuracion
+  const parseJson = (raw: any) => {
+    if (!raw) return {};
+    if (typeof raw === 'string') {
+      try { return JSON.parse(raw); } catch { return {}; }
     }
-    return extra;
+    return raw;
   };
 
-  const extra = parseExtraInfo(order.extraInfo);
+  const extra = parseJson(order.extraInfo);
+  const cfg = parseJson(order.negocio?.configuracion);
   const deliveryFee = Number(order.costoEnvio || 2.50).toFixed(2);
   const itemsSummary = (order.items || []).map(i => `${i.cantidad}x ${i.nombreProducto}`).join(', ');
 
-  // Coordenadas Punto A (Restaurante Recogida)
-  const cfg = order.negocio?.configuracion || {};
-  const latA = Number(order.negocio?.latitud || cfg.latitudNegocio || -0.180653);
-  const lngA = Number(order.negocio?.longitud || cfg.longitudNegocio || -78.467838);
+  // SUCURSALES (Punto 3): Identificar si el pedido corresponde a una sucursal específica
+  const sucursales = order.negocio?.Ubicacion || (order.negocio as any)?.ubicaciones || [];
+  const targetUbicacionId = extra.ubicacionId || (order as any).ubicacionId;
+  const matchedSucursal = sucursales.find((u: any) => u.id === targetUbicacionId) || (sucursales.length > 0 ? sucursales[0] : null);
+
+  const nombreLocal = matchedSucursal 
+    ? `${order.negocio?.nombre || 'Local'} (${matchedSucursal.nombre})`
+    : (order.negocio?.nombre || 'La Parrilla Citiox');
+
+  const direccionLocal = matchedSucursal?.direccion 
+    || cfg.direccion 
+    || order.negocio?.direccion 
+    || 'Dirección del local registrada';
+
+  // Coordenadas Punto A (Recogida): Priorizar sucursal -> latitudNegocio en config -> latitud negocio -> fallback
+  const latA = Number(matchedSucursal?.latitud || cfg.latitudNegocio || order.negocio?.latitud || -0.1136755);
+  const lngA = Number(matchedSucursal?.longitud || cfg.longitudNegocio || order.negocio?.longitud || -78.4798158);
 
   // Coordenadas Punto B (Cliente Entrega)
   const latB = Number(order.latitud || extra.latitudCliente || (latA - 0.015));
@@ -123,7 +144,7 @@ export default function DriverOrderMapModal({
     }
   }, []);
 
-  // 2. INICIALIZAR LEAFLET MAP
+  // 2. INICIALIZAR LEAFLET MAP (PARTE SUPERIOR DE LA PANTALLA)
   useEffect(() => {
     let isCancelled = false;
 
@@ -164,7 +185,7 @@ export default function DriverOrderMapModal({
         });
         mapInstanceRef.current = map;
 
-        // Tile layer voyager (Visualización clara tipo Uber/Rappi)
+        // Tile layer voyager
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
           maxZoom: 19,
           subdomains: 'abcd',
@@ -222,7 +243,6 @@ export default function DriverOrderMapModal({
         markerARef.current = L.marker([latA, lngA], { icon: iconA }).addTo(map);
         markerBRef.current = L.marker([latB, lngB], { icon: iconB }).addTo(map);
 
-        // Encuadrar vista preliminar
         const bounds = L.latLngBounds([[latDriver, lngDriver], [latA, lngA], [latB, lngB]]);
         map.fitBounds(bounds, { padding: [40, 40] });
 
@@ -244,7 +264,7 @@ export default function DriverOrderMapModal({
     };
   }, [latA, lngA, latB, lngB]);
 
-  // 3. CALCULAR RUTA REAL POR CALLES CON OSRM GRATUITO (OPEN STREET MAPS ROUTING)
+  // 3. CALCULAR RUTA REAL POR CALLES CON OSRM
   useEffect(() => {
     let isCancelled = false;
 
@@ -257,7 +277,7 @@ export default function DriverOrderMapModal({
       const lngDriver = driverRealCoords?.lng || (lngA - 0.003);
 
       try {
-        // Tramo 1: Repartidor -> Punto A (Restaurante Recogida)
+        // Tramo 1: Repartidor -> Punto A
         const res1 = await fetch(
           `https://router.project-osrm.org/route/v1/driving/${lngDriver},${latDriver};${lngA},${latA}?overview=full&geometries=geojson`
         );
@@ -270,7 +290,6 @@ export default function DriverOrderMapModal({
 
             setRouteLeg1({ distanceKm: `${dist1} km`, durationMin: `${time1} min` });
 
-            // Trazar Polyline por calles (Azul)
             const coords1 = r1.geometry.coordinates.map((c: [number, number]) => [c[1], c[0]]);
             if ((mapInstanceRef.current as any).polyLeg1) {
               mapInstanceRef.current.removeLayer((mapInstanceRef.current as any).polyLeg1);
@@ -283,13 +302,12 @@ export default function DriverOrderMapModal({
             }).addTo(mapInstanceRef.current);
             (mapInstanceRef.current as any).polyLeg1 = poly1;
 
-            // Actualizar Badge A
             const badgeEl = document.getElementById('badge-a-text');
-            if (badgeEl) badgeEl.innerText = `${time1} min • ~${dist1} km`;
+            if (badgeEl) badgeEl.innerText = `${time1} min • ${dist1} km`;
           }
         }
 
-        // Tramo 2: Punto A (Restaurante) -> Punto B (Cliente Destino)
+        // Tramo 2: Punto A -> Punto B
         const res2 = await fetch(
           `https://router.project-osrm.org/route/v1/driving/${lngA},${latA};${lngB},${latB}?overview=full&geometries=geojson`
         );
@@ -302,7 +320,6 @@ export default function DriverOrderMapModal({
 
             setRouteLeg2({ distanceKm: `${dist2} km`, durationMin: `${time2} min` });
 
-            // Trazar Polyline por calles (Verde)
             const coords2 = r2.geometry.coordinates.map((c: [number, number]) => [c[1], c[0]]);
             if ((mapInstanceRef.current as any).polyLeg2) {
               mapInstanceRef.current.removeLayer((mapInstanceRef.current as any).polyLeg2);
@@ -314,7 +331,6 @@ export default function DriverOrderMapModal({
             }).addTo(mapInstanceRef.current);
             (mapInstanceRef.current as any).polyLeg2 = poly2;
 
-            // Actualizar Badge B
             const badgeEl = document.getElementById('badge-b-text');
             if (badgeEl) badgeEl.innerText = `${time2} min • ${dist2} km`;
           }
@@ -347,7 +363,7 @@ export default function DriverOrderMapModal({
           </div>
           <div>
             <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 block leading-tight">
-              {order.negocio?.nombre || 'La Parrilla Citiox'}
+              {nombreLocal}
             </span>
             <h2 className="text-sm font-black text-white leading-tight">
               Pedido #{order.codigo || order.id.slice(-6).toUpperCase()}
@@ -358,124 +374,139 @@ export default function DriverOrderMapModal({
         <button
           onClick={onClose}
           className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-all active:scale-95 cursor-pointer"
+          title="Cerrar detalles"
         >
           <X className="w-5 h-5" />
         </button>
       </div>
 
       {/* 2. MAPA EN LA PARTE SUPERIOR (UBICACIÓN ANTES DE LA INFORMACIÓN DE LA ORDEN) */}
-      <div className="w-full h-[40vh] sm:h-[45vh] bg-slate-900 relative z-10 shrink-0 border-b border-slate-800 shadow-md">
+      <div className="w-full h-[38vh] sm:h-[42vh] bg-slate-900 relative z-10 shrink-0 border-b border-slate-800 shadow-md">
         <div ref={mapDivRef} className="w-full h-full" />
         
         {!mapLoaded && (
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center text-slate-300 gap-2 z-20">
             <div className="w-7 h-7 border-3 border-amber-400 border-t-transparent rounded-full animate-spin" />
-            <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Trazando ruta por calles en vivo...</span>
+            <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Trazando ruta por calles...</span>
           </div>
         )}
 
-        {/* Badge GPS Status / Ruta por Calles */}
+        {/* Badge GPS Status */}
         <div className="absolute bottom-3 left-3 z-20 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2 text-[10px] font-extrabold shadow-lg">
-          <Route className="w-3.5 h-3.5 text-emerald-400" />
+          <Crosshair className={`w-3.5 h-3.5 ${gpsStatus === 'ACTIVO' ? 'text-emerald-400 animate-pulse' : 'text-amber-400'}`} />
           <span className="text-slate-200">
-            {routeLeg2 ? `Ruta por calles (${routeLeg2.distanceKm})` : 'Calculando calles OSRM...'}
+            {gpsStatus === 'ACTIVO' ? 'GPS Móvil Activo' : 'Obteniendo GPS...'}
           </span>
         </div>
       </div>
 
-      {/* 3. INFORMACIÓN DE LA ORDEN (Sección Central Scrollable) */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3.5 pb-36 text-left bg-slate-950 custom-scrollbar">
+      {/* 3. INFORMACIÓN DE LA ORDEN (ORDEN SOLICITADO EXACTO: GANANCIA -> DETALLE PRODUCTOS -> RECOJE EN -> ENTREGA -> TIEMPO LLEGADA) */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3.5 pb-44 text-left bg-slate-950 custom-scrollbar">
         
-        {/* Banner Ganancia */}
+        {/* 1. Banner Ganancia */}
         <div className="bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 px-4 py-3 rounded-2xl flex items-center justify-between shadow-lg shadow-amber-500/10">
           <span className="text-xs font-black uppercase tracking-wider">TU GANANCIA DE ENVÍO:</span>
           <span className="text-lg font-black tracking-tight">+${deliveryFee}</span>
         </div>
 
-        {/* Tarjeta Punto 1: Recogida en Local (Punto A) */}
+        {/* 2. Detalle de Productos en Paquete */}
         <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-1.5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-blue-400 tracking-wider flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-blue-500/20 border border-blue-400/40 text-blue-400 flex items-center justify-center text-[10px]">A</span>
-              1. RECOGIDA EN LOCAL (RESTAURANTE):
-            </span>
-            {order.negocio?.direccion && (
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.negocio.direccion)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="px-2.5 py-1 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:text-blue-300 text-[10px] font-extrabold flex items-center gap-1 transition-all"
-              >
-                <span>GPS Local</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            )}
+          <div className="flex items-center gap-2 text-amber-400 font-black text-xs uppercase tracking-wider">
+            <PackageCheck className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>DETALLE DE PRODUCTOS EN PAQUETE:</span>
           </div>
-          <p className="font-extrabold text-slate-100 text-xs pl-6 leading-relaxed">
-            {order.negocio?.direccion || 'Av. Principal 123, Quito'}
+          <p className="font-bold text-slate-100 text-xs leading-relaxed pl-6">
+            {itemsSummary || 'Sin productos registrados'}
           </p>
         </div>
 
-        {/* Tarjeta Punto 2: Entrega a Cliente (Punto B) */}
-        <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-1.5 shadow-sm">
+        {/* 3. Recoge el Pedido en (Punto A - Local / Sucursal) */}
+        <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-2 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase text-emerald-400 tracking-wider flex items-center gap-1.5">
-              <span className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-400 flex items-center justify-center text-[10px]">B</span>
-              2. ENTREGA A DESTINO (CLIENTE):
+            <span className="text-[11px] font-black uppercase text-blue-400 tracking-wider flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-full bg-blue-500/20 border border-blue-400/40 text-blue-400 flex items-center justify-center text-[10px]">A</span>
+              RECOGE EL PEDIDO EN:
             </span>
-            {order.direccionCliente && (
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.direccionCliente)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 text-[10px] font-extrabold flex items-center gap-1 transition-all"
-              >
-                <span>GPS Cliente</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
+            {matchedSucursal && (
+              <span className="text-[9px] font-black uppercase bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-md border border-blue-500/30">
+                Sucursal: {matchedSucursal.nombre}
+              </span>
             )}
           </div>
           <p className="font-extrabold text-slate-100 text-xs pl-6 leading-relaxed">
-            {order.direccionCliente || 'Sin dirección registrada'}
+            {nombreLocal} — {direccionLocal}
+          </p>
+          <div className="pt-1 pl-6">
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccionLocal)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all active:scale-95"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span>IR AL LOCAL (GPS)</span>
+            </a>
+          </div>
+        </div>
+
+        {/* 4. Entrega a Destino (Punto B - Cliente) */}
+        <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-black uppercase text-emerald-400 tracking-wider flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-400 flex items-center justify-center text-[10px]">B</span>
+              ENTREGA A DESTINO (CLIENTE):
+            </span>
+          </div>
+          <p className="font-extrabold text-slate-100 text-xs pl-6 leading-relaxed">
+            {order.direccionCliente || 'Sin dirección de cliente registrada'}
           </p>
           {order.referenciaCliente && (
             <p className="text-[10px] text-slate-400 font-medium pl-6">Ref: {order.referenciaCliente}</p>
           )}
+          {order.direccionCliente && (
+            <div className="pt-1 pl-6">
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.direccionCliente)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all active:scale-95"
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span>IR DONDE EL CLIENTE (GPS)</span>
+              </a>
+            </div>
+          )}
         </div>
 
-        {/* Desglose de Distancias Reales por Calle */}
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          <div className="bg-slate-900/90 p-3 rounded-2xl border border-slate-800 text-center space-y-0.5 shadow-sm">
-            <span className="text-[10px] font-bold text-slate-400 block">Distancia a Recoger:</span>
-            <span className="font-black text-amber-300 text-sm">
-              📍 {routeLeg1 ? `${routeLeg1.distanceKm} (${routeLeg1.durationMin})` : '~1.2 km'}
-            </span>
-          </div>
-          <div className="bg-slate-900/90 p-3 rounded-2xl border border-slate-800 text-center space-y-0.5 shadow-sm">
-            <span className="text-[10px] font-bold text-slate-400 block">Distancia a Entregar:</span>
-            <span className="font-black text-emerald-400 text-sm">
-              🏁 {routeLeg2 ? `${routeLeg2.distanceKm} (${routeLeg2.durationMin})` : '2.4 km'}
-            </span>
-          </div>
-        </div>
-
-        {/* Detalle de Productos en Paquete */}
-        <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-1 shadow-sm">
+        {/* 5. Tiempo y Distancia de Llegada Estimada */}
+        <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-2 shadow-sm">
           <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">
-            DETALLE DE PRODUCTOS EN PAQUETE:
+            TIEMPO Y DISTANCIA ESTIMADA DE LLEGADA:
           </span>
-          <p className="font-bold text-slate-200 text-xs leading-relaxed">
-            {itemsSummary || 'Sin productos registrados'}
-          </p>
+          <div className="grid grid-cols-2 gap-3 text-xs pt-1">
+            <div className="bg-slate-950/90 p-3 rounded-2xl border border-slate-800 text-center space-y-0.5 shadow-sm">
+              <span className="text-[10px] font-bold text-slate-400 block">Distancia a Recoger:</span>
+              <span className="font-black text-amber-300 text-xs sm:text-sm">
+                📍 {routeLeg1 ? `${routeLeg1.distanceKm} (${routeLeg1.durationMin})` : '11.4 km (26 min)'}
+              </span>
+            </div>
+            <div className="bg-slate-900/90 p-3 rounded-2xl border border-slate-800 text-center space-y-0.5 shadow-sm">
+              <span className="text-[10px] font-bold text-slate-400 block">Distancia a Entregar:</span>
+              <span className="font-black text-emerald-400 text-xs sm:text-sm">
+                🏁 {routeLeg2 ? `${routeLeg2.distanceKm} (${routeLeg2.durationMin})` : '4.9 km (16 min)'}
+              </span>
+            </div>
+          </div>
         </div>
+
       </div>
 
-      {/* 4. BARRA DE ACCIÓN FIJA INFERIOR (FIXED BOTTOM ACTION BAR) */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/98 backdrop-blur-2xl border-t border-slate-800/90 p-4 space-y-2 shadow-[0_-8px_30px_rgba(0,0,0,0.5)]">
+      {/* 4. BARRA DE ACCIÓN FIJA INFERIOR (BOTONES 100% VISIBLES EN MÓVIL) */}
+      <div className="fixed bottom-0 left-0 right-0 z-[250] bg-slate-900/98 backdrop-blur-2xl border-t border-slate-800 p-3.5 sm:p-4 pb-6 space-y-2 shadow-[0_-10px_40px_rgba(0,0,0,0.6)]">
         <button
           onClick={() => onAccept(order.id)}
           disabled={actionLoading || hasActiveOrder}
-          className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2.5 cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-3.5 sm:py-4 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <CheckCircle className="w-5 h-5 stroke-[2.5]" />
           <span>
@@ -487,9 +518,10 @@ export default function DriverOrderMapModal({
 
         <button
           onClick={onClose}
-          className="w-full py-3 bg-slate-800 hover:bg-slate-700 active:bg-slate-850 text-slate-300 font-extrabold text-xs uppercase tracking-wider rounded-2xl transition-all cursor-pointer"
+          className="w-full py-3 bg-slate-800 hover:bg-slate-700 active:bg-slate-850 text-slate-300 font-extrabold text-xs uppercase tracking-wider rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-2"
         >
-          VOLVER A LA BOLSA
+          <ArrowLeft className="w-4 h-4" />
+          <span>VOLVER A LA BOLSA</span>
         </button>
       </div>
 
