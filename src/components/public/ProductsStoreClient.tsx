@@ -206,6 +206,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const [draftCheckoutPayload, setDraftCheckoutPayload] = useState<any>(null);
     const [draftPaymentCode, setDraftPaymentCode] = useState<string>('');
     const [selectedBankIndex, setSelectedBankIndex] = useState<number>(0);
+    // Cart Drawer State
+    const [showCartDrawer, setShowCartDrawer] = useState(false);
 
     // Estado para Pedido Activo y Contador Regresivo
     const [activeOrder, setActiveOrder] = useState<any | null>(null);
@@ -1242,56 +1244,137 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
             {step === 'catalog' ? (
                 <>
-                    {/* Hero / Banner Principal */}
-                    {hasCustomBanner ? (
-                        <div className="relative w-full bg-slate-950 flex flex-col items-center justify-center overflow-hidden">
-                            <div className="relative w-full">
-                                <img 
-                                    src={bannerImage} 
-                                    alt={negocio.nombre} 
-                                    className="w-full h-auto object-contain max-h-[500px] mx-auto block shadow-md"
-                                />
-                                {hasCustomTitle && (
-                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end justify-center text-center p-6">
-                                        <div className="max-w-md">
-                                            <h2 className="text-2xl md:text-4xl font-black text-white italic tracking-tighter uppercase mb-1 drop-shadow-lg">
-                                                {heroTitle}
-                                            </h2>
-                                            <p className="text-xs md:text-sm text-white/90 font-bold uppercase tracking-widest drop-shadow">
-                                                {heroSub}
-                                            </p>
+                    {/* ── HERO PRINCIPAL OSCURO ── */}
+                    <div className="relative w-full bg-[#120800] overflow-hidden">
+                        {/* Imagen de fondo con overlay oscuro */}
+                        <div 
+                            className="absolute inset-0 bg-cover bg-center opacity-50"
+                            style={{ backgroundImage: `url('${bannerImage}')` }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#120800] via-[#120800]/60 to-[#120800]/20" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#120800]/80 via-transparent to-[#120800]/30" />
+
+                        {/* Contenido del Hero */}
+                        <div className="relative z-10 px-6 pt-10 pb-8 max-w-lg mx-auto">
+                            {/* Badge superior */}
+                            <div className="inline-flex items-center gap-2 mb-4">
+                                <span className="px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border" style={{ color: primaryColor, borderColor: primaryColor, backgroundColor: `${primaryColor}20` }}>
+                                    🔥 Pedidos en Línea
+                                </span>
+                            </div>
+
+                            {/* Título grande */}
+                            <h2 className="text-5xl md:text-6xl font-black text-white uppercase leading-[0.9] tracking-tight mb-2 drop-shadow-2xl">
+                                {heroTitle.split(' ').slice(0, 2).join(' ')}
+                            </h2>
+                            {heroTitle.split(' ').length > 2 && (
+                                <h2 className="text-5xl md:text-6xl font-black italic uppercase leading-[0.9] tracking-tight mb-4 drop-shadow-2xl" style={{ color: primaryColor }}>
+                                    {heroTitle.split(' ').slice(2).join(' ')}
+                                </h2>
+                            )}
+
+                            <p className="text-white/70 text-sm font-medium mb-6 leading-relaxed max-w-xs">
+                                {heroSub}
+                            </p>
+
+                            {/* CTAs del Hero */}
+                            <div className="flex gap-3 flex-wrap">
+                                <button
+                                    onClick={() => {
+                                        setDeliveryType('DOMICILIO');
+                                        document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' });
+                                    }}
+                                    className="flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-xl active:scale-95 transition-all"
+                                    style={{ backgroundColor: primaryColor }}
+                                >
+                                    <span>🛵</span>
+                                    <span>Pedir a Domicilio</span>
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setDeliveryType('RETIRO');
+                                        document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' });
+                                    }}
+                                    className="flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider text-white/90 border border-white/30 bg-white/10 backdrop-blur-sm active:scale-95 transition-all hover:bg-white/20"
+                                >
+                                    <span>🏪</span>
+                                    <span>Retirar en Local</span>
+                                </button>
+                            </div>
+
+                            {/* 3 badges informativos */}
+                            <div className="flex gap-4 mt-6 pt-5 border-t border-white/10 flex-wrap">
+                                {config.tiempoMaximoEntrega && (
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-base">⏱️</span>
+                                        <div>
+                                            <p className="text-white font-black text-[10px]">{config.tiempoMaximoEntrega}</p>
+                                            <p className="text-white/50 text-[9px] font-medium">Entrega rápida</p>
                                         </div>
                                     </div>
                                 )}
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-base">🔥</span>
+                                    <div>
+                                        <p className="text-white font-black text-[10px]">Recién preparado</p>
+                                        <p className="text-white/50 text-[9px] font-medium">Ingredientes frescos</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-base">🔒</span>
+                                    <div>
+                                        <p className="text-white font-black text-[10px]">Pago seguro</p>
+                                        <p className="text-white/50 text-[9px] font-medium">Múltiples métodos</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    ) : (
-                        <div className="relative h-60 md:h-80 bg-slate-900 overflow-hidden flex items-center justify-center text-center px-6">
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/30 to-transparent z-10" />
-                            <div 
-                                className="absolute inset-0 opacity-80 bg-cover bg-center transition-all duration-500"
-                                style={{ backgroundImage: `url('${bannerImage}')` }}
-                            />
-                            
-                            <div className="relative z-20 max-w-md">
-                                <h2 className="text-3xl md:text-4xl font-black text-white italic tracking-tighter uppercase mb-2 drop-shadow-lg">
-                                    {heroTitle}
-                                </h2>
-                                <p className="text-xs md:text-sm text-white/90 font-bold uppercase tracking-widest mb-5 drop-shadow">
-                                    {heroSub}
-                                </p>
-                                <button 
-                                    onClick={() => {
-                                        const el = document.getElementById('catalogo');
-                                        el?.scrollIntoView({ behavior: 'smooth' });
-                                    }}
-                                    className="px-6 py-3 bg-white text-slate-900 text-[11px] font-black uppercase tracking-widest rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl"
+                    </div>
+
+                    {/* ── TARJETAS DE TIPO DE ENTREGA ── */}
+                    <div className="px-4 pt-5 pb-2">
+                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-3">¿Cómo quieres tu pedido?</h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            {/* Card Domicilio */}
+                            <div
+                                onClick={() => { setDeliveryType('DOMICILIO'); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }); }}
+                                className={`relative rounded-3xl p-4 cursor-pointer transition-all active:scale-95 overflow-hidden border-2 ${
+                                    deliveryType === 'DOMICILIO' ? 'border-transparent shadow-lg' : 'border-slate-100 bg-white hover:border-slate-200'
+                                }`}
+                                style={deliveryType === 'DOMICILIO' ? { background: `linear-gradient(135deg, ${primaryColor}15, ${primaryColor}05)`, borderColor: primaryColor } : {}}
+                            >
+                                <div className="text-4xl mb-2">🛵</div>
+                                <h4 className="text-xs font-black text-slate-900 uppercase tracking-wide">A Domicilio</h4>
+                                <p className="text-[10px] text-slate-400 font-medium mt-0.5">Te lo llevamos hasta la puerta de tu casa.</p>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setDeliveryType('DOMICILIO'); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }); }}
+                                    className="mt-3 w-full py-2 rounded-xl text-[10px] font-black uppercase tracking-wider text-white active:scale-95 transition-all"
+                                    style={{ backgroundColor: primaryColor }}
                                 >
-                                    Hacer Pedido
+                                    Pedir Delivery
+                                </button>
+                            </div>
+
+                            {/* Card Retiro */}
+                            <div
+                                onClick={() => { setDeliveryType('RETIRO'); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }); }}
+                                className={`relative rounded-3xl p-4 cursor-pointer transition-all active:scale-95 overflow-hidden border-2 ${
+                                    deliveryType === 'RETIRO' ? 'border-transparent shadow-lg' : 'border-slate-100 bg-white hover:border-slate-200'
+                                }`}
+                                style={deliveryType === 'RETIRO' ? { background: `linear-gradient(135deg, ${primaryColor}15, ${primaryColor}05)`, borderColor: primaryColor } : {}}
+                            >
+                                <div className="text-4xl mb-2">🏪</div>
+                                <h4 className="text-xs font-black text-slate-900 uppercase tracking-wide">Retiro en Local</h4>
+                                <p className="text-[10px] text-slate-400 font-medium mt-0.5">Pasa por tu pedido en nuestro local sin hacer fila.</p>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setDeliveryType('RETIRO'); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }); }}
+                                    className="mt-3 w-full py-2 rounded-xl text-[10px] font-black uppercase tracking-wider text-slate-900 bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all"
+                                >
+                                    Retirar Ahora
                                 </button>
                             </div>
                         </div>
-                    )}
+                    </div>
 
                     {/* Banner de Aviso de Pedido Activo / Pendiente de Aprobación (Debajo del Banner Principal) */}
                     {activeOrder && (
@@ -1410,91 +1493,98 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         </div>
                     )}
 
+                    {/* ── TÍTULO SECCIÓN CATÁLOGO ── */}
+                    <div className="px-4 pt-4 pb-1 flex items-center justify-between">
+                        <div>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] mb-0.5 block" style={{ color: primaryColor }}>🍽️ Menú</span>
+                            <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Los más pedidos</h3>
+                        </div>
+                        <button
+                            onClick={() => setSelectedCategory('all')}
+                            className="text-[10px] font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1"
+                        >
+                            Ver menú completo <ChevronRight className="size-3.5" />
+                        </button>
+                    </div>
+
                     {/* Catálogo de Productos */}
-                    <main id="catalogo" className="flex-1 px-6 mt-6 pb-24">
+                    <main id="catalogo" className="flex-1 px-4 mt-3 pb-36">
                         {loading ? (
                             <div className="flex flex-col items-center justify-center py-20">
                                 <Loader2 className="size-8 text-slate-300 animate-spin mb-3" />
                                 <span className="text-xs text-slate-400 font-bold uppercase tracking-widest">Cargando menú...</span>
                             </div>
                         ) : filteredProducts.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                 {filteredProducts.map(p => {
                                     const inCart = cart.find(item => item.product.id === p.id);
                                     
                                     return (
-                                        <div key={p.id} className="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex gap-4 relative overflow-hidden group">
-                                            {/* Imagen del Producto (Click para Zoom) */}
+                                        <div key={p.id} className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-all relative flex flex-col group">
+                                            {/* Imagen del Producto (Click para Zoom) - CUADRADA dominante */}
                                             <div 
                                                 onClick={() => setZoomProduct(p)}
-                                                className="relative size-24 sm:size-28 rounded-2xl bg-slate-100 overflow-hidden shrink-0 cursor-pointer group/img transition-transform duration-300"
-                                                title="Haz clic para ampliar la imagen"
+                                                className="relative w-full aspect-square bg-slate-100 overflow-hidden cursor-pointer"
+                                                title="Ver detalle"
                                             >
                                                 {p.imagenUrl ? (
                                                     // eslint-disable-next-line @next/next/no-img-element
                                                     <img 
                                                         src={p.imagenUrl} 
                                                         alt={p.nombre} 
-                                                        className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-500" 
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                                                     />
                                                 ) : (
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-emerald-500/5 text-emerald-600 font-black text-2xl italic uppercase">
+                                                    <div className="absolute inset-0 flex items-center justify-center font-black text-4xl italic uppercase" style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
                                                         {p.nombre.substring(0, 1)}
                                                     </div>
                                                 )}
-
-                                                {/* Badge de Zoom en la esquina de la imagen */}
-                                                <div className="absolute bottom-1.5 right-1.5 size-7 rounded-xl bg-slate-950/70 hover:bg-slate-950 text-white flex items-center justify-center backdrop-blur-xs transition-all shadow-md group-hover/img:scale-110">
+                                                {/* Badge Zoom */}
+                                                <div className="absolute top-2 right-2 size-7 rounded-xl bg-slate-950/60 text-white flex items-center justify-center backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <ZoomIn className="size-3.5" />
                                                 </div>
                                             </div>
 
                                             {/* Detalles del Producto */}
-                                            <div className="flex-1 flex flex-col justify-between text-left">
-                                                <div>
-                                                    <h3 
-                                                        onClick={() => setZoomProduct(p)}
-                                                        className="text-sm sm:text-base font-black text-slate-800 tracking-tight leading-tight group-hover:text-slate-900 cursor-pointer hover:underline"
-                                                    >
-                                                        {p.nombre}
-                                                    </h3>
-                                                    {p.descripcion && (
-                                                        <p className="text-[11px] text-slate-400 font-medium leading-relaxed mt-1 line-clamp-2">{p.descripcion}</p>
-                                                    )}
-                                                </div>
-                                                <div className="flex justify-between items-end mt-3 flex-wrap gap-2">
-                                                    <span className="text-base font-black text-slate-900">${p.precio.toFixed(2)}</span>
+                                            <div className="flex flex-col flex-1 p-3 text-left">
+                                                <h3 
+                                                    onClick={() => setZoomProduct(p)}
+                                                    className="text-xs font-black text-slate-900 tracking-tight leading-tight cursor-pointer line-clamp-2"
+                                                >
+                                                    {p.nombre}
+                                                </h3>
+                                                {p.descripcion && (
+                                                    <p className="text-[10px] text-slate-400 font-medium leading-relaxed mt-0.5 line-clamp-2">{p.descripcion}</p>
+                                                )}
+                                                <div className="flex justify-between items-center mt-auto pt-2">
+                                                    <span className="text-sm font-black text-slate-900">${p.precio.toFixed(2)}</span>
                                                     
-                                                    {/* Control de Carrito Más Grande */}
                                                     {inCart ? (
-                                                        <div className="flex items-center bg-slate-100/90 rounded-2xl p-1 gap-2.5 border border-slate-200/80 shadow-2xs">
+                                                        <div className="flex items-center bg-slate-100 rounded-xl p-0.5 gap-1.5 border border-slate-200">
                                                             <button 
                                                                 type="button"
                                                                 onClick={() => updateQuantity(p.id, -1)}
-                                                                className="size-8 bg-white hover:bg-slate-200 text-slate-800 rounded-xl flex items-center justify-center shadow-xs active:scale-90 transition-transform cursor-pointer"
-                                                                title="Disminuir cantidad"
+                                                                className="size-7 bg-white hover:bg-slate-100 text-slate-800 rounded-lg flex items-center justify-center shadow-xs active:scale-90 transition-transform cursor-pointer"
                                                             >
-                                                                <Minus className="size-4 stroke-[2.5]" />
+                                                                <Minus className="size-3.5 stroke-[2.5]" />
                                                             </button>
-                                                            <span className="text-sm font-black text-slate-900 min-w-[20px] text-center">{inCart.quantity}</span>
+                                                            <span className="text-xs font-black text-slate-900 min-w-[16px] text-center">{inCart.quantity}</span>
                                                             <button 
                                                                 type="button"
                                                                 onClick={() => updateQuantity(p.id, 1)}
-                                                                className="size-8 bg-white hover:bg-slate-200 text-slate-800 rounded-xl flex items-center justify-center shadow-xs active:scale-90 transition-transform cursor-pointer"
-                                                                title="Aumentar cantidad"
+                                                                className="size-7 bg-white hover:bg-slate-100 text-slate-800 rounded-lg flex items-center justify-center shadow-xs active:scale-90 transition-transform cursor-pointer"
                                                             >
-                                                                <Plus className="size-4 stroke-[2.5]" />
+                                                                <Plus className="size-3.5 stroke-[2.5]" />
                                                             </button>
                                                         </div>
                                                     ) : (
                                                         <button 
                                                             type="button"
                                                             onClick={() => addToCart(p)}
-                                                            className="h-10 px-5 rounded-2xl text-xs font-black uppercase tracking-wider text-white shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+                                                            className="size-8 rounded-xl text-white shadow-md active:scale-95 transition-all flex items-center justify-center cursor-pointer"
                                                             style={{ backgroundColor: primaryColor }}
                                                         >
                                                             <Plus className="size-4 stroke-[2.5]" />
-                                                            <span>Agregar</span>
                                                         </button>
                                                     )}
                                                 </div>
@@ -1512,19 +1602,93 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         )}
                     </main>
 
-                    {/* Footer Carrito Flotante */}
+                    {/* ── BANNER CTA GRUPOS/COMBOS ── */}
+                    {categories.length > 0 && (
+                        <div className="mx-4 my-4 rounded-3xl overflow-hidden relative" style={{ backgroundColor: '#120800' }}>
+                            <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: `url('${bannerImage}')` }} />
+                            <div className="relative z-10 p-6 flex items-center justify-between gap-4">
+                                <div>
+                                    <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider">¿Vas a tener visita?</p>
+                                    <h3 className="text-white font-black text-lg uppercase tracking-tight leading-tight mt-0.5">SOMOS TU<br/><span style={{ color: primaryColor }}>MEJOR OPCIÓN</span></h3>
+                                    <p className="text-white/50 text-[10px] mt-1">Grandes cantidades, mismo sabor.</p>
+                                </div>
+                                <button
+                                    onClick={() => setSelectedCategory('all')}
+                                    className="shrink-0 px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider border-2 border-white text-white hover:bg-white/20 active:scale-95 transition-all whitespace-nowrap flex items-center gap-2"
+                                >
+                                    <span>Ver Combos</span>
+                                    <span>👥</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── FOOTER PÚBLICO ── */}
+                    <footer className="mx-0 px-6 py-6 mt-2 border-t border-slate-100 bg-white">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center sm:text-left">
+                            {(config.whatsapp || negocio.whatsapp) && (
+                                <a href={`https://wa.me/${(config.whatsapp || negocio.whatsapp || '').replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
+                                    className="flex flex-col sm:flex-row items-center gap-2 group">
+                                    <span className="text-2xl">💬</span>
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">¿Dudas? Escríbenos</p>
+                                        <p className="text-xs font-black text-slate-900 group-hover:text-green-600 transition-colors">{config.whatsapp || negocio.whatsapp}</p>
+                                    </div>
+                                </a>
+                            )}
+                            {config.horarioAtencion && (
+                                <div className="flex flex-col sm:flex-row items-center gap-2">
+                                    <span className="text-2xl">🕐</span>
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Horario de atención</p>
+                                        <p className="text-xs font-black text-slate-900">{config.horarioAtencion}</p>
+                                    </div>
+                                </div>
+                            )}
+                            <div className="flex flex-col items-center sm:items-start gap-1">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Síguenos</p>
+                                <div className="flex items-center gap-3">
+                                    {config.instagram && (
+                                        <a href={`https://instagram.com/${config.instagram}`} target="_blank" rel="noopener noreferrer"
+                                            className="size-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white hover:scale-110 transition-transform">
+                                            <svg className="size-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                                        </a>
+                                    )}
+                                    {config.facebook && (
+                                        <a href={`https://facebook.com/${config.facebook}`} target="_blank" rel="noopener noreferrer"
+                                            className="size-8 rounded-xl bg-blue-600 flex items-center justify-center text-white hover:scale-110 transition-transform">
+                                            <svg className="size-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                                        </a>
+                                    )}
+                                    {!config.instagram && !config.facebook && (
+                                        <span className="text-xs text-slate-300 font-medium">—</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
+
+                    {/* ── CARRITO FLOTANTE PREMIUM ── */}
                     {cart.length > 0 && (
-                        <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white to-white/90 border-t border-slate-100/50 backdrop-blur-md z-30 flex justify-center">
+                        <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-4 pb-4">
                             <button 
-                                onClick={() => setStep('checkout')}
-                                className="w-full max-w-md py-4 px-6 rounded-2xl text-white shadow-xl flex justify-between items-center active:scale-[0.98] transition-transform font-black text-xs uppercase tracking-widest"
-                                style={{ backgroundColor: primaryColor }}
+                                onClick={() => setShowCartDrawer(true)}
+                                className="w-full max-w-md bg-slate-950 text-white py-3.5 px-5 rounded-2xl shadow-2xl flex items-center justify-between active:scale-[0.98] transition-all border border-white/10"
                             >
-                                <span className="flex items-center gap-2">
-                                    <ShoppingBag className="size-4 shrink-0" />
-                                    {totalItems} {totalItems === 1 ? 'Pincho' : 'Pinchos'}
-                                </span>
-                                <span>Ver Pedido (${cartSubtotal.toFixed(2)})</span>
+                                <div className="flex items-center gap-3">
+                                    <div className="relative">
+                                        <ShoppingBag className="size-5 text-white" />
+                                        <span className="absolute -top-2 -right-2 size-4 text-[8px] font-black rounded-full flex items-center justify-center text-white" style={{ backgroundColor: primaryColor }}>{totalItems}</span>
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="text-[9px] font-bold text-white/50 uppercase tracking-wider leading-none">Tu pedido</p>
+                                        <p className="text-xs font-black text-white leading-tight">{totalItems} {totalItems === 1 ? 'producto' : 'productos'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-sm font-black text-white">${cartSubtotal.toFixed(2)}</span>
+                                    <span className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider text-white" style={{ backgroundColor: primaryColor }}>Ver carrito →</span>
+                                </div>
                             </button>
                         </div>
                     )}
@@ -1702,82 +1866,14 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             </div>
                         )}
 
-                        {/* Fecha y Franja Horaria */}
-                        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
-                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest border-b border-slate-50 pb-2">Programación de Entrega</h3>
-                            
-                            {/* Selector Fecha */}
+                        {/* ⚡ Badge de Pedido Inmediato (reemplaza selector de fecha/hora) */}
+                        <div className="rounded-2xl p-4 flex items-center gap-3 border" style={{ backgroundColor: `${primaryColor}10`, borderColor: `${primaryColor}30` }}>
+                            <div className="size-10 rounded-xl flex items-center justify-center shrink-0 text-xl" style={{ backgroundColor: `${primaryColor}20` }}>⚡</div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Fecha de Entrega</label>
-                                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none snap-x">
-                                    {(() => {
-                                        const days = [];
-                                        const today = new Date();
-                                        const startIdx = isTodayAvailable() ? 0 : 1;
-                                        const weekdays = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-                                        const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-
-                                        for (let i = startIdx; i < startIdx + 7; i++) {
-                                            const d = new Date();
-                                            d.setDate(today.getDate() + i);
-                                            const dateStr = d.toISOString().split('T')[0];
-                                            const labelDay = d.getDate();
-                                            const labelWeek = weekdays[d.getDay()];
-                                            const labelMonth = months[d.getMonth()];
-                                            days.push({
-                                                dateStr,
-                                                label: `${labelWeek} ${labelDay}`,
-                                                subLabel: labelMonth,
-                                                isToday: i === 0
-                                            });
-                                        }
-
-                                        return days.map(day => (
-                                            <button
-                                                key={day.dateStr}
-                                                type="button"
-                                                onClick={() => setDeliveryDate(day.dateStr)}
-                                                className={`px-4 py-2.5 text-center rounded-2xl text-[10px] font-black uppercase tracking-wider border transition-all shrink-0 snap-center flex flex-col items-center justify-center min-w-[70px] ${
-                                                    deliveryDate === day.dateStr 
-                                                        ? 'bg-orange-600 text-white shadow-md border-transparent font-black' 
-                                                        : 'bg-slate-50 text-slate-500 border-transparent hover:bg-slate-100 font-bold'
-                                                }`}
-                                            >
-                                                <span>{day.isToday ? "Hoy" : day.label}</span>
-                                                <span className={`text-[8px] font-bold ${
-                                                    deliveryDate === day.dateStr ? 'text-orange-100' : 'text-slate-400'
-                                                }`}>{day.subLabel}</span>
-                                            </button>
-                                        ));
-                                    })()}
-                                </div>
-                            </div>
-
-                            {/* Selector Franja Horaria */}
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Franja Horaria</label>
-                                {slotsDisponibles.length > 0 ? (
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {slotsDisponibles.map(slot => (
-                                            <button
-                                                key={slot}
-                                                type="button"
-                                                onClick={() => setTimeSlot(slot)}
-                                                className={`py-2.5 text-center rounded-xl text-[10px] font-black tracking-wider transition-all border ${
-                                                    timeSlot === slot 
-                                                        ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500' 
-                                                        : 'bg-slate-50 text-slate-500 border-transparent hover:bg-slate-100'
-                                                }`}
-                                            >
-                                                {slot} hrs
-                                            </button>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="text-[10px] font-bold text-rose-500 bg-rose-50 border border-rose-100 rounded-xl p-3">
-                                        No hay franjas horarias disponibles para el día de hoy. Por favor, selecciona mañana.
-                                    </p>
-                                )}
+                                <p className="text-xs font-black uppercase tracking-wider" style={{ color: primaryColor }}>Pedido Inmediato</p>
+                                <p className="text-[11px] text-slate-600 font-medium mt-0.5">
+                                    Tu pedido se prepara de inmediato{config.tiempoMaximoEntrega ? ` · Entrega en ${config.tiempoMaximoEntrega}` : ' mientras el local esté abierto'}.
+                                </p>
                             </div>
                         </div>
 
@@ -1851,7 +1947,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         {/* Botón de Confirmación */}
                         <button
                             type="submit"
-                            disabled={submitting || slotsDisponibles.length === 0 || isBelowMinOrder}
+                            disabled={submitting || isBelowMinOrder}
                             className={`w-full py-4 text-center text-xs font-black uppercase tracking-widest rounded-2xl text-white shadow-xl transition-all flex items-center justify-center gap-2 ${
                                 isBelowMinOrder ? 'opacity-60 cursor-not-allowed' : 'active:scale-[0.98]'
                             }`}
@@ -1868,7 +1964,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 </>
                             ) : (
                                 <>
-                                    Confirmar Pedido (${cartTotal.toFixed(2)})
+                                    ⚡ Confirmar Pedido (${cartTotal.toFixed(2)})
                                 </>
                             )}
                         </button>
@@ -1876,20 +1972,113 @@ export default function ProductsStoreClient({ negocio }: Props) {
                 </main>
             )}
 
-            {/* Barra Flotante Inferior de Ver Carrito en Móvil */}
-            {step === 'catalog' && totalItems > 0 && (
-                <div className="fixed bottom-[84px] left-0 right-0 z-[120] px-4 md:hidden animate-in fade-in slide-in-from-bottom-5 duration-300 pointer-events-none">
-                    <button
-                        onClick={() => setStep('checkout')}
-                        className="w-full bg-slate-900 text-white py-4 px-6 rounded-2xl flex items-center justify-between shadow-xl active:scale-95 transition-transform pointer-events-auto"
-                        style={{ backgroundColor: primaryColor }}
-                    >
-                        <div className="flex items-center gap-2">
-                            <span className="bg-white/20 px-2.5 py-0.5 rounded-lg text-[9px] font-black">{totalItems} uds</span>
+            {/* ── CART DRAWER LATERAL PREMIUM ── */}
+            {showCartDrawer && (
+                <div className="fixed inset-0 z-[200] flex">
+                    {/* Overlay */}
+                    <div className="flex-1 bg-slate-950/70 backdrop-blur-sm" onClick={() => setShowCartDrawer(false)} />
+                    
+                    {/* Panel del carrito */}
+                    <div className="w-full max-w-sm bg-white flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
+                        {/* Header del drawer */}
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100" style={{ backgroundColor: '#120800' }}>
+                            <div className="flex items-center gap-3">
+                                <ShoppingBag className="size-5 text-white" />
+                                <div>
+                                    <p className="text-[9px] font-bold text-white/50 uppercase tracking-wider leading-none">Tu pedido</p>
+                                    <p className="text-sm font-black text-white">{totalItems} {totalItems === 1 ? 'producto' : 'productos'}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowCartDrawer(false)}
+                                className="size-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all active:scale-95 cursor-pointer"
+                            >
+                                <X className="size-4" />
+                            </button>
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-widest">Ver mi Carrito</span>
-                        <span className="text-xs font-black">${cartSubtotal.toFixed(2)}</span>
-                    </button>
+
+                        {/* Lista de ítems */}
+                        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+                            {cart.map(item => (
+                                <div key={item.product.id} className="flex items-center gap-3 bg-slate-50 rounded-2xl p-3">
+                                    {/* Miniatura producto */}
+                                    <div className="size-14 rounded-xl bg-slate-200 overflow-hidden shrink-0">
+                                        {item.product.imagenUrl ? (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img src={item.product.imagenUrl} alt={item.product.nombre} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center font-black text-lg italic" style={{ color: primaryColor }}>
+                                                {item.product.nombre.substring(0, 1)}
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Info */}
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-black text-slate-900 truncate">{item.product.nombre}</p>
+                                        <p className="text-[10px] text-slate-500 font-medium">${item.product.precio.toFixed(2)} c/u</p>
+                                    </div>
+                                    
+                                    {/* Controles */}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={() => updateQuantity(item.product.id, -1)}
+                                            className="size-7 bg-white border border-slate-200 rounded-lg flex items-center justify-center active:scale-90 transition-transform cursor-pointer"
+                                        >
+                                            <Minus className="size-3.5 stroke-[2.5]" />
+                                        </button>
+                                        <span className="text-xs font-black text-slate-900 min-w-[20px] text-center">{item.quantity}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => updateQuantity(item.product.id, 1)}
+                                            className="size-7 bg-white border border-slate-200 rounded-lg flex items-center justify-center active:scale-90 transition-transform cursor-pointer"
+                                        >
+                                            <Plus className="size-3.5 stroke-[2.5]" />
+                                        </button>
+                                    </div>
+
+                                    {/* Subtotal por ítem */}
+                                    <p className="text-xs font-black text-slate-900 shrink-0 min-w-[48px] text-right">${(item.product.precio * item.quantity).toFixed(2)}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Resumen de totales */}
+                        <div className="px-4 py-4 border-t border-slate-100 space-y-2">
+                            <div className="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                <span>Subtotal</span>
+                                <span>${cartSubtotal.toFixed(2)}</span>
+                            </div>
+                            {deliveryType === 'DOMICILIO' && (
+                                <div className="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    <span>Envío</span>
+                                    <span>${shippingCost.toFixed(2)}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-100">
+                                <span>TOTAL</span>
+                                <span>${cartTotal.toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        {/* CTA */}
+                        <div className="px-4 pb-6 space-y-2">
+                            <button
+                                onClick={() => { setShowCartDrawer(false); setStep('checkout'); }}
+                                className="w-full py-4 rounded-2xl text-white font-black text-sm uppercase tracking-widest shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                style={{ backgroundColor: primaryColor }}
+                            >
+                                ⚡ Confirmar Pedido (${cartTotal.toFixed(2)})
+                            </button>
+                            <button
+                                onClick={() => setShowCartDrawer(false)}
+                                className="w-full py-3 rounded-2xl text-slate-600 font-black text-xs uppercase tracking-wider bg-slate-100 hover:bg-slate-200 active:scale-[0.98] transition-all"
+                            >
+                                + Seguir comprando
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 
