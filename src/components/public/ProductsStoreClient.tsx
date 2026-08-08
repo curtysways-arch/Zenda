@@ -71,12 +71,17 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const configBannersList = (config.banners || []).map((b: any) => typeof b === 'string' ? b : b?.url).filter(Boolean);
     const singleBanner = config.bannerUrl || config.banner_url || (negocio as any).bannerUrl;
 
-    const rawBannerList = Array.from(new Set([
-        ...configBannerUrlsList,
-        ...imagenesBannerList,
-        ...configBannersList,
-        ...(singleBanner ? [singleBanner] : [])
-    ])).filter((u: string) => typeof u === 'string' && u.trim() !== '');
+    // Si el usuario configuró los banners en /admin/config (config.bannerUrls), esa lista es prioritaria y autoritativa.
+    let rawBannerList: string[] = [];
+    if (configBannerUrlsList.length > 0) {
+        rawBannerList = configBannerUrlsList;
+    } else if (imagenesBannerList.length > 0) {
+        rawBannerList = imagenesBannerList;
+    } else if (configBannersList.length > 0) {
+        rawBannerList = configBannersList;
+    } else if (singleBanner) {
+        rawBannerList = [singleBanner];
+    }
 
     const bannerList = rawBannerList.length > 0 ? rawBannerList : [
         'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=1200',

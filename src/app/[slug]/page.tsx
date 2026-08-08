@@ -481,17 +481,20 @@ export default async function PublicNegocioPage({
     const configBannerUrls = (Array.isArray(config.bannerUrls) ? config.bannerUrls : []).filter((u: string) => typeof u === 'string' && u.trim() !== '');
     const configBannerUrl = config.bannerUrl || config.banner_url || (negocio as any).bannerUrl;
 
-    const combinedBanners = Array.from(new Set([
-        ...configBannerUrls,
-        ...bannerImages,
-        ...(configBannerUrl ? [configBannerUrl] : [])
-    ])).filter((u: string) => typeof u === 'string' && u.trim() !== '');
-
     const allImages = (negocio.imagenes || [])
         .filter((img: any) => img.url && img.url.trim() !== '')
         .map((img: any) => img.url);
 
-    let displayImages = combinedBanners.length > 0 ? combinedBanners : allImages;
+    let displayImages: string[] = [];
+    if (configBannerUrls.length > 0) {
+        displayImages = configBannerUrls;
+    } else if (bannerImages.length > 0) {
+        displayImages = bannerImages;
+    } else if (configBannerUrl) {
+        displayImages = [configBannerUrl];
+    } else {
+        displayImages = allImages;
+    }
     
     // Fallback 2: Si displayImages está vacío, usar un banner hermoso según el rubro de negocio
     if (displayImages.length === 0) {

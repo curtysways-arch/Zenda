@@ -28,12 +28,10 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
     const [latitudNegocio, setLatitudNegocio] = useState(config.latitudNegocio !== undefined ? config.latitudNegocio.toString() : '-0.180653');
     const [longitudNegocio, setLongitudNegocio] = useState(config.longitudNegocio !== undefined ? config.longitudNegocio.toString() : '-78.467838');
     const [horarioAtencion, setHorarioAtencion] = useState(config.horarioAtencion || 'Lunes a Domingo: 11:00 AM - 11:00 PM');
-    // Banners del carrusel (combinar de configuracion y de la tabla de imágenes)
-    const initialBanners = Array.from(new Set([
-        ...(Array.isArray(config.bannerUrls) ? config.bannerUrls : []),
-        ...(config.bannerUrl ? [config.bannerUrl] : []),
-        ...((negocio?.imagenes || []).filter((i: any) => (i.tipo === 'BANNER' || i.esBanner) && i.url).map((i: any) => i.url))
-    ])).filter((u: string) => typeof u === 'string' && u.trim() !== '');
+    // Banners del carrusel (Prioridad autoritativa a config.bannerUrls)
+    const initialBanners = Array.isArray(config.bannerUrls)
+        ? config.bannerUrls.filter((u: string) => typeof u === 'string' && u.trim() !== '')
+        : (config.bannerUrl ? [config.bannerUrl] : ((negocio?.imagenes || []).filter((i: any) => (i.tipo === 'BANNER' || i.esBanner) && i.url).map((i: any) => i.url)));
 
     const [bannerUrls, setBannerUrls] = useState<string[]>(initialBanners);
     const [newBannerUrl, setNewBannerUrl] = useState('');
