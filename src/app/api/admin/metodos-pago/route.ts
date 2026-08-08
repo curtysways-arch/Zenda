@@ -57,7 +57,17 @@ export async function GET(req: Request) {
       });
     }
 
-    return NextResponse.json({ success: true, method });
+    const extraConfig = (typeof method.extraConfig === 'object' && method.extraConfig) ? (method.extraConfig as any) : {};
+    const isPinchos = method.negocioId === 'pinchos' || (method as any).negocio?.slug === 'pinchos';
+
+    return NextResponse.json({
+      success: true,
+      method: {
+        ...method,
+        soloPagoPrevio: extraConfig.soloPagoPrevio ?? (!isPinchos),
+        permiteContraentrega: extraConfig.permiteContraentrega ?? isPinchos,
+      }
+    });
   } catch (error: any) {
     console.error('Error GET /api/admin/metodos-pago:', error);
     return NextResponse.json({ error: 'Error al consultar métodos de pago' }, { status: 500 });
@@ -78,7 +88,7 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { banco, titular, numeroCuenta, tipoCuenta, identificacion, instructions, enabled } = body;
+    const { banco, titular, numeroCuenta, tipoCuenta, identificacion, instructions, enabled, soloPagoPrevio, permiteContraentrega } = body;
 
     let bankProvider = await prisma.paymentProvider.findUnique({
       where: { code: 'BANK_TRANSFER' }
@@ -96,9 +106,20 @@ export async function PUT(req: Request) {
       });
     }
 
+    const currentMethod = await prisma.paymentMethod.findFirst({
+      where: { negocioId, providerId: bankProvider.id }
+    });
+
+    const currentExtraConfig = (typeof currentMethod?.extraConfig === 'object' && currentMethod?.extraConfig) ? (currentMethod.extraConfig as any) : {};
+    const updatedExtraConfig = {
+      ...currentExtraConfig,
+      ...(soloPagoPrevio !== undefined ? { soloPagoPrevio: Boolean(soloPagoPrevio) } : {}),
+      ...(permiteContraentrega !== undefined ? { permiteContraentrega: Boolean(permiteContraentrega) } : {})
+    };
+
     const updatedMethod = await prisma.paymentMethod.upsert({
       where: {
-        id: body.id || 'pm_placeholder_id'
+        id: body.id || currentMethod?.id || 'pm_placeholder_id'
       },
       update: {
         banco,
@@ -107,6 +128,7 @@ export async function PUT(req: Request) {
         tipoCuenta,
         identificacion,
         instructions,
+        extraConfig: updatedExtraConfig,
         ...(enabled !== undefined ? { enabled } : {})
       },
       create: {
@@ -118,7 +140,8 @@ export async function PUT(req: Request) {
         numeroCuenta,
         tipoCuenta,
         identificacion,
-        instructions
+        instructions,
+        extraConfig: updatedExtraConfig
       }
     });
 

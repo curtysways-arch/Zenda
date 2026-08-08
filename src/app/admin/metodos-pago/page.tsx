@@ -12,6 +12,8 @@ export default function MetodosPagoAdminPage() {
 
   const [methodId, setMethodId] = useState<string>('');
   const [enabled, setEnabled] = useState(true);
+  const [soloPagoPrevio, setSoloPagoPrevio] = useState(true);
+  const [permiteContraentrega, setPermiteContraentrega] = useState(false);
   const [banco, setBanco] = useState('Banco Pichincha');
   const [titular, setTitular] = useState('');
   const [numeroCuenta, setNumeroCuenta] = useState('');
@@ -28,6 +30,8 @@ export default function MetodosPagoAdminPage() {
         if (data.success && data.method) {
           setMethodId(data.method.id || '');
           setEnabled(data.method.enabled ?? true);
+          setSoloPagoPrevio(data.method.soloPagoPrevio ?? true);
+          setPermiteContraentrega(data.method.permiteContraentrega ?? false);
           setBanco(data.method.banco || 'Banco Pichincha');
           setTitular(data.method.titular || '');
           setNumeroCuenta(data.method.numeroCuenta || '');
@@ -59,6 +63,8 @@ export default function MetodosPagoAdminPage() {
         body: JSON.stringify({
           id: methodId,
           enabled,
+          soloPagoPrevio,
+          permiteContraentrega,
           banco,
           titular,
           numeroCuenta,
@@ -115,6 +121,59 @@ export default function MetodosPagoAdminPage() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6 text-left">
+          {/* Card de Reglas de Cobro en Landing */}
+          <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+              <div className="size-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-black">
+                <CreditCard className="size-6 text-amber-600" />
+              </div>
+              <div>
+                <h2 className="text-base font-black text-slate-900">Políticas y Reglas de Cobro en Landing</h2>
+                <p className="text-xs text-slate-500 font-medium">Define cómo deben abonar los clientes al realizar un pedido desde la App Web / Landing.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Toggle Solo Pago Previo */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <span className="text-xs font-black text-slate-900 block">🔒 Exigir Pago Previo Obligatorio</span>
+                  <p className="text-[11px] text-slate-500 font-semibold leading-relaxed">
+                    El cliente **debe subir el comprobante de transferencia** para registrar el pedido. El modal de pago **no se puede cerrar** hasta completar la transferencia.
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                  <input
+                    type="checkbox"
+                    checked={soloPagoPrevio}
+                    onChange={(e) => setSoloPagoPrevio(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600" />
+                </label>
+              </div>
+
+              {/* Toggle Permitir Contraentrega */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <span className="text-xs font-black text-slate-900 block">💵 Permitir Pago Contraentrega (Efectivo)</span>
+                  <p className="text-[11px] text-slate-500 font-semibold leading-relaxed">
+                    Permite que tus clientes elijan pagar en efectivo al momento de recibir o retirar sus productos.
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                  <input
+                    type="checkbox"
+                    checked={permiteContraentrega}
+                    onChange={(e) => setPermiteContraentrega(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600" />
+                </label>
+              </div>
+            </div>
+          </div>
+
           {/* Card Principal Transferencia Bancaria */}
           <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
