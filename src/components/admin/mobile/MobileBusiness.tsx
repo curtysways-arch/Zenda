@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { DEFAULT_CONFIGS } from '@/app/admin/config/page';
+import { DEFAULT_CONFIGS } from '@/lib/constants/defaultConfigs';
 import ColorPaletteEditor from '@/components/admin/ColorPaletteEditor';
 import ImageUploader from '@/components/ui/ImageUploader';
 
