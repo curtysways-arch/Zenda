@@ -114,6 +114,28 @@ export default function DriverOrderMapModal({
   const latB = Number(order.latitud || extra.latitudCliente || (latA - 0.015));
   const lngB = Number(order.longitud || extra.longitudCliente || (lngA - 0.012));
 
+  // CALCULAR HORA DE LLEGADA ESTIMADA AL LOCAL (HORA FIJADA POR EL NEGOCIO AL ACEPTAR EL PEDIDO)
+  const getHoraLlegadaLocal = () => {
+    if (extra?.estimatedReadyAt) {
+      const targetDate = new Date(extra.estimatedReadyAt);
+      if (!isNaN(targetDate.getTime())) {
+        const formattedHora = targetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+        const diffMs = targetDate.getTime() - Date.now();
+        if (diffMs <= 0) {
+          return `⏰ ¡Llegar Ya! (${formattedHora})`;
+        }
+        const mins = Math.ceil(diffMs / 60000);
+        return `⏰ ${formattedHora} (Faltan ${mins} min)`;
+      }
+    }
+
+    // Fallback: Si no tiene hora fijada por el negocio, calcula la hora +15-20 min del pedido
+    const baseDate = order.createdAt ? new Date(order.createdAt) : new Date();
+    const targetDate = new Date(baseDate.getTime() + 20 * 60 * 1000);
+    const formattedHora = targetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    return `⏰ ${formattedHora} (Hora est. del negocio)`;
+  };
+
   // 1. SOLICITAR PERMISO DE UBICACIÓN MÓVIL EN TIEMPO REAL
   useEffect(() => {
     if (typeof window !== 'undefined' && 'geolocation' in navigator) {
@@ -352,7 +374,7 @@ export default function DriverOrderMapModal({
   }, [driverRealCoords]);
 
   return (
-    <div className="fixed inset-0 z-[200] bg-slate-950 flex flex-col h-screen overflow-hidden animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[200] bg-slate-950 flex flex-col h-[100dvh] overflow-hidden animate-in fade-in duration-300">
       
       {/* 1. HEADER FIJO SUPERIOR */}
       <div className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between z-30 shrink-0 shadow-lg">
@@ -380,7 +402,7 @@ export default function DriverOrderMapModal({
       </div>
 
       {/* 2. MAPA EN LA PARTE SUPERIOR (UBICACIÓN ANTES DE LA INFORMACIÓN DE LA ORDEN) */}
-      <div className="w-full h-[38vh] sm:h-[42vh] bg-slate-900 relative z-10 shrink-0 border-b border-slate-800 shadow-md">
+      <div className="w-full h-[36vh] sm:h-[40vh] bg-slate-900 relative z-10 shrink-0 border-b border-slate-800 shadow-md">
         <div ref={mapDivRef} className="w-full h-full" />
         
         {!mapLoaded && (
@@ -399,8 +421,8 @@ export default function DriverOrderMapModal({
         </div>
       </div>
 
-      {/* 3. INFORMACIÓN DE LA ORDEN PRE-ACEPTACIÓN */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3.5 pb-44 text-left bg-slate-950 custom-scrollbar">
+      {/* 3. INFORMACIÓN DE LA ORDEN PRE-ACEPTACIÓN (CON PADDING SUFICIENTE PARA LOS BOTONES FIJOS) */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3.5 pb-48 text-left bg-slate-950 custom-scrollbar">
         
         {/* 1. Banner Ganancia */}
         <div className="bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 px-4 py-3 rounded-2xl flex items-center justify-between shadow-lg shadow-amber-500/10">
@@ -419,7 +441,7 @@ export default function DriverOrderMapModal({
           </p>
         </div>
 
-        {/* 3. Recoge el Pedido en (Punto A - Local / Sucursal) sin botón GPS de navegación aún */}
+        {/* 3. Recoge el Pedido en (Punto A - Local / Sucursal) */}
         <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-2 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-black uppercase text-blue-400 tracking-wider flex items-center gap-1.5">
@@ -437,21 +459,26 @@ export default function DriverOrderMapModal({
           </p>
         </div>
 
-        {/* 4. Conteo regresivo estimado de llegada al local */}
+        {/* 4. Hora en la que debe llegar al local (Hora fijada por el negocio al aceptar el pedido) */}
         <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-2 shadow-sm">
           <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider block flex items-center gap-1.5">
             <Clock className="w-4 h-4 text-amber-400 animate-spin" />
-            TIEMPO ESTIMADO DE LLEGADA AL LOCAL:
+            HORA LÍMITE DE LLEGADA AL LOCAL (FIJADA POR NEGOCIO):
           </span>
-          <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
-            <span className="text-xs font-extrabold text-slate-300">Estimado por calles (OSRM):</span>
+          <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between">
+            <span className="text-xs font-extrabold text-slate-300">Hora de retiro acordada:</span>
             <span className="font-black text-amber-300 font-mono text-xs sm:text-sm">
-              ⏱️ {routeLeg1 ? `${routeLeg1.durationMin} (${routeLeg1.distanceKm})` : '15 min (~1.2 km)'}
+              {getHoraLlegadaLocal()}
             </span>
           </div>
+          {routeLeg1 && (
+            <p className="text-[10px] text-slate-400 font-medium pl-1">
+              📍 Trayecto estimado a la sucursal: {routeLeg1.distanceKm} ({routeLeg1.durationMin} en vía)
+            </p>
+          )}
         </div>
 
-        {/* 5. Entrega a Destino (Punto B - Cliente) sin botón GPS de navegación aún */}
+        {/* 5. Entrega a Destino (Punto B - Cliente) */}
         <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-2 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-black uppercase text-emerald-400 tracking-wider flex items-center gap-1.5">
@@ -469,12 +496,12 @@ export default function DriverOrderMapModal({
 
       </div>
 
-      {/* 4. BARRA DE ACCIÓN FIJA INFERIOR (BOTONES 100% VISIBLES EN MÓVIL) */}
-      <div className="fixed bottom-0 left-0 right-0 z-[250] bg-slate-900/98 backdrop-blur-2xl border-t border-slate-800 p-3.5 sm:p-4 pb-6 space-y-2 shadow-[0_-10px_40px_rgba(0,0,0,0.6)]">
+      {/* 4. BARRA DE ACCIÓN FIJA INFERIOR (PERMANENTEMENTE FIJA Y VISIBLE EN CUALQUIER PANTALLA) */}
+      <div className="fixed bottom-0 left-0 right-0 z-[300] bg-slate-900/98 backdrop-blur-2xl border-t border-slate-800 p-3.5 sm:p-4 pb-6 space-y-2 shadow-[0_-10px_40px_rgba(0,0,0,0.9)]">
         <button
           onClick={() => onAccept(order.id)}
           disabled={actionLoading || hasActiveOrder}
-          className="w-full py-3.5 sm:py-4 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <CheckCircle className="w-5 h-5 stroke-[2.5]" />
           <span>
