@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { Loader2, AlertCircle, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import CheckInCard from '@/components/client/CheckInCard';
 
-export default function CheckInPage({ params }: { params: { shareToken: string } }) {
-    const { shareToken } = params;
+export default function CheckInPage({ params }: { params: Promise<{ shareToken: string }> }) {
+    const resolvedParams = use(params);
+    const shareToken = resolvedParams.shareToken;
     const [appointment, setAppointment] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

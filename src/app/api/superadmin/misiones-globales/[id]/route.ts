@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { GlobalMissionType, GlobalRewardType } from '@prisma/client';
 
-type Params = { params: Promise<{ id: string }> | { id: string } };
+type Params = { params: Promise<{ id: string }> };
 
 /**
  * PUT: Actualizar una misión global existente

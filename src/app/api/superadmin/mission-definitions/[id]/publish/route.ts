@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { MissionDefinitionService } from '@/lib/growth/missionDefinitionService';
 
-type Params = { params: Promise<{ id: string }> | { id: string } };
+type Params = { params: Promise<{ id: string }> };
 
 /**
  * POST /api/superadmin/mission-definitions/[id]/publish
