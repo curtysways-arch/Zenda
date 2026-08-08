@@ -39,7 +39,7 @@ interface Pedido {
 export default function PedidosOnlinePage() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterState, setFilterState] = useState<'PENDING' | 'PREPARING' | 'COMPLETED' | 'ALL'>('PENDING');
+  const [filterState, setFilterState] = useState<'PENDING' | 'PREPARING' | 'COMPLETED' | 'ALL'>('ALL');
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -122,40 +122,31 @@ export default function PedidosOnlinePage() {
   };
 
   const isPendingState = (st: string) => 
-    ['PENDIENTE', 'PENDING', 'WAITING_CONFIRMATION', 'POR_CONFIRMAR', 'PAGO_EN_REVISION', 'PENDIENTE_PAGO', 'COMPROBANTE_ENVIADO'].includes((st || '').toUpperCase());
+    ['PENDIENTE', 'PENDING', 'WAITING_CONFIRMATION', 'POR_CONFIRMAR', 'PAGO_EN_REVISION', 'PENDIENTE_PAGO', 'COMPROBANTE_ENVIADO', 'COMPROBANTE_RECIBIDO'].includes((st || '').toUpperCase());
 
   const isPreparingOrActiveState = (st: string) => 
-    ['EN_PREPARACION', 'PREPARANDO', 'ACEPTADO', 'RECIBIDO', 'LISTO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA', 'ESPERANDO_CLIENTE', 'DESPACHADO', 'DRIVER_ASSIGNED'].includes((st || '').toUpperCase());
+    ['EN_PREPARACION', 'PREPARACION', 'PREPARANDO', 'PREPARING', 'ACEPTADO', 'CONFIRMED', 'RECIBIDO', 'LISTO', 'READY', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA', 'RUTA', 'ON_DELIVERY', 'ESPERANDO_CLIENTE', 'WAITING_CLIENT', 'DESPACHADO', 'DRIVER_ASSIGNED'].includes((st || '').toUpperCase());
 
   const isCompletedState = (st: string) => 
-    ['ENTREGADO', 'FINALIZADO', 'COMPLETADO', 'CANCELADO', 'RECHAZADO'].includes((st || '').toUpperCase());
+    ['ENTREGADO', 'DELIVERED', 'FINALIZADO', 'COMPLETADO', 'CANCELADO', 'CANCELLED', 'RECHAZADO'].includes((st || '').toUpperCase());
 
   const isPosOrTableOrder = (p: any): boolean => {
     const extra = typeof p.extraInfo === 'string' ? JSON.parse(p.extraInfo || '{}') : (p.extraInfo || {});
 
-    // 1. Si el canal es explícitamente WEB / LANDING_WEB, es un pedido online legítimo
-    const channel = String(extra.channel || extra.canal || '').toUpperCase();
-    const origin = String(extra.origin || extra.source || '').toUpperCase();
-    
-    const isExplicitWeb = channel === 'WEB' || channel === 'LANDING_WEB' || origin === 'LANDING_WEB' || origin === 'PUBLIC_CATALOG' || extra.isWebOrder === true;
-
-    if (isExplicitWeb) {
-      if (p.tipoEntrega === 'TABLE_ORDER' || p.tipoEntrega === 'MESA') return true;
-      return false; // Aceptado en Pedidos Online
-    }
-
-    // Si viene con tipoEntrega web (DOMICILIO, RETIRO, DELIVERY_ORDER, PICKUP_ORDER), incluirlo
+    // Excluir únicamente si es explícitamente una orden de Mesa
     const tDelivery = (p.tipoEntrega || '').toUpperCase();
-    if (tDelivery === 'DOMICILIO' || tDelivery === 'RETIRO' || tDelivery === 'DELIVERY_ORDER' || tDelivery === 'PICKUP_ORDER') {
-      return false;
+    if (tDelivery === 'TABLE_ORDER' || tDelivery === 'MESA') return true;
+
+    // Excluir si viene explícitamente de POS_CAJA y no es de delivery ni retiro web
+    const origin = String(extra.origin || extra.source || '').toUpperCase();
+    if (origin === 'POS_CAJA' && !['DOMICILIO', 'RETIRO', 'DELIVERY_ORDER', 'PICKUP_ORDER', 'DELIVERY', 'PICKUP'].includes(tDelivery)) {
+      return true;
     }
 
-    // 2. Cualquier otra orden (POS, Caja, Mesas) se EXCLUYE de Pedidos Online
-    return true;
+    return false;
   };
 
   const fetchOnlineOrders = async () => {
-    setLoading(true);
     try {
       const res = await fetch('/api/admin/pedidos');
       if (res.ok) {
@@ -180,6 +171,13 @@ export default function PedidosOnlinePage() {
       setLoading(false);
     }
   };
+
+  // Cargar al montar el componente y mantener polling cada 8 segundos
+  useEffect(() => {
+    fetchOnlineOrders();
+    const interval = setInterval(fetchOnlineOrders, 8000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleOpenReview = (pedido: Pedido) => {
     setReviewingOrder(pedido);
