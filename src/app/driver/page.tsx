@@ -585,22 +585,49 @@ export default function DriverAppPage() {
                   </div>
                 </div>
 
-                {/* BOTONERA DE ACCIÓN Y AVANCE DE PASOS */}
-                {order.estado === 'REPARTIDOR_ASIGNADO' && (
-                  <button
-                    onClick={() => handleMarkArrived(order.id)}
-                    disabled={actionLoading === order.id}
-                    className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95 transition-all"
-                  >
-                    <MapPin className="w-4 h-4" />
-                    <span>📍 Marcar Llegada al Restaurante</span>
-                  </button>
+                {/* CONDICIONAL DE BOTONES GPS Y ESTADOS SEGÚN EL FLUJO */}
+                {/* FASE 1: IR AL LOCAL (CUANDO EL PEDIDO ES ACEPTADO Y VA CAMINO AL RESTAURANTE) */}
+                {(order.estado === 'REPARTIDOR_ASIGNADO' || order.estado === 'REPARTIDOR_EN_LOCAL') && (
+                  <div className="space-y-2 pt-2 border-t border-slate-800">
+                    <div className="bg-slate-950 p-3 rounded-xl border border-blue-500/30 flex items-center justify-between">
+                      <span className="text-xs font-black text-amber-400 flex items-center gap-1.5">
+                        <Clock className="w-4 h-4 text-amber-400 animate-spin" /> Tiempo límite de llegada al local:
+                      </span>
+                      <span className="font-black text-amber-300 font-mono text-xs">
+                        ⏱️ {getCountdownString(parseExtraInfo(order.extraInfo)?.estimatedReadyAt)}
+                      </span>
+                    </div>
+
+                    {order.negocio?.direccion && (
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.negocio.direccion)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-lg cursor-pointer transition-all active:scale-95"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        <span>🗺️ IR AL LOCAL (GPS)</span>
+                      </a>
+                    )}
+
+                    {order.estado === 'REPARTIDOR_ASIGNADO' && (
+                      <button
+                        onClick={() => handleMarkArrived(order.id)}
+                        disabled={actionLoading === order.id}
+                        className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95 transition-all"
+                      >
+                        <MapPin className="w-4 h-4" />
+                        <span>📍 Marcar Llegada al Restaurante</span>
+                      </button>
+                    )}
+                  </div>
                 )}
 
+                {/* FASE 2: EN EL LOCAL Y ESPERANDO ENTREGA DEL PAQUETE */}
                 {(order.estado === 'REPARTIDOR_EN_LOCAL' || order.estado === 'ENTREGADO_A_REPARTIDOR') && (() => {
                   const isHandedOver = order.estado === 'ENTREGADO_A_REPARTIDOR';
                   return (
-                    <div className="space-y-2">
+                    <div className="space-y-2 pt-2 border-t border-slate-800">
                       <div className={`p-2.5 rounded-xl text-xs font-extrabold text-center flex items-center justify-center gap-2 border ${
                         isHandedOver 
                           ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 animate-pulse' 
@@ -623,18 +650,32 @@ export default function DriverAppPage() {
                         }`}
                       >
                         <Navigation className="w-4 h-4" />
-                        <span>{isHandedOver ? '🛵 INICIAR ENTREGA' : '⏳ ESPERANDO ENTREGA DEL NEGOCIO'}</span>
+                        <span>{isHandedOver ? '🛵 INICIAR ENTREGA AL CLIENTE' : '⏳ ESPERANDO ENTREGA DEL NEGOCIO'}</span>
                       </button>
                     </div>
                   );
                 })()}
 
+                {/* FASE 3: IR DONDE EL CLIENTE (APARECE AL RECIBIR EL PEDIDO Y SALIR EN RUTA) */}
                 {(order.estado === 'EN_CAMINO' || order.estado === 'EN_RUTA') && (
-                  <div className="space-y-2">
+                  <div className="space-y-2 pt-2 border-t border-slate-800">
                     <div className="p-2.5 bg-blue-500/20 border border-blue-500/30 rounded-xl text-blue-300 text-xs font-extrabold text-center flex items-center justify-center gap-2">
                       <Navigation className="w-4 h-4 text-blue-400 animate-pulse" />
                       <span>🚀 En Ruta • Viajando a la dirección del cliente</span>
                     </div>
+
+                    {order.direccionCliente && (
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.direccionCliente)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl cursor-pointer transition-all active:scale-95"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        <span>🗺️ IR DONDE EL CLIENTE (GPS)</span>
+                      </a>
+                    )}
+
                     <button
                       onClick={() => handleUpdateState(order.id, 'WAITING_CLIENT' as any)}
                       disabled={actionLoading === order.id}

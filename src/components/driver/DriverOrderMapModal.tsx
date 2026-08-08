@@ -92,7 +92,7 @@ export default function DriverOrderMapModal({
   const deliveryFee = Number(order.costoEnvio || 2.50).toFixed(2);
   const itemsSummary = (order.items || []).map(i => `${i.cantidad}x ${i.nombreProducto}`).join(', ');
 
-  // SUCURSALES (Punto 3): Identificar si el pedido corresponde a una sucursal específica
+  // SUCURSALES: Identificar si el pedido corresponde a una sucursal específica
   const sucursales = order.negocio?.Ubicacion || (order.negocio as any)?.ubicaciones || [];
   const targetUbicacionId = extra.ubicacionId || (order as any).ubicacionId;
   const matchedSucursal = sucursales.find((u: any) => u.id === targetUbicacionId) || (sucursales.length > 0 ? sucursales[0] : null);
@@ -185,7 +185,6 @@ export default function DriverOrderMapModal({
         });
         mapInstanceRef.current = map;
 
-        // Tile layer voyager
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
           maxZoom: 19,
           subdomains: 'abcd',
@@ -400,7 +399,7 @@ export default function DriverOrderMapModal({
         </div>
       </div>
 
-      {/* 3. INFORMACIÓN DE LA ORDEN (ORDEN SOLICITADO EXACTO: GANANCIA -> DETALLE PRODUCTOS -> RECOJE EN -> ENTREGA -> TIEMPO LLEGADA) */}
+      {/* 3. INFORMACIÓN DE LA ORDEN PRE-ACEPTACIÓN */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3.5 pb-44 text-left bg-slate-950 custom-scrollbar">
         
         {/* 1. Banner Ganancia */}
@@ -420,7 +419,7 @@ export default function DriverOrderMapModal({
           </p>
         </div>
 
-        {/* 3. Recoge el Pedido en (Punto A - Local / Sucursal) */}
+        {/* 3. Recoge el Pedido en (Punto A - Local / Sucursal) sin botón GPS de navegación aún */}
         <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-2 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-black uppercase text-blue-400 tracking-wider flex items-center gap-1.5">
@@ -436,20 +435,23 @@ export default function DriverOrderMapModal({
           <p className="font-extrabold text-slate-100 text-xs pl-6 leading-relaxed">
             {nombreLocal} — {direccionLocal}
           </p>
-          <div className="pt-1 pl-6">
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccionLocal)}`}
-              target="_blank"
-              rel="noreferrer"
-              className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all active:scale-95"
-            >
-              <ExternalLink className="w-4 h-4" />
-              <span>IR AL LOCAL (GPS)</span>
-            </a>
+        </div>
+
+        {/* 4. Conteo regresivo estimado de llegada al local */}
+        <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-2 shadow-sm">
+          <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider block flex items-center gap-1.5">
+            <Clock className="w-4 h-4 text-amber-400 animate-spin" />
+            TIEMPO ESTIMADO DE LLEGADA AL LOCAL:
+          </span>
+          <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+            <span className="text-xs font-extrabold text-slate-300">Estimado por calles (OSRM):</span>
+            <span className="font-black text-amber-300 font-mono text-xs sm:text-sm">
+              ⏱️ {routeLeg1 ? `${routeLeg1.durationMin} (${routeLeg1.distanceKm})` : '15 min (~1.2 km)'}
+            </span>
           </div>
         </div>
 
-        {/* 4. Entrega a Destino (Punto B - Cliente) */}
+        {/* 5. Entrega a Destino (Punto B - Cliente) sin botón GPS de navegación aún */}
         <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-2 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-black uppercase text-emerald-400 tracking-wider flex items-center gap-1.5">
@@ -463,40 +465,6 @@ export default function DriverOrderMapModal({
           {order.referenciaCliente && (
             <p className="text-[10px] text-slate-400 font-medium pl-6">Ref: {order.referenciaCliente}</p>
           )}
-          {order.direccionCliente && (
-            <div className="pt-1 pl-6">
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.direccionCliente)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-all active:scale-95"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span>IR DONDE EL CLIENTE (GPS)</span>
-              </a>
-            </div>
-          )}
-        </div>
-
-        {/* 5. Tiempo y Distancia de Llegada Estimada */}
-        <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-2 shadow-sm">
-          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">
-            TIEMPO Y DISTANCIA ESTIMADA DE LLEGADA:
-          </span>
-          <div className="grid grid-cols-2 gap-3 text-xs pt-1">
-            <div className="bg-slate-950/90 p-3 rounded-2xl border border-slate-800 text-center space-y-0.5 shadow-sm">
-              <span className="text-[10px] font-bold text-slate-400 block">Distancia a Recoger:</span>
-              <span className="font-black text-amber-300 text-xs sm:text-sm">
-                📍 {routeLeg1 ? `${routeLeg1.distanceKm} (${routeLeg1.durationMin})` : '11.4 km (26 min)'}
-              </span>
-            </div>
-            <div className="bg-slate-900/90 p-3 rounded-2xl border border-slate-800 text-center space-y-0.5 shadow-sm">
-              <span className="text-[10px] font-bold text-slate-400 block">Distancia a Entregar:</span>
-              <span className="font-black text-emerald-400 text-xs sm:text-sm">
-                🏁 {routeLeg2 ? `${routeLeg2.distanceKm} (${routeLeg2.durationMin})` : '4.9 km (16 min)'}
-              </span>
-            </div>
-          </div>
         </div>
 
       </div>
