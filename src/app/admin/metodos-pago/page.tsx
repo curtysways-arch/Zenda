@@ -123,7 +123,15 @@ export default function MetodosPagoAdminPage() {
       setSaving(true);
       setMessage(null);
 
-      const mainAcc = cuentas[0] || {};
+      const mainAcc: BankAccount = cuentas[0] || {
+        id: 'acc_main',
+        banco: 'Banco Pichincha',
+        titular: '',
+        numeroCuenta: '',
+        tipoCuenta: 'Ahorros',
+        identificacion: '',
+        instructions: ''
+      };
 
       const res = await fetch('/api/admin/metodos-pago', {
         method: 'PUT',
