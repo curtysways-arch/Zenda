@@ -152,8 +152,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
             }
         }
 
-        // 2. Fallback: Evaluar el texto libre del horario (ej: "Lunes a Domingo: 11:00 AM - 10:00 PM")
-        const horarioTexto = config.horarioAtencion || 'Lunes a Domingo: 11:00 AM - 10:00 PM';
+        // 2. Fallback: Evaluar el texto libre del horario (ej: "Lunes a Domingo: 11:00 AM - 11:00 PM")
+        const horarioTexto = config.horarioAtencion || (config.horaLimiteMismoDia ? `Lunes a Domingo: 11:00 AM - ${config.horaLimiteMismoDia}` : 'Lunes a Domingo: 11:00 AM - 11:00 PM');
         if (horarioTexto) {
             const matches = Array.from(horarioTexto.matchAll(/(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/gi));
             if (matches.length >= 2) {
@@ -1414,17 +1414,10 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     <div>
                                         <p className="font-bold text-white text-xs">Horario de Atención:</p>
                                         <p className="text-white/80 font-medium text-xs mt-0.5">
-                                            {config.horarioAtencion || 'Lunes a Domingo: 11:00 AM - 10:00 PM'}
+                                            {config.horarioAtencion || (config.horaLimiteMismoDia ? `Lunes a Domingo: 11:00 AM - ${config.horaLimiteMismoDia}` : 'Lunes a Domingo: 11:00 AM - 11:00 PM')}
                                         </p>
                                     </div>
                                 </div>
-
-                                {isStoreClosed && (
-                                    <div className="mt-3 pt-2.5 border-t border-white/15 flex items-center gap-2 text-red-200 text-xs font-bold">
-                                        <Lock className="w-4 h-4 shrink-0 text-red-400" />
-                                        <span>El menú y los pedidos se desbloquean al abrir el local.</span>
-                                    </div>
-                                )}
                             </div>
 
                             {/* Indicadores de Banner (Dots) */}
@@ -1558,20 +1551,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         </div>
                     )}
 
-                    {/* BANNER DE AVISO CUANDO EL LOCAL ESTÁ CERRADO */}
-                    {isStoreClosed && (
-                        <div className="mx-4 mt-4 p-4 rounded-3xl bg-gradient-to-r from-red-950 via-slate-900 to-rose-950 text-white border border-red-800/60 shadow-xl flex items-center gap-3">
-                            <div className="size-10 rounded-2xl bg-red-500/20 text-red-400 flex items-center justify-center shrink-0 border border-red-500/30">
-                                <Lock className="size-5 animate-bounce text-red-400" />
-                            </div>
-                            <div className="text-left">
-                                <h4 className="text-xs font-black uppercase tracking-wider text-red-300">🔴 Menú Bloqueado - Local Cerrado</h4>
-                                <p className="text-[11px] text-slate-300 font-medium mt-0.5">
-                                    {storeStatus.reason || 'El establecimiento no recibe pedidos en este momento.'}
-                                </p>
-                            </div>
-                        </div>
-                    )}
+
 
                     {/* Categorías (Filtros) */}
                     {categories.length > 0 && (

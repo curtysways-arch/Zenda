@@ -27,7 +27,7 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
     const [costoEnvioPorKm, setCostoEnvioPorKm] = useState(config.costoEnvioPorKm !== undefined ? config.costoEnvioPorKm.toString() : '0.25');
     const [latitudNegocio, setLatitudNegocio] = useState(config.latitudNegocio !== undefined ? config.latitudNegocio.toString() : '-0.180653');
     const [longitudNegocio, setLongitudNegocio] = useState(config.longitudNegocio !== undefined ? config.longitudNegocio.toString() : '-78.467838');
-    const [horaLimiteMismoDia, setHoraLimiteMismoDia] = useState(config.horaLimiteMismoDia || '18:00');
+    const [horarioAtencion, setHorarioAtencion] = useState(config.horarioAtencion || 'Lunes a Domingo: 11:00 AM - 11:00 PM');
     // Banners del carrusel
     const [bannerUrls, setBannerUrls] = useState<string[]>(
         Array.isArray(config.bannerUrls) && config.bannerUrls.length > 0
@@ -91,7 +91,7 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                 costoEnvioPorKm: parseFloat(costoEnvioPorKm) || 0,
                 latitudNegocio: parseFloat(latitudNegocio) || 0,
                 longitudNegocio: parseFloat(longitudNegocio) || 0,
-                horaLimiteMismoDia
+                horarioAtencion
             }
         });
     };
@@ -297,12 +297,13 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Hora Límite Pedidos Mismo Día</label>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Horario de Atención</label>
                                 <input
-                                    type="time"
+                                    type="text"
                                     required
-                                    value={horaLimiteMismoDia}
-                                    onChange={e => setHoraLimiteMismoDia(e.target.value)}
+                                    placeholder="Ej: Lunes a Domingo: 11:00 AM - 11:00 PM"
+                                    value={horarioAtencion}
+                                    onChange={e => setHorarioAtencion(e.target.value)}
                                     className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
                                 />
                             </div>
