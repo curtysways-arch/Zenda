@@ -97,7 +97,7 @@ function RestaurantLandingContent({
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${cs} 0%, rgba(0,0,0,0.3) 50%, ${cp}50 100%)` }} />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={cfg.bannerUrl || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&q=80"}
+          src={(Array.isArray(cfg.bannerUrls) && cfg.bannerUrls.length > 0 ? cfg.bannerUrls[0] : null) || cfg.bannerUrl || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&q=80"}
           alt={negocio.nombre}
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', mixBlendMode: 'multiply', opacity: 0.6 }}
         />

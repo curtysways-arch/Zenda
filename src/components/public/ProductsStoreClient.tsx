@@ -65,16 +65,18 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const secondaryColor = negocio.colorSecundario || '#112117';
     const config: any = negocio.configuracion || {};
 
-    // Obtener todas las imágenes de portada/banner del negocio para el slider
+    // Obtener todas las imágenes de portada/banner del negocio para el slider desde todas las fuentes (config.bannerUrls, config.bannerUrl, imagenes, etc.)
+    const configBannerUrlsList = (Array.isArray(config.bannerUrls) ? config.bannerUrls : []).filter(Boolean);
     const imagenesBannerList = (negocio as any).imagenes?.filter((i: any) => (i.tipo === 'BANNER' || i.esBanner) && i.url)?.map((i: any) => i.url) || [];
     const configBannersList = (config.banners || []).map((b: any) => typeof b === 'string' ? b : b?.url).filter(Boolean);
     const singleBanner = config.bannerUrl || config.banner_url || (negocio as any).bannerUrl;
 
     const rawBannerList = Array.from(new Set([
+        ...configBannerUrlsList,
         ...imagenesBannerList,
         ...configBannersList,
         ...(singleBanner ? [singleBanner] : [])
-    ])).filter(Boolean);
+    ])).filter((u: string) => typeof u === 'string' && u.trim() !== '');
 
     const bannerList = rawBannerList.length > 0 ? rawBannerList : [
         'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=1200',

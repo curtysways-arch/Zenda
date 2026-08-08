@@ -483,7 +483,11 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                 <main id="catalogo" className="max-w-4xl mx-auto px-4 pt-4 space-y-6 pb-28">
                     {/* Banner Carousel with Delivery Time */}
                     <PinchoBannerCarousel
-                        banners={(negocio.configuracion as any)?.bannerUrls || [(negocio.configuracion as any)?.bannerUrl].filter(Boolean)}
+                        banners={Array.from(new Set([
+                            ...((negocio.configuracion as any)?.bannerUrls || []),
+                            ...((negocio.configuracion as any)?.bannerUrl ? [(negocio.configuracion as any).bannerUrl] : []),
+                            ...(((negocio as any).imagenes || []).filter((i: any) => (i.tipo === 'BANNER' || i.esBanner) && i.url).map((i: any) => i.url))
+                        ])).filter((u: string) => typeof u === 'string' && u.trim() !== '')}
                         deliveryTime={(negocio.configuracion as any)?.tiempoMaximoEntrega || '30-45 min'}
                         storeName={negocio.nombre}
                     />

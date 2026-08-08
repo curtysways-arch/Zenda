@@ -28,12 +28,14 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
     const [latitudNegocio, setLatitudNegocio] = useState(config.latitudNegocio !== undefined ? config.latitudNegocio.toString() : '-0.180653');
     const [longitudNegocio, setLongitudNegocio] = useState(config.longitudNegocio !== undefined ? config.longitudNegocio.toString() : '-78.467838');
     const [horarioAtencion, setHorarioAtencion] = useState(config.horarioAtencion || 'Lunes a Domingo: 11:00 AM - 11:00 PM');
-    // Banners del carrusel
-    const [bannerUrls, setBannerUrls] = useState<string[]>(
-        Array.isArray(config.bannerUrls) && config.bannerUrls.length > 0
-            ? config.bannerUrls
-            : config.bannerUrl ? [config.bannerUrl] : []
-    );
+    // Banners del carrusel (combinar de configuracion y de la tabla de imágenes)
+    const initialBanners = Array.from(new Set([
+        ...(Array.isArray(config.bannerUrls) ? config.bannerUrls : []),
+        ...(config.bannerUrl ? [config.bannerUrl] : []),
+        ...((negocio?.imagenes || []).filter((i: any) => (i.tipo === 'BANNER' || i.esBanner) && i.url).map((i: any) => i.url))
+    ])).filter((u: string) => typeof u === 'string' && u.trim() !== '');
+
+    const [bannerUrls, setBannerUrls] = useState<string[]>(initialBanners);
     const [newBannerUrl, setNewBannerUrl] = useState('');
     const [uploadingBanner, setUploadingBanner] = useState(false);
 
@@ -61,7 +63,7 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
             }
 
             if (res.ok && data.url) {
-                setBannerUrls(prev => [...prev, data.url]);
+                setBannerUrls(prev => Array.from(new Set([...prev, data.url])));
             } else {
                 alert(data.error || `Error (${res.status}) al subir la imagen.`);
             }
@@ -76,6 +78,8 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
 
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const validBanners = bannerUrls.filter(u => u && u.trim() !== '');
+
         onSaveNegocio({
             nombre,
             whatsapp,
@@ -84,7 +88,8 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
             configuracion: {
                 ...config,
                 wizardCompleted: true,
-                bannerUrls: bannerUrls.filter(u => u && u.trim() !== ''),
+                bannerUrls: validBanners,
+                bannerUrl: validBanners[0] || null,
                 montoMinimoPedido: parseFloat(montoMinimoPedido) || 0,
                 tiempoMaximoEntrega,
                 costoEnvio: parseFloat(costoEnvio) || 0,

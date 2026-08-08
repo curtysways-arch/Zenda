@@ -467,7 +467,7 @@ export default async function PublicNegocioPage({
         console.error('[slug/page] Error fetching banner images:', e);
     }
 
-    // Fallback 1: Buscar bannerUrl guardado en el JSON de configuración para negocios ya creados
+    // Fallback 1: Buscar bannerUrls y bannerUrl guardados en configuracion del negocio
     // Parseo defensivo: configuracion puede llegar como string o como objeto
     const rawConfig = negocio.configuracion;
     let config: any = {};
@@ -478,16 +478,20 @@ export default async function PublicNegocioPage({
             config = rawConfig as any;
         }
     }
+    const configBannerUrls = (Array.isArray(config.bannerUrls) ? config.bannerUrls : []).filter((u: string) => typeof u === 'string' && u.trim() !== '');
     const configBannerUrl = config.bannerUrl || config.banner_url || (negocio as any).bannerUrl;
-    if (bannerImages.length === 0 && configBannerUrl && configBannerUrl.trim() !== '') {
-        bannerImages.push(configBannerUrl);
-    }
-    
+
+    const combinedBanners = Array.from(new Set([
+        ...configBannerUrls,
+        ...bannerImages,
+        ...(configBannerUrl ? [configBannerUrl] : [])
+    ])).filter((u: string) => typeof u === 'string' && u.trim() !== '');
+
     const allImages = (negocio.imagenes || [])
         .filter((img: any) => img.url && img.url.trim() !== '')
         .map((img: any) => img.url);
 
-    let displayImages = bannerImages.length > 0 ? bannerImages : allImages;
+    let displayImages = combinedBanners.length > 0 ? combinedBanners : allImages;
     
     // Fallback 2: Si displayImages está vacío, usar un banner hermoso según el rubro de negocio
     if (displayImages.length === 0) {
