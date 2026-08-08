@@ -9,12 +9,16 @@ export async function GET(
         const { slug } = await params;
         const negocio = await prisma.negocio.findUnique({
             where: { slug },
-            select: { id: true, nombre: true }
+            select: { id: true, nombre: true, configuracion: true }
         });
 
         if (!negocio) {
             return NextResponse.json({ success: false, error: 'Negocio no encontrado' }, { status: 404 });
         }
+
+        const config = typeof negocio.configuracion === 'string'
+            ? (() => { try { return JSON.parse(negocio.configuracion as string); } catch { return {}; } })()
+            : ((negocio.configuracion as any) || {});
 
         let bankProvider = await prisma.paymentProvider.findUnique({
             where: { code: 'BANK_TRANSFER' }
@@ -55,6 +59,11 @@ export async function GET(
             });
         }
 
+        const extraConfig = (typeof method.extraConfig === 'object' && method.extraConfig) ? (method.extraConfig as any) : {};
+        const isPinchos = slug === 'pinchos';
+        const soloPagoPrevio = !isPinchos && (config.soloPagoPrevio ?? extraConfig.soloPagoPrevio ?? true);
+        const permiteContraentrega = isPinchos || (config.permiteContraentrega ?? extraConfig.permiteContraentrega ?? false);
+
         return NextResponse.json({
             success: true,
             method: {
@@ -64,7 +73,10 @@ export async function GET(
                 tipoCuenta: method.tipoCuenta,
                 identificacion: method.identificacion,
                 instructions: method.instructions,
-                customName: method.customName
+                customName: method.customName,
+                qrImageUrl: method.qrImageUrl,
+                soloPagoPrevio,
+                permiteContraentrega
             }
         });
     } catch (error) {

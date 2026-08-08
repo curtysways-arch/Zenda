@@ -151,7 +151,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
         }
     };
 
-    // Load Catalogue
+    // Load Catalogue & Bank Details
     useEffect(() => {
         const fetchCatalogue = async () => {
             try {
@@ -168,7 +168,19 @@ export default function ProductsStoreClient({ negocio }: Props) {
                 setLoading(false);
             }
         };
+        const fetchBankDetails = async () => {
+            try {
+                const bankRes = await fetch(`/api/public/${negocio.slug}/bank-details`);
+                const bankData = await bankRes.json();
+                if (bankData.success && bankData.method) {
+                    setBankConfig(bankData.method);
+                }
+            } catch (e) {
+                console.error("Error al cargar datos bancarios:", e);
+            }
+        };
         fetchCatalogue();
+        fetchBankDetails();
     }, [negocio.slug]);
 
     // Load Cart from localStorage
@@ -189,6 +201,10 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const [showMapModal, setShowMapModal] = useState(false);
     const [selectedLat, setSelectedLat] = useState<number | null>(null);
     const [selectedLng, setSelectedLng] = useState<number | null>(null);
+
+    // Draft Checkout State para Negocios con Pago Previo Obligatorio
+    const [draftCheckoutPayload, setDraftCheckoutPayload] = useState<any>(null);
+    const [draftPaymentCode, setDraftPaymentCode] = useState<string>('');
 
     // Estado para Pedido Activo y Contador Regresivo
     const [activeOrder, setActiveOrder] = useState<any | null>(null);
@@ -283,7 +299,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
             const bizPhone = (negocio as any).telefono || negocio.whatsapp || (config as any)?.whatsapp || '593998877665';
             let formattedBizPhone = bizPhone.replace(/[^0-9]/g, '');
             if (formattedBizPhone.startsWith('0')) {
-                formattedBizPhone = '593' + formattedBizPhone.slice(1);
+                formattedBizPhone = '593' + formattedBizPhone.substring(1);
             }
 
             const itemsText = cart.map(item => `• ${item.quantity}x ${item.product.nombre} ($${(item.product.precio * item.quantity).toFixed(2)})`).join('\n');
@@ -394,9 +410,9 @@ export default function ProductsStoreClient({ negocio }: Props) {
             const latNegocio = config.latitudNegocio !== undefined ? parseFloat(config.latitudNegocio) : -0.180653;
             const lngNegocio = config.longitudNegocio !== undefined ? parseFloat(config.longitudNegocio) : -78.467838;
             const distance = getDistanceFromLatLonInKm(latNegocio, lngNegocio, selectedLat, selectedLng);
-            return `${distance.toFixed(1)} km`;
+            return `📍 ${distance.toFixed(1)} km aprox. ($${shippingCost.toFixed(2)})`;
         }
-        return '';
+        return `📍 Tarifa base ($${shippingCost.toFixed(2)})`;
     };
 
     // Calculations
@@ -527,26 +543,42 @@ export default function ProductsStoreClient({ negocio }: Props) {
         }
     };
 
-    // Función auxiliar para crear pedido directamente sin repetir OTP si el cliente ya está autenticado
+    // Función auxiliar para procesar o preparar el pedido
     const createOrderDirectly = async (phone: string, name: string) => {
+        const isPinchos = negocio.slug === 'pinchos';
+        const isSoloPagoPrevio = !isPinchos && (bankConfig?.soloPagoPrevio ?? true);
+
+        const payload = {
+            deliveryType,
+            clientName: name,
+            clientPhone: phone,
+            clientAddress: deliveryType === 'DOMICILIO' ? clientAddress : null,
+            clientReference: deliveryType === 'DOMICILIO' ? clientReference : null,
+            lat: deliveryType === 'DOMICILIO' ? selectedLat : null,
+            lng: deliveryType === 'DOMICILIO' ? selectedLng : null,
+            deliveryDate: deliveryDate,
+            timeSlot,
+            items: cart.map(item => ({
+                productId: item.product.id,
+                cantidad: item.quantity
+            }))
+        };
+
+        if (isSoloPagoPrevio) {
+            // 🔒 PAGO PREVIO OBLIGATORIO: No se crea la orden en la BD todavía
+            setDraftCheckoutPayload(payload);
+            const mockCode = `PAY-${Math.floor(100000 + Math.random() * 900000)}`;
+            setDraftPaymentCode(mockCode);
+            saveClientDataToLocalStorage(name, phone);
+            setStep('payment');
+            return;
+        }
+
+        // Flujo tradicional (Pinchos o Pago en Efectivo/Contraentrega)
         const response = await fetch(`/api/public/${negocio.slug}/orders`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                deliveryType,
-                clientName: name,
-                clientPhone: phone,
-                clientAddress: deliveryType === 'DOMICILIO' ? clientAddress : null,
-                clientReference: deliveryType === 'DOMICILIO' ? clientReference : null,
-                lat: deliveryType === 'DOMICILIO' ? selectedLat : null,
-                lng: deliveryType === 'DOMICILIO' ? selectedLng : null,
-                deliveryDate: deliveryDate,
-                timeSlot,
-                items: cart.map(item => ({
-                    productId: item.product.id,
-                    cantidad: item.quantity
-                }))
-            })
+            body: JSON.stringify(payload)
         });
 
         if (response.ok) {
@@ -554,20 +586,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
             setCreatedOrder(data.pedido);
             setCreatedPayment(data.payment);
             setActiveOrder(data.pedido);
-
-            // Guardar datos del cliente y su última ubicación para futuros pedidos
             saveClientDataToLocalStorage(name, phone);
-
-            // Cargar datos bancarios del negocio usando endpoint público
-            try {
-                const bankRes = await fetch(`/api/public/${negocio.slug}/bank-details`);
-                const bankData = await bankRes.json();
-                if (bankData.success && bankData.method) {
-                    setBankConfig(bankData.method);
-                }
-            } catch (e) {
-                console.error("Error al cargar datos bancarios:", e);
-            }
             setStep('payment');
             setCart([]);
             localStorage.removeItem(`cart_${negocio.id}`);
@@ -675,10 +694,10 @@ export default function ProductsStoreClient({ negocio }: Props) {
         }
     };
 
-    // Paso 3: Subir Comprobante de Pago
+    // Paso 3: Subir Comprobante de Pago y Confirmar Orden en DB
     const handleUploadEvidenceSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!evidenceFile || !createdOrder) {
+        if (!evidenceFile) {
             setUploadError("Por favor selecciona una imagen o documento PDF de tu comprobante.");
             return;
         }
@@ -687,10 +706,40 @@ export default function ProductsStoreClient({ negocio }: Props) {
             setUploadingEvidence(true);
             setUploadError(null);
 
+            let targetOrder = createdOrder;
+
+            // Si es Pago Previo Obligatorio y la orden aún no está en la BD, crearla ahora
+            if (!targetOrder && draftCheckoutPayload) {
+                const createRes = await fetch(`/api/public/${negocio.slug}/orders`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(draftCheckoutPayload)
+                });
+
+                if (!createRes.ok) {
+                    const errData = await createRes.json();
+                    setUploadError(errData.error || "Error al registrar la orden previa.");
+                    setUploadingEvidence(false);
+                    return;
+                }
+
+                const createData = await createRes.json();
+                targetOrder = createData.pedido;
+                setCreatedOrder(createData.pedido);
+                setCreatedPayment(createData.payment);
+                setActiveOrder(createData.pedido);
+            }
+
+            if (!targetOrder) {
+                setUploadError("No se encontró una orden válida para adjuntar comprobante.");
+                setUploadingEvidence(false);
+                return;
+            }
+
             const formData = new FormData();
             formData.append('file', evidenceFile);
 
-            const res = await fetch(`/api/public/${negocio.slug}/orders/${createdOrder.id}/payment-evidence`, {
+            const res = await fetch(`/api/public/${negocio.slug}/orders/${targetOrder.id}/payment-evidence`, {
                 method: 'POST',
                 body: formData
             });
@@ -698,6 +747,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
             const data = await res.json();
             if (data.success) {
                 clearCart();
+                setDraftCheckoutPayload(null);
                 setStep('success');
             } else {
                 setUploadError(data.error || "Error al subir el comprobante.");
@@ -763,8 +813,11 @@ export default function ProductsStoreClient({ negocio }: Props) {
     }
 
     // PANTALLA 2: DATOS BANCARIOS Y CARGA DE COMPROBANTE
-    if (step === 'payment' && createdOrder) {
-        const paymentCode = createdPayment?.codigoPago || `PINCHOS-${createdOrder.id.slice(0, 6).toUpperCase()}`;
+    if (step === 'payment' && (createdOrder || draftCheckoutPayload)) {
+        const paymentCode = createdPayment?.codigoPago || draftPaymentCode || `PAY-${Math.floor(100000 + Math.random() * 900000)}`;
+        const totalAmountToPay = Number(createdOrder?.total || cartTotal || 0).toFixed(2);
+        const isPinchos = negocio.slug === 'pinchos';
+        const isLockedPayment = !isPinchos && (bankConfig?.soloPagoPrevio ?? true);
 
         return (
             <div className="min-h-screen bg-slate-950 text-slate-900 flex flex-col justify-start items-center pb-12">
@@ -778,13 +831,20 @@ export default function ProductsStoreClient({ negocio }: Props) {
                     )}
                     <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/80 to-slate-950" />
 
-                    <button 
-                        onClick={() => setStep('checkout')}
-                        className="relative z-10 size-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 cursor-pointer border border-white/10"
-                        title="Volver"
-                    >
-                        <ArrowLeft className="size-5" />
-                    </button>
+                    {!isLockedPayment ? (
+                        <button 
+                            onClick={() => setStep('checkout')}
+                            className="relative z-10 size-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 cursor-pointer border border-white/10"
+                            title="Volver"
+                        >
+                            <ArrowLeft className="size-5" />
+                        </button>
+                    ) : (
+                        <div className="relative z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-black uppercase shadow-xs">
+                            <Lock className="size-3.5 text-amber-400" />
+                            <span>Pago Previo Requerido</span>
+                        </div>
+                    )}
 
                     <div className="relative z-10 flex items-center gap-2">
                         {negocio.logoUrl ? (
@@ -844,7 +904,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                         <div className="flex items-center gap-3">
                             <div className="text-right space-y-0.5">
                                 <span className="text-[9px] font-black uppercase tracking-widest text-orange-900/70 block">Monto a Transferir</span>
-                                <span className="text-2xl font-black text-slate-900 tracking-tight">${(Number(createdOrder?.total) || 0).toFixed(2)}</span>
+                                <span className="text-2xl font-black text-slate-900 tracking-tight">${totalAmountToPay}</span>
                             </div>
                             <div className="size-11 bg-orange-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-600/30 shrink-0">
                                 <Wallet className="size-6" />
