@@ -1078,60 +1078,85 @@ export default function PedidosOnlinePage() {
                                   )}
                                 </div>
                               ) : (
-                                /* SI NO HAY REPARTIDOR DE LA APP ASIGNADO AÚN */
+                                /* VISTA POR DEFECTO: ESPERANDO ACEPTACIÓN DEL REPARTIDOR Y ALERTA DE REASIGNACIÓN */
                                 <div className="space-y-3 bg-slate-50 border border-slate-200 rounded-2xl p-4">
-                                  <label className="block text-[11px] font-black uppercase text-slate-600 tracking-wider">
-                                    🛵 Asignar Repartidor de la Plataforma:
-                                  </label>
+                                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 space-y-2.5">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2 text-amber-900 font-extrabold text-xs">
+                                        <Loader2 className="w-4 h-4 text-amber-600 animate-spin shrink-0" />
+                                        <span>⏳ ESPERANDO ACEPTACIÓN DEL REPARTIDOR...</span>
+                                      </div>
+                                      <span className="px-2.5 py-0.5 bg-amber-200 text-amber-950 text-[10px] font-black rounded-full animate-pulse">
+                                        EN ESPERA
+                                      </span>
+                                    </div>
 
-                                  <div className="space-y-2">
-                                    <select
-                                      value={selectedDriverId}
-                                      onChange={e => setSelectedDriverId(e.target.value)}
-                                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800"
-                                    >
-                                      <option value="">-- Seleccionar Repartidor Registrado --</option>
-                                      {approvedDrivers.map(d => (
-                                        <option key={d.id} value={d.id}>
-                                          {d.name} ({d.estado || 'DISPONIBLE'}) - {d.profile?.vehiculo || d.profile?.tipoVehiculo || 'Repartidor'}
-                                        </option>
-                                      ))}
-                                    </select>
+                                    <p className="text-xs text-amber-800 font-medium">
+                                      Pedido ingresado a cocina. Se ha notificado a la red de repartidores de la plataforma.
+                                    </p>
 
-                                    <button
-                                      type="button"
-                                      onClick={() => handleAssignDriverToOrder(order, selectedDriverId)}
-                                      disabled={!selectedDriverId || processingId === order.id}
-                                      className={`w-full py-3 text-xs font-black uppercase rounded-xl shadow-md transition-all flex items-center justify-center gap-2 ${
-                                        selectedDriverId
-                                          ? 'bg-blue-600 hover:bg-blue-500 text-white cursor-pointer'
-                                          : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                      }`}
-                                    >
-                                      {processingId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />}
-                                      Asignar y Notificar Repartidor (Esperando Aceptación)
-                                    </button>
-                                  </div>
+                                    {/* ALERTA SI NINGÚN REPARTIDOR RESPONDE */}
+                                    <div className="bg-white border border-amber-300 rounded-xl p-3 text-xs space-y-2 mt-2 shadow-xs">
+                                      <div className="flex items-center gap-2 text-amber-900 font-bold">
+                                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                                        <span>Si ningún repartidor acepta la orden o deseas despachar manualmente:</span>
+                                      </div>
 
-                                  <div className="pt-3 border-t border-slate-200 space-y-2">
-                                    <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider">
-                                      O Despachar con Repartidor del Local:
-                                    </label>
-                                    <input
-                                      type="text"
-                                      value={assignedDriver}
-                                      onChange={e => setAssignedDriver(e.target.value)}
-                                      placeholder="Nombre del repartidor local..."
-                                      className="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold"
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDispatchOrder(order, order.estado === 'LISTO' ? 'EN_CAMINO' : 'LISTO')}
-                                      disabled={processingId === order.id}
-                                      className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-black uppercase cursor-pointer"
-                                    >
-                                      {order.estado === 'EN_PREPARACION' ? '👩‍🍳 Marcar LISTO en Cocina' : '🛵 Despachar con Repartidor Local'}
-                                    </button>
+                                      <div className="space-y-2 pt-1 border-t border-slate-100">
+                                        <label className="block text-[10px] font-black uppercase text-slate-500">
+                                          1. Seleccionar Repartidor Registrado:
+                                        </label>
+                                        <div className="flex gap-2">
+                                          <select
+                                            value={selectedDriverId}
+                                            onChange={e => setSelectedDriverId(e.target.value)}
+                                            className="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800"
+                                          >
+                                            <option value="">-- Seleccionar Repartidor Registrado --</option>
+                                            {approvedDrivers.map(d => (
+                                              <option key={d.id} value={d.id}>
+                                                {d.name} ({d.estado || 'DISPONIBLE'})
+                                              </option>
+                                            ))}
+                                          </select>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleAssignDriverToOrder(order, selectedDriverId)}
+                                            disabled={!selectedDriverId || processingId === order.id}
+                                            className={`px-3 py-2 text-xs font-black rounded-xl shrink-0 ${
+                                              selectedDriverId
+                                                ? 'bg-blue-600 text-white cursor-pointer hover:bg-blue-500'
+                                                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                            }`}
+                                          >
+                                            Asignar
+                                          </button>
+                                        </div>
+                                      </div>
+
+                                      <div className="space-y-2 pt-2 border-t border-slate-100">
+                                        <label className="block text-[10px] font-black uppercase text-slate-500">
+                                          2. O Despachar con Repartidor del Local:
+                                        </label>
+                                        <div className="flex gap-2">
+                                          <input
+                                            type="text"
+                                            value={assignedDriver}
+                                            onChange={e => setAssignedDriver(e.target.value)}
+                                            placeholder="Repartidor de Local..."
+                                            className="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold"
+                                          />
+                                          <button
+                                            type="button"
+                                            onClick={() => handleDispatchOrder(order, order.estado === 'LISTO' ? 'EN_CAMINO' : 'LISTO')}
+                                            disabled={processingId === order.id}
+                                            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-black shrink-0 cursor-pointer uppercase"
+                                          >
+                                            Despachar
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
                               )}
