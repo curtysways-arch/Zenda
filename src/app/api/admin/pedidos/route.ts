@@ -179,21 +179,49 @@ export async function PUT(req: Request) {
             newExtraInfo.pricingBreakdown = pricingBreakdown || currentExtra.pricingBreakdown;
         }
 
+        if (updateData.estadoDisponibilidad) {
+            newExtraInfo.estadoDisponibilidad = updateData.estadoDisponibilidad;
+        }
+
         updateData.extraInfo = newExtraInfo;
 
-        const pedidoActualizado = await (prisma as any).pedido.update({
-            where: { id },
-            data: updateData,
-            include: {
-                items: true,
-                payment: {
-                    include: {
-                        evidences: { orderBy: { createdAt: 'desc' } },
-                        method: true
+        let pedidoActualizado: any;
+        try {
+            pedidoActualizado = await (prisma as any).pedido.update({
+                where: { id },
+                data: updateData,
+                include: {
+                    items: true,
+                    payment: {
+                        include: {
+                            evidences: { orderBy: { createdAt: 'desc' } },
+                            method: true
+                        }
                     }
                 }
+            });
+        } catch (updateErr: any) {
+            console.warn('[ADMIN_PEDIDOS_UPDATE_FALLBACK]', updateErr?.message || updateErr);
+            // Fallback si la columna estadoDisponibilidad aún no existe en la base de datos de producción
+            if (updateData.estadoDisponibilidad) {
+                delete updateData.estadoDisponibilidad;
+                pedidoActualizado = await (prisma as any).pedido.update({
+                    where: { id },
+                    data: updateData,
+                    include: {
+                        items: true,
+                        payment: {
+                            include: {
+                                evidences: { orderBy: { createdAt: 'desc' } },
+                                method: true
+                            }
+                        }
+                    }
+                });
+            } else {
+                throw updateErr;
             }
-        });
+        }
 
         // FASE 5C: Invocación del Enterprise Runtime (si está habilitado para el negocio)
         try {

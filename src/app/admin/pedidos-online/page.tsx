@@ -430,7 +430,7 @@ export default function PedidosOnlinePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredOrders.map(pedido => {
             const isDelivery = pedido.tipoEntrega === 'DELIVERY_ORDER' || pedido.tipoEntrega === 'DOMICILIO';
-            const isProdConfirmed = pedido.estadoDisponibilidad === 'PRODUCTOS_CONFIRMADOS' || pedido.estadoDisponibilidad === 'CAMBIOS_ACEPTADOS';
+            const isProdConfirmed = (pedido.estadoDisponibilidad || pedido.extraInfo?.estadoDisponibilidad) === 'PRODUCTOS_CONFIRMADOS' || (pedido.estadoDisponibilidad || pedido.extraInfo?.estadoDisponibilidad) === 'CAMBIOS_ACEPTADOS';
             const isPaymentVerified = pedido.payment?.estado === 'PAGO_VERIFICADO' || pedido.payment?.estado === 'CONFIRMADO';
             const canAcceptOrder = isProdConfirmed && isPaymentVerified && pedido.estado === 'RECIBIDO';
             const hasPendingRefund = pedido.payment?.estado === 'REEMBOLSO_PENDIENTE';
@@ -542,7 +542,7 @@ export default function PedidosOnlinePage() {
       {fullscreenOrder && (() => {
         const order = fullscreenOrder;
         const isDelivery = order.tipoEntrega === 'DELIVERY_ORDER' || order.tipoEntrega === 'DOMICILIO';
-        const isProdConfirmed = order.estadoDisponibilidad === 'PRODUCTOS_CONFIRMADOS' || order.estadoDisponibilidad === 'CAMBIOS_ACEPTADOS';
+        const isProdConfirmed = (order.estadoDisponibilidad || order.extraInfo?.estadoDisponibilidad) === 'PRODUCTOS_CONFIRMADOS' || (order.estadoDisponibilidad || order.extraInfo?.estadoDisponibilidad) === 'CAMBIOS_ACEPTADOS';
         const isPaymentVerified = order.payment?.estado === 'PAGO_VERIFICADO' || order.payment?.estado === 'CONFIRMADO';
         const canAcceptOrder = isProdConfirmed && isPaymentVerified && order.estado === 'RECIBIDO';
         const hasPendingRefund = order.payment?.estado === 'REEMBOLSO_PENDIENTE';
