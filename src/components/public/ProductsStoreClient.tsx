@@ -714,6 +714,9 @@ export default function ProductsStoreClient({ negocio }: Props) {
             lng: deliveryType === 'DOMICILIO' ? selectedLng : null,
             deliveryDate: deliveryDate,
             timeSlot,
+            subtotal: cartSubtotal,
+            costoEnvio: getDynamicShippingCost(),
+            total: cartTotal,
             items: cart.map(item => ({
                 productId: item.product.id,
                 cantidad: item.quantity
