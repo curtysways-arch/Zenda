@@ -86,12 +86,13 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
     const isCancelled = normState === 'CANCELLED';
 
     const refreshOrder = useCallback(async () => {
-        setRefreshing(true);
         try {
             const res = await fetch(`/api/public/${storeSlug}/orders/${order.id}`);
             if (res.ok) {
                 const data = await res.json();
-                if (data.order) setOrder(data.order);
+                if (data.order) {
+                    setOrder(data.order);
+                }
             }
         } catch (_) {} finally {
             setRefreshing(false);
@@ -101,9 +102,42 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
 
     useEffect(() => {
         if (isDelivered || isCancelled) return;
-        const interval = setInterval(refreshOrder, 5000);
-        return () => clearInterval(interval);
-    }, [refreshOrder, isDelivered, isCancelled]);
+
+        // 1. Refresco ultra reactivo a 2 segundos
+        const interval = setInterval(refreshOrder, 2000);
+
+        // 2. Refresco instantáneo al cambiar foco o regresar a la ventana
+        const handleFocus = () => refreshOrder();
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('visibilitychange', handleFocus);
+
+        // 3. Conexión SSE en tiempo real sin recargar página
+        let es: EventSource | null = null;
+        try {
+            es = new EventSource(`/api/public/${storeSlug}/notifications/sse`);
+            const onEventTrigger = (event: any) => {
+                try {
+                    const data = JSON.parse(event?.data || '{}');
+                    if (!data.pedidoId || data.pedidoId === order.id) {
+                        refreshOrder();
+                    }
+                } catch (_) {
+                    refreshOrder();
+                }
+            };
+            es.onmessage = onEventTrigger;
+            es.addEventListener('realtime_event', onEventTrigger);
+            es.addEventListener('CAMBIOS_SOLICITADOS', onEventTrigger);
+            es.addEventListener('ESTADO_CAMBIADO', onEventTrigger);
+        } catch (_) {}
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('visibilitychange', handleFocus);
+            if (es) es.close();
+        };
+    }, [refreshOrder, isDelivered, isCancelled, storeSlug, order.id]);
 
     const fmt = (v: any) => (Number(v) || 0).toFixed(2);
     
