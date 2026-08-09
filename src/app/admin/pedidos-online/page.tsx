@@ -187,16 +187,24 @@ export default function PedidosOnlinePage() {
     }
   };
 
-  // 2. VERIFICAR PAGO
+  // 2. VERIFICAR PAGO (Solo verifica el comprobante financiero sin alterar estado del pedido ni cerrar ventana)
   const handleVerifyPayment = async (pedidoId: string) => {
     setProcessingId(pedidoId);
     try {
-      await fetch('/api/admin/pedidos', {
+      const res = await fetch('/api/admin/pedidos', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: pedidoId, action: 'VERIFICAR_PAGO' })
       });
-      await fetchOnlineOrders();
+      if (res.ok) {
+        if (fullscreenOrder && fullscreenOrder.id === pedidoId) {
+          setFullscreenOrder(prev => prev ? {
+            ...prev,
+            payment: { ...prev.payment, estado: 'PAGO_VERIFICADO' } as any
+          } : null);
+        }
+        await fetchOnlineOrders();
+      }
     } catch (e) {
       console.error('Error verificando pago:', e);
     } finally {
@@ -223,11 +231,11 @@ export default function PedidosOnlinePage() {
     }
   };
 
-  // 3. ACEPTACIÓN DEFINITIVA -> Pasa a ACEPTADO -> EN_PREPARACION en Cocina
+  // 3. ACEPTACIÓN DEFINITIVA -> Pasa a EN_PREPARACION en Cocina y Cierra Ventana
   const handleAcceptOrderToKitchen = async (pedidoTarget: Pedido) => {
     setProcessingId(pedidoTarget.id);
     try {
-      await fetch('/api/admin/pedidos', {
+      const res = await fetch('/api/admin/pedidos', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -236,7 +244,13 @@ export default function PedidosOnlinePage() {
           prepTimeMinutes: selectedPrepTime
         })
       });
-      await fetchOnlineOrders();
+      if (res.ok) {
+        setFullscreenOrder(null);
+        await fetchOnlineOrders();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Error al aceptar el pedido');
+      }
     } catch (e) {
       console.error('Error aceptando pedido:', e);
     } finally {
