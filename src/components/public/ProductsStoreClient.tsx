@@ -892,6 +892,13 @@ export default function ProductsStoreClient({ negocio }: Props) {
                 return;
             }
 
+            if (!evidenceFile && targetOrder) {
+                clearCart();
+                setDraftCheckoutPayload(null);
+                setStep('success');
+                return;
+            }
+
             const formData = new FormData();
             formData.append('file', evidenceFile);
 
@@ -1198,7 +1205,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                 <input
                                     id="evidence-file-input"
                                     type="file"
-                                    required
+                                    required={!createdPayment && !activeOrder}
                                     accept="image/png, image/jpeg, image/webp, application/pdf"
                                     onChange={e => {
                                         if (e.target.files?.[0]) setEvidenceFile(e.target.files[0]);

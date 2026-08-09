@@ -11,6 +11,7 @@ import Link from 'next/link';
 
 interface OrderItem {
     id: string;
+    productoId?: string;
     nombreProducto: string;
     cantidad: number;
     precioUnitario: number | string;
@@ -117,9 +118,14 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
     const outOfStockItemsList = (order as any).extraInfo?.outOfStockItemsList || [];
     const outOfStockIds = new Set(outOfStockItemsList.map((i: any) => i.id || i.productoId).filter(Boolean));
 
-    const effectiveProposedItems = proposedItemsList.length > 0
+    let effectiveProposedItems = proposedItemsList.length > 0
         ? proposedItemsList
         : (order.items || []).filter(it => !outOfStockIds.has(it.id) && !outOfStockIds.has(it.productoId));
+
+    // Si por algún dato legacy todos resultaron filtrados pero order.items tiene elementos, usar order.items
+    if (effectiveProposedItems.length === 0 && order.items && order.items.length > 0) {
+        effectiveProposedItems = order.items;
+    }
 
     const proposedItemsSubtotal = effectiveProposedItems.reduce((acc: number, it: any) => 
         acc + ((Number(it.precioUnitario || it.precio) || 0) * (Number(it.cantidad) || 1)), 0);
@@ -131,11 +137,11 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
     const hasExistingPayment = !!order.payment || ['COMPROBANTE_ENVIADO', 'COMPROBANTE_RECIBIDO', 'PAGO_VERIFICADO', 'CONFIRMADO'].includes(order.payment?.estado || order.estado);
 
     return (
-        <div style={{ fontFamily: "'Inter', sans-serif", background: cs, minHeight: '100vh', paddingBottom: 60 }}>
+        <div style={{ fontFamily: "'Inter', sans-serif", background: cs, minHeight: '100vh', paddingBottom: 140 }}>
             <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');`}</style>
 
-            {/* HEADER CON PADDING SUPERIOR AMPLIADO A 100PX (SIN TRASLAPE CON NAVBAR STICKY) */}
-            <div style={{ background: `linear-gradient(135deg, ${cs}, rgba(0,0,0,0.9))`, padding: '100px 20px 28px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            {/* HEADER CON PADDING SUPERIOR AMPLIADO A 130PX (PARA EVITAR SOLAPAMIENTO DE BARRA SUPERIOR E INFERIOR) */}
+            <div style={{ background: `linear-gradient(135deg, ${cs}, rgba(0,0,0,0.9))`, padding: '130px 20px 28px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <div style={{ maxWidth: 800, margin: '0 auto' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
