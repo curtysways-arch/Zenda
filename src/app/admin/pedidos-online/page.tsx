@@ -1006,14 +1006,14 @@ export default function PedidosOnlinePage() {
                             asgnState = 'ESPERANDO_CLIENTE';
                           } else if (['ENTREGADO', 'FINALIZADO', 'COMPLETADO'].includes(order.estado)) {
                             asgnState = 'COMPLETADO';
-                          } else if (['ACEPTADO', 'REPARTIDOR_ACEPTO'].includes(order.estado) && asgnState === 'ASIGNADO') {
+                          } else if (['REPARTIDOR_ASIGNADO', 'ACEPTADO', 'REPARTIDOR_ACEPTO', 'ENTREGADO_A_REPARTIDOR'].includes(order.estado) || currentAsgn?.estado === 'ACEPTADO') {
                             asgnState = 'ACEPTADO';
                           }
 
                           return (
                             <>
                               {/* SI EXISTE UNA ASIGNACIÓN O EL ESTADO INDICA REPARTIDOR ASIGNADO/EN LOCAL */}
-                              {(currentAsgn || ['REPARTIDOR_EN_LOCAL', 'REPARTIDOR_ASIGNADO', 'EN_CAMINO', 'LLEGO'].includes(order.estado)) ? (
+                              {(currentAsgn || order.extraInfo?.assignedDriver || ['REPARTIDOR_EN_LOCAL', 'REPARTIDOR_ASIGNADO', 'EN_CAMINO', 'LLEGO'].includes(order.estado)) ? (
                                 <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
@@ -1038,10 +1038,12 @@ export default function PedidosOnlinePage() {
                                         ? 'bg-blue-100 text-blue-900 border border-blue-300'
                                         : 'bg-slate-200 text-slate-800'
                                     }`}>
-                                      {asgnState === 'ASIGNADO' 
+                                      {asgnState === 'ASIGNADO' || asgnState === 'PENDIENTE'
                                         ? '⏳ PENDIENTE DE ACEPTACIÓN' 
                                         : asgnState === 'REPARTIDOR_EN_LOCAL' 
                                         ? '📍 REPARTIDOR EN LOCAL' 
+                                        : asgnState === 'ACEPTADO'
+                                        ? '✅ REPARTIDOR ASIGNADO'
                                         : asgnState}
                                     </span>
                                   </div>
