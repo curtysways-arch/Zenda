@@ -43,7 +43,12 @@ export async function PUT(req: Request) {
 
     try {
         const body = await req.json();
-        const { id, estado, franjaHoraria, fechaEntrega, notas, subtotal, costoEnvio, costoEmpaque, descuento, total, pricingBreakdown, prepTimeMinutes, extraInfoUpdates } = body;
+        const {
+            id, action, estado, estadoDisponibilidad, franjaHoraria, fechaEntrega, notas,
+            subtotal, costoEnvio, costoEmpaque, descuento, total, pricingBreakdown,
+            prepTimeMinutes, extraInfoUpdates, proposedItems, outOfStockProductIds,
+            disableOutOfStock, metodoDevolucion, referenciaDevolucion, observacionDevolucion, motivoRechazo
+        } = body;
 
         if (!id) {
             return NextResponse.json({ error: 'El ID es obligatorio' }, { status: 400 });
@@ -52,7 +57,7 @@ export async function PUT(req: Request) {
         // Validar propiedad del negocio
         const pedido = await (prisma as any).pedido.findUnique({
             where: { id },
-            include: { negocio: true, payment: true }
+            include: { negocio: true, payment: true, items: true }
         });
 
         if (!pedido || pedido.negocioId !== negocioId) {
@@ -60,18 +65,94 @@ export async function PUT(req: Request) {
         }
 
         const updateData: any = {};
-        if (estado) updateData.estado = estado;
+        const currentExtra = (pedido.extraInfo as any) || {};
+
+        // 1. ACCIÓN: CONFIRMAR DISPONIBILIDAD DE PRODUCTOS
+        if (action === 'CONFIRMAR_DISPONIBILIDAD' || estadoDisponibilidad === 'PRODUCTOS_CONFIRMADOS') {
+            updateData.estadoDisponibilidad = 'PRODUCTOS_CONFIRMADOS';
+            if (pedido.estado === 'RECIBIDO') {
+                updateData.estado = 'RECIBIDO'; // Permanece en RECIBIDO en espera de verificación de pago
+            }
+        }
+
+        // 2. ACCIÓN: SOLICITAR CAMBIOS POR PRODUCTO AGOTADO (NO genera reembolso aún hasta que cliente acepte)
+        if (action === 'SOLICITAR_CAMBIOS' || estado === 'CAMBIOS_SOLICITADOS') {
+            updateData.estadoDisponibilidad = 'CAMBIOS_SOLICITADOS';
+            updateData.estado = 'CAMBIOS_SOLICITADOS';
+
+            if (proposedItems && Array.isArray(proposedItems)) {
+                currentExtra.proposedItems = proposedItems;
+                currentExtra.proposedSubtotal = subtotal !== undefined ? parseFloat(subtotal) : pedido.subtotal;
+                currentExtra.proposedTotal = total !== undefined ? parseFloat(total) : pedido.total;
+            }
+
+            // Disponibilidad rápida de productos en catálogo
+            if (disableOutOfStock && outOfStockProductIds && Array.isArray(outOfStockProductIds) && outOfStockProductIds.length > 0) {
+                try {
+                    await (prisma as any).producto.updateMany({
+                        where: { id: { in: outOfStockProductIds }, negocioId },
+                        data: { activo: false }
+                    });
+                } catch (pErr) {
+                    console.warn('[ADMIN_PEDIDOS_DISABLE_PRODUCTS_ERROR]', pErr);
+                }
+            }
+        }
+
+        // 3. ACCIÓN: VERIFICAR O RECHAZAR PAGO
+        if (action === 'VERIFICAR_PAGO' || estado === 'PAGO_VERIFICADO') {
+            if (pedido.payment) {
+                await (prisma as any).orderPayment.update({
+                    where: { id: pedido.payment.id },
+                    data: { estado: 'PAGO_VERIFICADO' }
+                });
+            }
+        } else if (action === 'RECHAZAR_PAGO' || estado === 'PAGO_RECHAZADO') {
+            if (pedido.payment) {
+                await (prisma as any).orderPayment.update({
+                    where: { id: pedido.payment.id },
+                    data: { estado: 'PAGO_RECHAZADO', motivoRechazo: motivoRechazo || 'Comprobante inválido o no legible' }
+                });
+            }
+        }
+
+        // 4. ACCIÓN: ACEPTACIÓN DEFINITIVA DEL PEDIDO (PRODUCTOS OK + PAGO VERIFICADO) -> Pasa a ACEPTADO -> EN_PREPARACION (Cocina)
+        if (action === 'ACEPTAR_PEDIDO' || estado === 'ACEPTADO' || estado === 'EN_PREPARACION') {
+            updateData.estado = 'EN_PREPARACION';
+            if (pedido.payment && pedido.payment.estado !== 'CONFIRMADO') {
+                await (prisma as any).orderPayment.update({
+                    where: { id: pedido.payment.id },
+                    data: { estado: 'CONFIRMADO' }
+                }).catch(() => {});
+            }
+        } else if (estado) {
+            updateData.estado = estado;
+        }
+
+        // 5. ACCIÓN FINANCIERA INDEPENDIENTE: CONFIRMAR DEVOLUCIÓN DE REEMBOLSO (OrderPayment.estado = REEMBOLSADO)
+        if (action === 'CONFIRMAR_DEVOLUCION' && pedido.payment) {
+            await (prisma as any).orderPayment.update({
+                where: { id: pedido.payment.id },
+                data: {
+                    estado: 'REEMBOLSADO',
+                    metodoDevolucion: metodoDevolucion || 'TRANSFERENCIA',
+                    referenciaDevolucion: referenciaDevolucion || null,
+                    observacionDevolucion: observacionDevolucion || null,
+                    devolucionAt: new Date(),
+                    devolucionUser: (session.user as any).name || (session.user as any).email || 'Administrador'
+                }
+            });
+            // NOTA: El estado del pedido no se modifica en lo absoluto para preservar el flujo operativo.
+        }
+
         if (franjaHoraria) updateData.franjaHoraria = franjaHoraria;
         if (fechaEntrega) updateData.fechaEntrega = new Date(fechaEntrega);
         if (notas !== undefined) updateData.notas = notas;
 
-        // Actualizaciones financieras de Caja via PricingEngine
         if (subtotal !== undefined) updateData.subtotal = parseFloat(subtotal);
         if (costoEnvio !== undefined) updateData.costoEnvio = parseFloat(costoEnvio);
         if (total !== undefined) updateData.total = parseFloat(total);
 
-        // Guardar desglose de auditoría, prepTimeMinutes y extraInfoUpdates en extraInfo
-        const currentExtra = (pedido.extraInfo as any) || {};
         const newExtraInfo = {
             ...currentExtra,
             ...(extraInfoUpdates || {}),
@@ -89,13 +170,6 @@ export async function PUT(req: Request) {
         }
 
         updateData.extraInfo = newExtraInfo;
-
-        if (pedido.payment && (estado === 'EN_PREPARACION' || estado === 'RECIBIDO' || estado === 'ACEPTADO')) {
-            await (prisma as any).orderPayment.update({
-                where: { id: pedido.payment.id },
-                data: { estado: 'APROBADO' }
-            }).catch(() => {});
-        }
 
         const pedidoActualizado = await (prisma as any).pedido.update({
             where: { id },

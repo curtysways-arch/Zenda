@@ -2188,21 +2188,15 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             ))}
                         </div>
 
-                        {/* Resumen de totales */}
+                        {/* Resumen de totales (Sin calcular envío aún hasta elegir ubicación en checkout) */}
                         <div className="px-4 py-4 border-t border-slate-100 space-y-2">
                             <div className="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
                                 <span>Subtotal</span>
                                 <span>${cartSubtotal.toFixed(2)}</span>
                             </div>
-                            {deliveryType === 'DOMICILIO' && (
-                                <div className="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                    <span>Envío</span>
-                                    <span>${shippingCost.toFixed(2)}</span>
-                                </div>
-                            )}
                             <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-100">
                                 <span>TOTAL</span>
-                                <span>${cartTotal.toFixed(2)}</span>
+                                <span>${cartSubtotal.toFixed(2)}</span>
                             </div>
                         </div>
 
@@ -2219,15 +2213,15 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             ) : (
                                 <button
                                     onClick={() => { setShowCartDrawer(false); setStep('checkout'); }}
-                                    className="w-full py-4 rounded-2xl text-white font-black text-sm uppercase tracking-widest shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                    className="w-full py-4 rounded-2xl text-white font-black text-sm uppercase tracking-widest shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
                                     style={{ backgroundColor: primaryColor }}
                                 >
-                                    ⚡ Confirmar Pedido (${cartTotal.toFixed(2)})
+                                    ⚡ Confirmar Pedido (${cartSubtotal.toFixed(2)})
                                 </button>
                             )}
                             <button
                                 onClick={() => setShowCartDrawer(false)}
-                                className="w-full py-3 rounded-2xl text-slate-600 font-black text-xs uppercase tracking-wider bg-slate-100 hover:bg-slate-200 active:scale-[0.98] transition-all"
+                                className="w-full py-3 rounded-2xl text-slate-600 font-black text-xs uppercase tracking-wider bg-slate-100 hover:bg-slate-200 active:scale-[0.98] transition-all cursor-pointer"
                             >
                                 + Seguir comprando
                             </button>

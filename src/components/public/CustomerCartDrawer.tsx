@@ -237,22 +237,16 @@ export default function CustomerCartDrawer({
                   ))}
                 </div>
 
-                {/* Resumen Financiero + Botón Continuar (Fijo al fondo) */}
+                {/* Resumen Financiero + Botón Continuar (Fijo al fondo - Sin calcular envío aún) */}
                 <div className="shrink-0 p-5 pb-16 sm:pb-6 bg-slate-50 border-t border-slate-100 space-y-3 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
                   <div className="space-y-1.5 text-xs text-slate-600 font-medium">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
                       <span className="font-bold text-slate-900">${subtotal.toFixed(2)}</span>
                     </div>
-                    {deliveryType === 'DOMICILIO' && (
-                      <div className="flex justify-between">
-                        <span>Costo Delivery</span>
-                        <span className="font-bold text-slate-900">${deliveryCost.toFixed(2)}</span>
-                      </div>
-                    )}
                     <div className="flex justify-between text-base font-black text-slate-900 pt-1.5 border-t border-slate-200">
                       <span>Total</span>
-                      <span style={{ color: primaryColor }}>${total.toFixed(2)}</span>
+                      <span style={{ color: primaryColor }}>${subtotal.toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -261,7 +255,7 @@ export default function CustomerCartDrawer({
                     className="w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
                     style={{ backgroundColor: primaryColor }}
                   >
-                    <span>Continuar Pedido ({totalItemsCount} items)</span>
+                    <span>Continuar Pedido ({totalItemsCount} items - ${subtotal.toFixed(2)})</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>

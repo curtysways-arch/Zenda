@@ -35,8 +35,8 @@ export async function GET() {
         negocioId,
         estado: {
           in: [
-            'WAITING_CONFIRMATION', 'CONFIRMED', 'RECIBIDO', 'EN_PREPARACION', 'PREPARACION',
-            'LISTO', 'LISTA', 'REPARTIDOR_ASIGNADO', 'EN_CAMINO', 'EN_RUTA', 'RUTA', 'ENTREGADO', 'ENTREGADO_MESA', 'RETIRADO'
+            'LISTO', 'LISTA', 'FULFILLMENT', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL',
+            'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA', 'ENTREGADO', 'ENTREGADO_MESA', 'RETIRADO'
           ]
         }
       },

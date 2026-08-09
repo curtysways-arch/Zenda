@@ -435,3 +435,110 @@ export async function PATCH(
         return NextResponse.json({ error: e.message || 'Error actualizando comanda' }, { status: 500 });
     }
 }
+
+export async function PUT(
+    request: Request,
+    { params }: { params: Promise<{ slug: string }> }
+) {
+    const { slug } = await params;
+    try {
+        const body = await request.json();
+        const { orderId, action } = body;
+
+        if (!orderId || !action) {
+            return NextResponse.json({ error: 'orderId y action son requeridos' }, { status: 400 });
+        }
+
+        const negocio = await prisma.negocio.findUnique({ where: { slug } });
+        if (!negocio) {
+            return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
+        }
+
+        const order = await (prisma as any).pedido.findFirst({
+            where: { id: orderId, negocioId: negocio.id },
+            include: { payment: true, items: true }
+        });
+
+        if (!order) {
+            return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 });
+        }
+
+        const currentExtra = typeof order.extraInfo === 'string' ? JSON.parse(order.extraInfo || '{}') : (order.extraInfo || {});
+
+        // 1. CLIENTE ACEPTA LA PROPUESTA DE CAMBIOS DE PRODUCTOS AGOTADOS
+        if (action === 'ACEPTAR_CAMBIOS') {
+            const proposedItems = currentExtra.proposedItems || [];
+            const proposedTotal = Number(currentExtra.proposedTotal ?? order.total);
+            const proposedSubtotal = Number(currentExtra.proposedSubtotal ?? order.subtotal);
+
+            const montoPagado = order.payment ? Number(order.payment.monto) : Number(order.total);
+            const updateOrderData: any = {
+                estadoDisponibilidad: 'CAMBIOS_ACEPTADOS',
+                subtotal: proposedSubtotal,
+                total: proposedTotal,
+                extraInfo: {
+                    ...currentExtra,
+                    proposedItemsAcceptedAt: new Date().toISOString()
+                }
+            };
+
+            // Reemplazar los ítems por la propuesta aceptada
+            if (proposedItems.length > 0) {
+                await (prisma as any).pedidoItem.deleteMany({ where: { pedidoId: order.id } });
+                await (prisma as any).pedidoItem.createMany({
+                    data: proposedItems.map((pItem: any) => ({
+                        pedidoId: order.id,
+                        productoId: pItem.productoId || null,
+                        nombreProducto: pItem.nombreProducto || pItem.nombre,
+                        precioUnitario: Number(pItem.precioUnitario || pItem.precio || 0),
+                        cantidad: Number(pItem.cantidad || 1)
+                    }))
+                });
+            }
+
+            // REGLA CRÍTICA: Generar REEMBOLSO_PENDIENTE ÚNICAMENTE al aceptar el cliente si montoPagado > proposedTotal
+            if (order.payment) {
+                if (montoPagado > proposedTotal) {
+                    const excedente = parseFloat((montoPagado - proposedTotal).toFixed(2));
+                    await (prisma as any).orderPayment.update({
+                        where: { id: order.payment.id },
+                        data: {
+                            montoExcedente: excedente,
+                            estado: 'REEMBOLSO_PENDIENTE'
+                        }
+                    });
+                    // El pedido continúa operativamente sin bloquearse
+                    updateOrderData.estado = 'PRODUCTOS_CONFIRMADOS';
+                } else if (montoPagado < proposedTotal) {
+                    updateOrderData.estado = 'PAGO_ADICIONAL_PENDIENTE';
+                } else {
+                    updateOrderData.estado = 'PRODUCTOS_CONFIRMADOS';
+                }
+            } else {
+                updateOrderData.estado = 'PRODUCTOS_CONFIRMADOS';
+            }
+
+            const updated = await (prisma as any).pedido.update({
+                where: { id: order.id },
+                data: updateOrderData,
+                include: { items: true, payment: true }
+            });
+
+            return NextResponse.json({ success: true, order: updated });
+        }
+
+        // 2. CLIENTE CANCELA PEDIDO TRAS PROPUESTA
+        if (action === 'CANCELAR_PEDIDO') {
+            const updated = await (prisma as any).pedido.update({
+                where: { id: order.id },
+                data: { estado: 'CANCELADO', estadoDisponibilidad: 'CAMBIOS_RECHAZADOS' }
+            });
+            return NextResponse.json({ success: true, order: updated });
+        }
+
+        return NextResponse.json({ error: 'Acción no válida' }, { status: 400 });
+    } catch (e: any) {
+        console.error('[ORDERS_PUT_CLIENT_API]', e);
+        return NextResponse.json({ error: e.message || 'Error procesando respuesta del cliente' }, { status: 500 });
+    }
+}

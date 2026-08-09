@@ -2626,7 +2626,8 @@ model Pedido {
   subtotal          Float
   costoEnvio        Float
   total             Float
-  estado            String       @default("PENDIENTE_PAGO") // "BORRADOR" | "PENDIENTE_PAGO" | "PAGO_EN_REVISION" | "PAGO_CONFIRMADO" | "EN_PREPARACION" | "LISTO" | "EN_RUTA" | "ENTREGADO" | "CANCELADO"
+  estado            String       @default("RECIBIDO") // "RECIBIDO" | "PRODUCTOS_CONFIRMADOS" | "CAMBIOS_SOLICITADOS" | "CAMBIOS_ACEPTADOS" | "PAGO_ADICIONAL_PENDIENTE" | "ACEPTADO" | "EN_PREPARACION" | "LISTO" | "FULFILLMENT" | "ASIGNADO" | "EN_CAMINO" | "ENTREGADO" | "FINALIZADO" | "CANCELADO"
+  estadoDisponibilidad String   @default("PENDIENTE") // "PENDIENTE" | "PRODUCTOS_CONFIRMADOS" | "CAMBIOS_SOLICITADOS" | "CAMBIOS_ACEPTADOS"
   notas             String?
   extraInfo         Json?
   negocio           Negocio      @relation(fields: [negocioId], references: [id], onDelete: Cascade)
@@ -2692,23 +2693,29 @@ model PaymentMethod {
 }
 
 model OrderPayment {
-  id             String            @id @default(uuid())
-  pedidoId       String            @unique
-  negocioId      String
-  methodId       String?
-  monto          Float
-  moneda         String            @default("USD")
-  estado         String            @default("PENDIENTE") // "PENDIENTE" | "COMPROBANTE_ENVIADO" | "EN_REVISION" | "CONFIRMADO" | "RECHAZADO" | "EXPIRADO" | "REEMBOLSADO"
-  codigoPago     String?           // Código de referencia único de pago
-  motivoRechazo  String?
-  observaciones  String?
-  pedido         Pedido            @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
-  negocio        Negocio           @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  method         PaymentMethod?    @relation(fields: [methodId], references: [id], onDelete: SetNull)
-  evidences      PaymentEvidence[]
-  history        PaymentHistory[]
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  id                    String            @id @default(uuid())
+  pedidoId              String            @unique
+  negocioId             String
+  methodId              String?
+  monto                 Float
+  montoExcedente        Float             @default(0)
+  moneda                String            @default("USD")
+  estado                String            @default("PENDIENTE") // "PENDIENTE" | "COMPROBANTE_ENVIADO" | "EN_REVISION" | "CONFIRMADO" | "PAGO_VERIFICADO" | "PAGO_RECHAZADO" | "REEMBOLSO_PENDIENTE" | "REEMBOLSADO" | "EXPIRADO"
+  metodoDevolucion      String?           // "TRANSFERENCIA" | "EFECTIVO" | "OTRO"
+  referenciaDevolucion  String?
+  observacionDevolucion String?
+  devolucionAt          DateTime?
+  devolucionUser        String?
+  codigoPago            String?           // Código de referencia único de pago
+  motivoRechazo         String?
+  observaciones         String?
+  pedido                Pedido            @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  negocio               Negocio           @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  method                PaymentMethod?    @relation(fields: [methodId], references: [id], onDelete: SetNull)
+  evidences             PaymentEvidence[]
+  history               PaymentHistory[]
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
 
   @@index([negocioId])
   @@index([estado])
