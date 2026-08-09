@@ -518,21 +518,43 @@ export async function PUT(
                 updateOrderData.estado = 'PRODUCTOS_CONFIRMADOS';
             }
 
-            const updated = await (prisma as any).pedido.update({
-                where: { id: order.id },
-                data: updateOrderData,
-                include: { items: true, payment: true }
-            });
+            let updated: any;
+            try {
+                updated = await (prisma as any).pedido.update({
+                    where: { id: order.id },
+                    data: updateOrderData,
+                    include: { items: true, payment: true }
+                });
+            } catch (err) {
+                if (updateOrderData.estadoDisponibilidad) {
+                    delete updateOrderData.estadoDisponibilidad;
+                    updated = await (prisma as any).pedido.update({
+                        where: { id: order.id },
+                        data: updateOrderData,
+                        include: { items: true, payment: true }
+                    });
+                } else {
+                    throw err;
+                }
+            }
 
             return NextResponse.json({ success: true, order: updated });
         }
 
         // 2. CLIENTE CANCELA PEDIDO TRAS PROPUESTA
         if (action === 'CANCELAR_PEDIDO') {
-            const updated = await (prisma as any).pedido.update({
-                where: { id: order.id },
-                data: { estado: 'CANCELADO', estadoDisponibilidad: 'CAMBIOS_RECHAZADOS' }
-            });
+            let updated: any;
+            try {
+                updated = await (prisma as any).pedido.update({
+                    where: { id: order.id },
+                    data: { estado: 'CANCELADO', estadoDisponibilidad: 'CAMBIOS_RECHAZADOS' }
+                });
+            } catch (err) {
+                updated = await (prisma as any).pedido.update({
+                    where: { id: order.id },
+                    data: { estado: 'CANCELADO' }
+                });
+            }
             return NextResponse.json({ success: true, order: updated });
         }
 

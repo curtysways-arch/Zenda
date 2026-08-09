@@ -114,13 +114,18 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
 
     // Cálculo del Total Propuesto de Formato Seguro si hay ítems propuestos por el local
     const proposedItemsList = (order as any).extraInfo?.proposedItems || [];
-    const proposedItemsSubtotal = proposedItemsList.reduce((acc: number, it: any) => acc + ((Number(it.precioUnitario || it.precio) || 0) * (Number(it.cantidad) || 1)), 0);
+    const outOfStockItemsList = (order as any).extraInfo?.outOfStockItemsList || [];
+    const outOfStockIds = new Set(outOfStockItemsList.map((i: any) => i.id || i.productoId).filter(Boolean));
+
+    const effectiveProposedItems = proposedItemsList.length > 0
+        ? proposedItemsList
+        : (order.items || []).filter(it => !outOfStockIds.has(it.id) && !outOfStockIds.has(it.productoId));
+
+    const proposedItemsSubtotal = effectiveProposedItems.reduce((acc: number, it: any) => 
+        acc + ((Number(it.precioUnitario || it.precio) || 0) * (Number(it.cantidad) || 1)), 0);
     
     // El total propuesto debe incluir el subtotal correcto de los ítems propuestos + costo de envío
-    const rawProposedTotal = Number((order as any).extraInfo?.proposedTotal);
-    const proposedGrandTotal = (proposedItemsList.length > 0 && proposedItemsSubtotal > 0)
-        ? (proposedItemsSubtotal + costoEnvio)
-        : (!isNaN(rawProposedTotal) && rawProposedTotal > 0 ? rawProposedTotal : grandTotal);
+    const proposedGrandTotal = proposedItemsSubtotal > 0 ? (proposedItemsSubtotal + costoEnvio) : grandTotal;
 
     // Estado del pago anterior
     const hasExistingPayment = !!order.payment || ['COMPROBANTE_ENVIADO', 'COMPROBANTE_RECIBIDO', 'PAGO_VERIFICADO', 'CONFIRMADO'].includes(order.payment?.estado || order.estado);
@@ -129,8 +134,8 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
         <div style={{ fontFamily: "'Inter', sans-serif", background: cs, minHeight: '100vh', paddingBottom: 60 }}>
             <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');`}</style>
 
-            {/* HEADER CON PADDING SUPERIOR AMPLIADO (SIN TRASLAPE CON NAVBAR) */}
-            <div style={{ background: `linear-gradient(135deg, ${cs}, rgba(0,0,0,0.9))`, padding: '48px 20px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            {/* HEADER CON PADDING SUPERIOR AMPLIADO A 100PX (SIN TRASLAPE CON NAVBAR STICKY) */}
+            <div style={{ background: `linear-gradient(135deg, ${cs}, rgba(0,0,0,0.9))`, padding: '100px 20px 28px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <div style={{ maxWidth: 800, margin: '0 auto' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -208,7 +213,7 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                             <div style={{ color: '#10b981', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
                                 <span>🟢</span> PRODUCTOS DISPONIBLES Y PROPUESTOS:
                             </div>
-                            {proposedItemsList.map((it: any, idx: number) => (
+                            {effectiveProposedItems.map((it: any, idx: number) => (
                                 <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#fff', padding: '4px 0', fontWeight: 600 }}>
                                     <span>{it.cantidad}x {it.nombreProducto || it.nombre}</span>
                                     <span style={{ fontWeight: 800 }}>${((Number(it.precioUnitario || it.precio) || 0) * it.cantidad).toFixed(2)}</span>
