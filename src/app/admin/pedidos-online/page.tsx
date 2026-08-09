@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { 
   Globe, PackageCheck, Bike, ShoppingBag, Check, X, Clock, MapPin, Phone,
   User, Loader2, AlertCircle, RefreshCw, ChevronRight, DollarSign, Filter,
-  MessageCircle, Printer, ExternalLink, Sparkles, Eye, ShieldCheck, AlertTriangle
+  MessageCircle, Printer, ExternalLink, Sparkles, Eye, ShieldCheck, AlertTriangle,
+  Maximize2, ArrowLeft
 } from 'lucide-react';
 
 interface PedidoItem {
@@ -29,6 +30,7 @@ interface OrderPayment {
 interface Pedido {
   id: string;
   codigo?: string;
+  numeroPedido?: number;
   nombreCliente: string;
   telefonoCliente: string;
   direccionCliente?: string;
@@ -54,18 +56,15 @@ export default function PedidosOnlinePage() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Alerta Sonora y Pantalla Completa
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [alertOrder, setAlertOrder] = useState<Pedido | null>(null);
+  // Estado de Orden Seleccionada para Detalle a Pantalla Completa
+  const [fullscreenOrder, setFullscreenOrder] = useState<Pedido | null>(null);
 
   // Modal de Disponibilidad & Propuesta de Cambios
-  const [reviewingOrder, setReviewingOrder] = useState<Pedido | null>(null);
   const [selectedPrepTime, setSelectedPrepTime] = useState<number>(20);
   const [itemsAvailability, setItemsAvailability] = useState<Record<string, boolean>>({});
   const [disableCatalogProducts, setDisableCatalogProducts] = useState(true);
 
   // Modal de Confirmación de Reembolso
-  const [refundingOrder, setRefundingOrder] = useState<Pedido | null>(null);
   const [refundMethod, setRefundMethod] = useState<string>('TRANSFERENCIA');
   const [refundRef, setRefundRef] = useState<string>('');
   const [refundNotes, setRefundNotes] = useState<string>('');
@@ -75,12 +74,17 @@ export default function PedidosOnlinePage() {
       const res = await fetch('/api/admin/pedidos');
       if (res.ok) {
         const data = await res.json();
-        // Filtrar pedidos de canal web / online
         const onlineOnly = (data || []).filter((p: any) => {
           const ch = (p.extraInfo?.channel || p.extraInfo?.canal || 'WEB').toUpperCase();
           return ch !== 'POS' && ch !== 'MOSTRADOR';
         });
         setPedidos(onlineOnly);
+
+        // Si hay una orden en pantalla completa abierta, refrescar sus datos actualizados
+        if (fullscreenOrder) {
+          const updatedTarget = onlineOnly.find((p: Pedido) => p.id === fullscreenOrder.id);
+          if (updatedTarget) setFullscreenOrder(updatedTarget);
+        }
       }
     } catch (e) {
       console.error('Error fetching online orders:', e);
@@ -91,13 +95,13 @@ export default function PedidosOnlinePage() {
 
   useEffect(() => {
     fetchOnlineOrders();
-    const interval = setInterval(fetchOnlineOrders, 10000);
+    const interval = setInterval(fetchOnlineOrders, 8000);
     return () => clearInterval(interval);
   }, []);
 
-  // Abrir Modal de Revisión y cargar disponibilidad inicial (☑ todo disponible por defecto)
-  const handleOpenReview = (pedido: Pedido) => {
-    setReviewingOrder(pedido);
+  // Abrir Orden a Pantalla Completa y cargar disponibilidad inicial
+  const handleOpenFullscreenOrder = (pedido: Pedido) => {
+    setFullscreenOrder(pedido);
     const initialAvailability: Record<string, boolean> = {};
     (pedido.items || []).forEach(it => {
       initialAvailability[it.id] = true;
@@ -106,27 +110,24 @@ export default function PedidosOnlinePage() {
   };
 
   // 1. CONFIRMAR DISPONIBILIDAD O ENVIAR PROPUESTA DE CAMBIOS
-  const handleSaveDisponibilidad = async () => {
-    if (!reviewingOrder) return;
-    setProcessingId(reviewingOrder.id);
+  const handleSaveDisponibilidad = async (pedidoTarget: Pedido) => {
+    setProcessingId(pedidoTarget.id);
 
-    const outOfStockItems = reviewingOrder.items.filter(it => itemsAvailability[it.id] === false);
+    const outOfStockItems = pedidoTarget.items.filter(it => itemsAvailability[it.id] === false);
     const isAllAvailable = outOfStockItems.length === 0;
 
     try {
       if (isAllAvailable) {
-        // Todo disponible -> PRODUCTOS_CONFIRMADOS
         await fetch('/api/admin/pedidos', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            id: reviewingOrder.id,
+            id: pedidoTarget.id,
             action: 'CONFIRMAR_DISPONIBILIDAD'
           })
         });
       } else {
-        // Producto agotado -> Enviar propuesta de cambios a cliente (NO genera reembolso aún)
-        const proposedItems = reviewingOrder.items
+        const proposedItems = pedidoTarget.items
           .filter(it => itemsAvailability[it.id] !== false)
           .map(it => ({
             id: it.id,
@@ -137,7 +138,7 @@ export default function PedidosOnlinePage() {
           }));
 
         const newSubtotal = proposedItems.reduce((sum, it) => sum + (it.precioUnitario * it.cantidad), 0);
-        const shippingCost = Number(reviewingOrder.costoEnvio || 0);
+        const shippingCost = Number(pedidoTarget.costoEnvio || 0);
         const newTotal = newSubtotal + shippingCost;
         const outOfStockProductIds = outOfStockItems.map(it => it.productoId).filter(Boolean);
 
@@ -145,7 +146,7 @@ export default function PedidosOnlinePage() {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            id: reviewingOrder.id,
+            id: pedidoTarget.id,
             action: 'SOLICITAR_CAMBIOS',
             proposedItems,
             subtotal: newSubtotal,
@@ -156,7 +157,6 @@ export default function PedidosOnlinePage() {
         });
       }
 
-      setReviewingOrder(null);
       await fetchOnlineOrders();
     } catch (err) {
       console.error('Error guardando disponibilidad:', err);
@@ -202,14 +202,14 @@ export default function PedidosOnlinePage() {
   };
 
   // 3. ACEPTACIÓN DEFINITIVA -> Pasa a ACEPTADO -> EN_PREPARACION en Cocina
-  const handleAcceptOrderToKitchen = async (pedido: Pedido) => {
-    setProcessingId(pedido.id);
+  const handleAcceptOrderToKitchen = async (pedidoTarget: Pedido) => {
+    setProcessingId(pedidoTarget.id);
     try {
       await fetch('/api/admin/pedidos', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: pedido.id,
+          id: pedidoTarget.id,
           action: 'ACEPTAR_PEDIDO',
           prepTimeMinutes: selectedPrepTime
         })
@@ -222,23 +222,21 @@ export default function PedidosOnlinePage() {
     }
   };
 
-  // 4. CONFIRMAR DEVOLUCIÓN FINANCIERA DE REEMBOLSO (REEMBOLSO_PENDIENTE -> REEMBOLSADO)
-  const handleConfirmRefund = async () => {
-    if (!refundingOrder) return;
-    setProcessingId(refundingOrder.id);
+  // 4. CONFIRMAR DEVOLUCIÓN FINANCIERA DE REEMBOLSO
+  const handleConfirmRefund = async (pedidoTarget: Pedido) => {
+    setProcessingId(pedidoTarget.id);
     try {
       await fetch('/api/admin/pedidos', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: refundingOrder.id,
+          id: pedidoTarget.id,
           action: 'CONFIRMAR_DEVOLUCION',
           metodoDevolucion: refundMethod,
           referenciaDevolucion: refundRef,
           observacionDevolucion: refundNotes
         })
       });
-      setRefundingOrder(null);
       setRefundRef('');
       setRefundNotes('');
       await fetchOnlineOrders();
@@ -254,6 +252,44 @@ export default function PedidosOnlinePage() {
     const formattedPhone = cleanPhone.startsWith('0') ? `593${cleanPhone.slice(1)}` : cleanPhone;
     const message = encodeURIComponent(customMsg || `Hola ${nombre}, te saludamos de tu restaurante. Recibimos tu pedido #${orderId} y estamos procesándolo! 🛵💨`);
     window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
+  };
+
+  const handlePrintTicket = (pedido: Pedido) => {
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    if (!printWindow) return;
+    const code = pedido.codigo || pedido.numeroPedido || pedido.id.slice(-6);
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Ticket Pedido #${code}</title>
+          <style>
+            body { font-family: monospace; font-size: 12px; padding: 10px; width: 280px; margin: 0 auto; }
+            h2 { text-align: center; margin-bottom: 5px; font-size: 16px; }
+            .line { border-top: 1px dashed #000; margin: 8px 0; }
+            .flex { display: flex; justify-content: space-between; }
+            .bold { font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <h2>PEDIDO #${code}</h2>
+          <div class="line"></div>
+          <p><strong>Cliente:</strong> ${pedido.nombreCliente}</p>
+          <p><strong>Telf:</strong> ${pedido.telefonoCliente}</p>
+          <p><strong>Tipo:</strong> ${pedido.tipoEntrega}</p>
+          ${pedido.direccionCliente ? `<p><strong>Dirección:</strong> ${pedido.direccionCliente}</p>` : ''}
+          <div class="line"></div>
+          <p class="bold">PRODUCTOS:</p>
+          ${(pedido.items || []).map(i => `<div class="flex"><span>${i.cantidad}x ${i.nombreProducto}</span><span>$${((Number(i.precioUnitario) || 0) * i.cantidad).toFixed(2)}</span></div>`).join('')}
+          <div class="line"></div>
+          <div class="flex bold"><span>TOTAL:</span><span>$${(Number(pedido.total) || 0).toFixed(2)}</span></div>
+          <div class="line"></div>
+          <p style="text-align:center; font-size:10px;">¡Gracias por tu compra!</p>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
   };
 
   // Filtrar pedidos por estado
@@ -287,7 +323,7 @@ export default function PedidosOnlinePage() {
           </div>
           <div>
             <h1 className="text-xl font-black tracking-tight">Gestión Oficial de Pedidos Online</h1>
-            <p className="text-xs text-slate-400 font-medium">Revisión de disponibilidad, verificación de pago y cocina</p>
+            <p className="text-xs text-slate-400 font-medium">Haz clic en cualquier tarjeta para abrir la gestión a pantalla completa</p>
           </div>
         </div>
 
@@ -381,7 +417,8 @@ export default function PedidosOnlinePage() {
             return (
               <div
                 key={pedido.id}
-                className={`bg-white rounded-3xl p-5 border shadow-sm space-y-3.5 transition-all hover:shadow-md relative text-left ${
+                onClick={() => handleOpenFullscreenOrder(pedido)}
+                className={`bg-white rounded-3xl p-5 border shadow-sm space-y-3.5 transition-all hover:shadow-xl hover:scale-[1.01] cursor-pointer relative text-left group ${
                   hasPendingRefund 
                     ? 'border-rose-300 bg-rose-50/30' 
                     : pedido.estado === 'RECIBIDO' 
@@ -392,11 +429,12 @@ export default function PedidosOnlinePage() {
                 {/* Header Pedido */}
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 block">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 flex items-center gap-1">
                       {isDelivery ? '🛵 Delivery Online' : '🏬 Para Retirar'}
+                      <Maximize2 className="w-3 h-3 text-slate-400 group-hover:text-amber-600 transition-colors ml-1" />
                     </span>
                     <h3 className="text-lg font-black text-slate-900 leading-tight">
-                      #{pedido.codigo || pedido.id.slice(-6).toUpperCase()}
+                      #{pedido.codigo || pedido.numeroPedido || pedido.id.slice(-6).toUpperCase()}
                     </h3>
                   </div>
 
@@ -454,62 +492,23 @@ export default function PedidosOnlinePage() {
                         <span>🔴 REEMBOLSO PENDIENTE:</span>
                         <span className="text-sm">${(Number(pedido.payment?.montoExcedente) || 0).toFixed(2)}</span>
                       </div>
-                      <button
-                        onClick={() => setRefundingOrder(pedido)}
-                        className="w-full py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-black text-[10px] uppercase shadow-md transition-colors cursor-pointer"
-                      >
-                        Confirmar Devolución
-                      </button>
                     </div>
                   )}
                 </div>
 
-                {/* PASOS DE CONTROL (REVISIÓN DE DISPONIBILIDAD -> PAGO -> ACEPTACIÓN) */}
-                <div className="space-y-2 pt-2 border-t border-slate-100">
-                  
-                  {/* Step 1: Disponibilidad */}
-                  {pedido.estado === 'RECIBIDO' && (
-                    <button
-                      onClick={() => handleOpenReview(pedido)}
-                      disabled={processingId === pedido.id}
-                      className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                    >
-                      <PackageCheck className="w-4 h-4" />
-                      <span>Revisar Disponibilidad (☑ / ☐)</span>
-                    </button>
-                  )}
-
-                  {/* Step 2: Verificación de Pago */}
-                  {pedido.estado === 'RECIBIDO' && !isPaymentVerified && (
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => handleVerifyPayment(pedido.id)}
-                        disabled={processingId === pedido.id}
-                        className="py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-xl shadow-sm transition-all cursor-pointer"
-                      >
-                        ✓ Verificar Pago
-                      </button>
-                      <button
-                        onClick={() => handleRejectPayment(pedido.id)}
-                        disabled={processingId === pedido.id}
-                        className="py-2 bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase rounded-xl shadow-sm transition-all cursor-pointer"
-                      >
-                        ✕ Rechazar Pago
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Step 3: Botón Definitivo [ ✅ Aceptar Pedido ] */}
-                  {canAcceptOrder && (
-                    <button
-                      onClick={() => handleAcceptOrderToKitchen(pedido)}
-                      disabled={processingId === pedido.id}
-                      className="w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black text-xs uppercase rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95"
-                    >
-                      <Check className="w-5 h-5 stroke-[3]" />
-                      <span>✅ Aceptar Pedido (Enviar a Cocina)</span>
-                    </button>
-                  )}
+                {/* Botón Abrir Pantalla Completa */}
+                <div className="pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenFullscreenOrder(pedido);
+                    }}
+                    className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Maximize2 className="w-4 h-4 text-amber-400" />
+                    <span>Gestionar a Pantalla Completa</span>
+                  </button>
                 </div>
 
               </div>
@@ -518,139 +517,339 @@ export default function PedidosOnlinePage() {
         </div>
       )}
 
-      {/* MODAL 1: REVISIÓN DE DISPONIBILIDAD & PROPUESTA DE CAMBIOS */}
-      {reviewingOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-left">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <span className="text-[10px] font-black uppercase text-amber-600">Revisión de Productos</span>
-                <h3 className="text-base font-black text-slate-900">Pedido #{reviewingOrder.codigo || reviewingOrder.id.slice(-6).toUpperCase()}</h3>
+      {/* ── MODAL FULLSCREEN DE GESTIÓN DE PEDIDO ── */}
+      {fullscreenOrder && (() => {
+        const order = fullscreenOrder;
+        const isDelivery = order.tipoEntrega === 'DELIVERY_ORDER' || order.tipoEntrega === 'DOMICILIO';
+        const isProdConfirmed = order.estadoDisponibilidad === 'PRODUCTOS_CONFIRMADOS' || order.estadoDisponibilidad === 'CAMBIOS_ACEPTADOS';
+        const isPaymentVerified = order.payment?.estado === 'PAGO_VERIFICADO' || order.payment?.estado === 'CONFIRMADO';
+        const canAcceptOrder = isProdConfirmed && isPaymentVerified && order.estado === 'RECIBIDO';
+        const hasPendingRefund = order.payment?.estado === 'REEMBOLSO_PENDIENTE';
+        const evidenceUrl = order.payment?.evidences?.[0]?.fileUrl;
+        const totalVal = Number(order.total) || 0;
+
+        return (
+          <div className="fixed inset-0 z-[9999] bg-slate-950/90 backdrop-blur-md overflow-y-auto flex flex-col p-3 sm:p-6 animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl w-full max-w-6xl mx-auto my-auto shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+              
+              {/* HEADER PANTALLA COMPLETA */}
+              <div className="bg-slate-900 text-white p-4 sm:p-6 flex items-center justify-between shrink-0 shadow-md">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFullscreenOrder(null)}
+                    className="p-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer flex items-center gap-1 text-xs font-bold"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Volver</span>
+                  </button>
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-amber-400 tracking-widest block">
+                      {isDelivery ? '🛵 PEDIDO DELIVERY ONLINE' : '🏬 PEDIDO PARA RETIRAR'}
+                    </span>
+                    <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+                      Gestión Pedido #{order.codigo || order.numeroPedido || order.id.slice(-6).toUpperCase()}
+                    </h2>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className={`px-3 py-1.5 rounded-2xl text-xs font-black uppercase border ${
+                    order.estado === 'EN_PREPARACION'
+                      ? 'bg-blue-600 border-blue-400 text-white'
+                      : order.estado === 'RECIBIDO'
+                      ? 'bg-amber-500 text-slate-950 border-amber-400'
+                      : 'bg-slate-800 border-slate-700 text-slate-200'
+                  }`}>
+                    Estado: {order.estado}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setFullscreenOrder(null)}
+                    className="p-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
               </div>
-              <button onClick={() => setReviewingOrder(null)} className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            <p className="text-xs text-slate-600 font-medium">
-              Marca los productos disponibles. Si desmarcas algún producto agotado, se enviará la propuesta de cambios al cliente.
-            </p>
+              {/* CUERPO DEL MODAL (3 COLUMNAS EN DESKTOP) */}
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 bg-slate-50/50">
+                
+                {/* COLUMNA 1: INFORMACIÓN DEL CLIENTE Y LOGÍSTICA */}
+                <div className="space-y-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-xs h-fit">
+                  <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-2">
+                    <User className="w-4 h-4 text-amber-500" />
+                    1. Información del Cliente
+                  </h3>
 
-            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-              {reviewingOrder.items.map(item => {
-                const isAvail = itemsAvailability[item.id] !== false;
-                return (
-                  <div key={item.id} className="flex items-center justify-between p-3 rounded-2xl border border-slate-200 bg-slate-50 text-xs">
-                    <span className="font-bold text-slate-900">{item.cantidad}x {item.nombreProducto}</span>
+                  <div className="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-extrabold text-slate-900 text-sm">{order.nombreCliente}</span>
+                      <button
+                        type="button"
+                        onClick={() => openWhatsApp(order.telefonoCliente, order.nombreCliente, order.codigo || order.id.slice(-6))}
+                        className="px-2.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-xl text-[10px] font-black flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5 text-emerald-600" /> WhatsApp
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-slate-600 font-semibold pt-1">
+                      <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span>{order.telefonoCliente}</span>
+                    </div>
+
+                    {isDelivery && order.direccionCliente && (
+                      <div className="pt-2 border-t border-slate-200/80 space-y-1">
+                        <div className="flex items-start justify-between gap-1">
+                          <span className="text-slate-700 font-semibold flex items-start gap-1">
+                            <MapPin className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                            {order.direccionCliente}
+                          </span>
+                        </div>
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.direccionCliente)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-[10px] font-black text-amber-600 hover:underline pt-1"
+                        >
+                          Abrir Ubicación en Google Maps <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Acciones Adicionales */}
+                  <div className="pt-2 space-y-2">
                     <button
                       type="button"
-                      onClick={() => setItemsAvailability(prev => ({ ...prev, [item.id]: !isAvail }))}
-                      className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase transition-all cursor-pointer ${
-                        isAvail ? 'bg-emerald-500 text-white' : 'bg-rose-600 text-white'
-                      }`}
+                      onClick={() => handlePrintTicket(order)}
+                      className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs uppercase rounded-2xl flex items-center justify-center gap-2 cursor-pointer transition-all"
                     >
-                      {isAvail ? '☑ Disponible' : '☐ Agotado'}
+                      <Printer className="w-4 h-4" />
+                      Imprimir Ticket Comanda
                     </button>
                   </div>
-                );
-              })}
-            </div>
+                </div>
 
-            {/* Opción rápida de desactivar en catálogo */}
-            <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="disableCatalog"
-                checked={disableCatalogProducts}
-                onChange={e => setDisableCatalogProducts(e.target.checked)}
-                className="w-4 h-4 text-amber-600 rounded cursor-pointer"
-              />
-              <label htmlFor="disableCatalog" className="text-xs font-extrabold text-slate-700 cursor-pointer">
-                Desactivar disponibilidad del producto agotado en catálogo
-              </label>
-            </div>
+                {/* COLUMNA 2: GESTIÓN DE DISPONIBILIDAD DE PRODUCTOS (☑ / ☐) */}
+                <div className="space-y-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-xs">
+                  <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-2">
+                    <PackageCheck className="w-4 h-4 text-amber-500" />
+                    2. Disponibilidad de Productos en Cocina
+                  </h3>
 
-            <div className="pt-3 border-t border-slate-100 flex gap-2">
-              <button
-                onClick={handleSaveDisponibilidad}
-                disabled={processingId === reviewingOrder.id}
-                className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase rounded-2xl shadow-lg transition-all cursor-pointer"
-              >
-                Guardar Disponibilidad / Enviar Cambios
-              </button>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Verifica la existencia de cada producto. Si falta algún ítem, desmárcalo para enviarle la propuesta de cambios al cliente.
+                  </p>
+
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                    {order.items.map(item => {
+                      const isAvail = itemsAvailability[item.id] !== false;
+                      return (
+                        <div
+                          key={item.id}
+                          className={`flex items-center justify-between p-3.5 rounded-2xl border text-xs transition-all ${
+                            isAvail ? 'bg-slate-50 border-slate-200' : 'bg-rose-50 border-rose-200'
+                          }`}
+                        >
+                          <div>
+                            <span className="font-extrabold text-slate-900 block">{item.cantidad}x {item.nombreProducto}</span>
+                            <span className="text-[10px] text-slate-400">${(Number(item.precioUnitario) || 0).toFixed(2)} c/u</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setItemsAvailability(prev => ({ ...prev, [item.id]: !isAvail }))}
+                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all cursor-pointer ${
+                              isAvail ? 'bg-emerald-500 text-white shadow-sm' : 'bg-rose-600 text-white shadow-sm'
+                            }`}
+                          >
+                            {isAvail ? '☑ Disponible' : '☐ Agotado'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="disableCatalogFull"
+                      checked={disableCatalogProducts}
+                      onChange={e => setDisableCatalogProducts(e.target.checked)}
+                      className="w-4 h-4 text-amber-600 rounded cursor-pointer"
+                    />
+                    <label htmlFor="disableCatalogFull" className="text-xs font-extrabold text-slate-700 cursor-pointer">
+                      Desactivar disponibilidad del producto agotado en catálogo
+                    </label>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSaveDisponibilidad(order)}
+                    disabled={processingId === order.id}
+                    className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase rounded-2xl shadow-lg shadow-blue-600/20 cursor-pointer transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {processingId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    Guardar Disponibilidad / Enviar Cambios
+                  </button>
+                </div>
+
+                {/* COLUMNA 3: VERIFICACIÓN DE PAGO, REEMBOLSO & ACEPTACIÓN DEFINITIVA */}
+                <div className="space-y-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-amber-500" />
+                      3. Pago & Aceptación del Pedido
+                    </h3>
+
+                    {/* Estado del Pago */}
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500 font-bold">Estado del Pago:</span>
+                        <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase ${
+                          isPaymentVerified ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
+                        }`}>
+                          {order.payment?.estado || 'PENDIENTE'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between font-black text-slate-900 pt-1 border-t border-slate-200">
+                        <span>Total del Pedido:</span>
+                        <span className="text-emerald-600 text-base">${totalVal.toFixed(2)}</span>
+                      </div>
+
+                      {evidenceUrl && (
+                        <div className="pt-2 border-t border-slate-200">
+                          <a
+                            href={evidenceUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-full py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                          >
+                            <Eye className="w-4 h-4 text-amber-600" /> Ver Comprobante Adjunto
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Botones de Verificación de Pago */}
+                    {!isPaymentVerified && order.estado === 'RECIBIDO' && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleVerifyPayment(order.id)}
+                          disabled={processingId === order.id}
+                          className="py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-2xl shadow-md cursor-pointer transition-all"
+                        >
+                          ✓ Verificar Pago
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRejectPayment(order.id)}
+                          disabled={processingId === order.id}
+                          className="py-3 bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase rounded-2xl shadow-md cursor-pointer transition-all"
+                        >
+                          ✕ Rechazar Pago
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Selector de Tiempo de Preparación */}
+                    <div className="space-y-2 pt-2 border-t border-slate-100">
+                      <label className="block text-[11px] font-black uppercase text-slate-500 tracking-wider">
+                        ⏰ Tiempo Estimado de Preparación
+                      </label>
+                      <div className="grid grid-cols-5 gap-1.5">
+                        {[15, 20, 30, 45, 60].map(mins => (
+                          <button
+                            key={mins}
+                            type="button"
+                            onClick={() => setSelectedPrepTime(mins)}
+                            className={`py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                              selectedPrepTime === mins
+                                ? 'bg-amber-500 text-white shadow-md scale-[1.05]'
+                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                            }`}
+                          >
+                            {mins}m
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* GESTIÓN DE REEMBOLSO INDEPENDIENTE (SI APLICA) */}
+                    {hasPendingRefund && (
+                      <div className="bg-rose-50 p-4 rounded-2xl border border-rose-200 space-y-3 text-xs">
+                        <div className="flex items-center justify-between font-black text-rose-950">
+                          <span>🔴 REEMBOLSO PENDIENTE:</span>
+                          <span className="text-base text-rose-600">${(Number(order.payment?.montoExcedente) || 0).toFixed(2)}</span>
+                        </div>
+
+                        <div className="space-y-2">
+                          <select
+                            value={refundMethod}
+                            onChange={e => setRefundMethod(e.target.value)}
+                            className="w-full p-2 bg-white border border-rose-200 rounded-xl font-bold text-xs"
+                          >
+                            <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+                            <option value="EFECTIVO">Efectivo en Caja</option>
+                            <option value="OTRO">Otro Método</option>
+                          </select>
+                          <input
+                            type="text"
+                            value={refundRef}
+                            onChange={e => setRefundRef(e.target.value)}
+                            placeholder="Nº Comprobante devolución..."
+                            className="w-full p-2 bg-white border border-rose-200 rounded-xl font-semibold text-xs"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleConfirmRefund(order)}
+                            disabled={processingId === order.id}
+                            className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase rounded-xl shadow-md transition-all cursor-pointer"
+                          >
+                            Confirmar Devolución ($3.00)
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* BOTÓN DEFINITIVO ACEPTAR PEDIDO */}
+                  <div className="pt-4 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => handleAcceptOrderToKitchen(order)}
+                      disabled={!canAcceptOrder || processingId === order.id}
+                      className={`w-full py-4 text-xs font-black uppercase rounded-2xl shadow-xl flex items-center justify-center gap-2 transition-all ${
+                        canAcceptOrder
+                          ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-emerald-500/20 active:scale-98 cursor-pointer'
+                          : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
+                      }`}
+                    >
+                      {processingId === order.id ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <Check className="w-5 h-5 stroke-[3]" />
+                      )}
+                      <span>
+                        {canAcceptOrder
+                          ? `✅ ACEPTAR PEDIDO Y ENVIAR A COCINA (${selectedPrepTime} MIN)`
+                          : 'Aceptar Pedido (Requiere Productos OK + Pago Verificado)'}
+                      </span>
+                    </button>
+                  </div>
+
+                </div>
+
+              </div>
+
             </div>
           </div>
-        </div>
-      )}
-
-      {/* MODAL 2: CONFIRMAR DEVOLUCIÓN DE REEMBOLSO INDEPENDIENTE */}
-      {refundingOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 text-left border-2 border-rose-300">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <span className="text-[10px] font-black uppercase text-rose-600">Gestión Financiera de Reembolso</span>
-                <h3 className="text-base font-black text-slate-900">Pedido #{refundingOrder.codigo || refundingOrder.id.slice(-6).toUpperCase()}</h3>
-              </div>
-              <button onClick={() => setRefundingOrder(null)} className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="bg-rose-50 p-3 rounded-2xl border border-rose-200 flex items-center justify-between text-xs font-black text-rose-950">
-              <span>MONTO A DEVOLVER:</span>
-              <span className="text-base text-rose-600">${(Number(refundingOrder.payment?.montoExcedente) || 0).toFixed(2)}</span>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Método de Devolución</label>
-                <select
-                  value={refundMethod}
-                  onChange={e => setRefundMethod(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
-                >
-                  <option value="TRANSFERENCIA">Transferencia Bancaria</option>
-                  <option value="EFECTIVO">Efectivo en Caja</option>
-                  <option value="OTRO">Otro Método</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Número de Comprobante / Referencia</label>
-                <input
-                  type="text"
-                  value={refundRef}
-                  onChange={e => setRefundRef(e.target.value)}
-                  placeholder="Ej: Transf #982341"
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Observación</label>
-                <input
-                  type="text"
-                  value={refundNotes}
-                  onChange={e => setRefundNotes(e.target.value)}
-                  placeholder="Devolución efectuada por ítem no disponible"
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold"
-                />
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-slate-100">
-              <button
-                onClick={handleConfirmRefund}
-                disabled={processingId === refundingOrder.id}
-                className="w-full py-3.5 bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase rounded-2xl shadow-lg transition-all cursor-pointer"
-              >
-                Confirmar Devolución ($3.00)
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
     </div>
   );
