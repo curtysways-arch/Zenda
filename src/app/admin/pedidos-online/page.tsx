@@ -143,10 +143,6 @@ export default function PedidosOnlinePage() {
             precioUnitario: it.precioUnitario
           }));
 
-        if (proposedItems.length === 0) {
-          alert('Atención: Has marcado todos los productos como agotados. Por favor deja al menos 1 producto disponible o rechaza el pedido.');
-          return;
-        }
 
         const outOfStockItemsList = outOfStockItems.map(it => ({
           id: it.id,

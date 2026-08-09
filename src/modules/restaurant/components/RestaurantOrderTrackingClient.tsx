@@ -238,12 +238,18 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                             <div style={{ color: '#10b981', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
                                 <span>🟢</span> PRODUCTOS DISPONIBLES Y PROPUESTOS:
                             </div>
-                            {effectiveProposedItems.map((it: any, idx: number) => (
-                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#fff', padding: '4px 0', fontWeight: 600 }}>
-                                    <span>{it.cantidad}x {it.nombreProducto || it.nombre}</span>
-                                    <span style={{ fontWeight: 800 }}>${((Number(it.precioUnitario || it.precio) || 0) * it.cantidad).toFixed(2)}</span>
+                            {effectiveProposedItems.length === 0 ? (
+                                <div style={{ color: '#fb923c', fontSize: 13, fontStyle: 'italic', padding: '8px 0', fontWeight: 600 }}>
+                                    ⚠️ El establecimiento indica que no cuenta con los productos de este pedido en cocina. Por favor selecciona un platillo de reemplazo en el catálogo o cancela la orden.
                                 </div>
-                            ))}
+                            ) : (
+                                effectiveProposedItems.map((it: any, idx: number) => (
+                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#fff', padding: '4px 0', fontWeight: 600 }}>
+                                        <span>{it.cantidad}x {it.nombreProducto || it.nombre}</span>
+                                        <span style={{ fontWeight: 800 }}>${((Number(it.precioUnitario || it.precio) || 0) * it.cantidad).toFixed(2)}</span>
+                                    </div>
+                                ))
+                            )}
 
                             <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.15)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
@@ -268,34 +274,44 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                             <div style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.4)', borderRadius: 14, padding: 12, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <ShieldCheck size={18} color="#10b981" />
                                 <span style={{ fontSize: 12, color: '#a7f3d0', fontWeight: 700 }}>
-                                    ✅ Tu comprobante de pago anterior ya está registrado. Al aceptar los cambios no necesitas volver a subir otro comprobante.
+                                    ✅ Tu comprobante de pago anterior ya está registrado. Al modificar o cancelar la orden no necesitas volver a subir otro comprobante.
                                 </span>
                             </div>
                         )}
 
                         {/* ACCIONES DEL CLIENTE */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                            <button
-                                onClick={async () => {
-                                    setRefreshing(true);
-                                    try {
-                                        await fetch(`/api/public/${storeSlug}/orders`, {
-                                            method: 'PUT',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ orderId: order.id, action: 'ACEPTAR_CAMBIOS' })
-                                        });
-                                        refreshOrder();
-                                    } catch (e) {
-                                        console.error('Error al aceptar cambios:', e);
-                                    } finally {
-                                        setRefreshing(false);
-                                    }
-                                }}
-                                disabled={refreshing}
-                                style={{ width: '100%', background: '#10b981', color: '#fff', border: 'none', borderRadius: 16, padding: '16px', fontWeight: 900, fontSize: 14, cursor: 'pointer', textTransform: 'uppercase', boxShadow: '0 6px 20px rgba(16,185,129,0.4)' }}
-                            >
-                                ✓ Aceptar Propuesta de Pedido (${fmt(proposedGrandTotal)})
-                            </button>
+                            {effectiveProposedItems.length > 0 ? (
+                                <button
+                                    onClick={async () => {
+                                        setRefreshing(true);
+                                        try {
+                                            await fetch(`/api/public/${storeSlug}/orders`, {
+                                                method: 'PUT',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ orderId: order.id, action: 'ACEPTAR_CAMBIOS' })
+                                            });
+                                            refreshOrder();
+                                        } catch (e) {
+                                            console.error('Error al aceptar cambios:', e);
+                                        } finally {
+                                            setRefreshing(false);
+                                        }
+                                    }}
+                                    disabled={refreshing}
+                                    style={{ width: '100%', background: '#10b981', color: '#fff', border: 'none', borderRadius: 16, padding: '16px', fontWeight: 900, fontSize: 14, cursor: 'pointer', textTransform: 'uppercase', boxShadow: '0 6px 20px rgba(16,185,129,0.4)' }}
+                                >
+                                    ✓ Aceptar Propuesta de Pedido (${fmt(proposedGrandTotal)})
+                                </button>
+                            ) : (
+                                <Link
+                                    href={`/${storeSlug}?modifyingOrder=${order.id}`}
+                                    onClick={handlePrepareCartModification}
+                                    style={{ width: '100%', background: '#10b981', color: '#fff', border: 'none', borderRadius: 16, padding: '16px', fontWeight: 900, fontSize: 14, cursor: 'pointer', textTransform: 'uppercase', textDecoration: 'none', textAlign: 'center', display: 'block', boxShadow: '0 6px 20px rgba(16,185,129,0.4)' }}
+                                >
+                                    🛒 Elegir Reemplazo en el Catálogo
+                                </Link>
+                            )}
 
                             <div style={{ display: 'flex', gap: 10 }}>
                                 <Link
