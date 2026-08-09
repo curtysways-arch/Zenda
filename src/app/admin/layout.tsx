@@ -1,6 +1,7 @@
 import MobileBottomNav from '@/components/admin/mobile/MobileBottomNav';
 import MobileTopBar from '@/components/admin/mobile/MobileTopBar';
 import AdminSidebar from '@/components/admin/AdminSidebar';
+import GlobalOrderNotifier from '@/components/admin/GlobalOrderNotifier';
 import { ConfirmProvider } from '@/components/admin/ConfirmContext';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -92,6 +93,9 @@ export default async function AdminLayout({
 
     return (
         <ConfirmProvider primaryColor={primaryColor}>
+            {/* Notificador emergente y alarma de nuevos pedidos online */}
+            <GlobalOrderNotifier primaryColor={primaryColor} />
+
             <div className="flex h-screen bg-slate-50 overflow-hidden light-theme" style={{ '--primary-color': primaryColor } as any}>
                 
                 {/* Sidebar Unificado para todos los negocios de Citiox */}
