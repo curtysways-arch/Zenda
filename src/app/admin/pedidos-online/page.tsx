@@ -971,12 +971,21 @@ export default function PedidosOnlinePage() {
                         {(() => {
                           const currentAsgn = assignmentsMap[order.id];
                           const assignedDriverName = currentAsgn?.resource?.name || order.extraInfo?.assignedDriver || assignedDriver;
-                          const asgnState = currentAsgn?.estado || (order.estado === 'EN_CAMINO' ? 'EN_RUTA' : order.estado === 'ENTREGADO' ? 'COMPLETADO' : null);
+                          let asgnState = currentAsgn?.estado || 'ASIGNADO';
+                          if (['REPARTIDOR_EN_LOCAL', 'LLEGO', 'EN_LOCAL'].includes(order.estado)) {
+                            asgnState = 'REPARTIDOR_EN_LOCAL';
+                          } else if (['EN_CAMINO', 'EN_RUTA', 'RUTA'].includes(order.estado)) {
+                            asgnState = 'EN_RUTA';
+                          } else if (['ENTREGADO', 'FINALIZADO', 'COMPLETADO'].includes(order.estado)) {
+                            asgnState = 'COMPLETADO';
+                          } else if (['ACEPTADO', 'REPARTIDOR_ACEPTO'].includes(order.estado) && asgnState === 'ASIGNADO') {
+                            asgnState = 'ACEPTADO';
+                          }
 
                           return (
                             <>
-                              {/* SI EXISTE UNA ASIGNACIÓN A UN REPARTIDOR DE LA APP */}
-                              {currentAsgn ? (
+                              {/* SI EXISTE UNA ASIGNACIÓN O EL ESTADO INDICA REPARTIDOR ASIGNADO/EN LOCAL */}
+                              {(currentAsgn || ['REPARTIDOR_EN_LOCAL', 'REPARTIDOR_ASIGNADO', 'EN_CAMINO', 'LLEGO'].includes(order.estado)) ? (
                                 <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
@@ -986,24 +995,30 @@ export default function PedidosOnlinePage() {
                                       <div>
                                         <h4 className="font-extrabold text-slate-900 text-xs">{assignedDriverName}</h4>
                                         <p className="text-[10px] text-slate-500 font-semibold">
-                                          {currentAsgn.resource?.profile?.vehiculo || currentAsgn.resource?.profile?.tipoVehiculo || 'Repartidor Oficial'}
+                                          {currentAsgn?.resource?.profile?.vehiculo || currentAsgn?.resource?.profile?.tipoVehiculo || 'Repartidor Oficial'}
                                         </p>
                                       </div>
                                     </div>
-                                    <span className={`px-2 py-1 rounded-xl text-[10px] font-black uppercase ${
+                                    <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase ${
                                       asgnState === 'ASIGNADO' || asgnState === 'PENDIENTE'
                                         ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
+                                        : asgnState === 'REPARTIDOR_EN_LOCAL'
+                                        ? 'bg-amber-400 text-amber-950 border border-amber-500 font-black'
                                         : asgnState === 'ACEPTADO'
                                         ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
                                         : asgnState === 'EN_RUTA'
                                         ? 'bg-blue-100 text-blue-900 border border-blue-300'
                                         : 'bg-slate-200 text-slate-800'
                                     }`}>
-                                      {asgnState === 'ASIGNADO' ? '⏳ PENDIENTE DE ACEPTACIÓN' : asgnState}
+                                      {asgnState === 'ASIGNADO' 
+                                        ? '⏳ PENDIENTE DE ACEPTACIÓN' 
+                                        : asgnState === 'REPARTIDOR_EN_LOCAL' 
+                                        ? '📍 REPARTIDOR EN LOCAL' 
+                                        : asgnState}
                                     </span>
                                   </div>
 
-                                  {/* MENSAJE DE ESTADO SEGÚN ACEPTACIÓN DEL REPARTIDOR */}
+                                  {/* MENSAJES AUTOMÁTICOS DE ESTADO DEL REPARTIDOR */}
                                   {(asgnState === 'ASIGNADO' || asgnState === 'PENDIENTE') && (
                                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs space-y-2">
                                       <div className="flex items-center gap-2 text-amber-900 font-bold">
@@ -1013,24 +1028,6 @@ export default function PedidosOnlinePage() {
                                       <p className="text-[11px] text-amber-800 font-medium">
                                         Se notificó a {assignedDriverName}. En cuanto presione Aceptar, verás la actualización en vivo.
                                       </p>
-                                      <div className="flex gap-2 pt-1">
-                                        <button
-                                          type="button"
-                                          onClick={() => handleUpdateAssignmentStatus(currentAsgn.id, order.id, 'ACEPTADO')}
-                                          disabled={processingId === order.id}
-                                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[10px] font-black cursor-pointer"
-                                        >
-                                          ✓ Marcar Aceptado Manualmente
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => handleUnassignDriver(currentAsgn.id, order.id)}
-                                          disabled={processingId === order.id}
-                                          className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-[10px] font-bold cursor-pointer"
-                                        >
-                                          Reasignar
-                                        </button>
-                                      </div>
                                     </div>
                                   )}
 
@@ -1041,11 +1038,31 @@ export default function PedidosOnlinePage() {
                                         <span>✅ ¡El repartidor {assignedDriverName} ACEPTÓ el pedido!</span>
                                       </div>
                                       <p className="text-[11px] text-emerald-800 font-medium">
-                                        El repartidor va en camino a retirar la orden en el restaurante.
+                                        El repartidor va en camino al local para retirar la orden.
                                       </p>
                                       <button
                                         type="button"
-                                        onClick={() => handleUpdateAssignmentStatus(currentAsgn.id, order.id, 'EN_RUTA')}
+                                        onClick={() => handleUpdateAssignmentStatus(currentAsgn?.id, order.id, 'EN_RUTA')}
+                                        disabled={processingId === order.id}
+                                        className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase shadow-md cursor-pointer flex items-center justify-center gap-2"
+                                      >
+                                        <Truck className="w-4 h-4" /> Despachar (Enviar en Ruta al Cliente)
+                                      </button>
+                                    </div>
+                                  )}
+
+                                  {asgnState === 'REPARTIDOR_EN_LOCAL' && (
+                                    <div className="bg-amber-50 border border-amber-300 rounded-xl p-3 text-xs space-y-2">
+                                      <div className="flex items-center gap-2 text-amber-900 font-extrabold">
+                                        <Check className="w-4 h-4 text-amber-600 shrink-0" />
+                                        <span>📍 ¡El repartidor {assignedDriverName} YA LLEGÓ al local!</span>
+                                      </div>
+                                      <p className="text-[11px] text-amber-800 font-medium">
+                                        El repartidor está en la entrada esperando la comanda lista para entregar.
+                                      </p>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleUpdateAssignmentStatus(currentAsgn?.id, order.id, 'EN_RUTA')}
                                         disabled={processingId === order.id}
                                         className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase shadow-md cursor-pointer flex items-center justify-center gap-2"
                                       >
@@ -1062,7 +1079,7 @@ export default function PedidosOnlinePage() {
                                       </div>
                                       <button
                                         type="button"
-                                        onClick={() => handleUpdateAssignmentStatus(currentAsgn.id, order.id, 'COMPLETADO')}
+                                        onClick={() => handleUpdateAssignmentStatus(currentAsgn?.id, order.id, 'COMPLETADO')}
                                         disabled={processingId === order.id}
                                         className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase shadow-md cursor-pointer flex items-center justify-center gap-2"
                                       >
