@@ -209,6 +209,25 @@ export default function PedidosOnlinePage() {
     }
   };
 
+  const handleCleanTestOrders = async () => {
+    if (!confirm('¿Estás seguro de eliminar todos los pedidos de prueba de este restaurante?')) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/clean-test-orders', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || 'Pedidos de prueba eliminados correctamente.');
+        await fetchOnlineOrders();
+      } else {
+        alert(data.error || 'Error al eliminar pedidos de prueba.');
+      }
+    } catch (err) {
+      console.error('Error al limpiar pedidos:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchOnlineOrders = async () => {
     try {
       const res = await fetch('/api/admin/pedidos');
@@ -509,6 +528,13 @@ export default function PedidosOnlinePage() {
             className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" /> Actualizar
+          </button>
+          <button
+            onClick={handleCleanTestOrders}
+            disabled={loading}
+            className="px-3.5 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
+          >
+            <X className="w-3.5 h-3.5" /> Vaciar Pedidos de Prueba
           </button>
         </div>
       </div>
