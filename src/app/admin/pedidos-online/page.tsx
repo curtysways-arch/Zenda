@@ -5,7 +5,7 @@ import {
   Globe, PackageCheck, Bike, ShoppingBag, Check, X, Clock, MapPin, Phone,
   User, Loader2, AlertCircle, RefreshCw, ChevronRight, DollarSign, Filter,
   MessageCircle, Printer, ExternalLink, Sparkles, Eye, ShieldCheck, AlertTriangle,
-  Maximize2, ArrowLeft
+  Maximize2, ArrowLeft, Truck
 } from 'lucide-react';
 
 interface PedidoItem {
@@ -18,35 +18,30 @@ interface PedidoItem {
 
 interface OrderPayment {
   id: string;
+  estado: string;
   monto: number;
   montoExcedente?: number;
-  estado: string; // PENDIENTE | COMPROBANTE_ENVIADO | PAGO_VERIFICADO | PAGO_RECHAZADO | REEMBOLSO_PENDIENTE | REEMBOLSADO
-  metodoDevolucion?: string;
-  referenciaDevolucion?: string;
-  observacionDevolucion?: string;
-  evidences?: Array<{ fileUrl: string }>;
+  motivoRechazo?: string;
+  evidences?: { id: string; fileUrl: string; createdAt: string }[];
 }
 
 interface Pedido {
   id: string;
   codigo?: string;
   numeroPedido?: number;
+  estado: string;
+  estadoDisponibilidad?: string;
+  tipoEntrega: 'RETIRO' | 'DOMICILIO' | 'DELIVERY_ORDER' | 'PICKUP_ORDER' | string;
   nombreCliente: string;
   telefonoCliente: string;
   direccionCliente?: string;
-  referenciaCliente?: string;
-  tipoEntrega: 'DELIVERY_ORDER' | 'PICKUP_ORDER' | 'TABLE_ORDER' | string;
-  estado: string;
-  estadoDisponibilidad?: string;
-  metodoPago?: string;
-  paymentStatus?: string;
-  total: number;
   subtotal: number;
-  costoEnvio?: number;
-  createdAt: string;
+  costoEnvio: number;
+  total: number;
   extraInfo?: any;
   items: PedidoItem[];
   payment?: OrderPayment;
+  createdAt: string;
 }
 
 export default function PedidosOnlinePage() {
@@ -58,6 +53,7 @@ export default function PedidosOnlinePage() {
 
   // Estado de Orden Seleccionada para Detalle a Pantalla Completa
   const [fullscreenOrder, setFullscreenOrder] = useState<Pedido | null>(null);
+  const [assignedDriver, setAssignedDriver] = useState<string>('Repartidor de Local');
 
   // Modal de Disponibilidad & Propuesta de Cambios
   const [selectedPrepTime, setSelectedPrepTime] = useState<number>(20);
@@ -68,6 +64,29 @@ export default function PedidosOnlinePage() {
   const [refundMethod, setRefundMethod] = useState<string>('TRANSFERENCIA');
   const [refundRef, setRefundRef] = useState<string>('');
   const [refundNotes, setRefundNotes] = useState<string>('');
+
+  const handleDispatchOrder = async (pedidoTarget: Pedido, targetState: string) => {
+    setProcessingId(pedidoTarget.id);
+    try {
+      const res = await fetch('/api/admin/pedidos', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: pedidoTarget.id,
+          estado: targetState,
+          extraInfoUpdates: { assignedDriver: assignedDriver || 'Repartidor de Local' }
+        })
+      });
+      if (res.ok) {
+        setFullscreenOrder(null);
+        await fetchOnlineOrders();
+      }
+    } catch (e) {
+      console.error('Error al despachar pedido:', e);
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   const fetchOnlineOrders = async () => {
     try {
@@ -563,6 +582,7 @@ export default function PedidosOnlinePage() {
         const hasPendingRefund = order.payment?.estado === 'REEMBOLSO_PENDIENTE';
         const evidenceUrl = order.payment?.evidences?.[0]?.fileUrl;
         const totalVal = Number(order.total) || 0;
+        const isOrderAcceptedOrPrepared = ['EN_PREPARACION', 'LISTO', 'EN_CAMINO', 'EN_RUTA', 'RUTA', 'ENTREGADO', 'FINALIZADO'].includes(order.estado);
 
         return (
           <div className="fixed inset-0 z-[9999] bg-slate-950/90 backdrop-blur-md overflow-y-auto flex flex-col p-3 sm:p-6 animate-in fade-in duration-200">
@@ -579,6 +599,7 @@ export default function PedidosOnlinePage() {
                     <ArrowLeft className="w-4 h-4" />
                     <span>Volver</span>
                   </button>
+                  <div className="h-6 w-px bg-slate-700" />
                   <div>
                     <span className="text-[10px] font-black uppercase text-amber-400 tracking-widest block">
                       {isDelivery ? '🛵 PEDIDO DELIVERY ONLINE' : '🏬 PEDIDO PARA RETIRAR'}
@@ -593,6 +614,8 @@ export default function PedidosOnlinePage() {
                   <span className={`px-3 py-1.5 rounded-2xl text-xs font-black uppercase border ${
                     order.estado === 'EN_PREPARACION'
                       ? 'bg-blue-600 border-blue-400 text-white'
+                      : order.estado === 'LISTO'
+                      ? 'bg-emerald-600 border-emerald-400 text-white'
                       : order.estado === 'RECIBIDO'
                       ? 'bg-amber-500 text-slate-950 border-amber-400'
                       : 'bg-slate-800 border-slate-700 text-slate-200'
@@ -669,75 +692,100 @@ export default function PedidosOnlinePage() {
                   </div>
                 </div>
 
-                {/* COLUMNA 2: GESTIÓN DE DISPONIBILIDAD DE PRODUCTOS (☑ / ☐) */}
+                {/* COLUMNA 2: GESTIÓN DE DISPONIBILIDAD DE PRODUCTOS (BLOQUEADO SI YA FUE ACEPTADO) */}
                 <div className="space-y-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-xs">
                   <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-2">
                     <PackageCheck className="w-4 h-4 text-amber-500" />
                     2. Disponibilidad de Productos en Cocina
                   </h3>
 
-                  <p className="text-xs text-slate-500 font-medium">
-                    Verifica la existencia de cada producto. Si falta algún ítem, desmárcalo para enviarle la propuesta de cambios al cliente.
-                  </p>
+                  {isOrderAcceptedOrPrepared ? (
+                    <>
+                      <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-3.5 text-xs font-extrabold flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>Pedido Aceptado — Productos confirmados e ingresados a cocina.</span>
+                      </div>
 
-                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                    {order.items.map(item => {
-                      const isAvail = itemsAvailability[item.id] !== false;
-                      return (
-                        <div
-                          key={item.id}
-                          className={`flex items-center justify-between p-3.5 rounded-2xl border text-xs transition-all ${
-                            isAvail ? 'bg-slate-50 border-slate-200' : 'bg-rose-50 border-rose-200'
-                          }`}
-                        >
-                          <div>
-                            <span className="font-extrabold text-slate-900 block">{item.cantidad}x {item.nombreProducto}</span>
-                            <span className="text-[10px] text-slate-400">${(Number(item.precioUnitario) || 0).toFixed(2)} c/u</span>
+                      <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                        {order.items.map(item => (
+                          <div key={item.id} className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+                            <div>
+                              <span className="font-extrabold text-slate-900 block">{item.cantidad}x {item.nombreProducto}</span>
+                              <span className="text-[10px] text-slate-400">${(Number(item.precioUnitario) || 0).toFixed(2)} c/u</span>
+                            </div>
+                            <span className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase bg-emerald-500 text-white shadow-xs">
+                              ✓ Confirmado
+                            </span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => setItemsAvailability(prev => ({ ...prev, [item.id]: !isAvail }))}
-                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all cursor-pointer ${
-                              isAvail ? 'bg-emerald-500 text-white shadow-sm' : 'bg-rose-600 text-white shadow-sm'
-                            }`}
-                          >
-                            {isAvail ? '☑ Disponible' : '☐ Agotado'}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xs text-slate-500 font-medium">
+                        Verifica la existencia de cada producto. Si falta algún ítem, desmárcalo para enviarle la propuesta de cambios al cliente.
+                      </p>
 
-                  <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="disableCatalogFull"
-                      checked={disableCatalogProducts}
-                      onChange={e => setDisableCatalogProducts(e.target.checked)}
-                      className="w-4 h-4 text-amber-600 rounded cursor-pointer"
-                    />
-                    <label htmlFor="disableCatalogFull" className="text-xs font-extrabold text-slate-700 cursor-pointer">
-                      Desactivar disponibilidad del producto agotado en catálogo
-                    </label>
-                  </div>
+                      <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                        {order.items.map(item => {
+                          const isAvail = itemsAvailability[item.id] !== false;
+                          return (
+                            <div
+                              key={item.id}
+                              className={`flex items-center justify-between p-3.5 rounded-2xl border text-xs transition-all ${
+                                isAvail ? 'bg-slate-50 border-slate-200' : 'bg-rose-50 border-rose-200'
+                              }`}
+                            >
+                              <div>
+                                <span className="font-extrabold text-slate-900 block">{item.cantidad}x {item.nombreProducto}</span>
+                                <span className="text-[10px] text-slate-400">${(Number(item.precioUnitario) || 0).toFixed(2)} c/u</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setItemsAvailability(prev => ({ ...prev, [item.id]: !isAvail }))}
+                                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all cursor-pointer ${
+                                  isAvail ? 'bg-emerald-500 text-white shadow-sm' : 'bg-rose-600 text-white shadow-sm'
+                                }`}
+                              >
+                                {isAvail ? '☑ Disponible' : '☐ Agotado'}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleSaveDisponibilidad(order)}
-                    disabled={processingId === order.id}
-                    className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase rounded-2xl shadow-lg shadow-blue-600/20 cursor-pointer transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {processingId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                    Guardar Disponibilidad / Enviar Cambios
-                  </button>
+                      <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="disableCatalogFull"
+                          checked={disableCatalogProducts}
+                          onChange={e => setDisableCatalogProducts(e.target.checked)}
+                          className="w-4 h-4 text-amber-600 rounded cursor-pointer"
+                        />
+                        <label htmlFor="disableCatalogFull" className="text-xs font-extrabold text-slate-700 cursor-pointer">
+                          Desactivar disponibilidad del producto agotado en catálogo
+                        </label>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSaveDisponibilidad(order)}
+                        disabled={processingId === order.id}
+                        className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase rounded-2xl shadow-lg shadow-blue-600/20 cursor-pointer transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {processingId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                        Guardar Disponibilidad / Enviar Cambios
+                      </button>
+                    </>
+                  )}
                 </div>
 
-                {/* COLUMNA 3: VERIFICACIÓN DE PAGO, REEMBOLSO & ACEPTACIÓN DEFINITIVA */}
+                {/* COLUMNA 3: VERIFICACIÓN / DESPACHO DE PEDIDO */}
                 <div className="space-y-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
                   <div className="space-y-4">
                     <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-amber-500" />
-                      3. Pago & Aceptación del Pedido
+                      {isOrderAcceptedOrPrepared ? <Truck className="w-4 h-4 text-amber-500" /> : <ShieldCheck className="w-4 h-4 text-amber-500" />}
+                      {isOrderAcceptedOrPrepared ? '3. Despacho & Asignación de Repartidor' : '3. Pago & Aceptación del Pedido'}
                     </h3>
 
                     {/* Estado del Pago */}
@@ -770,114 +818,183 @@ export default function PedidosOnlinePage() {
                       )}
                     </div>
 
-                    {/* Botones de Verificación de Pago */}
-                    {!isPaymentVerified && order.estado === 'RECIBIDO' && (
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleVerifyPayment(order.id)}
-                          disabled={processingId === order.id}
-                          className="py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-2xl shadow-md cursor-pointer transition-all"
-                        >
-                          ✓ Verificar Pago
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleRejectPayment(order.id)}
-                          disabled={processingId === order.id}
-                          className="py-3 bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase rounded-2xl shadow-md cursor-pointer transition-all"
-                        >
-                          ✕ Rechazar Pago
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Selector de Tiempo de Preparación */}
-                    <div className="space-y-2 pt-2 border-t border-slate-100">
-                      <label className="block text-[11px] font-black uppercase text-slate-500 tracking-wider">
-                        ⏰ Tiempo Estimado de Preparación
-                      </label>
-                      <div className="grid grid-cols-5 gap-1.5">
-                        {[15, 20, 30, 45, 60].map(mins => (
-                          <button
-                            key={mins}
-                            type="button"
-                            onClick={() => setSelectedPrepTime(mins)}
-                            className={`py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                              selectedPrepTime === mins
-                                ? 'bg-amber-500 text-white shadow-md scale-[1.05]'
-                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                            }`}
-                          >
-                            {mins}m
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* GESTIÓN DE REEMBOLSO INDEPENDIENTE (SI APLICA) */}
-                    {hasPendingRefund && (
-                      <div className="bg-rose-50 p-4 rounded-2xl border border-rose-200 space-y-3 text-xs">
-                        <div className="flex items-center justify-between font-black text-rose-950">
-                          <span>🔴 REEMBOLSO PENDIENTE:</span>
-                          <span className="text-base text-rose-600">${(Number(order.payment?.montoExcedente) || 0).toFixed(2)}</span>
-                        </div>
-
+                    {/* VISTA DE DESPACHO Y ASIGNACIÓN SI EL PEDIDO YA FUE ACEPTADO O ESTÁ LISTO */}
+                    {isOrderAcceptedOrPrepared ? (
+                      <div className="space-y-4 pt-2 border-t border-slate-100">
                         <div className="space-y-2">
-                          <select
-                            value={refundMethod}
-                            onChange={e => setRefundMethod(e.target.value)}
-                            className="w-full p-2 bg-white border border-rose-200 rounded-xl font-bold text-xs"
-                          >
-                            <option value="TRANSFERENCIA">Transferencia Bancaria</option>
-                            <option value="EFECTIVO">Efectivo en Caja</option>
-                            <option value="OTRO">Otro Método</option>
-                          </select>
+                          <label className="block text-[11px] font-black uppercase text-slate-500 tracking-wider">
+                            🛵 Repartidor / Servicio de Entrega:
+                          </label>
                           <input
                             type="text"
-                            value={refundRef}
-                            onChange={e => setRefundRef(e.target.value)}
-                            placeholder="Nº Comprobante devolución..."
-                            className="w-full p-2 bg-white border border-rose-200 rounded-xl font-semibold text-xs"
+                            value={assignedDriver}
+                            onChange={e => setAssignedDriver(e.target.value)}
+                            placeholder="Nombre del repartidor..."
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:bg-white transition-colors"
                           />
+                        </div>
+
+                        {order.estado === 'EN_PREPARACION' && (
                           <button
                             type="button"
-                            onClick={() => handleConfirmRefund(order)}
+                            onClick={() => handleDispatchOrder(order, 'LISTO')}
                             disabled={processingId === order.id}
-                            className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase rounded-xl shadow-md transition-all cursor-pointer"
+                            className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-2xl shadow-lg cursor-pointer transition-all active:scale-98 flex items-center justify-center gap-2"
                           >
-                            Confirmar Devolución ($3.00)
+                            {processingId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                            👩‍🍳 Marcar Pedido como LISTO en Cocina
                           </button>
-                        </div>
+                        )}
+
+                        {order.estado === 'LISTO' && (
+                          <div className="space-y-2.5">
+                            <button
+                              type="button"
+                              onClick={() => handleDispatchOrder(order, 'EN_CAMINO')}
+                              disabled={processingId === order.id}
+                              className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs uppercase rounded-2xl shadow-xl shadow-blue-600/20 cursor-pointer transition-all active:scale-98 flex items-center justify-center gap-2"
+                            >
+                              {processingId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />}
+                              🛵 Despachar (Enviar en Ruta a Domicilio)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDispatchOrder(order, 'ENTREGADO')}
+                              disabled={processingId === order.id}
+                              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-2xl shadow-md cursor-pointer transition-all active:scale-98 flex items-center justify-center gap-2"
+                            >
+                              📦 Marcar como ENTREGADO / FINALIZADO
+                            </button>
+                          </div>
+                        )}
+
+                        {(order.estado === 'EN_CAMINO' || order.estado === 'EN_RUTA' || order.estado === 'RUTA') && (
+                          <div className="space-y-3">
+                            <div className="bg-blue-50 border border-blue-200 text-blue-900 rounded-2xl p-3.5 text-xs font-bold text-center">
+                              🛵 En Ruta con: <span className="font-black text-blue-950">{order.extraInfo?.assignedDriver || assignedDriver}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleDispatchOrder(order, 'ENTREGADO')}
+                              disabled={processingId === order.id}
+                              className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-2xl shadow-xl cursor-pointer transition-all active:scale-98 flex items-center justify-center gap-2"
+                            >
+                              📦 Confirmar Entrega Definitiva (ENTREGADO)
+                            </button>
+                          </div>
+                        )}
+
+                        {order.estado === 'ENTREGADO' && (
+                          <div className="bg-emerald-100 border border-emerald-300 text-emerald-900 rounded-2xl p-4 text-xs font-black text-center shadow-xs">
+                            🎉 Pedido Entregado y Finalizado Correctamente
+                          </div>
+                        )}
                       </div>
+                    ) : (
+                      <>
+                        {/* Botones de Verificación de Pago */}
+                        {!isPaymentVerified && order.estado === 'RECIBIDO' && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleVerifyPayment(order.id)}
+                              disabled={processingId === order.id}
+                              className="py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-2xl shadow-md cursor-pointer transition-all"
+                            >
+                              ✓ Verificar Pago
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRejectPayment(order.id)}
+                              disabled={processingId === order.id}
+                              className="py-3 bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase rounded-2xl shadow-md cursor-pointer transition-all"
+                            >
+                              ✕ Rechazar Pago
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Selector de Tiempo de Preparación */}
+                        <div className="space-y-2 pt-2 border-t border-slate-100">
+                          <label className="block text-[11px] font-black uppercase text-slate-500 tracking-wider">
+                            ⏰ Tiempo Estimado de Preparación
+                          </label>
+                          <div className="grid grid-cols-5 gap-1.5">
+                            {[15, 20, 30, 45, 60].map(mins => (
+                              <button
+                                key={mins}
+                                type="button"
+                                onClick={() => setSelectedPrepTime(mins)}
+                                className={`py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                                  selectedPrepTime === mins
+                                    ? 'bg-amber-500 text-white shadow-md scale-[1.05]'
+                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                }`}
+                              >
+                                {mins}m
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* GESTIÓN DE REEMBOLSO INDEPENDIENTE (SI APLICA) */}
+                        {hasPendingRefund && (
+                          <div className="bg-rose-50 p-4 rounded-2xl border border-rose-200 space-y-3 text-xs">
+                            <div className="flex items-center justify-between font-black text-rose-950">
+                              <span>🔴 REEMBOLSO PENDIENTE:</span>
+                              <span className="text-base text-rose-600">${(Number(order.payment?.montoExcedente) || 0).toFixed(2)}</span>
+                            </div>
+
+                            <div className="space-y-2">
+                              <select
+                                value={refundMethod}
+                                onChange={e => setRefundMethod(e.target.value)}
+                                className="w-full p-2 bg-white border border-rose-200 rounded-xl font-bold text-xs"
+                              >
+                                <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+                                <option value="EFECTIVO">Efectivo en Caja</option>
+                                <option value="OTRO">Otro Método</option>
+                              </select>
+                              <input
+                                type="text"
+                                value={refundRef}
+                                onChange={e => setRefundRef(e.target.value)}
+                                placeholder="Nº Comprobante devolución..."
+                                className="w-full p-2 bg-white border border-rose-200 rounded-xl font-semibold text-xs"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleConfirmRefund(order)}
+                                disabled={processingId === order.id}
+                                className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase rounded-xl shadow-md transition-all cursor-pointer"
+                              >
+                                Confirmar Devolución ($3.00)
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
 
-                  {/* BOTÓN DEFINITIVO ACEPTAR PEDIDO */}
-                  <div className="pt-4 border-t border-slate-100">
-                    <button
-                      type="button"
-                      onClick={() => handleAcceptOrderToKitchen(order)}
-                      disabled={!canAcceptOrder || processingId === order.id}
-                      className={`w-full py-4 text-xs font-black uppercase rounded-2xl shadow-xl flex items-center justify-center gap-2 transition-all ${
-                        canAcceptOrder
-                          ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-emerald-500/20 active:scale-98 cursor-pointer'
-                          : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
-                      }`}
-                    >
-                      {processingId === order.id ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <Check className="w-5 h-5 stroke-[3]" />
-                      )}
-                      <span>
-                        {canAcceptOrder
-                          ? `✅ ACEPTAR PEDIDO Y ENVIAR A COCINA (${selectedPrepTime} MIN)`
-                          : 'Aceptar Pedido (Requiere Productos OK + Pago Verificado)'}
-                      </span>
-                    </button>
-                  </div>
-
+                  {/* BOTÓN DEFINITIVO ACEPTAR PEDIDO (SOLO SI NO HA SIDO ACEPTADO AÚN) */}
+                  {!isOrderAcceptedOrPrepared && (
+                    <div className="pt-4 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => handleAcceptOrderToKitchen(order)}
+                        disabled={!canAcceptOrder || processingId === order.id}
+                        className={`w-full py-4 text-xs font-black uppercase rounded-2xl shadow-xl flex items-center justify-center gap-2 transition-all ${
+                          canAcceptOrder
+                            ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-emerald-500/20 active:scale-98 cursor-pointer'
+                            : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
+                        }`}
+                      >
+                        {processingId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                        Aceptar Pedido (Requiere Productos OK + Pago Verificado)
+                      </button>
+                    </div>
+                  )}
                 </div>
 
               </div>
