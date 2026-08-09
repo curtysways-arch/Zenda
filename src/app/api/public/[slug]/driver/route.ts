@@ -259,20 +259,30 @@ export async function POST(
       return NextResponse.json({ success: true, order: updatedOrder });
     }
 
-    // 5. Actualizar estado de entrega (ON_ROUTE -> EN_RUTA, DELIVERED -> ENTREGADO)
+    // 5. Actualizar estado de entrega (ON_ROUTE -> EN_CAMINO, WAITING_CLIENT -> ESPERANDO_CLIENTE, DELIVERED -> ENTREGADO)
     if (action === 'UPDATE_DELIVERY_STATE') {
       const targetId = orderId || taskId;
       if (!targetId || !nextState) {
         return NextResponse.json({ error: 'orderId/taskId y nextState son requeridos.' }, { status: 400 });
       }
 
+      const dbStatusMap: Record<string, string> = {
+        'ON_ROUTE': 'EN_CAMINO',
+        'EN_RUTA': 'EN_CAMINO',
+        'WAITING_CLIENT': 'ESPERANDO_CLIENTE',
+        'ESPERANDO_CLIENTE': 'ESPERANDO_CLIENTE',
+        'DELIVERED': 'ENTREGADO',
+        'ENTREGADO': 'ENTREGADO',
+        'PICKED_UP': 'ENTREGADO_A_REPARTIDOR'
+      };
+
+      const dbState = dbStatusMap[nextState] || nextState;
+
       const currentOrder = await (prisma as any).pedido.findUnique({ where: { id: targetId } });
       let currentExtra = {};
       if (currentOrder?.extraInfo) {
         currentExtra = typeof currentOrder.extraInfo === 'string' ? JSON.parse(currentOrder.extraInfo) : currentOrder.extraInfo;
       }
-
-      const dbState = nextState === 'ON_ROUTE' ? 'EN_RUTA' : nextState === 'DELIVERED' ? 'ENTREGADO' : nextState;
 
       const updatedOrder = await (prisma as any).pedido.update({
         where: { id: targetId },
@@ -285,8 +295,29 @@ export async function POST(
         }
       });
 
+      if (dbState === 'ENTREGADO') {
+        try {
+          await (prisma as any).deliveryAssignment.updateMany({
+            where: { ordenReferenciaId: targetId },
+            data: { estado: 'COMPLETADO' }
+          });
+        } catch (asgnErr) {}
+      }
+
+      // Emitir evento en tiempo real para actualización instantánea en el cliente y admin
+      try {
+        const { sseEmitter } = require('@/lib/notifications/notificationService');
+        sseEmitter.emit('realtime_event', {
+          negocioId: negocio.id,
+          type: 'ESTADO_CAMBIADO',
+          pedidoId: targetId,
+          estado: dbState
+        });
+      } catch (sseErr) {}
+
       return NextResponse.json({ success: true, order: updatedOrder });
     }
+
     if (action === 'REJECT_TASK') {
       if (!taskId || !driverId) {
         return NextResponse.json({ error: 'taskId y driverId son requeridos.' }, { status: 400 });
@@ -298,31 +329,6 @@ export async function POST(
         message: 'Pedido rechazado. Devuelto a la cola de asignación.',
         task: updatedTask,
       });
-    }
-
-    // 6. Cambio de estado de entrega (ON_ROUTE, DELIVERED, etc.)
-    if (action === 'UPDATE_DELIVERY_STATE') {
-      const targetId = orderId || taskId;
-      if (!targetId || !nextState) {
-        return NextResponse.json({ error: 'orderId/taskId y nextState son requeridos.' }, { status: 400 });
-      }
-
-      const dbStatusMap: Record<string, string> = {
-        'ON_ROUTE': 'EN_CAMINO',
-        'WAITING_CLIENT': 'ESPERANDO_CLIENTE',
-        'ESPERANDO_CLIENTE': 'ESPERANDO_CLIENTE',
-        'DELIVERED': 'ENTREGADO',
-        'PICKED_UP': 'ENTREGADO_A_REPARTIDOR'
-      };
-
-      const newDbStatus = dbStatusMap[nextState] || nextState;
-
-      const updatedOrder = await (prisma as any).pedido.update({
-        where: { id: targetId },
-        data: { estado: newDbStatus }
-      });
-
-      return NextResponse.json({ success: true, order: updatedOrder });
     }
 
     return NextResponse.json({ error: 'Acción no válida.' }, { status: 400 });
