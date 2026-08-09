@@ -94,7 +94,7 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
     } catch (_) {}
   }, []);
 
-  // Polling de nuevos pedidos cada 5 segundos
+  // Polling de nuevos pedidos cada 2 segundos con detección de foco en pestaña
   useEffect(() => {
     const checkNewOrders = async () => {
       try {
@@ -103,10 +103,10 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
         const data = await res.json();
         if (!Array.isArray(data)) return;
 
-        // Filtrar pedidos entrantes online (RECIBIDO)
+        // Filtrar pedidos entrantes online (RECIBIDO, PENDIENTE o COMPROBANTE_RECIBIDO)
         const incomingOrders = data.filter((p: Pedido) => {
           const ch = (p.extraInfo?.channel || p.extraInfo?.canal || 'WEB').toUpperCase();
-          return ch !== 'POS' && ch !== 'MOSTRADOR' && p.estado === 'RECIBIDO';
+          return ch !== 'POS' && ch !== 'MOSTRADOR' && ['RECIBIDO', 'PENDIENTE', 'COMPROBANTE_RECIBIDO'].includes(p.estado);
         });
 
         // Buscar el pedido entrante más reciente que NO haya sido reconocido aún
@@ -115,7 +115,7 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
         if (unacknowledged) {
           setActiveAlertOrder(unacknowledged);
         } else if (activeAlertOrder && !incomingOrders.some((p: Pedido) => p.id === activeAlertOrder.id)) {
-          // Si el pedido ya no está en estado RECIBIDO, cerrar la alerta
+          // Si el pedido ya no está en estado PENDIENTE/RECIBIDO, cerrar la alerta
           setActiveAlertOrder(null);
         }
       } catch (err) {
@@ -124,8 +124,17 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
     };
 
     checkNewOrders();
-    const interval = setInterval(checkNewOrders, 5000);
-    return () => clearInterval(interval);
+    const interval = setInterval(checkNewOrders, 2000);
+
+    const handleFocus = () => checkNewOrders();
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('visibilitychange', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('visibilitychange', handleFocus);
+    };
   }, [acknowledgedIds, activeAlertOrder]);
 
   // Bucle de sonido de alarma mientras haya una alerta activa

@@ -613,7 +613,7 @@ export default function PedidosOnlinePage() {
             const isDelivery = pedido.tipoEntrega === 'DELIVERY_ORDER' || pedido.tipoEntrega === 'DOMICILIO';
             const isProdConfirmed = (pedido.estadoDisponibilidad || pedido.extraInfo?.estadoDisponibilidad) === 'PRODUCTOS_CONFIRMADOS' || (pedido.estadoDisponibilidad || pedido.extraInfo?.estadoDisponibilidad) === 'CAMBIOS_ACEPTADOS';
             const isPaymentVerified = pedido.payment?.estado === 'PAGO_VERIFICADO' || pedido.payment?.estado === 'CONFIRMADO';
-            const canAcceptOrder = isProdConfirmed && isPaymentVerified && pedido.estado === 'RECIBIDO';
+            const canAcceptOrder = isProdConfirmed && isPaymentVerified && ['RECIBIDO', 'PENDIENTE', 'PRODUCTOS_CONFIRMADOS', 'CAMBIOS_ACEPTADOS'].includes(pedido.estado);
             const hasPendingRefund = pedido.payment?.estado === 'REEMBOLSO_PENDIENTE';
 
             return (
@@ -725,7 +725,7 @@ export default function PedidosOnlinePage() {
         const isDelivery = order.tipoEntrega === 'DELIVERY_ORDER' || order.tipoEntrega === 'DOMICILIO';
         const isProdConfirmed = (order.estadoDisponibilidad || order.extraInfo?.estadoDisponibilidad) === 'PRODUCTOS_CONFIRMADOS' || (order.estadoDisponibilidad || order.extraInfo?.estadoDisponibilidad) === 'CAMBIOS_ACEPTADOS';
         const isPaymentVerified = order.payment?.estado === 'PAGO_VERIFICADO' || order.payment?.estado === 'CONFIRMADO';
-        const canAcceptOrder = isProdConfirmed && isPaymentVerified && order.estado === 'RECIBIDO';
+        const canAcceptOrder = isProdConfirmed && isPaymentVerified && ['RECIBIDO', 'PENDIENTE', 'PRODUCTOS_CONFIRMADOS', 'CAMBIOS_ACEPTADOS'].includes(order.estado);
         const hasPendingRefund = order.payment?.estado === 'REEMBOLSO_PENDIENTE';
         const evidenceUrl = order.payment?.evidences?.[0]?.fileUrl;
         const totalVal = Number(order.total) || 0;
@@ -1142,7 +1142,7 @@ export default function PedidosOnlinePage() {
                     ) : (
                       <>
                         {/* Botones de Verificación de Pago */}
-                        {!isPaymentVerified && order.estado === 'RECIBIDO' && (
+                        {!isPaymentVerified && (order.estado === 'RECIBIDO' || order.estado === 'PENDIENTE' || !order.payment || order.payment.estado === 'COMPROBANTE_RECIBIDO' || order.payment.estado === 'PENDIENTE' || order.payment.estado === 'COMPROBANTE_ENVIADO') && (
                           <div className="grid grid-cols-2 gap-2">
                             <button
                               type="button"
