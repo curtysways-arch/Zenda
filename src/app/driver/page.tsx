@@ -136,6 +136,8 @@ export default function DriverAppPage() {
           action: 'ACCEPT_TASK',
           orderId,
           driverId,
+          name: driverName,
+          phone: driverPhone,
         }),
       });
       setSelectedOrderForDetail(null);
@@ -157,6 +159,8 @@ export default function DriverAppPage() {
           action: 'MARK_ARRIVED',
           orderId,
           driverId,
+          name: driverName,
+          phone: driverPhone,
         }),
       });
       fetchDriverData();

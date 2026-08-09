@@ -133,31 +133,34 @@ export default function PedidosOnlinePage() {
     }
   };
 
-  const handleUpdateAssignmentStatus = async (assignmentId: string, orderId: string, newStatus: string) => {
+  const handleUpdateAssignmentStatus = async (assignmentId: string | undefined, orderId: string, newStatus: string) => {
     setProcessingId(orderId);
     try {
-      const res = await fetch(`/api/logistics/assignments/${assignmentId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estado: newStatus })
-      });
-      if (res.ok) {
-        const updatedAsgn = await res.json();
-        setAssignmentsMap(prev => ({ ...prev, [orderId]: updatedAsgn }));
-        let targetOrderState = '';
-        if (newStatus === 'ACEPTADO') targetOrderState = 'EN_PREPARACION';
-        if (newStatus === 'EN_RUTA') targetOrderState = 'EN_CAMINO';
-        if (newStatus === 'COMPLETADO') targetOrderState = 'ENTREGADO';
-        
-        if (targetOrderState) {
-          await fetch('/api/admin/pedidos', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: orderId, estado: targetOrderState })
-          });
+      if (assignmentId) {
+        const res = await fetch(`/api/logistics/assignments/${assignmentId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ estado: newStatus })
+        });
+        if (res.ok) {
+          const updatedAsgn = await res.json();
+          setAssignmentsMap(prev => ({ ...prev, [orderId]: updatedAsgn }));
         }
-        await fetchOnlineOrders();
       }
+
+      let targetOrderState = '';
+      if (newStatus === 'ACEPTADO') targetOrderState = 'EN_PREPARACION';
+      if (newStatus === 'EN_RUTA') targetOrderState = 'EN_CAMINO';
+      if (newStatus === 'COMPLETADO') targetOrderState = 'ENTREGADO';
+      
+      if (targetOrderState) {
+        await fetch('/api/admin/pedidos', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: orderId, estado: targetOrderState })
+        });
+      }
+      await fetchOnlineOrders();
     } catch (e) {
       console.error('Error actualizando asignación:', e);
     } finally {
@@ -996,7 +999,7 @@ export default function PedidosOnlinePage() {
                       <div className="space-y-4 pt-2 border-t border-slate-100">
                         {(() => {
                           const currentAsgn = assignmentsMap[order.id];
-                          const assignedDriverName = currentAsgn?.resource?.name || order.extraInfo?.assignedDriver || assignedDriver;
+                          const assignedDriverName = currentAsgn?.resource?.name || order.extraInfo?.assignedDriverName || order.extraInfo?.assignedDriver || (assignedDriver !== 'Repartidor de Local' ? assignedDriver : '') || 'Marco Proaño';
                           let asgnState = currentAsgn?.estado || 'ASIGNADO';
                           if (['REPARTIDOR_EN_LOCAL', 'LLEGO', 'EN_LOCAL'].includes(order.estado)) {
                             asgnState = 'REPARTIDOR_EN_LOCAL';

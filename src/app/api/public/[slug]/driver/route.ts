@@ -161,6 +161,8 @@ export async function POST(
         currentExtra = typeof currentOrder.extraInfo === 'string' ? JSON.parse(currentOrder.extraInfo) : currentOrder.extraInfo;
       }
 
+      const driverName = name || 'Marco Proaño';
+
       const updatedOrder = await (prisma as any).pedido.update({
         where: { id: targetId },
         data: {
@@ -168,11 +170,60 @@ export async function POST(
           extraInfo: {
             ...currentExtra,
             assignedDriverId: driverId,
-            assignedDriverName: name || 'Marco Proaño',
+            assignedDriverName: driverName,
+            assignedDriver: driverName,
+            assignedDriverPhone: phone || '0991234567',
             driverAcceptedAt: new Date().toISOString()
           }
         }
       });
+
+      // Crear/actualizar asignación logística para vincular con panel admin
+      try {
+        let driverRes = await (prisma as any).operableResource.findFirst({
+          where: { negocioId: negocio.id, category: 'DELIVERY_DRIVER' }
+        });
+        if (!driverRes) {
+          driverRes = await (prisma as any).operableResource.create({
+            data: {
+              negocioId: negocio.id,
+              name: driverName,
+              category: 'DELIVERY_DRIVER',
+              active: true
+            }
+          });
+        }
+
+        const existingAsgn = await (prisma as any).deliveryAssignment.findFirst({
+          where: { ordenReferenciaId: targetId }
+        });
+
+        if (existingAsgn) {
+          await (prisma as any).deliveryAssignment.update({
+            where: { id: existingAsgn.id },
+            data: {
+              resourceId: driverRes.id,
+              estado: 'ACEPTADO'
+            }
+          });
+        } else {
+          await (prisma as any).deliveryAssignment.create({
+            data: {
+              negocioId: negocio.id,
+              resourceId: driverRes.id,
+              tipo: 'ENTREGA',
+              estado: 'ACEPTADO',
+              ordenReferenciaId: targetId,
+              ordenReferenciaTipo: 'PEDIDO_ONLINE',
+              clienteNombre: currentOrder?.nombreCliente,
+              clienteTelefono: currentOrder?.telefonoCliente,
+              clienteDireccion: currentOrder?.direccionCliente
+            }
+          });
+        }
+      } catch (asgnErr) {
+        console.warn('[DRIVER_ACCEPT_ASGN_WARN]', asgnErr);
+      }
 
       return NextResponse.json({ success: true, order: updatedOrder });
     }
@@ -190,12 +241,16 @@ export async function POST(
         currentExtra = typeof currentOrder.extraInfo === 'string' ? JSON.parse(currentOrder.extraInfo) : currentOrder.extraInfo;
       }
 
+      const driverName = name || (currentExtra as any)?.assignedDriver || 'Marco Proaño';
+
       const updatedOrder = await (prisma as any).pedido.update({
         where: { id: targetId },
         data: {
           estado: 'REPARTIDOR_EN_LOCAL',
           extraInfo: {
             ...currentExtra,
+            assignedDriverName: driverName,
+            assignedDriver: driverName,
             driverArrivedAt: new Date().toISOString()
           }
         }
