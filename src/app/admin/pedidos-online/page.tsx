@@ -118,7 +118,7 @@ export default function PedidosOnlinePage() {
 
     try {
       if (isAllAvailable) {
-        await fetch('/api/admin/pedidos', {
+        const res = await fetch('/api/admin/pedidos', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -126,6 +126,12 @@ export default function PedidosOnlinePage() {
             action: 'CONFIRMAR_DISPONIBILIDAD'
           })
         });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          alert(`Error al confirmar disponibilidad: ${errData.error || 'Error en el servidor'}`);
+          return;
+        }
       } else {
         const proposedItems = pedidoTarget.items
           .filter(it => itemsAvailability[it.id] !== false)
@@ -150,7 +156,7 @@ export default function PedidosOnlinePage() {
         const newTotal = newSubtotal + shippingCost;
         const outOfStockProductIds = outOfStockItems.map(it => it.productoId).filter(Boolean);
 
-        await fetch('/api/admin/pedidos', {
+        const res = await fetch('/api/admin/pedidos', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -164,6 +170,12 @@ export default function PedidosOnlinePage() {
             disableOutOfStock: disableCatalogProducts
           })
         });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          alert(`Error al solicitar cambios: ${errData.error || 'Error en el servidor'}`);
+          return;
+        }
       }
 
       await fetchOnlineOrders();

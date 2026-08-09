@@ -65,7 +65,16 @@ export async function PUT(req: Request) {
         }
 
         const updateData: any = {};
-        const currentExtra = (pedido.extraInfo as any) || {};
+        let currentExtra: any = {};
+        if (typeof pedido.extraInfo === 'string') {
+            try {
+                currentExtra = JSON.parse(pedido.extraInfo);
+            } catch {
+                currentExtra = {};
+            }
+        } else if (pedido.extraInfo && typeof pedido.extraInfo === 'object') {
+            currentExtra = { ...pedido.extraInfo };
+        }
 
         // 1. ACCIÓN: CONFIRMAR DISPONIBILIDAD DE PRODUCTOS
         if (action === 'CONFIRMAR_DISPONIBILIDAD' || estadoDisponibilidad === 'PRODUCTOS_CONFIRMADOS') {
@@ -315,9 +324,9 @@ export async function PUT(req: Request) {
         }
 
         return NextResponse.json(pedidoActualizado);
-    } catch (e) {
-        console.error('[API_PEDIDOS_PUT]', e);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    } catch (e: any) {
+        console.error('[API_PEDIDOS_PUT_FATAL_ERROR]', e?.message || e, e?.stack);
+        return NextResponse.json({ error: e?.message || 'Error interno al actualizar pedido' }, { status: 500 });
     }
 }
 
