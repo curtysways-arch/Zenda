@@ -277,28 +277,34 @@ export async function PUT(req: Request) {
             const { sseEmitter } = require('@/lib/notifications/notificationService');
             const { notificationService } = require('@/lib/notifications');
 
-            // Emitir evento SSE en tiempo real
+            const currentEffectiveStatus = estado || ((action === 'SOLICITAR_CAMBIOS' || (updateData as any).estadoDisponibilidad === 'CAMBIOS_SOLICITADOS') ? 'CAMBIOS_SOLICITADOS' : pedido.estado);
+
+            // Emitir evento SSE en tiempo real para el landing / tracking del cliente
             if (sseEmitter) {
                 sseEmitter.emit('realtime_event', {
                     negocioId: pedido.negocioId,
-                    type: 'ESTADO_CAMBIADO',
-                    title: `🔄 Pedido #${pedido.numeroPedido} Actualizado`,
-                    message: `Nuevo Estado: ${estado || pedido.estado}`,
+                    type: currentEffectiveStatus === 'CAMBIOS_SOLICITADOS' ? 'CAMBIOS_SOLICITADOS' : 'ESTADO_CAMBIADO',
+                    title: currentEffectiveStatus === 'CAMBIOS_SOLICITADOS' 
+                        ? `🚨 Cambios Solicitados en Pedido #${pedido.numeroPedido || pedido.id.slice(0, 8)}`
+                        : `🔄 Pedido #${pedido.numeroPedido} Actualizado`,
+                    message: currentEffectiveStatus === 'CAMBIOS_SOLICITADOS'
+                        ? `Algunos productos no están disponibles. Revisa la propuesta ajustada.`
+                        : `Nuevo Estado: ${currentEffectiveStatus}`,
                     pedidoId: pedido.id
                 });
             }
 
-            // Notificación Push al negocio
+            // Notificación Push al negocio y al cliente
             if (notificationService?.sendPushToBusiness) {
                 await notificationService.sendPushToBusiness(
                     pedido.negocioId,
-                    `Pedido #${pedido.numeroPedido} -> ${estado || pedido.estado}`,
+                    `Pedido #${pedido.numeroPedido} -> ${currentEffectiveStatus}`,
                     `Cliente: ${pedido.nombreCliente}`
                 ).catch(() => {});
             }
 
             // Notificación de WhatsApp DEL BOT AL CLIENTE
-            if (pedido.telefonoCliente && estado) {
+            if (pedido.telefonoCliente) {
                 let mensaje = '';
                 const formattedFechaEntrega = pedidoActualizado.fechaEntrega 
                     ? new Date(pedidoActualizado.fechaEntrega).toLocaleDateString('es-EC', { 
@@ -311,7 +317,12 @@ export async function PUT(req: Request) {
                     }) 
                     : 'Por definir';
 
-                switch (estado) {
+                switch (currentEffectiveStatus) {
+                    case 'CAMBIOS_SOLICITADOS':
+                        const outOfStockItemsText = (body.outOfStockItemsList || []).map((i: any) => `• ${i.cantidad || 1}x ${i.nombreProducto || i.nombre}`).join('\n');
+                        const trackingUrl = `https://citiox.com/${pedido.negocio.slug}/pedidos/${pedido.id}`;
+                        mensaje = `🚨 *¡Aviso de Disponibilidad en tu Pedido #${pedido.numeroPedido || pedido.id.slice(0, 8)}!*\n\nHola *${pedido.nombreCliente || 'Cliente'}*, en *${pedido.negocio.nombre}* revisamos tu comanda.\n\n⚠️ *Productos Agotados:* \n${outOfStockItemsText || 'Falta de insumos en cocina'}\n\nPor favor ingresa para aceptar la propuesta o elegir productos de reemplazo:\n👉 ${trackingUrl}`;
+                        break;
                     case 'ACEPTADO':
                         mensaje = `✅ *¡Tu pedido #${pedido.numeroPedido} ha sido ACEPTADO!*\n\nEl equipo de *${pedido.negocio.nombre}* ingresará tu pedido a preparación en breve. 🔥`;
                         break;
