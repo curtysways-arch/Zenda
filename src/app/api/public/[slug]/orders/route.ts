@@ -558,6 +558,48 @@ export async function PUT(
             return NextResponse.json({ success: true, order: updated });
         }
 
+        // 3. CLIENTE MODIFICA/REEMPLAZA PRODUCTOS EN EL CATÁLOGO PARA ESTE PEDIDO
+        if (action === 'CLIENT_MODIFY_ORDER') {
+            const { items: newItems, subtotal: newSubtotal, total: newTotal } = body;
+            if (newItems && Array.isArray(newItems) && newItems.length > 0) {
+                await (prisma as any).pedidoItem.deleteMany({ where: { pedidoId: order.id } });
+                await (prisma as any).pedidoItem.createMany({
+                    data: newItems.map((pItem: any) => ({
+                        pedidoId: order.id,
+                        productoId: pItem.productoId || null,
+                        nombreProducto: pItem.nombreProducto || pItem.nombre,
+                        precioUnitario: Number(pItem.precioUnitario || pItem.precio || 0),
+                        cantidad: Number(pItem.cantidad || 1)
+                    }))
+                });
+            }
+
+            const updateDataMod: any = {
+                estado: 'RECIBIDO',
+                estadoDisponibilidad: 'PRODUCTOS_CONFIRMADOS',
+                subtotal: Number(newSubtotal ?? order.subtotal),
+                total: Number(newTotal ?? order.total)
+            };
+
+            let updated: any;
+            try {
+                updated = await (prisma as any).pedido.update({
+                    where: { id: order.id },
+                    data: updateDataMod,
+                    include: { items: true, payment: true }
+                });
+            } catch (e) {
+                delete updateDataMod.estadoDisponibilidad;
+                updated = await (prisma as any).pedido.update({
+                    where: { id: order.id },
+                    data: updateDataMod,
+                    include: { items: true, payment: true }
+                });
+            }
+
+            return NextResponse.json({ success: true, order: updated });
+        }
+
         return NextResponse.json({ error: 'Acción no válida' }, { status: 400 });
     } catch (e: any) {
         console.error('[ORDERS_PUT_CLIENT_API]', e);

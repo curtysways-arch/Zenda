@@ -720,6 +720,42 @@ export default function ProductsStoreClient({ negocio }: Props) {
             }))
         };
 
+        const modifyingOrderId = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('modifyingOrder') || localStorage.getItem('modifyingOrderId')) : null;
+
+        if (modifyingOrderId) {
+            const modSubtotal = cart.reduce((sum, item) => sum + (item.product.precio * item.quantity), 0);
+            const modTotal = modSubtotal + (deliveryType === 'DOMICILIO' ? Number(config.costoEnvio || 0) : 0);
+
+            const updateRes = await fetch(`/api/public/${negocio.slug}/orders`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    orderId: modifyingOrderId,
+                    action: 'CLIENT_MODIFY_ORDER',
+                    items: cart.map(c => ({
+                        productoId: c.product.id,
+                        nombreProducto: c.product.nombre,
+                        precioUnitario: c.product.precio,
+                        cantidad: c.quantity
+                    })),
+                    subtotal: modSubtotal,
+                    total: modTotal
+                })
+            });
+
+            if (updateRes.ok) {
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem('modifyingOrderId');
+                    localStorage.removeItem('modifyingOrderCode');
+                    localStorage.removeItem(`cart_${negocio.id}`);
+                    localStorage.removeItem(`cart_${negocio.slug}`);
+                }
+                setCart([]);
+                window.location.href = `/${negocio.slug}/pedidos/${modifyingOrderId}`;
+                return;
+            }
+        }
+
         if (isSoloPagoPrevio) {
             // 🔒 PAGO PREVIO OBLIGATORIO: No se crea la orden en la BD todavía
             setDraftCheckoutPayload(payload);

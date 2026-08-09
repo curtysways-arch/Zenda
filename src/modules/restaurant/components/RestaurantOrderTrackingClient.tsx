@@ -136,6 +136,25 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
     // Estado del pago anterior
     const hasExistingPayment = !!order.payment || ['COMPROBANTE_ENVIADO', 'COMPROBANTE_RECIBIDO', 'PAGO_VERIFICADO', 'CONFIRMADO'].includes(order.payment?.estado || order.estado);
 
+    const handlePrepareCartModification = () => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('modifyingOrderId', order.id);
+            localStorage.setItem('modifyingOrderCode', String(order.numeroPedido || order.codigo || order.id.slice(0, 8)));
+            
+            const cartKey = `cart_${storeSlug}`;
+            const cartItemsToLoad = effectiveProposedItems.map((it: any) => ({
+                product: {
+                    id: it.productoId || it.id,
+                    nombre: it.nombreProducto || it.nombre,
+                    precio: Number(it.precioUnitario || it.precio) || 0,
+                    activo: true
+                },
+                quantity: Number(it.cantidad) || 1
+            }));
+            localStorage.setItem(cartKey, JSON.stringify(cartItemsToLoad));
+        }
+    };
+
     return (
         <div style={{ fontFamily: "'Inter', sans-serif", background: cs, minHeight: '100vh', paddingBottom: 140 }}>
             <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');`}</style>
@@ -280,7 +299,8 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
 
                             <div style={{ display: 'flex', gap: 10 }}>
                                 <Link
-                                    href={`/${storeSlug}`}
+                                    href={`/${storeSlug}?modifyingOrder=${order.id}`}
+                                    onClick={handlePrepareCartModification}
                                     style={{ flex: 1, background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 14, padding: '12px', fontWeight: 700, fontSize: 12, textAlign: 'center', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                                 >
                                     <span>🛒 Ver Catálogo / Reemplazar</span>
