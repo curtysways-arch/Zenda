@@ -134,7 +134,7 @@ export default function PedidosOnlinePage() {
         }
       } else {
         const proposedItems = pedidoTarget.items
-          .filter(it => itemsAvailability[it.id] !== false)
+          .filter(it => itemsAvailability[it.id] !== false && (!it.productoId || itemsAvailability[it.productoId] !== false))
           .map(it => ({
             id: it.id,
             productoId: it.productoId,

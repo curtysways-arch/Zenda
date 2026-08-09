@@ -116,22 +116,23 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
     // Cálculo del Total Propuesto de Formato Seguro si hay ítems propuestos por el local
     const proposedItemsList = (order as any).extraInfo?.proposedItems || [];
     const outOfStockItemsList = (order as any).extraInfo?.outOfStockItemsList || [];
-    const outOfStockIds = new Set(outOfStockItemsList.map((i: any) => i.id || i.productoId).filter(Boolean));
 
-    let effectiveProposedItems = proposedItemsList.length > 0
-        ? proposedItemsList
-        : (order.items || []).filter(it => !outOfStockIds.has(it.id) && !outOfStockIds.has(it.productoId));
+    const outOfStockNames = new Set(outOfStockItemsList.map((i: any) => (i.nombreProducto || i.nombre || '').trim().toLowerCase()));
+    const outOfStockIds = new Set(outOfStockItemsList.flatMap((i: any) => [i.id, i.productoId]).filter(Boolean));
 
-    // Si por algún dato legacy todos resultaron filtrados pero order.items tiene elementos, usar order.items
-    if (effectiveProposedItems.length === 0 && order.items && order.items.length > 0) {
-        effectiveProposedItems = order.items;
-    }
+    const sourceProposed = proposedItemsList.length > 0 ? proposedItemsList : (order.items || []);
+
+    const effectiveProposedItems = sourceProposed.filter((it: any) => {
+        const idMatch = outOfStockIds.has(it.id) || (it.productoId && outOfStockIds.has(it.productoId));
+        const nameMatch = outOfStockNames.has((it.nombreProducto || it.nombre || '').trim().toLowerCase());
+        return !idMatch && !nameMatch;
+    });
 
     const proposedItemsSubtotal = effectiveProposedItems.reduce((acc: number, it: any) => 
         acc + ((Number(it.precioUnitario || it.precio) || 0) * (Number(it.cantidad) || 1)), 0);
     
     // El total propuesto debe incluir el subtotal correcto de los ítems propuestos + costo de envío
-    const proposedGrandTotal = proposedItemsSubtotal > 0 ? (proposedItemsSubtotal + costoEnvio) : grandTotal;
+    const proposedGrandTotal = proposedItemsSubtotal > 0 ? (proposedItemsSubtotal + costoEnvio) : (outOfStockItemsList.length > 0 ? 0 : grandTotal);
 
     // Estado del pago anterior
     const hasExistingPayment = !!order.payment || ['COMPROBANTE_ENVIADO', 'COMPROBANTE_RECIBIDO', 'PAGO_VERIFICADO', 'CONFIRMADO'].includes(order.payment?.estado || order.estado);
