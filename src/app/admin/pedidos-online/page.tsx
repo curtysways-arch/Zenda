@@ -427,13 +427,13 @@ export default function PedidosOnlinePage() {
                   <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block">Productos</span>
                   {pedido.items?.map(it => (
                     <div key={it.id} className="flex justify-between font-bold text-slate-800">
-                      <span>{it.cantidad}x {it.nombreProducto}</span>
-                      <span>${(it.precioUnitario * it.cantidad).toFixed(2)}</span>
+                      <span>{it.cantidad || 1}x {it.nombreProducto}</span>
+                      <span>${((Number(it.precioUnitario) || 0) * (Number(it.cantidad) || 1)).toFixed(2)}</span>
                     </div>
                   ))}
                   <div className="pt-2 mt-1 border-t border-slate-200 flex justify-between font-black text-slate-900">
                     <span>Total:</span>
-                    <span className="text-emerald-600 text-sm">${pedido.total.toFixed(2)}</span>
+                    <span className="text-emerald-600 text-sm">${(Number(pedido.total) || 0).toFixed(2)}</span>
                   </div>
                 </div>
 
@@ -452,7 +452,7 @@ export default function PedidosOnlinePage() {
                     <div className="p-2.5 rounded-xl bg-rose-100 border border-rose-300 text-rose-900 text-xs space-y-1.5 animate-pulse">
                       <div className="flex items-center justify-between font-black">
                         <span>🔴 REEMBOLSO PENDIENTE:</span>
-                        <span className="text-sm">${pedido.payment?.montoExcedente?.toFixed(2)}</span>
+                        <span className="text-sm">${(Number(pedido.payment?.montoExcedente) || 0).toFixed(2)}</span>
                       </div>
                       <button
                         onClick={() => setRefundingOrder(pedido)}
@@ -599,7 +599,7 @@ export default function PedidosOnlinePage() {
 
             <div className="bg-rose-50 p-3 rounded-2xl border border-rose-200 flex items-center justify-between text-xs font-black text-rose-950">
               <span>MONTO A DEVOLVER:</span>
-              <span className="text-base text-rose-600">${refundingOrder.payment?.montoExcedente?.toFixed(2)}</span>
+              <span className="text-base text-rose-600">${(Number(refundingOrder.payment?.montoExcedente) || 0).toFixed(2)}</span>
             </div>
 
             <div className="space-y-3 text-xs">
