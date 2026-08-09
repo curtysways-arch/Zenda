@@ -294,6 +294,8 @@ export default function PedidosOnlinePage() {
           alert(`Error al confirmar disponibilidad: ${errData.error || 'Error en el servidor'}`);
           return;
         }
+        setFullscreenOrder((prev: any) => prev ? { ...prev, estadoDisponibilidad: 'PRODUCTOS_CONFIRMADOS' } : prev);
+        await fetchOnlineOrders();
       } else {
         const proposedItems = pedidoTarget.items
           .filter(it => itemsAvailability[it.id] !== false && (!it.productoId || itemsAvailability[it.productoId] !== false))
@@ -733,6 +735,7 @@ export default function PedidosOnlinePage() {
         const evidenceUrl = order.payment?.evidences?.[0]?.fileUrl;
         const totalVal = Number(order.total) || 0;
         const isOrderAcceptedOrPrepared = ['ACEPTADO', 'EN_PREPARACION', 'LISTO', 'LISTA', 'ASIGNADO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ESPERANDO_REPARTIDOR', 'LLEGO', 'EN_CAMINO', 'EN_RUTA', 'RUTA', 'WAITING_CLIENT', 'ESPERANDO_CLIENTE', 'ENTREGADO', 'FINALIZADO', 'COMPLETADO'].includes(order.estado);
+        const isAvailabilityConfirmed = isOrderAcceptedOrPrepared || order.estadoDisponibilidad === 'PRODUCTOS_CONFIRMADOS';
 
         return (
           <div className="fixed inset-0 z-[9999] bg-slate-950/90 backdrop-blur-md overflow-y-auto flex flex-col p-3 sm:p-6 animate-in fade-in duration-200">
@@ -849,11 +852,11 @@ export default function PedidosOnlinePage() {
                     2. Disponibilidad de Productos en Cocina
                   </h3>
 
-                  {isOrderAcceptedOrPrepared ? (
+                  {isAvailabilityConfirmed ? (
                     <>
                       <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-3.5 text-xs font-extrabold flex items-center gap-2">
                         <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>Pedido Aceptado — Productos confirmados e ingresados a cocina.</span>
+                        <span>Productos confirmados e ingresados a cocina.</span>
                       </div>
 
                       <div className="space-y-2 max-h-72 overflow-y-auto pr-1">

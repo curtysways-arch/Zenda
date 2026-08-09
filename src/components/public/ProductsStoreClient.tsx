@@ -495,6 +495,10 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
     // Cart Operations
     const addToCart = (product: Product) => {
+        if (!product.activo) {
+            alert('Este producto se encuentra agotado temporalmente.');
+            return;
+        }
         if (isStoreClosed) {
             alert('El local se encuentra cerrado en este momento. No es posible añadir productos al carrito.');
             return;
@@ -586,7 +590,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
         const matchesCategory = selectedCategory === 'all' || p.categoriaId === selectedCategory;
         const matchesSearch = p.nombre.toLowerCase().includes(searchQuery.toLowerCase()) || 
                             (p.descripcion && p.descripcion.toLowerCase().includes(searchQuery.toLowerCase()));
-        return p.activo && matchesCategory && matchesSearch;
+        return matchesCategory && matchesSearch;
     });
 
     // Validations & Availabilities
@@ -1708,12 +1712,19 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                                 className="relative w-full aspect-square bg-slate-100 overflow-hidden cursor-pointer"
                                                 title="Ver detalle"
                                             >
+                                                {!p.activo && (
+                                                    <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px] z-10 flex items-center justify-center pointer-events-none">
+                                                        <span className="px-3 py-1.5 bg-rose-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg border border-rose-500">
+                                                            🚫 AGOTADO
+                                                        </span>
+                                                    </div>
+                                                )}
                                                 {p.imagenUrl ? (
                                                     // eslint-disable-next-line @next/next/no-img-element
                                                     <img 
                                                         src={p.imagenUrl} 
                                                         alt={p.nombre} 
-                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                                                        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${!p.activo ? 'grayscale opacity-75' : ''}`} 
                                                     />
                                                 ) : (
                                                     <div className="absolute inset-0 flex items-center justify-center font-black text-4xl italic uppercase" style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
@@ -1740,7 +1751,11 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                                 <div className="flex justify-between items-center mt-auto pt-2">
                                                     <span className="text-sm font-black text-slate-900">${p.precio.toFixed(2)}</span>
                                                     
-                                                    {isStoreClosed ? (
+                                                    {!p.activo ? (
+                                                        <span className="px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider text-rose-600 bg-rose-50 border border-rose-200">
+                                                            Agotado
+                                                        </span>
+                                                    ) : isStoreClosed ? (
                                                         <button 
                                                             type="button"
                                                             onClick={(e) => { e.stopPropagation(); alert('El local se encuentra cerrado en este momento.'); }}
