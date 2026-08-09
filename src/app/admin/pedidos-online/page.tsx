@@ -490,7 +490,7 @@ export default function PedidosOnlinePage() {
   // Filtrar pedidos por estado
   const filteredOrders = pedidos.filter(p => {
     if (filterState === 'PENDING') return p.estado === 'RECIBIDO' || p.estado === 'CAMBIOS_SOLICITADOS';
-    if (filterState === 'PREPARING') return ['ACEPTADO', 'EN_PREPARACION', 'LISTO', 'LISTA'].includes(p.estado);
+    if (filterState === 'PREPARING') return ['ACEPTADO', 'EN_PREPARACION', 'LISTO', 'LISTA', 'ASIGNADO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ESPERANDO_REPARTIDOR', 'LLEGO', 'EN_CAMINO', 'EN_RUTA'].includes(p.estado);
     if (filterState === 'REFUNDS') return p.payment?.estado === 'REEMBOLSO_PENDIENTE' || Number(p.payment?.montoExcedente || 0) > 0;
     
     if (searchQuery.trim()) {
@@ -729,7 +729,7 @@ export default function PedidosOnlinePage() {
         const hasPendingRefund = order.payment?.estado === 'REEMBOLSO_PENDIENTE';
         const evidenceUrl = order.payment?.evidences?.[0]?.fileUrl;
         const totalVal = Number(order.total) || 0;
-        const isOrderAcceptedOrPrepared = ['EN_PREPARACION', 'LISTO', 'EN_CAMINO', 'EN_RUTA', 'RUTA', 'ENTREGADO', 'FINALIZADO'].includes(order.estado);
+        const isOrderAcceptedOrPrepared = ['ACEPTADO', 'EN_PREPARACION', 'LISTO', 'LISTA', 'ASIGNADO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ESPERANDO_REPARTIDOR', 'LLEGO', 'EN_CAMINO', 'EN_RUTA', 'RUTA', 'ENTREGADO', 'FINALIZADO', 'COMPLETADO'].includes(order.estado);
 
         return (
           <div className="fixed inset-0 z-[9999] bg-slate-950/90 backdrop-blur-md overflow-y-auto flex flex-col p-3 sm:p-6 animate-in fade-in duration-200">
