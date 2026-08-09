@@ -53,6 +53,11 @@ export default function PedidosOnlinePage() {
 
   // Estado de Orden Seleccionada para Detalle a Pantalla Completa
   const [fullscreenOrder, setFullscreenOrder] = useState<Pedido | null>(null);
+
+  // Estado de Logística y Repartidores
+  const [approvedDrivers, setApprovedDrivers] = useState<any[]>([]);
+  const [assignmentsMap, setAssignmentsMap] = useState<Record<string, any>>({});
+  const [selectedDriverId, setSelectedDriverId] = useState<string>('');
   const [assignedDriver, setAssignedDriver] = useState<string>('Repartidor de Local');
 
   // Modal de Disponibilidad & Propuesta de Cambios
@@ -64,6 +69,122 @@ export default function PedidosOnlinePage() {
   const [refundMethod, setRefundMethod] = useState<string>('TRANSFERENCIA');
   const [refundRef, setRefundRef] = useState<string>('');
   const [refundNotes, setRefundNotes] = useState<string>('');
+
+  const fetchLogisticsData = async () => {
+    try {
+      const [driversRes, assignmentsRes] = await Promise.all([
+        fetch('/api/logistics/resources'),
+        fetch('/api/logistics/assignments')
+      ]);
+
+      if (driversRes.ok) {
+        const dData = await driversRes.json();
+        setApprovedDrivers(Array.isArray(dData) ? dData : []);
+      }
+
+      if (assignmentsRes.ok) {
+        const aData = await assignmentsRes.json();
+        if (Array.isArray(aData)) {
+          const map: Record<string, any> = {};
+          aData.forEach((asgn: any) => {
+            if (asgn.ordenReferenciaId) {
+              map[asgn.ordenReferenciaId] = asgn;
+            }
+          });
+          setAssignmentsMap(map);
+        }
+      }
+    } catch (err) {
+      console.warn('[LOGISTICS_FETCH_ERROR]', err);
+    }
+  };
+
+  const handleAssignDriverToOrder = async (pedidoTarget: Pedido, driverId: string) => {
+    if (!driverId) return;
+    setProcessingId(pedidoTarget.id);
+    try {
+      const res = await fetch('/api/logistics/assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resourceId: driverId,
+          tipo: 'ENTREGA',
+          ordenReferenciaId: pedidoTarget.id,
+          ordenReferenciaTipo: 'PEDIDO_ONLINE',
+          clienteNombre: pedidoTarget.nombreCliente,
+          clienteTelefono: pedidoTarget.telefonoCliente,
+          clienteDireccion: pedidoTarget.direccionCliente || 'Entrega a Domicilio'
+        })
+      });
+      if (res.ok) {
+        const newAsgn = await res.json();
+        setAssignmentsMap(prev => ({ ...prev, [pedidoTarget.id]: newAsgn }));
+        const drv = approvedDrivers.find(d => d.id === driverId);
+        if (drv) setAssignedDriver(drv.name);
+        await fetchOnlineOrders();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Error asignando repartidor');
+      }
+    } catch (e) {
+      console.error('Error asignando repartidor:', e);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleUpdateAssignmentStatus = async (assignmentId: string, orderId: string, newStatus: string) => {
+    setProcessingId(orderId);
+    try {
+      const res = await fetch(`/api/logistics/assignments/${assignmentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: newStatus })
+      });
+      if (res.ok) {
+        const updatedAsgn = await res.json();
+        setAssignmentsMap(prev => ({ ...prev, [orderId]: updatedAsgn }));
+        let targetOrderState = '';
+        if (newStatus === 'ACEPTADO') targetOrderState = 'EN_PREPARACION';
+        if (newStatus === 'EN_RUTA') targetOrderState = 'EN_CAMINO';
+        if (newStatus === 'COMPLETADO') targetOrderState = 'ENTREGADO';
+        
+        if (targetOrderState) {
+          await fetch('/api/admin/pedidos', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: orderId, estado: targetOrderState })
+          });
+        }
+        await fetchOnlineOrders();
+      }
+    } catch (e) {
+      console.error('Error actualizando asignación:', e);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleUnassignDriver = async (assignmentId: string, orderId: string) => {
+    setProcessingId(orderId);
+    try {
+      await fetch(`/api/logistics/assignments/${assignmentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: 'CANCELADO' })
+      });
+      setAssignmentsMap(prev => {
+        const next = { ...prev };
+        delete next[orderId];
+        return next;
+      });
+      await fetchOnlineOrders();
+    } catch (e) {
+      console.error('Error desasignando repartidor:', e);
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   const handleDispatchOrder = async (pedidoTarget: Pedido, targetState: string) => {
     setProcessingId(pedidoTarget.id);
@@ -99,12 +220,12 @@ export default function PedidosOnlinePage() {
         });
         setPedidos(onlineOnly);
 
-        // Si hay una orden en pantalla completa abierta, refrescar sus datos actualizados
         if (fullscreenOrder) {
           const updatedTarget = onlineOnly.find((p: Pedido) => p.id === fullscreenOrder.id);
           if (updatedTarget) setFullscreenOrder(updatedTarget);
         }
       }
+      await fetchLogisticsData();
     } catch (e) {
       console.error('Error fetching online orders:', e);
     } finally {
@@ -818,77 +939,179 @@ export default function PedidosOnlinePage() {
                       )}
                     </div>
 
-                    {/* VISTA DE DESPACHO Y ASIGNACIÓN SI EL PEDIDO YA FUE ACEPTADO O ESTÁ LISTO */}
+                    {/* VISTA DE DESPACHO Y ASIGNACIÓN CON LÓGICA COMPLETA DE REPARTIDOR */}
                     {isOrderAcceptedOrPrepared ? (
                       <div className="space-y-4 pt-2 border-t border-slate-100">
-                        <div className="space-y-2">
-                          <label className="block text-[11px] font-black uppercase text-slate-500 tracking-wider">
-                            🛵 Repartidor / Servicio de Entrega:
-                          </label>
-                          <input
-                            type="text"
-                            value={assignedDriver}
-                            onChange={e => setAssignedDriver(e.target.value)}
-                            placeholder="Nombre del repartidor..."
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:bg-white transition-colors"
-                          />
-                        </div>
+                        {(() => {
+                          const currentAsgn = assignmentsMap[order.id];
+                          const assignedDriverName = currentAsgn?.resource?.name || order.extraInfo?.assignedDriver || assignedDriver;
+                          const asgnState = currentAsgn?.estado || (order.estado === 'EN_CAMINO' ? 'EN_RUTA' : order.estado === 'ENTREGADO' ? 'COMPLETADO' : null);
 
-                        {order.estado === 'EN_PREPARACION' && (
-                          <button
-                            type="button"
-                            onClick={() => handleDispatchOrder(order, 'LISTO')}
-                            disabled={processingId === order.id}
-                            className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-2xl shadow-lg cursor-pointer transition-all active:scale-98 flex items-center justify-center gap-2"
-                          >
-                            {processingId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                            👩‍🍳 Marcar Pedido como LISTO en Cocina
-                          </button>
-                        )}
+                          return (
+                            <>
+                              {/* SI EXISTE UNA ASIGNACIÓN A UN REPARTIDOR DE LA APP */}
+                              {currentAsgn ? (
+                                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-9 h-9 bg-blue-600 text-white rounded-full flex items-center justify-center font-black text-sm">
+                                        {assignedDriverName.charAt(0).toUpperCase()}
+                                      </div>
+                                      <div>
+                                        <h4 className="font-extrabold text-slate-900 text-xs">{assignedDriverName}</h4>
+                                        <p className="text-[10px] text-slate-500 font-semibold">
+                                          {currentAsgn.resource?.profile?.vehiculo || currentAsgn.resource?.profile?.tipoVehiculo || 'Repartidor Oficial'}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <span className={`px-2 py-1 rounded-xl text-[10px] font-black uppercase ${
+                                      asgnState === 'ASIGNADO' || asgnState === 'PENDIENTE'
+                                        ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
+                                        : asgnState === 'ACEPTADO'
+                                        ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                                        : asgnState === 'EN_RUTA'
+                                        ? 'bg-blue-100 text-blue-900 border border-blue-300'
+                                        : 'bg-slate-200 text-slate-800'
+                                    }`}>
+                                      {asgnState === 'ASIGNADO' ? '⏳ PENDIENTE DE ACEPTACIÓN' : asgnState}
+                                    </span>
+                                  </div>
 
-                        {order.estado === 'LISTO' && (
-                          <div className="space-y-2.5">
-                            <button
-                              type="button"
-                              onClick={() => handleDispatchOrder(order, 'EN_CAMINO')}
-                              disabled={processingId === order.id}
-                              className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs uppercase rounded-2xl shadow-xl shadow-blue-600/20 cursor-pointer transition-all active:scale-98 flex items-center justify-center gap-2"
-                            >
-                              {processingId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />}
-                              🛵 Despachar (Enviar en Ruta a Domicilio)
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDispatchOrder(order, 'ENTREGADO')}
-                              disabled={processingId === order.id}
-                              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-2xl shadow-md cursor-pointer transition-all active:scale-98 flex items-center justify-center gap-2"
-                            >
-                              📦 Marcar como ENTREGADO / FINALIZADO
-                            </button>
-                          </div>
-                        )}
+                                  {/* MENSAJE DE ESTADO SEGÚN ACEPTACIÓN DEL REPARTIDOR */}
+                                  {(asgnState === 'ASIGNADO' || asgnState === 'PENDIENTE') && (
+                                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs space-y-2">
+                                      <div className="flex items-center gap-2 text-amber-900 font-bold">
+                                        <Loader2 className="w-4 h-4 text-amber-600 animate-spin shrink-0" />
+                                        <span>Esperando a que el repartidor acepte la orden en su app...</span>
+                                      </div>
+                                      <p className="text-[11px] text-amber-800 font-medium">
+                                        Se notificó a {assignedDriverName}. En cuanto presione Aceptar, verás la actualización en vivo.
+                                      </p>
+                                      <div className="flex gap-2 pt-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleUpdateAssignmentStatus(currentAsgn.id, order.id, 'ACEPTADO')}
+                                          disabled={processingId === order.id}
+                                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[10px] font-black cursor-pointer"
+                                        >
+                                          ✓ Marcar Aceptado Manualmente
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleUnassignDriver(currentAsgn.id, order.id)}
+                                          disabled={processingId === order.id}
+                                          className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-[10px] font-bold cursor-pointer"
+                                        >
+                                          Reasignar
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
 
-                        {(order.estado === 'EN_CAMINO' || order.estado === 'EN_RUTA' || order.estado === 'RUTA') && (
-                          <div className="space-y-3">
-                            <div className="bg-blue-50 border border-blue-200 text-blue-900 rounded-2xl p-3.5 text-xs font-bold text-center">
-                              🛵 En Ruta con: <span className="font-black text-blue-950">{order.extraInfo?.assignedDriver || assignedDriver}</span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleDispatchOrder(order, 'ENTREGADO')}
-                              disabled={processingId === order.id}
-                              className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-2xl shadow-xl cursor-pointer transition-all active:scale-98 flex items-center justify-center gap-2"
-                            >
-                              📦 Confirmar Entrega Definitiva (ENTREGADO)
-                            </button>
-                          </div>
-                        )}
+                                  {asgnState === 'ACEPTADO' && (
+                                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs space-y-2">
+                                      <div className="flex items-center gap-2 text-emerald-900 font-bold">
+                                        <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                                        <span>✅ ¡El repartidor {assignedDriverName} ACEPTÓ el pedido!</span>
+                                      </div>
+                                      <p className="text-[11px] text-emerald-800 font-medium">
+                                        El repartidor va en camino a retirar la orden en el restaurante.
+                                      </p>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleUpdateAssignmentStatus(currentAsgn.id, order.id, 'EN_RUTA')}
+                                        disabled={processingId === order.id}
+                                        className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase shadow-md cursor-pointer flex items-center justify-center gap-2"
+                                      >
+                                        <Truck className="w-4 h-4" /> Despachar (Enviar en Ruta al Cliente)
+                                      </button>
+                                    </div>
+                                  )}
 
-                        {order.estado === 'ENTREGADO' && (
-                          <div className="bg-emerald-100 border border-emerald-300 text-emerald-900 rounded-2xl p-4 text-xs font-black text-center shadow-xs">
-                            🎉 Pedido Entregado y Finalizado Correctamente
-                          </div>
-                        )}
+                                  {(asgnState === 'EN_RUTA' || asgnState === 'EN_CAMINO') && (
+                                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs space-y-2">
+                                      <div className="flex items-center gap-2 text-blue-900 font-bold">
+                                        <Truck className="w-4 h-4 text-blue-600 shrink-0 animate-bounce" />
+                                        <span>🛵 Pedido en ruta al domicilio del cliente con {assignedDriverName}.</span>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleUpdateAssignmentStatus(currentAsgn.id, order.id, 'COMPLETADO')}
+                                        disabled={processingId === order.id}
+                                        className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase shadow-md cursor-pointer flex items-center justify-center gap-2"
+                                      >
+                                        <Check className="w-4 h-4" /> Confirmar Entrega Definitiva (ENTREGADO)
+                                      </button>
+                                    </div>
+                                  )}
+
+                                  {asgnState === 'COMPLETADO' && (
+                                    <div className="bg-emerald-100 border border-emerald-300 text-emerald-900 rounded-xl p-3 text-xs font-black text-center">
+                                      🎉 Pedido Entregado Correctamente por {assignedDriverName}
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                /* SI NO HAY REPARTIDOR DE LA APP ASIGNADO AÚN */
+                                <div className="space-y-3 bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                                  <label className="block text-[11px] font-black uppercase text-slate-600 tracking-wider">
+                                    🛵 Asignar Repartidor de la Plataforma:
+                                  </label>
+
+                                  <div className="space-y-2">
+                                    <select
+                                      value={selectedDriverId}
+                                      onChange={e => setSelectedDriverId(e.target.value)}
+                                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800"
+                                    >
+                                      <option value="">-- Seleccionar Repartidor Registrado --</option>
+                                      {approvedDrivers.map(d => (
+                                        <option key={d.id} value={d.id}>
+                                          {d.name} ({d.estado || 'DISPONIBLE'}) - {d.profile?.vehiculo || d.profile?.tipoVehiculo || 'Repartidor'}
+                                        </option>
+                                      ))}
+                                    </select>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAssignDriverToOrder(order, selectedDriverId)}
+                                      disabled={!selectedDriverId || processingId === order.id}
+                                      className={`w-full py-3 text-xs font-black uppercase rounded-xl shadow-md transition-all flex items-center justify-center gap-2 ${
+                                        selectedDriverId
+                                          ? 'bg-blue-600 hover:bg-blue-500 text-white cursor-pointer'
+                                          : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                      }`}
+                                    >
+                                      {processingId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />}
+                                      Asignar y Notificar Repartidor (Esperando Aceptación)
+                                    </button>
+                                  </div>
+
+                                  <div className="pt-3 border-t border-slate-200 space-y-2">
+                                    <label className="block text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                                      O Despachar con Repartidor del Local:
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={assignedDriver}
+                                      onChange={e => setAssignedDriver(e.target.value)}
+                                      placeholder="Nombre del repartidor local..."
+                                      className="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs font-bold"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDispatchOrder(order, order.estado === 'LISTO' ? 'EN_CAMINO' : 'LISTO')}
+                                      disabled={processingId === order.id}
+                                      className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-black uppercase cursor-pointer"
+                                    >
+                                      {order.estado === 'EN_PREPARACION' ? '👩‍🍳 Marcar LISTO en Cocina' : '🛵 Despachar con Repartidor Local'}
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     ) : (
                       <>
