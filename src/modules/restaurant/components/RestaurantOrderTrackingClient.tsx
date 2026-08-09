@@ -114,8 +114,12 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
     const grandTotal = Number(order.total) || (subtotal + costoEnvio);
 
     // Cálculo del Total Propuesto de Formato Seguro si hay ítems propuestos por el local
-    const proposedItemsList = (order as any).extraInfo?.proposedItems || [];
-    const outOfStockItemsList = (order as any).extraInfo?.outOfStockItemsList || [];
+    const parsedExtraInfo = typeof (order as any).extraInfo === 'string'
+        ? JSON.parse((order as any).extraInfo || '{}')
+        : ((order as any).extraInfo || {});
+
+    const proposedItemsList = parsedExtraInfo.proposedItems || [];
+    const outOfStockItemsList = parsedExtraInfo.outOfStockItemsList || [];
 
     const outOfStockNames = new Set(outOfStockItemsList.map((i: any) => (i.nombreProducto || i.nombre || '').trim().toLowerCase()));
     const outOfStockIds = new Set(outOfStockItemsList.flatMap((i: any) => [i.id, i.productoId]).filter(Boolean));

@@ -30,6 +30,7 @@ export async function GET(
                 id: true,
                 numeroPedido: true,
                 estado: true,
+                estadoDisponibilidad: true,
                 tipoEntrega: true,
                 nombreCliente: true,
                 telefonoCliente: true,
@@ -37,6 +38,7 @@ export async function GET(
                 subtotal: true,
                 costoEnvio: true,
                 total: true,
+                extraInfo: true,
                 notas: true,
                 createdAt: true,
                 updatedAt: true,
@@ -60,6 +62,7 @@ export async function GET(
                 items: {
                     select: {
                         id: true,
+                        productoId: true,
                         nombreProducto: true,
                         cantidad: true,
                         precioUnitario: true,
@@ -72,9 +75,15 @@ export async function GET(
             return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 });
         }
 
+        const parsedExtraInfo = typeof order.extraInfo === 'string'
+            ? JSON.parse(order.extraInfo || '{}')
+            : (order.extraInfo || {});
+
         // Serializar Decimal a número para el cliente
         const serialized = {
             ...order,
+            extraInfo: parsedExtraInfo,
+            estadoDisponibilidad: (order as any).estadoDisponibilidad || parsedExtraInfo.estadoDisponibilidad || null,
             subtotal: order.subtotal ? Number(order.subtotal) : null,
             costoEnvio: order.costoEnvio ? Number(order.costoEnvio) : null,
             total: order.total ? Number(order.total) : null,
