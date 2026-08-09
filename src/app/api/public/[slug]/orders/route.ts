@@ -193,8 +193,10 @@ export async function POST(
             destinationCoords: lat && lng ? { lat: parseFloat(lat), lng: parseFloat(lng) } : undefined
         });
 
-        const costoEnvio = pricingResult.deliveryCost;
-        const total = pricingResult.total;
+        const isDeliveryOrder = deliveryType === 'DOMICILIO' || deliveryType === 'DELIVERY_ORDER';
+        const finalSubtotal = body.subtotal !== undefined && parseFloat(body.subtotal) > 0 ? parseFloat(body.subtotal) : pricingResult.subtotal;
+        const finalCostoEnvio = isDeliveryOrder ? (body.costoEnvio !== undefined ? parseFloat(body.costoEnvio) : pricingResult.deliveryCost) : 0;
+        const finalTotal = body.total !== undefined && parseFloat(body.total) > 0 ? parseFloat(body.total) : Math.round((finalSubtotal + finalCostoEnvio) * 100) / 100;
 
         // Resolver fecha de entrega
         let dateToDeliver = new Date();
@@ -229,9 +231,9 @@ export async function POST(
                     longitud: lng || null,
                     fechaEntrega: dateToDeliver,
                     franjaHoraria: timeSlot || 'Inmediata',
-                    subtotal: pricingResult.subtotal,
-                    costoEnvio: pricingResult.deliveryCost,
-                    total: pricingResult.total,
+                    subtotal: finalSubtotal,
+                    costoEnvio: finalCostoEnvio,
+                    total: finalTotal,
                     estado: 'PENDIENTE',
                     extraInfo: {
                         ...(body.extraInfo || {}),
@@ -259,7 +261,7 @@ export async function POST(
             const initialPayment = await PaymentService.createInitialPayment({
                 pedidoId: newOrder.id,
                 negocioId: negocio.id,
-                monto: total,
+                monto: finalTotal,
                 estado: initialPaymentStatus as any
             }, tx);
 
@@ -334,14 +336,14 @@ export async function POST(
             await notificationService.sendPushToBusiness(
                 negocio.id,
                 `🛒 ¡Nuevo Pedido #${order.numeroPedido}!`,
-                `De ${clientName} (${deliveryType === 'DOMICILIO' ? 'Domicilio' : 'Retiro'}) por $${total.toFixed(2)}.`
+                `De ${clientName} (${deliveryType === 'DOMICILIO' ? 'Domicilio' : 'Retiro'}) por $${finalTotal.toFixed(2)}.`
             ).catch(() => {});
 
             sseEmitter.emit('realtime_event', {
                 negocioId: negocio.id,
                 type: 'NUEVO_PEDIDO',
                 title: `🛒 Nuevo Pedido #${order.numeroPedido}`,
-                message: `Cliente: ${clientName} | Total: $${total.toFixed(2)}`,
+                message: `Cliente: ${clientName} | Total: $${finalTotal.toFixed(2)}`,
                 pedidoId: order.id
             });
 
@@ -373,9 +375,9 @@ export async function POST(
                 : 'No especificada';
             bizMsg += `📅 *Horario Referencial Solicitado:* ${requestedDateFormatted}\n\n`;
             bizMsg += `📦 *Detalle del Pedido:*\n${itemsList}\n\n`;
-            bizMsg += `💰 *Subtotal:* $${subtotal.toFixed(2)}\n`;
-            if (deliveryType === 'DOMICILIO') bizMsg += `🛵 *Envío:* $${costoEnvio.toFixed(2)}\n`;
-            bizMsg += `💵 *TOTAL:* $${total.toFixed(2)}\n`;
+            bizMsg += `💰 *Subtotal:* $${finalSubtotal.toFixed(2)}\n`;
+            if (deliveryType === 'DOMICILIO') bizMsg += `🛵 *Envío:* $${finalCostoEnvio.toFixed(2)}\n`;
+            bizMsg += `💵 *TOTAL:* $${finalTotal.toFixed(2)}\n`;
 
             await whatsappService.sendWhatsApp(bizPhone, bizMsg).catch(() => {});
         } catch (notifErr) {
