@@ -151,7 +151,7 @@ export default function PedidosOnlinePage() {
           precioUnitario: it.precioUnitario
         }));
 
-        const newSubtotal = proposedItems.reduce((sum, it) => sum + (it.precioUnitario * it.cantidad), 0);
+        const newSubtotal = proposedItems.reduce((sum, it) => sum + ((Number(it.precioUnitario) || 0) * (Number(it.cantidad) || 1)), 0);
         const shippingCost = Number(pedidoTarget.costoEnvio || 0);
         const newTotal = newSubtotal + shippingCost;
         const outOfStockProductIds = outOfStockItems.map(it => it.productoId).filter(Boolean);

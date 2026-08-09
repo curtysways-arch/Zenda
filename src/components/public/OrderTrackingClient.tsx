@@ -810,20 +810,31 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                         </div>
 
                         {/* Formulario de Carga de Comprobante */}
-                        <form 
-                            onSubmit={async (e) => {
-                                e.preventDefault();
-                                if (evidenceFile) {
-                                    await handleFileUpload(evidenceFile);
-                                    setShowPaymentModal(false);
-                                }
-                            }} 
-                            className="space-y-4 pt-1"
-                        >
-                            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md space-y-3">
-                                <label className="block text-[10px] font-black text-slate-900 uppercase tracking-widest">
-                                    SUBIR COMPROBANTE (PNG, JPG, WEBP O PDF) *
-                                </label>
+                        {(order.payment?.evidences?.length > 0 || ['COMPROBANTE_ENVIADO', 'COMPROBANTE_RECIBIDO', 'PAGO_VERIFICADO', 'CONFIRMADO'].includes(order.payment?.estado || '')) ? (
+                            <div className="bg-emerald-50 border border-emerald-200 rounded-3xl p-5 text-emerald-950 space-y-2">
+                                <div className="flex items-center gap-2 font-black text-xs text-emerald-800">
+                                    <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                                    <span>✅ COMPROBANTE DE PAGO REGISTRADO</span>
+                                </div>
+                                <p className="text-xs text-emerald-800 font-medium">
+                                    Tu comprobante de pago ya ha sido recibido y registrado en el sistema. No necesitas volver a subir un archivo.
+                                </p>
+                            </div>
+                        ) : (
+                            <form 
+                                onSubmit={async (e) => {
+                                    e.preventDefault();
+                                    if (evidenceFile) {
+                                        await handleFileUpload(evidenceFile);
+                                        setShowPaymentModal(false);
+                                    }
+                                }} 
+                                className="space-y-4 pt-1"
+                            >
+                                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md space-y-3">
+                                    <label className="block text-[10px] font-black text-slate-900 uppercase tracking-widest">
+                                        SUBIR COMPROBANTE (PNG, JPG, WEBP O PDF) *
+                                    </label>
 
                                 <div 
                                     onClick={() => document.getElementById('tracking-evidence-file-input')?.click()}
@@ -896,6 +907,7 @@ export default function OrderTrackingClient({ order: initialOrder, negocio, onBa
                                 </div>
                             </div>
                         </form>
+                        )}
                     </div>
                 </div>
             )}
