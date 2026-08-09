@@ -135,37 +135,6 @@ export async function PUT(req: Request) {
                     data: { estado: 'CONFIRMADO' }
                 }).catch(() => {});
             }
-
-            // Si es pedido a domicilio, notificar/asignar automáticamente a repartidores disponibles
-            if (pedido.tipoEntrega === 'DOMICILIO' || pedido.tipoEntrega === 'DELIVERY_ORDER') {
-                try {
-                    const existingAsgn = await (prisma as any).deliveryAssignment.findFirst({
-                        where: { ordenReferenciaId: pedido.id }
-                    });
-                    if (!existingAsgn) {
-                        const driverRes = await (prisma as any).operableResource.findFirst({
-                            where: { negocioId, active: true, category: 'DELIVERY_DRIVER' }
-                        });
-                        if (driverRes) {
-                            await (prisma as any).deliveryAssignment.create({
-                                data: {
-                                    negocioId,
-                                    resourceId: driverRes.id,
-                                    tipo: 'ENTREGA',
-                                    estado: 'ASIGNADO',
-                                    ordenReferenciaId: pedido.id,
-                                    ordenReferenciaTipo: 'PEDIDO_ONLINE',
-                                    clienteNombre: pedido.nombreCliente,
-                                    clienteTelefono: pedido.telefonoCliente,
-                                    clienteDireccion: pedido.direccionCliente
-                                }
-                            }).catch(() => {});
-                        }
-                    }
-                } catch (asgnErr) {
-                    console.warn('[AUTO_DRIVER_ASSIGNMENT_WARN]', asgnErr);
-                }
-            }
         } else if (estado) {
             updateData.estado = estado;
         }

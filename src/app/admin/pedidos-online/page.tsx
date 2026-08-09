@@ -965,44 +965,26 @@ export default function PedidosOnlinePage() {
                       )}
                     </div>
 
-                    {/* CÓDIGOS DE SEGURIDAD PIN (LOCAL Y CLIENTE) */}
+                    {/* CÓDIGO DE SEGURIDAD PIN (RETIRO EN LOCAL) */}
                     {(() => {
                       let pCode = order.extraInfo?.pickupCode;
-                      let dCode = order.extraInfo?.deliveryCode;
                       if (!pCode) {
                         let num = 0; const str = (order.id || '') + 'pickup';
                         for (let i = 0; i < str.length; i++) num = (num * 31 + str.charCodeAt(i)) % 9000;
                         pCode = String(1000 + Math.abs(num));
                       }
-                      if (!dCode) {
-                        let num = 0; const str = (order.id || '') + 'delivery';
-                        for (let i = 0; i < str.length; i++) num = (num * 31 + str.charCodeAt(i)) % 9000;
-                        dCode = String(1000 + Math.abs(num));
-                      }
 
                       return (
-                        <div className="bg-slate-900 text-white p-3.5 rounded-2xl space-y-2.5 shadow-md border border-slate-800">
+                        <div className="bg-slate-900 text-white p-3.5 rounded-2xl space-y-2 shadow-md border border-slate-800">
                           <div className="flex items-center justify-between">
                             <div className="space-y-0.5">
                               <span className="text-[10px] font-black uppercase text-amber-400 block tracking-wider">
                                 🔑 PIN Retiro en Local:
                               </span>
-                              <span className="text-[10px] text-slate-400">Repartidor dicta este PIN al local</span>
+                              <span className="text-[10px] text-slate-400">Repartidor dicta este PIN al restaurante al recoger</span>
                             </div>
-                            <span className="px-3 py-1 bg-amber-500 text-slate-950 font-black text-base rounded-xl tracking-widest shadow-sm">
+                            <span className="px-3.5 py-1 bg-amber-500 text-slate-950 font-black text-base rounded-xl tracking-widest shadow-sm">
                               {pCode}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between pt-2 border-t border-slate-800">
-                            <div className="space-y-0.5">
-                              <span className="text-[10px] font-black uppercase text-emerald-400 block tracking-wider">
-                                🔐 PIN Entrega al Cliente:
-                              </span>
-                              <span className="text-[10px] text-slate-400">Cliente dicta este PIN al repartidor</span>
-                            </div>
-                            <span className="px-3 py-1 bg-emerald-500 text-slate-950 font-black text-base rounded-xl tracking-widest shadow-sm">
-                              {dCode}
                             </span>
                           </div>
                         </div>
