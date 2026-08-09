@@ -11,13 +11,14 @@ export async function POST() {
     let targetNegocioId = negocioId;
 
     if (!targetNegocioId) {
-      // Buscar negocio por slug citiox o parrilla-citiox-demo
+      // Buscar negocio por slug o nombre relacionad con citiox o parrilla
       const negocioCitiox = await (prisma as any).negocio.findFirst({
         where: {
           OR: [
             { slug: { contains: 'citiox', mode: 'insensitive' } },
             { slug: { contains: 'parrilla', mode: 'insensitive' } },
-            { nombre: { contains: 'Citiox', mode: 'insensitive' } }
+            { nombre: { contains: 'Citiox', mode: 'insensitive' } },
+            { nombre: { contains: 'Parrilla', mode: 'insensitive' } }
           ]
         }
       });
@@ -27,45 +28,47 @@ export async function POST() {
     }
 
     if (!targetNegocioId) {
-      return NextResponse.json({ error: 'No se identificó el negocio Citiox para limpiar pedidos.' }, { status: 400 });
+      return NextResponse.json({ error: 'No se logró identificar el negocio para limpiar pedidos.' }, { status: 400 });
     }
 
-    // Obtenemos los pedidos a eliminar para este negocio específico
-    const pedidos = await (prisma as any).pedido.findMany({
+    // 1. Obtener IDs de pedidos
+    const pedidos = await prisma.pedido.findMany({
       where: { negocioId: targetNegocioId },
-      select: { id: true, paymentId: true }
+      select: { id: true }
     });
 
-    const pedidoIds = pedidos.map((p: any) => p.id);
+    const pedidoIds = pedidos.map(p => p.id);
 
     if (pedidoIds.length === 0) {
-      return NextResponse.json({ message: 'No se encontraron pedidos de prueba para eliminar en este restaurante.' });
+      return NextResponse.json({
+        success: true,
+        deletedOrdersCount: 0,
+        message: 'No se encontraron pedidos de prueba para eliminar en este restaurante.'
+      });
     }
 
-    // 1. Eliminar DeliveryAssignments
+    // 2. Eliminar asignaciones de delivery asociadas
     await (prisma as any).deliveryAssignment.deleteMany({
       where: { ordenReferenciaId: { in: pedidoIds } }
     }).catch(() => {});
 
-    // 2. Eliminar PedidoItems
-    await (prisma as any).pedidoItem.deleteMany({
+    // 3. Eliminar ítems de pedidos
+    await prisma.pedidoItem.deleteMany({
       where: { pedidoId: { in: pedidoIds } }
-    });
+    }).catch(() => {});
 
-    // 3. Eliminar OrderPayments & Evidencias
-    const paymentIds = pedidos.map((p: any) => p.paymentId).filter(Boolean);
-    if (paymentIds.length > 0) {
-      await (prisma as any).paymentEvidence.deleteMany({
-        where: { orderPaymentId: { in: paymentIds } }
-      }).catch(() => {});
+    // 4. Eliminar evidencias de pago
+    await (prisma as any).paymentEvidence.deleteMany({
+      where: { payment: { pedidoId: { in: pedidoIds } } }
+    }).catch(() => {});
 
-      await (prisma as any).orderPayment.deleteMany({
-        where: { id: { in: paymentIds } }
-      }).catch(() => {});
-    }
+    // 5. Eliminar pagos de ordenes
+    await (prisma as any).orderPayment.deleteMany({
+      where: { pedidoId: { in: pedidoIds } }
+    }).catch(() => {});
 
-    // 4. Eliminar Pedidos
-    const deletedCount = await (prisma as any).pedido.deleteMany({
+    // 6. Eliminar Pedidos definitivamente
+    const deletedCount = await prisma.pedido.deleteMany({
       where: { id: { in: pedidoIds } }
     });
 
