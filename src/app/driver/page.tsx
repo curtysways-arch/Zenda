@@ -56,6 +56,7 @@ export default function DriverAppPage() {
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [nowTime, setNowTime] = useState<number>(Date.now());
+  const [inputPins, setInputPins] = useState<{ [orderId: string]: string }>({});
 
   const [selectedOrderForDetail, setSelectedOrderForDetail] = useState<DbOrder | null>(null);
 
@@ -198,7 +199,7 @@ export default function DriverAppPage() {
   const myAssignedOrders = availableDbOrders.filter(o => {
     const extra = parseExtraInfo(o.extraInfo);
     return extra.assignedDriverId === driverId || 
-      ['REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA', 'ESPERANDO_CLIENTE'].includes(o.estado);
+      ['REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA', 'ESPERANDO_CLIENTE', 'WAITING_CLIENT'].includes(o.estado);
   });
 
   const openUnassignedOrders = availableDbOrders.filter(o => {
@@ -626,8 +627,34 @@ export default function DriverAppPage() {
                 {/* FASE 2: EN EL LOCAL Y ESPERANDO ENTREGA DEL PAQUETE */}
                 {(order.estado === 'REPARTIDOR_EN_LOCAL' || order.estado === 'ENTREGADO_A_REPARTIDOR') && (() => {
                   const isHandedOver = order.estado === 'ENTREGADO_A_REPARTIDOR';
+                  const extraData = parseExtraInfo(order.extraInfo);
+                  let expectedPickupCode = extraData?.pickupCode;
+                  let expectedDeliveryCode = extraData?.deliveryCode;
+                  if (!expectedPickupCode) {
+                    let num = 0; const str = (order.id || '') + 'pickup';
+                    for (let i = 0; i < str.length; i++) num = (num * 31 + str.charCodeAt(i)) % 9000;
+                    expectedPickupCode = String(1000 + Math.abs(num));
+                  }
+                  if (!expectedDeliveryCode) {
+                    let num = 0; const str = (order.id || '') + 'delivery';
+                    for (let i = 0; i < str.length; i++) num = (num * 31 + str.charCodeAt(i)) % 9000;
+                    expectedDeliveryCode = String(1000 + Math.abs(num));
+                  }
+
                   return (
                     <div className="space-y-2 pt-2 border-t border-slate-800">
+                      <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl flex items-center justify-between">
+                        <div className="space-y-0.5 text-left">
+                          <span className="text-[10px] font-black uppercase text-amber-400 block tracking-wider">
+                            🔑 PIN Retiro en Local:
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-medium">Dicta este PIN al restaurante</span>
+                        </div>
+                        <span className="px-3 py-1 bg-amber-500 text-slate-950 font-black text-sm rounded-lg tracking-widest">
+                          {expectedPickupCode}
+                        </span>
+                      </div>
+
                       <div className={`p-2.5 rounded-xl text-xs font-extrabold text-center flex items-center justify-center gap-2 border ${
                         isHandedOver 
                           ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 animate-pulse' 
@@ -637,20 +664,17 @@ export default function DriverAppPage() {
                         <span>
                           {isHandedOver 
                             ? '📦 Paquete Entregado por Restaurante • ¡Listo para salir!' 
-                            : '⏳ En el local • Esperando confirmación de entrega por el negocio...'}
+                            : '⏳ En el local • Dicta el PIN al local para retirar comanda'}
                         </span>
                       </div>
+
                       <button
                         onClick={() => handleUpdateState(order.id, 'ON_ROUTE')}
-                        disabled={!isHandedOver || actionLoading === order.id}
-                        className={`w-full py-3.5 rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl transition-all ${
-                          isHandedOver
-                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white cursor-pointer active:scale-95'
-                            : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60'
-                        }`}
+                        disabled={!isHandedOver && actionLoading === order.id}
+                        className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95 transition-all"
                       >
                         <Navigation className="w-4 h-4" />
-                        <span>{isHandedOver ? '🛵 INICIAR ENTREGA AL CLIENTE' : '⏳ ESPERANDO ENTREGA DEL NEGOCIO'}</span>
+                        <span>🛵 INICIAR ENTREGA AL CLIENTE</span>
                       </button>
                     </div>
                   );
@@ -681,28 +705,72 @@ export default function DriverAppPage() {
                       disabled={actionLoading === order.id}
                       className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95 transition-all"
                     >
-                      <MapPin className="w-4 h-4" />
+                      <MapPin className="w-4 h-4 text-slate-950" />
                       <span>📍 Llegué al Destino (Esperando Cliente)</span>
                     </button>
                   </div>
                 )}
 
-                {order.estado === 'ESPERANDO_CLIENTE' && (
-                  <div className="space-y-2">
-                    <div className="p-2.5 bg-amber-500/20 border border-amber-500/30 rounded-xl text-amber-300 text-xs font-extrabold text-center flex items-center justify-center gap-2 animate-pulse">
-                      <Clock className="w-4 h-4 text-amber-400" />
-                      <span>🔔 En el Destino • Esperando que el cliente reciba</span>
+                {(order.estado === 'ESPERANDO_CLIENTE' || order.estado === 'WAITING_CLIENT') && (() => {
+                  const extraData = parseExtraInfo(order.extraInfo);
+                  let expectedDeliveryCode = extraData?.deliveryCode;
+                  if (!expectedDeliveryCode) {
+                    let num = 0; const str = (order.id || '') + 'delivery';
+                    for (let i = 0; i < str.length; i++) num = (num * 31 + str.charCodeAt(i)) % 9000;
+                    expectedDeliveryCode = String(1000 + Math.abs(num));
+                  }
+
+                  const enteredPin = inputPins[order.id] || '';
+                  const isPinValid = enteredPin.trim() === expectedDeliveryCode;
+
+                  return (
+                    <div className="space-y-3 pt-2 border-t border-slate-800">
+                      <div className="p-3 bg-amber-500/20 border border-amber-500/30 rounded-xl text-amber-300 text-xs font-extrabold flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+                          <span>🔔 En el Destino • Pide el PIN al cliente</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-xl space-y-2 text-left">
+                        <label className="block text-[11px] font-black uppercase text-amber-400">
+                          🔑 Ingresa el PIN de 4 dígitos entregado por el cliente:
+                        </label>
+                        <input
+                          type="text"
+                          maxLength={4}
+                          value={enteredPin}
+                          onChange={e => setInputPins(prev => ({ ...prev, [order.id]: e.target.value.trim() }))}
+                          placeholder="Ej: 9157"
+                          className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-center text-lg font-black text-amber-400 tracking-widest focus:border-amber-400 outline-none"
+                        />
+                        {enteredPin.length === 4 && !isPinValid && (
+                          <p className="text-[11px] text-rose-400 font-bold text-center">
+                            ❌ PIN incorrecto. Pide al cliente su código de 4 dígitos.
+                          </p>
+                        )}
+                        {isPinValid && (
+                          <p className="text-[11px] text-emerald-400 font-bold text-center">
+                            ✅ ¡PIN Correcto! Puedes finalizar la entrega.
+                          </p>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => handleUpdateState(order.id, 'DELIVERED')}
+                        disabled={!isPinValid || actionLoading === order.id}
+                        className={`w-full py-3.5 rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl transition-all ${
+                          isPinValid
+                            ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 cursor-pointer active:scale-95'
+                            : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60'
+                        }`}
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        <span>{isPinValid ? '✅ Confirmar Entregado al Cliente' : '🔒 Requiere PIN de 4 dígitos del Cliente'}</span>
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleUpdateState(order.id, 'DELIVERED')}
-                      disabled={actionLoading === order.id}
-                      className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95 transition-all"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                      <span>✅ Confirmar Entregado al Cliente</span>
-                    </button>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             );
           })}

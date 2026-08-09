@@ -235,6 +235,8 @@ export async function POST(
                     estado: 'PENDIENTE',
                     extraInfo: {
                         ...(body.extraInfo || {}),
+                        pickupCode: Math.floor(1000 + Math.random() * 9000).toString(),
+                        deliveryCode: Math.floor(1000 + Math.random() * 9000).toString(),
                         paymentMethodCode: body.paymentMethodCode || body.paymentMethod || body.metodoPago || 'TRANSFER',
                         channel: body.channel || 'WEB',
                         tableCode: body.tableCode || null,

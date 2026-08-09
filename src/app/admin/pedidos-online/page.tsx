@@ -729,7 +729,7 @@ export default function PedidosOnlinePage() {
         const hasPendingRefund = order.payment?.estado === 'REEMBOLSO_PENDIENTE';
         const evidenceUrl = order.payment?.evidences?.[0]?.fileUrl;
         const totalVal = Number(order.total) || 0;
-        const isOrderAcceptedOrPrepared = ['ACEPTADO', 'EN_PREPARACION', 'LISTO', 'LISTA', 'ASIGNADO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ESPERANDO_REPARTIDOR', 'LLEGO', 'EN_CAMINO', 'EN_RUTA', 'RUTA', 'ENTREGADO', 'FINALIZADO', 'COMPLETADO'].includes(order.estado);
+        const isOrderAcceptedOrPrepared = ['ACEPTADO', 'EN_PREPARACION', 'LISTO', 'LISTA', 'ASIGNADO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ESPERANDO_REPARTIDOR', 'LLEGO', 'EN_CAMINO', 'EN_RUTA', 'RUTA', 'WAITING_CLIENT', 'ESPERANDO_CLIENTE', 'ENTREGADO', 'FINALIZADO', 'COMPLETADO'].includes(order.estado);
 
         return (
           <div className="fixed inset-0 z-[9999] bg-slate-950/90 backdrop-blur-md overflow-y-auto flex flex-col p-3 sm:p-6 animate-in fade-in duration-200">
@@ -965,6 +965,50 @@ export default function PedidosOnlinePage() {
                       )}
                     </div>
 
+                    {/* CÓDIGOS DE SEGURIDAD PIN (LOCAL Y CLIENTE) */}
+                    {(() => {
+                      let pCode = order.extraInfo?.pickupCode;
+                      let dCode = order.extraInfo?.deliveryCode;
+                      if (!pCode) {
+                        let num = 0; const str = (order.id || '') + 'pickup';
+                        for (let i = 0; i < str.length; i++) num = (num * 31 + str.charCodeAt(i)) % 9000;
+                        pCode = String(1000 + Math.abs(num));
+                      }
+                      if (!dCode) {
+                        let num = 0; const str = (order.id || '') + 'delivery';
+                        for (let i = 0; i < str.length; i++) num = (num * 31 + str.charCodeAt(i)) % 9000;
+                        dCode = String(1000 + Math.abs(num));
+                      }
+
+                      return (
+                        <div className="bg-slate-900 text-white p-3.5 rounded-2xl space-y-2.5 shadow-md border border-slate-800">
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                              <span className="text-[10px] font-black uppercase text-amber-400 block tracking-wider">
+                                🔑 PIN Retiro en Local:
+                              </span>
+                              <span className="text-[10px] text-slate-400">Repartidor dicta este PIN al local</span>
+                            </div>
+                            <span className="px-3 py-1 bg-amber-500 text-slate-950 font-black text-base rounded-xl tracking-widest shadow-sm">
+                              {pCode}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+                            <div className="space-y-0.5">
+                              <span className="text-[10px] font-black uppercase text-emerald-400 block tracking-wider">
+                                🔐 PIN Entrega al Cliente:
+                              </span>
+                              <span className="text-[10px] text-slate-400">Cliente dicta este PIN al repartidor</span>
+                            </div>
+                            <span className="px-3 py-1 bg-emerald-500 text-slate-950 font-black text-base rounded-xl tracking-widest shadow-sm">
+                              {dCode}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     {/* VISTA DE DESPACHO Y ASIGNACIÓN CON LÓGICA COMPLETA DE REPARTIDOR */}
                     {isOrderAcceptedOrPrepared ? (
                       <div className="space-y-4 pt-2 border-t border-slate-100">
@@ -976,6 +1020,8 @@ export default function PedidosOnlinePage() {
                             asgnState = 'REPARTIDOR_EN_LOCAL';
                           } else if (['EN_CAMINO', 'EN_RUTA', 'RUTA'].includes(order.estado)) {
                             asgnState = 'EN_RUTA';
+                          } else if (['WAITING_CLIENT', 'ESPERANDO_CLIENTE'].includes(order.estado)) {
+                            asgnState = 'ESPERANDO_CLIENTE';
                           } else if (['ENTREGADO', 'FINALIZADO', 'COMPLETADO'].includes(order.estado)) {
                             asgnState = 'COMPLETADO';
                           } else if (['ACEPTADO', 'REPARTIDOR_ACEPTO'].includes(order.estado) && asgnState === 'ASIGNADO') {

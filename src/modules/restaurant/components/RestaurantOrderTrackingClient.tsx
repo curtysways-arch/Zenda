@@ -239,6 +239,32 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 8, margin: '8px 0 0', lineHeight: 1.4 }}>
                             {stateInfo.description}
                         </p>
+
+                        {/* CÓDIGO PIN DE CONFIRMACIÓN DE ENTREGA PARA EL CLIENTE */}
+                        {(() => {
+                            let dCode = parsedExtraInfo?.deliveryCode;
+                            if (!dCode) {
+                                let num = 0; const str = (order.id || '') + 'delivery';
+                                for (let i = 0; i < str.length; i++) num = (num * 31 + str.charCodeAt(i)) % 9000;
+                                dCode = String(1000 + Math.abs(num));
+                            }
+
+                            return (
+                                <div style={{ marginTop: 14, background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 14, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                                    <div>
+                                        <span style={{ color: '#34d399', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>
+                                            🔐 TU CÓDIGO PIN DE CONFIRMACIÓN DE ENTREGA
+                                        </span>
+                                        <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: 600 }}>
+                                            Dicta este PIN de 4 dígitos al repartidor al recibir tu pedido en puerta.
+                                        </span>
+                                    </div>
+                                    <div style={{ background: '#10b981', color: '#022c22', fontWeight: 900, fontSize: 20, letterSpacing: '0.15em', padding: '4px 14px', borderRadius: 10 }}>
+                                        {dCode}
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             </div>
