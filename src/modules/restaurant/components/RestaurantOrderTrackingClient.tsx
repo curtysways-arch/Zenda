@@ -137,30 +137,49 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
 
                 {/* MODAL / BANNER DE PROPUESTA DE CAMBIOS SI PRODUCTOS AGOTADOS */}
                 {(order.estado === 'CAMBIOS_SOLICITADOS' || (order as any).estadoDisponibilidad === 'CAMBIOS_SOLICITADOS') && (
-                    <div style={{ background: 'linear-gradient(135deg, rgba(234,88,12,0.15), rgba(245,158,11,0.2))', border: '2px solid #ea580c', borderRadius: 16, padding: 16, marginBottom: 16, color: '#fff' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                            <span style={{ fontSize: 18 }}>⚠️</span>
-                            <span style={{ fontWeight: 900, fontSize: 14, color: '#f97316' }}>Propuesta de Modificación de Pedido</span>
-                        </div>
-                        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', marginBottom: 12, lineHeight: 1.4 }}>
-                            El establecimiento ha verificado los productos y nos notifica que algunos ítems están agotados. Han preparado la siguiente versión modificada de tu pedido:
-                        </p>
-
-                        <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 12, padding: 12, marginBottom: 12, fontSize: 12 }}>
-                            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', marginBottom: 6 }}>Nuevos Productos Disponibles</div>
-                            {((order as any).extraInfo?.proposedItems || []).map((it: any, idx: number) => (
-                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
-                                    <span>{it.cantidad}x {it.nombreProducto || it.nombre}</span>
-                                    <span style={{ fontWeight: 700 }}>${((Number(it.precioUnitario || it.precio) || 0) * it.cantidad).toFixed(2)}</span>
-                                </div>
-                            ))}
-                            <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', fontWeight: 900 }}>
-                                <span>Nuevo Total:</span>
-                                <span style={{ color: cp, fontSize: 15 }}>${Number((order as any).extraInfo?.proposedTotal ?? order.total).toFixed(2)}</span>
+                    <div style={{ background: 'linear-gradient(135deg, rgba(234,88,12,0.2), rgba(245,158,11,0.25))', border: '2px solid #f97316', borderRadius: 20, padding: 18, marginBottom: 16, color: '#fff', boxShadow: '0 8px 32px rgba(234,88,12,0.2)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                            <span style={{ fontSize: 22 }}>🚨</span>
+                            <div>
+                                <h3 style={{ fontWeight: 900, fontSize: 15, color: '#fb923c', margin: 0 }}>¡Aviso de Disponibilidad en tu Pedido!</h3>
+                                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: 0 }}>El establecimiento no cuenta con algunos productos en cocina y propone una modificación.</p>
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: 8 }}>
+                        {/* DESGLOSE 1: PRODUCTOS AGOTADOS */}
+                        {((order as any).extraInfo?.outOfStockItemsList || []).length > 0 && (
+                            <div style={{ background: 'rgba(225,29,72,0.15)', border: '1px solid rgba(225,29,72,0.4)', borderRadius: 14, padding: 12, marginBottom: 10 }}>
+                                <div style={{ color: '#f43f5e', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    <span>🔴</span> PRODUCTO(S) NO DISPONIBLE(S):
+                                </div>
+                                {((order as any).extraInfo?.outOfStockItemsList || []).map((it: any, idx: number) => (
+                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'rgba(255,255,255,0.7)', textDecoration: 'line-through', padding: '2px 0' }}>
+                                        <span>{it.cantidad}x {it.nombreProducto || it.nombre}</span>
+                                        <span>${((Number(it.precioUnitario || it.precio) || 0) * it.cantidad).toFixed(2)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* DESGLOSE 2: PROPUESTA DISPONIBLE */}
+                        <div style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: 12, marginBottom: 12 }}>
+                            <div style={{ color: '#10b981', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <span>🟢</span> PROPUESTA DE PRODUCTOS DISPONIBLES:
+                            </div>
+                            {((order as any).extraInfo?.proposedItems || []).map((it: any, idx: number) => (
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#fff', padding: '3px 0', fontWeight: 600 }}>
+                                    <span>{it.cantidad}x {it.nombreProducto || it.nombre}</span>
+                                    <span style={{ fontWeight: 800 }}>${((Number(it.precioUnitario || it.precio) || 0) * it.cantidad).toFixed(2)}</span>
+                                </div>
+                            ))}
+                            <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 900 }}>
+                                <span style={{ fontSize: 13 }}>NUEVO TOTAL AJUSTADO:</span>
+                                <span style={{ color: cp, fontSize: 18 }}>${Number((order as any).extraInfo?.proposedTotal ?? order.total).toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        {/* ACCIONES DEL CLIENTE */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                             <button
                                 onClick={async () => {
                                     setRefreshing(true);
@@ -178,33 +197,42 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                                     }
                                 }}
                                 disabled={refreshing}
-                                style={{ flex: 1, background: '#10b981', color: '#fff', border: 'none', borderRadius: 12, padding: '12px', fontWeight: 900, fontSize: 12, cursor: 'pointer' }}
+                                style={{ width: '100%', background: '#10b981', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontWeight: 900, fontSize: 13, cursor: 'pointer', textTransform: 'uppercase', boxShadow: '0 4px 14px rgba(16,185,129,0.4)' }}
                             >
-                                ✓ Aceptar Cambios
+                                ✓ Aceptar Propuesta (${Number((order as any).extraInfo?.proposedTotal ?? order.total).toFixed(2)})
                             </button>
-                            <button
-                                onClick={async () => {
-                                    if (confirm('¿Deseas cancelar el pedido?')) {
-                                        setRefreshing(true);
-                                        try {
-                                            await fetch(`/api/public/${storeSlug}/orders`, {
-                                                method: 'PUT',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ orderId: order.id, action: 'CANCELAR_PEDIDO' })
-                                            });
-                                            refreshOrder();
-                                        } catch (e) {
-                                            console.error('Error al cancelar pedido:', e);
-                                        } finally {
-                                            setRefreshing(false);
+
+                            <div style={{ display: 'flex', gap: 8 }}>
+                                <Link
+                                    href={`/${storeSlug}`}
+                                    style={{ flex: 1, background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 12, padding: '10px', fontWeight: 700, fontSize: 11, textAlign: 'center', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
+                                >
+                                    <span>🛒 Ver Catálogo / Reemplazar</span>
+                                </Link>
+                                <button
+                                    onClick={async () => {
+                                        if (confirm('¿Deseas cancelar el pedido definitivamente?')) {
+                                            setRefreshing(true);
+                                            try {
+                                                await fetch(`/api/public/${storeSlug}/orders`, {
+                                                    method: 'PUT',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ orderId: order.id, action: 'CANCELAR_PEDIDO' })
+                                                });
+                                                refreshOrder();
+                                            } catch (e) {
+                                                console.error('Error al cancelar pedido:', e);
+                                            } finally {
+                                                setRefreshing(false);
+                                            }
                                         }
-                                    }
-                                }}
-                                disabled={refreshing}
-                                style={{ flex: 1, background: 'rgba(239,68,68,0.2)', color: '#ef4444', border: '1px solid #ef4444', borderRadius: 12, padding: '12px', fontWeight: 900, fontSize: 12, cursor: 'pointer' }}
-                            >
-                                ✕ Cancelar Pedido
-                            </button>
+                                    }}
+                                    disabled={refreshing}
+                                    style={{ flex: 1, background: 'rgba(225,29,72,0.15)', color: '#f43f5e', border: '1px solid rgba(225,29,72,0.3)', borderRadius: 12, padding: '10px', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}
+                                >
+                                    ✕ Cancelar Pedido
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

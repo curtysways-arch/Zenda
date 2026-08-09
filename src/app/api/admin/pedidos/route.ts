@@ -82,6 +82,7 @@ export async function PUT(req: Request) {
 
             if (proposedItems && Array.isArray(proposedItems)) {
                 currentExtra.proposedItems = proposedItems;
+                currentExtra.outOfStockItemsList = body.outOfStockItemsList || [];
                 currentExtra.proposedSubtotal = subtotal !== undefined ? parseFloat(subtotal) : pedido.subtotal;
                 currentExtra.proposedTotal = total !== undefined ? parseFloat(total) : pedido.total;
             }
@@ -236,23 +237,28 @@ export async function PUT(req: Request) {
         // Notificaciones Push + SSE + WhatsApp del Bot al Cliente
         try {
             const { whatsappService } = require('@/lib/whatsapp');
-            const { sseEmitter, notificationService } = require('@/lib/notifications/notificationService');
+            const { sseEmitter } = require('@/lib/notifications/notificationService');
+            const { notificationService } = require('@/lib/notifications');
 
             // Emitir evento SSE en tiempo real
-            sseEmitter.emit('realtime_event', {
-                negocioId: pedido.negocioId,
-                type: 'ESTADO_CAMBIADO',
-                title: `🔄 Pedido #${pedido.numeroPedido} Actualizado`,
-                message: `Nuevo Estado: ${estado || pedido.estado}`,
-                pedidoId: pedido.id
-            });
+            if (sseEmitter) {
+                sseEmitter.emit('realtime_event', {
+                    negocioId: pedido.negocioId,
+                    type: 'ESTADO_CAMBIADO',
+                    title: `🔄 Pedido #${pedido.numeroPedido} Actualizado`,
+                    message: `Nuevo Estado: ${estado || pedido.estado}`,
+                    pedidoId: pedido.id
+                });
+            }
 
             // Notificación Push al negocio
-            await notificationService.sendPushToBusiness(
-                pedido.negocioId,
-                `Pedido #${pedido.numeroPedido} -> ${estado || pedido.estado}`,
-                `Cliente: ${pedido.nombreCliente}`
-            ).catch(() => {});
+            if (notificationService?.sendPushToBusiness) {
+                await notificationService.sendPushToBusiness(
+                    pedido.negocioId,
+                    `Pedido #${pedido.numeroPedido} -> ${estado || pedido.estado}`,
+                    `Cliente: ${pedido.nombreCliente}`
+                ).catch(() => {});
+            }
 
             // Notificación de WhatsApp DEL BOT AL CLIENTE
             if (pedido.telefonoCliente && estado) {

@@ -137,6 +137,14 @@ export default function PedidosOnlinePage() {
             precioUnitario: it.precioUnitario
           }));
 
+        const outOfStockItemsList = outOfStockItems.map(it => ({
+          id: it.id,
+          productoId: it.productoId,
+          nombreProducto: it.nombreProducto,
+          cantidad: it.cantidad,
+          precioUnitario: it.precioUnitario
+        }));
+
         const newSubtotal = proposedItems.reduce((sum, it) => sum + (it.precioUnitario * it.cantidad), 0);
         const shippingCost = Number(pedidoTarget.costoEnvio || 0);
         const newTotal = newSubtotal + shippingCost;
@@ -149,6 +157,7 @@ export default function PedidosOnlinePage() {
             id: pedidoTarget.id,
             action: 'SOLICITAR_CAMBIOS',
             proposedItems,
+            outOfStockItemsList,
             subtotal: newSubtotal,
             total: newTotal,
             outOfStockProductIds,
