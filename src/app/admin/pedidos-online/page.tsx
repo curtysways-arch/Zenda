@@ -5,7 +5,7 @@ import {
   Globe, PackageCheck, Bike, ShoppingBag, Check, X, Clock, MapPin, Phone,
   User, Loader2, AlertCircle, RefreshCw, ChevronRight, DollarSign, Filter,
   MessageCircle, Printer, ExternalLink, Sparkles, Eye, ShieldCheck, AlertTriangle,
-  Maximize2, ArrowLeft, Truck
+  Maximize2, ArrowLeft, Truck, ChefHat, Lock
 } from 'lucide-react';
 
 interface PedidoItem {
@@ -646,17 +646,32 @@ export default function PedidosOnlinePage() {
                     </h3>
                   </div>
 
-                  <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase border ${
-                    pedido.estado === 'EN_PREPARACION'
-                      ? 'bg-blue-100 border-blue-300 text-blue-800'
-                      : pedido.estado === 'CAMBIOS_SOLICITADOS'
-                      ? 'bg-amber-100 border-amber-300 text-amber-900'
-                      : pedido.estado === 'RECIBIDO'
-                      ? 'bg-amber-400 text-slate-950 border-amber-500'
-                      : 'bg-slate-100 border-slate-200 text-slate-700'
-                  }`}>
-                    {pedido.estado}
-                  </span>
+                  <div className="flex flex-col items-end gap-1">
+                    {/* Badge de Estado en Cocina */}
+                    <span className={`px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase flex items-center gap-1 border ${
+                      (pedido.extraInfo?.kitchenStatus === 'LISTO' || pedido.estado === 'LISTO')
+                        ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                        : 'bg-amber-100 text-amber-900 border-amber-300 animate-pulse'
+                    }`}>
+                      <ChefHat className="w-3 h-3 text-amber-600" />
+                      {(pedido.extraInfo?.kitchenStatus === 'LISTO' || pedido.estado === 'LISTO') ? 'Cocina: Listo' : 'Cocina: En Preparación'}
+                    </span>
+
+                    {/* Badge de Estado General / Repartidor */}
+                    <span className={`px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase border ${
+                      pedido.estado === 'EN_PREPARACION'
+                        ? 'bg-blue-100 border-blue-300 text-blue-800'
+                        : (pedido.estado === 'REPARTIDOR_ASIGNADO' || pedido.extraInfo?.assignedDriver)
+                        ? 'bg-indigo-100 border-indigo-300 text-indigo-900'
+                        : pedido.estado === 'CAMBIOS_SOLICITADOS'
+                        ? 'bg-amber-100 border-amber-300 text-amber-900'
+                        : pedido.estado === 'RECIBIDO'
+                        ? 'bg-amber-400 text-slate-950 border-amber-500'
+                        : 'bg-slate-100 border-slate-200 text-slate-700'
+                    }`}>
+                      {pedido.estado}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Cliente */}
@@ -1039,93 +1054,155 @@ export default function PedidosOnlinePage() {
                             asgnState = 'ACEPTADO';
                           }
 
-                          return (
+                           const isKitchenFinished = order.extraInfo?.kitchenStatus === 'LISTO' || order.estado === 'LISTO';
+
+                           return (
                             <>
                               {/* SI EXISTE UNA ASIGNACIÓN O EL ESTADO INDICA REPARTIDOR ASIGNADO/EN LOCAL */}
                               {(currentAsgn || order.extraInfo?.assignedDriver || ['REPARTIDOR_EN_LOCAL', 'REPARTIDOR_ASIGNADO', 'EN_CAMINO', 'LLEGO'].includes(order.estado)) ? (
-                                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
-                                  <div className="flex items-center justify-between">
+                                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl text-white">
+                                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                                     <div className="flex items-center gap-3">
-                                      <div className="w-9 h-9 bg-blue-600 text-white rounded-full flex items-center justify-center font-black text-sm">
+                                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-2xl flex items-center justify-center font-black text-base shadow-md">
                                         {assignedDriverName.charAt(0).toUpperCase()}
                                       </div>
                                       <div>
-                                        <h4 className="font-extrabold text-slate-900 text-xs">{assignedDriverName}</h4>
-                                        <p className="text-[10px] text-slate-500 font-semibold">
-                                          {currentAsgn?.resource?.profile?.vehiculo || currentAsgn?.resource?.profile?.tipoVehiculo || 'Repartidor Oficial'}
+                                        <h4 className="font-extrabold text-white text-sm flex items-center gap-2">
+                                          {assignedDriverName}
+                                          <span className="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-md font-bold">
+                                            🛵 REPARTIDOR
+                                          </span>
+                                        </h4>
+                                        <p className="text-[11px] text-slate-400 font-semibold">
+                                          {currentAsgn?.resource?.profile?.vehiculo || currentAsgn?.resource?.profile?.tipoVehiculo || 'Vehículo de Entregas'}
                                         </p>
                                       </div>
                                     </div>
-                                    <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase ${
+                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                                       asgnState === 'ASIGNADO' || asgnState === 'PENDIENTE'
-                                        ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
+                                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse'
                                         : asgnState === 'REPARTIDOR_EN_LOCAL'
-                                        ? 'bg-amber-400 text-amber-950 border border-amber-500 font-black'
+                                        ? 'bg-amber-400 text-amber-950 font-black'
                                         : asgnState === 'ACEPTADO'
-                                        ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                                         : asgnState === 'EN_RUTA'
-                                        ? 'bg-blue-100 text-blue-900 border border-blue-300'
-                                        : 'bg-slate-200 text-slate-800'
+                                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                                        : 'bg-slate-800 text-slate-300'
                                     }`}>
                                       {asgnState === 'ASIGNADO' || asgnState === 'PENDIENTE'
-                                        ? '⏳ PENDIENTE DE ACEPTACIÓN' 
+                                        ? '⏳ PENDIENTE ACEPTACIÓN' 
                                         : asgnState === 'REPARTIDOR_EN_LOCAL' 
-                                        ? '📍 REPARTIDOR EN LOCAL' 
+                                        ? '📍 LLEGÓ AL LOCAL' 
                                         : asgnState === 'ACEPTADO'
-                                        ? '✅ REPARTIDOR ASIGNADO'
+                                        ? '✅ ASIGNADO'
                                         : asgnState}
+                                    </span>
+                                  </div>
+
+                                  {/* INDICADOR DE ESTADO DE COCINA */}
+                                  <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-xs">
+                                    <div className="flex items-center gap-2">
+                                      <ChefHat className={`w-4 h-4 ${isKitchenFinished ? 'text-emerald-400' : 'text-amber-400 animate-pulse'}`} />
+                                      <span className="font-extrabold text-slate-200">Estado en Cocina:</span>
+                                    </div>
+                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                                      isKitchenFinished 
+                                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                                        : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                    }`}>
+                                      {isKitchenFinished ? '✅ LISTO EN COCINA' : '🍳 EN PREPARACIÓN'}
                                     </span>
                                   </div>
 
                                   {/* MENSAJES AUTOMÁTICOS DE ESTADO DEL REPARTIDOR */}
                                   {(asgnState === 'ASIGNADO' || asgnState === 'PENDIENTE') && (
-                                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs space-y-2">
-                                      <div className="flex items-center gap-2 text-amber-900 font-bold">
-                                        <Loader2 className="w-4 h-4 text-amber-600 animate-spin shrink-0" />
+                                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3 text-xs space-y-2">
+                                      <div className="flex items-center gap-2 text-amber-300 font-bold">
+                                        <Loader2 className="w-4 h-4 text-amber-400 animate-spin shrink-0" />
                                         <span>Esperando a que el repartidor acepte la orden en su app...</span>
                                       </div>
-                                      <p className="text-[11px] text-amber-800 font-medium">
+                                      <p className="text-[11px] text-amber-400/80 font-medium">
                                         Se notificó a {assignedDriverName}. En cuanto presione Aceptar, verás la actualización en vivo.
                                       </p>
                                     </div>
                                   )}
 
                                   {asgnState === 'ACEPTADO' && (
-                                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs space-y-2">
-                                      <div className="flex items-center gap-2 text-emerald-900 font-bold">
-                                        <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 text-xs space-y-3">
+                                      <div className="flex items-center gap-2 text-emerald-300 font-bold">
+                                        <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                                         <span>✅ ¡El repartidor {assignedDriverName} ACEPTÓ el pedido!</span>
                                       </div>
-                                      <p className="text-[11px] text-emerald-800 font-medium">
+                                      <p className="text-[11px] text-emerald-400/80 font-medium">
                                         El repartidor va en camino al local para retirar la orden.
                                       </p>
+
+                                      {!isKitchenFinished && (
+                                        <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[11px] text-amber-300 font-medium flex items-start gap-2">
+                                          <ChefHat className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 animate-pulse" />
+                                          <span>🔒 Cocina aún está preparando los platos. El botón de despacho se activará automáticamente cuando la cocina marque "Listo".</span>
+                                        </div>
+                                      )}
+
                                       <button
                                         type="button"
                                         onClick={() => handleUpdateAssignmentStatus(currentAsgn?.id, order.id, 'EN_RUTA')}
-                                        disabled={processingId === order.id}
-                                        className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase shadow-md cursor-pointer flex items-center justify-center gap-2"
+                                        disabled={processingId === order.id || !isKitchenFinished}
+                                        className={`w-full py-3.5 rounded-2xl text-xs font-black uppercase shadow-lg flex items-center justify-center gap-2 transition-all ${
+                                          isKitchenFinished
+                                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white cursor-pointer active:scale-98 shadow-blue-500/20'
+                                            : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                                        }`}
                                       >
-                                        <Truck className="w-4 h-4" /> Despachar (Enviar en Ruta al Cliente)
+                                        {isKitchenFinished ? (
+                                          <>
+                                            <Truck className="w-4 h-4" /> Despachar (Enviar en Ruta al Cliente)
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Lock className="w-4 h-4 text-amber-400" /> En Cocina (Despacho Bloqueado)
+                                          </>
+                                        )}
                                       </button>
                                     </div>
                                   )}
 
                                   {asgnState === 'REPARTIDOR_EN_LOCAL' && (
-                                    <div className="bg-amber-50 border border-amber-300 rounded-xl p-3 text-xs space-y-2">
-                                      <div className="flex items-center gap-2 text-amber-900 font-extrabold">
-                                        <Check className="w-4 h-4 text-amber-600 shrink-0" />
+                                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 text-xs space-y-3">
+                                      <div className="flex items-center gap-2 text-amber-300 font-extrabold">
+                                        <Check className="w-4 h-4 text-amber-400 shrink-0" />
                                         <span>📍 ¡El repartidor {assignedDriverName} YA LLEGÓ al local!</span>
                                       </div>
-                                      <p className="text-[11px] text-amber-800 font-medium">
+                                      <p className="text-[11px] text-amber-400/80 font-medium">
                                         El repartidor está en la entrada esperando la comanda lista para entregar.
                                       </p>
+
+                                      {!isKitchenFinished && (
+                                        <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[11px] text-amber-300 font-medium flex items-start gap-2">
+                                          <ChefHat className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 animate-pulse" />
+                                          <span>🔒 Cocina aún está preparando los platos. El botón de despacho se activará cuando cocina marque "Listo".</span>
+                                        </div>
+                                      )}
+
                                       <button
                                         type="button"
                                         onClick={() => handleUpdateAssignmentStatus(currentAsgn?.id, order.id, 'EN_RUTA')}
-                                        disabled={processingId === order.id}
-                                        className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase shadow-md cursor-pointer flex items-center justify-center gap-2"
+                                        disabled={processingId === order.id || !isKitchenFinished}
+                                        className={`w-full py-3.5 rounded-2xl text-xs font-black uppercase shadow-lg flex items-center justify-center gap-2 transition-all ${
+                                          isKitchenFinished
+                                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white cursor-pointer active:scale-98 shadow-blue-500/20'
+                                            : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                                        }`}
                                       >
-                                        <Truck className="w-4 h-4" /> Despachar (Enviar en Ruta al Cliente)
+                                        {isKitchenFinished ? (
+                                          <>
+                                            <Truck className="w-4 h-4" /> Despachar (Enviar en Ruta al Cliente)
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Lock className="w-4 h-4 text-amber-400" /> En Cocina (Despacho Bloqueado)
+                                          </>
+                                        )}
                                       </button>
                                     </div>
                                   )}
