@@ -139,7 +139,7 @@ export async function PUT(req: Request) {
             updateData.estado = estado;
         }
 
-        // 5. ACCIÓN FINANCIERA INDEPENDIENTE: CONFIRMAR DEVOLUCIÓN DE REEMBOLSO (OrderPayment.estado = REEMBOLSADO)
+        // 5. ACCIÓN FINANCIERA INDEPENDIENTE: CONFIRMAR DEVOLUCIÓN O REGISTRAR REEMBOLSO
         if (action === 'CONFIRMAR_DEVOLUCION') {
             if (pedido.payment) {
                 await (prisma as any).orderPayment.update({
@@ -158,6 +158,20 @@ export async function PUT(req: Request) {
             currentExtra.refundCompleted = true;
             currentExtra.montoExcedente = 0;
             currentExtra.paymentStatus = 'REEMBOLSADO';
+        } else if (action === 'REGISTRAR_REEMBOLSO_PENDIENTE') {
+            const amount = parseFloat(body.montoReembolso || 0);
+            if (pedido.payment) {
+                await (prisma as any).orderPayment.update({
+                    where: { id: pedido.payment.id },
+                    data: {
+                        montoExcedente: amount,
+                        estado: 'REEMBOLSO_PENDIENTE'
+                    }
+                });
+            }
+            currentExtra.montoExcedente = amount;
+            currentExtra.paymentStatus = 'REEMBOLSO_PENDIENTE';
+            currentExtra.refundCompleted = false;
         }
 
         if (franjaHoraria) updateData.franjaHoraria = franjaHoraria;

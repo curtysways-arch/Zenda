@@ -70,6 +70,8 @@ export default function PedidosOnlinePage() {
   const [refundMethod, setRefundMethod] = useState<string>('TRANSFERENCIA');
   const [refundRef, setRefundRef] = useState<string>('');
   const [refundNotes, setRefundNotes] = useState<string>('');
+  const [showCustomRefundInput, setShowCustomRefundInput] = useState(false);
+  const [customRefundAmount, setCustomRefundAmount] = useState('');
 
   const fetchLogisticsData = async () => {
     try {
@@ -451,6 +453,33 @@ export default function PedidosOnlinePage() {
     }
   };
 
+  const handleRegisterCustomRefund = async (pedidoId: string) => {
+    const amt = parseFloat(customRefundAmount || '0');
+    if (!amt || amt <= 0) {
+      alert('Por favor ingresa un monto válido mayor a $0.00');
+      return;
+    }
+    setProcessingId(pedidoId);
+    try {
+      await fetch('/api/admin/pedidos', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: pedidoId,
+          action: 'REGISTRAR_REEMBOLSO_PENDIENTE',
+          montoReembolso: amt
+        })
+      });
+      setShowCustomRefundInput(false);
+      setCustomRefundAmount('');
+      await fetchOnlineOrders();
+    } catch (e) {
+      console.error('Error registrando reembolso manual:', e);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const openWhatsApp = (phone: string, nombre: string, orderId: string, customMsg?: string) => {
     const cleanPhone = phone.replace(/\D/g, '');
     const formattedPhone = cleanPhone.startsWith('0') ? `593${cleanPhone.slice(1)}` : cleanPhone;
@@ -496,15 +525,26 @@ export default function PedidosOnlinePage() {
     printWindow.print();
   };
 
-  // Helper para detectar cualquier discrepancia/excedente de pago o reembolso pendiente
+  // Helper para detectar cualquier discrepancia/excedente de pago o reembolso pendiente (3 capas)
   const getRefundDetails = (p: any) => {
     const extra = typeof p.extraInfo === 'string' ? (() => { try { return JSON.parse(p.extraInfo); } catch(_) { return {}; } })() : (p.extraInfo || {});
     const paymentState = (p.payment?.estado || extra.paymentStatus || '').toUpperCase();
     
+    // 1. Excedente explícito grabado en DB o extraInfo
     const dbExcedente = Number(p.payment?.montoExcedente || extra.montoExcedente || 0);
+
+    // 2. Excedente derivado de productos eliminados o marcados sin stock en pedido pagado
+    const isPaymentConfirmed = paymentState === 'CONFIRMADO' || paymentState === 'PAGO_VERIFICADO' || paymentState === 'REEMBOLSO_PENDIENTE';
+    const outOfStockItemsList = Array.isArray(extra.outOfStockItemsList) ? extra.outOfStockItemsList : [];
+    const outOfStockTotal = isPaymentConfirmed ? outOfStockItemsList.reduce((sum: number, it: any) => {
+      return sum + ((Number(it.precioUnitario || it.precio) || 0) * (Number(it.cantidad) || 1));
+    }, 0) : 0;
+
+    // 3. Diferencia matemática entre lo pagado / evidencias y el total actual
     const currentTotal = Number(p.total || 0);
-    const originalTotal = Number(extra.originalTotal || extra.montoPagado || 0);
-    const montoPagado = Number(p.payment?.montoPagado || extra.montoPagado || (originalTotal > currentTotal ? originalTotal : (dbExcedente > 0 ? currentTotal + dbExcedente : 0)));
+    const evidenceTotal = (p.payment?.evidences || []).reduce((sum: number, ev: any) => sum + (Number(ev.monto) || 0), 0);
+    const montoPagado = Number(p.payment?.montoPagado || extra.montoPagado || (evidenceTotal > 0 ? evidenceTotal : 0));
+    const originalTotal = Number(extra.originalTotal || extra.proposedTotal || (montoPagado > currentTotal ? montoPagado : 0));
 
     let calculatedExcedente = 0;
     if (montoPagado > 0 && currentTotal > 0 && montoPagado > currentTotal + 0.01) {
@@ -513,14 +553,16 @@ export default function PedidosOnlinePage() {
       calculatedExcedente = Number((originalTotal - currentTotal).toFixed(2));
     }
 
-    const finalExcedente = Math.max(dbExcedente, calculatedExcedente);
+    const finalExcedente = Math.max(dbExcedente, outOfStockTotal, calculatedExcedente);
     const isRefunded = paymentState === 'REEMBOLSADO' || Boolean(extra.refundCompleted);
     const hasRefund = !isRefunded && (paymentState === 'REEMBOLSO_PENDIENTE' || finalExcedente > 0.01);
 
+    const effectivePaid = montoPagado > 0 ? montoPagado : (originalTotal > 0 ? originalTotal : (currentTotal + finalExcedente));
+
     return {
       hasRefund,
-      excedente: finalExcedente,
-      montoPagado: montoPagado > 0 ? montoPagado : (currentTotal + finalExcedente),
+      excedente: Number(finalExcedente.toFixed(2)),
+      montoPagado: Number(effectivePaid.toFixed(2)),
       currentTotal
     };
   };
@@ -1497,6 +1539,56 @@ export default function PedidosOnlinePage() {
                                   <span>Confirmar Devolución al Cliente (${fsRefundInfo.excedente.toFixed(2)})</span>
                                 </button>
                               </div>
+                            </div>
+                          );
+                        })()}
+
+                        {/* REGISTRAR REEMBOLSO MANUAL SI HACE FALTA */}
+                        {(() => {
+                          const fsRefundInfo = getRefundDetails(order);
+                          if (fsRefundInfo.hasRefund) return null;
+                          return (
+                            <div className="pt-2 border-t border-slate-100">
+                              {!showCustomRefundInput ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setShowCustomRefundInput(true)}
+                                  className="text-[11px] font-black text-rose-600 hover:text-rose-800 underline flex items-center gap-1 cursor-pointer"
+                                >
+                                  💸 ¿Este pedido requiere devolución/reembolso? Registrar monto manual
+                                </button>
+                              ) : (
+                                <div className="bg-rose-50 border border-rose-200 p-3.5 rounded-2xl space-y-2 text-xs">
+                                  <label className="text-[10px] font-black uppercase text-rose-900 block">
+                                    Monto a Reembolsar al Cliente ($)
+                                  </label>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      value={customRefundAmount}
+                                      onChange={e => setCustomRefundAmount(e.target.value)}
+                                      placeholder="Ej: 6.00"
+                                      className="p-2.5 bg-white border border-rose-300 rounded-xl text-xs font-black text-slate-900 flex-1"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRegisterCustomRefund(order.id)}
+                                      disabled={processingId === order.id}
+                                      className="px-3.5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-black text-xs cursor-pointer shadow-sm"
+                                    >
+                                      Guardar
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowCustomRefundInput(false)}
+                                      className="px-2 py-2 text-slate-500 font-bold text-xs cursor-pointer"
+                                    >
+                                      Cancelar
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           );
                         })()}
