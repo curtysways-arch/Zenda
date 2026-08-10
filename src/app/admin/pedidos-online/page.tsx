@@ -496,11 +496,40 @@ export default function PedidosOnlinePage() {
     printWindow.print();
   };
 
+  // Helper para detectar cualquier discrepancia/excedente de pago o reembolso pendiente
+  const getRefundDetails = (p: any) => {
+    const extra = typeof p.extraInfo === 'string' ? (() => { try { return JSON.parse(p.extraInfo); } catch(_) { return {}; } })() : (p.extraInfo || {});
+    const paymentState = (p.payment?.estado || extra.paymentStatus || '').toUpperCase();
+    
+    const dbExcedente = Number(p.payment?.montoExcedente || extra.montoExcedente || 0);
+    const currentTotal = Number(p.total || 0);
+    const originalTotal = Number(extra.originalTotal || extra.montoPagado || 0);
+    const montoPagado = Number(p.payment?.montoPagado || extra.montoPagado || (originalTotal > currentTotal ? originalTotal : (dbExcedente > 0 ? currentTotal + dbExcedente : 0)));
+
+    let calculatedExcedente = 0;
+    if (montoPagado > 0 && currentTotal > 0 && montoPagado > currentTotal + 0.01) {
+      calculatedExcedente = Number((montoPagado - currentTotal).toFixed(2));
+    } else if (originalTotal > 0 && currentTotal > 0 && originalTotal > currentTotal + 0.01) {
+      calculatedExcedente = Number((originalTotal - currentTotal).toFixed(2));
+    }
+
+    const finalExcedente = Math.max(dbExcedente, calculatedExcedente);
+    const isRefunded = paymentState === 'REEMBOLSADO' || Boolean(extra.refundCompleted);
+    const hasRefund = !isRefunded && (paymentState === 'REEMBOLSO_PENDIENTE' || finalExcedente > 0.01);
+
+    return {
+      hasRefund,
+      excedente: finalExcedente,
+      montoPagado: montoPagado > 0 ? montoPagado : (currentTotal + finalExcedente),
+      currentTotal
+    };
+  };
+
   // Filtrar pedidos por estado
   const filteredOrders = pedidos.filter(p => {
     if (filterState === 'PENDING') return p.estado === 'RECIBIDO' || p.estado === 'CAMBIOS_SOLICITADOS';
     if (filterState === 'PREPARING') return ['ACEPTADO', 'EN_PREPARACION', 'LISTO', 'LISTA', 'ASIGNADO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ESPERANDO_REPARTIDOR', 'LLEGO', 'EN_CAMINO', 'EN_RUTA'].includes(p.estado);
-    if (filterState === 'REFUNDS') return p.payment?.estado === 'REEMBOLSO_PENDIENTE' || Number(p.payment?.montoExcedente || 0) > 0;
+    if (filterState === 'REFUNDS') return getRefundDetails(p).hasRefund;
     
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -513,7 +542,7 @@ export default function PedidosOnlinePage() {
     return true;
   });
 
-  const pendingRefundsCount = pedidos.filter(p => p.payment?.estado === 'REEMBOLSO_PENDIENTE').length;
+  const pendingRefundsCount = pedidos.filter(p => getRefundDetails(p).hasRefund).length;
   const outOfStockCount = pedidos.filter(p => p.estadoDisponibilidad === 'CAMBIOS_SOLICITADOS').length;
 
   return (
@@ -624,7 +653,8 @@ export default function PedidosOnlinePage() {
             const isProdConfirmed = (pedido.estadoDisponibilidad || pedido.extraInfo?.estadoDisponibilidad) === 'PRODUCTOS_CONFIRMADOS' || (pedido.estadoDisponibilidad || pedido.extraInfo?.estadoDisponibilidad) === 'CAMBIOS_ACEPTADOS';
             const isPaymentVerified = pedido.payment?.estado === 'PAGO_VERIFICADO' || pedido.payment?.estado === 'CONFIRMADO';
             const canAcceptOrder = isProdConfirmed && isPaymentVerified && ['RECIBIDO', 'PENDIENTE', 'PRODUCTOS_CONFIRMADOS', 'CAMBIOS_ACEPTADOS'].includes(pedido.estado);
-            const hasPendingRefund = pedido.payment?.estado === 'REEMBOLSO_PENDIENTE';
+            const refundInfo = getRefundDetails(pedido);
+            const hasPendingRefund = refundInfo.hasRefund;
 
             return (
               <div
@@ -632,7 +662,7 @@ export default function PedidosOnlinePage() {
                 onClick={() => handleOpenFullscreenOrder(pedido)}
                 className={`bg-white rounded-3xl p-5 border shadow-sm space-y-3.5 transition-all hover:shadow-xl hover:scale-[1.01] cursor-pointer relative text-left group ${
                   hasPendingRefund 
-                    ? 'border-rose-300 bg-rose-50/30' 
+                    ? 'border-rose-300 bg-rose-50/40 ring-2 ring-rose-400/30' 
                     : pedido.estado === 'RECIBIDO' 
                     ? 'border-amber-300 ring-2 ring-amber-400/20' 
                     : 'border-slate-200'
@@ -736,11 +766,17 @@ export default function PedidosOnlinePage() {
                   </div>
 
                   {hasPendingRefund && (
-                    <div className="p-2.5 rounded-xl bg-rose-100 border border-rose-300 text-rose-900 text-xs space-y-1.5 animate-pulse">
+                    <div className="p-3 rounded-2xl bg-rose-100 border border-rose-300 text-rose-950 text-xs space-y-1 shadow-sm">
                       <div className="flex items-center justify-between font-black">
-                        <span>🔴 REEMBOLSO PENDIENTE:</span>
-                        <span className="text-sm">${(Number(pedido.payment?.montoExcedente) || 0).toFixed(2)}</span>
+                        <span className="flex items-center gap-1.5 text-rose-900">
+                          <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 animate-bounce" />
+                          🔴 REEMBOLSO PENDIENTE:
+                        </span>
+                        <span className="text-sm font-mono font-black text-rose-700">${refundInfo.excedente.toFixed(2)}</span>
                       </div>
+                      <p className="text-[10px] text-rose-800 font-bold">
+                        Cobrado: ${refundInfo.montoPagado.toFixed(2)} ➔ Nuevo Total: ${refundInfo.currentTotal.toFixed(2)}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -1418,41 +1454,52 @@ export default function PedidosOnlinePage() {
                         </div>
 
                         {/* GESTIÓN DE REEMBOLSO INDEPENDIENTE (SI APLICA) */}
-                        {hasPendingRefund && (
-                          <div className="bg-rose-50 p-4 rounded-2xl border border-rose-200 space-y-3 text-xs">
-                            <div className="flex items-center justify-between font-black text-rose-950">
-                              <span>🔴 REEMBOLSO PENDIENTE:</span>
-                              <span className="text-base text-rose-600">${(Number(order.payment?.montoExcedente) || 0).toFixed(2)}</span>
-                            </div>
+                        {(() => {
+                          const fsRefundInfo = getRefundDetails(order);
+                          if (!fsRefundInfo.hasRefund) return null;
+                          return (
+                            <div className="bg-rose-50 p-4 rounded-2xl border border-rose-200 space-y-3 text-xs">
+                              <div className="flex items-center justify-between font-black text-rose-950">
+                                <span className="flex items-center gap-1.5 text-rose-900 font-extrabold">
+                                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                                  🔴 REEMBOLSO PENDIENTE AL CLIENTE:
+                                </span>
+                                <span className="text-base text-rose-700 font-mono font-black">${fsRefundInfo.excedente.toFixed(2)}</span>
+                              </div>
+                              <p className="text-[11px] text-rose-800 font-bold">
+                                Cobrado: ${fsRefundInfo.montoPagado.toFixed(2)} ➔ Nuevo Total: ${fsRefundInfo.currentTotal.toFixed(2)}
+                              </p>
 
-                            <div className="space-y-2">
-                              <select
-                                value={refundMethod}
-                                onChange={e => setRefundMethod(e.target.value)}
-                                className="w-full p-2 bg-white border border-rose-200 rounded-xl font-bold text-xs"
-                              >
-                                <option value="TRANSFERENCIA">Transferencia Bancaria</option>
-                                <option value="EFECTIVO">Efectivo en Caja</option>
-                                <option value="OTRO">Otro Método</option>
-                              </select>
-                              <input
-                                type="text"
-                                value={refundRef}
-                                onChange={e => setRefundRef(e.target.value)}
-                                placeholder="Nº Comprobante devolución..."
-                                className="w-full p-2 bg-white border border-rose-200 rounded-xl font-semibold text-xs"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleConfirmRefund(order)}
-                                disabled={processingId === order.id}
-                                className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-black text-xs uppercase rounded-xl shadow-md transition-all cursor-pointer"
-                              >
-                                Confirmar Devolución ($3.00)
-                              </button>
+                              <div className="space-y-2 pt-1">
+                                <select
+                                  value={refundMethod}
+                                  onChange={e => setRefundMethod(e.target.value)}
+                                  className="w-full p-2.5 bg-white border border-rose-200 rounded-xl font-bold text-xs text-slate-800"
+                                >
+                                  <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+                                  <option value="EFECTIVO">Efectivo en Caja</option>
+                                  <option value="OTRO">Otro Método</option>
+                                </select>
+                                <input
+                                  type="text"
+                                  value={refundRef}
+                                  onChange={e => setRefundRef(e.target.value)}
+                                  placeholder="Nº Comprobante o ref. de devolución..."
+                                  className="w-full p-2.5 bg-white border border-rose-200 rounded-xl font-semibold text-xs text-slate-800"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleConfirmRefund(order)}
+                                  disabled={processingId === order.id}
+                                  className="w-full py-3 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-black text-xs uppercase rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                                >
+                                  <Check className="w-4 h-4" />
+                                  <span>Confirmar Devolución al Cliente (${fsRefundInfo.excedente.toFixed(2)})</span>
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          );
+                        })()}
                       </>
                     )}
                   </div>

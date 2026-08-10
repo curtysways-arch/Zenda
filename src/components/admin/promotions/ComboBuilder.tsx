@@ -28,9 +28,14 @@ export default function ComboBuilder({
   const finalComboImage = imagenUrl || firstProductImage;
 
   const toggleSelectProduct = (id: string) => {
-    setSelectedProductIds(prev => 
-      prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]
-    );
+    setSelectedProductIds(prev => {
+      const nextIds = prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id];
+      const sel = products.filter(p => nextIds.includes(p.id));
+      if (sel.length > 0) {
+        setComboDescription(`Incluye: ${sel.map(p => p.nombre).join(' + ')}`);
+      }
+      return nextIds;
+    });
   };
 
   const handleSave = () => {
@@ -39,9 +44,13 @@ export default function ComboBuilder({
       return;
     }
 
+    const finalDesc = comboDescription && comboDescription !== 'Plato Principal + Acompañante + Bebida a precio especial.' 
+      ? comboDescription 
+      : (selectedProducts.length > 0 ? `Incluye: ${selectedProducts.map(p => p.nombre).join(' + ')}` : comboDescription);
+
     onSaveCombo({
       titulo: comboName,
-      descripcion: comboDescription,
+      descripcion: finalDesc,
       tipoPromo: 'COMBO',
       precioPromo: comboPrice,
       precioAnterior: normalTotalPrice > 0 ? normalTotalPrice : undefined,

@@ -217,8 +217,26 @@ export default function PromotionsSection({
                                         <h4 className="text-xs sm:text-sm font-black text-slate-800 leading-snug uppercase tracking-tight line-clamp-1">
                                             {promo.titulo}
                                         </h4>
-                                        <p className="text-[10px] sm:text-[11px] text-slate-400 font-bold leading-snug line-clamp-1">
-                                            {promo.descripcion || "Relájate y ahorra en tus próximas reservas."}
+                                        <p className="text-[10px] sm:text-[11px] text-amber-950 font-bold leading-snug line-clamp-2 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-lg mt-1">
+                                            {(() => {
+                                                let displayDesc = promo.descripcion || '';
+                                                if (Array.isArray(promo.productosRelacionados) && promo.productosRelacionados.length > 0) {
+                                                    const names = promo.productosRelacionados.map((id: string) => (promo.services || []).find((s: any) => s.id === id || s.nombre === id)?.nombre).filter(Boolean);
+                                                    if (names.length > 0) {
+                                                        return `Incluye: ${names.join(' + ')}`;
+                                                    }
+                                                }
+                                                if (!displayDesc || displayDesc === 'Plato Principal + Acompañante + Bebida a precio especial.') {
+                                                    if (promo.titulo?.toLowerCase().includes('dúo') || promo.titulo?.toLowerCase().includes('duo')) {
+                                                        return 'Incluye: 2x Hamburguesas Especiales + 1x Papas Fritas Grandes + 2x Bebidas 500ml';
+                                                    } else if (promo.titulo?.toLowerCase().includes('familiar')) {
+                                                        return 'Incluye: 1x Costillas BBQ (500g) + 2x Papas Rústicas + Ensalada + 1.5L Gaseosa';
+                                                    } else if (promo.tipoPromo === 'COMBO') {
+                                                        return 'Incluye: 1x Plato Fuerte + 1x Porción de Acompañamiento + 1x Bebida Personal';
+                                                    }
+                                                }
+                                                return displayDesc || 'Incluye: Combo especial de casa + Bebida';
+                                            })()}
                                         </p>
                                     </div>
                                 </div>

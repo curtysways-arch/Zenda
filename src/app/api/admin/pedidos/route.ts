@@ -140,19 +140,24 @@ export async function PUT(req: Request) {
         }
 
         // 5. ACCIÓN FINANCIERA INDEPENDIENTE: CONFIRMAR DEVOLUCIÓN DE REEMBOLSO (OrderPayment.estado = REEMBOLSADO)
-        if (action === 'CONFIRMAR_DEVOLUCION' && pedido.payment) {
-            await (prisma as any).orderPayment.update({
-                where: { id: pedido.payment.id },
-                data: {
-                    estado: 'REEMBOLSADO',
-                    metodoDevolucion: metodoDevolucion || 'TRANSFERENCIA',
-                    referenciaDevolucion: referenciaDevolucion || null,
-                    observacionDevolucion: observacionDevolucion || null,
-                    devolucionAt: new Date(),
-                    devolucionUser: (session.user as any).name || (session.user as any).email || 'Administrador'
-                }
-            });
-            // NOTA: El estado del pedido no se modifica en lo absoluto para preservar el flujo operativo.
+        if (action === 'CONFIRMAR_DEVOLUCION') {
+            if (pedido.payment) {
+                await (prisma as any).orderPayment.update({
+                    where: { id: pedido.payment.id },
+                    data: {
+                        estado: 'REEMBOLSADO',
+                        montoExcedente: 0,
+                        metodoDevolucion: metodoDevolucion || 'TRANSFERENCIA',
+                        referenciaDevolucion: referenciaDevolucion || null,
+                        observacionDevolucion: observacionDevolucion || null,
+                        devolucionAt: new Date(),
+                        devolucionUser: (session.user as any).name || (session.user as any).email || 'Administrador'
+                    }
+                });
+            }
+            currentExtra.refundCompleted = true;
+            currentExtra.montoExcedente = 0;
+            currentExtra.paymentStatus = 'REEMBOLSADO';
         }
 
         if (franjaHoraria) updateData.franjaHoraria = franjaHoraria;

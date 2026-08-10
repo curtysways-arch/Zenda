@@ -23,13 +23,34 @@ function extractMetadata(p: any, productsMap: Map<string, any>) {
     ? p.imagenUrl 
     : (linkedProduct?.imagenUrl || '');
 
+  const productosRelacionados = meta.productosRelacionados || [];
+  let detailedItemsStr = '';
+  if (Array.isArray(productosRelacionados) && productosRelacionados.length > 0) {
+    const names = productosRelacionados.map((id: string) => productsMap.get(id)?.nombre).filter(Boolean);
+    if (names.length > 0) {
+      detailedItemsStr = `Incluye: ${names.join(' + ')}`;
+    }
+  }
+
+  if (!cleanDesc || cleanDesc === 'Plato Principal + Acompañante + Bebida a precio especial.') {
+    if (detailedItemsStr) {
+      cleanDesc = detailedItemsStr;
+    } else if (p.titulo?.toLowerCase().includes('dúo') || p.titulo?.toLowerCase().includes('duo')) {
+      cleanDesc = 'Incluye: 2x Hamburguesas Especiales + 1x Papas Fritas Grandes + 2x Bebidas 500ml';
+    } else if (p.titulo?.toLowerCase().includes('familiar')) {
+      cleanDesc = 'Incluye: 1x Costillas BBQ (500g) + 2x Papas Rústicas + Ensalada + 1.5L Gaseosa';
+    } else if (p.tipoPromo === 'COMBO') {
+      cleanDesc = 'Incluye: 1x Plato Fuerte + 1x Porción de Acompañamiento + 1x Bebida Personal';
+    }
+  }
+
   return {
     ...p,
     descripcion: cleanDesc,
     imagenUrl: finalImagenUrl,
     productoRequeridoId,
     categoriaRequeridaId: meta.categoriaRequeridaId || null,
-    productosRelacionados: meta.productosRelacionados || [],
+    productosRelacionados,
     cuponCodigo: meta.cuponCodigo || null,
     canales: meta.canales || ['POS', 'MESEROS', 'DELIVERY', 'PICKUP', 'LANDING'],
     montoMinimo: meta.montoMinimo || 0,
