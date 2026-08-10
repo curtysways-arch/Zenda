@@ -49,13 +49,60 @@ export default function PromotionBuilder({
   const [usosPorClienteMaximo, setUsosPorClienteMaximo] = useState<number | undefined>(initialData?.usosPorClienteMaximo);
   const [presupuestoMaximo, setPresupuestoMaximo] = useState<number | undefined>(initialData?.presupuestoMaximo);
   const [esCombinable, setEsCombinable] = useState<boolean>(initialData?.esCombinable || false);
+  const [imagenUrl, setImagenUrl] = useState<string>(initialData?.imagenUrl || '');
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>(initialData?.productosRelacionados || []);
 
   // Alerta de Rentabilidad (Calculada)
-  const samplePrice = 15.00;
-  const sampleDiscount = tipoPromo === 'PORCENTAJE' ? (samplePrice * (precioPromo / 100)) : (precioPromo || 3);
+  const selectedProduct = products.find(p => p.id === productoRequeridoId);
+  const samplePrice = selectedProduct ? Number(selectedProduct.precio) || 15 : (precioAnterior || 15.00);
+  const sampleDiscount = (tipoPromo === 'DOS_POR_UNO' || tipoPromo === '2X1') ? (samplePrice / 2) : (tipoPromo === 'PORCENTAJE' ? (samplePrice * (precioPromo / 100)) : (precioPromo || 3));
   const finalSamplePrice = Math.max(0, samplePrice - sampleDiscount);
-  const sampleMargin = (finalSamplePrice / samplePrice) * 100;
+  const sampleMargin = samplePrice > 0 ? (finalSamplePrice / samplePrice) * 100 : 50;
   const isLowMarginAlert = sampleMargin < 50;
+
+  // Auto-ajustar titulo, precios e imagen al cambiar producto o tipo de promo
+  const handleSelectProduct = (productId: string) => {
+    setProductoRequeridoId(productId);
+    if (!productId) return;
+
+    const foundProd = products.find(p => p.id === productId);
+    if (foundProd) {
+      const basePrice = Number(foundProd.precio) || 0;
+      if (!imagenUrl && foundProd.imagenUrl) {
+        setImagenUrl(foundProd.imagenUrl);
+      }
+
+      if (tipoPromo === 'DOS_POR_UNO' || tipoPromo === '2X1') {
+        setTitulo(`🔥 2x1 en ${foundProd.nombre}`);
+        setDescripcion(`Pide 1 de esta oferta y se añadirán 2 ${foundProd.nombre} al carrito por el precio de 1.`);
+        setPrecioPromo(basePrice);
+        setPrecioAnterior(basePrice * 2);
+      } else if (tipoPromo === 'PORCENTAJE') {
+        setTitulo(`🔥 ${precioPromo || 15}% OFF en ${foundProd.nombre}`);
+        setDescripcion(`Disfruta de descuento especial en ${foundProd.nombre}.`);
+        setPrecioAnterior(basePrice);
+        setPrecioPromo(precioPromo || 15);
+      } else {
+        setTitulo(`🔥 Oferta Especial en ${foundProd.nombre}`);
+        setPrecioAnterior(basePrice);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (productoRequeridoId) {
+      const foundProd = products.find(p => p.id === productoRequeridoId);
+      if (foundProd) {
+        const basePrice = Number(foundProd.precio) || 0;
+        if (tipoPromo === 'DOS_POR_UNO' || tipoPromo === '2X1') {
+          setTitulo(`🔥 2x1 en ${foundProd.nombre}`);
+          setDescripcion(`Pide 1 de esta oferta y se añadirán 2 ${foundProd.nombre} al carrito por el precio de 1.`);
+          setPrecioPromo(basePrice);
+          setPrecioAnterior(basePrice * 2);
+        }
+      }
+    }
+  }, [tipoPromo, productoRequeridoId]);
 
   // Aplicar Presets de Objetivos
   const applyPreset = (presetKey: string) => {
@@ -218,19 +265,7 @@ export default function PromotionBuilder({
             </label>
             <select
               value={productoRequeridoId}
-              onChange={e => {
-                const selectedId = e.target.value;
-                setProductoRequeridoId(selectedId);
-                if (selectedId) {
-                  const foundProd = products.find(p => p.id === selectedId);
-                  if (foundProd) {
-                    setPrecioAnterior(Number(foundProd.precio) || 0);
-                    if (!titulo || titulo.startsWith('🔥') || titulo.startsWith('🍔')) {
-                      setTitulo(`🔥 Promoción en ${foundProd.nombre}`);
-                    }
-                  }
-                }
-              }}
+              onChange={e => handleSelectProduct(e.target.value)}
               className="w-full p-3 bg-white border border-amber-300 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs"
             >
               <option value="">-- Todos los Productos (Global) --</option>

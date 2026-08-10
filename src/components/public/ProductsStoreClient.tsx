@@ -328,9 +328,84 @@ export default function ProductsStoreClient({ negocio }: Props) {
                 console.error("Error al cargar datos bancarios:", e);
             }
         };
+        const fetchPromos = async () => {
+            try {
+                const res = await fetch(`/api/public/${negocio.slug}/promotions`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.promotions) setActivePromotions(data.promotions);
+                }
+            } catch (e) {
+                console.error("Error al cargar promociones:", e);
+            }
+        };
         fetchCatalogue();
         fetchBankDetails();
+        fetchPromos();
     }, [negocio.slug]);
+
+    const [activePromotions, setActivePromotions] = useState<any[]>([]);
+
+    const handleOrderPromotion = (promo: any) => {
+        if (isStoreClosed) {
+            alert('El local se encuentra cerrado en este momento. No es posible añadir productos al carrito.');
+            return;
+        }
+
+        const t = (promo.tipoPromo || '').toUpperCase();
+        
+        // Si es 2x1 en un producto específico
+        if ((t === 'DOS_POR_UNO' || t === '2X1') && promo.productoRequeridoId) {
+            const prod = products.find(p => p.id === promo.productoRequeridoId);
+            if (prod) {
+                let newCart: CartItem[] = [];
+                const existing = cart.find(item => item.product.id === prod.id);
+                if (existing) {
+                    newCart = cart.map(item =>
+                        item.product.id === prod.id
+                            ? { ...item, quantity: item.quantity + 2 }
+                            : item
+                    );
+                } else {
+                    newCart = [...cart, { product: prod, quantity: 2 }];
+                }
+                saveCart(newCart);
+                setShowCartDrawer(true);
+                return;
+            }
+        }
+
+        // Si es Combo con productos relacionados
+        if (t === 'COMBO' && Array.isArray(promo.productosRelacionados) && promo.productosRelacionados.length > 0) {
+            let updatedCart = [...cart];
+            promo.productosRelacionados.forEach((pId: string) => {
+                const prod = products.find(p => p.id === pId);
+                if (prod) {
+                    const existingIdx = updatedCart.findIndex(it => it.product.id === prod.id);
+                    if (existingIdx >= 0) {
+                        updatedCart[existingIdx] = {
+                            ...updatedCart[existingIdx],
+                            quantity: updatedCart[existingIdx].quantity + 1
+                        };
+                    } else {
+                        updatedCart.push({ product: prod, quantity: 1 });
+                    }
+                }
+            });
+            saveCart(updatedCart);
+            setShowCartDrawer(true);
+            return;
+        }
+
+        // Producto individual vinculado
+        if (promo.productoRequeridoId) {
+            const prod = products.find(p => p.id === promo.productoRequeridoId);
+            if (prod) {
+                addToCart(prod);
+                setShowCartDrawer(true);
+            }
+        }
+    };
 
     // Load Cart from localStorage
     useEffect(() => {
@@ -1674,6 +1749,68 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                         {cat.nombre}
                                     </button>
                                 ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── SECCIÓN DE PROMOCIONES ACTIVAS & COMBOS ── */}
+                    {activePromotions.length > 0 && (
+                        <div className="px-4 pt-4 pb-2 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] mb-0.5 block text-amber-600">🔥 Ofertas Imperdibles</span>
+                                    <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Promociones & Combos</h3>
+                                </div>
+                                <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black uppercase">
+                                    {activePromotions.length} disponibles
+                                </span>
+                            </div>
+
+                            <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
+                                {activePromotions.map(promo => {
+                                    const linkedProduct = products.find(p => p.id === promo.productoRequeridoId);
+                                    const displayImg = promo.imagenUrl || linkedProduct?.imagenUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80';
+                                    
+                                    return (
+                                        <div key={promo.id} className="min-w-[260px] max-w-[280px] bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-white border border-amber-200/80 rounded-3xl p-3.5 shadow-sm space-y-3 shrink-0 flex flex-col justify-between">
+                                            <div className="space-y-2">
+                                                <div className="relative h-28 w-full rounded-2xl overflow-hidden bg-slate-100">
+                                                    <img src={displayImg} alt={promo.titulo} className="w-full h-full object-cover" />
+                                                    <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-full bg-amber-500 text-white font-black text-[9px] uppercase shadow-sm">
+                                                        {promo.tipoPromo === 'DOS_POR_UNO' || promo.tipoPromo === '2X1' ? '🎁 2x1' : '🔥 Oferta'}
+                                                    </span>
+                                                </div>
+
+                                                <div>
+                                                    <h4 className="font-extrabold text-slate-900 text-sm leading-tight line-clamp-1">{promo.titulo}</h4>
+                                                    <p className="text-slate-500 text-[11px] font-medium leading-snug line-clamp-2 mt-0.5">{promo.descripcion}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center justify-between pt-1">
+                                                <div>
+                                                    <span className="text-xs font-black text-amber-600">
+                                                        ${(Number(promo.precioPromo) || Number(linkedProduct?.precio) || 0).toFixed(2)}
+                                                    </span>
+                                                    {promo.precioAnterior && (
+                                                        <span className="text-[10px] text-slate-400 line-through block font-bold">
+                                                            ${Number(promo.precioAnterior).toFixed(2)}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleOrderPromotion(promo)}
+                                                    className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] uppercase rounded-xl shadow-md cursor-pointer transition-all active:scale-95 flex items-center gap-1"
+                                                >
+                                                    <Plus className="size-3 text-amber-400" />
+                                                    <span>Pedir Promo</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
