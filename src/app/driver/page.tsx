@@ -305,17 +305,38 @@ export default function DriverAppPage() {
 
   const getDriverRealFee = (order: DbOrder) => {
     const extra = parseExtraInfo(order.extraInfo);
-    const realFee = extra?.pricingBreakdown?.realShippingCost ?? 
-                    extra?.pricingBreakdown?.originalShippingFee ?? 
-                    extra?.pricingBreakdown?.driverFee ?? 
-                    extra?.realDriverFee ?? 
-                    extra?.originalCostoEnvio;
-    if (typeof realFee === 'number' && realFee > 0) return realFee.toFixed(2);
+    const realFee = Number(
+      extra?.pricingBreakdown?.realShippingCost ||
+      extra?.pricingBreakdown?.originalShippingFee ||
+      extra?.pricingBreakdown?.driverFee ||
+      extra?.realDriverFee ||
+      extra?.originalCostoEnvio ||
+      0
+    );
+    if (realFee > 0) return realFee.toFixed(2);
+
     const orderFee = Number(order.costoEnvio || 0);
-    const subsidy = Number(extra?.pricingBreakdown?.restaurantSubsidy || extra?.restaurantSubsidy || 0);
-    if (subsidy > 0 && orderFee < subsidy) {
+    const subsidy = Number(extra?.pricingBreakdown?.restaurantSubsidy || extra?.restaurantSubsidy || extra?.subsidioRestaurante || 0);
+    if (subsidy > 0) {
       return (orderFee + subsidy).toFixed(2);
     }
+
+    if (orderFee < 1.50) {
+      const breakdownDist = Number(extra?.pricingBreakdown?.distanceKm || extra?.distanceKm || 0);
+      let dist = breakdownDist;
+      if (dist <= 0 && order.latitud && order.longitud) {
+        const R = 6371;
+        const lat1 = -0.180653; const lon1 = -78.467838;
+        const dLat = ((order.latitud - lat1) * Math.PI) / 180;
+        const dLon = ((order.longitud - lon1) * Math.PI) / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos((lat1 * Math.PI) / 180) * Math.cos((order.latitud * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        dist = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
+      }
+      if (dist <= 0) dist = 5.3;
+      const calcFee = Math.max(2.50, 1.50 + (dist * 0.30));
+      return calcFee.toFixed(2);
+    }
+
     return (orderFee > 0 ? orderFee : 2.50).toFixed(2);
   };
 
