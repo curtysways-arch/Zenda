@@ -90,6 +90,7 @@ export async function PUT(req: Request) {
             updateData.estado = 'CAMBIOS_SOLICITADOS';
 
             if (proposedItems && Array.isArray(proposedItems)) {
+                currentExtra.originalSubtotal = currentExtra.originalSubtotal || pedido.subtotal;
                 currentExtra.proposedItems = proposedItems;
                 currentExtra.outOfStockItemsList = body.outOfStockItemsList || [];
                 currentExtra.proposedSubtotal = subtotal !== undefined ? parseFloat(subtotal) : pedido.subtotal;

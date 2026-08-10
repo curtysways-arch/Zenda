@@ -333,6 +333,7 @@ export default function PedidosOnlinePage() {
             action: 'SOLICITAR_CAMBIOS',
             proposedItems,
             outOfStockItemsList,
+            originalSubtotal: pedidoTarget.subtotal,
             subtotal: newSubtotal,
             total: newTotal,
             outOfStockProductIds,
@@ -525,45 +526,52 @@ export default function PedidosOnlinePage() {
     printWindow.print();
   };
 
-  // Helper para detectar cualquier discrepancia/excedente de pago o reembolso pendiente (3 capas)
+  // Helper para detectar cualquier discrepancia/excedente de pago o reembolso pendiente (exclusivo para productos)
   const getRefundDetails = (p: any) => {
     const extra = typeof p.extraInfo === 'string' ? (() => { try { return JSON.parse(p.extraInfo); } catch(_) { return {}; } })() : (p.extraInfo || {});
     const paymentState = (p.payment?.estado || extra.paymentStatus || '').toUpperCase();
     
-    // 1. Excedente explícito grabado en DB o extraInfo
+    // Subtotales de Productos (Exclusivos sin incluir envío)
+    const currentSubtotal = Number(p.subtotal || (p.items || []).reduce((acc: number, i: any) => acc + ((Number(i.precioUnitario) || 0) * (Number(i.cantidad) || 1)), 0));
+    
+    const outOfStockItemsList = Array.isArray(extra.outOfStockItemsList) ? extra.outOfStockItemsList : [];
+    const outOfStockSubtotal = outOfStockItemsList.reduce((sum: number, it: any) => {
+      return sum + ((Number(it.precioUnitario || it.precio) || 0) * (Number(it.cantidad) || 1));
+    }, 0);
+
     const dbExcedente = Number(p.payment?.montoExcedente || extra.montoExcedente || 0);
 
-    // 2. Excedente derivado de productos eliminados o marcados sin stock en pedido pagado
-    const isPaymentConfirmed = paymentState === 'CONFIRMADO' || paymentState === 'PAGO_VERIFICADO' || paymentState === 'REEMBOLSO_PENDIENTE';
-    const outOfStockItemsList = Array.isArray(extra.outOfStockItemsList) ? extra.outOfStockItemsList : [];
-    const outOfStockTotal = isPaymentConfirmed ? outOfStockItemsList.reduce((sum: number, it: any) => {
-      return sum + ((Number(it.precioUnitario || it.precio) || 0) * (Number(it.cantidad) || 1));
-    }, 0) : 0;
+    // Subtotal original pagado por productos (si no existe, se infiere del subtotal actual + agotados o dbExcedente)
+    const originalSubtotal = Number(extra.originalSubtotal || (extra.proposedSubtotal ? currentSubtotal + outOfStockSubtotal : (dbExcedente > 0 ? currentSubtotal + dbExcedente : (outOfStockSubtotal > 0 ? currentSubtotal + outOfStockSubtotal : currentSubtotal))));
 
-    // 3. Diferencia matemática entre lo pagado / evidencias y el total actual
-    const currentTotal = Number(p.total || 0);
-    const evidenceTotal = (p.payment?.evidences || []).reduce((sum: number, ev: any) => sum + (Number(ev.monto) || 0), 0);
-    const montoPagado = Number(p.payment?.montoPagado || extra.montoPagado || (evidenceTotal > 0 ? evidenceTotal : 0));
-    const originalTotal = Number(extra.originalTotal || extra.proposedTotal || (montoPagado > currentTotal ? montoPagado : 0));
-
-    let calculatedExcedente = 0;
-    if (montoPagado > 0 && currentTotal > 0 && montoPagado > currentTotal + 0.01) {
-      calculatedExcedente = Number((montoPagado - currentTotal).toFixed(2));
-    } else if (originalTotal > 0 && currentTotal > 0 && originalTotal > currentTotal + 0.01) {
-      calculatedExcedente = Number((originalTotal - currentTotal).toFixed(2));
+    // Reembolso por productos (diferencia estricta entre productos pagados y productos finales)
+    let montoDevolver = 0;
+    if (dbExcedente > 0) {
+      montoDevolver = dbExcedente;
+    } else if (originalSubtotal > currentSubtotal + 0.01) {
+      montoDevolver = Number((originalSubtotal - currentSubtotal).toFixed(2));
+    } else if (outOfStockSubtotal > 0) {
+      montoDevolver = Number(outOfStockSubtotal.toFixed(2));
     }
 
-    const finalExcedente = Math.max(dbExcedente, outOfStockTotal, calculatedExcedente);
     const isRefunded = paymentState === 'REEMBOLSADO' || Boolean(extra.refundCompleted);
-    const hasRefund = !isRefunded && (paymentState === 'REEMBOLSO_PENDIENTE' || finalExcedente > 0.01);
+    const hasRefund = !isRefunded && (paymentState === 'REEMBOLSO_PENDIENTE' || montoDevolver > 0.01);
 
-    const effectivePaid = montoPagado > 0 ? montoPagado : (originalTotal > 0 ? originalTotal : (currentTotal + finalExcedente));
+    const envioCost = Number(p.costoEnvio || 0);
 
     return {
       hasRefund,
-      excedente: Number(finalExcedente.toFixed(2)),
-      montoPagado: Number(effectivePaid.toFixed(2)),
-      currentTotal
+      isRefunded,
+      montoDevolver: Number(montoDevolver.toFixed(2)),
+      originalProdSubtotal: Number(originalSubtotal.toFixed(2)),
+      currentProdSubtotal: Number(currentSubtotal.toFixed(2)),
+      motivo: extra.outOfStockItemsList?.length ? 'Producto no disponible en local' : (extra.motivoReembolso || 'Cambio / Ajuste de productos en pedido'),
+      envio: Number(envioCost.toFixed(2)),
+      codigoReembolso: `R-${p.codigo || p.numeroPedido || p.id.slice(-6).toUpperCase()}`,
+      referenciaDevolucion: extra.referenciaDevolucion || p.payment?.referenciaDevolucion || null,
+      metodoDevolucion: extra.metodoDevolucion || p.payment?.metodoDevolucion || null,
+      devolucionAt: extra.devolucionAt || p.payment?.devolucionAt || null,
+      devolucionUser: extra.devolucionUser || p.payment?.devolucionUser || null,
     };
   };
 
@@ -808,17 +816,36 @@ export default function PedidosOnlinePage() {
                   </div>
 
                   {hasPendingRefund && (
-                    <div className="p-3 rounded-2xl bg-rose-100 border border-rose-300 text-rose-950 text-xs space-y-1 shadow-sm">
-                      <div className="flex items-center justify-between font-black">
-                        <span className="flex items-center gap-1.5 text-rose-900">
-                          <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 animate-bounce" />
-                          🔴 REEMBOLSO PENDIENTE:
+                    <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-300 text-rose-950 text-xs space-y-2 shadow-sm">
+                      <div className="flex items-center justify-between border-b border-rose-200/80 pb-2">
+                        <span className="text-[10px] font-black uppercase text-rose-800 bg-rose-200/70 px-2 py-0.5 rounded-md">
+                          {refundInfo.codigoReembolso}
                         </span>
-                        <span className="text-sm font-mono font-black text-rose-700">${refundInfo.excedente.toFixed(2)}</span>
+                        <span className="text-[10px] font-black uppercase text-rose-700 bg-rose-100 border border-rose-300 px-2 py-0.5 rounded-md flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 text-rose-600 animate-bounce" />
+                          🔴 REEMBOLSO PENDIENTE
+                        </span>
                       </div>
-                      <p className="text-[10px] text-rose-800 font-bold">
-                        Cobrado: ${refundInfo.montoPagado.toFixed(2)} ➔ Nuevo Total: ${refundInfo.currentTotal.toFixed(2)}
-                      </p>
+
+                      <div className="space-y-1 text-[11px] font-medium text-slate-700">
+                        <div className="flex justify-between">
+                          <span>Productos pagados originalmente:</span>
+                          <span className="font-mono font-bold text-slate-900">${refundInfo.originalProdSubtotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Productos después de cambios:</span>
+                          <span className="font-mono font-bold text-slate-900">${refundInfo.currentProdSubtotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between font-black text-rose-700 pt-1 border-t border-dashed border-rose-200">
+                          <span>💰 Reembolso por productos:</span>
+                          <span className="font-mono text-sm">${refundInfo.montoDevolver.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-100/90 rounded-lg p-1.5 flex justify-between text-[10px] text-slate-600 font-bold border border-slate-200">
+                        <span>🛵 Envío (Fulfillment): ${refundInfo.envio.toFixed(2)}</span>
+                        <span className="text-slate-500">Estado: Independiente</span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1498,47 +1525,110 @@ export default function PedidosOnlinePage() {
                         {/* GESTIÓN DE REEMBOLSO INDEPENDIENTE (SI APLICA) */}
                         {(() => {
                           const fsRefundInfo = getRefundDetails(order);
-                          if (!fsRefundInfo.hasRefund) return null;
+                          if (!fsRefundInfo.hasRefund && !fsRefundInfo.isRefunded) return null;
                           return (
-                            <div className="bg-rose-50 p-4 rounded-2xl border border-rose-200 space-y-3 text-xs">
-                              <div className="flex items-center justify-between font-black text-rose-950">
-                                <span className="flex items-center gap-1.5 text-rose-900 font-extrabold">
-                                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-                                  🔴 REEMBOLSO PENDIENTE AL CLIENTE:
+                            <div className={`p-4 rounded-3xl border space-y-3.5 text-xs ${
+                              fsRefundInfo.isRefunded 
+                                ? 'bg-emerald-50/80 border-emerald-300 text-emerald-950' 
+                                : 'bg-rose-50/80 border-rose-300 text-rose-950'
+                            }`}>
+                              <div className="flex items-center justify-between border-b pb-3 border-rose-200/80">
+                                <div>
+                                  <span className="text-[10px] font-black uppercase tracking-wider text-rose-800 bg-rose-200/70 px-2.5 py-0.5 rounded-full">
+                                    Reembolso {fsRefundInfo.codigoReembolso}
+                                  </span>
+                                  <h4 className="text-sm font-black text-rose-950 mt-1">
+                                    Pedido #{order.codigo || order.numeroPedido || order.id.slice(-6).toUpperCase()}
+                                  </h4>
+                                </div>
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                  fsRefundInfo.isRefunded ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white shadow-sm'
+                                }`}>
+                                  {fsRefundInfo.isRefunded ? '✅ REEMBOLSADO' : '🔴 REEMBOLSO PENDIENTE'}
                                 </span>
-                                <span className="text-base text-rose-700 font-mono font-black">${fsRefundInfo.excedente.toFixed(2)}</span>
                               </div>
-                              <p className="text-[11px] text-rose-800 font-bold">
-                                Cobrado: ${fsRefundInfo.montoPagado.toFixed(2)} ➔ Nuevo Total: ${fsRefundInfo.currentTotal.toFixed(2)}
-                              </p>
 
-                              <div className="space-y-2 pt-1">
-                                <select
-                                  value={refundMethod}
-                                  onChange={e => setRefundMethod(e.target.value)}
-                                  className="w-full p-2.5 bg-white border border-rose-200 rounded-xl font-bold text-xs text-slate-800"
-                                >
-                                  <option value="TRANSFERENCIA">Transferencia Bancaria</option>
-                                  <option value="EFECTIVO">Efectivo en Caja</option>
-                                  <option value="OTRO">Otro Método</option>
-                                </select>
-                                <input
-                                  type="text"
-                                  value={refundRef}
-                                  onChange={e => setRefundRef(e.target.value)}
-                                  placeholder="Nº Comprobante o ref. de devolución..."
-                                  className="w-full p-2.5 bg-white border border-rose-200 rounded-xl font-semibold text-xs text-slate-800"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => handleConfirmRefund(order)}
-                                  disabled={processingId === order.id}
-                                  className="w-full py-3 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-black text-xs uppercase rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
-                                >
-                                  <Check className="w-4 h-4" />
-                                  <span>Confirmar Devolución al Cliente (${fsRefundInfo.excedente.toFixed(2)})</span>
-                                </button>
+                              <div className="space-y-1 text-xs text-slate-800">
+                                <p className="font-bold">
+                                  👤 <span className="font-black text-slate-900">{order.nombreCliente}</span> ({order.telefonoCliente})
+                                </p>
+                                <p className="text-rose-900 font-semibold">
+                                  📌 <span className="font-black">Motivo:</span> {fsRefundInfo.motivo}
+                                </p>
                               </div>
+
+                              <div className="bg-white rounded-2xl border border-rose-200/80 p-3.5 space-y-2 text-xs">
+                                <div className="flex justify-between text-slate-600 font-medium">
+                                  <span>Monto originalmente pagado por productos:</span>
+                                  <span className="font-mono font-bold text-slate-900">${fsRefundInfo.originalProdSubtotal.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-slate-600 font-medium">
+                                  <span>Nuevo total de productos:</span>
+                                  <span className="font-mono font-bold text-slate-900">${fsRefundInfo.currentProdSubtotal.toFixed(2)}</span>
+                                </div>
+                                <div className="border-t border-dashed border-rose-200 pt-2 flex justify-between font-black text-sm text-rose-700">
+                                  <span>💰 Monto a devolver (Productos):</span>
+                                  <span className="font-mono text-base text-rose-700">${fsRefundInfo.montoDevolver.toFixed(2)}</span>
+                                </div>
+                              </div>
+
+                              <div className="bg-slate-100/80 rounded-xl p-2.5 flex items-center justify-between text-xs border border-slate-200">
+                                <span className="font-bold text-slate-600">🛵 Envío (Fulfillment): ${fsRefundInfo.envio.toFixed(2)}</span>
+                                <span className="text-[10px] text-slate-500 font-semibold">Estado: Independiente</span>
+                              </div>
+
+                              {!fsRefundInfo.isRefunded ? (
+                                <div className="space-y-2 pt-2 border-t border-rose-200/80">
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                      <label className="text-[10px] font-black uppercase text-rose-900 block mb-1">Método de Devolución</label>
+                                      <select
+                                        value={refundMethod}
+                                        onChange={e => setRefundMethod(e.target.value)}
+                                        className="w-full p-2.5 bg-white border border-rose-300 rounded-xl font-bold text-xs text-slate-800"
+                                      >
+                                        <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+                                        <option value="EFECTIVO">Efectivo en Caja</option>
+                                        <option value="OTRO">Otro Método Permitido</option>
+                                      </select>
+                                    </div>
+                                    <div>
+                                      <label className="text-[10px] font-black uppercase text-rose-900 block mb-1">Nº Comprobante / Ref.</label>
+                                      <input
+                                        type="text"
+                                        value={refundRef}
+                                        onChange={e => setRefundRef(e.target.value)}
+                                        placeholder="Nº comprobante..."
+                                        className="w-full p-2.5 bg-white border border-rose-300 rounded-xl font-semibold text-xs text-slate-800"
+                                      />
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleConfirmRefund(order)}
+                                    disabled={processingId === order.id}
+                                    className="w-full py-3.5 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-black text-xs uppercase rounded-2xl shadow-lg shadow-rose-600/20 cursor-pointer flex items-center justify-center gap-2 transition-all"
+                                  >
+                                    <Check className="w-4 h-4 stroke-[3]" />
+                                    <span>Procesar Devolución (${fsRefundInfo.montoDevolver.toFixed(2)})</span>
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="bg-emerald-100/80 p-3 rounded-2xl border border-emerald-300 text-emerald-950 text-xs space-y-1 font-bold">
+                                  <div className="flex items-center justify-between">
+                                    <span>✅ DEVOLUCIÓN COMPLETADA</span>
+                                    <span>${fsRefundInfo.montoDevolver.toFixed(2)}</span>
+                                  </div>
+                                  <p className="text-[10px] text-emerald-800">
+                                    Método: {fsRefundInfo.metodoDevolucion || refundMethod} {fsRefundInfo.referenciaDevolucion ? `| Comprobante: ${fsRefundInfo.referenciaDevolucion}` : ''}
+                                  </p>
+                                  {fsRefundInfo.devolucionUser && (
+                                    <p className="text-[10px] text-emerald-700 font-semibold">
+                                      Procesado por: {fsRefundInfo.devolucionUser}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           );
                         })()}
