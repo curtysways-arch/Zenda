@@ -52,6 +52,11 @@ export default function PromotionBuilder({
   const [imagenUrl, setImagenUrl] = useState<string>(initialData?.imagenUrl || '');
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>(initialData?.productosRelacionados || []);
 
+  // Parámetros de Envío Gratis
+  const [distanciaMaximaKm, setDistanciaMaximaKm] = useState<number | undefined>(initialData?.distanciaMaximaKm);
+  const [costoMaximoSubsidiado, setCostoMaximoSubsidiado] = useState<number | undefined>(initialData?.costoMaximoSubsidiado);
+  const [esCostoCompleto, setEsCostoCompleto] = useState<boolean>(initialData?.esCostoCompleto ?? true);
+
   // Alerta de Rentabilidad (Calculada)
   const selectedProduct = products.find(p => p.id === productoRequeridoId);
   const samplePrice = selectedProduct ? Number(selectedProduct.precio) || 15 : (precioAnterior || 15.00);
@@ -123,6 +128,9 @@ export default function PromotionBuilder({
       if (initialData.horaFinValida !== undefined) setHoraFinValida(initialData.horaFinValida || '');
       if (initialData.canales !== undefined) setCanales(initialData.canales);
       if (initialData.imagenUrl !== undefined) setImagenUrl(initialData.imagenUrl || '');
+      if (initialData.distanciaMaximaKm !== undefined) setDistanciaMaximaKm(initialData.distanciaMaximaKm ? Number(initialData.distanciaMaximaKm) : undefined);
+      if (initialData.costoMaximoSubsidiado !== undefined) setCostoMaximoSubsidiado(initialData.costoMaximoSubsidiado ? Number(initialData.costoMaximoSubsidiado) : undefined);
+      if (initialData.esCostoCompleto !== undefined) setEsCostoCompleto(initialData.esCostoCompleto ?? true);
     }
   }, [initialData]);
 
@@ -410,31 +418,86 @@ export default function PromotionBuilder({
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-xs font-black text-slate-700 uppercase tracking-wider block mb-1">
-                {tipoPromo === 'PORCENTAJE' ? 'Porcentaje %' : 'Monto / Beneficio ($)'}
-              </label>
-              <input
-                type="number"
-                step="0.5"
-                value={precioPromo}
-                onChange={e => setPrecioPromo(parseFloat(e.target.value) || 0)}
-                className="w-full p-3 bg-white border border-slate-200 rounded-2xl text-xs font-black text-slate-900 focus:outline-none"
-              />
+          {tipoPromo === 'ENVIO_GRATIS' ? (
+            <div className="space-y-3 bg-amber-50/70 p-3.5 rounded-2xl border border-amber-200">
+              <span className="text-[10px] font-black text-amber-900 uppercase tracking-wider block">🚚 Configuración de Subsidio de Envío</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <div>
+                  <label className="text-[10px] font-extrabold text-slate-700 uppercase block mb-1">Distancia Máxima (km)</label>
+                  <select
+                    value={distanciaMaximaKm || ''}
+                    onChange={e => setDistanciaMaximaKm(e.target.value ? parseFloat(e.target.value) : undefined)}
+                    className="w-full p-2.5 bg-white border border-slate-200 rounded-xl font-bold text-slate-900 focus:outline-none"
+                  >
+                    <option value="">Sin límite de distancia</option>
+                    <option value="1">Hasta 1 km</option>
+                    <option value="2">Hasta 2 km</option>
+                    <option value="3">Hasta 3 km</option>
+                    <option value="5">Hasta 5 km</option>
+                    <option value="10">Hasta 10 km</option>
+                    <option value="15">Hasta 15 km</option>
+                    <option value="20">Hasta 20 km</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-extrabold text-slate-700 uppercase block mb-1">Costo Máximo Subsidiado ($)</label>
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 cursor-pointer text-[11px] font-bold text-slate-800">
+                      <input
+                        type="checkbox"
+                        checked={esCostoCompleto}
+                        onChange={e => {
+                          setEsCostoCompleto(e.target.checked);
+                          if (e.target.checked) setCostoMaximoSubsidiado(undefined);
+                          else setCostoMaximoSubsidiado(3.00);
+                        }}
+                        className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                      />
+                      <span>Cubrir costo completo del envío</span>
+                    </label>
+
+                    {!esCostoCompleto && (
+                      <input
+                        type="number"
+                        step="0.50"
+                        value={costoMaximoSubsidiado || ''}
+                        onChange={e => setCostoMaximoSubsidiado(parseFloat(e.target.value) || 0)}
+                        placeholder="Ej. 3.00"
+                        className="w-full p-2 bg-white border border-slate-200 rounded-xl font-black text-slate-900"
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="text-xs font-black text-slate-700 uppercase tracking-wider block mb-1">Precio Anterior ($)</label>
-              <input
-                type="number"
-                step="0.5"
-                value={precioAnterior || ''}
-                onChange={e => setPrecioAnterior(parseFloat(e.target.value) || undefined)}
-                placeholder="Opcional"
-                className="w-full p-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none"
-              />
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs font-black text-slate-700 uppercase tracking-wider block mb-1">
+                  {tipoPromo === 'PORCENTAJE' ? 'Porcentaje %' : 'Monto / Beneficio ($)'}
+                </label>
+                <input
+                  type="number"
+                  step="0.5"
+                  value={precioPromo}
+                  onChange={e => setPrecioPromo(parseFloat(e.target.value) || 0)}
+                  className="w-full p-3 bg-white border border-slate-200 rounded-2xl text-xs font-black text-slate-900 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-black text-slate-700 uppercase tracking-wider block mb-1">Precio Anterior ($)</label>
+                <input
+                  type="number"
+                  step="0.5"
+                  value={precioAnterior || ''}
+                  onChange={e => setPrecioAnterior(parseFloat(e.target.value) || undefined)}
+                  placeholder="Opcional"
+                  className="w-full p-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none"
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -532,29 +595,64 @@ export default function PromotionBuilder({
           </select>
         </div>
 
-        {/* ALERTA DE RENTABILIDAD */}
-        <div className={`p-4 rounded-2xl border space-y-2 flex flex-col justify-between ${
-          isLowMarginAlert ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900'
-        }`}>
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5 font-black text-xs uppercase">
-              <ShieldAlert className="size-4 shrink-0" />
-              <span>Protección de Rentabilidad</span>
+        {/* ALERTA Y SIMULACIÓN DE RENTABILIDAD EN VIVO */}
+        {tipoPromo === 'ENVIO_GRATIS' ? (
+          <div className="p-4 rounded-2xl border bg-amber-50/90 border-amber-300 text-amber-950 space-y-2 flex flex-col justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5 font-black text-xs uppercase text-amber-900">
+                <ShieldAlert className="size-4 shrink-0 text-amber-600" />
+                <span>Simulación en Vivo — Envío Gratis</span>
+              </div>
+              {(() => {
+                const realShippingCost = 4.00;
+                const subsidyAmount = esCostoCompleto ? realShippingCost : Math.min(realShippingCost, Number(costoMaximoSubsidiado || 3.00));
+                const customerPaysShipping = Math.max(0, realShippingCost - subsidyAmount);
+                const sampleProductsSubtotal = 25.00;
+                const customerTotal = sampleProductsSubtotal + customerPaysShipping;
+
+                return (
+                  <div className="text-[11px] leading-snug space-y-1">
+                    <p className="font-semibold text-slate-700">
+                      Productos: <strong>${sampleProductsSubtotal.toFixed(2)}</strong> • Envío Real: <strong>${realShippingCost.toFixed(2)}</strong>
+                    </p>
+                    <p className="font-bold text-amber-800">
+                      Subsidio Restaurante: <strong>-${subsidyAmount.toFixed(2)}</strong> • Cliente Paga Envío: <strong>${customerPaysShipping.toFixed(2)}</strong>
+                    </p>
+                    <p className="font-black text-emerald-700">
+                      Total a Cobrar al Cliente: <strong>${customerTotal.toFixed(2)}</strong> (Driver cobra sus $4.00 completos)
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
-            <p className="text-[11px] leading-snug font-medium">
-              Precio Muestra: <strong>${samplePrice.toFixed(2)}</strong> • Descuento: <strong>-${sampleDiscount.toFixed(2)}</strong> • Precio Final: <strong>${finalSamplePrice.toFixed(2)}</strong>
-            </p>
+            <span className="text-[10px] font-black uppercase text-amber-900 bg-amber-200/80 p-2 rounded-xl border border-amber-300 block text-center leading-tight">
+              🚚 El restaurante asume {esCostoCompleto ? 'el costo completo' : `hasta $${Number(costoMaximoSubsidiado || 3.00).toFixed(2)}`} del envío.
+            </span>
           </div>
-          {isLowMarginAlert ? (
-            <span className="text-[10px] font-black uppercase text-rose-700 bg-rose-100 p-1.5 rounded-lg border border-rose-200 block text-center">
-              ⚠️ Este descuento reduce significativamente el margen estimado.
-            </span>
-          ) : (
-            <span className="text-[10px] font-black uppercase text-emerald-700 bg-emerald-100 p-1.5 rounded-lg border border-emerald-200 block text-center">
-              ✓ Margen de rentabilidad protegido (&gt;50%)
-            </span>
-          )}
-        </div>
+        ) : (
+          <div className={`p-4 rounded-2xl border space-y-2 flex flex-col justify-between ${
+            isLowMarginAlert ? 'bg-rose-50 border-rose-200 text-rose-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+          }`}>
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5 font-black text-xs uppercase">
+                <ShieldAlert className="size-4 shrink-0" />
+                <span>Protección de Rentabilidad</span>
+              </div>
+              <p className="text-[11px] leading-snug font-medium">
+                Precio Muestra: <strong>${samplePrice.toFixed(2)}</strong> • Descuento: <strong>-${sampleDiscount.toFixed(2)}</strong> • Precio Final: <strong>${finalSamplePrice.toFixed(2)}</strong>
+              </p>
+            </div>
+            {isLowMarginAlert ? (
+              <span className="text-[10px] font-black uppercase text-rose-700 bg-rose-100 p-1.5 rounded-lg border border-rose-200 block text-center">
+                ⚠️ Este descuento reduce significativamente el margen estimado.
+              </span>
+            ) : (
+              <span className="text-[10px] font-black uppercase text-emerald-700 bg-emerald-100 p-1.5 rounded-lg border border-emerald-200 block text-center">
+                ✓ Margen de rentabilidad protegido (&gt;50%)
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </form>
   );

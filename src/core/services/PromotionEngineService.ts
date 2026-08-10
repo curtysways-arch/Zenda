@@ -125,7 +125,10 @@ export class PromotionEngineService {
 
       // 10. Validar Productos / Categorías Requeridas
       if (promo.productoRequeridoId) {
-        const hasReqProd = cartItems.some(it => it.productId === promo.productoRequeridoId);
+        const hasReqProd = cartItems.some(it => {
+          const pid = it.productId || (it as any).id || (it as any).productoId;
+          return pid === promo.productoRequeridoId || (it.nombre && promo.titulo && promo.titulo.toLowerCase().includes(it.nombre.toLowerCase()));
+        });
         if (!hasReqProd) continue;
       }
 
@@ -180,9 +183,15 @@ export class PromotionEngineService {
       } else if (promoType === 'DOS_POR_UNO' || promoType === '2X1') {
         // En 2x1, descuenta 1 unidad por cada 2 ítems elegibles
         cartItems.forEach(it => {
-          if (it.cantidad >= 2) {
-            const freeCount = Math.floor(it.cantidad / 2);
-            discount += freeCount * (it.precio || 0);
+          const pid = it.productId || (it as any).id || (it as any).productoId;
+          const isEligible = !promo.productoRequeridoId || pid === promo.productoRequeridoId || (it.nombre && promo.titulo && promo.titulo.toLowerCase().includes(it.nombre.toLowerCase()));
+          if (isEligible) {
+            if (it.cantidad >= 2) {
+              const freeCount = Math.floor(it.cantidad / 2);
+              discount += freeCount * (it.precio || 0);
+            } else if (it.cantidad === 1 && promo.productoRequeridoId) {
+              discount += (it.precio || 0) * 0.5;
+            }
           }
         });
       } else if (promoType === 'TRES_POR_DOS' || promoType === '3X2') {
@@ -194,6 +203,7 @@ export class PromotionEngineService {
         });
       } else if (promoType === 'ENVIO_GRATIS' || promoType === 'FREE_DELIVERY') {
         isFreeDelivery = true;
+        discount = 0; // El precio de los productos se cobra al 100% (cero descuento a producto)
       } else if (promoType === 'COMBO') {
         const comboPrice = Number(promo.precioPromo || 0);
         if (comboPrice > 0 && subtotal > comboPrice) {

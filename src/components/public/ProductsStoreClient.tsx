@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import MapSelectionModal from './MapSelectionModal';
+import { PromotionEngineService } from '@/core/services/PromotionEngineService';
 
 interface Product {
     id: string;
@@ -656,8 +657,49 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
     // Calculations
     const cartSubtotal = cart.reduce((acc, item) => acc + (item.product.precio * item.quantity), 0);
-    const shippingCost = getDynamicShippingCost();
-    const cartTotal = cartSubtotal + shippingCost;
+    const rawShippingCost = deliveryType === 'DOMICILIO' ? getDynamicShippingCost() : 0;
+
+    const latNegocio = config.latitudNegocio !== undefined ? parseFloat(config.latitudNegocio) : -0.180653;
+    const lngNegocio = config.longitudNegocio !== undefined ? parseFloat(config.longitudNegocio) : -78.467838;
+    const distanceKm = (selectedLat && selectedLng) 
+        ? getDistanceFromLatLonInKm(latNegocio, lngNegocio, selectedLat, selectedLng) 
+        : 0;
+
+    const freeDeliveryPromo = (deliveryType === 'DOMICILIO' && activePromotions) ? activePromotions.find(p => {
+        if ((p.tipoPromo || '').toUpperCase() !== 'ENVIO_GRATIS') return false;
+        if (p.montoMinimo && cartSubtotal < Number(p.montoMinimo)) return false;
+        if (p.distanciaMaximaKm && distanceKm > 0 && distanceKm > Number(p.distanciaMaximaKm)) return false;
+        if (p.productoRequeridoId && !cart.some(it => it.product.id === p.productoRequeridoId)) return false;
+        return true;
+    }) : null;
+
+    let merchantShippingSubsidy = 0;
+    let shippingDiscount = 0;
+    let customerShippingAmount = rawShippingCost;
+
+    if (freeDeliveryPromo && deliveryType === 'DOMICILIO') {
+        const maxSubsidy = freeDeliveryPromo.esCostoCompleto ? rawShippingCost : Number(freeDeliveryPromo.costoMaximoSubsidiado || 3.00);
+        merchantShippingSubsidy = Math.min(rawShippingCost, maxSubsidy);
+        shippingDiscount = merchantShippingSubsidy;
+        customerShippingAmount = Math.max(0, rawShippingCost - merchantShippingSubsidy);
+    }
+
+    const promoEvaluation = PromotionEngineService.evaluate({
+        cartItems: cart.map(it => ({
+            productId: it.product.id,
+            categoryId: it.product.categoriaId || undefined,
+            nombre: it.product.nombre,
+            precio: it.product.precio,
+            cantidad: it.quantity
+        })),
+        channel: deliveryType === 'DOMICILIO' ? 'DELIVERY' : 'PICKUP',
+        subtotal: cartSubtotal,
+        promotions: activePromotions || []
+    });
+
+    const promoDiscount = promoEvaluation.totalDiscount;
+    const shippingCost = customerShippingAmount;
+    const cartTotal = Math.max(0, cartSubtotal - promoDiscount + customerShippingAmount);
     const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
 
     const minOrderAmount = config.montoMinimoPedido !== undefined ? parseFloat(config.montoMinimoPedido) : 0;
@@ -787,6 +829,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
         const isPinchos = negocio.slug === 'pinchos';
         const isSoloPagoPrevio = !isPinchos && (bankConfig?.soloPagoPrevio ?? true);
 
+        const appliedPromo = promoEvaluation.appliedPromotions[0];
+
         const payload = {
             deliveryType,
             clientName: name,
@@ -798,7 +842,17 @@ export default function ProductsStoreClient({ negocio }: Props) {
             deliveryDate: deliveryDate,
             timeSlot,
             subtotal: cartSubtotal,
-            costoEnvio: getDynamicShippingCost(),
+            costoEnvio: customerShippingAmount,
+            discountAmount: promoDiscount,
+            descuento: promoDiscount,
+            shippingAmount: rawShippingCost,
+            shippingDiscount: shippingDiscount,
+            merchantShippingSubsidy: merchantShippingSubsidy,
+            customerShippingAmount: customerShippingAmount,
+            driverEarnings: rawShippingCost,
+            promotionId: appliedPromo?.promotionId || freeDeliveryPromo?.id || null,
+            promotionCode: appliedPromo?.promotionCode || freeDeliveryPromo?.cuponCodigo || null,
+            promotionTitle: appliedPromo?.promotionTitle || freeDeliveryPromo?.titulo || null,
             total: cartTotal,
             items: cart.map(item => ({
                 productId: item.product.id,
@@ -2249,20 +2303,48 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             </div>
                             
                             <div className="border-t border-slate-100 pt-4 space-y-2">
-                                <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
-                                    <span>Subtotal</span>
+                                <div className="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    <span>Subtotal Productos</span>
                                     <span>${cartSubtotal.toFixed(2)}</span>
                                 </div>
+
                                 {deliveryType === 'DOMICILIO' && (
-                                    <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-wider items-center">
-                                        <div className="flex flex-col text-left">
-                                            <span>Costo Envío</span>
+                                    <>
+                                        <div className="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                            <span>Envío normal</span>
+                                            <span>${rawShippingCost.toFixed(2)}</span>
                                         </div>
-                                        <span>${shippingCost.toFixed(2)}</span>
+
+                                        {merchantShippingSubsidy > 0 && (
+                                            <div className="flex justify-between text-xs font-black text-emerald-600 uppercase tracking-wider">
+                                                <span>Descuento de envío (Promo)</span>
+                                                <span>-${merchantShippingSubsidy.toFixed(2)}</span>
+                                            </div>
+                                        )}
+
+                                        <div className="flex justify-between text-xs font-black text-slate-800 uppercase tracking-wider pt-1 border-t border-slate-100/80">
+                                            <span>Envío a pagar</span>
+                                            <span>${customerShippingAmount.toFixed(2)}</span>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Mensaje Adaptativo de Seguridad de Envío Gratis */}
+                                {freeDeliveryPromo && deliveryType === 'DOMICILIO' && (
+                                    <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-tight font-medium space-y-1">
+                                        <p className="font-black text-amber-950 flex items-center gap-1 uppercase tracking-wider">
+                                            🚚 Promoción de Envío Aplicada
+                                        </p>
+                                        {customerShippingAmount === 0 ? (
+                                            <p>¡Envío gratis! Tu pedido cumple las condiciones de esta promoción.</p>
+                                        ) : (
+                                            <p>Descuento de envío de hasta ${merchantShippingSubsidy.toFixed(2)} aplicado. El excedente del costo de envío (${customerShippingAmount.toFixed(2)}) será cobrado en tu pedido.</p>
+                                        )}
                                     </div>
                                 )}
-                                <div className="flex justify-between text-sm font-black text-slate-800 uppercase tracking-widest pt-2 border-t border-slate-50">
-                                    <span>Total</span>
+
+                                <div className="flex justify-between text-sm font-black text-slate-900 uppercase tracking-widest pt-2 border-t border-slate-200">
+                                    <span>Total a Pagar</span>
                                     <span>${cartTotal.toFixed(2)}</span>
                                 </div>
                             </div>

@@ -615,6 +615,7 @@ export default function PedidosOnlinePage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredOrders.map(pedido => {
+            const extra = typeof pedido.extraInfo === 'string' ? (() => { try { return JSON.parse(pedido.extraInfo); } catch(_) { return {}; } })() : (pedido.extraInfo || {});
             const isDelivery = pedido.tipoEntrega === 'DELIVERY_ORDER' || pedido.tipoEntrega === 'DOMICILIO';
             const isProdConfirmed = (pedido.estadoDisponibilidad || pedido.extraInfo?.estadoDisponibilidad) === 'PRODUCTOS_CONFIRMADOS' || (pedido.estadoDisponibilidad || pedido.extraInfo?.estadoDisponibilidad) === 'CAMBIOS_ACEPTADOS';
             const isPaymentVerified = pedido.payment?.estado === 'PAGO_VERIFICADO' || pedido.payment?.estado === 'CONFIRMADO';
@@ -676,6 +677,28 @@ export default function PedidosOnlinePage() {
                       <span>${((Number(it.precioUnitario) || 0) * (Number(it.cantidad) || 1)).toFixed(2)}</span>
                     </div>
                   ))}
+                  {Number(extra?.discountAmount || extra?.descuento || 0) > 0 && (
+                    <div className="flex justify-between font-extrabold text-emerald-600 text-[11px] pt-1 border-t border-emerald-100/80">
+                      <span>🎁 Promo ({extra?.promotionTitle || '2x1'}):</span>
+                      <span>-${(Number(extra?.discountAmount || extra?.descuento) || 0).toFixed(2)}</span>
+                    </div>
+                  )}
+                  {Number(extra?.merchantShippingSubsidy || extra?.shippingDiscount || 0) > 0 && (
+                    <div className="pt-1.5 mt-1 border-t border-amber-200/80 text-[10px] space-y-0.5 font-bold text-slate-700">
+                      <div className="flex justify-between text-slate-500">
+                        <span>🛵 Tarifa Real Driver:</span>
+                        <span>${(Number(extra?.shippingAmount || extra?.driverEarnings || 4.00)).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-amber-700 font-extrabold">
+                        <span>🚚 Subsidio Restaurante:</span>
+                        <span>-${(Number(extra?.merchantShippingSubsidy || extra?.shippingDiscount)).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-900 font-extrabold">
+                        <span>💵 Cliente Paga Envío:</span>
+                        <span>${(Number(extra?.customerShippingAmount || pedido.costoEnvio || 0)).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  )}
                   <div className="pt-2 mt-1 border-t border-slate-200 flex justify-between font-black text-slate-900">
                     <span>Total:</span>
                     <span className="text-emerald-600 text-sm">${(Number(pedido.total) || 0).toFixed(2)}</span>

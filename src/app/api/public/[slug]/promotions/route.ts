@@ -33,7 +33,10 @@ function extractMetadata(p: any, productsMap: Map<string, any>) {
     cuponCodigo: meta.cuponCodigo || null,
     canales: meta.canales || ['POS', 'MESEROS', 'DELIVERY', 'PICKUP', 'LANDING'],
     montoMinimo: meta.montoMinimo || 0,
-    tipoCliente: meta.tipoCliente || 'ANY'
+    tipoCliente: meta.tipoCliente || 'ANY',
+    distanciaMaximaKm: meta.distanciaMaximaKm || null,
+    costoMaximoSubsidiado: meta.costoMaximoSubsidiado || null,
+    esCostoCompleto: meta.esCostoCompleto ?? true
   };
 }
 

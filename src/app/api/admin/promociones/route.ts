@@ -34,7 +34,10 @@ function extractMetadata(p: any, productsMap: Map<string, any>) {
     cuponCodigo: meta.cuponCodigo || null,
     canales: meta.canales || ['POS', 'MESEROS', 'DELIVERY', 'PICKUP', 'LANDING'],
     montoMinimo: meta.montoMinimo || 0,
-    tipoCliente: meta.tipoCliente || 'ANY'
+    tipoCliente: meta.tipoCliente || 'ANY',
+    distanciaMaximaKm: meta.distanciaMaximaKm || null,
+    costoMaximoSubsidiado: meta.costoMaximoSubsidiado || null,
+    esCostoCompleto: meta.esCostoCompleto ?? true
   };
 }
 
@@ -187,7 +190,10 @@ export async function POST(request: Request) {
       cuponCodigo,
       canales,
       montoMinimo,
-      tipoCliente
+      tipoCliente,
+      distanciaMaximaKm: body.distanciaMaximaKm || null,
+      costoMaximoSubsidiado: body.costoMaximoSubsidiado || null,
+      esCostoCompleto: body.esCostoCompleto ?? true
     };
 
     const finalDescription = `${descripcion.trim()}\n<!-- CITIOX_META: ${JSON.stringify(metaObj)} -->`;

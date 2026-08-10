@@ -195,9 +195,11 @@ export async function POST(
 
         const isDeliveryOrder = deliveryType === 'DOMICILIO' || deliveryType === 'DELIVERY_ORDER';
         const discountAmount = body.discountAmount !== undefined ? parseFloat(body.discountAmount) : (body.descuento !== undefined ? parseFloat(body.descuento) : 0);
-        const finalSubtotal = body.subtotal !== undefined && parseFloat(body.subtotal) > 0 ? parseFloat(body.subtotal) : pricingResult.subtotal;
+        const rawSubtotal = itemsToCreate.reduce((sum, item) => sum + (item.precioUnitario * item.cantidad), 0);
+        const finalSubtotal = rawSubtotal > 0 ? rawSubtotal : (body.subtotal !== undefined && parseFloat(body.subtotal) > 0 ? parseFloat(body.subtotal) : pricingResult.subtotal);
         const finalCostoEnvio = isDeliveryOrder ? (body.costoEnvio !== undefined ? parseFloat(body.costoEnvio) : pricingResult.deliveryCost) : 0;
-        const finalTotal = body.total !== undefined && parseFloat(body.total) > 0 ? parseFloat(body.total) : Math.max(0, Math.round((finalSubtotal - discountAmount + finalCostoEnvio) * 100) / 100);
+        const netSubtotal = Math.max(0, finalSubtotal - discountAmount);
+        const finalTotal = body.total !== undefined && parseFloat(body.total) > 0 ? parseFloat(body.total) : Math.round((netSubtotal + finalCostoEnvio) * 100) / 100;
 
         // Resolver fecha de entrega
         let dateToDeliver = new Date();
@@ -243,6 +245,11 @@ export async function POST(
                         promotionTitle: body.promotionTitle || null,
                         discountAmount: discountAmount,
                         descuento: discountAmount,
+                        shippingAmount: body.shippingAmount !== undefined ? parseFloat(body.shippingAmount) : finalCostoEnvio,
+                        shippingDiscount: body.shippingDiscount !== undefined ? parseFloat(body.shippingDiscount) : 0,
+                        merchantShippingSubsidy: body.merchantShippingSubsidy !== undefined ? parseFloat(body.merchantShippingSubsidy) : 0,
+                        customerShippingAmount: body.customerShippingAmount !== undefined ? parseFloat(body.customerShippingAmount) : finalCostoEnvio,
+                        driverEarnings: body.driverEarnings !== undefined ? parseFloat(body.driverEarnings) : (body.shippingAmount !== undefined ? parseFloat(body.shippingAmount) : finalCostoEnvio),
                         pickupCode: Math.floor(1000 + Math.random() * 9000).toString(),
                         deliveryCode: Math.floor(1000 + Math.random() * 9000).toString(),
                         paymentMethodCode: body.paymentMethodCode || body.paymentMethod || body.metodoPago || 'TRANSFER',

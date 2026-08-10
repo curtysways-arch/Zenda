@@ -37,44 +37,62 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
   
   const [activeAlertOrder, setActiveAlertOrder] = useState<Pedido | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [acknowledgedIds, setAcknowledgedIds] = useState<Set<string>>(new Set());
-  
+
+  const acknowledgedIdsRef = useRef<Set<string>>(new Set());
+  const activeAlertOrderRef = useRef<Pedido | null>(null);
   const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Sintetizador de alarma sonora usando Web Audio API
+  // Mantener ref de alerta activa sincronizado
+  useEffect(() => {
+    activeAlertOrderRef.current = activeAlertOrder;
+  }, [activeAlertOrder]);
+
+  // Campana cristalina de restaurante (Restaurant Service Bell Chime)
   const playAlarmSound = () => {
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
-      
-      // Tono 1 (880Hz - A5)
+
+      // Tono 1: Campana cálida C5 (523.25 Hz) con caída exponencial suave
       const osc1 = ctx.createOscillator();
       const gain1 = ctx.createGain();
       osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(880, ctx.currentTime);
-      gain1.gain.setValueAtTime(0.5, ctx.currentTime);
-      gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+      osc1.frequency.setValueAtTime(523.25, ctx.currentTime);
+      gain1.gain.setValueAtTime(0.4, ctx.currentTime);
+      gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.9);
       osc1.connect(gain1);
       gain1.connect(ctx.destination);
       osc1.start();
-      osc1.stop(ctx.currentTime + 0.25);
+      osc1.stop(ctx.currentTime + 0.9);
 
-      // Tono 2 (1174.66Hz - D6)
+      // Armónico metálico refinado C6 (1046.5 Hz)
+      const oscHarmonic = ctx.createOscillator();
+      const gainHarmonic = ctx.createGain();
+      oscHarmonic.type = 'triangle';
+      oscHarmonic.frequency.setValueAtTime(1046.5, ctx.currentTime);
+      gainHarmonic.gain.setValueAtTime(0.12, ctx.currentTime);
+      gainHarmonic.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7);
+      oscHarmonic.connect(gainHarmonic);
+      gainHarmonic.connect(ctx.destination);
+      oscHarmonic.start();
+      oscHarmonic.stop(ctx.currentTime + 0.7);
+
+      // Tono 2: Campanilla de confirmación E5 (659.25 Hz) a los 160ms
       setTimeout(() => {
         try {
           const osc2 = ctx.createOscillator();
           const gain2 = ctx.createGain();
-          osc2.type = 'triangle';
-          osc2.frequency.setValueAtTime(1174.66, ctx.currentTime);
-          gain2.gain.setValueAtTime(0.6, ctx.currentTime);
-          gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(659.25, ctx.currentTime);
+          gain2.gain.setValueAtTime(0.45, ctx.currentTime);
+          gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.1);
           osc2.connect(gain2);
           gain2.connect(ctx.destination);
           osc2.start();
-          osc2.stop(ctx.currentTime + 0.35);
+          osc2.stop(ctx.currentTime + 1.1);
         } catch (_) {}
-      }, 150);
+      }, 160);
 
     } catch (e) {
       console.warn('Alarma audio error:', e);
@@ -88,13 +106,13 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          setAcknowledgedIds(new Set(parsed));
+          acknowledgedIdsRef.current = new Set(parsed);
         }
       }
     } catch (_) {}
   }, []);
 
-  // Polling de nuevos pedidos cada 2 segundos con detección de foco en pestaña
+  // Polling único y limpio sin duplicación de observables
   useEffect(() => {
     const checkNewOrders = async () => {
       try {
@@ -109,13 +127,15 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
           return ch !== 'POS' && ch !== 'MOSTRADOR' && ['RECIBIDO', 'PENDIENTE', 'COMPROBANTE_RECIBIDO'].includes(p.estado);
         });
 
-        // Buscar el pedido entrante más reciente que NO haya sido reconocido aún
-        const unacknowledged = incomingOrders.find((p: Pedido) => !acknowledgedIds.has(p.id));
+        // Buscar el pedido entrante más reciente que NO haya sido reconocido
+        const unacknowledged = incomingOrders.find((p: Pedido) => !acknowledgedIdsRef.current.has(p.id));
 
         if (unacknowledged) {
-          setActiveAlertOrder(unacknowledged);
-        } else if (activeAlertOrder && !incomingOrders.some((p: Pedido) => p.id === activeAlertOrder.id)) {
-          // Si el pedido ya no está en estado PENDIENTE/RECIBIDO, cerrar la alerta
+          // Solo actualizar si no está activo ya el mismo pedido
+          if (!activeAlertOrderRef.current || activeAlertOrderRef.current.id !== unacknowledged.id) {
+            setActiveAlertOrder(unacknowledged);
+          }
+        } else if (activeAlertOrderRef.current && !incomingOrders.some((p: Pedido) => p.id === activeAlertOrderRef.current?.id)) {
           setActiveAlertOrder(null);
         }
       } catch (err) {
@@ -124,18 +144,12 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
     };
 
     checkNewOrders();
-    const interval = setInterval(checkNewOrders, 2000);
-
-    const handleFocus = () => checkNewOrders();
-    window.addEventListener('focus', handleFocus);
-    window.addEventListener('visibilitychange', handleFocus);
+    const interval = setInterval(checkNewOrders, 3000);
 
     return () => {
       clearInterval(interval);
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('visibilitychange', handleFocus);
     };
-  }, [acknowledgedIds, activeAlertOrder]);
+  }, []);
 
   // Bucle de sonido de alarma mientras haya una alerta activa
   useEffect(() => {
@@ -143,7 +157,7 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
       playAlarmSound();
       alarmIntervalRef.current = setInterval(() => {
         playAlarmSound();
-      }, 3000);
+      }, 4000);
     } else {
       if (alarmIntervalRef.current) {
         clearInterval(alarmIntervalRef.current);
@@ -157,17 +171,16 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
         alarmIntervalRef.current = null;
       }
     };
-  }, [activeAlertOrder, soundEnabled]);
+  }, [activeAlertOrder?.id, soundEnabled]);
 
   // Aceptar / Reconocer pedido y navegar a la atención del pedido
   const handleAcknowledgeAndAttend = () => {
     if (!activeAlertOrder) return;
-    const newSet = new Set(acknowledgedIds);
-    newSet.add(activeAlertOrder.id);
-    setAcknowledgedIds(newSet);
+    const targetId = activeAlertOrder.id;
+    acknowledgedIdsRef.current.add(targetId);
     
     try {
-      localStorage.setItem('citiox_acknowledged_orders', JSON.stringify(Array.from(newSet)));
+      localStorage.setItem('citiox_acknowledged_orders', JSON.stringify(Array.from(acknowledgedIdsRef.current)));
     } catch (_) {}
 
     setActiveAlertOrder(null);
@@ -181,12 +194,11 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
   // Silenciar / Descartar ventana emergente
   const handleDismissAlert = () => {
     if (!activeAlertOrder) return;
-    const newSet = new Set(acknowledgedIds);
-    newSet.add(activeAlertOrder.id);
-    setAcknowledgedIds(newSet);
+    const targetId = activeAlertOrder.id;
+    acknowledgedIdsRef.current.add(targetId);
     
     try {
-      localStorage.setItem('citiox_acknowledged_orders', JSON.stringify(Array.from(newSet)));
+      localStorage.setItem('citiox_acknowledged_orders', JSON.stringify(Array.from(acknowledgedIdsRef.current)));
     } catch (_) {}
 
     setActiveAlertOrder(null);
@@ -198,72 +210,69 @@ export default function GlobalOrderNotifier({ primaryColor = '#ea580c' }: Props)
   const itemsCount = (activeAlertOrder.items || []).reduce((acc, i) => acc + (i.cantidad || 1), 0);
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-amber-500 space-y-5 text-center relative overflow-hidden animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border-2 border-amber-500 animate-in zoom-in-95 duration-200">
         
-        {/* Header Emergente */}
-        <div className="bg-gradient-to-r from-amber-500 to-orange-600 text-white py-3.5 px-6 -mx-6 -mt-6 mb-2 flex items-center justify-between shadow-md">
-          <span className="font-black text-xs uppercase flex items-center gap-2 tracking-wider animate-pulse">
-            <Sparkles className="w-4 h-4" /> ¡NUEVO PEDIDO WEB ENTRANTE!
-          </span>
+        {/* Header Modal Alarma */}
+        <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 p-4 text-white flex items-center justify-between shadow-md">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-amber-200 animate-pulse" />
+            <span className="font-black text-xs uppercase tracking-wider">¡Nuevo Pedido Web Entrante!</span>
+          </div>
+
           <button
             type="button"
             onClick={() => setSoundEnabled(!soundEnabled)}
-            className="px-2.5 py-1 bg-black/20 hover:bg-black/40 text-white rounded-lg text-[10px] font-black cursor-pointer flex items-center gap-1 transition-colors"
+            className="p-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white transition-colors cursor-pointer flex items-center gap-1 text-[10px] font-bold"
+            title={soundEnabled ? "Silenciar Alarma" : "Activar Alarma"}
           >
-            {soundEnabled ? (
-              <>
-                <Bell className="w-3 h-3 text-amber-300" /> Alarma ON
-              </>
-            ) : (
-              <>
-                <BellOff className="w-3 h-3 text-slate-300" /> Mute
-              </>
-            )}
+            {soundEnabled ? <Bell className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5 text-rose-300" />}
+            <span>{soundEnabled ? "Alarma ON" : "Alarma OFF"}</span>
           </button>
         </div>
 
-        {/* Icono animado */}
-        <div className="size-20 mx-auto rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-black animate-bounce shadow-xl border-2 border-amber-300">
-          <Globe className="w-10 h-10" />
-        </div>
+        {/* Cuerpo del Modal */}
+        <div className="p-6 space-y-5 text-center">
+          <div className="size-16 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto border-2 border-amber-200 shadow-inner">
+            <Globe className="w-8 h-8" />
+          </div>
 
-        {/* Información del pedido */}
-        <div className="space-y-1">
-          <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Código de Pedido</span>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-            #{activeAlertOrder.codigo || activeAlertOrder.numeroPedido || activeAlertOrder.id.slice(-6).toUpperCase()}
-          </h2>
-          <p className="text-sm font-extrabold text-amber-600">
-            {activeAlertOrder.nombreCliente} • {activeAlertOrder.telefonoCliente}
-          </p>
-        </div>
+          <div>
+            <span className="text-xs font-black uppercase text-slate-400 tracking-wider block">Código de Pedido</span>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+              #{activeAlertOrder.numeroPedido || activeAlertOrder.codigo || activeAlertOrder.id.substring(0, 6)}
+            </h2>
+            <p className="text-xs font-extrabold text-amber-600 mt-1">
+              {activeAlertOrder.nombreCliente} • {activeAlertOrder.telefonoCliente}
+            </p>
+          </div>
 
-        {/* Resumen dinámico */}
-        <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs text-slate-700 font-bold justify-between flex items-center shadow-inner">
-          <span className="flex items-center gap-1.5 text-slate-600">
-            <ShoppingBag className="w-4 h-4 text-amber-500" />
-            {itemsCount} producto(s) en pedido
-          </span>
-          <span className="text-lg font-black text-emerald-600">${totalVal.toFixed(2)}</span>
-        </div>
+          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 text-slate-600 font-bold">
+              <ShoppingBag className="w-4 h-4 text-amber-500" />
+              <span>{itemsCount} producto(s) en pedido</span>
+            </div>
+            <span className="text-base font-black text-emerald-600">${totalVal.toFixed(2)}</span>
+          </div>
 
-        {/* Botones de Acción */}
-        <div className="pt-2 flex gap-3">
-          <button
-            type="button"
-            onClick={handleDismissAlert}
-            className="px-4 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs uppercase rounded-2xl cursor-pointer transition-all active:scale-95"
-          >
-            Silenciar
-          </button>
-          <button
-            type="button"
-            onClick={handleAcknowledgeAndAttend}
-            className="flex-1 py-3.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-black text-xs uppercase rounded-2xl shadow-xl shadow-amber-500/30 cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
-          >
-            <Check className="w-5 h-5 stroke-[3]" /> Atender Pedido Ahora
-          </button>
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <button
+              type="button"
+              onClick={handleDismissAlert}
+              className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs uppercase rounded-2xl transition-all cursor-pointer"
+            >
+              Silenciar
+            </button>
+
+            <button
+              type="button"
+              onClick={handleAcknowledgeAndAttend}
+              className="py-3 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs uppercase rounded-2xl shadow-lg shadow-amber-500/20 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
+            >
+              <Check className="w-4 h-4" />
+              <span>Atender Pedido Ahora</span>
+            </button>
+          </div>
         </div>
 
       </div>
