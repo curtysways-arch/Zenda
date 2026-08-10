@@ -26,13 +26,13 @@ export async function GET(
   const { BusinessRuntimeResolver } = await import('@/core/runtime/BusinessRuntimeResolver');
   const runtimeInfo = await BusinessRuntimeResolver.resolve(negocio);
 
-  // Pedidos exclusivamente en preparación para pantalla KDS de cocina
-  const ACTIVE_KITCHEN_STATES = ['EN_PREPARACION', 'PREPARING', 'CONFIRMED', 'PREPARACION'];
-
+  // Pedidos activos para pantalla KDS de cocina (excluyendo solo finalizados o cancelados)
   const orders = await (prisma as any).pedido.findMany({
     where: {
       negocioId: negocio.id,
-      estado: { in: ACTIVE_KITCHEN_STATES }
+      NOT: {
+        estado: { in: ['ENTREGADO', 'CANCELADO', 'COMPLETADO', 'RECHAZADO', 'DESPACHADO'] }
+      }
     },
     include: { items: true },
     orderBy: { createdAt: 'asc' }

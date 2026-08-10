@@ -85,7 +85,7 @@ export default function AdminCocinaPage() {
             </h1>
             <span className="bg-amber-100 text-amber-900 border border-amber-300 text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
               <span className="size-2 rounded-full bg-amber-600 animate-pulse" />
-              Exclusivo: Pedidos en Preparación ({orders.length})
+              Comandas Activas en Cocina ({orders.length})
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1 font-medium">
