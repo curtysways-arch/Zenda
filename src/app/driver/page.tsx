@@ -1,7 +1,7 @@
 /**
  * @file page.tsx
  * @module app/driver
- * @description App Web de Repartidores para Citiox Enterprise vNext.
+ * @description App Web de Repartidores NATIVA para Citiox Enterprise vNext.
  */
 
 'use client';
@@ -249,40 +249,37 @@ export default function DriverAppPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-28">
-      {/* Top Header App con Logo Oficial CiTiOX DRIVER */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-950 text-white p-3.5 sticky top-0 z-50 flex items-center justify-between shadow-xl">
+    <div className="min-h-screen bg-slate-100 text-slate-900 font-sans pb-32">
+      {/* HEADER NATIVO CON LOGO COMPLETO CITIOX DRIVER SIN RECORTES */}
+      <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-950 text-white p-4 sticky top-0 z-50 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-blue-600/20 border border-blue-400/30 overflow-hidden flex items-center justify-center shadow-md">
-            <img src="/citiox-driver-logo.png" alt="CiTiOX Driver Logo" className="w-full h-full object-cover" />
+          <div className="h-11 w-auto max-w-[140px] flex items-center justify-center shrink-0">
+            <img src="/citiox-driver-logo.png" alt="CiTiOX Driver Logo" className="h-full w-auto object-contain rounded-xl shadow-md" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-black text-sm tracking-tight text-white flex items-center gap-1">
-                CiTiOX <span className="text-blue-400 font-extrabold">DRIVER</span>
-              </h1>
-              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${
-                status === 'DISPONIBLE' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                status === 'DESCANSO' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider ${
+                status === 'DISPONIBLE' ? 'bg-emerald-500/20 text-emerald-300' :
+                status === 'DESCANSO' ? 'bg-amber-500/20 text-amber-300' :
+                'bg-rose-500/20 text-rose-300'
               }`}>
                 {status}
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-semibold">{driverName} • Repartidor Oficial</p>
+            <p className="text-xs text-slate-300 font-bold mt-0.5">{driverName} • Repartidor Oficial</p>
           </div>
         </div>
 
         <button
           onClick={fetchDriverData}
-          className="p-2.5 rounded-2xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-blue-400 transition-all cursor-pointer shadow-md"
+          className="p-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-blue-400 transition-all cursor-pointer shadow-md"
           title="Refrescar datos"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
-      {/* CONDITIONAL VISTA 1: VENTANA EXCLUSIVA DE GESTIÓN DE CARRERA ACTIVA */}
+      {/* CONDITIONAL VISTA 1: GESTIÓN DE CARRERA ACTIVA */}
       {hasActiveOrder ? (
         myAssignedOrders.map(order => {
           const extra = parseExtraInfo(order.extraInfo);
@@ -310,69 +307,69 @@ export default function DriverAppPage() {
 
           return (
             <div key={order.id} className="space-y-4">
-              {/* CABECERA CURVADA AZUL - ESTILO EXACTO DE IMAGE 1 */}
-              <div className="bg-gradient-to-b from-blue-700 via-blue-800 to-indigo-900 text-white pt-6 pb-14 px-5 rounded-b-[2.5rem] shadow-xl relative">
+              {/* CABECERA CURVADA AZUL SIN BORDES */}
+              <div className="bg-gradient-to-b from-blue-700 via-blue-800 to-indigo-900 text-white pt-6 pb-16 px-5 rounded-b-[2.5rem] shadow-xl relative">
                 <div className="flex items-center justify-between">
                   <button 
                     onClick={() => setSelectedOrderForDetail(null)}
-                    className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer"
+                    className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer"
                   >
-                    <ArrowLeft className="w-5 h-5" />
+                    <ArrowLeft className="w-6 h-6" />
                   </button>
                   <div className="text-center">
-                    <h2 className="text-lg font-black tracking-tight">Entrega en curso</h2>
-                    <p className="text-xs text-blue-200 font-bold">Pedido #{order.codigo || order.numeroPedido || order.id.slice(-6).toUpperCase()}</p>
+                    <h2 className="text-xl font-black tracking-tight">Entrega en curso</h2>
+                    <p className="text-sm text-blue-200 font-bold mt-0.5">Pedido #{order.codigo || order.numeroPedido || order.id.slice(-6).toUpperCase()}</p>
                   </div>
                   <a 
                     href={`tel:${order.telefonoCliente}`}
-                    className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer"
+                    className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer"
                   >
-                    <Phone className="w-5 h-5" />
+                    <Phone className="w-6 h-6" />
                   </a>
                 </div>
               </div>
 
-              {/* TARJETA HERO FLOTANTE DE ESTADO (BLANCA) */}
+              {/* TARJETA HERO FLOTANTE DE ESTADO (SIN BORDES, SOMBRA ELEVADA) */}
               <div className="max-w-md mx-auto px-4 -mt-12 relative z-10">
-                <div className="bg-white rounded-3xl p-4 shadow-xl border border-slate-100 flex items-center justify-between">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-blue-500/20">
+                <div className="bg-white rounded-3xl p-5 shadow-xl shadow-slate-300/60 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-3xl shadow-lg shadow-blue-500/30">
                       🛵
                     </div>
                     <div>
-                      <h3 className="font-black text-slate-900 text-sm leading-tight">
+                      <h3 className="font-black text-slate-900 text-base leading-tight">
                         {order.estado === 'EN_CAMINO' || order.estado === 'EN_RUTA' ? 'En camino al cliente' :
                          order.estado === 'REPARTIDOR_EN_LOCAL' ? 'En el local del restaurante' :
                          order.estado === 'ESPERANDO_CLIENTE' || order.estado === 'WAITING_CLIENT' ? 'Llegaste al destino' :
                          'Repartidor Asignado'}
                       </h3>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5">Lleva tu pedido de forma segura</p>
+                      <p className="text-sm text-slate-500 font-medium mt-1">Lleva tu pedido de forma segura</p>
                     </div>
                   </div>
 
-                  <div className="bg-blue-50 border border-blue-100 p-2.5 rounded-2xl text-center shrink-0 min-w-[80px]">
-                    <span className="text-sm font-black text-blue-600 font-mono block">
+                  <div className="bg-blue-50 p-3 rounded-2xl text-center shrink-0 min-w-[85px]">
+                    <span className="text-base font-black text-blue-600 font-mono block">
                       {getCountdownString(order.extraInfo?.estimatedReadyAt)}
                     </span>
-                    <span className="text-[10px] text-blue-500 font-bold block">min restantes</span>
+                    <span className="text-xs text-blue-500 font-bold block mt-0.5">min restantes</span>
                   </div>
                 </div>
               </div>
 
-              {/* CONTENIDO PRINCIPAL DE TARJETAS BLANCAS TIPO IMAGE 1 */}
+              {/* CONTENIDO PRINCIPAL DE TARJETAS NATIVAS SIN BORDES */}
               <div className="max-w-md mx-auto px-4 space-y-4">
 
                 {/* TARJETA 1: 📍 DESTINO */}
-                <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 space-y-4 text-left">
+                <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4 text-left">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-[11px] font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
+                      <span className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
                         <MapPin className="w-4 h-4 text-blue-600" /> DESTINO
                       </span>
-                      <h3 className="text-base font-black text-slate-900 mt-1">{order.nombreCliente}</h3>
-                      <p className="text-xs text-slate-600 font-medium mt-0.5">{order.direccionCliente || 'Dirección registrada en pedido'}</p>
+                      <h3 className="text-lg font-black text-slate-900 mt-1">{order.nombreCliente}</h3>
+                      <p className="text-sm text-slate-600 font-semibold mt-1">{order.direccionCliente || 'Dirección registrada en pedido'}</p>
                       {order.referenciaCliente && (
-                        <p className="text-xs text-slate-400 font-medium mt-0.5">Referencia: {order.referenciaCliente}</p>
+                        <p className="text-xs text-slate-400 font-medium mt-1">Referencia: {order.referenciaCliente}</p>
                       )}
                     </div>
 
@@ -382,156 +379,155 @@ export default function DriverAppPage() {
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.direccionCliente)}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="w-16 h-16 rounded-full bg-blue-50 hover:bg-blue-100 border border-blue-200 flex flex-col items-center justify-center text-blue-600 font-bold shadow-sm transition-all shrink-0 cursor-pointer"
+                        className="w-16 h-16 rounded-full bg-blue-50 hover:bg-blue-100 flex flex-col items-center justify-center text-blue-600 font-bold shadow-md transition-all shrink-0 cursor-pointer"
                       >
-                        <Navigation className="w-5 h-5 fill-blue-600 text-blue-600" />
-                        <span className="text-[9px] font-black tracking-wider mt-0.5">NAVEGAR</span>
+                        <Navigation className="w-6 h-6 fill-blue-600 text-blue-600" />
+                        <span className="text-[10px] font-black tracking-wider mt-0.5">NAVEGAR</span>
                       </a>
                     )}
                   </div>
 
                   {/* 3 COLUMNAS DE ACCIÓN (LLAMAR, DISTANCIA, MENSAJE WHATSAPP) */}
                   <div className="pt-4 border-t border-slate-100 grid grid-cols-3 divide-x divide-slate-100 text-center">
-                    <a href={`tel:${order.telefonoCliente}`} className="px-2 py-1 group">
-                      <Phone className="w-5 h-5 text-blue-600 mx-auto group-hover:scale-110 transition-transform" />
-                      <span className="text-xs font-bold text-slate-700 block mt-1">Llamar</span>
+                    <a href={`tel:${order.telefonoCliente}`} className="px-2 py-2 group">
+                      <Phone className="w-6 h-6 text-blue-600 mx-auto group-hover:scale-110 transition-transform" />
+                      <span className="text-xs font-black text-slate-800 block mt-1.5">Llamar</span>
                     </a>
 
-                    <div className="px-2 py-1">
-                      <span className="text-xs font-black text-slate-900 block">{distanceStr}</span>
-                      <span className="text-[10px] text-slate-400 font-semibold block mt-0.5">Distancia</span>
+                    <div className="px-2 py-2">
+                      <span className="text-sm font-black text-slate-900 block">{distanceStr}</span>
+                      <span className="text-xs text-slate-400 font-semibold block mt-0.5">Distancia</span>
                     </div>
 
                     <a 
                       href={`https://wa.me/${order.telefonoCliente?.replace(/[^0-9]/g, '')}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="px-2 py-1 group"
+                      className="px-2 py-2 group"
                     >
-                      <MessageCircle className="w-5 h-5 text-blue-600 mx-auto group-hover:scale-110 transition-transform" />
-                      <span className="text-xs font-bold text-slate-700 block mt-1">Mensaje</span>
+                      <MessageCircle className="w-6 h-6 text-blue-600 mx-auto group-hover:scale-110 transition-transform" />
+                      <span className="text-xs font-black text-slate-800 block mt-1.5">Mensaje</span>
                     </a>
                   </div>
                 </div>
 
                 {/* TARJETA 2: 🛍️ DETALLES DEL PEDIDO */}
-                <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 space-y-3 text-left">
-                  <span className="text-[11px] font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
+                <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4 text-left">
+                  <span className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
                     <PackageCheck className="w-4 h-4 text-blue-600" /> DETALLES DEL PEDIDO
                   </span>
 
-                  <div className="space-y-2 text-xs pt-1">
+                  <div className="space-y-3 text-sm pt-1">
                     {(order.items || []).map((it, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-slate-700 font-medium">
+                      <div key={idx} className="flex justify-between items-center text-slate-800 font-semibold">
                         <span>{it.cantidad}x {it.nombreProducto}</span>
-                        <span className="font-bold text-slate-900">${(Number(it.precioUnitario) * it.cantidad).toFixed(2)}</span>
+                        <span className="font-black text-slate-900">${(Number(it.precioUnitario) * it.cantidad).toFixed(2)}</span>
                       </div>
                     ))}
-                    <div className="flex justify-between items-center text-slate-500 text-xs">
+                    <div className="flex justify-between items-center text-slate-500 text-xs font-medium">
                       <span>Empaque</span>
-                      <span className="font-semibold">${(Number(extra?.packagingCost || 0)).toFixed(2)}</span>
+                      <span className="font-bold">${(Number(extra?.packagingCost || 0)).toFixed(2)}</span>
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-slate-100 flex justify-between items-center text-sm font-black text-slate-900">
+                  <div className="pt-3 border-t border-slate-100 flex justify-between items-center text-base font-black text-slate-900">
                     <span>Total del pedido</span>
-                    <span>${totalToCollect}</span>
+                    <span className="text-lg">${totalToCollect}</span>
                   </div>
                 </div>
 
                 {/* TARJETA 3: 🛵 INFORMACIÓN DE ENTREGA */}
-                <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 space-y-3 text-left">
-                  <span className="text-[11px] font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
+                <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4 text-left">
+                  <span className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
                     <Truck className="w-4 h-4 text-blue-600" /> INFORMACIÓN DE ENTREGA
                   </span>
 
-                  <div className="space-y-2.5 text-xs">
+                  <div className="space-y-3 text-sm">
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-600 font-medium flex items-center gap-1.5">
-                        <DollarSign className="w-4 h-4 text-blue-600" /> Ganancia por envío
+                      <span className="text-slate-600 font-semibold flex items-center gap-2">
+                        <DollarSign className="w-5 h-5 text-blue-600" /> Ganancia por envío
                       </span>
-                      <span className="font-black text-blue-600 text-sm">+${deliveryFee}</span>
+                      <span className="font-black text-blue-600 text-lg">+${deliveryFee}</span>
                     </div>
 
-                    <div className="flex justify-between items-center border-t border-slate-100 pt-2">
-                      <span className="text-slate-600 font-medium flex items-center gap-1.5">
-                        <ShieldAlert className="w-4 h-4 text-slate-400" /> Pago del cliente
+                    <div className="flex justify-between items-center border-t border-slate-100 pt-3">
+                      <span className="text-slate-600 font-semibold flex items-center gap-2">
+                        <ShieldAlert className="w-5 h-5 text-slate-400" /> Pago del cliente
                       </span>
-                      <span className="font-bold text-slate-800">
+                      <span className="font-bold text-slate-900">
                         {isCashOnDelivery ? `💰 Efectivo ($${totalToCollect})` : '💳 Pagado Online ($0.00)'}
                       </span>
                     </div>
 
-                    <div className="flex justify-between items-center border-t border-slate-100 pt-2">
-                      <span className="text-slate-600 font-medium flex items-center gap-1.5">
-                        <Clock className="w-4 h-4 text-slate-400" /> Entrega solicitada
+                    <div className="flex justify-between items-center border-t border-slate-100 pt-3">
+                      <span className="text-slate-600 font-semibold flex items-center gap-2">
+                        <Clock className="w-5 h-5 text-slate-400" /> Entrega solicitada
                       </span>
-                      <span className="font-bold text-slate-800">Hoy, {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="font-bold text-slate-900">Hoy, {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* TARJETA 4: 🔔 CLIENTE NOTIFICADO */}
-                <div className="bg-blue-50/80 border border-blue-200/80 rounded-3xl p-4 flex items-center justify-between text-left">
-                  <div className="space-y-0.5">
+                <div className="bg-blue-50/90 rounded-3xl p-5 flex items-center justify-between text-left shadow-sm">
+                  <div className="space-y-1">
                     <span className="text-xs font-black text-blue-900 uppercase tracking-wider block flex items-center gap-1.5">
                       🔔 CLIENTE NOTIFICADO
                     </span>
-                    <p className="text-[11px] text-blue-800 font-medium">El cliente ha sido notificado que su pedido está en camino.</p>
+                    <p className="text-xs text-blue-800 font-semibold">El cliente ha sido notificado que su pedido está en camino.</p>
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md">
-                    <Check className="w-5 h-5 stroke-[3]" />
+                  <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                    <Check className="w-6 h-6 stroke-[3]" />
                   </div>
                 </div>
 
                 {/* TARJETA 5: HERRAMIENTAS */}
                 <div className="space-y-2 text-left">
-                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block px-1">
+                  <span className="text-xs font-black uppercase text-slate-400 tracking-wider block px-1">
                     HERRAMIENTAS
                   </span>
-                  <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="grid grid-cols-3 gap-3 text-center">
                     <button 
                       onClick={() => alert(`Enlace de seguimiento: https://citiox.com/pedido/${order.id}`)}
-                      className="bg-white border border-slate-200/80 rounded-2xl p-3 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer flex flex-col items-center gap-1 shadow-xs"
+                      className="bg-white rounded-2xl p-4 text-xs font-black text-slate-800 hover:bg-slate-50 transition-all cursor-pointer flex flex-col items-center gap-2 shadow-md shadow-slate-200/50"
                     >
-                      <Share2 className="w-4 h-4 text-blue-600" />
-                      <span className="text-[11px]">Compartir</span>
+                      <Share2 className="w-5 h-5 text-blue-600" />
+                      <span>Compartir</span>
                     </button>
 
                     <button 
                       onClick={() => alert('Soporte notificado. El equipo te contactará de inmediato.')}
-                      className="bg-white border border-slate-200/80 rounded-2xl p-3 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer flex flex-col items-center gap-1 shadow-xs"
+                      className="bg-white rounded-2xl p-4 text-xs font-black text-slate-800 hover:bg-slate-50 transition-all cursor-pointer flex flex-col items-center gap-2 shadow-md shadow-slate-200/50"
                     >
-                      <AlertTriangle className="w-4 h-4 text-amber-500" />
-                      <span className="text-[11px]">Problema</span>
+                      <AlertTriangle className="w-5 h-5 text-amber-500" />
+                      <span>Problema</span>
                     </button>
 
                     <button 
                       onClick={() => alert('Para cancelar esta carrera contacta al administrador.')}
-                      className="bg-white border border-slate-200/80 rounded-2xl p-3 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer flex flex-col items-center gap-1 shadow-xs"
+                      className="bg-white rounded-2xl p-4 text-xs font-black text-slate-800 hover:bg-slate-50 transition-all cursor-pointer flex flex-col items-center gap-2 shadow-md shadow-slate-200/50"
                     >
-                      <XCircle className="w-4 h-4 text-rose-500" />
-                      <span className="text-[11px]">Cancelar</span>
+                      <XCircle className="w-5 h-5 text-rose-500" />
+                      <span>Cancelar</span>
                     </button>
                   </div>
                 </div>
 
-                {/* VISTA Y LÓGICA DE VALIDACIÓN DE PIN Y BOTÓN DESPACHAR SEGÚN EL ESTADO OPERATIVO */}
-                {/* SI ESTÁ EN EL LOCAL */}
+                {/* VISTA Y LÓGICA DE VALIDACIÓN DE PIN SEGÚN ESTADO OPERATIVO */}
                 {(order.estado === 'REPARTIDOR_EN_LOCAL' || order.estado === 'ENTREGADO_A_REPARTIDOR') && (
-                  <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 space-y-3 text-left">
+                  <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3 text-left">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black uppercase text-amber-600 flex items-center gap-1.5">
                         🔑 PIN Retiro en Local: {expectedPickupCode}
                       </span>
                     </div>
 
-                    <div className={`p-3 rounded-2xl text-xs font-extrabold text-center flex items-center justify-center gap-2 border ${
+                    <div className={`p-4 rounded-2xl text-xs font-black text-center flex items-center justify-center gap-2 ${
                       isHandedOver 
-                        ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
-                        : 'bg-amber-50 border-amber-200 text-amber-900'
+                        ? 'bg-emerald-50 text-emerald-800' 
+                        : 'bg-amber-50 text-amber-900'
                     }`}>
-                      <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                      <Clock className="w-5 h-5 text-amber-600 shrink-0" />
                       <span>
                         {isHandedOver 
                           ? '📦 ¡Paquete Despachado por Restaurante! Puedes salir en ruta.' 
@@ -541,9 +537,8 @@ export default function DriverAppPage() {
                   </div>
                 )}
 
-                {/* SI ESTÁ EN DESTINO ESPERANDO CLIENTE */}
                 {(order.estado === 'ESPERANDO_CLIENTE' || order.estado === 'WAITING_CLIENT') && (
-                  <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 space-y-3 text-left">
+                  <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3 text-left">
                     <span className="text-xs font-black uppercase text-amber-600 flex items-center gap-1.5">
                       🔑 PIN DE CONFIRMACIÓN DEL CLIENTE
                     </span>
@@ -553,7 +548,7 @@ export default function DriverAppPage() {
                       value={enteredPin}
                       onChange={e => setInputPins(prev => ({ ...prev, [order.id]: e.target.value.trim() }))}
                       placeholder="Ingresa PIN de 4 dígitos (Ej: 5955)..."
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-center text-lg font-black text-slate-900 tracking-widest outline-none focus:border-blue-600"
+                      className="w-full p-4 bg-slate-50 border-none rounded-2xl text-center text-xl font-black text-slate-900 tracking-widest outline-none focus:ring-2 focus:ring-blue-600"
                     />
                     {enteredPin.length === 4 && !isPinValid && (
                       <p className="text-xs text-rose-600 font-bold text-center">❌ PIN incorrecto. Pide al cliente su código.</p>
@@ -567,14 +562,14 @@ export default function DriverAppPage() {
               </div>
 
               {/* BARRA INFERIOR FIJA CON BOTÓN PRINCIPAL GIGANTE ESTILO IMAGE 1 */}
-              <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-50 flex items-center gap-3 max-w-md mx-auto">
+              <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md z-50 flex items-center gap-3 max-w-md mx-auto shadow-2xl">
                 {order.estado === 'REPARTIDOR_ASIGNADO' && (
                   <button
                     onClick={() => handleMarkArrived(order.id)}
                     disabled={actionLoading === order.id}
-                    className="flex-1 py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 rounded-2xl text-xs font-black uppercase shadow-xl flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98"
+                    className="flex-1 py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 rounded-2xl text-sm font-black uppercase shadow-xl flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98"
                   >
-                    <MapPin className="w-4 h-4 text-slate-950" />
+                    <MapPin className="w-5 h-5 text-slate-950" />
                     <span>📍 Marcar Llegada al Restaurante</span>
                   </button>
                 )}
@@ -583,22 +578,22 @@ export default function DriverAppPage() {
                   <button
                     onClick={() => handleUpdateState(order.id, 'ON_ROUTE')}
                     disabled={!isHandedOver || actionLoading === order.id}
-                    className={`flex-1 py-4 rounded-2xl text-xs font-black uppercase shadow-xl flex items-center justify-center gap-2 transition-all ${
+                    className={`flex-1 py-4 rounded-2xl text-sm font-black uppercase shadow-xl flex items-center justify-center gap-2 transition-all ${
                       isHandedOver
                         ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white cursor-pointer active:scale-98 shadow-blue-500/20'
-                        : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                     }`}
                   >
                     {isHandedOver ? (
                       <>
-                        <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                          <Check className="w-4 h-4 text-white" />
+                        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                          <Check className="w-5 h-5 text-white stroke-[3]" />
                         </div>
                         <span>🛵 INICIAR ENTREGA AL CLIENTE</span>
                       </>
                     ) : (
                       <>
-                        <Lock className="w-4 h-4 text-slate-400 shrink-0" />
+                        <Lock className="w-5 h-5 text-slate-400 shrink-0" />
                         <span>🔒 ESPERANDO QUE EL LOCAL MARQUE ENTREGA</span>
                       </>
                     )}
@@ -609,10 +604,10 @@ export default function DriverAppPage() {
                   <button
                     onClick={() => handleUpdateState(order.id, 'WAITING_CLIENT' as any)}
                     disabled={actionLoading === order.id}
-                    className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-xs font-black uppercase shadow-xl flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98 shadow-blue-500/20"
+                    className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-sm font-black uppercase shadow-xl flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98 shadow-blue-500/20"
                   >
-                    <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                      <MapPin className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                      <MapPin className="w-5 h-5 text-white" />
                     </div>
                     <span>📍 LLEGUÉ AL DESTINO (EN ESPERA)</span>
                   </button>
@@ -622,27 +617,27 @@ export default function DriverAppPage() {
                   <button
                     onClick={() => handleUpdateState(order.id, 'DELIVERED')}
                     disabled={!isPinValid || actionLoading === order.id}
-                    className={`flex-1 py-4 rounded-2xl text-xs font-black uppercase shadow-xl flex items-center justify-center gap-2 transition-all ${
+                    className={`flex-1 py-4 rounded-2xl text-sm font-black uppercase shadow-xl flex items-center justify-center gap-2 transition-all ${
                       isPinValid
                         ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white cursor-pointer active:scale-98 shadow-blue-500/20'
-                        : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                     }`}
                   >
-                    <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                      <Check className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                      <Check className="w-5 h-5 text-white stroke-[3]" />
                     </div>
                     <div>
                       <span className="block leading-tight">PEDIDO ENTREGADO</span>
-                      <span className="text-[9px] font-semibold opacity-90 block">Confirmar entrega al cliente</span>
+                      <span className="text-[10px] font-semibold opacity-90 block">Confirmar entrega al cliente</span>
                     </div>
                   </button>
                 )}
 
                 <button 
                   onClick={() => alert(`Acciones adicionales para pedido #${order.numeroPedido}`)}
-                  className="w-12 h-14 bg-white border border-slate-200/80 rounded-2xl flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-xs"
+                  className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-md shadow-slate-200/60"
                 >
-                  <MoreHorizontal className="w-5 h-5" />
+                  <MoreHorizontal className="w-6 h-6" />
                 </button>
               </div>
             </div>
@@ -651,44 +646,44 @@ export default function DriverAppPage() {
       ) : (
         /* VISTA 2: MODO BÚSQUEDA / BOLSA DE TRABAJO (SOLO SI NO HAY CARRERA ACTIVA) */
         <>
-          {/* Selector de Estado de Disponibilidad */}
+          {/* Selector de Estado de Disponibilidad (SIN BORDES, SOMBRA ELEVADA) */}
           <div className="p-4 max-w-md mx-auto">
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-4 shadow-sm space-y-3 text-left">
+            <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4 text-left">
               <label className="block text-xs font-black uppercase text-slate-500 tracking-wider">
-                Mi Disponibilidad Actual
+                MI DISPONIBILIDAD ACTUAL
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-3">
                 <button
                   onClick={() => handleStatusChange('DISPONIBLE')}
-                  className={`py-3 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1 transition-all cursor-pointer ${
+                  className={`py-4 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                     status === 'DISPONIBLE'
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
-                  <CheckCircle className="w-4 h-4" />
+                  <CheckCircle className="w-5 h-5" />
                   <span>DISPONIBLE</span>
                 </button>
                 <button
                   onClick={() => handleStatusChange('DESCANSO')}
-                  className={`py-3 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1 transition-all cursor-pointer ${
+                  className={`py-4 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                     status === 'DESCANSO'
-                      ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20'
+                      ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
-                  <Clock className="w-4 h-4" />
+                  <Clock className="w-5 h-5" />
                   <span>DESCANSO</span>
                 </button>
                 <button
                   onClick={() => handleStatusChange('DESCONECTADO')}
-                  className={`py-3 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1 transition-all cursor-pointer ${
+                  className={`py-4 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                     status === 'DESCONECTADO'
-                      ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20'
+                      ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
-                  <Power className="w-4 h-4" />
+                  <Power className="w-5 h-5" />
                   <span>OFFLINE</span>
                 </button>
               </div>
@@ -697,19 +692,19 @@ export default function DriverAppPage() {
 
           {/* PEDIDOS DISPONIBLES EN BOLSA DE TRABAJO */}
           {status === 'DISPONIBLE' && (
-            <div className="p-4 max-w-md mx-auto space-y-3 text-left">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-blue-600 animate-spin" />
+            <div className="p-4 max-w-md mx-auto space-y-4 text-left">
+              <div className="flex items-center justify-between px-1">
+                <h2 className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-blue-600 animate-spin" />
                   Bolsa de Pedidos Disponibles ({openUnassignedOrders.length})
                 </h2>
               </div>
 
               {openUnassignedOrders.length === 0 ? (
-                <div className="bg-white border border-slate-200/80 rounded-3xl p-8 text-center text-slate-400 space-y-2 shadow-sm">
-                  <PackageCheck className="w-10 h-10 mx-auto text-slate-300" />
-                  <p className="font-bold text-xs text-slate-700">No hay pedidos disponibles en este momento.</p>
-                  <p className="text-[11px] text-slate-500">Nuevos pedidos aparecerán aquí cuando los restaurantes los acepten.</p>
+                <div className="bg-white rounded-3xl p-10 text-center text-slate-400 space-y-3 shadow-md shadow-slate-200/70">
+                  <PackageCheck className="w-12 h-12 mx-auto text-slate-300" />
+                  <p className="font-black text-sm text-slate-800">No hay pedidos disponibles en este momento.</p>
+                  <p className="text-xs text-slate-500">Nuevos pedidos aparecerán aquí cuando los restaurantes los acepten.</p>
                 </div>
               ) : (
                 openUnassignedOrders.map(order => {
@@ -718,22 +713,22 @@ export default function DriverAppPage() {
                   return (
                     <div
                       key={order.id}
-                      className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-sm space-y-3 hover:border-blue-400 transition-all cursor-pointer"
+                      className="bg-white rounded-3xl p-6 shadow-md shadow-slate-200/70 space-y-4 hover:shadow-lg transition-all cursor-pointer"
                       onClick={() => setSelectedOrderForDetail(order)}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-slate-900">
+                        <span className="text-sm font-black text-slate-900">
                           #{order.codigo || order.numeroPedido || order.id.slice(-6).toUpperCase()}
                         </span>
-                        <span className="px-3 py-1 bg-blue-50 text-blue-600 border border-blue-200 font-black text-xs rounded-full">
+                        <span className="px-3.5 py-1.5 bg-blue-50 text-blue-600 font-black text-xs rounded-full">
                           +${deliveryFee} Ganancia
                         </span>
                       </div>
 
-                      <div className="space-y-1 text-xs text-slate-600">
-                        <p className="font-black text-slate-900">{order.negocio?.nombre || 'Restaurante Citiox'}</p>
-                        <p className="font-medium text-slate-500">📍 Recogida: {order.negocio?.direccion || 'Local Principal'}</p>
-                        <p className="font-medium text-slate-500">📍 Entrega: {order.direccionCliente || 'Domicilio Cliente'}</p>
+                      <div className="space-y-1.5 text-sm text-slate-600">
+                        <p className="font-black text-slate-900 text-base">{order.negocio?.nombre || 'Restaurante Citiox'}</p>
+                        <p className="font-semibold text-slate-600">📍 Recogida: {order.negocio?.direccion || 'Local Principal'}</p>
+                        <p className="font-semibold text-slate-600">📍 Entrega: {order.direccionCliente || 'Domicilio Cliente'}</p>
                       </div>
 
                       <button
@@ -742,9 +737,9 @@ export default function DriverAppPage() {
                           handleAcceptOrder(order.id);
                         }}
                         disabled={actionLoading === order.id}
-                        className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-xs font-black uppercase shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98"
+                        className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-sm font-black uppercase shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98"
                       >
-                        <Truck className="w-4 h-4 text-white" />
+                        <Truck className="w-5 h-5 text-white" />
                         <span>Aceptar Carrera (+${deliveryFee})</span>
                       </button>
                     </div>
