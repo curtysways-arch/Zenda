@@ -194,9 +194,10 @@ export async function POST(
         });
 
         const isDeliveryOrder = deliveryType === 'DOMICILIO' || deliveryType === 'DELIVERY_ORDER';
+        const discountAmount = body.discountAmount !== undefined ? parseFloat(body.discountAmount) : (body.descuento !== undefined ? parseFloat(body.descuento) : 0);
         const finalSubtotal = body.subtotal !== undefined && parseFloat(body.subtotal) > 0 ? parseFloat(body.subtotal) : pricingResult.subtotal;
         const finalCostoEnvio = isDeliveryOrder ? (body.costoEnvio !== undefined ? parseFloat(body.costoEnvio) : pricingResult.deliveryCost) : 0;
-        const finalTotal = body.total !== undefined && parseFloat(body.total) > 0 ? parseFloat(body.total) : Math.round((finalSubtotal + finalCostoEnvio) * 100) / 100;
+        const finalTotal = body.total !== undefined && parseFloat(body.total) > 0 ? parseFloat(body.total) : Math.max(0, Math.round((finalSubtotal - discountAmount + finalCostoEnvio) * 100) / 100);
 
         // Resolver fecha de entrega
         let dateToDeliver = new Date();
@@ -237,6 +238,11 @@ export async function POST(
                     estado: 'PENDIENTE',
                     extraInfo: {
                         ...(body.extraInfo || {}),
+                        promotionId: body.promotionId || null,
+                        promotionCode: body.promotionCode || null,
+                        promotionTitle: body.promotionTitle || null,
+                        discountAmount: discountAmount,
+                        descuento: discountAmount,
                         pickupCode: Math.floor(1000 + Math.random() * 9000).toString(),
                         deliveryCode: Math.floor(1000 + Math.random() * 9000).toString(),
                         paymentMethodCode: body.paymentMethodCode || body.paymentMethod || body.metodoPago || 'TRANSFER',
