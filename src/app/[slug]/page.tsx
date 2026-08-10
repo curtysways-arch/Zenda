@@ -51,7 +51,7 @@ export default async function PublicNegocioPage({
             try {
                 const [prods, cats] = await Promise.all([
                     (prisma as any).producto.findMany({
-                        where: { negocioId: negocio.id, activo: true },
+                        where: { negocioId: negocio.id },
                         orderBy: { orden: 'asc' }
                     }),
                     (prisma as any).categoriaProducto.findMany({
@@ -135,7 +135,7 @@ export default async function PublicNegocioPage({
         let initialCategories: any[] = [];
         try {
             const [prods, cats] = await Promise.all([
-                (prisma as any).producto.findMany({ where: { negocioId: negocio.id, activo: true }, orderBy: { orden: 'asc' }, include: { categoria: true } }),
+                (prisma as any).producto.findMany({ where: { negocioId: negocio.id }, orderBy: { orden: 'asc' }, include: { categoria: true } }),
                 (prisma as any).categoriaProducto.findMany({ where: { negocioId: negocio.id, activo: true }, orderBy: { orden: 'asc' } })
             ]);
             initialProducts = prods;

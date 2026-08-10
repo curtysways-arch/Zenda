@@ -26,9 +26,9 @@ export async function GET(
             orderBy: { orden: 'asc' }
         });
 
-        // Obtener productos activos
+        // Obtener productos (incluyendo agotados para mostrar aviso)
         const products = await (prisma as any).producto.findMany({
-            where: { negocioId: negocio.id, activo: true },
+            where: { negocioId: negocio.id },
             orderBy: { orden: 'asc' }
         });
 
