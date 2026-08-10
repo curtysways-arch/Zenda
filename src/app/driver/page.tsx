@@ -13,7 +13,7 @@ import {
   Map, Sparkles, Store, Building2, ExternalLink, Lock, ArrowLeft, Share2,
   MessageCircle, MoreHorizontal, ChefHat, AlertTriangle, Check,
   TrendingUp, History, User, LogOut, ChevronRight, Star, Award, FileText,
-  Filter, Search, Calendar, CreditCard, ShieldCheck, ThumbsUp
+  Filter, Search, Calendar, CreditCard, ShieldCheck, ThumbsUp, Eye
 } from 'lucide-react';
 import DriverOrderMapModal from '@/components/driver/DriverOrderMapModal';
 
@@ -32,6 +32,7 @@ interface DbOrder {
   costoEnvio?: number;
   paymentStatus?: string;
   createdAt: string;
+  payment?: any;
   extraInfo?: any;
   negocio?: {
     id: string;
@@ -864,38 +865,93 @@ export default function DriverAppPage() {
                   ) : (
                     openUnassignedOrders.map(order => {
                       const deliveryFee = getDriverRealFee(order);
+                      const formattedDate = order.createdAt 
+                        ? new Date(order.createdAt).toLocaleDateString('es-EC', {
+                            day: 'numeric',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true
+                          })
+                        : 'Hora no registrada';
+
+                      const isPaidOnline = order.payment?.estado === 'PAGO_VERIFICADO' || order.payment?.estado === 'CONFIRMADO' || order.paymentStatus === 'CONFIRMADO';
 
                       return (
                         <div
                           key={order.id}
-                          className="w-full bg-white rounded-3xl p-6 shadow-md shadow-slate-200/70 space-y-4 hover:shadow-lg transition-all cursor-pointer"
                           onClick={() => setSelectedOrderForDetail(order)}
+                          className="w-full bg-white rounded-3xl p-5 border border-slate-200/80 shadow-md shadow-slate-200/50 space-y-4 hover:shadow-xl hover:border-blue-300 transition-all cursor-pointer text-left relative overflow-hidden"
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-black text-slate-900">
-                              #{order.codigo || order.numeroPedido || order.id.slice(-6).toUpperCase()}
-                            </span>
-                            <span className="px-3.5 py-1.5 bg-blue-50 text-blue-600 font-black text-xs rounded-full">
+                          {/* Insignia de Estado Limpia: DISPONIBLE EN BOLSA */}
+                          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div className="flex items-center gap-2">
+                              <span className="px-2.5 py-1 bg-amber-100 text-amber-900 text-[10px] font-black uppercase tracking-wider rounded-lg border border-amber-300/80 flex items-center gap-1">
+                                <Sparkles className="w-3 h-3 text-amber-600 animate-pulse" />
+                                DISPONIBLE EN BOLSA
+                              </span>
+                              <span className="text-xs font-mono font-black text-slate-900">
+                                #{order.codigo || order.numeroPedido || order.id.slice(-6).toUpperCase()}
+                              </span>
+                            </div>
+                            <span className="px-3 py-1 bg-emerald-50 text-emerald-700 font-mono font-black text-xs rounded-full border border-emerald-200">
                               +${deliveryFee} Ganancia
                             </span>
                           </div>
 
-                          <div className="space-y-1.5 text-sm text-slate-600">
-                            <p className="font-black text-slate-900 text-base">{order.negocio?.nombre || 'Restaurante Citiox'}</p>
-                            <p className="font-semibold text-slate-600">📍 Recogida: {order.negocio?.direccion || 'Local Principal'}</p>
-                            <p className="font-semibold text-slate-600">📍 Entrega: {order.direccionCliente || 'Domicilio Cliente'}</p>
+                          {/* Fecha y Hora del Pedido */}
+                          <div className="flex items-center justify-between text-xs text-slate-500 font-semibold px-1">
+                            <span className="flex items-center gap-1.5 text-slate-600">
+                              <Clock className="w-3.5 h-3.5 text-slate-400" />
+                              <span>Pedido: <strong className="text-slate-900 font-black">{formattedDate}</strong></span>
+                            </span>
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${
+                              isPaidOnline ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'
+                            }`}>
+                              {isPaidOnline ? '💳 PAGADO ONLINE' : '💵 EFECTIVO AL ENTREGAR'}
+                            </span>
                           </div>
 
+                          {/* Trayecto Limpio: Punto A (Recogida) -> Punto B (Entrega) */}
+                          <div className="bg-slate-50/80 p-3.5 rounded-2xl border border-slate-100 space-y-2.5">
+                            {/* Recogida */}
+                            <div className="flex items-start gap-2.5 text-xs">
+                              <div className="w-6 h-6 rounded-full bg-amber-500 text-white font-black flex items-center justify-center shrink-0 text-[10px] shadow-sm">
+                                A
+                              </div>
+                              <div>
+                                <span className="text-[10px] font-black uppercase text-amber-700 tracking-wider block">Local de Recogida</span>
+                                <p className="font-black text-slate-900 text-sm leading-tight">{order.negocio?.nombre || 'Restaurante Citiox'}</p>
+                                <p className="text-slate-500 font-semibold text-[11px] mt-0.5">{order.negocio?.direccion || 'Dirección de local registrada'}</p>
+                              </div>
+                            </div>
+
+                            <div className="border-t border-dashed border-slate-200 my-1"></div>
+
+                            {/* Entrega */}
+                            <div className="flex items-start gap-2.5 text-xs">
+                              <div className="w-6 h-6 rounded-full bg-blue-600 text-white font-black flex items-center justify-center shrink-0 text-[10px] shadow-sm">
+                                B
+                              </div>
+                              <div>
+                                <span className="text-[10px] font-black uppercase text-blue-700 tracking-wider block">Entrega a Cliente</span>
+                                <p className="font-black text-slate-900 text-sm leading-tight">{order.nombreCliente || 'Cliente Registrado'}</p>
+                                <p className="text-slate-500 font-semibold text-[11px] mt-0.5">{order.direccionCliente || 'Sin dirección de cliente'}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Botón de Acción Limpio */}
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleAcceptOrder(order.id);
+                              setSelectedOrderForDetail(order);
                             }}
-                            disabled={actionLoading === order.id}
-                            className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-sm font-black uppercase shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98"
+                            className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-xs font-black uppercase shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98"
                           >
-                            <Truck className="w-5 h-5 text-white" />
-                            <span>Aceptar Carrera (+${deliveryFee})</span>
+                            <Eye className="w-4 h-4 text-white" />
+                            <span>Ver Detalles de Carrera (+${deliveryFee})</span>
                           </button>
                         </div>
                       );

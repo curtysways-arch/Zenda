@@ -1719,52 +1719,75 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     )}
                                 </div>
                                 <div className="flex-1">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <span className={`text-xs font-black uppercase tracking-wider ${
-                                            ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
-                                                ? 'text-amber-400'
-                                                : 'text-emerald-400'
-                                        }`}>
-                                            {['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
-                                                ? `⏳ Pedido Pendiente de Aprobación #${activeOrder.id.slice(0, 8)}`
-                                                : `🛵 Pedido Confirmado #${activeOrder.id.slice(0, 8)}`}
-                                        </span>
-                                        <span className={`text-[8px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
-                                            ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
-                                                ? 'bg-amber-500/30 text-amber-200 border border-amber-400/30'
-                                                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
-                                        }`}>
-                                            {['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado) ? 'En Verificación' : activeOrder.estado}
-                                        </span>
-                                    </div>
-                                    <p className="text-[11px] text-slate-300 font-semibold mt-1">
-                                        {['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
-                                            ? 'El establecimiento está verificando tu pago para programar el envío.'
-                                            : `Entrega estimada: ${activeOrder.fechaEntrega ? new Date(activeOrder.fechaEntrega).toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : 'Por definir'}`}
-                                    </p>
+                                    {(() => {
+                                        const isChangesReq = activeOrder.estado === 'CAMBIOS_SOLICITADOS' || activeOrder.estadoDisponibilidad === 'CAMBIOS_SOLICITADOS' || activeOrder.extraInfo?.estadoDisponibilidad === 'CAMBIOS_SOLICITADOS';
+                                        const isPendingPayment = ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado);
+
+                                        return (
+                                            <>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className={`text-xs font-black uppercase tracking-wider ${
+                                                        isChangesReq || isPendingPayment ? 'text-amber-400' : 'text-emerald-400'
+                                                    }`}>
+                                                        {isChangesReq
+                                                            ? `⚠️ El Negocio Solicitó Cambios en Pedido #${activeOrder.id.slice(0, 8).toUpperCase()}`
+                                                            : isPendingPayment
+                                                            ? `⏳ Pedido Pendiente de Aprobación #${activeOrder.id.slice(0, 8).toUpperCase()}`
+                                                            : `🛵 Pedido Confirmado #${activeOrder.id.slice(0, 8).toUpperCase()}`}
+                                                    </span>
+                                                    <span className={`text-[8px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                                                        isChangesReq
+                                                            ? 'bg-amber-500/40 text-amber-200 border border-amber-400/50 animate-pulse'
+                                                            : isPendingPayment
+                                                            ? 'bg-amber-500/30 text-amber-200 border border-amber-400/30'
+                                                            : 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
+                                                    }`}>
+                                                        {isChangesReq ? '⚠️ REVISAR PROPUESTA' : isPendingPayment ? 'En Verificación' : activeOrder.estado}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[11px] text-slate-300 font-semibold mt-1">
+                                                    {isChangesReq
+                                                        ? 'El establecimiento solicita modificar algunos productos. Revisa y confirma tu propuesta.'
+                                                        : isPendingPayment
+                                                        ? 'El establecimiento está verificando tu pago para programar el envío.'
+                                                        : `Entrega estimada: ${activeOrder.fechaEntrega ? new Date(activeOrder.fechaEntrega).toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : 'Por definir'}`}
+                                                </p>
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                             </div>
 
                             <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto border-t md:border-t-0 border-slate-800/80 pt-3 md:pt-0">
                                 <div className="text-left md:text-right">
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">Tiempo Restante</span>
-                                    <span className={`text-sm font-mono font-black ${
-                                        ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
-                                            ? 'text-amber-400'
-                                            : 'text-emerald-400'
-                                    }`}>
-                                        {countdownTime || 'Calculando...'}
-                                    </span>
+                                    {(() => {
+                                        const isChangesReq = activeOrder.estado === 'CAMBIOS_SOLICITADOS' || activeOrder.estadoDisponibilidad === 'CAMBIOS_SOLICITADOS' || activeOrder.extraInfo?.estadoDisponibilidad === 'CAMBIOS_SOLICITADOS';
+                                        const isPendingPayment = ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado);
+                                        return (
+                                            <>
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">
+                                                    {isChangesReq ? 'ACCION REQUERIDA' : 'Tiempo Restante'}
+                                                </span>
+                                                <span className={`text-sm font-mono font-black ${
+                                                    isChangesReq || isPendingPayment ? 'text-amber-400' : 'text-emerald-400'
+                                                }`}>
+                                                    {isChangesReq ? 'Esperando tu confirmación...' : (countdownTime || 'Calculando...')}
+                                                </span>
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                                 <Link
                                     href={`/${negocio.slug}/pedidos/${activeOrder.id}`}
                                     className={`px-4 py-2.5 font-black text-xs rounded-xl transition-all active:scale-95 shrink-0 shadow-md flex items-center gap-1.5 ${
-                                        ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
+                                        (activeOrder.estado === 'CAMBIOS_SOLICITADOS' || activeOrder.estadoDisponibilidad === 'CAMBIOS_SOLICITADOS' || activeOrder.extraInfo?.estadoDisponibilidad === 'CAMBIOS_SOLICITADOS')
+                                            ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-amber-500/20'
+                                            : ['PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'PENDIENTE'].includes(activeOrder.estado)
                                             ? 'bg-amber-500 hover:bg-amber-600 text-slate-950'
                                             : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950'
                                     }`}
                                 >
-                                    <span>Ver Pedido →</span>
+                                    <span>{(activeOrder.estado === 'CAMBIOS_SOLICITADOS' || activeOrder.estadoDisponibilidad === 'CAMBIOS_SOLICITADOS' || activeOrder.extraInfo?.estadoDisponibilidad === 'CAMBIOS_SOLICITADOS') ? 'Revisar Cambios →' : 'Ver Pedido →'}</span>
                                 </Link>
                             </div>
                         </div>

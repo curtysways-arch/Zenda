@@ -45,6 +45,7 @@ interface Props {
 
 const STATE_CONFIG: Record<string, { label: string; icon: any; color: string; description: string }> = {
     PENDING:            { label: 'Esperando',         icon: Clock,       color: '#f59e0b', description: 'Tu pedido está en espera de confirmación del negocio.' },
+    CAMBIOS_SOLICITADOS:{ label: 'Cambios Solicitados', icon: Clock,     color: '#f59e0b', description: 'El negocio solicita modificar productos en tu pedido. Por favor revisa la propuesta.' },
     CONFIRMED:          { label: 'Aceptado',          icon: CheckCircle, color: '#10b981', description: '¡Tu pedido fue aceptado! Entrando a producción.' },
     PREPARING:          { label: 'En preparación',    icon: ChefHat,     color: '#f97316', description: 'Tu pedido está siendo preparado en la cocina.' },
     READY:              { label: '¡Pedido listo!',     icon: Package,     color: '#8b5cf6', description: 'Tu pedido está listo y empacado.' },
@@ -60,6 +61,7 @@ function normalizeState(rawState?: string, extraInfo?: any): string {
     const s = (rawState || '').toUpperCase();
     const extra = typeof extraInfo === 'string' ? JSON.parse(extraInfo || '{}') : (extraInfo || {});
 
+    if (s === 'CAMBIOS_SOLICITADOS' || extra.estadoDisponibilidad === 'CAMBIOS_SOLICITADOS') return 'CAMBIOS_SOLICITADOS';
     if (['PENDIENTE', 'PENDING', 'WAITING_CONFIRMATION', 'POR_CONFIRMAR', 'PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'COMPROBANTE_ENVIADO', 'COMPROBANTE_RECIBIDO'].includes(s)) return 'PENDING';
     if (['ACEPTADO', 'CONFIRMED', 'RECIBIDO'].includes(s)) return 'CONFIRMED';
     if (['EN_PREPARACION', 'PREPARACION', 'PREPARANDO', 'PREPARING'].includes(s)) return 'PREPARING';

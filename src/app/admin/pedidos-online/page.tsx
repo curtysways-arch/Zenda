@@ -63,6 +63,7 @@ export default function PedidosOnlinePage() {
   // Modal de Disponibilidad & Propuesta de Cambios
   const [selectedPrepTime, setSelectedPrepTime] = useState<number>(20);
   const [itemsAvailability, setItemsAvailability] = useState<Record<string, boolean>>({});
+  const [itemsQuantities, setItemsQuantities] = useState<Record<string, number>>({});
   const [disableCatalogProducts, setDisableCatalogProducts] = useState(true);
   const [confirmedAvailabilityOrderIds, setConfirmedAvailabilityOrderIds] = useState<Record<string, boolean>>({});
 
@@ -269,18 +270,59 @@ export default function PedidosOnlinePage() {
   const handleOpenFullscreenOrder = (pedido: Pedido) => {
     setFullscreenOrder(pedido);
     const initialAvailability: Record<string, boolean> = {};
+    const initialQuantities: Record<string, number> = {};
     (pedido.items || []).forEach(it => {
       initialAvailability[it.id] = true;
+      initialQuantities[it.id] = it.cantidad;
     });
     setItemsAvailability(initialAvailability);
+    setItemsQuantities(initialQuantities);
   };
 
   // 1. CONFIRMAR DISPONIBILIDAD O ENVIAR PROPUESTA DE CAMBIOS
   const handleSaveDisponibilidad = async (pedidoTarget: Pedido) => {
     setProcessingId(pedidoTarget.id);
 
-    const outOfStockItems = pedidoTarget.items.filter(it => itemsAvailability[it.id] === false);
-    const isAllAvailable = outOfStockItems.length === 0;
+    const proposedItems: any[] = [];
+    const outOfStockItemsList: any[] = [];
+    const outOfStockProductIds: string[] = [];
+
+    (pedidoTarget.items || []).forEach((it: any) => {
+      const isAvail = itemsAvailability[it.id] !== false && (!it.productoId || itemsAvailability[it.productoId] !== false);
+      const effectiveQty = itemsQuantities[it.id] !== undefined ? itemsQuantities[it.id] : it.cantidad;
+
+      if (isAvail && effectiveQty > 0) {
+        proposedItems.push({
+          id: it.id,
+          productoId: it.productoId,
+          nombreProducto: it.nombreProducto,
+          cantidad: effectiveQty,
+          precioUnitario: it.precioUnitario
+        });
+
+        if (effectiveQty < it.cantidad) {
+          outOfStockItemsList.push({
+            id: it.id,
+            productoId: it.productoId,
+            nombreProducto: it.nombreProducto,
+            cantidad: it.cantidad - effectiveQty,
+            precioUnitario: it.precioUnitario
+          });
+          if (it.productoId) outOfStockProductIds.push(it.productoId);
+        }
+      } else {
+        outOfStockItemsList.push({
+          id: it.id,
+          productoId: it.productoId,
+          nombreProducto: it.nombreProducto,
+          cantidad: it.cantidad,
+          precioUnitario: it.precioUnitario
+        });
+        if (it.productoId) outOfStockProductIds.push(it.productoId);
+      }
+    });
+
+    const isAllAvailable = outOfStockItemsList.length === 0;
 
     try {
       if (isAllAvailable) {
@@ -301,29 +343,9 @@ export default function PedidosOnlinePage() {
         setFullscreenOrder((prev: any) => prev ? { ...prev, estadoDisponibilidad: 'PRODUCTOS_CONFIRMADOS' } : prev);
         await fetchOnlineOrders();
       } else {
-        const proposedItems = pedidoTarget.items
-          .filter(it => itemsAvailability[it.id] !== false && (!it.productoId || itemsAvailability[it.productoId] !== false))
-          .map(it => ({
-            id: it.id,
-            productoId: it.productoId,
-            nombreProducto: it.nombreProducto,
-            cantidad: it.cantidad,
-            precioUnitario: it.precioUnitario
-          }));
-
-
-        const outOfStockItemsList = outOfStockItems.map(it => ({
-          id: it.id,
-          productoId: it.productoId,
-          nombreProducto: it.nombreProducto,
-          cantidad: it.cantidad,
-          precioUnitario: it.precioUnitario
-        }));
-
         const newSubtotal = proposedItems.reduce((sum, it) => sum + ((Number(it.precioUnitario) || 0) * (Number(it.cantidad) || 1)), 0);
         const shippingCost = Number(pedidoTarget.costoEnvio || 0);
         const newTotal = newSubtotal + shippingCost;
-        const outOfStockProductIds = outOfStockItems.map(it => it.productoId).filter(Boolean);
 
         const res = await fetch('/api/admin/pedidos', {
           method: 'PUT',
@@ -1162,29 +1184,98 @@ export default function PedidosOnlinePage() {
                         Verifica la existencia de cada producto. Si falta algún ítem, desmárcalo para enviarle la propuesta de cambios al cliente.
                       </p>
 
-                      <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                      <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
                         {order.items.map(item => {
                           const isAvail = itemsAvailability[item.id] !== false;
+                          const currentQty = itemsQuantities[item.id] !== undefined ? itemsQuantities[item.id] : item.cantidad;
+
                           return (
                             <div
                               key={item.id}
                               className={`flex items-center justify-between p-3.5 rounded-2xl border text-xs transition-all ${
-                                isAvail ? 'bg-slate-50 border-slate-200' : 'bg-rose-50 border-rose-200'
+                                isAvail ? 'bg-slate-50/80 border-slate-200' : 'bg-rose-50/80 border-rose-200 opacity-80'
                               }`}
                             >
-                              <div>
-                                <span className="font-extrabold text-slate-900 block">{item.cantidad}x {item.nombreProducto}</span>
-                                <span className="text-[10px] text-slate-400">${(Number(item.precioUnitario) || 0).toFixed(2)} c/u</span>
+                              {/* CHECKBOX ÚNICO + NOMBRE Y PRECIO */}
+                              <div className="flex items-center gap-3">
+                                <input
+                                  type="checkbox"
+                                  id={`check-avail-${item.id}`}
+                                  checked={isAvail}
+                                  onChange={() => {
+                                    const nextAvail = !isAvail;
+                                    setItemsAvailability(prev => ({ ...prev, [item.id]: nextAvail }));
+                                    if (!nextAvail) {
+                                      setItemsQuantities(prev => ({ ...prev, [item.id]: 0 }));
+                                    } else {
+                                      setItemsQuantities(prev => ({ ...prev, [item.id]: item.cantidad }));
+                                    }
+                                  }}
+                                  className="w-5 h-5 text-emerald-600 rounded-md border-slate-300 cursor-pointer accent-emerald-600 focus:ring-emerald-500 shrink-0"
+                                />
+                                <label htmlFor={`check-avail-${item.id}`} className="cursor-pointer select-none">
+                                  <span className={`font-black text-xs block ${isAvail ? 'text-slate-900' : 'text-slate-500 line-through'}`}>
+                                    {item.nombreProducto}
+                                  </span>
+                                  <span className="text-[10px] font-semibold text-slate-400">
+                                    ${(Number(item.precioUnitario) || 0).toFixed(2)} c/u
+                                  </span>
+                                </label>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => setItemsAvailability(prev => ({ ...prev, [item.id]: !isAvail }))}
-                                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all cursor-pointer ${
-                                  isAvail ? 'bg-emerald-500 text-white shadow-sm' : 'bg-rose-600 text-white shadow-sm'
-                                }`}
-                              >
-                                {isAvail ? '☑ Disponible' : '☐ Agotado'}
-                              </button>
+
+                              {/* CONTROLES DE MODIFICAR CANTIDAD */}
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black uppercase text-slate-400">Cant:</span>
+                                <div className="flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden shadow-2xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const current = itemsQuantities[item.id] !== undefined ? itemsQuantities[item.id] : item.cantidad;
+                                      if (current > 0) {
+                                        const nextQty = current - 1;
+                                        setItemsQuantities(prev => ({ ...prev, [item.id]: nextQty }));
+                                        if (nextQty === 0) {
+                                          setItemsAvailability(prev => ({ ...prev, [item.id]: false }));
+                                        }
+                                      }
+                                    }}
+                                    className="w-7 h-7 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs flex items-center justify-center cursor-pointer transition-all active:scale-90"
+                                  >
+                                    -
+                                  </button>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max={item.cantidad}
+                                    value={currentQty}
+                                    onChange={(e) => {
+                                      const val = parseInt(e.target.value) || 0;
+                                      const clamped = Math.max(0, val);
+                                      setItemsQuantities(prev => ({ ...prev, [item.id]: clamped }));
+                                      if (clamped === 0) {
+                                        setItemsAvailability(prev => ({ ...prev, [item.id]: false }));
+                                      } else {
+                                        setItemsAvailability(prev => ({ ...prev, [item.id]: true }));
+                                      }
+                                    }}
+                                    className="w-9 text-center font-mono font-black text-xs text-slate-900 py-1 outline-none"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const current = itemsQuantities[item.id] !== undefined ? itemsQuantities[item.id] : item.cantidad;
+                                      const nextQty = current + 1;
+                                      setItemsQuantities(prev => ({ ...prev, [item.id]: nextQty }));
+                                      if (nextQty > 0) {
+                                        setItemsAvailability(prev => ({ ...prev, [item.id]: true }));
+                                      }
+                                    }}
+                                    className="w-7 h-7 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs flex items-center justify-center cursor-pointer transition-all active:scale-90"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
                             </div>
                           );
                         })}

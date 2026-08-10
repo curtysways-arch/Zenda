@@ -405,6 +405,23 @@ export default function DriverOrderMapModal({
       {/* 3. INFORMACIÓN DE LA ORDEN PRE-ACEPTACIÓN (DISEÑO BLANCO Y AZUL SIN BORDES) */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-48 text-left bg-slate-100 custom-scrollbar">
         
+        {/* 0. Fecha y Hora del Pedido */}
+        <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/80 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-blue-600 shrink-0" />
+            <span className="font-extrabold text-slate-700">Fecha y Hora del Pedido:</span>
+          </div>
+          <span className="font-black text-slate-900 font-mono">
+            {order.createdAt ? new Date(order.createdAt).toLocaleDateString('es-EC', {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            }) : 'No registrada'}
+          </span>
+        </div>
+
         {/* 1. Banner Ganancia */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-4 rounded-3xl flex items-center justify-between shadow-lg shadow-blue-500/20">
           <span className="text-xs font-black uppercase tracking-wider">TU GANANCIA DE ENVÍO:</span>
