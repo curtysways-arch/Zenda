@@ -42,6 +42,7 @@ function VentasContent() {
   const [direccionCliente, setDireccionCliente] = useState('Venta Directa Mostrador');
   const [referenciaCliente, setReferenciaCliente] = useState('');
   const [mesaCode, setMesaCode] = useState('POS-Virtual');
+  const [kitchenNotes, setKitchenNotes] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [pagarInmediato, setPagarInmediato] = useState(true);
 
@@ -215,7 +216,10 @@ function VentasContent() {
     });
   };
 
-  const clearCart = () => setCart({});
+  const clearCart = () => {
+    setCart({});
+    setKitchenNotes('');
+  };
 
   // Selected Cart Items Summary (incorporando llevaEmpaque y precioEmpaque por producto)
   const selectedItems = Object.entries(cart).map(([id, entry]) => {
@@ -267,6 +271,7 @@ function VentasContent() {
           tipoEntrega,
           metodoPago,
           mesaCode: tipoEntrega === 'TABLE_ORDER' ? mesaCode : 'POS',
+          kitchenNotes: kitchenNotes.trim() || null,
           autoConfirm: true,
           paymentStatus: pagarInmediato ? 'PAGADO' : 'PENDIENTE',
           items: selectedItems.map(i => ({
@@ -597,6 +602,21 @@ function VentasContent() {
                   placeholder="099 123 4567"
                 />
               </div>
+            </div>
+
+            {/* Recomendación / Nota para Cocina Input */}
+            <div className="space-y-0.5">
+              <label className="block text-[8px] font-black uppercase text-amber-700 tracking-wider flex items-center gap-1">
+                <ChefHat className="w-2.5 h-2.5 text-amber-600" />
+                <span>Recomendación / Nota para Cocina</span>
+              </label>
+              <input
+                type="text"
+                value={kitchenNotes}
+                onChange={e => setKitchenNotes(e.target.value)}
+                className="w-full px-2 py-1 rounded-lg text-[11px] font-bold bg-amber-50/60 border border-amber-200/80 text-amber-950 outline-none focus:border-amber-400 placeholder:text-amber-700/40"
+                placeholder="Ej: Sin cebolla, término medio, salsa aparte..."
+              />
             </div>
 
             {/* Forma de Pago Selector */}

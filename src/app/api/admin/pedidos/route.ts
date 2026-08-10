@@ -403,7 +403,7 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { 
             nombreCliente, telefonoCliente, direccionCliente, referenciaCliente, 
-            tipoEntrega, items, autoConfirm, descuentoAmount, mesaCode 
+            tipoEntrega, items, autoConfirm, descuentoAmount, mesaCode, kitchenNotes 
         } = body;
 
         if (!items || !Array.isArray(items) || items.length === 0) {
@@ -459,6 +459,7 @@ export async function POST(req: Request) {
                     extraInfo: {
                         origin: 'POS_CAJA',
                         mesaCode: mesaCode || null,
+                        kitchenNotes: kitchenNotes || null,
                         packagingCost: pricingResult.packagingCost,
                         discountAmount: pricingResult.discountAmount,
                         pricingBreakdown: pricingResult

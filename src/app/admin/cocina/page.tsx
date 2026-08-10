@@ -135,6 +135,12 @@ function KDSCard({ order, onAdvance }: { order: KDSOrder; onAdvance: () => void 
   const allChecked = totalItemsCount > 0 && checkedCount === totalItemsCount;
   const isDelivery = ['DELIVERY_ORDER', 'DOMICILIO', 'DELIVERY'].includes((order.tipoEntrega || '').toUpperCase());
 
+  // Extraer información de Mesa y Recomendaciones para Cocina
+  const extra = (order.extraInfo as any) || {};
+  const rawTable = extra.mesaCode || extra.tableName || (order as any).referenciaCliente || (order as any).referencia || '';
+  const mesaLabel = rawTable ? (rawTable.toLowerCase().includes('mesa') ? rawTable : `Mesa ${rawTable}`) : null;
+  const kitchenNotes = extra.kitchenNotes || (order as any).notas || (order as any).observaciones || null;
+
   return (
     <div className={`bg-white border-2 rounded-3xl p-4 shadow-sm space-y-3.5 flex flex-col justify-between transition-all ${
       isUrgent ? 'border-rose-500 bg-rose-50/10' : allChecked ? 'border-emerald-500 bg-emerald-50/20' : 'border-slate-200'
@@ -157,15 +163,29 @@ function KDSCard({ order, onAdvance }: { order: KDSOrder; onAdvance: () => void 
             isDelivery ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-purple-50 text-purple-700 border border-purple-200'
           }`}>
             {isDelivery ? <Bike className="size-3" /> : <ShoppingBag className="size-3" />}
-            {isDelivery ? 'Delivery' : 'Retiro / Mesa'}
+            {isDelivery ? 'Delivery' : 'Retiro'}
           </span>
 
-          {order.extraInfo?.tableName && (
-            <span className="bg-amber-100 text-amber-900 border border-amber-200 text-[10px] font-black px-2 py-0.5 rounded-lg">
-              🪑 {order.extraInfo.tableName}
+          {/* BADGE DESTACADO DE MESA */}
+          {mesaLabel && (
+            <span className="bg-amber-100 text-amber-950 border border-amber-300 text-[11px] font-black px-2.5 py-0.5 rounded-lg flex items-center gap-1 shadow-2xs">
+              🍽️ {mesaLabel}
             </span>
           )}
         </div>
+
+        {/* BLOQUE DE RECOMENDACIÓN / NOTAS PARA COCINA */}
+        {kitchenNotes && (
+          <div className="mt-2 bg-amber-50 border-2 border-amber-300/90 rounded-2xl p-2.5 space-y-1 text-left">
+            <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 flex items-center gap-1">
+              <ChefHat className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+              📝 RECOMENDACIÓN PARA COCINA:
+            </span>
+            <p className="text-xs font-black text-amber-950 bg-white/90 p-2 rounded-xl border border-amber-200 leading-snug">
+              "{kitchenNotes}"
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Checklist de Productos de la Comanda */}
