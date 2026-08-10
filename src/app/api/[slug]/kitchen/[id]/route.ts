@@ -38,18 +38,30 @@ export async function PUT(
   });
   if (!order) return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 });
 
-  let nuevoEstado = estado;
-  if (advance && !estado) {
-    nuevoEstado = STATE_TRANSITIONS[order.estado] || order.estado;
-  }
+  const currentExtra = (order.extraInfo as any) || {};
+  const updatedExtra = {
+    ...currentExtra,
+    kitchenStatus: 'LISTO',
+    kitchenFinishedAt: new Date().toISOString()
+  };
 
-  if (!nuevoEstado) {
-    return NextResponse.json({ error: 'Se debe proveer estado o advance=true' }, { status: 400 });
+  // Estado general del pedido:
+  // Si estaba en preparación, pasa a LISTO para ser despachado.
+  // Si ya tenía repartidor asignado, se mantiene el estado operativo sin marcarlo como ENTREGADO.
+  let nuevoEstado = order.estado;
+  if (['EN_PREPARACION', 'PREPARACION', 'PREPARANDO', 'CONFIRMED', 'RECIBIDO'].includes(order.estado)) {
+    nuevoEstado = 'LISTO';
+  } else if (estado && estado !== 'ENTREGADO') {
+    nuevoEstado = estado;
   }
 
   const updated = await (prisma as any).pedido.update({
     where: { id },
-    data: { estado: nuevoEstado, updatedAt: new Date() },
+    data: {
+      estado: nuevoEstado,
+      extraInfo: updatedExtra,
+      updatedAt: new Date()
+    },
     include: { items: true }
   });
 

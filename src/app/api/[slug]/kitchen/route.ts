@@ -38,9 +38,15 @@ export async function GET(
     orderBy: { createdAt: 'asc' }
   });
 
+  // Filtrar comandas que aún requieren preparación en cocina (kitchenStatus !== 'LISTO')
+  const activeKitchenOrders = orders.filter((o: any) => {
+    const extra = (o.extraInfo as any) || {};
+    return extra.kitchenStatus !== 'LISTO';
+  });
+
   return NextResponse.json({
     success: true,
-    orders,
+    orders: activeKitchenOrders,
     isEnterprise: runtimeInfo.isEnterprise,
     blueprint: runtimeInfo.blueprint
   });
