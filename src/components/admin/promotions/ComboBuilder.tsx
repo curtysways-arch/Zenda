@@ -18,11 +18,14 @@ export default function ComboBuilder({
   const [comboDescription, setComboDescription] = useState('Plato Principal + Acompañante + Bebida a precio especial.');
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [comboPrice, setComboPrice] = useState<number>(10.99);
+  const [imagenUrl, setImagenUrl] = useState<string>('');
 
   // Calcular precio normal sumando items seleccionados
   const selectedProducts = products.filter(p => selectedProductIds.includes(p.id));
   const normalTotalPrice = selectedProducts.reduce((sum, p) => sum + (Number(p.precio) || 0), 0);
   const savings = Math.max(0, normalTotalPrice - comboPrice);
+  const firstProductImage = selectedProducts.find(p => p.imagenUrl)?.imagenUrl || '';
+  const finalComboImage = imagenUrl || firstProductImage;
 
   const toggleSelectProduct = (id: string) => {
     setSelectedProductIds(prev => 
@@ -42,6 +45,7 @@ export default function ComboBuilder({
       tipoPromo: 'COMBO',
       precioPromo: comboPrice,
       precioAnterior: normalTotalPrice > 0 ? normalTotalPrice : undefined,
+      imagenUrl: finalComboImage,
       productosRelacionados: selectedProductIds,
       canales: ['POS', 'MESEROS', 'DELIVERY', 'PICKUP', 'LANDING'],
       estado: 'ACTIVA'

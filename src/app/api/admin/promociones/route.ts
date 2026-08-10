@@ -5,6 +5,39 @@ import { authOptions } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
+function extractMetadata(p: any, productsMap: Map<string, any>) {
+  let meta: any = {};
+  let cleanDesc = p.descripcion || '';
+
+  if (cleanDesc.includes('<!-- CITIOX_META:')) {
+    try {
+      const parts = cleanDesc.split('<!-- CITIOX_META:');
+      cleanDesc = parts[0].trim();
+      const jsonStr = parts[1].split('-->')[0].trim();
+      meta = JSON.parse(jsonStr);
+    } catch (_) {}
+  }
+
+  const productoRequeridoId = meta.productoRequeridoId || (p.PromotionToService && p.PromotionToService[0]?.B) || null;
+  const linkedProduct = productoRequeridoId ? productsMap.get(productoRequeridoId) : null;
+  const finalImagenUrl = p.imagenUrl && p.imagenUrl.trim() !== '' 
+    ? p.imagenUrl 
+    : (linkedProduct?.imagenUrl || '');
+
+  return {
+    ...p,
+    descripcion: cleanDesc,
+    imagenUrl: finalImagenUrl,
+    productoRequeridoId,
+    categoriaRequeridaId: meta.categoriaRequeridaId || null,
+    productosRelacionados: meta.productosRelacionados || [],
+    cuponCodigo: meta.cuponCodigo || null,
+    canales: meta.canales || ['POS', 'MESEROS', 'DELIVERY', 'PICKUP', 'LANDING'],
+    montoMinimo: meta.montoMinimo || 0,
+    tipoCliente: meta.tipoCliente || 'ANY'
+  };
+}
+
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,17 +50,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 400 });
     }
 
-    // 1. Obtener todas las promociones
-    const promotions = await (prisma as any).promotion.findMany({
-      where: { businessId: negocioId },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        PromotionToService: true
-      }
-    });
-
-    // 2. Obtener productos y categorías para el selector
-    const [products, categories, orders] = await Promise.all([
+    const [promotions, products, categories, orders] = await Promise.all([
+      (prisma as any).promotion.findMany({
+        where: { businessId: negocioId },
+        orderBy: { createdAt: 'desc' },
+        include: { PromotionToService: true }
+      }),
       (prisma as any).producto.findMany({
         where: { negocioId },
         orderBy: { orden: 'asc' }
@@ -38,19 +66,15 @@ export async function GET(request: Request) {
       }),
       (prisma as any).pedido.findMany({
         where: { negocioId },
-        select: {
-          id: true,
-          total: true,
-          subtotal: true,
-          extraInfo: true,
-          createdAt: true
-        },
+        select: { id: true, total: true, subtotal: true, extraInfo: true, createdAt: true },
         orderBy: { createdAt: 'desc' },
         take: 300
       })
     ]);
 
-    // 3. Calcular métricas en tiempo real por promoción
+    const productsMap = new Map<string, any>();
+    products.forEach((prod: any) => productsMap.set(prod.id, prod));
+
     let totalSalesWithPromo = 0;
     let totalOrdersWithPromo = 0;
     let totalDiscountsGiven = 0;
@@ -84,11 +108,11 @@ export async function GET(request: Request) {
       }
     });
 
-    // Enriquecer cada promoción con métricas reales
     const enrichedPromotions = promotions.map((p: any) => {
       const stats = promoStatsMap[p.id] || { ordersCount: 0, salesTotal: 0, discountTotal: 0 };
+      const baseWithMeta = extractMetadata(p, productsMap);
       return {
-        ...p,
+        ...baseWithMeta,
         ordersGenerated: stats.ordersCount,
         salesGenerated: stats.salesTotal,
         discountGiven: stats.discountTotal
@@ -130,15 +154,12 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-
     const {
       titulo,
       descripcion = '',
       tipoPromo = 'PORCENTAJE',
       precioPromo = 0,
       precioAnterior,
-      porcentajeDescuento,
-      montoDescuento,
       imagenUrl = '',
       fechaInicio = new Date().toISOString(),
       fechaFin = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -146,16 +167,11 @@ export async function POST(request: Request) {
       horaInicioValida,
       horaFinValida,
       canales = ['POS', 'MESEROS', 'DELIVERY', 'PICKUP', 'LANDING'],
-      montoMinimo,
-      cantidadMinima,
+      montoMinimo = 0,
       productoRequeridoId,
       categoriaRequeridaId,
       cuponCodigo,
       tipoCliente = 'ANY',
-      usosTotalesMaximo,
-      usosPorClienteMaximo,
-      presupuestoMaximo,
-      esCombinable = false,
       productosRelacionados = [],
       estado = 'ACTIVA'
     } = body;
@@ -164,6 +180,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'El título de la promoción es obligatorio' }, { status: 400 });
     }
 
+    const metaObj = {
+      productoRequeridoId,
+      categoriaRequeridaId,
+      productosRelacionados,
+      cuponCodigo,
+      canales,
+      montoMinimo,
+      tipoCliente
+    };
+
+    const finalDescription = `${descripcion.trim()}\n<!-- CITIOX_META: ${JSON.stringify(metaObj)} -->`;
     const promoId = `promo_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
     const newPromo = await (prisma as any).promotion.create({
@@ -171,7 +198,7 @@ export async function POST(request: Request) {
         id: promoId,
         businessId: negocioId,
         titulo,
-        descripcion: descripcion || '',
+        descripcion: finalDescription,
         precioPromo: parseFloat(precioPromo) || 0,
         precioAnterior: precioAnterior ? parseFloat(precioAnterior) : null,
         imagenUrl: imagenUrl || '',
@@ -186,10 +213,28 @@ export async function POST(request: Request) {
       }
     });
 
+    if (productoRequeridoId) {
+      try {
+        await (prisma as any).promotionToService.create({
+          data: { A: promoId, B: productoRequeridoId }
+        });
+      } catch (_) {}
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Promoción creada exitosamente',
-      promotion: newPromo
+      promotion: {
+        ...newPromo,
+        descripcion,
+        productoRequeridoId,
+        categoriaRequeridaId,
+        productosRelacionados,
+        cuponCodigo,
+        canales,
+        montoMinimo,
+        tipoCliente
+      }
     });
   } catch (error: any) {
     console.error('[API_ADMIN_PROMOCIONES_POST_ERROR]', error);
@@ -250,10 +295,36 @@ export async function PUT(request: Request) {
       return NextResponse.json({ success: true, promotion: duplicated });
     }
 
+    const metaObj = {
+      productoRequeridoId: updateFields.productoRequeridoId,
+      categoriaRequeridaId: updateFields.categoriaRequeridaId,
+      productosRelacionados: updateFields.productosRelacionados || [],
+      cuponCodigo: updateFields.cuponCodigo,
+      canales: updateFields.canales,
+      montoMinimo: updateFields.montoMinimo,
+      tipoCliente: updateFields.tipoCliente
+    };
+
+    let cleanDesc = updateFields.descripcion || '';
+    if (cleanDesc.includes('<!-- CITIOX_META:')) {
+      cleanDesc = cleanDesc.split('<!-- CITIOX_META:')[0].trim();
+    }
+    const finalDescription = `${cleanDesc}\n<!-- CITIOX_META: ${JSON.stringify(metaObj)} -->`;
+
     const updated = await (prisma as any).promotion.update({
       where: { id },
       data: {
-        ...updateFields,
+        titulo: updateFields.titulo,
+        descripcion: finalDescription,
+        tipoPromo: updateFields.tipoPromo,
+        precioPromo: parseFloat(updateFields.precioPromo) || 0,
+        precioAnterior: updateFields.precioAnterior ? parseFloat(updateFields.precioAnterior) : null,
+        imagenUrl: updateFields.imagenUrl || '',
+        fechaInicio: updateFields.fechaInicio ? new Date(updateFields.fechaInicio) : undefined,
+        fechaFin: updateFields.fechaFin ? new Date(updateFields.fechaFin) : undefined,
+        diasValidos: Array.isArray(updateFields.diasValidos) ? updateFields.diasValidos.join(',') : updateFields.diasValidos,
+        horaInicioValida: updateFields.horaInicioValida,
+        horaFinValida: updateFields.horaFinValida,
         updatedAt: new Date()
       }
     });

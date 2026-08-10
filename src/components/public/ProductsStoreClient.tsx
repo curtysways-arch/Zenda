@@ -353,21 +353,28 @@ export default function ProductsStoreClient({ negocio }: Props) {
         }
 
         const t = (promo.tipoPromo || '').toUpperCase();
+        let targetProd = products.find(p => p.id === promo.productoRequeridoId);
         
+        if (!targetProd && promo.titulo) {
+            targetProd = products.find(p => promo.titulo.toLowerCase().includes(p.nombre.toLowerCase()));
+        }
+        if (!targetProd && products.length > 0) {
+            targetProd = products[0];
+        }
+
         // Si es 2x1 en un producto específico
-        if ((t === 'DOS_POR_UNO' || t === '2X1') && promo.productoRequeridoId) {
-            const prod = products.find(p => p.id === promo.productoRequeridoId);
-            if (prod) {
+        if (t === 'DOS_POR_UNO' || t === '2X1') {
+            if (targetProd) {
                 let newCart: CartItem[] = [];
-                const existing = cart.find(item => item.product.id === prod.id);
+                const existing = cart.find(item => item.product.id === targetProd.id);
                 if (existing) {
                     newCart = cart.map(item =>
-                        item.product.id === prod.id
+                        item.product.id === targetProd.id
                             ? { ...item, quantity: item.quantity + 2 }
                             : item
                     );
                 } else {
-                    newCart = [...cart, { product: prod, quantity: 2 }];
+                    newCart = [...cart, { product: targetProd, quantity: 2 }];
                 }
                 saveCart(newCart);
                 setShowCartDrawer(true);
@@ -398,12 +405,9 @@ export default function ProductsStoreClient({ negocio }: Props) {
         }
 
         // Producto individual vinculado
-        if (promo.productoRequeridoId) {
-            const prod = products.find(p => p.id === promo.productoRequeridoId);
-            if (prod) {
-                addToCart(prod);
-                setShowCartDrawer(true);
-            }
+        if (targetProd) {
+            addToCart(targetProd);
+            setShowCartDrawer(true);
         }
     };
 
@@ -1768,8 +1772,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
                             <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
                                 {activePromotions.map(promo => {
-                                    const linkedProduct = products.find(p => p.id === promo.productoRequeridoId);
-                                    const displayImg = promo.imagenUrl || linkedProduct?.imagenUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80';
+                                    const linkedProduct = products.find(p => p.id === promo.productoRequeridoId) || products.find(p => promo.titulo && promo.titulo.toLowerCase().includes(p.nombre.toLowerCase())) || products[0];
+                                    const displayImg = promo.imagenUrl && promo.imagenUrl.trim() !== '' ? promo.imagenUrl : (linkedProduct?.imagenUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80');
                                     
                                     return (
                                         <div key={promo.id} className="min-w-[260px] max-w-[280px] bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-white border border-amber-200/80 rounded-3xl p-3.5 shadow-sm space-y-3 shrink-0 flex flex-col justify-between">

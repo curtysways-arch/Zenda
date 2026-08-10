@@ -207,6 +207,7 @@ export default function PromotionBuilder({
       tipoPromo,
       precioPromo,
       precioAnterior,
+      imagenUrl: imagenUrl || selectedProduct?.imagenUrl || '',
       fechaInicio,
       fechaFin,
       diasValidos,
@@ -356,6 +357,37 @@ export default function PromotionBuilder({
               placeholder="Ej. Válido en pedidos mayores a $10 durante esta semana."
               className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
+          </div>
+
+          <div>
+            <label className="text-xs font-black text-slate-700 uppercase tracking-wider block mb-1">🖼️ Imagen de la Promoción</label>
+            <div className="flex items-center gap-3">
+              <div className="size-16 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0">
+                {imagenUrl || selectedProduct?.imagenUrl ? (
+                  <img src={imagenUrl || selectedProduct?.imagenUrl} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-400 text-[10px] font-extrabold uppercase">Sin Foto</div>
+                )}
+              </div>
+              <div className="flex-1 space-y-1">
+                <input
+                  type="url"
+                  value={imagenUrl}
+                  onChange={e => setImagenUrl(e.target.value)}
+                  placeholder="https://... URL de la foto o banner"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+                {selectedProduct?.imagenUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setImagenUrl(selectedProduct.imagenUrl)}
+                    className="text-[10px] font-black text-amber-700 hover:text-amber-800 underline cursor-pointer block"
+                  >
+                    📷 Usar foto de {selectedProduct.nombre}
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
