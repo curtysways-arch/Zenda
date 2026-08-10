@@ -26,7 +26,8 @@ import {
     Award,
     Calendar,
     Briefcase,
-    Tag
+    Tag,
+    Sliders
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -76,6 +77,7 @@ export default function SuperAdminSidebar() {
         { name: 'WhatsApp', href: '/superadmin/whatsapp', icon: MessageCircle },
         { name: 'Comunicaciones', href: '/superadmin/comunicaciones', icon: Megaphone },
         { name: 'Planes', href: '/superadmin/planes', icon: Package },
+        { name: 'Add-ons', href: '/superadmin/addons', icon: Sliders },
         { name: 'Suscripciones', href: '/superadmin/suscripciones', icon: CreditCard },
         { 
             name: 'Pagos', 

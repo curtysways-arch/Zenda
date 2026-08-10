@@ -232,14 +232,32 @@ export default function PlanModal({ plan, isOpen, onClose }: PlanModalProps) {
                                 </label>
                                 <select
                                     style={{ color: '#000', backgroundColor: '#fff' }}
-                                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none transition-all font-black"
+                                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none transition-all font-black cursor-pointer"
                                     value={formData.tipo_negocio}
-                                    onChange={(e) => setFormData({ ...formData, tipo_negocio: e.target.value })}
+                                    onChange={(e) => {
+                                        const newTipo = e.target.value;
+                                        // Auto-presets por tipo de negocio
+                                        let updated = { ...formData, tipo_negocio: newTipo };
+                                        if (newTipo === 'RESTAURANT') {
+                                            updated = { ...updated, automatic_discounts_enabled: true, whatsapp_notifications: true, whatsapp_reminders: true };
+                                        } else if (newTipo === 'RESERVA') {
+                                            updated = { ...updated, communications_module: true, whatsapp_reminders: true, whatsapp_notifications: true };
+                                        } else if (newTipo === 'SPORTS_COURTS') {
+                                            updated = { ...updated, tournaments_enabled: true, whatsapp_notifications: true };
+                                        } else if (newTipo === 'PRODUCTOS') {
+                                            updated = { ...updated, automatic_discounts_enabled: true, whatsapp_campaigns: true };
+                                        } else if (newTipo === 'ACADEMIA') {
+                                            updated = { ...updated, courses_module: true, communications_module: true };
+                                        }
+                                        setFormData(updated);
+                                    }}
                                 >
                                     <option value="TODOS">🌐 TODOS (Plan Universal)</option>
-                                    <option value="SPORTS_COURTS">🏓 Canchas Deportivas & Clubes (SPORTS_COURTS)</option>
+                                    <option value="RESTAURANT">🍽️ Restaurante, Cafetería & KDS (RESTAURANT)</option>
                                     <option value="RESERVA">💆 Spa, Citas & Bienestar (RESERVA)</option>
-                                    <option value="PRODUCTOS">🛒 Tienda, Ecommerce & Pedidos (PRODUCTOS)</option>
+                                    <option value="SPORTS_COURTS">🏓 Canchas Deportivas & Clubes (SPORTS_COURTS)</option>
+                                    <option value="LAUNDRY">🧺 Lavandería & Tintorería (LAUNDRY)</option>
+                                    <option value="PRODUCTOS">🛒 Tienda, Ecommerce & POS (PRODUCTOS)</option>
                                     <option value="ACADEMIA">🎓 Clases, Academias & Cursos (ACADEMIA)</option>
                                 </select>
                             </div>

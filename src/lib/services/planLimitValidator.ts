@@ -1,83 +1,44 @@
 import prisma from '../prisma';
 import { featureService } from './featureService';
+import { EntitlementsService } from '@/core/entitlements/EntitlementsService';
 
 export const planLimitValidator = {
     /**
-     * Valida si un negocio puede crear un nuevo servicio.
+     * Valida si un negocio puede crear un nuevo servicio / producto.
      */
     async canCreateField(businessId: string): Promise<{ allowed: boolean; message?: string }> {
-        const maxServices = await featureService.getLimit(businessId, 'max_services');
-        if (maxServices === 0) {
-            return { allowed: false, message: "No se encontró el plan del negocio." };
-        }
-
-        const currentCount = await prisma.service.count({ where: { negocioId: businessId } });
-        if (currentCount >= maxServices) {
+        const ent = await EntitlementsService.resolve(businessId);
+        const currentCount = await prisma.producto.count({ where: { negocioId: businessId } }).catch(() => 0);
+        if (currentCount >= ent.limits.products) {
             return {
                 allowed: false,
-                message: "Has alcanzado el número máximo de servicios permitido por tu plan."
+                message: `Has alcanzado el límite de ${ent.limits.products} productos permitido por tu plan.`
             };
         }
-
         return { allowed: true };
     },
 
     /**
      * Valida si un negocio puede crear un nuevo profesional (Staff).
-     * Usa featureService.getLimit para obtener el max_staff dinámicamente.
      */
     async canCreateStaff(businessId: string): Promise<{ allowed: boolean; message?: string }> {
-        const maxStaff = await featureService.getLimit(businessId, 'max_staff');
-        if (maxStaff === 0) {
-            return { allowed: false, message: "No se encontró el plan del negocio." };
-        }
-
-        const currentCount = await prisma.staff.count({ where: { businessId } });
-        if (currentCount >= maxStaff) {
-            return {
-                allowed: false,
-                message: "Tu plan actual no permite más profesionales. Actualiza tu plan para ampliar tu equipo."
-            };
-        }
-
-        return { allowed: true };
+        const res = await EntitlementsService.checkProfessionalLimit(businessId);
+        return {
+            allowed: res.allowed,
+            message: res.message
+        };
     },
 
     /**
      * Valida si un negocio puede crear una nueva reserva (Cita).
-     * Siempre permite la creación, pero determina si se ha superado el límite.
      */
     async canCreateReservation(businessId: string): Promise<{ allowed: boolean; message?: string; exceeded?: boolean }> {
-        const maxMonthly = await featureService.getLimit(businessId, 'max_appointments_monthly');
-        if (maxMonthly === 0) {
-            return { allowed: true, exceeded: false };
-        }
-
-        if (maxMonthly >= 999999) return { allowed: true, exceeded: false };
-
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-
-        const reservationsCount = await prisma.appointment.count({
-            where: {
-                negocioId: businessId,
-                createdAt: {
-                    gte: startOfMonth,
-                    lte: endOfMonth
-                }
-            }
-        });
-
-        if (reservationsCount >= maxMonthly) {
-            return {
-                allowed: true, // Permitimos siempre la creación física de la cita
-                exceeded: true,
-                message: "Has alcanzado el límite mensual de citas. Actualiza tu plan para seguir recibiendo reservas."
-            };
-        }
-
-        return { allowed: true, exceeded: false };
+        const res = await EntitlementsService.checkAppointmentLimit(businessId);
+        return {
+            allowed: true, // Permitir registro en BD pero marcar exceeded si sobrepasa cuota
+            exceeded: !res.allowed,
+            message: res.message
+        };
     },
 
     /**
@@ -243,23 +204,13 @@ export const planLimitValidator = {
 
     /**
      * Valida si un negocio puede crear una nueva sede.
-     * Usa featureService.getLimit para el límite dinámico.
      */
     async canCreateLocation(businessId: string): Promise<{ allowed: boolean; message?: string }> {
-        const maxLocations = await featureService.getLimit(businessId, 'max_locations');
-        if (maxLocations === 0) {
-            return { allowed: false, message: "No se encontró el plan del negocio." };
-        }
-
-        const currentCount = await prisma.ubicacion.count({ where: { negocioId: businessId } });
-        if (currentCount >= maxLocations) {
-            return {
-                allowed: false,
-                message: "Tu plan actual no permite más sedes."
-            };
-        }
-
-        return { allowed: true };
+        const res = await EntitlementsService.checkBranchLimit(businessId);
+        return {
+            allowed: res.allowed,
+            message: res.message
+        };
     },
 
     /**
