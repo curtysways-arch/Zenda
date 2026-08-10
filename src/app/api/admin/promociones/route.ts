@@ -308,7 +308,10 @@ export async function PUT(request: Request) {
       cuponCodigo: updateFields.cuponCodigo,
       canales: updateFields.canales,
       montoMinimo: updateFields.montoMinimo,
-      tipoCliente: updateFields.tipoCliente
+      tipoCliente: updateFields.tipoCliente,
+      distanciaMaximaKm: updateFields.distanciaMaximaKm || null,
+      costoMaximoSubsidiado: updateFields.costoMaximoSubsidiado || null,
+      esCostoCompleto: updateFields.esCostoCompleto ?? true
     };
 
     let cleanDesc = updateFields.descripcion || '';

@@ -673,6 +673,13 @@ export default function ProductsStoreClient({ negocio }: Props) {
         return true;
     }) : null;
 
+    const exceededDistancePromo = (deliveryType === 'DOMICILIO' && activePromotions) ? activePromotions.find(p => {
+        if ((p.tipoPromo || '').toUpperCase() !== 'ENVIO_GRATIS') return false;
+        if (p.montoMinimo && cartSubtotal < Number(p.montoMinimo)) return false;
+        if (p.distanciaMaximaKm && distanceKm > 0 && distanceKm > Number(p.distanciaMaximaKm)) return true;
+        return false;
+    }) : null;
+
     let merchantShippingSubsidy = 0;
     let shippingDiscount = 0;
     let customerShippingAmount = rawShippingCost;
@@ -2329,7 +2336,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     </>
                                 )}
 
-                                {/* Mensaje Adaptativo de Seguridad de Envío Gratis */}
+                                 {/* Mensaje Adaptativo de Seguridad de Envío Gratis */}
                                 {freeDeliveryPromo && deliveryType === 'DOMICILIO' && (
                                     <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-tight font-medium space-y-1">
                                         <p className="font-black text-amber-950 flex items-center gap-1 uppercase tracking-wider">
@@ -2340,6 +2347,16 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                         ) : (
                                             <p>Descuento de envío de hasta ${merchantShippingSubsidy.toFixed(2)} aplicado. El excedente del costo de envío (${customerShippingAmount.toFixed(2)}) será cobrado en tu pedido.</p>
                                         )}
+                                    </div>
+                                )}
+
+                                {/* Advertencia si supera la distancia máxima */}
+                                {!freeDeliveryPromo && exceededDistancePromo && deliveryType === 'DOMICILIO' && (
+                                    <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs leading-tight font-medium space-y-1">
+                                        <p className="font-black text-rose-950 flex items-center gap-1 uppercase tracking-wider">
+                                            📍 Distancia Fuera de Cobertura de Promo
+                                        </p>
+                                        <p>Tu ubicación actual (<strong>{distanceKm.toFixed(1)} km</strong>) supera el límite máximo de <strong>{exceededDistancePromo.distanciaMaximaKm} km</strong> configurado para el envío gratis.</p>
                                     </div>
                                 )}
 

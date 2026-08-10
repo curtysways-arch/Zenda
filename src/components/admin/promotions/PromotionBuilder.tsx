@@ -213,7 +213,7 @@ export default function PromotionBuilder({
       titulo,
       descripcion,
       tipoPromo,
-      precioPromo,
+      precioPromo: tipoPromo === 'ENVIO_GRATIS' ? (esCostoCompleto ? 0 : (costoMaximoSubsidiado || 3)) : precioPromo,
       precioAnterior,
       imagenUrl: imagenUrl || selectedProduct?.imagenUrl || '',
       fechaInicio,
@@ -221,7 +221,7 @@ export default function PromotionBuilder({
       diasValidos,
       horaInicioValida,
       horaFinValida,
-      canales,
+      canales: tipoPromo === 'ENVIO_GRATIS' ? ['DELIVERY'] : canales,
       montoMinimo,
       cantidadMinima,
       productoRequeridoId,
@@ -232,6 +232,9 @@ export default function PromotionBuilder({
       usosPorClienteMaximo,
       presupuestoMaximo,
       esCombinable,
+      distanciaMaximaKm,
+      costoMaximoSubsidiado: esCostoCompleto ? undefined : costoMaximoSubsidiado,
+      esCostoCompleto,
       estado: 'ACTIVA'
     });
   };
