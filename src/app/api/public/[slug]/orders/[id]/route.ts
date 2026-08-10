@@ -93,9 +93,70 @@ export async function GET(
             }))
         };
 
-        return NextResponse.json({ success: true, order: serialized });
-    } catch (e: any) {
-        console.error('[ORDER_TRACKING_GET]', e);
-        return NextResponse.json({ error: e.message || 'Error interno' }, { status: 500 });
+        return NextResponse.json({ order: serialized });
+    } catch (error) {
+        console.error('[API Order Track Error]:', error);
+        return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
+    }
+}
+
+export async function POST(
+    request: Request,
+    { params }: { params: Promise<{ slug: string; id: string }> }
+) {
+    const { slug, id } = await params;
+    try {
+        const body = await request.json();
+        const { driverRating, driverComment, driverTags, restaurantRating, restaurantComment, rater } = body;
+
+        const negocio = await prisma.negocio.findUnique({ where: { slug }, select: { id: true } });
+        if (!negocio) {
+            return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
+        }
+
+        const order = await (prisma as any).pedido.findFirst({
+            where: {
+                negocioId: negocio.id,
+                OR: [{ id }, ...(isNaN(Number(id)) ? [] : [{ numeroPedido: Number(id) }])]
+            }
+        });
+
+        if (!order) {
+            return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 });
+        }
+
+        let extra: any = {};
+        if (order.extraInfo) {
+            extra = typeof order.extraInfo === 'string' ? JSON.parse(order.extraInfo) : order.extraInfo;
+        }
+
+        if (rater === 'DRIVER') {
+            // Repartidor califica al cliente
+            extra.customerRating = {
+                stars: Number(driverRating) || 5,
+                comment: driverComment || '',
+                tags: driverTags || [],
+                createdAt: new Date().toISOString()
+            };
+        } else {
+            // Cliente califica al repartidor y al restaurante
+            extra.clientReview = {
+                driverStars: Number(driverRating) || 5,
+                driverTags: driverTags || [],
+                driverComment: driverComment || '',
+                restaurantStars: Number(restaurantRating) || 5,
+                restaurantComment: restaurantComment || '',
+                createdAt: new Date().toISOString()
+            };
+        }
+
+        const updatedOrder = await (prisma as any).pedido.update({
+            where: { id: order.id },
+            data: { extraInfo: extra }
+        });
+
+        return NextResponse.json({ success: true, order: updatedOrder });
+    } catch (err: any) {
+        return NextResponse.json({ error: err.message || 'Error guardando calificación' }, { status: 500 });
     }
 }

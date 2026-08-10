@@ -507,6 +507,92 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                     </div>
                 </div>
 
+                {/* SECCIÓN DE CALIFICACIÓN DEL CLIENTE AL ENTREGAR */}
+                {isDelivered && (() => {
+                    const clientReview = order.extraInfo?.clientReview;
+                    if (clientReview) {
+                        return (
+                            <div style={{ background: 'rgba(16,185,129,0.15)', borderRadius: 20, padding: 20, marginBottom: 20, border: '1px solid rgba(16,185,129,0.3)', textAlign: 'center' }}>
+                                <div style={{ fontSize: 24, marginBottom: 6 }}>⭐</div>
+                                <h3 style={{ color: '#10b981', fontWeight: 900, fontSize: 16, margin: 0 }}>¡Gracias por tu calificación!</h3>
+                                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 4 }}>
+                                    Valoraste la experiencia con {clientReview.driverStars || 5} estrellas ⭐
+                                </p>
+                            </div>
+                        );
+                    }
+
+                    return (
+                        <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 20, padding: 20, marginBottom: 20, border: `1px solid ${cp}40`, textAlign: 'left' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                                <span style={{ fontSize: 20 }}>⭐</span>
+                                <h3 style={{ color: '#fff', fontWeight: 900, fontSize: 15, margin: 0 }}>Califica tu Entrega y Restaurante</h3>
+                            </div>
+
+                            {/* Calificar Repartidor */}
+                            <div style={{ marginBottom: 16 }}>
+                                <label style={{ display: 'block', color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                                    🛵 Repartidor ({order.extraInfo?.assignedDriverName || 'Marco Proaño'}):
+                                </label>
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                            key={star}
+                                            type="button"
+                                            onClick={() => (window as any)._tmpDriverStar = star}
+                                            style={{ background: 'none', border: 'none', fontSize: 26, cursor: 'pointer' }}
+                                        >
+                                            ⭐
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Calificar Restaurante */}
+                            <div style={{ marginBottom: 16 }}>
+                                <label style={{ display: 'block', color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                                    🍽️ Restaurante ({negocio?.nombre}):
+                                </label>
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                            key={star}
+                                            type="button"
+                                            onClick={() => (window as any)._tmpRestStar = star}
+                                            style={{ background: 'none', border: 'none', fontSize: 26, cursor: 'pointer' }}
+                                        >
+                                            ⭐
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    const dStar = (window as any)._tmpDriverStar || 5;
+                                    const rStar = (window as any)._tmpRestStar || 5;
+                                    try {
+                                        await fetch(`/api/public/${storeSlug}/orders/${order.id}`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                driverRating: dStar,
+                                                restaurantRating: rStar,
+                                                rater: 'CLIENT'
+                                            })
+                                        });
+                                        refreshOrder();
+                                    } catch (_) {}
+                                }}
+                                style={{ width: '100%', padding: '14px', background: cp, color: '#fff', border: 'none', borderRadius: 14, fontWeight: 900, fontSize: 14, cursor: 'pointer', boxShadow: `0 4px 14px ${cp}40` }}
+                            >
+                                ENVIAR CALIFICACIÓN
+                            </button>
+                        </div>
+                    );
+                })()}
+
                 {/* ACCIONES */}
                 <div style={{ display: 'flex', gap: 12 }}>
                     {!isDelivered && !isCancelled && (

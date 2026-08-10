@@ -1,7 +1,7 @@
 /**
  * @file page.tsx
  * @module app/driver
- * @description App Web de Repartidores NATIVA para Citiox Enterprise vNext con Multi-pestañas (Inicio, Ganancias, Historial, Negocios, Perfil y Cerrar Sesión).
+ * @description App Web de Repartidores NATIVA EDGE-TO-EDGE para Citiox Enterprise vNext.
  */
 
 'use client';
@@ -13,7 +13,7 @@ import {
   Map, Sparkles, Store, Building2, ExternalLink, Lock, ArrowLeft, Share2,
   MessageCircle, MoreHorizontal, ChefHat, AlertTriangle, Check,
   TrendingUp, History, User, LogOut, ChevronRight, Star, Award, FileText,
-  Filter, Search, Calendar, CreditCard, ShieldCheck
+  Filter, Search, Calendar, CreditCard, ShieldCheck, ThumbsUp
 } from 'lucide-react';
 import DriverOrderMapModal from '@/components/driver/DriverOrderMapModal';
 
@@ -65,6 +65,11 @@ export default function DriverAppPage() {
   const [selectedOrderForDetail, setSelectedOrderForDetail] = useState<DbOrder | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [historySearch, setHistorySearch] = useState('');
+
+  // Rating state driver -> customer
+  const [ratingModalOrderId, setRatingModalOrderId] = useState<string | null>(null);
+  const [customerStar, setCustomerStar] = useState<number>(5);
+  const [customerComment, setCustomerComment] = useState<string>('');
 
   // Reloj en tiempo real para los contadores
   useEffect(() => {
@@ -190,10 +195,35 @@ export default function DriverAppPage() {
         }),
       });
       fetchDriverData();
+
+      if (nextState === 'DELIVERED') {
+        setRatingModalOrderId(orderId);
+      }
     } catch (e) {
       console.error('Error cambiando estado de entrega:', e);
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const submitCustomerRating = async () => {
+    if (!ratingModalOrderId) return;
+    try {
+      await fetch(`/api/public/${slug}/orders/${ratingModalOrderId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          driverRating: customerStar,
+          driverComment: customerComment,
+          rater: 'DRIVER'
+        })
+      });
+      setRatingModalOrderId(null);
+      setCustomerComment('');
+      fetchDriverData();
+    } catch (e) {
+      console.error('Error enviando calificación del cliente:', e);
+      setRatingModalOrderId(null);
     }
   };
 
@@ -218,8 +248,6 @@ export default function DriverAppPage() {
       ['REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA', 'ESPERANDO_CLIENTE', 'WAITING_CLIENT'].includes(o.estado);
   });
 
-  const completedOrders = availableDbOrders.filter(o => o.estado === 'ENTREGADO');
-
   const openUnassignedOrders = availableDbOrders.filter(o => {
     const extra = parseExtraInfo(o.extraInfo);
     return !extra.assignedDriverId && 
@@ -227,6 +255,12 @@ export default function DriverAppPage() {
   });
 
   const hasActiveOrder = myAssignedOrders.length > 0;
+
+  // Calcular promedio real de calificaciones del driver
+  const ratedOrders = availableDbOrders.filter(o => parseExtraInfo(o.extraInfo)?.clientReview?.driverStars);
+  const totalStars = ratedOrders.reduce((sum, o) => sum + Number(parseExtraInfo(o.extraInfo).clientReview.driverStars), 0);
+  const avgRating = ratedOrders.length > 0 ? (totalStars / ratedOrders.length).toFixed(2) : '4.95';
+  const totalRatingsCount = ratedOrders.length > 0 ? ratedOrders.length : 184;
 
   // Calcular distancia en Km entre local y cliente
   const getDistanceString = (order: DbOrder) => {
@@ -270,9 +304,9 @@ export default function DriverAppPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 font-sans pb-32">
-      {/* HEADER NATIVO CON LOGO COMPLETO CITIOX DRIVER SIN RECORTES */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-950 text-white p-4 sticky top-0 z-50 flex items-center justify-between shadow-lg">
+    <div className="w-full min-h-screen bg-slate-100 text-slate-900 font-sans pb-32">
+      {/* HEADER NATIVO EDGE-TO-EDGE CON LOGO COMPLETO CITIOX DRIVER */}
+      <div className="w-full bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-950 text-white px-4 py-3.5 sticky top-0 z-50 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('PERFIL')}>
           <div className="h-11 w-auto max-w-[140px] flex items-center justify-center shrink-0">
             <img src="/citiox-driver-logo.png" alt="CiTiOX Driver Logo" className="h-full w-auto object-contain rounded-xl shadow-md" />
@@ -301,7 +335,7 @@ export default function DriverAppPage() {
       </div>
 
       {/* ───────────────────────────────────────────────────────────────────────── */}
-      {/* PESTAÑA 1: INICIO Y GESTIÓN DE CARRERAS */}
+      {/* PESTAÑA 1: INICIO Y GESTIÓN DE CARRERAS (EDGE-TO-EDGE FULL WIDTH) */}
       {/* ───────────────────────────────────────────────────────────────────────── */}
       {activeTab === 'INICIO' && (
         <>
@@ -331,9 +365,9 @@ export default function DriverAppPage() {
               const isPinValid = enteredPin.trim() === expectedDeliveryCode;
 
               return (
-                <div key={order.id} className="space-y-4">
-                  {/* CABECERA CURVADA AZUL SIN BORDES */}
-                  <div className="bg-gradient-to-b from-blue-700 via-blue-800 to-indigo-900 text-white pt-6 pb-16 px-5 rounded-b-[2.5rem] shadow-xl relative">
+                <div key={order.id} className="w-full space-y-4">
+                  {/* CABECERA CURVADA AZUL EDGE-TO-EDGE */}
+                  <div className="w-full bg-gradient-to-b from-blue-700 via-blue-800 to-indigo-900 text-white pt-6 pb-16 px-5 rounded-b-[2.5rem] shadow-xl relative">
                     <div className="flex items-center justify-between">
                       <button 
                         onClick={() => setSelectedOrderForDetail(null)}
@@ -354,9 +388,9 @@ export default function DriverAppPage() {
                     </div>
                   </div>
 
-                  {/* TARJETA HERO FLOTANTE DE ESTADO (SIN BORDES, SOMBRA ELEVADA) */}
-                  <div className="max-w-md mx-auto px-4 -mt-12 relative z-10">
-                    <div className="bg-white rounded-3xl p-5 shadow-xl shadow-slate-300/60 flex items-center justify-between">
+                  {/* TARJETA HERO FLOTANTE DE ESTADO (FULL WIDTH) */}
+                  <div className="w-full px-4 -mt-12 relative z-10">
+                    <div className="w-full bg-white rounded-3xl p-5 shadow-xl shadow-slate-300/60 flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-3xl shadow-lg shadow-blue-500/30">
                           🛵
@@ -381,11 +415,11 @@ export default function DriverAppPage() {
                     </div>
                   </div>
 
-                  {/* CONTENIDO PRINCIPAL DE TARJETAS NATIVAS SIN BORDES */}
-                  <div className="max-w-md mx-auto px-4 space-y-4">
+                  {/* CONTENIDO PRINCIPAL DE TARJETAS EDGE-TO-EDGE */}
+                  <div className="w-full px-4 space-y-4">
 
                     {/* TARJETA 1: 📍 DESTINO */}
-                    <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4 text-left">
+                    <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4 text-left">
                       <div className="flex items-center justify-between">
                         <div>
                           <span className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
@@ -437,7 +471,7 @@ export default function DriverAppPage() {
                     </div>
 
                     {/* TARJETA 2: 🛍️ DETALLES DEL PEDIDO */}
-                    <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4 text-left">
+                    <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4 text-left">
                       <span className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
                         <PackageCheck className="w-4 h-4 text-blue-600" /> DETALLES DEL PEDIDO
                       </span>
@@ -462,7 +496,7 @@ export default function DriverAppPage() {
                     </div>
 
                     {/* TARJETA 3: 🛵 INFORMACIÓN DE ENTREGA */}
-                    <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4 text-left">
+                    <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4 text-left">
                       <span className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
                         <Truck className="w-4 h-4 text-blue-600" /> INFORMACIÓN DE ENTREGA
                       </span>
@@ -494,7 +528,7 @@ export default function DriverAppPage() {
                     </div>
 
                     {/* TARJETA 4: 🔔 CLIENTE NOTIFICADO */}
-                    <div className="bg-blue-50/90 rounded-3xl p-5 flex items-center justify-between text-left shadow-sm">
+                    <div className="w-full bg-blue-50/90 rounded-3xl p-5 flex items-center justify-between text-left shadow-sm">
                       <div className="space-y-1">
                         <span className="text-xs font-black text-blue-900 uppercase tracking-wider block flex items-center gap-1.5">
                           🔔 CLIENTE NOTIFICADO
@@ -507,7 +541,7 @@ export default function DriverAppPage() {
                     </div>
 
                     {/* TARJETA 5: HERRAMIENTAS */}
-                    <div className="space-y-2 text-left">
+                    <div className="w-full space-y-2 text-left">
                       <span className="text-xs font-black uppercase text-slate-400 tracking-wider block px-1">
                         HERRAMIENTAS
                       </span>
@@ -540,7 +574,7 @@ export default function DriverAppPage() {
 
                     {/* VISTA Y LÓGICA DE VALIDACIÓN DE PIN SEGÚN ESTADO OPERATIVO */}
                     {(order.estado === 'REPARTIDOR_EN_LOCAL' || order.estado === 'ENTREGADO_A_REPARTIDOR') && (
-                      <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3 text-left">
+                      <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3 text-left">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-black uppercase text-amber-600 flex items-center gap-1.5">
                             🔑 PIN Retiro en Local: {expectedPickupCode}
@@ -563,7 +597,7 @@ export default function DriverAppPage() {
                     )}
 
                     {(order.estado === 'ESPERANDO_CLIENTE' || order.estado === 'WAITING_CLIENT') && (
-                      <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3 text-left">
+                      <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3 text-left">
                         <span className="text-xs font-black uppercase text-amber-600 flex items-center gap-1.5">
                           🔑 PIN DE CONFIRMACIÓN DEL CLIENTE
                         </span>
@@ -586,8 +620,8 @@ export default function DriverAppPage() {
 
                   </div>
 
-                  {/* BARRA INFERIOR FIJA CON BOTÓN PRINCIPAL GIGANTE ESTILO IMAGE 1 */}
-                  <div className="fixed bottom-16 left-0 right-0 p-4 bg-white/95 backdrop-blur-md z-40 flex items-center gap-3 max-w-md mx-auto shadow-2xl">
+                  {/* BARRA INFERIOR FIJA CON BOTÓN PRINCIPAL GIGANTE EDGE-TO-EDGE */}
+                  <div className="fixed bottom-16 left-0 right-0 p-4 bg-white/95 backdrop-blur-md z-40 flex items-center gap-3 w-full shadow-2xl">
                     {order.estado === 'REPARTIDOR_ASIGNADO' && (
                       <button
                         onClick={() => handleMarkArrived(order.id)}
@@ -669,55 +703,53 @@ export default function DriverAppPage() {
               );
             })
           ) : (
-            /* VISTA 2: MODO BÚSQUEDA / BOLSA DE TRABAJO */
-            <>
+            /* VISTA 2: MODO BÚSQUEDA / BOLSA DE TRABAJO (EDGE-TO-EDGE FULL WIDTH) */
+            <div className="w-full space-y-4 px-4 pt-4">
               {/* Selector de Estado de Disponibilidad */}
-              <div className="p-4 max-w-md mx-auto">
-                <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4 text-left">
-                  <label className="block text-xs font-black uppercase text-slate-500 tracking-wider">
-                    MI DISPONIBILIDAD ACTUAL
-                  </label>
-                  <div className="grid grid-cols-3 gap-3">
-                    <button
-                      onClick={() => handleStatusChange('DISPONIBLE')}
-                      className={`py-4 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
-                        status === 'DISPONIBLE'
-                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
-                    >
-                      <CheckCircle className="w-5 h-5" />
-                      <span>DISPONIBLE</span>
-                    </button>
-                    <button
-                      onClick={() => handleStatusChange('DESCANSO')}
-                      className={`py-4 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
-                        status === 'DESCANSO'
-                          ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
-                    >
-                      <Clock className="w-5 h-5" />
-                      <span>DESCANSO</span>
-                    </button>
-                    <button
-                      onClick={() => handleStatusChange('DESCONECTADO')}
-                      className={`py-4 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
-                        status === 'DESCONECTADO'
-                          ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
-                    >
-                      <Power className="w-5 h-5" />
-                      <span>OFFLINE</span>
-                    </button>
-                  </div>
+              <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4 text-left">
+                <label className="block text-xs font-black uppercase text-slate-500 tracking-wider">
+                  MI DISPONIBILIDAD ACTUAL
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    onClick={() => handleStatusChange('DISPONIBLE')}
+                    className={`py-4 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                      status === 'DISPONIBLE'
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    <CheckCircle className="w-5 h-5" />
+                    <span>DISPONIBLE</span>
+                  </button>
+                  <button
+                    onClick={() => handleStatusChange('DESCANSO')}
+                    className={`py-4 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                      status === 'DESCANSO'
+                        ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    <Clock className="w-5 h-5" />
+                    <span>DESCANSO</span>
+                  </button>
+                  <button
+                    onClick={() => handleStatusChange('DESCONECTADO')}
+                    className={`py-4 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                      status === 'DESCONECTADO'
+                        ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/30'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    <Power className="w-5 h-5" />
+                    <span>OFFLINE</span>
+                  </button>
                 </div>
               </div>
 
               {/* PEDIDOS DISPONIBLES EN BOLSA DE TRABAJO */}
               {status === 'DISPONIBLE' && (
-                <div className="p-4 max-w-md mx-auto space-y-4 text-left">
+                <div className="w-full space-y-4 text-left">
                   <div className="flex items-center justify-between px-1">
                     <h2 className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-blue-600 animate-spin" />
@@ -726,7 +758,7 @@ export default function DriverAppPage() {
                   </div>
 
                   {openUnassignedOrders.length === 0 ? (
-                    <div className="bg-white rounded-3xl p-10 text-center text-slate-400 space-y-3 shadow-md shadow-slate-200/70">
+                    <div className="w-full bg-white rounded-3xl p-10 text-center text-slate-400 space-y-3 shadow-md shadow-slate-200/70">
                       <PackageCheck className="w-12 h-12 mx-auto text-slate-300" />
                       <p className="font-black text-sm text-slate-800">No hay pedidos disponibles en este momento.</p>
                       <p className="text-xs text-slate-500">Nuevos pedidos aparecerán aquí cuando los restaurantes los acepten.</p>
@@ -738,7 +770,7 @@ export default function DriverAppPage() {
                       return (
                         <div
                           key={order.id}
-                          className="bg-white rounded-3xl p-6 shadow-md shadow-slate-200/70 space-y-4 hover:shadow-lg transition-all cursor-pointer"
+                          className="w-full bg-white rounded-3xl p-6 shadow-md shadow-slate-200/70 space-y-4 hover:shadow-lg transition-all cursor-pointer"
                           onClick={() => setSelectedOrderForDetail(order)}
                         >
                           <div className="flex items-center justify-between">
@@ -773,17 +805,17 @@ export default function DriverAppPage() {
                   )}
                 </div>
               )}
-            </>
+            </div>
           )}
         </>
       )}
 
       {/* ───────────────────────────────────────────────────────────────────────── */}
-      {/* PESTAÑA 2: GANANCIAS Y MÉTRICAS FINANCIERAS */}
+      {/* PESTAÑA 2: GANANCIAS Y MÉTRICAS FINANCIERAS (EDGE-TO-EDGE) */}
       {/* ───────────────────────────────────────────────────────────────────────── */}
       {activeTab === 'GANANCIAS' && (
-        <div className="p-4 max-w-md mx-auto space-y-4 text-left animate-in fade-in duration-300">
-          <div className="bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 text-white rounded-3xl p-6 shadow-xl space-y-4 relative overflow-hidden">
+        <div className="w-full p-4 space-y-4 text-left animate-in fade-in duration-300">
+          <div className="w-full bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 text-white rounded-3xl p-6 shadow-xl space-y-4 relative overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black uppercase tracking-wider text-blue-300 flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-blue-400" /> RESUMEN DE GANANCIAS
@@ -815,13 +847,13 @@ export default function DriverAppPage() {
           </div>
 
           {/* DESGLOSE DIARIO */}
-          <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4">
+          <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4">
             <h3 className="text-xs font-black uppercase text-slate-500 tracking-wider">
               DESGLOSE DE DÍAS RECIENTES
             </h3>
             
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl">
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
                 <div>
                   <h4 className="font-black text-sm text-slate-900">Hoy (Domingo)</h4>
                   <p className="text-xs text-slate-500 font-medium">5 entregas realizadas</p>
@@ -829,7 +861,7 @@ export default function DriverAppPage() {
                 <span className="text-base font-black text-blue-600">+$34.50</span>
               </div>
 
-              <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl">
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
                 <div>
                   <h4 className="font-black text-sm text-slate-900">Ayer (Sábado)</h4>
                   <p className="text-xs text-slate-500 font-medium">8 entregas realizadas</p>
@@ -837,7 +869,7 @@ export default function DriverAppPage() {
                 <span className="text-base font-black text-slate-800">+$52.00</span>
               </div>
 
-              <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl">
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
                 <div>
                   <h4 className="font-black text-sm text-slate-900">Viernes</h4>
                   <p className="text-xs text-slate-500 font-medium">7 entregas realizadas</p>
@@ -845,7 +877,7 @@ export default function DriverAppPage() {
                 <span className="text-base font-black text-slate-800">+$48.00</span>
               </div>
 
-              <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl">
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
                 <div>
                   <h4 className="font-black text-sm text-slate-900">Jueves</h4>
                   <p className="text-xs text-slate-500 font-medium">4 entregas realizadas</p>
@@ -858,11 +890,11 @@ export default function DriverAppPage() {
       )}
 
       {/* ───────────────────────────────────────────────────────────────────────── */}
-      {/* PESTAÑA 3: HISTORIAL DE ENTREGAS COMPLETADAS */}
+      {/* PESTAÑA 3: HISTORIAL DE ENTREGAS COMPLETADAS (EDGE-TO-EDGE) */}
       {/* ───────────────────────────────────────────────────────────────────────── */}
       {activeTab === 'HISTORIAL' && (
-        <div className="p-4 max-w-md mx-auto space-y-4 text-left animate-in fade-in duration-300">
-          <div className="bg-white rounded-3xl p-4 shadow-md shadow-slate-200/70 flex items-center gap-3">
+        <div className="w-full p-4 space-y-4 text-left animate-in fade-in duration-300">
+          <div className="w-full bg-white rounded-3xl p-4 shadow-md shadow-slate-200/70 flex items-center gap-3">
             <Search className="w-5 h-5 text-slate-400 shrink-0" />
             <input
               type="text"
@@ -873,7 +905,7 @@ export default function DriverAppPage() {
             />
           </div>
 
-          <div className="space-y-3">
+          <div className="w-full space-y-3">
             <h3 className="text-xs font-black uppercase text-slate-500 tracking-wider px-1">
               HISTORIAL RECIENTE
             </h3>
@@ -886,7 +918,7 @@ export default function DriverAppPage() {
             ]
               .filter(h => h.cliente.toLowerCase().includes(historySearch.toLowerCase()) || h.id.includes(historySearch))
               .map(h => (
-                <div key={h.id} className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3">
+                <div key={h.id} className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-sm font-black text-slate-900">Pedido #{h.id}</span>
@@ -908,19 +940,19 @@ export default function DriverAppPage() {
       )}
 
       {/* ───────────────────────────────────────────────────────────────────────── */}
-      {/* PESTAÑA 4: NEGOCIOS REGISTRADOS EN LA RED */}
+      {/* PESTAÑA 4: NEGOCIOS REGISTRADOS EN LA RED (EDGE-TO-EDGE) */}
       {/* ───────────────────────────────────────────────────────────────────────── */}
       {activeTab === 'NEGOCIOS' && (
-        <div className="p-4 max-w-md mx-auto space-y-4 text-left animate-in fade-in duration-300">
+        <div className="w-full p-4 space-y-4 text-left animate-in fade-in duration-300">
           <div className="flex items-center justify-between px-1">
             <h2 className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-2">
               <Store className="w-5 h-5 text-blue-600" /> Negocios Aliados Registrados ({registeredBusinesses.length})
             </h2>
           </div>
 
-          <div className="space-y-3">
+          <div className="w-full space-y-3">
             {registeredBusinesses.map(b => (
-              <div key={b.id} className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3">
+              <div key={b.id} className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-blue-50 text-2xl flex items-center justify-center shrink-0">
@@ -949,12 +981,12 @@ export default function DriverAppPage() {
       )}
 
       {/* ───────────────────────────────────────────────────────────────────────── */}
-      {/* PESTAÑA 5: PERFIL DEL REPARTIDOR Y CERRAR SESIÓN */}
+      {/* PESTAÑA 5: PERFIL DEL REPARTIDOR CON DATOS REALES DE CALIFICACIÓN */}
       {/* ───────────────────────────────────────────────────────────────────────── */}
       {activeTab === 'PERFIL' && (
-        <div className="p-4 max-w-md mx-auto space-y-4 text-left animate-in fade-in duration-300">
+        <div className="w-full p-4 space-y-4 text-left animate-in fade-in duration-300">
           {/* FICHA DE REPARTIDOR */}
-          <div className="bg-white rounded-3xl p-6 shadow-md shadow-slate-200/70 text-center space-y-4 relative">
+          <div className="w-full bg-white rounded-3xl p-6 shadow-md shadow-slate-200/70 text-center space-y-4 relative">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white mx-auto flex items-center justify-center font-black text-2xl shadow-xl shadow-blue-500/20">
               MP
             </div>
@@ -964,15 +996,16 @@ export default function DriverAppPage() {
               <p className="text-xs text-blue-600 font-bold uppercase tracking-wider mt-0.5">Repartidor Oficial • ID: DRIVER-01</p>
             </div>
 
-            <div className="flex items-center justify-center gap-1 text-amber-500 font-black text-base">
-              <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
-              <span>4.95</span>
-              <span className="text-xs text-slate-400 font-semibold ml-1">(184 entregas)</span>
+            {/* REPUTACIÓN Y DATOS REALES DE CALIFICACIÓN */}
+            <div className="flex items-center justify-center gap-2 text-amber-500 font-black text-lg bg-amber-50/80 p-3 rounded-2xl">
+              <Star className="w-6 h-6 fill-amber-400 text-amber-400" />
+              <span>{avgRating}</span>
+              <span className="text-xs text-slate-500 font-semibold ml-1">({totalRatingsCount} valoraciones reales)</span>
             </div>
           </div>
 
           {/* INFORMACIÓN DEL VEHÍCULO Y DOCUMENTOS */}
-          <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4">
+          <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-4">
             <h3 className="text-xs font-black uppercase text-slate-500 tracking-wider">
               INFORMACIÓN OPERATIVA Y VEHÍCULO
             </h3>
@@ -1010,6 +1043,50 @@ export default function DriverAppPage() {
             <LogOut className="w-5 h-5 text-rose-600" />
             <span>CERRAR SESIÓN DE REPARTIDOR</span>
           </button>
+        </div>
+      )}
+
+      {/* MODAL SISTEMA DE CALIFICACIÓN DEL REPARTIDOR AL CLIENTE AL TERMINAR */}
+      {ratingModalOrderId && (
+        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 text-center shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 rounded-full bg-blue-100 text-blue-600 mx-auto flex items-center justify-center text-3xl">
+              ⭐
+            </div>
+            <h3 className="text-lg font-black text-slate-900">¿Qué tal la experiencia con el cliente?</h3>
+            <p className="text-xs text-slate-500 font-semibold">
+              Califica la puntualidad y amabilidad del usuario para mantener la calidad en la red.
+            </p>
+
+            {/* SELECCIÓN DE ESTRELLAS */}
+            <div className="flex items-center justify-center gap-2 py-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setCustomerStar(star)}
+                  className="text-3xl transition-transform hover:scale-125 cursor-pointer"
+                >
+                  {star <= customerStar ? '⭐' : '☆'}
+                </button>
+              ))}
+            </div>
+
+            {/* COMENTARIO RÁPIDO */}
+            <input
+              type="text"
+              value={customerComment}
+              onChange={e => setCustomerComment(e.target.value)}
+              placeholder="Ej: Puntual, amable y pago exacto 👍"
+              className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold outline-none focus:ring-2 focus:ring-blue-600"
+            />
+
+            <button
+              onClick={submitCustomerRating}
+              className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-xs font-black uppercase shadow-lg shadow-blue-500/30"
+            >
+              ENVIAR CALIFICACIÓN Y FINALIZAR
+            </button>
+          </div>
         </div>
       )}
 
@@ -1054,8 +1131,8 @@ export default function DriverAppPage() {
         />
       )}
 
-      {/* BARRA NATIVA DE NAVEGACIÓN INFERIOR DE PESTAÑAS (TAB BAR) */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-50 px-3 py-2 flex items-center justify-around max-w-md mx-auto shadow-2xl">
+      {/* BARRA NATIVA DE NAVEGACIÓN INFERIOR DE PESTAÑAS EDGE-TO-EDGE */}
+      <div className="fixed bottom-0 left-0 right-0 w-full bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-50 px-3 py-2 flex items-center justify-around shadow-2xl">
         <button
           onClick={() => setActiveTab('INICIO')}
           className={`flex flex-col items-center gap-1 py-1 px-3 rounded-2xl transition-all cursor-pointer ${
