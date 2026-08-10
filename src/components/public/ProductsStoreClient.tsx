@@ -1713,9 +1713,10 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                                 title="Ver detalle"
                                             >
                                                 {!p.activo && (
-                                                    <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px] z-10 flex items-center justify-center pointer-events-none">
-                                                        <span className="px-3 py-1.5 bg-rose-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg border border-rose-500">
-                                                            🚫 AGOTADO
+                                                    <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] z-10 flex items-center justify-center pointer-events-none">
+                                                        <span className="px-3.5 py-1.5 bg-white/90 backdrop-blur-md text-slate-800 font-extrabold text-[10px] uppercase tracking-wider rounded-full shadow-md border border-slate-200/80 flex items-center gap-1.5">
+                                                            <span className="size-2 rounded-full bg-rose-500 animate-pulse"></span>
+                                                            Agotado
                                                         </span>
                                                     </div>
                                                 )}
@@ -1724,7 +1725,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                                     <img 
                                                         src={p.imagenUrl} 
                                                         alt={p.nombre} 
-                                                        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${!p.activo ? 'grayscale opacity-75' : ''}`} 
+                                                        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${!p.activo ? 'opacity-90' : ''}`} 
                                                     />
                                                 ) : (
                                                     <div className="absolute inset-0 flex items-center justify-center font-black text-4xl italic uppercase" style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
