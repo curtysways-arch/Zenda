@@ -74,6 +74,11 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
     const [refreshing, setRefreshing] = useState(false);
     const [lastRefresh, setLastRefresh] = useState(new Date());
 
+    const [clientDriverStar, setClientDriverStar] = useState<number>(5);
+    const [clientRestStar, setClientRestStar] = useState<number>(5);
+    const [clientComment, setClientComment] = useState<string>('');
+    const [submittingRating, setSubmittingRating] = useState<boolean>(false);
+
     const cp = negocio?.colorPrimario || '#c2410c';
     const cs = negocio?.colorSecundario || '#1c0a00';
 
@@ -531,16 +536,25 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
 
                             {/* Calificar Repartidor */}
                             <div style={{ marginBottom: 16 }}>
-                                <label style={{ display: 'block', color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
-                                    🛵 Repartidor ({order.extraInfo?.assignedDriverName || 'Marco Proaño'}):
+                                <label style={{ display: 'block', color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                                    🛵 Repartidor ({order.extraInfo?.assignedDriverName || 'Marco Proaño'}): <span style={{ color: '#f59e0b', fontWeight: 900 }}>{clientDriverStar} ★</span>
                                 </label>
-                                <div style={{ display: 'flex', gap: 8 }}>
+                                <div style={{ display: 'flex', gap: 10 }}>
                                     {[1, 2, 3, 4, 5].map((star) => (
                                         <button
                                             key={star}
                                             type="button"
-                                            onClick={() => (window as any)._tmpDriverStar = star}
-                                            style={{ background: 'none', border: 'none', fontSize: 26, cursor: 'pointer' }}
+                                            onClick={() => setClientDriverStar(star)}
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                fontSize: 32,
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease',
+                                                transform: star <= clientDriverStar ? 'scale(1.2)' : 'scale(0.9)',
+                                                opacity: star <= clientDriverStar ? 1 : 0.25,
+                                                filter: star <= clientDriverStar ? 'drop-shadow(0 0 6px #f59e0b)' : 'none'
+                                            }}
                                         >
                                             ⭐
                                         </button>
@@ -550,16 +564,25 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
 
                             {/* Calificar Restaurante */}
                             <div style={{ marginBottom: 16 }}>
-                                <label style={{ display: 'block', color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
-                                    🍽️ Restaurante ({negocio?.nombre}):
+                                <label style={{ display: 'block', color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                                    🍽️ Restaurante ({negocio?.nombre}): <span style={{ color: '#f59e0b', fontWeight: 900 }}>{clientRestStar} ★</span>
                                 </label>
-                                <div style={{ display: 'flex', gap: 8 }}>
+                                <div style={{ display: 'flex', gap: 10 }}>
                                     {[1, 2, 3, 4, 5].map((star) => (
                                         <button
                                             key={star}
                                             type="button"
-                                            onClick={() => (window as any)._tmpRestStar = star}
-                                            style={{ background: 'none', border: 'none', fontSize: 26, cursor: 'pointer' }}
+                                            onClick={() => setClientRestStar(star)}
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                fontSize: 32,
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease',
+                                                transform: star <= clientRestStar ? 'scale(1.2)' : 'scale(0.9)',
+                                                opacity: star <= clientRestStar ? 1 : 0.25,
+                                                filter: star <= clientRestStar ? 'drop-shadow(0 0 6px #f59e0b)' : 'none'
+                                            }}
                                         >
                                             ⭐
                                         </button>
@@ -567,27 +590,60 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                                 </div>
                             </div>
 
+                            <input
+                                type="text"
+                                value={clientComment}
+                                onChange={e => setClientComment(e.target.value)}
+                                placeholder="Escribe un comentario opcional..."
+                                style={{
+                                    width: '100%',
+                                    padding: '12px 14px',
+                                    background: 'rgba(255,255,255,0.08)',
+                                    border: '1px solid rgba(255,255,255,0.15)',
+                                    borderRadius: 12,
+                                    color: '#fff',
+                                    fontSize: 13,
+                                    marginBottom: 16,
+                                    outline: 'none'
+                                }}
+                            />
+
                             <button
                                 type="button"
+                                disabled={submittingRating}
                                 onClick={async () => {
-                                    const dStar = (window as any)._tmpDriverStar || 5;
-                                    const rStar = (window as any)._tmpRestStar || 5;
+                                    setSubmittingRating(true);
                                     try {
                                         await fetch(`/api/public/${storeSlug}/orders/${order.id}`, {
                                             method: 'POST',
                                             headers: { 'Content-Type': 'application/json' },
                                             body: JSON.stringify({
-                                                driverRating: dStar,
-                                                restaurantRating: rStar,
+                                                driverRating: clientDriverStar,
+                                                restaurantRating: clientRestStar,
+                                                driverComment: clientComment,
                                                 rater: 'CLIENT'
                                             })
                                         });
-                                        refreshOrder();
-                                    } catch (_) {}
+                                        await refreshOrder();
+                                    } catch (_) {} finally {
+                                        setSubmittingRating(false);
+                                    }
                                 }}
-                                style={{ width: '100%', padding: '14px', background: cp, color: '#fff', border: 'none', borderRadius: 14, fontWeight: 900, fontSize: 14, cursor: 'pointer', boxShadow: `0 4px 14px ${cp}40` }}
+                                style={{
+                                    width: '100%',
+                                    padding: '14px',
+                                    background: cp,
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderRadius: 14,
+                                    fontWeight: 900,
+                                    fontSize: 14,
+                                    cursor: submittingRating ? 'wait' : 'pointer',
+                                    opacity: submittingRating ? 0.7 : 1,
+                                    boxShadow: `0 4px 14px ${cp}40`
+                                }}
                             >
-                                ENVIAR CALIFICACIÓN
+                                {submittingRating ? 'Guardando...' : 'ENVIAR CALIFICACIÓN'}
                             </button>
                         </div>
                     );
