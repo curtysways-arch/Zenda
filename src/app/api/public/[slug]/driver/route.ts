@@ -279,9 +279,23 @@ export async function POST(
       const dbState = dbStatusMap[nextState] || nextState;
 
       const currentOrder = await (prisma as any).pedido.findUnique({ where: { id: targetId } });
-      let currentExtra = {};
+      let currentExtra: any = {};
       if (currentOrder?.extraInfo) {
         currentExtra = typeof currentOrder.extraInfo === 'string' ? JSON.parse(currentOrder.extraInfo) : currentOrder.extraInfo;
+      }
+
+      // El repartidor no puede pasar a EN_CAMINO / EN_RUTA hasta que el local entregue el paquete
+      if (nextState === 'ON_ROUTE' || nextState === 'EN_RUTA' || nextState === 'EN_CAMINO') {
+        const isHandedOver = currentOrder?.estado === 'ENTREGADO_A_REPARTIDOR' || 
+          currentOrder?.estado === 'EN_CAMINO' || 
+          currentOrder?.estado === 'EN_RUTA' || 
+          Boolean(currentExtra.isHandedOver || currentExtra.dispatchStatus === 'DESPACHADO');
+
+        if (!isHandedOver) {
+          return NextResponse.json({ 
+            error: 'Debes esperar a que el restaurante entregue la comanda y confirme el despacho.' 
+          }, { status: 400 });
+        }
       }
 
       const updatedOrder = await (prisma as any).pedido.update({

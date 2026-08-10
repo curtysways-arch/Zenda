@@ -10,7 +10,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Truck, CheckCircle, XCircle, Navigation, MapPin, Phone,
   Clock, ShieldAlert, PackageCheck, AlertCircle, RefreshCw, Power, DollarSign,
-  Map, Sparkles, Store, Building2, ExternalLink
+  Map, Sparkles, Store, Building2, ExternalLink, Lock
 } from 'lucide-react';
 import DriverOrderMapModal from '@/components/driver/DriverOrderMapModal';
 
@@ -628,10 +628,10 @@ export default function DriverAppPage() {
                   </div>
                 )}
 
-                {/* FASE 2: EN EL LOCAL Y ESPERANDO ENTREGA DEL PAQUETE */}
+                {/* FASE 2: EN EL LOCAL Y ESPERANDO ENTREGA DEL PAQUETE POR PARTE DEL RESTAURANTE */}
                 {(order.estado === 'REPARTIDOR_EN_LOCAL' || order.estado === 'ENTREGADO_A_REPARTIDOR') && (() => {
-                  const isHandedOver = order.estado === 'ENTREGADO_A_REPARTIDOR';
                   const extraData = parseExtraInfo(order.extraInfo);
+                  const isHandedOver = (order.estado as string) === 'ENTREGADO_A_REPARTIDOR' || (order.estado as string) === 'EN_CAMINO' || (order.estado as string) === 'EN_RUTA' || Boolean(extraData?.isHandedOver || extraData?.dispatchStatus === 'DESPACHADO');
                   let expectedPickupCode = extraData?.pickupCode;
                   let expectedDeliveryCode = extraData?.deliveryCode;
                   if (!expectedPickupCode) {
@@ -662,23 +662,36 @@ export default function DriverAppPage() {
                       <div className={`p-2.5 rounded-xl text-xs font-extrabold text-center flex items-center justify-center gap-2 border ${
                         isHandedOver 
                           ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 animate-pulse' 
-                          : 'bg-amber-500/20 border-amber-500/30 text-amber-300 animate-pulse'
+                          : 'bg-amber-500/20 border-amber-500/30 text-amber-300'
                       }`}>
-                        <Clock className="w-4 h-4 text-amber-400" />
+                        <Clock className="w-4 h-4 text-amber-400 shrink-0" />
                         <span>
                           {isHandedOver 
-                            ? '📦 Paquete Entregado por Restaurante • ¡Listo para salir!' 
-                            : '⏳ En el local • Dicta el PIN al local para retirar comanda'}
+                            ? '📦 ¡Paquete Despachado por Restaurante! Puedes salir en ruta.' 
+                            : `⏳ Dicta el PIN (${expectedPickupCode}) al local para que entregue la comanda.`}
                         </span>
                       </div>
 
                       <button
                         onClick={() => handleUpdateState(order.id, 'ON_ROUTE')}
-                        disabled={!isHandedOver && actionLoading === order.id}
-                        className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95 transition-all"
+                        disabled={!isHandedOver || actionLoading === order.id}
+                        className={`w-full py-3.5 rounded-xl text-xs font-black uppercase flex items-center justify-center gap-2 shadow-xl transition-all ${
+                          isHandedOver
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white cursor-pointer active:scale-95 shadow-blue-500/20'
+                            : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                        }`}
                       >
-                        <Navigation className="w-4 h-4" />
-                        <span>🛵 INICIAR ENTREGA AL CLIENTE</span>
+                        {isHandedOver ? (
+                          <>
+                            <Navigation className="w-4 h-4" />
+                            <span>🛵 INICIAR ENTREGA AL CLIENTE</span>
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+                            <span>🔒 ESPERANDO QUE EL LOCAL MARQUE ENTREGA</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   );
