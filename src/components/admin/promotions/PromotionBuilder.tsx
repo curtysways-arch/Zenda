@@ -104,9 +104,33 @@ export default function PromotionBuilder({
     }
   }, [tipoPromo, productoRequeridoId]);
 
+  // Sincronizar estado cuando initialData cambie (ej: Cupones, Oportunidades o presets externos)
+  useEffect(() => {
+    if (initialData) {
+      if (initialData.goalPreset) setGoalPreset(initialData.goalPreset);
+      if (initialData.titulo !== undefined) setTitulo(initialData.titulo);
+      if (initialData.descripcion !== undefined) setDescripcion(initialData.descripcion);
+      if (initialData.tipoPromo !== undefined) setTipoPromo(initialData.tipoPromo);
+      if (initialData.precioPromo !== undefined) setPrecioPromo(Number(initialData.precioPromo) || 0);
+      if (initialData.precioAnterior !== undefined) setPrecioAnterior(initialData.precioAnterior ? Number(initialData.precioAnterior) : undefined);
+      if (initialData.productoRequeridoId !== undefined) setProductoRequeridoId(initialData.productoRequeridoId || '');
+      if (initialData.categoriaRequeridaId !== undefined) setCategoriaRequeridaId(initialData.categoriaRequeridaId || '');
+      if (initialData.cuponCodigo !== undefined) setCuponCodigo(initialData.cuponCodigo || '');
+      if (initialData.tipoCliente !== undefined) setTipoCliente(initialData.tipoCliente);
+      if (initialData.montoMinimo !== undefined) setMontoMinimo(Number(initialData.montoMinimo) || 0);
+      if (initialData.diasValidos !== undefined) setDiasValidos(Array.isArray(initialData.diasValidos) ? initialData.diasValidos : (initialData.diasValidos ? initialData.diasValidos.split(',') : ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']));
+      if (initialData.horaInicioValida !== undefined) setHoraInicioValida(initialData.horaInicioValida || '');
+      if (initialData.horaFinValida !== undefined) setHoraFinValida(initialData.horaFinValida || '');
+      if (initialData.canales !== undefined) setCanales(initialData.canales);
+      if (initialData.imagenUrl !== undefined) setImagenUrl(initialData.imagenUrl || '');
+    }
+  }, [initialData]);
+
   // Aplicar Presets de Objetivos
   const applyPreset = (presetKey: string) => {
     setGoalPreset(presetKey);
+    const firstProd = products && products.length > 0 ? products[0] : null;
+
     if (presetKey === 'TODAY') {
       setTitulo('🔥 Venta Flash de Hoy');
       setDescripcion('Descuento especial válido únicamente durante el día de hoy.');
@@ -128,6 +152,7 @@ export default function PromotionBuilder({
       setCuponCodigo('BIENVENIDO');
       setTipoCliente('NEW');
       setMontoMinimo(12);
+      setPrecioPromo(15);
     } else if (presetKey === 'RECURRING') {
       setTitulo('🔁 Regreso VIP — $3.00 OFF');
       setDescripcion('Recompensa para comensales frecuentes.');
@@ -141,9 +166,19 @@ export default function PromotionBuilder({
       setMontoMinimo(15);
       setCanales(['DELIVERY', 'PICKUP', 'LANDING']);
     } else if (presetKey === 'PRODUCT') {
-      setTitulo('🍔 Especial de la Semana (2x1)');
-      setDescripcion('Pide 2 y paga 1 en productos seleccionados.');
       setTipoPromo('DOS_POR_UNO');
+      if (firstProd) {
+        setProductoRequeridoId(firstProd.id);
+        const basePrice = Number(firstProd.precio) || 0;
+        setTitulo(`🔥 2x1 en ${firstProd.nombre}`);
+        setDescripcion(`Pide 1 de esta oferta y se añadirán 2 ${firstProd.nombre} al carrito por el precio de 1.`);
+        setPrecioPromo(basePrice);
+        setPrecioAnterior(basePrice * 2);
+        if (firstProd.imagenUrl) setImagenUrl(firstProd.imagenUrl);
+      } else {
+        setTitulo('🍔 Especial 2x1 del Menú');
+        setDescripcion('Pide 2 y paga 1 en el producto seleccionado.');
+      }
     }
   };
 
