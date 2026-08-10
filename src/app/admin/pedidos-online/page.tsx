@@ -1105,20 +1105,20 @@ export default function PedidosOnlinePage() {
                             <>
                               {/* SI EXISTE UNA ASIGNACIÓN O EL ESTADO INDICA REPARTIDOR ASIGNADO/EN LOCAL */}
                               {(currentAsgn || order.extraInfo?.assignedDriver || ['REPARTIDOR_EN_LOCAL', 'REPARTIDOR_ASIGNADO', 'EN_CAMINO', 'LLEGO', 'ENTREGADO_A_REPARTIDOR'].includes(order.estado)) ? (
-                                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl text-white">
+                                <div className="bg-white border border-slate-200/80 rounded-3xl p-5 space-y-4 shadow-md shadow-slate-200/50 text-slate-900">
                                   
-                                  {/* HEADER DEL REPARTIDOR (DISEÑO RESPETANDO ANCHO DE COLUMNA Y SIN OVERFLOW) */}
-                                  <div className="space-y-2 border-b border-slate-800 pb-3.5">
+                                  {/* HEADER DEL REPARTIDOR (TEXTO NEGRO PURO SLATE-900 SOBRE FONDO BLANCO) */}
+                                  <div className="space-y-2 border-b border-slate-100 pb-3.5">
                                     <div className="flex items-center justify-between gap-2">
                                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-2xl flex items-center justify-center font-black text-base shadow-md shrink-0">
+                                        <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center font-black text-base shadow-md shadow-blue-500/20 shrink-0">
                                           {assignedDriverName.charAt(0).toUpperCase()}
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                          <h4 className="font-extrabold text-white text-sm truncate leading-tight">
+                                          <h4 className="font-black text-slate-900 text-sm truncate leading-tight">
                                             {assignedDriverName}
                                           </h4>
-                                          <p className="text-[11px] text-slate-400 font-semibold truncate mt-0.5">
+                                          <p className="text-[11px] text-slate-500 font-bold truncate mt-0.5">
                                             {currentAsgn?.resource?.profile?.vehiculo || currentAsgn?.resource?.profile?.tipoVehiculo || '🛵 Repartidor de Entregas'}
                                           </p>
                                         </div>
@@ -1126,21 +1126,21 @@ export default function PedidosOnlinePage() {
 
                                       <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider shrink-0 whitespace-nowrap shadow-sm ${
                                         asgnState === 'ASIGNADO' || asgnState === 'PENDIENTE'
-                                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse'
+                                          ? 'bg-amber-100 text-amber-900 border border-amber-200 animate-pulse'
                                           : asgnState === 'REPARTIDOR_EN_LOCAL'
-                                          ? 'bg-amber-400 text-amber-950 font-black'
+                                          ? 'bg-amber-500 text-slate-950 font-black'
                                           : asgnState === 'ACEPTADO'
-                                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                          ? 'bg-emerald-100 text-emerald-900 border border-emerald-200'
                                           : asgnState === 'EN_RUTA' || asgnState === 'EN_CAMINO'
-                                          ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                                          : 'bg-slate-800 text-slate-300'
+                                          ? 'bg-blue-100 text-blue-900 border border-blue-200'
+                                          : 'bg-slate-100 text-slate-700'
                                       }`}>
                                         {asgnState === 'ASIGNADO' || asgnState === 'PENDIENTE'
                                           ? '⏳ PENDIENTE' 
                                           : asgnState === 'REPARTIDOR_EN_LOCAL' 
                                           ? '📍 EN LOCAL' 
                                           : asgnState === 'ACEPTADO'
-                                          ? '✅ ASIGNADO'
+                                          ? 'ACEPTADO'
                                           : asgnState === 'EN_RUTA' || asgnState === 'EN_CAMINO'
                                           ? '🛵 EN RUTA'
                                           : asgnState}
@@ -1149,15 +1149,15 @@ export default function PedidosOnlinePage() {
                                   </div>
 
                                   {/* INDICADOR DE ESTADO DE COCINA */}
-                                  <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-xs gap-2">
+                                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs gap-2">
                                     <div className="flex items-center gap-2 min-w-0">
-                                      <ChefHat className={`w-4 h-4 shrink-0 ${isKitchenFinished ? 'text-emerald-400' : 'text-amber-400 animate-pulse'}`} />
-                                      <span className="font-extrabold text-slate-200 text-xs">Estado Cocina:</span>
+                                      <ChefHat className={`w-4 h-4 shrink-0 ${isKitchenFinished ? 'text-emerald-600' : 'text-amber-600 animate-pulse'}`} />
+                                      <span className="font-extrabold text-slate-800 text-xs">Estado Cocina:</span>
                                     </div>
                                     <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase shrink-0 whitespace-nowrap ${
                                       isKitchenFinished 
-                                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-                                        : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                                        : 'bg-amber-100 text-amber-900 border border-amber-200'
                                     }`}>
                                       {isKitchenFinished ? '✅ LISTO EN COCINA' : '🍳 EN PREPARACIÓN'}
                                     </span>
@@ -1165,30 +1165,30 @@ export default function PedidosOnlinePage() {
 
                                   {/* MENSAJES AUTOMÁTICOS Y BOTONES DE DESPACHO */}
                                   {(asgnState === 'ASIGNADO' || asgnState === 'PENDIENTE') && (
-                                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3.5 text-xs space-y-2">
-                                      <div className="flex items-center gap-2 text-amber-300 font-bold">
-                                        <Loader2 className="w-4 h-4 text-amber-400 animate-spin shrink-0" />
+                                    <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-3.5 text-xs space-y-2">
+                                      <div className="flex items-center gap-2 text-amber-950 font-black">
+                                        <Loader2 className="w-4 h-4 text-amber-600 animate-spin shrink-0" />
                                         <span>Esperando a que el repartidor acepte la orden...</span>
                                       </div>
-                                      <p className="text-[11px] text-amber-400/80 font-medium">
+                                      <p className="text-[11px] text-amber-800 font-semibold">
                                         Se notificó a {assignedDriverName}. En cuanto presione Aceptar, verás la actualización en vivo.
                                       </p>
                                     </div>
                                   )}
 
                                   {asgnState === 'ACEPTADO' && (
-                                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 text-xs space-y-3">
-                                      <div className="flex items-center gap-2 text-emerald-300 font-bold">
-                                        <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                                    <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 text-xs space-y-3">
+                                      <div className="flex items-center gap-2 text-emerald-950 font-black">
+                                        <Check className="w-4 h-4 text-emerald-600 shrink-0 stroke-[3]" />
                                         <span>✅ ¡{assignedDriverName} ACEPTÓ el pedido!</span>
                                       </div>
-                                      <p className="text-[11px] text-emerald-400/80 font-medium">
+                                      <p className="text-[11px] text-emerald-800 font-medium">
                                         El repartidor va en camino al local para retirar la orden.
                                       </p>
 
                                       {!isKitchenFinished && (
-                                        <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[11px] text-amber-300 font-medium flex items-start gap-2">
-                                          <ChefHat className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 animate-pulse" />
+                                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 font-semibold flex items-start gap-2">
+                                          <ChefHat className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 animate-pulse" />
                                           <span>🔒 Cocina aún está preparando los platos. El botón de despacho se activará cuando cocina marque "Listo".</span>
                                         </div>
                                       )}
@@ -1200,7 +1200,7 @@ export default function PedidosOnlinePage() {
                                         className={`w-full py-3.5 rounded-2xl text-xs font-black uppercase shadow-lg flex items-center justify-center gap-2 transition-all ${
                                           isKitchenFinished
                                             ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white cursor-pointer active:scale-98 shadow-blue-500/20'
-                                            : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                                            : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
                                         }`}
                                       >
                                         {isKitchenFinished ? (
@@ -1209,7 +1209,7 @@ export default function PedidosOnlinePage() {
                                           </>
                                         ) : (
                                           <>
-                                            <Lock className="w-4 h-4 text-amber-400" /> En Cocina (Despacho Bloqueado)
+                                            <Lock className="w-4 h-4 text-amber-500" /> En Cocina (Despacho Bloqueado)
                                           </>
                                         )}
                                       </button>
@@ -1217,18 +1217,18 @@ export default function PedidosOnlinePage() {
                                   )}
 
                                   {asgnState === 'REPARTIDOR_EN_LOCAL' && (
-                                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 text-xs space-y-3">
-                                      <div className="flex items-center gap-2 text-amber-300 font-extrabold">
-                                        <Check className="w-4 h-4 text-amber-400 shrink-0" />
+                                    <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 text-xs space-y-3">
+                                      <div className="flex items-center gap-2 text-amber-950 font-black">
+                                        <Check className="w-4 h-4 text-amber-600 shrink-0 stroke-[3]" />
                                         <span>📍 ¡{assignedDriverName} YA LLEGÓ al local!</span>
                                       </div>
-                                      <p className="text-[11px] text-amber-400/80 font-medium">
+                                      <p className="text-[11px] text-amber-800 font-medium">
                                         El repartidor está esperando la comanda lista en puerta.
                                       </p>
 
                                       {!isKitchenFinished && (
-                                        <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[11px] text-amber-300 font-medium flex items-start gap-2">
-                                          <ChefHat className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 animate-pulse" />
+                                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 font-semibold flex items-start gap-2">
+                                          <ChefHat className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 animate-pulse" />
                                           <span>🔒 Cocina aún está preparando los platos. El botón de despacho se activará cuando cocina marque "Listo".</span>
                                         </div>
                                       )}
@@ -1240,7 +1240,7 @@ export default function PedidosOnlinePage() {
                                         className={`w-full py-3.5 rounded-2xl text-xs font-black uppercase shadow-lg flex items-center justify-center gap-2 transition-all ${
                                           isKitchenFinished
                                             ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white cursor-pointer active:scale-98 shadow-blue-500/20'
-                                            : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                                            : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
                                         }`}
                                       >
                                         {isKitchenFinished ? (
@@ -1249,7 +1249,7 @@ export default function PedidosOnlinePage() {
                                           </>
                                         ) : (
                                           <>
-                                            <Lock className="w-4 h-4 text-amber-400" /> En Cocina (Despacho Bloqueado)
+                                            <Lock className="w-4 h-4 text-amber-500" /> En Cocina (Despacho Bloqueado)
                                           </>
                                         )}
                                       </button>
@@ -1257,12 +1257,12 @@ export default function PedidosOnlinePage() {
                                   )}
 
                                   {(asgnState === 'EN_RUTA' || asgnState === 'EN_CAMINO' || order.estado === 'EN_CAMINO' || order.estado === 'ENTREGADO_A_REPARTIDOR') && (
-                                    <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 text-xs space-y-3">
-                                      <div className="flex items-center gap-2 text-blue-400 font-bold">
-                                        <Truck className="w-4 h-4 text-blue-400 shrink-0 animate-bounce" />
+                                    <div className="bg-blue-50/70 border border-blue-200/80 rounded-2xl p-4 text-xs space-y-3">
+                                      <div className="flex items-center gap-2 text-blue-950 font-black">
+                                        <Truck className="w-4 h-4 text-blue-600 shrink-0 animate-bounce" />
                                         <span>🛵 Pedido entregado al repartidor {assignedDriverName}.</span>
                                       </div>
-                                      <p className="text-[11px] text-slate-400 leading-relaxed font-medium">
+                                      <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
                                         El repartidor se desplaza hacia el domicilio del cliente. Al ser entregado, presiona abajo para finalizar.
                                       </p>
                                       <button
@@ -1278,7 +1278,7 @@ export default function PedidosOnlinePage() {
                                   )}
 
                                   {asgnState === 'COMPLETADO' && (
-                                    <div className="bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 rounded-2xl p-3.5 text-xs font-black text-center shadow-md">
+                                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-950 rounded-2xl p-3.5 text-xs font-black text-center shadow-sm">
                                       🎉 Pedido Entregado Correctamente por {assignedDriverName}
                                     </div>
                                   )}
