@@ -345,6 +345,15 @@ export default function DriverOrderMapModal({
     return () => { isCancelled = true; };
   }, [mapLoaded, latA, lngA, latB, lngB, driverRealCoords]);
 
+  const paymentState = (order.paymentStatus || (order as any).payment?.estado || extra?.paymentStatus || '').toUpperCase();
+  const paymentMethod = ((order as any).metodoPago || (order as any).payment?.metodo || extra?.metodoPago || '').toUpperCase();
+
+  const isOrderPaid = ['CONFIRMADO', 'PAGO_VERIFICADO', 'VERIFICADO', 'PAID'].includes(paymentState) ||
+                      (['TRANSFERENCIA', 'TARJETA', 'STRIPE', 'PAYPHONE', 'DATAFAT', 'TRANSFER', 'ONLINE'].includes(paymentMethod) && paymentState !== 'PENDIENTE');
+
+  const isCashOnDelivery = !isOrderPaid;
+  const totalVal = Number(order.total || 0).toFixed(2);
+
   return (
     <div className="fixed inset-0 z-[200] bg-slate-100 text-slate-900 flex flex-col h-[100dvh] overflow-hidden animate-in fade-in duration-300">
       
@@ -401,6 +410,29 @@ export default function DriverOrderMapModal({
           <span className="text-xs font-black uppercase tracking-wider">TU GANANCIA DE ENVÍO:</span>
           <span className="text-xl font-black tracking-tight">+${deliveryFee}</span>
         </div>
+
+        {/* 1.5. Banner Cobro al Cliente */}
+        {isOrderPaid ? (
+          <div className="bg-emerald-50 border border-emerald-200/80 rounded-3xl p-4 shadow-sm text-left flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                <Check className="w-6 h-6 stroke-[3]" />
+              </div>
+              <div>
+                <span className="text-xs font-black uppercase text-emerald-950 block">✅ PEDIDO YA PAGADO ($0.00 A COBRAR)</span>
+                <span className="text-xs font-bold text-emerald-700">El cliente pagó online. No debes cobrar efectivo al entregar.</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 rounded-3xl p-4 shadow-md text-left space-y-1">
+            <span className="text-xs font-black uppercase tracking-wider block opacity-90">💵 COBRAR EN EFECTIVO AL CLIENTE:</span>
+            <div className="flex items-center justify-between">
+              <span className="text-xl font-black font-mono">${totalVal}</span>
+              <span className="px-3 py-0.5 bg-slate-950/20 rounded-full text-[10px] font-black uppercase">Cobrar en Puerta</span>
+            </div>
+          </div>
+        )}
 
         {/* 2. Detalle de Productos en Paquete */}
         <div className="bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-2">

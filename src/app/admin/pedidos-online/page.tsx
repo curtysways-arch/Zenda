@@ -982,14 +982,14 @@ export default function PedidosOnlinePage() {
                       {isOrderAcceptedOrPrepared ? '3. Despacho & Asignación de Repartidor' : '3. Pago & Aceptación del Pedido'}
                     </h3>
 
-                    {/* Estado del Pago */}
-                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2 text-xs">
+                    {/* Estado del Pago & Liquidación Financiera */}
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2.5 text-xs">
                       <div className="flex items-center justify-between">
                         <span className="text-slate-500 font-bold">Estado del Pago:</span>
                         <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase ${
                           isPaymentVerified ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'
                         }`}>
-                          {order.payment?.estado || 'PENDIENTE'}
+                          {isPaymentVerified ? '✅ PAGO CONFIRMADO' : ((order as any).metodoPago === 'EFECTIVO' ? '💵 EFECTIVO CONTRA ENTREGA' : order.payment?.estado || 'PENDIENTE')}
                         </span>
                       </div>
 
@@ -997,6 +997,47 @@ export default function PedidosOnlinePage() {
                         <span>Total del Pedido:</span>
                         <span className="text-emerald-600 text-base">${totalVal.toFixed(2)}</span>
                       </div>
+
+                      {/* DESGLOSE FINANCIERO DE COBRO Y LIQUIDACIÓN CON DRIVER */}
+                      {(() => {
+                        const drvFee = 3.04;
+                        const netCashToRestaurant = Math.max(0, totalVal - drvFee);
+                        const isCashOrder = (order as any).metodoPago === 'EFECTIVO' || (!isPaymentVerified && (order as any).payment?.metodo === 'EFECTIVO');
+
+                        return isCashOrder ? (
+                          <div className="pt-2 border-t border-amber-200/80 bg-amber-50/80 p-3 rounded-xl space-y-1.5 text-[11px]">
+                            <span className="font-black text-amber-950 block uppercase tracking-wider">
+                              💵 Liquidación de Cobro en Efectivo (Driver):
+                            </span>
+                            <div className="flex justify-between text-slate-700 font-semibold">
+                              <span>Cobro en puerta al cliente:</span>
+                              <span className="font-bold text-slate-900">${totalVal.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-slate-700 font-semibold">
+                              <span>(-) Tarifa de Envío Driver:</span>
+                              <span className="font-bold text-rose-600">-${drvFee.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-amber-950 font-black pt-1 border-t border-amber-200/60 text-xs">
+                              <span>(=) Pendiente Ingreso a Caja:</span>
+                              <span className="text-emerald-700">${netCashToRestaurant.toFixed(2)}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="pt-2 border-t border-emerald-200/80 bg-emerald-50/80 p-3 rounded-xl space-y-1.5 text-[11px]">
+                            <span className="font-black text-emerald-950 block uppercase tracking-wider">
+                              💳 Pago Online Verificado:
+                            </span>
+                            <div className="flex justify-between text-emerald-900 font-semibold">
+                              <span>Ingreso Neto a Cuenta/Caja:</span>
+                              <span className="font-black text-emerald-700">${netCashToRestaurant.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-slate-600 font-semibold">
+                              <span>Envío pagado por negocio a driver:</span>
+                              <span className="font-bold text-slate-900">${drvFee.toFixed(2)}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       {evidenceUrl && (
                         <div className="pt-2 border-t border-slate-200">
