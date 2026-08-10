@@ -1447,20 +1447,20 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
             {step === 'catalog' ? (
                 <>
-                    {/* ── HERO PRINCIPAL OSCURO ── */}
-                    <div className="relative w-full bg-[#120800] overflow-hidden">
+                    {/* ── HERO PRINCIPAL LUMINOSO ── */}
+                    <div className="relative w-full bg-slate-950 overflow-hidden">
                         {/* Carrusel de imágenes de portada con transición suave */}
                         {bannerList.map((url, idx) => (
                             <div 
                                 key={idx}
                                 className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${
-                                    idx === currentBannerIndex ? 'opacity-50 z-0' : 'opacity-0 -z-10'
+                                    idx === currentBannerIndex ? 'opacity-85 z-0' : 'opacity-0 -z-10'
                                 }`}
                                 style={{ backgroundImage: `url('${url}')` }}
                             />
                         ))}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#120800] via-[#120800]/60 to-[#120800]/20" />
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#120800]/80 via-transparent to-[#120800]/30" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/35 to-black/10" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/50 via-transparent to-slate-950/20" />
 
                         {/* Contenido del Hero */}
                         <div className="relative z-10 px-6 pt-10 pb-8 max-w-lg mx-auto">
