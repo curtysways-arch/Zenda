@@ -380,7 +380,7 @@ export default function DriverOrderMapModal({
       <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-950 border-b border-slate-800 px-4 py-3 flex items-center justify-between z-30 shrink-0 shadow-lg">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-400/30 overflow-hidden flex items-center justify-center shadow-md">
-            <img src="/citiox-driver-logo.png" alt="CiTiOX Driver" className="w-full h-full object-cover" />
+            <img src="/citiox-driver-logo.png" alt="CiTiOX Driver" className="w-full h-full object-contain" />
           </div>
           <div>
             <span className="text-[10px] font-black uppercase tracking-wider text-blue-400 block leading-tight">

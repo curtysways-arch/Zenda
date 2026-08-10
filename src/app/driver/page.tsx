@@ -308,8 +308,8 @@ export default function DriverAppPage() {
       {/* HEADER NATIVO EDGE-TO-EDGE CON LOGO COMPLETO CITIOX DRIVER */}
       <div className="w-full bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-950 text-white px-4 py-3.5 sticky top-0 z-50 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('PERFIL')}>
-          <div className="h-11 w-auto max-w-[140px] flex items-center justify-center shrink-0">
-            <img src="/citiox-driver-logo.png" alt="CiTiOX Driver Logo" className="h-full w-auto object-contain rounded-xl shadow-md" />
+          <div className="w-11 h-11 flex items-center justify-center shrink-0">
+            <img src="/citiox-driver-logo.png" alt="CiTiOX Driver Logo" className="w-full h-full object-contain rounded-2xl shadow-md shadow-blue-500/30" />
           </div>
           <div>
             <div className="flex items-center gap-2">
