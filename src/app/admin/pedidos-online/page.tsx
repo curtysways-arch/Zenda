@@ -756,6 +756,10 @@ export default function PedidosOnlinePage() {
                       <h3 className="text-base font-black text-slate-900 leading-tight mt-1">
                         Pedido #{pedido.codigo || pedido.numeroPedido || pedido.id.slice(-6).toUpperCase()}
                       </h3>
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 mt-1">
+                        <Clock className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                        <span>{pedido.createdAt ? new Date(pedido.createdAt).toLocaleDateString('es-EC', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true }) : 'Sin fecha'}</span>
+                      </div>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                       refundInfo.isRefunded ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white shadow-sm'
@@ -886,6 +890,10 @@ export default function PedidosOnlinePage() {
                     <h3 className="text-lg font-black text-slate-900 leading-tight">
                       #{pedido.codigo || pedido.numeroPedido || pedido.id.slice(-6).toUpperCase()}
                     </h3>
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 mt-0.5">
+                      <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <span>{pedido.createdAt ? new Date(pedido.createdAt).toLocaleDateString('es-EC', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true }) : 'Sin fecha'}</span>
+                    </div>
                   </div>
 
                   <div className="flex flex-col items-end gap-1">
@@ -1073,6 +1081,10 @@ export default function PedidosOnlinePage() {
                     <h2 className="text-xl sm:text-2xl font-black tracking-tight">
                       Gestión Pedido #{order.codigo || order.numeroPedido || order.id.slice(-6).toUpperCase()}
                     </h2>
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 mt-1">
+                      <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>Realizado el: <strong className="text-white font-mono font-black">{order.createdAt ? new Date(order.createdAt).toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'Sin fecha'}</strong></span>
+                    </div>
                   </div>
                 </div>
 
