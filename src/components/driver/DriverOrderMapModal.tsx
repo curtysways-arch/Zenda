@@ -346,7 +346,7 @@ export default function DriverOrderMapModal({
               mapInstanceRef.current.removeLayer((mapInstanceRef.current as any).polyLeg2);
             }
             const poly2 = L.polyline(coords2, {
-              color: '#10b981',
+              color: '#2563eb',
               weight: 7,
               opacity: 0.9,
             }).addTo(mapInstanceRef.current);
@@ -376,14 +376,14 @@ export default function DriverOrderMapModal({
   return (
     <div className="fixed inset-0 z-[200] bg-slate-950 flex flex-col h-[100dvh] overflow-hidden animate-in fade-in duration-300">
       
-      {/* 1. HEADER FIJO SUPERIOR */}
-      <div className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between z-30 shrink-0 shadow-lg">
+      {/* 1. HEADER FIJO SUPERIOR CON LOGO CITIOX DRIVER */}
+      <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-950 border-b border-slate-800 px-4 py-3 flex items-center justify-between z-30 shrink-0 shadow-lg">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-black">
-            <Store className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-400/30 overflow-hidden flex items-center justify-center shadow-md">
+            <img src="/citiox-driver-logo.png" alt="CiTiOX Driver" className="w-full h-full object-cover" />
           </div>
           <div>
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 block leading-tight">
+            <span className="text-[10px] font-black uppercase tracking-wider text-blue-400 block leading-tight">
               {nombreLocal}
             </span>
             <h2 className="text-sm font-black text-white leading-tight">
