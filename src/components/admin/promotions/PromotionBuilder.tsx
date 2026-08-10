@@ -27,10 +27,36 @@ export default function PromotionBuilder({
   const [precioPromo, setPrecioPromo] = useState<number>(initialData?.precioPromo || 15);
   const [precioAnterior, setPrecioAnterior] = useState<number | undefined>(initialData?.precioAnterior);
 
+  // Helper ultra seguro para formatear fechas a YYYY-MM-DD
+  const formatDateInput = (val: any, fallbackDays = 0) => {
+    if (!val) {
+      const d = new Date();
+      if (fallbackDays) d.setDate(d.getDate() + fallbackDays);
+      return d.toISOString().split('T')[0];
+    }
+    if (typeof val === 'string') {
+      return val.includes('T') ? val.split('T')[0] : val;
+    }
+    try {
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? new Date().toISOString().split('T')[0] : d.toISOString().split('T')[0];
+    } catch (_) {
+      const d = new Date();
+      if (fallbackDays) d.setDate(d.getDate() + fallbackDays);
+      return d.toISOString().split('T')[0];
+    }
+  };
+
+  const parseDiasValidos = (val: any) => {
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string' && val.trim() !== '') return val.split(',').map(s => s.trim());
+    return ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+  };
+
   // Fechas y Horarios
-  const [fechaInicio, setFechaInicio] = useState(initialData?.fechaInicio ? initialData.fechaInicio.split('T')[0] : new Date().toISOString().split('T')[0]);
-  const [fechaFin, setFechaFin] = useState(initialData?.fechaFin ? initialData.fechaFin.split('T')[0] : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
-  const [diasValidos, setDiasValidos] = useState<string[]>(initialData?.diasValidos ? (Array.isArray(initialData.diasValidos) ? initialData.diasValidos : initialData.diasValidos.split(',')) : ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']);
+  const [fechaInicio, setFechaInicio] = useState(formatDateInput(initialData?.fechaInicio));
+  const [fechaFin, setFechaFin] = useState(formatDateInput(initialData?.fechaFin, 30));
+  const [diasValidos, setDiasValidos] = useState<string[]>(parseDiasValidos(initialData?.diasValidos));
   const [horaInicioValida, setHoraInicioValida] = useState(initialData?.horaInicioValida || '');
   const [horaFinValida, setHoraFinValida] = useState(initialData?.horaFinValida || '');
 
@@ -118,12 +144,14 @@ export default function PromotionBuilder({
       if (initialData.tipoPromo !== undefined) setTipoPromo(initialData.tipoPromo);
       if (initialData.precioPromo !== undefined) setPrecioPromo(Number(initialData.precioPromo) || 0);
       if (initialData.precioAnterior !== undefined) setPrecioAnterior(initialData.precioAnterior ? Number(initialData.precioAnterior) : undefined);
+      if (initialData.fechaInicio !== undefined) setFechaInicio(formatDateInput(initialData.fechaInicio));
+      if (initialData.fechaFin !== undefined) setFechaFin(formatDateInput(initialData.fechaFin, 30));
       if (initialData.productoRequeridoId !== undefined) setProductoRequeridoId(initialData.productoRequeridoId || '');
       if (initialData.categoriaRequeridaId !== undefined) setCategoriaRequeridaId(initialData.categoriaRequeridaId || '');
       if (initialData.cuponCodigo !== undefined) setCuponCodigo(initialData.cuponCodigo || '');
       if (initialData.tipoCliente !== undefined) setTipoCliente(initialData.tipoCliente);
       if (initialData.montoMinimo !== undefined) setMontoMinimo(Number(initialData.montoMinimo) || 0);
-      if (initialData.diasValidos !== undefined) setDiasValidos(Array.isArray(initialData.diasValidos) ? initialData.diasValidos : (initialData.diasValidos ? initialData.diasValidos.split(',') : ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']));
+      if (initialData.diasValidos !== undefined) setDiasValidos(parseDiasValidos(initialData.diasValidos));
       if (initialData.horaInicioValida !== undefined) setHoraInicioValida(initialData.horaInicioValida || '');
       if (initialData.horaFinValida !== undefined) setHoraFinValida(initialData.horaFinValida || '');
       if (initialData.canales !== undefined) setCanales(initialData.canales);
