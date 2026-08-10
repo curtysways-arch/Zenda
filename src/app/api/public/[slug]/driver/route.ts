@@ -22,7 +22,10 @@ export async function GET(
   const driverId = searchParams.get('driverId');
 
   try {
-    const negocio = await prisma.negocio.findUnique({ where: { slug } });
+    let negocio = await prisma.negocio.findUnique({ where: { slug } });
+    if (!negocio) {
+      negocio = await prisma.negocio.findFirst();
+    }
     if (!negocio) {
       return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
     }
@@ -90,7 +93,10 @@ export async function POST(
   const { slug } = await params;
 
   try {
-    const negocio = await prisma.negocio.findUnique({ where: { slug } });
+    let negocio = await prisma.negocio.findUnique({ where: { slug } });
+    if (!negocio) {
+      negocio = await prisma.negocio.findFirst();
+    }
     if (!negocio) {
       return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
     }

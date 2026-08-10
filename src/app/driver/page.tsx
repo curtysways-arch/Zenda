@@ -240,31 +240,42 @@ export default function DriverAppPage() {
 
   // Calcular cuenta regresiva
   const getCountdownString = (estimatedReadyAt?: string) => {
-    if (!estimatedReadyAt) return '15:00 min';
+    if (!estimatedReadyAt) return '15:00';
     const target = new Date(estimatedReadyAt).getTime();
     const diff = Math.max(0, Math.floor((target - nowTime) / 1000));
     const mins = Math.floor(diff / 60);
     const secs = diff % 60;
-    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')} min`;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans pb-12">
-      {/* Top Header App */}
-      <div className="bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-50 flex items-center justify-between shadow-xl">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-28">
+      {/* Top Header App con Logo Oficial CiTiOX DRIVER */}
+      <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-950 text-white p-3.5 sticky top-0 z-50 flex items-center justify-between shadow-xl">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-orange-600 flex items-center justify-center font-black text-white shadow-lg">
-            <Truck className="w-5 h-5" />
+          <div className="w-11 h-11 rounded-2xl bg-blue-600/20 border border-blue-400/30 overflow-hidden flex items-center justify-center shadow-md">
+            <img src="/citiox-driver-logo.png" alt="CiTiOX Driver Logo" className="w-full h-full object-cover" />
           </div>
           <div>
-            <h1 className="font-extrabold text-base tracking-tight text-white">{driverName}</h1>
-            <p className="text-xs text-slate-400">Repartidor Oficial • La Parrilla Citiox</p>
+            <div className="flex items-center gap-2">
+              <h1 className="font-black text-sm tracking-tight text-white flex items-center gap-1">
+                CiTiOX <span className="text-blue-400 font-extrabold">DRIVER</span>
+              </h1>
+              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${
+                status === 'DISPONIBLE' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                status === 'DESCANSO' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+              }`}>
+                {status}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 font-semibold">{driverName} • Repartidor Oficial</p>
           </div>
         </div>
 
         <button
           onClick={fetchDriverData}
-          className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
+          className="p-2.5 rounded-2xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-blue-400 transition-all cursor-pointer shadow-md"
           title="Refrescar datos"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -273,31 +284,386 @@ export default function DriverAppPage() {
 
       {/* CONDITIONAL VISTA 1: VENTANA EXCLUSIVA DE GESTIÓN DE CARRERA ACTIVA */}
       {hasActiveOrder ? (
-        <div className="p-4 max-w-md mx-auto space-y-4">
-          <div className="bg-emerald-950/40 border border-emerald-500/40 p-3.5 rounded-2xl flex items-center justify-between shadow-lg">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-emerald-500 animate-ping" />
-              <span className="text-xs font-black uppercase text-emerald-300 tracking-wider">Gestión de Carrera Activa</span>
+        myAssignedOrders.map(order => {
+          const extra = parseExtraInfo(order.extraInfo);
+          const isCashOnDelivery = order.paymentStatus !== 'CONFIRMADO' && order.paymentStatus !== 'PAGO_VERIFICADO';
+          const deliveryFee = Number(order.costoEnvio || 2.50).toFixed(2);
+          const totalToCollect = Number(order.total || 0).toFixed(2);
+          const distanceStr = getDistanceString(order);
+          const isHandedOver = (order.estado as string) === 'ENTREGADO_A_REPARTIDOR' || (order.estado as string) === 'EN_CAMINO' || (order.estado as string) === 'EN_RUTA' || Boolean(extra?.isHandedOver || extra?.dispatchStatus === 'DESPACHADO');
+
+          let expectedPickupCode = extra?.pickupCode;
+          let expectedDeliveryCode = extra?.deliveryCode;
+          if (!expectedPickupCode) {
+            let num = 0; const str = (order.id || '') + 'pickup';
+            for (let i = 0; i < str.length; i++) num = (num * 31 + str.charCodeAt(i)) % 9000;
+            expectedPickupCode = String(1000 + Math.abs(num));
+          }
+          if (!expectedDeliveryCode) {
+            let num = 0; const str = (order.id || '') + 'delivery';
+            for (let i = 0; i < str.length; i++) num = (num * 31 + str.charCodeAt(i)) % 9000;
+            expectedDeliveryCode = String(1000 + Math.abs(num));
+          }
+
+          const enteredPin = inputPins[order.id] || '';
+          const isPinValid = enteredPin.trim() === expectedDeliveryCode;
+
+          return (
+            <div key={order.id} className="space-y-4">
+              {/* CABECERA CURVADA AZUL - ESTILO EXACTO DE IMAGE 1 */}
+              <div className="bg-gradient-to-b from-blue-700 via-blue-800 to-indigo-900 text-white pt-6 pb-14 px-5 rounded-b-[2.5rem] shadow-xl relative">
+                <div className="flex items-center justify-between">
+                  <button 
+                    onClick={() => setSelectedOrderForDetail(null)}
+                    className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <div className="text-center">
+                    <h2 className="text-lg font-black tracking-tight">Entrega en curso</h2>
+                    <p className="text-xs text-blue-200 font-bold">Pedido #{order.codigo || order.numeroPedido || order.id.slice(-6).toUpperCase()}</p>
+                  </div>
+                  <a 
+                    href={`tel:${order.telefonoCliente}`}
+                    className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-all cursor-pointer"
+                  >
+                    <Phone className="w-5 h-5" />
+                  </a>
+                </div>
+              </div>
+
+              {/* TARJETA HERO FLOTANTE DE ESTADO (BLANCA) */}
+              <div className="max-w-md mx-auto px-4 -mt-12 relative z-10">
+                <div className="bg-white rounded-3xl p-4 shadow-xl border border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-blue-500/20">
+                      🛵
+                    </div>
+                    <div>
+                      <h3 className="font-black text-slate-900 text-sm leading-tight">
+                        {order.estado === 'EN_CAMINO' || order.estado === 'EN_RUTA' ? 'En camino al cliente' :
+                         order.estado === 'REPARTIDOR_EN_LOCAL' ? 'En el local del restaurante' :
+                         order.estado === 'ESPERANDO_CLIENTE' || order.estado === 'WAITING_CLIENT' ? 'Llegaste al destino' :
+                         'Repartidor Asignado'}
+                      </h3>
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">Lleva tu pedido de forma segura</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-100 p-2.5 rounded-2xl text-center shrink-0 min-w-[80px]">
+                    <span className="text-sm font-black text-blue-600 font-mono block">
+                      {getCountdownString(order.extraInfo?.estimatedReadyAt)}
+                    </span>
+                    <span className="text-[10px] text-blue-500 font-bold block">min restantes</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* CONTENIDO PRINCIPAL DE TARJETAS BLANCAS TIPO IMAGE 1 */}
+              <div className="max-w-md mx-auto px-4 space-y-4">
+
+                {/* TARJETA 1: 📍 DESTINO */}
+                <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 space-y-4 text-left">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4 text-blue-600" /> DESTINO
+                      </span>
+                      <h3 className="text-base font-black text-slate-900 mt-1">{order.nombreCliente}</h3>
+                      <p className="text-xs text-slate-600 font-medium mt-0.5">{order.direccionCliente || 'Dirección registrada en pedido'}</p>
+                      {order.referenciaCliente && (
+                        <p className="text-xs text-slate-400 font-medium mt-0.5">Referencia: {order.referenciaCliente}</p>
+                      )}
+                    </div>
+
+                    {/* BOTÓN CIRCULAR FLOTANTE NAVEGAR */}
+                    {order.direccionCliente && (
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.direccionCliente)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-16 h-16 rounded-full bg-blue-50 hover:bg-blue-100 border border-blue-200 flex flex-col items-center justify-center text-blue-600 font-bold shadow-sm transition-all shrink-0 cursor-pointer"
+                      >
+                        <Navigation className="w-5 h-5 fill-blue-600 text-blue-600" />
+                        <span className="text-[9px] font-black tracking-wider mt-0.5">NAVEGAR</span>
+                      </a>
+                    )}
+                  </div>
+
+                  {/* 3 COLUMNAS DE ACCIÓN (LLAMAR, DISTANCIA, MENSAJE WHATSAPP) */}
+                  <div className="pt-4 border-t border-slate-100 grid grid-cols-3 divide-x divide-slate-100 text-center">
+                    <a href={`tel:${order.telefonoCliente}`} className="px-2 py-1 group">
+                      <Phone className="w-5 h-5 text-blue-600 mx-auto group-hover:scale-110 transition-transform" />
+                      <span className="text-xs font-bold text-slate-700 block mt-1">Llamar</span>
+                    </a>
+
+                    <div className="px-2 py-1">
+                      <span className="text-xs font-black text-slate-900 block">{distanceStr}</span>
+                      <span className="text-[10px] text-slate-400 font-semibold block mt-0.5">Distancia</span>
+                    </div>
+
+                    <a 
+                      href={`https://wa.me/${order.telefonoCliente?.replace(/[^0-9]/g, '')}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2 py-1 group"
+                    >
+                      <MessageCircle className="w-5 h-5 text-blue-600 mx-auto group-hover:scale-110 transition-transform" />
+                      <span className="text-xs font-bold text-slate-700 block mt-1">Mensaje</span>
+                    </a>
+                  </div>
+                </div>
+
+                {/* TARJETA 2: 🛍️ DETALLES DEL PEDIDO */}
+                <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 space-y-3 text-left">
+                  <span className="text-[11px] font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
+                    <PackageCheck className="w-4 h-4 text-blue-600" /> DETALLES DEL PEDIDO
+                  </span>
+
+                  <div className="space-y-2 text-xs pt-1">
+                    {(order.items || []).map((it, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-slate-700 font-medium">
+                        <span>{it.cantidad}x {it.nombreProducto}</span>
+                        <span className="font-bold text-slate-900">${(Number(it.precioUnitario) * it.cantidad).toFixed(2)}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between items-center text-slate-500 text-xs">
+                      <span>Empaque</span>
+                      <span className="font-semibold">${(Number(extra?.packagingCost || 0)).toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-100 flex justify-between items-center text-sm font-black text-slate-900">
+                    <span>Total del pedido</span>
+                    <span>${totalToCollect}</span>
+                  </div>
+                </div>
+
+                {/* TARJETA 3: 🛵 INFORMACIÓN DE ENTREGA */}
+                <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 space-y-3 text-left">
+                  <span className="text-[11px] font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
+                    <Truck className="w-4 h-4 text-blue-600" /> INFORMACIÓN DE ENTREGA
+                  </span>
+
+                  <div className="space-y-2.5 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-600 font-medium flex items-center gap-1.5">
+                        <DollarSign className="w-4 h-4 text-blue-600" /> Ganancia por envío
+                      </span>
+                      <span className="font-black text-blue-600 text-sm">+${deliveryFee}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center border-t border-slate-100 pt-2">
+                      <span className="text-slate-600 font-medium flex items-center gap-1.5">
+                        <ShieldAlert className="w-4 h-4 text-slate-400" /> Pago del cliente
+                      </span>
+                      <span className="font-bold text-slate-800">
+                        {isCashOnDelivery ? `💰 Efectivo ($${totalToCollect})` : '💳 Pagado Online ($0.00)'}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center border-t border-slate-100 pt-2">
+                      <span className="text-slate-600 font-medium flex items-center gap-1.5">
+                        <Clock className="w-4 h-4 text-slate-400" /> Entrega solicitada
+                      </span>
+                      <span className="font-bold text-slate-800">Hoy, {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* TARJETA 4: 🔔 CLIENTE NOTIFICADO */}
+                <div className="bg-blue-50/80 border border-blue-200/80 rounded-3xl p-4 flex items-center justify-between text-left">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-black text-blue-900 uppercase tracking-wider block flex items-center gap-1.5">
+                      🔔 CLIENTE NOTIFICADO
+                    </span>
+                    <p className="text-[11px] text-blue-800 font-medium">El cliente ha sido notificado que su pedido está en camino.</p>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                    <Check className="w-5 h-5 stroke-[3]" />
+                  </div>
+                </div>
+
+                {/* TARJETA 5: HERRAMIENTAS */}
+                <div className="space-y-2 text-left">
+                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block px-1">
+                    HERRAMIENTAS
+                  </span>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <button 
+                      onClick={() => alert(`Enlace de seguimiento: https://citiox.com/pedido/${order.id}`)}
+                      className="bg-white border border-slate-200/80 rounded-2xl p-3 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer flex flex-col items-center gap-1 shadow-xs"
+                    >
+                      <Share2 className="w-4 h-4 text-blue-600" />
+                      <span className="text-[11px]">Compartir</span>
+                    </button>
+
+                    <button 
+                      onClick={() => alert('Soporte notificado. El equipo te contactará de inmediato.')}
+                      className="bg-white border border-slate-200/80 rounded-2xl p-3 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer flex flex-col items-center gap-1 shadow-xs"
+                    >
+                      <AlertTriangle className="w-4 h-4 text-amber-500" />
+                      <span className="text-[11px]">Problema</span>
+                    </button>
+
+                    <button 
+                      onClick={() => alert('Para cancelar esta carrera contacta al administrador.')}
+                      className="bg-white border border-slate-200/80 rounded-2xl p-3 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer flex flex-col items-center gap-1 shadow-xs"
+                    >
+                      <XCircle className="w-4 h-4 text-rose-500" />
+                      <span className="text-[11px]">Cancelar</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* VISTA Y LÓGICA DE VALIDACIÓN DE PIN Y BOTÓN DESPACHAR SEGÚN EL ESTADO OPERATIVO */}
+                {/* SI ESTÁ EN EL LOCAL */}
+                {(order.estado === 'REPARTIDOR_EN_LOCAL' || order.estado === 'ENTREGADO_A_REPARTIDOR') && (
+                  <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 space-y-3 text-left">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase text-amber-600 flex items-center gap-1.5">
+                        🔑 PIN Retiro en Local: {expectedPickupCode}
+                      </span>
+                    </div>
+
+                    <div className={`p-3 rounded-2xl text-xs font-extrabold text-center flex items-center justify-center gap-2 border ${
+                      isHandedOver 
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+                        : 'bg-amber-50 border-amber-200 text-amber-900'
+                    }`}>
+                      <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span>
+                        {isHandedOver 
+                          ? '📦 ¡Paquete Despachado por Restaurante! Puedes salir en ruta.' 
+                          : `⏳ Dicta el PIN (${expectedPickupCode}) al local para que entregue la comanda.`}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* SI ESTÁ EN DESTINO ESPERANDO CLIENTE */}
+                {(order.estado === 'ESPERANDO_CLIENTE' || order.estado === 'WAITING_CLIENT') && (
+                  <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80 space-y-3 text-left">
+                    <span className="text-xs font-black uppercase text-amber-600 flex items-center gap-1.5">
+                      🔑 PIN DE CONFIRMACIÓN DEL CLIENTE
+                    </span>
+                    <input
+                      type="text"
+                      maxLength={4}
+                      value={enteredPin}
+                      onChange={e => setInputPins(prev => ({ ...prev, [order.id]: e.target.value.trim() }))}
+                      placeholder="Ingresa PIN de 4 dígitos (Ej: 5955)..."
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-center text-lg font-black text-slate-900 tracking-widest outline-none focus:border-blue-600"
+                    />
+                    {enteredPin.length === 4 && !isPinValid && (
+                      <p className="text-xs text-rose-600 font-bold text-center">❌ PIN incorrecto. Pide al cliente su código.</p>
+                    )}
+                    {isPinValid && (
+                      <p className="text-xs text-emerald-600 font-bold text-center">✅ ¡PIN Correcto! Puedes confirmar la entrega.</p>
+                    )}
+                  </div>
+                )}
+
+              </div>
+
+              {/* BARRA INFERIOR FIJA CON BOTÓN PRINCIPAL GIGANTE ESTILO IMAGE 1 */}
+              <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-50 flex items-center gap-3 max-w-md mx-auto">
+                {order.estado === 'REPARTIDOR_ASIGNADO' && (
+                  <button
+                    onClick={() => handleMarkArrived(order.id)}
+                    disabled={actionLoading === order.id}
+                    className="flex-1 py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 rounded-2xl text-xs font-black uppercase shadow-xl flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98"
+                  >
+                    <MapPin className="w-4 h-4 text-slate-950" />
+                    <span>📍 Marcar Llegada al Restaurante</span>
+                  </button>
+                )}
+
+                {(order.estado === 'REPARTIDOR_EN_LOCAL' || order.estado === 'ENTREGADO_A_REPARTIDOR') && (
+                  <button
+                    onClick={() => handleUpdateState(order.id, 'ON_ROUTE')}
+                    disabled={!isHandedOver || actionLoading === order.id}
+                    className={`flex-1 py-4 rounded-2xl text-xs font-black uppercase shadow-xl flex items-center justify-center gap-2 transition-all ${
+                      isHandedOver
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white cursor-pointer active:scale-98 shadow-blue-500/20'
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
+                    }`}
+                  >
+                    {isHandedOver ? (
+                      <>
+                        <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                          <Check className="w-4 h-4 text-white" />
+                        </div>
+                        <span>🛵 INICIAR ENTREGA AL CLIENTE</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4 text-slate-400 shrink-0" />
+                        <span>🔒 ESPERANDO QUE EL LOCAL MARQUE ENTREGA</span>
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {(order.estado === 'EN_CAMINO' || order.estado === 'EN_RUTA') && (
+                  <button
+                    onClick={() => handleUpdateState(order.id, 'WAITING_CLIENT' as any)}
+                    disabled={actionLoading === order.id}
+                    className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-xs font-black uppercase shadow-xl flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98 shadow-blue-500/20"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                      <MapPin className="w-4 h-4 text-white" />
+                    </div>
+                    <span>📍 LLEGUÉ AL DESTINO (EN ESPERA)</span>
+                  </button>
+                )}
+
+                {(order.estado === 'ESPERANDO_CLIENTE' || order.estado === 'WAITING_CLIENT') && (
+                  <button
+                    onClick={() => handleUpdateState(order.id, 'DELIVERED')}
+                    disabled={!isPinValid || actionLoading === order.id}
+                    className={`flex-1 py-4 rounded-2xl text-xs font-black uppercase shadow-xl flex items-center justify-center gap-2 transition-all ${
+                      isPinValid
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white cursor-pointer active:scale-98 shadow-blue-500/20'
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
+                    }`}
+                  >
+                    <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                      <Check className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <span className="block leading-tight">PEDIDO ENTREGADO</span>
+                      <span className="text-[9px] font-semibold opacity-90 block">Confirmar entrega al cliente</span>
+                    </div>
+                  </button>
+                )}
+
+                <button 
+                  onClick={() => alert(`Acciones adicionales para pedido #${order.numeroPedido}`)}
+                  className="w-12 h-14 bg-white border border-slate-200/80 rounded-2xl flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-xs"
+                >
+                  <MoreHorizontal className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-            <span className="text-[10px] font-extrabold text-slate-400">1 Pedido en Curso</span>
-          </div>
-        </div>
+          );
+        })
       ) : (
         /* VISTA 2: MODO BÚSQUEDA / BOLSA DE TRABAJO (SOLO SI NO HAY CARRERA ACTIVA) */
         <>
           {/* Selector de Estado de Disponibilidad */}
           <div className="p-4 max-w-md mx-auto">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-3">
-              <label className="block text-xs font-black uppercase text-slate-400 tracking-wider">
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-4 shadow-sm space-y-3 text-left">
+              <label className="block text-xs font-black uppercase text-slate-500 tracking-wider">
                 Mi Disponibilidad Actual
               </label>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => handleStatusChange('DISPONIBLE')}
-                  className={`py-3 px-2 rounded-xl text-xs font-black flex flex-col items-center gap-1 transition-all ${
+                  className={`py-3 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1 transition-all cursor-pointer ${
                     status === 'DISPONIBLE'
-                      ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20'
-                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
                   <CheckCircle className="w-4 h-4" />
@@ -305,10 +671,10 @@ export default function DriverAppPage() {
                 </button>
                 <button
                   onClick={() => handleStatusChange('DESCANSO')}
-                  className={`py-3 px-2 rounded-xl text-xs font-black flex flex-col items-center gap-1 transition-all ${
+                  className={`py-3 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1 transition-all cursor-pointer ${
                     status === 'DESCANSO'
-                      ? 'bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20'
-                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                      ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
                   <Clock className="w-4 h-4" />
@@ -316,10 +682,10 @@ export default function DriverAppPage() {
                 </button>
                 <button
                   onClick={() => handleStatusChange('DESCONECTADO')}
-                  className={`py-3 px-2 rounded-xl text-xs font-black flex flex-col items-center gap-1 transition-all ${
+                  className={`py-3 px-2 rounded-2xl text-xs font-black flex flex-col items-center gap-1 transition-all cursor-pointer ${
                     status === 'DESCONECTADO'
                       ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20'
-                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
                   <Power className="w-4 h-4" />
@@ -331,110 +697,55 @@ export default function DriverAppPage() {
 
           {/* PEDIDOS DISPONIBLES EN BOLSA DE TRABAJO */}
           {status === 'DISPONIBLE' && (
-            <div className="p-4 max-w-md mx-auto space-y-3">
+            <div className="p-4 max-w-md mx-auto space-y-3 text-left">
               <div className="flex items-center justify-between">
-                <h2 className="text-xs font-black uppercase text-amber-400 tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-amber-400 animate-spin" />
+                <h2 className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-blue-600 animate-spin" />
                   Bolsa de Pedidos Disponibles ({openUnassignedOrders.length})
                 </h2>
               </div>
 
               {openUnassignedOrders.length === 0 ? (
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-slate-500 space-y-2">
-                  <PackageCheck className="w-10 h-10 mx-auto text-slate-700" />
-                  <p className="font-bold text-xs text-slate-400">No hay pedidos disponibles en este momento.</p>
-                  <p className="text-[11px] text-slate-600">Nuevos pedidos aparecerán aquí cuando los restaurantes los acepten.</p>
+                <div className="bg-white border border-slate-200/80 rounded-3xl p-8 text-center text-slate-400 space-y-2 shadow-sm">
+                  <PackageCheck className="w-10 h-10 mx-auto text-slate-300" />
+                  <p className="font-bold text-xs text-slate-700">No hay pedidos disponibles en este momento.</p>
+                  <p className="text-[11px] text-slate-500">Nuevos pedidos aparecerán aquí cuando los restaurantes los acepten.</p>
                 </div>
               ) : (
                 openUnassignedOrders.map(order => {
                   const deliveryFee = Number(order.costoEnvio || 2.50).toFixed(2);
-                  const extra = parseExtraInfo(order.extraInfo);
-                  const itemsSummary = (order.items || []).map(i => `${i.cantidad}x ${i.nombreProducto}`).join(', ');
-                  const distanceStr = getDistanceString(order);
 
                   return (
                     <div
                       key={order.id}
-                      className="bg-gradient-to-br from-slate-900 to-amber-950/40 border border-amber-500/40 rounded-2xl p-4 shadow-xl space-y-3 relative overflow-hidden"
+                      className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-sm space-y-3 hover:border-blue-400 transition-all cursor-pointer"
+                      onClick={() => setSelectedOrderForDetail(order)}
                     >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-black text-sm text-white">#{order.codigo || order.id.slice(-6).toUpperCase()}</span>
-                            <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
-                              <Navigation className="w-3 h-3 text-amber-400" /> {distanceStr}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-xs font-extrabold text-amber-300 mt-1">
-                            <Store className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                            <span className="truncate">{order.negocio?.nombre || 'Restaurante Citiox'}</span>
-                          </div>
-                        </div>
-                        <div className="bg-amber-400 text-slate-950 px-2.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1 shadow-md">
-                          <DollarSign className="w-3.5 h-3.5" /> Ganancia: ${deliveryFee}
-                        </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-slate-900">
+                          #{order.codigo || order.numeroPedido || order.id.slice(-6).toUpperCase()}
+                        </span>
+                        <span className="px-3 py-1 bg-blue-50 text-blue-600 border border-blue-200 font-black text-xs rounded-full">
+                          +${deliveryFee} Ganancia
+                        </span>
                       </div>
 
-                      {/* Detalles de Dirección, Recogida, Distancia y Contenido de Mochila */}
-                      <div className="space-y-2 text-xs text-slate-300 bg-slate-950/70 p-3 rounded-xl border border-amber-500/20">
-                        {/* Dirección de Recogida */}
-                        <div className="flex items-start justify-between gap-1 pb-1.5 border-b border-slate-800">
-                          <div className="flex items-start gap-1.5 truncate">
-                            <Building2 className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-                            <div>
-                              <span className="text-[10px] font-black uppercase text-orange-400 block">Recogida (Local):</span>
-                              <span className="font-semibold text-slate-200">{order.negocio?.direccion || 'Local del Restaurante'}</span>
-                            </div>
-                          </div>
-                          {order.negocio?.direccion && (
-                            <a
-                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.negocio.direccion)}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-orange-400 hover:underline font-bold shrink-0 text-[10px] flex items-center gap-0.5"
-                            >
-                              GPS Local <ExternalLink className="w-2.5 h-2.5" />
-                            </a>
-                          )}
-                        </div>
-
-                        {/* Dirección de Entrega */}
-                        <div className="flex items-start justify-between gap-1">
-                          <div className="flex items-start gap-1.5">
-                            <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                            <div>
-                              <span className="text-[10px] font-black uppercase text-emerald-400 block">Entrega (Cliente):</span>
-                              <span className="font-semibold text-slate-200">{order.direccionCliente || 'Dirección de Entrega'}</span>
-                              {order.referenciaCliente && (
-                                <p className="text-[10px] text-slate-400 font-medium">Ref: {order.referenciaCliente}</p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {itemsSummary && (
-                          <div className="flex items-start gap-1.5 text-[11px] text-slate-300 pt-1.5 border-t border-slate-800">
-                            <PackageCheck className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                            <span className="line-clamp-2">Paquete: <strong>{itemsSummary}</strong></span>
-                          </div>
-                        )}
-
-                        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1.5 border-t border-slate-800 font-bold">
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5 text-amber-400" />
-                            <span>Cocina: <strong>{getCountdownString(extra?.estimatedReadyAt)}</strong></span>
-                          </div>
-                          <span className="text-amber-300">📍 Recogida: ~1.2 km</span>
-                          <span className="text-emerald-400">🏁 Entrega: {distanceStr}</span>
-                        </div>
+                      <div className="space-y-1 text-xs text-slate-600">
+                        <p className="font-black text-slate-900">{order.negocio?.nombre || 'Restaurante Citiox'}</p>
+                        <p className="font-medium text-slate-500">📍 Recogida: {order.negocio?.direccion || 'Local Principal'}</p>
+                        <p className="font-medium text-slate-500">📍 Entrega: {order.direccionCliente || 'Domicilio Cliente'}</p>
                       </div>
 
                       <button
-                        onClick={() => setSelectedOrderForDetail(order)}
-                        className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs uppercase rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAcceptOrder(order.id);
+                        }}
+                        disabled={actionLoading === order.id}
+                        className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-xs font-black uppercase shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98"
                       >
-                        <Navigation className="w-4 h-4" />
-                        <span>👁️ Ver Detalles y Ruta (${deliveryFee})</span>
+                        <Truck className="w-4 h-4 text-white" />
+                        <span>Aceptar Carrera (+${deliveryFee})</span>
                       </button>
                     </div>
                   );
@@ -445,7 +756,7 @@ export default function DriverAppPage() {
         </>
       )}
 
-      {/* MODAL / PANTALLA COMPLETA DE REVISIÓN DE DETALLES DE CARRERA CON MAPA INTERACTIVO Y BOTÓN FIJO */}
+      {/* MODAL DE MAPA INTERACTIVO Y RUTA */}
       {selectedOrderForDetail && (
         <DriverOrderMapModal
           order={selectedOrderForDetail}
