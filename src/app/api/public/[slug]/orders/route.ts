@@ -198,8 +198,9 @@ export async function POST(
         const rawSubtotal = itemsToCreate.reduce((sum, item) => sum + (item.precioUnitario * item.cantidad), 0);
         const finalSubtotal = rawSubtotal > 0 ? rawSubtotal : (body.subtotal !== undefined && parseFloat(body.subtotal) > 0 ? parseFloat(body.subtotal) : pricingResult.subtotal);
         const finalCostoEnvio = isDeliveryOrder ? (body.costoEnvio !== undefined ? parseFloat(body.costoEnvio) : pricingResult.deliveryCost) : 0;
+        const customerShippingCost = isDeliveryOrder ? (body.customerShippingAmount !== undefined ? parseFloat(body.customerShippingAmount) : finalCostoEnvio) : 0;
         const netSubtotal = Math.max(0, finalSubtotal - discountAmount);
-        const finalTotal = body.total !== undefined && parseFloat(body.total) > 0 ? parseFloat(body.total) : Math.round((netSubtotal + finalCostoEnvio) * 100) / 100;
+        const finalTotal = body.total !== undefined && parseFloat(body.total) > 0 ? parseFloat(body.total) : Math.round((netSubtotal + customerShippingCost) * 100) / 100;
 
         // Resolver fecha de entrega
         let dateToDeliver = new Date();

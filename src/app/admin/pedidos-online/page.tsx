@@ -958,7 +958,15 @@ export default function PedidosOnlinePage() {
                   )}
                   <div className="pt-2 mt-1 border-t border-slate-200 flex justify-between font-black text-slate-900">
                     <span>Total:</span>
-                    <span className="text-emerald-600 text-sm">${(Number(pedido.total) || 0).toFixed(2)}</span>
+                    <span className="text-emerald-600 text-sm">
+                      ${(() => {
+                        const itemsSum = (pedido.items || []).reduce((acc: number, i: any) => acc + ((Number(i.precioUnitario) || 0) * (Number(i.cantidad) || 1)), 0);
+                        const disc = Number(extra?.discountAmount || extra?.descuento || 0);
+                        const custShipping = Number(extra?.customerShippingAmount !== undefined ? extra.customerShippingAmount : (pedido.costoEnvio || 0));
+                        const calcTotal = itemsSum - disc + custShipping;
+                        return (calcTotal > 0 ? calcTotal : Number(pedido.total || 0)).toFixed(2);
+                      })()}
+                    </span>
                   </div>
                 </div>
 
