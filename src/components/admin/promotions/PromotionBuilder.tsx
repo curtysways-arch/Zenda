@@ -202,7 +202,67 @@ export default function PromotionBuilder({
         </div>
       </div>
 
-      {/* 2. DATOS GENERALES Y TIPO DE PROMOCIÓN */}
+      {/* 2. ASIGNACIÓN EXPLÍCITA A PRODUCTO O CATEGORÍA EXISTENTE */}
+      <div className="bg-amber-50/70 p-4.5 rounded-2xl border border-amber-200/80 space-y-3">
+        <div className="flex items-center gap-2">
+          <ShoppingBag className="size-4 text-amber-600" />
+          <label className="text-xs font-black text-amber-950 uppercase tracking-wider block">
+            📦 Asignar a Producto o Categoría Existente del Menú
+          </label>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="text-[11px] font-extrabold text-slate-700 block mb-1">
+              Producto Específico del Menú:
+            </label>
+            <select
+              value={productoRequeridoId}
+              onChange={e => {
+                const selectedId = e.target.value;
+                setProductoRequeridoId(selectedId);
+                if (selectedId) {
+                  const foundProd = products.find(p => p.id === selectedId);
+                  if (foundProd) {
+                    setPrecioAnterior(Number(foundProd.precio) || 0);
+                    if (!titulo || titulo.startsWith('🔥') || titulo.startsWith('🍔')) {
+                      setTitulo(`🔥 Promoción en ${foundProd.nombre}`);
+                    }
+                  }
+                }
+              }}
+              className="w-full p-3 bg-white border border-amber-300 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs"
+            >
+              <option value="">-- Todos los Productos (Global) --</option>
+              {products.map(p => (
+                <option key={p.id} value={p.id}>
+                  🍔 {p.nombre} (${(Number(p.precio) || 0).toFixed(2)})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="text-[11px] font-extrabold text-slate-700 block mb-1">
+              Categoría Completa del Menú:
+            </label>
+            <select
+              value={categoriaRequeridaId}
+              onChange={e => setCategoriaRequeridaId(e.target.value)}
+              className="w-full p-3 bg-white border border-amber-300 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs"
+            >
+              <option value="">-- Todas las Categorías --</option>
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>
+                  📁 {c.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. DATOS GENERALES Y TIPO DE PROMOCIÓN */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-4">
           <div>

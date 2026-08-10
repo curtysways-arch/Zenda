@@ -522,7 +522,7 @@ export default function PedidosOnlinePage() {
             <Globe className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-black tracking-tight">Gestión Oficial de Pedidos Online</h1>
+            <h1 className="text-xl font-black tracking-tight text-white !text-white">Gestión Oficial de Pedidos Online</h1>
             <p className="text-xs text-slate-400 font-medium">Haz clic en cualquier tarjeta para abrir la gestión a pantalla completa</p>
           </div>
         </div>

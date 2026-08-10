@@ -126,7 +126,7 @@ export default function PromotionDashboard({
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Tags className="size-6 text-amber-400" />
-            <h1 className="text-2xl font-black italic uppercase tracking-tight">Módulo de Promociones & Crecimiento</h1>
+            <h1 className="text-2xl font-black italic uppercase tracking-tight text-white !text-white">Módulo de Promociones & Crecimiento</h1>
           </div>
           <p className="text-slate-300 text-xs font-medium max-w-xl">
             Aumenta tus ventas, incrementa el ticket promedio y llena horas de baja demanda reutilizando tu infraestructura actual de Citiox.
