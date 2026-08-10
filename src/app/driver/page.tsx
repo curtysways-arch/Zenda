@@ -303,6 +303,22 @@ export default function DriverAppPage() {
     { id: '4', nombre: 'Sushi Roll Express', direccion: 'Av. Amazonas N34, Quito', telefono: '0992221100', activo: true, ordenesHoy: 6, logo: '🍣' },
   ];
 
+  const getDriverRealFee = (order: DbOrder) => {
+    const extra = parseExtraInfo(order.extraInfo);
+    const realFee = extra?.pricingBreakdown?.realShippingCost ?? 
+                    extra?.pricingBreakdown?.originalShippingFee ?? 
+                    extra?.pricingBreakdown?.driverFee ?? 
+                    extra?.realDriverFee ?? 
+                    extra?.originalCostoEnvio;
+    if (typeof realFee === 'number' && realFee > 0) return realFee.toFixed(2);
+    const orderFee = Number(order.costoEnvio || 0);
+    const subsidy = Number(extra?.pricingBreakdown?.restaurantSubsidy || extra?.restaurantSubsidy || 0);
+    if (subsidy > 0 && orderFee < subsidy) {
+      return (orderFee + subsidy).toFixed(2);
+    }
+    return (orderFee > 0 ? orderFee : 2.50).toFixed(2);
+  };
+
   return (
     <div className="w-full min-h-screen bg-slate-100 text-slate-900 font-sans pb-32">
       {/* HEADER NATIVO EDGE-TO-EDGE CON LOGO COMPLETO CITIOX DRIVER */}
@@ -343,7 +359,7 @@ export default function DriverAppPage() {
             myAssignedOrders.map(order => {
               const extra = parseExtraInfo(order.extraInfo);
               const isCashOnDelivery = order.paymentStatus !== 'CONFIRMADO' && order.paymentStatus !== 'PAGO_VERIFICADO';
-              const deliveryFee = Number(order.costoEnvio || 2.50).toFixed(2);
+              const deliveryFee = getDriverRealFee(order);
               const totalToCollect = Number(order.total || 0).toFixed(2);
               const distanceStr = getDistanceString(order);
               const isHandedOver = (order.estado as string) === 'ENTREGADO_A_REPARTIDOR' || (order.estado as string) === 'EN_CAMINO' || (order.estado as string) === 'EN_RUTA' || Boolean(extra?.isHandedOver || extra?.dispatchStatus === 'DESPACHADO');
@@ -765,7 +781,7 @@ export default function DriverAppPage() {
                     </div>
                   ) : (
                     openUnassignedOrders.map(order => {
-                      const deliveryFee = Number(order.costoEnvio || 2.50).toFixed(2);
+                      const deliveryFee = getDriverRealFee(order);
 
                       return (
                         <div

@@ -56,13 +56,20 @@ const STATE_CONFIG: Record<string, { label: string; icon: any; color: string; de
 
 const ORDER_STEPS = ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'ON_DELIVERY', 'DELIVERED'];
 
-function normalizeState(rawState?: string): string {
+function normalizeState(rawState?: string, extraInfo?: any): string {
     const s = (rawState || '').toUpperCase();
+    const extra = typeof extraInfo === 'string' ? JSON.parse(extraInfo || '{}') : (extraInfo || {});
+
     if (['PENDIENTE', 'PENDING', 'WAITING_CONFIRMATION', 'POR_CONFIRMAR', 'PENDIENTE_PAGO', 'PAGO_EN_REVISION', 'COMPROBANTE_ENVIADO', 'COMPROBANTE_RECIBIDO'].includes(s)) return 'PENDING';
     if (['ACEPTADO', 'CONFIRMED', 'RECIBIDO'].includes(s)) return 'CONFIRMED';
     if (['EN_PREPARACION', 'PREPARACION', 'PREPARANDO', 'PREPARING'].includes(s)) return 'PREPARING';
     if (['LISTO', 'READY'].includes(s)) return 'READY';
-    if (['EN_CAMINO', 'EN_RUTA', 'RUTA', 'ON_DELIVERY', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR'].includes(s)) return 'ON_DELIVERY';
+    if (['REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL'].includes(s)) {
+        if (extra.kitchenStatus === 'LISTO') return 'READY';
+        return 'PREPARING';
+    }
+    if (['ENTREGADO_A_REPARTIDOR'].includes(s)) return 'READY';
+    if (['EN_CAMINO', 'EN_RUTA', 'RUTA', 'ON_DELIVERY'].includes(s)) return 'ON_DELIVERY';
     if (['ESPERANDO_CLIENTE', 'WAITING_CLIENT'].includes(s)) return 'WAITING_CLIENT';
     if (['ENTREGADO', 'DELIVERED', 'FINALIZADO', 'COMPLETADO'].includes(s)) return 'DELIVERED';
     if (['CANCELADO', 'CANCELLED', 'RECHAZADO'].includes(s)) return 'CANCELLED';
@@ -78,17 +85,24 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
     const [clientRestStar, setClientRestStar] = useState<number>(5);
     const [clientComment, setClientComment] = useState<string>('');
     const [submittingRating, setSubmittingRating] = useState<boolean>(false);
+    const [showRatingModal, setShowRatingModal] = useState<boolean>(false);
 
     const cp = negocio?.colorPrimario || '#c2410c';
     const cs = negocio?.colorSecundario || '#1c0a00';
 
-    const normState = normalizeState(order.estado);
+    const normState = normalizeState(order.estado, order.extraInfo);
     const stateInfo = STATE_CONFIG[normState] || STATE_CONFIG['PENDING'];
     const StateIcon = stateInfo.icon;
 
     const currentStepIdx = normState === 'WAITING_CLIENT' ? 4 : ORDER_STEPS.indexOf(normState);
     const isDelivered = normState === 'DELIVERED';
     const isCancelled = normState === 'CANCELLED';
+
+    useEffect(() => {
+        if (isDelivered && !order.extraInfo?.clientReview) {
+            setShowRatingModal(true);
+        }
+    }, [isDelivered, order.extraInfo?.clientReview]);
 
     const refreshOrder = useCallback(async () => {
         try {
@@ -512,34 +526,25 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                     </div>
                 </div>
 
-                {/* SECCIÓN DE CALIFICACIÓN DEL CLIENTE AL ENTREGAR */}
-                {isDelivered && (() => {
-                    const clientReview = order.extraInfo?.clientReview;
-                    if (clientReview) {
-                        return (
-                            <div style={{ background: 'rgba(16,185,129,0.15)', borderRadius: 20, padding: 20, marginBottom: 20, border: '1px solid rgba(16,185,129,0.3)', textAlign: 'center' }}>
-                                <div style={{ fontSize: 24, marginBottom: 6 }}>⭐</div>
-                                <h3 style={{ color: '#10b981', fontWeight: 900, fontSize: 16, margin: 0 }}>¡Gracias por tu calificación!</h3>
-                                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 4 }}>
-                                    Valoraste la experiencia con {clientReview.driverStars || 5} estrellas ⭐
-                                </p>
+                {/* MODAL EMERGENTE DE CALIFICACIÓN AL FINALIZAR LA ENTREGA */}
+                {showRatingModal && isDelivered && !order.extraInfo?.clientReview && (
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+                        <div style={{ background: cs || '#1c0a00', border: `1px solid ${cp}60`, borderRadius: 24, padding: 24, maxWidth: 440, width: '100%', color: '#fff', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)' }}>
+                            <div style={{ width: 64, height: 64, borderRadius: '50%', background: `${cp}25`, color: cp, margin: '0 auto 14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
+                                🌟
                             </div>
-                        );
-                    }
 
-                    return (
-                        <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 20, padding: 20, marginBottom: 20, border: `1px solid ${cp}40`, textAlign: 'left' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                                <span style={{ fontSize: 20 }}>⭐</span>
-                                <h3 style={{ color: '#fff', fontWeight: 900, fontSize: 15, margin: 0 }}>Califica tu Entrega y Restaurante</h3>
-                            </div>
+                            <h2 style={{ fontSize: 20, fontWeight: 900, margin: '0 0 6px', color: '#fff' }}>¡Tu pedido fue entregado!</h2>
+                            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', margin: '0 0 20px' }}>
+                                Califica la atención de tu repartidor y la calidad de la comida.
+                            </p>
 
                             {/* Calificar Repartidor */}
-                            <div style={{ marginBottom: 16 }}>
-                                <label style={{ display: 'block', color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                            <div style={{ marginBottom: 18, textAlign: 'left', background: 'rgba(255,255,255,0.05)', padding: 14, borderRadius: 16 }}>
+                                <label style={{ display: 'block', color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: 800, marginBottom: 8 }}>
                                     🛵 Repartidor ({order.extraInfo?.assignedDriverName || 'Marco Proaño'}): <span style={{ color: '#f59e0b', fontWeight: 900 }}>{clientDriverStar} ★</span>
                                 </label>
-                                <div style={{ display: 'flex', gap: 10 }}>
+                                <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
                                     {[1, 2, 3, 4, 5].map((star) => (
                                         <button
                                             key={star}
@@ -548,7 +553,7 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                                             style={{
                                                 background: 'none',
                                                 border: 'none',
-                                                fontSize: 32,
+                                                fontSize: 34,
                                                 cursor: 'pointer',
                                                 transition: 'all 0.2s ease',
                                                 transform: star <= clientDriverStar ? 'scale(1.2)' : 'scale(0.9)',
@@ -563,11 +568,11 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                             </div>
 
                             {/* Calificar Restaurante */}
-                            <div style={{ marginBottom: 16 }}>
-                                <label style={{ display: 'block', color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                            <div style={{ marginBottom: 18, textAlign: 'left', background: 'rgba(255,255,255,0.05)', padding: 14, borderRadius: 16 }}>
+                                <label style={{ display: 'block', color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: 800, marginBottom: 8 }}>
                                     🍽️ Restaurante ({negocio?.nombre}): <span style={{ color: '#f59e0b', fontWeight: 900 }}>{clientRestStar} ★</span>
                                 </label>
-                                <div style={{ display: 'flex', gap: 10 }}>
+                                <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
                                     {[1, 2, 3, 4, 5].map((star) => (
                                         <button
                                             key={star}
@@ -576,7 +581,7 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                                             style={{
                                                 background: 'none',
                                                 border: 'none',
-                                                fontSize: 32,
+                                                fontSize: 34,
                                                 cursor: 'pointer',
                                                 transition: 'all 0.2s ease',
                                                 transform: star <= clientRestStar ? 'scale(1.2)' : 'scale(0.9)',
@@ -594,16 +599,16 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                                 type="text"
                                 value={clientComment}
                                 onChange={e => setClientComment(e.target.value)}
-                                placeholder="Escribe un comentario opcional..."
+                                placeholder="Escribe un comentario opcional sobre tu experiencia..."
                                 style={{
                                     width: '100%',
-                                    padding: '12px 14px',
+                                    padding: '14px',
                                     background: 'rgba(255,255,255,0.08)',
                                     border: '1px solid rgba(255,255,255,0.15)',
-                                    borderRadius: 12,
+                                    borderRadius: 14,
                                     color: '#fff',
                                     fontSize: 13,
-                                    marginBottom: 16,
+                                    marginBottom: 18,
                                     outline: 'none'
                                 }}
                             />
@@ -624,6 +629,7 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                                                 rater: 'CLIENT'
                                             })
                                         });
+                                        setShowRatingModal(false);
                                         await refreshOrder();
                                     } catch (_) {} finally {
                                         setSubmittingRating(false);
@@ -631,23 +637,32 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                                 }}
                                 style={{
                                     width: '100%',
-                                    padding: '14px',
+                                    padding: '16px',
                                     background: cp,
                                     color: '#fff',
                                     border: 'none',
-                                    borderRadius: 14,
+                                    borderRadius: 16,
                                     fontWeight: 900,
-                                    fontSize: 14,
+                                    fontSize: 15,
                                     cursor: submittingRating ? 'wait' : 'pointer',
                                     opacity: submittingRating ? 0.7 : 1,
-                                    boxShadow: `0 4px 14px ${cp}40`
+                                    boxShadow: `0 4px 14px ${cp}40`,
+                                    marginBottom: 10
                                 }}
                             >
                                 {submittingRating ? 'Guardando...' : 'ENVIAR CALIFICACIÓN'}
                             </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setShowRatingModal(false)}
+                                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                            >
+                                Omitir por ahora
+                            </button>
                         </div>
-                    );
-                })()}
+                    </div>
+                )}
 
                 {/* ACCIONES */}
                 <div style={{ display: 'flex', gap: 12 }}>

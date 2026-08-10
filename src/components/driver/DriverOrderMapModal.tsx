@@ -89,7 +89,22 @@ export default function DriverOrderMapModal({
 
   const extra = parseJson(order.extraInfo);
   const cfg = parseJson(order.negocio?.configuracion);
-  const deliveryFee = Number(order.costoEnvio || 2.50).toFixed(2);
+  
+  const getDriverRealFee = () => {
+    const realFee = extra?.pricingBreakdown?.realShippingCost ?? 
+                    extra?.pricingBreakdown?.originalShippingFee ?? 
+                    extra?.pricingBreakdown?.driverFee ?? 
+                    extra?.realDriverFee ?? 
+                    extra?.originalCostoEnvio;
+    if (typeof realFee === 'number' && realFee > 0) return realFee.toFixed(2);
+    const orderFee = Number(order.costoEnvio || 0);
+    const subsidy = Number(extra?.pricingBreakdown?.restaurantSubsidy || extra?.restaurantSubsidy || 0);
+    if (subsidy > 0 && orderFee < subsidy) {
+      return (orderFee + subsidy).toFixed(2);
+    }
+    return (orderFee > 0 ? orderFee : 2.50).toFixed(2);
+  };
+  const deliveryFee = getDriverRealFee();
   const itemsSummary = (order.items || []).map(i => `${i.cantidad}x ${i.nombreProducto}`).join(', ');
 
   // SUCURSALES: Identificar si el pedido corresponde a una sucursal específica

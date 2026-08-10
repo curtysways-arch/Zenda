@@ -64,6 +64,7 @@ export default function PedidosOnlinePage() {
   const [selectedPrepTime, setSelectedPrepTime] = useState<number>(20);
   const [itemsAvailability, setItemsAvailability] = useState<Record<string, boolean>>({});
   const [disableCatalogProducts, setDisableCatalogProducts] = useState(true);
+  const [confirmedAvailabilityOrderIds, setConfirmedAvailabilityOrderIds] = useState<Record<string, boolean>>({});
 
   // Modal de Confirmación de Reembolso
   const [refundMethod, setRefundMethod] = useState<string>('TRANSFERENCIA');
@@ -341,8 +342,10 @@ export default function PedidosOnlinePage() {
           alert(`Error al solicitar cambios: ${errData.error || 'Error en el servidor'}`);
           return;
         }
+        setFullscreenOrder((prev: any) => prev ? { ...prev, estadoDisponibilidad: 'CAMBIOS_PROPUESTOS' } : prev);
       }
 
+      setConfirmedAvailabilityOrderIds(prev => ({ ...prev, [pedidoTarget.id]: true }));
       await fetchOnlineOrders();
     } catch (err) {
       console.error('Error guardando disponibilidad:', err);
@@ -773,7 +776,7 @@ export default function PedidosOnlinePage() {
         const evidenceUrl = order.payment?.evidences?.[0]?.fileUrl;
         const totalVal = Number(order.total) || 0;
         const isOrderAcceptedOrPrepared = ['ACEPTADO', 'EN_PREPARACION', 'LISTO', 'LISTA', 'ASIGNADO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ESPERANDO_REPARTIDOR', 'LLEGO', 'EN_CAMINO', 'EN_RUTA', 'RUTA', 'WAITING_CLIENT', 'ESPERANDO_CLIENTE', 'ENTREGADO', 'FINALIZADO', 'COMPLETADO'].includes(order.estado);
-        const isAvailabilityConfirmed = isOrderAcceptedOrPrepared || order.estadoDisponibilidad === 'PRODUCTOS_CONFIRMADOS';
+        const isAvailabilityConfirmed = isOrderAcceptedOrPrepared || order.estadoDisponibilidad === 'PRODUCTOS_CONFIRMADOS' || order.estadoDisponibilidad === 'CAMBIOS_PROPUESTOS' || Boolean(confirmedAvailabilityOrderIds[order.id]);
 
         return (
           <div className="fixed inset-0 z-[9999] bg-slate-950/90 backdrop-blur-md overflow-y-auto flex flex-col p-3 sm:p-6 animate-in fade-in duration-200">
