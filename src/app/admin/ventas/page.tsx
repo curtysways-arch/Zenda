@@ -80,13 +80,25 @@ function VentasContent() {
       const res = await fetch('/api/admin/pedidos');
       if (res.ok) {
         const data = await res.json();
-        const activeList = (Array.isArray(data) ? data : []).filter((p: any) => 
-          p.estado === 'RECIBIDO' || p.estado === 'EN_PREPARACION' || p.estado === 'PENDIENTE' || p.estado === 'WAITING_CONFIRMATION'
-        );
-        setActiveOrders(activeList);
+        const activeTableOrders = (Array.isArray(data) ? data : []).filter((p: any) => {
+          let extra: any = {};
+          if (typeof p.extraInfo === 'string') {
+            try { extra = JSON.parse(p.extraInfo); } catch { extra = {}; }
+          } else if (p.extraInfo && typeof p.extraInfo === 'object') {
+            extra = p.extraInfo;
+          }
+
+          const isTableOrder = p.tipoEntrega === 'TABLE_ORDER' || 
+                               (p.referenciaCliente && p.referenciaCliente.toLowerCase().includes('mesa') && !p.referenciaCliente.includes('POS-Virtual')) ||
+                               (extra.mesaCode && extra.mesaCode !== 'POS' && extra.mesaCode !== 'POS-Virtual');
+          
+          const isActiveStatus = p.estado === 'RECIBIDO' || p.estado === 'EN_PREPARACION' || p.estado === 'PENDIENTE' || p.estado === 'WAITING_CONFIRMATION';
+          return isTableOrder && isActiveStatus;
+        });
+        setActiveOrders(activeTableOrders);
       }
     } catch (e) {
-      console.error('Error cargando pedidos activos:', e);
+      console.error('Error cargando pedidos activos de mesa:', e);
     } finally {
       setLoadingActiveOrders(false);
     }
@@ -890,7 +902,7 @@ function VentasContent() {
           <div className="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="font-black text-lg text-slate-900 flex items-center gap-2">
-                <span>📋</span> Seleccionar Pedido para Adición
+                <span>🍽️</span> Seleccionar Mesa Activa para Adición
               </h3>
               <button 
                 onClick={() => setShowActiveOrdersModal(false)} 
@@ -901,18 +913,18 @@ function VentasContent() {
             </div>
 
             <p className="text-xs text-slate-500 font-medium">
-              Elige la comanda o mesa activa a la cual deseas agregar nuevos productos desde el catálogo POS.
+              Elige la comanda de mesa activa a la cual deseas agregar nuevos productos desde el catálogo POS.
             </p>
 
             <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
               {loadingActiveOrders ? (
                 <div className="py-10 text-center text-xs font-bold text-slate-400">
                   <Loader2 className="w-6 h-6 animate-spin mx-auto text-amber-500 mb-2" />
-                  Cargando pedidos activos...
+                  Cargando comandas de mesa activas...
                 </div>
               ) : activeOrders.length === 0 ? (
                 <div className="py-10 text-center text-xs font-bold text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">
-                  No hay pedidos activos actualmente en preparación o mesa.
+                  No hay comandas de mesa activas actualmente en preparación.
                 </div>
               ) : (
                 activeOrders.map((ord: any) => (
