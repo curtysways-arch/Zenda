@@ -68,6 +68,30 @@ function VentasContent() {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
+  // Active Orders Modal & Addition Mode
+  const [showActiveOrdersModal, setShowActiveOrdersModal] = useState(false);
+  const [activeOrders, setActiveOrders] = useState<any[]>([]);
+  const [loadingActiveOrders, setLoadingActiveOrders] = useState(false);
+  const [selectedOrderForAddition, setSelectedOrderForAddition] = useState<any | null>(null);
+
+  const fetchActiveOrders = async () => {
+    try {
+      setLoadingActiveOrders(true);
+      const res = await fetch('/api/admin/pedidos');
+      if (res.ok) {
+        const data = await res.json();
+        const activeList = (Array.isArray(data) ? data : []).filter((p: any) => 
+          p.estado === 'RECIBIDO' || p.estado === 'EN_PREPARACION' || p.estado === 'PENDIENTE' || p.estado === 'WAITING_CONFIRMATION'
+        );
+        setActiveOrders(activeList);
+      }
+    } catch (e) {
+      console.error('Error cargando pedidos activos:', e);
+    } finally {
+      setLoadingActiveOrders(false);
+    }
+  };
+
   // Load Catalogue & Business Data
   useEffect(() => {
     async function loadCatalogue() {
@@ -80,13 +104,7 @@ function VentasContent() {
         if (resP.ok) {
           const dP = await resP.json();
           setProducts(Array.isArray(dP) ? dP : []);
-          if (Array.isArray(dP) && dP.length > 0) {
-            const initialCart: { [id: string]: CartEntry } = {};
-            dP.slice(0, 2).forEach((p: any) => {
-              initialCart[p.id] = { qty: 1, takeawayQty: 0 };
-            });
-            setCart(initialCart);
-          }
+          setCart({});
         }
         if (resC.ok) {
           const dC = await resC.json();
@@ -260,35 +278,64 @@ function VentasContent() {
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/admin/pedidos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombreCliente,
-          telefonoCliente: telefonoCliente || '0991234567',
-          direccionCliente: tipoEntrega === 'DELIVERY_ORDER' ? direccionCliente : null,
-          referenciaCliente: tipoEntrega === 'DELIVERY_ORDER' ? referenciaCliente : null,
-          tipoEntrega,
-          metodoPago,
-          mesaCode: tipoEntrega === 'TABLE_ORDER' ? mesaCode : 'POS',
-          kitchenNotes: kitchenNotes.trim() || null,
-          autoConfirm: true,
-          paymentStatus: pagarInmediato ? 'PAGADO' : 'PENDIENTE',
-          items: selectedItems.map(i => ({
-            productoId: i.productoId,
-            nombreProducto: i.takeawayQty > 0 ? `${i.nombreProducto} (${i.takeawayQty} con empaque)` : i.nombreProducto,
-            precioUnitario: i.precioUnitario,
-            cantidad: i.cantidad
-          }))
-        })
-      });
+      if (selectedOrderForAddition) {
+        // MODO ADICIÓN A PEDIDO EXISTENTE
+        const res = await fetch('/api/admin/pedidos', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: selectedOrderForAddition.id,
+            action: 'ADD_ITEMS_TO_ORDER',
+            kitchenNotes: kitchenNotes.trim() || null,
+            newItems: selectedItems.map(i => ({
+              productoId: i.productoId,
+              nombreProducto: i.takeawayQty > 0 ? `${i.nombreProducto} (${i.takeawayQty} con empaque)` : i.nombreProducto,
+              precioUnitario: i.precioUnitario,
+              cantidad: i.cantidad
+            }))
+          })
+        });
 
-      if (res.ok) {
-        alert(pagarInmediato ? '¡Venta POS Cobrada y enviada a cocina!' : '¡Orden POS enviada a cocina! Pendiente de cobro en Caja.');
-        clearCart();
+        if (res.ok) {
+          alert(`¡Adición enviada con éxito a la Orden #${selectedOrderForAddition.numeroPedido}!`);
+          clearCart();
+          setSelectedOrderForAddition(null);
+        } else {
+          const errData = await res.json();
+          alert(errData.error || 'Error al adicionar productos al pedido');
+        }
       } else {
-        const errData = await res.json();
-        alert(errData.error || 'Error al enviar orden');
+        // NUEVA ORDEN POS
+        const res = await fetch('/api/admin/pedidos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombreCliente,
+            telefonoCliente: telefonoCliente || '0991234567',
+            direccionCliente: tipoEntrega === 'DELIVERY_ORDER' ? direccionCliente : null,
+            referenciaCliente: tipoEntrega === 'DELIVERY_ORDER' ? referenciaCliente : null,
+            tipoEntrega,
+            metodoPago,
+            mesaCode: tipoEntrega === 'TABLE_ORDER' ? mesaCode : 'POS',
+            kitchenNotes: kitchenNotes.trim() || null,
+            autoConfirm: true,
+            paymentStatus: pagarInmediato ? 'PAGADO' : 'PENDIENTE',
+            items: selectedItems.map(i => ({
+              productoId: i.productoId,
+              nombreProducto: i.takeawayQty > 0 ? `${i.nombreProducto} (${i.takeawayQty} con empaque)` : i.nombreProducto,
+              precioUnitario: i.precioUnitario,
+              cantidad: i.cantidad
+            }))
+          })
+        });
+
+        if (res.ok) {
+          alert(pagarInmediato ? '¡Venta POS Cobrada y enviada a cocina!' : '¡Orden POS enviada a cocina! Pendiente de cobro en Caja.');
+          clearCart();
+        } else {
+          const errData = await res.json();
+          alert(errData.error || 'Error al enviar orden');
+        }
       }
     } catch (e) {
       console.error(e);
@@ -461,7 +508,7 @@ function VentasContent() {
           <div className="shrink-0 space-y-2">
             
             {/* Header Venta POS */}
-            <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 gap-2">
               <div className="flex items-center gap-1.5">
                 <ShoppingBag className="w-3.5 h-3.5 text-[#ea580c]" />
                 <h2 className="font-extrabold text-xs text-slate-900 uppercase tracking-wider">Orden POS Activa</h2>
@@ -469,13 +516,41 @@ function VentasContent() {
                   {totalItemsCount}
                 </span>
               </div>
-              <button
-                onClick={clearCart}
-                className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <Trash2 className="w-3 h-3" /> Vaciar
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    fetchActiveOrders();
+                    setShowActiveOrdersModal(true);
+                  }}
+                  className="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 text-[10px] font-black tracking-tight transition-all flex items-center gap-1 cursor-pointer border border-amber-300"
+                >
+                  <span>📋</span> Adicionar a Pedido
+                </button>
+                <button
+                  onClick={clearCart}
+                  className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  <Trash2 className="w-3 h-3" /> Vaciar
+                </button>
+              </div>
             </div>
+
+            {/* Banner de Modo Adición si hay un pedido seleccionado */}
+            {selectedOrderForAddition && (
+              <div className="p-2 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 flex items-center justify-between gap-2 text-[11px] font-extrabold animate-in fade-in">
+                <div className="flex items-center gap-1.5 overflow-hidden">
+                  <span className="shrink-0 text-amber-600">📌</span>
+                  <span className="truncate">Adicionando a Orden #{selectedOrderForAddition.numeroPedido} ({selectedOrderForAddition.nombreCliente})</span>
+                </div>
+                <button
+                  onClick={() => setSelectedOrderForAddition(null)}
+                  className="px-2 py-0.5 bg-amber-600 hover:bg-amber-700 text-white text-[10px] rounded-md cursor-pointer shrink-0 font-bold"
+                >
+                  ✕ Cancelar
+                </button>
+              </div>
+            )}
 
             {/* Tipo de Entrega Switcher (Para Llevar, Mesa, Domicilio) */}
             <div>
@@ -809,6 +884,72 @@ function VentasContent() {
           setDireccionCliente(`Ubicación GPS (${dist} km) - Lat: ${newLat.toFixed(4)}, Lng: ${newLng.toFixed(4)}`);
         }}
       />
+      {/* Modal de Pedidos Activos para Adición */}
+      {showActiveOrdersModal && (
+        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="font-black text-lg text-slate-900 flex items-center gap-2">
+                <span>📋</span> Seleccionar Pedido para Adición
+              </h3>
+              <button 
+                onClick={() => setShowActiveOrdersModal(false)} 
+                className="p-1.5 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 font-medium">
+              Elige la comanda o mesa activa a la cual deseas agregar nuevos productos desde el catálogo POS.
+            </p>
+
+            <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
+              {loadingActiveOrders ? (
+                <div className="py-10 text-center text-xs font-bold text-slate-400">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-amber-500 mb-2" />
+                  Cargando pedidos activos...
+                </div>
+              ) : activeOrders.length === 0 ? (
+                <div className="py-10 text-center text-xs font-bold text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">
+                  No hay pedidos activos actualmente en preparación o mesa.
+                </div>
+              ) : (
+                activeOrders.map((ord: any) => (
+                  <div key={ord.id} className="p-4 bg-slate-50 hover:bg-amber-50/50 border border-slate-200 hover:border-amber-300 rounded-2xl flex items-center justify-between gap-3 transition-all">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-sm text-slate-900">Orden #{ord.numeroPedido}</span>
+                        {ord.referenciaCliente && (
+                          <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-black rounded-full border border-amber-200">
+                            {ord.referenciaCliente}
+                          </span>
+                        )}
+                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full">
+                          {ord.estado}
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-500 font-semibold mt-1">
+                        Cliente: {ord.nombreCliente} • Total Actual: <span className="text-slate-900 font-bold">${ord.total?.toFixed(2) || '0.00'}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setSelectedOrderForAddition(ord);
+                        setShowActiveOrdersModal(false);
+                      }}
+                      className="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Adicionar
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

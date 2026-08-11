@@ -76,6 +76,29 @@ export async function PUT(req: Request) {
             currentExtra = { ...pedido.extraInfo };
         }
 
+        // 1. ACCIÓN: ADICIONAR PRODUCTOS A PEDIDO EXISTENTE
+        if (action === 'ADD_ITEMS_TO_ORDER' && body.newItems && Array.isArray(body.newItems) && body.newItems.length > 0) {
+            await (prisma as any).pedidoItem.createMany({
+                data: body.newItems.map((i: any) => ({
+                    id: `pi_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+                    pedidoId: id,
+                    productoId: i.productoId || i.id,
+                    nombreProducto: i.nombreProducto || i.nombre,
+                    precioUnitario: parseFloat(i.precioUnitario || i.precio || 0),
+                    cantidad: parseInt(i.cantidad || 1, 10)
+                }))
+            });
+
+            const updatedAllItems = await (prisma as any).pedidoItem.findMany({ where: { pedidoId: id } });
+            const newSubtotal = updatedAllItems.reduce((sum: number, item: any) => sum + (item.precioUnitario * item.cantidad), 0);
+            updateData.subtotal = newSubtotal;
+            updateData.total = newSubtotal + (pedido.costoEnvio || 0) + (currentExtra.packagingCost || 0) - (currentExtra.discountAmount || 0);
+
+            if (body.kitchenNotes) {
+                currentExtra.kitchenNotes = (currentExtra.kitchenNotes ? `${currentExtra.kitchenNotes} | ` : '') + body.kitchenNotes;
+            }
+        }
+
         // 1. ACCIÓN: CONFIRMAR DISPONIBILIDAD DE PRODUCTOS
         if (action === 'CONFIRMAR_DISPONIBILIDAD' || estadoDisponibilidad === 'PRODUCTOS_CONFIRMADOS') {
             updateData.estadoDisponibilidad = 'PRODUCTOS_CONFIRMADOS';
