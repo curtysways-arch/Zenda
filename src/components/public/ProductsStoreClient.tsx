@@ -430,6 +430,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const [showMapModal, setShowMapModal] = useState(false);
     const [selectedLat, setSelectedLat] = useState<number | null>(null);
     const [selectedLng, setSelectedLng] = useState<number | null>(null);
+    const [selectedAddressName, setSelectedAddressName] = useState<string>('');
 
     // Draft Checkout State para Negocios con Pago Previo Obligatorio
     const [draftCheckoutPayload, setDraftCheckoutPayload] = useState<any>(null);
@@ -789,6 +790,9 @@ export default function ProductsStoreClient({ negocio }: Props) {
             if (savedAddr) setClientAddress(savedAddr);
             if (savedRef) setClientReference(savedRef);
 
+            const savedAddressName = localStorage.getItem('pinchos_client_address_name');
+            if (savedAddressName) setSelectedAddressName(savedAddressName);
+
             if (savedLat && savedLng) {
                 const pLat = parseFloat(savedLat);
                 const pLng = parseFloat(savedLng);
@@ -823,6 +827,7 @@ export default function ProductsStoreClient({ negocio }: Props) {
             }
             if (clientAddress) localStorage.setItem('pinchos_client_address', clientAddress);
             if (clientReference) localStorage.setItem('pinchos_client_reference', clientReference);
+            if (selectedAddressName) localStorage.setItem('pinchos_client_address_name', selectedAddressName);
             if (selectedLat !== null && selectedLat !== undefined) localStorage.setItem('pinchos_client_lat', selectedLat.toString());
             if (selectedLng !== null && selectedLng !== undefined) localStorage.setItem('pinchos_client_lng', selectedLng.toString());
             localStorage.setItem('customerInfo', JSON.stringify({ name, phone, address: clientAddress }));
@@ -2276,13 +2281,13 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                             }`}>
                                                 <MapPin className="size-4" />
                                             </div>
-                                            <div className="text-left">
+                                            <div className="text-left overflow-hidden">
                                                 <span className="block font-black text-xs">
                                                     {selectedLat && selectedLng ? '📍 Ubicación GPS Fijada' : '🗺️ Seleccionar Punto en el Mapa'}
                                                 </span>
-                                                <span className="block text-[10px] font-medium text-slate-500">
+                                                <span className="block text-[10px] font-bold text-emerald-800 truncate max-w-[190px] sm:max-w-[260px]">
                                                     {selectedLat && selectedLng 
-                                                        ? `${selectedLat.toFixed(4)}, ${selectedLng.toFixed(4)}` 
+                                                        ? (selectedAddressName || `${selectedLat.toFixed(4)}, ${selectedLng.toFixed(4)}`) 
                                                         : 'Toca para abrir el mapa interactivo'}
                                                 </span>
                                             </div>
@@ -2563,12 +2568,14 @@ export default function ProductsStoreClient({ negocio }: Props) {
                 initialLng={selectedLng}
                 businessLat={config.latitudNegocio !== undefined ? parseFloat(config.latitudNegocio) : -0.180653}
                 businessLng={config.longitudNegocio !== undefined ? parseFloat(config.longitudNegocio) : -78.467838}
-                onConfirmLocation={(latVal, lngVal) => {
+                onConfirmLocation={(latVal, lngVal, addressName) => {
                     setSelectedLat(latVal);
                     setSelectedLng(lngVal);
+                    if (addressName) setSelectedAddressName(addressName);
                     try {
                         localStorage.setItem('pinchos_client_lat', latVal.toString());
                         localStorage.setItem('pinchos_client_lng', lngVal.toString());
+                        if (addressName) localStorage.setItem('pinchos_client_address_name', addressName);
                     } catch (e) {}
                 }}
             />

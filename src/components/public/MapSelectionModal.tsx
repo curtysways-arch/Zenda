@@ -10,7 +10,7 @@ interface MapSelectionModalProps {
     initialLng?: number | null;
     businessLat?: number;
     businessLng?: number;
-    onConfirmLocation: (lat: number, lng: number) => void;
+    onConfirmLocation: (lat: number, lng: number, addressName?: string) => void;
 }
 
 export default function MapSelectionModal({
@@ -31,10 +31,32 @@ export default function MapSelectionModal({
 
     const [currentLat, setCurrentLat] = useState<number>(initLatRef.current);
     const [currentLng, setCurrentLng] = useState<number>(initLngRef.current);
+    const [resolvedAddress, setResolvedAddress] = useState<string>('');
     const [isLocating, setIsLocating] = useState<boolean>(false);
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [isSearching, setIsSearching] = useState<boolean>(false);
     const [mapLoading, setMapLoading] = useState<boolean>(true);
+
+    // Reverse Geocoding automático al desplazar el mapa
+    useEffect(() => {
+        if (!isOpen || !currentLat || !currentLng) return;
+        const timer = setTimeout(async () => {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${currentLat}&lon=${currentLng}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.display_name) {
+                        const parts = data.display_name.split(',');
+                        const shortName = parts.slice(0, 3).join(',').trim();
+                        setResolvedAddress(shortName || data.display_name);
+                    }
+                }
+            } catch (e) {
+                console.warn('Error reverse geocoding:', e);
+            }
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [isOpen, currentLat, currentLng]);
 
     // Actualizar refs y auto-obtener GPS al abrir el modal
     useEffect(() => {
@@ -295,10 +317,16 @@ export default function MapSelectionModal({
                     </button>
                 </div>
 
-                {/* Coordenadas */}
-                <div className="px-5 py-2.5 bg-slate-50 border-t border-slate-100 flex justify-between text-[10px] font-mono text-slate-500 font-bold">
-                    <span>Latitud: {currentLat.toFixed(6)}</span>
-                    <span>Longitud: {currentLng.toFixed(6)}</span>
+                {/* Dirección Resuelta y Coordenadas */}
+                <div className="px-5 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold">
+                    <div className="truncate max-w-[280px] sm:max-w-[340px]">
+                        <span className="text-slate-900 font-black truncate block">
+                            {resolvedAddress ? `📍 ${resolvedAddress}` : 'Obteniendo nombre de la ubicación...'}
+                        </span>
+                    </div>
+                    <span className="font-mono text-slate-400 shrink-0 text-[9px]">
+                        {currentLat.toFixed(4)}, {currentLng.toFixed(4)}
+                    </span>
                 </div>
 
                 {/* Footer */}
@@ -313,7 +341,7 @@ export default function MapSelectionModal({
                     <button
                         type="button"
                         onClick={() => {
-                            onConfirmLocation(currentLat, currentLng);
+                            onConfirmLocation(currentLat, currentLng, resolvedAddress);
                             onClose();
                         }}
                         className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-2xl uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
