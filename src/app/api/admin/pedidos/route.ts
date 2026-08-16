@@ -444,9 +444,11 @@ export async function POST(req: Request) {
         const pricingResult = PricingEngine.calculate({
             items: items.map((i: any) => ({
                 productId: i.productoId || i.id,
-                nombreProducto: i.nombreProducto || i.nombre,
+                name: i.nombreProducto || i.nombre,
+                unitPrice: parseFloat(i.precioUnitario || i.precio || 0),
                 precioUnitario: parseFloat(i.precioUnitario || i.precio || 0),
-                cantidad: parseInt(i.cantidad || 1, 10)
+                quantity: parseInt(i.cantidad || i.quantity || 1, 10),
+                cantidad: parseInt(i.cantidad || i.quantity || 1, 10)
             })),
             deliveryType: tipoEntrega || 'PICKUP_ORDER',
             discountAmount: parseFloat(descuentoAmount || 0),
