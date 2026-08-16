@@ -241,20 +241,20 @@ export default function PedidosOnlinePage() {
       const res = await fetch('/api/admin/pedidos');
       if (res.ok) {
         const data = await res.json();
-        const onlineOnly = (data || []).filter((p: any) => {
-          const ch = (p.extraInfo?.channel || p.extraInfo?.canal || 'WEB').toUpperCase();
-          return ch !== 'POS' && ch !== 'MOSTRADOR';
+        const deliveryOnly = (data || []).filter((p: any) => {
+          const t = (p.tipoEntrega || '').toUpperCase();
+          return t === 'DELIVERY_ORDER' || t === 'DOMICILIO' || t === 'DELIVERY';
         });
-        setPedidos(onlineOnly);
+        setPedidos(deliveryOnly);
 
         if (fullscreenOrder) {
-          const updatedTarget = onlineOnly.find((p: Pedido) => p.id === fullscreenOrder.id);
+          const updatedTarget = deliveryOnly.find((p: Pedido) => p.id === fullscreenOrder.id);
           if (updatedTarget) setFullscreenOrder(updatedTarget);
         }
       }
       await fetchLogisticsData();
     } catch (e) {
-      console.error('Error fetching online orders:', e);
+      console.error('Error fetching delivery orders:', e);
     } finally {
       setLoading(false);
     }
@@ -637,11 +637,11 @@ export default function PedidosOnlinePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 text-white p-5 rounded-3xl shadow-xl">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-black">
-            <Globe className="w-6 h-6" />
+            <Bike className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-black tracking-tight text-white !text-white">Gestión Oficial de Pedidos Online</h1>
-            <p className="text-xs text-slate-400 font-medium">Haz clic en cualquier tarjeta para abrir la gestión a pantalla completa</p>
+            <h1 className="text-xl font-black tracking-tight text-white !text-white">Gestión Oficial de Delivery</h1>
+            <p className="text-xs text-slate-400 font-medium">Control exclusivo de pedidos con despacho a domicilio vía repartidor (creados en ventas o landing).</p>
           </div>
         </div>
 

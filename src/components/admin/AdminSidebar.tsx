@@ -11,7 +11,7 @@ import {
   LayoutDashboard, CalendarDays, Dribbble, Sparkles, Settings, Users, LogOut,
   MessageSquare, Building2, BarChart3, Trophy, Tags, Lock, Layout, Package,
   GraduationCap, Contact, Scissors, Store, ShieldCheck, Bell, Briefcase, Utensils,
-  Truck, Wallet, CreditCard, LucideIcon
+  Truck, Wallet, CreditCard, ClipboardList, Bike, LucideIcon
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -113,11 +113,11 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
     // Core Operational Capabilities
     if (capabilities.orders) {
       items.push({ name: 'Ventas', href: '/admin/ventas', icon: Store, section: 'GESTIÓN OPERATIVA' });
-      items.push({ name: 'Pedidos Online', href: '/admin/pedidos-online', icon: Package, section: 'GESTIÓN OPERATIVA', badge: pendingOrders > 0 ? pendingOrders : undefined });
+      items.push({ name: 'Delivery', href: '/admin/pedidos-online', icon: Bike, section: 'GESTIÓN OPERATIVA', badge: pendingOrders > 0 ? pendingOrders : undefined });
     }
     items.push({ name: 'Caja & Finanzas', href: '/admin/caja', icon: Wallet, section: 'GESTIÓN OPERATIVA' });
     if (capabilities.dispatch) {
-      items.push({ name: 'Despacho', href: '/admin/despacho', icon: Truck, section: 'GESTIÓN OPERATIVA' });
+      items.push({ name: 'Órdenes', href: '/admin/despacho', icon: ClipboardList, section: 'GESTIÓN OPERATIVA' });
     }
     if (capabilities.tables) {
       items.push({ name: 'Mesas', href: '/admin/mesas', icon: Layout, section: 'GESTIÓN OPERATIVA' });

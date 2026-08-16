@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Truck, Navigation, Clock, UserCheck, ShieldCheck, MapPin, Printer, RefreshCw,
-  Search, CheckCircle2, ChevronRight, AlertCircle, Phone, ArrowLeft, Bike, ShoppingBag, Utensils, X, Building, QrCode
+  Search, CheckCircle2, ChevronRight, AlertCircle, Phone, ArrowLeft, Bike, ShoppingBag, Utensils, X, Building, QrCode, ClipboardList
 } from 'lucide-react';
 
 interface OrderItem {
@@ -87,15 +87,21 @@ export default function AdminDespachoPage() {
 
   // Filtrado de pedidos
   const filteredOrders = orders.filter(order => {
-    if (filterChannel === 'DELIVERY' && order.tipoEntrega !== 'DOMICILIO' && order.tipoEntrega !== 'DELIVERY') return false;
-    if (filterChannel === 'TABLE' && order.tipoEntrega !== 'MESA' && order.tipoEntrega !== 'TABLE') return false;
-    if (filterChannel === 'PICKUP' && order.tipoEntrega !== 'RETIRO' && order.tipoEntrega !== 'PICKUP') return false;
+    const t = (order.tipoEntrega || '').toUpperCase();
+    const ref = (order.referenciaCliente || '').toLowerCase();
+    const isTable = t === 'MESA' || t === 'TABLE' || t === 'TABLE_ORDER' || ref.includes('mesa');
+    const isDelivery = t === 'DOMICILIO' || t === 'DELIVERY' || t === 'DELIVERY_ORDER';
+    const isPickup = t === 'RETIRO' || t === 'PICKUP' || t === 'PICKUP_ORDER' || (!isTable && !isDelivery);
+
+    if (filterChannel === 'DELIVERY' && !isDelivery) return false;
+    if (filterChannel === 'TABLE' && !isTable) return false;
+    if (filterChannel === 'PICKUP' && !isPickup) return false;
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const matchName = order.nombreCliente.toLowerCase().includes(q);
       const matchNum = String(order.numeroPedido).includes(q);
-      const matchPhone = order.telefonoCliente.includes(q);
+      const matchPhone = (order.telefonoCliente || '').includes(q);
       if (!matchName && !matchNum && !matchPhone) return false;
     }
     return true;
@@ -194,15 +200,15 @@ export default function AdminDespachoPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
         <div className="flex items-center gap-4">
           <div className="p-3.5 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-2xl">
-            <Truck className="size-7" />
+            <ClipboardList className="size-7" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-black text-slate-900 tracking-tight">Despacho & Logística Universal</h1>
-              <span className="px-2.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-black rounded-md uppercase">10/10 Enterprise</span>
+              <h1 className="text-xl font-black text-slate-900 tracking-tight">Órdenes del Día & Historial General</h1>
+              <span className="px-2.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-black rounded-md uppercase">Listado Oficial</span>
             </div>
             <p className="text-xs text-slate-500 font-semibold mt-0.5">
-              Gestión unificada de repartidores, couriers externos, entregas en mesa y retiradas en local.
+              Listado completo de todas las órdenes creadas en el día (Mesa, Para Llevar, Delivery) con sus estados y detalles.
             </p>
           </div>
         </div>
