@@ -1903,6 +1903,9 @@ export default function PedidosOnlinePage() {
                         {/* REGISTRAR REEMBOLSO MANUAL SI HACE FALTA */}
                         {(() => {
                           const fsRefundInfo = getRefundDetails(order);
+                          const isCancelledOrRejected = order.estado === 'CANCELADO' || order.estado === 'RECHAZADO' || (order as any).paymentStatus === 'RECHAZADO';
+                          // No mostrar en órdenes normales que no han sido modificadas ni canceladas
+                          if (!isCancelledOrRejected && !fsRefundInfo.hasRefund && !fsRefundInfo.isRefunded) return null;
                           if (fsRefundInfo.hasRefund) return null;
                           return (
                             <div className="pt-2 border-t border-slate-100">
