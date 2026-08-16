@@ -29,22 +29,17 @@ export async function GET() {
     const memoryDispatchTasks = dispatchEngine.getTasks(negocioId);
     const memoryResources = resourceRuntime.getResources(negocioId);
 
-    // 2. Pedidos en base de datos para sincronización y vista unificada
+    // 2. Pedidos en base de datos para sincronización y vista unificada de la jornada
     const dbOrders = await (prisma as any).pedido.findMany({
       where: {
-        negocioId,
-        estado: {
-          in: [
-            'LISTO', 'LISTA', 'FULFILLMENT', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL',
-            'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA', 'ENTREGADO', 'ENTREGADO_MESA', 'RETIRADO'
-          ]
-        }
+        negocioId
       },
       include: {
         items: true,
         payment: true
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      take: 100
     });
 
     // Sembrar recursos por defecto si la lista está vacía (repartidores demo/personal)
