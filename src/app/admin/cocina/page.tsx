@@ -121,6 +121,18 @@ export default function AdminCocinaPage() {
   );
 }
 
+function formatElapsedTime(mins: number): string {
+  if (mins < 60) return `${mins} min`;
+  const hours = Math.floor(mins / 60);
+  const remainingMins = mins % 60;
+  if (hours < 24) {
+    return remainingMins > 0 ? `${hours}h ${remainingMins}m` : `${hours}h`;
+  }
+  const days = Math.floor(hours / 24);
+  const remainingHours = hours % 24;
+  return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
+}
+
 function KDSCard({ order, onAdvance }: { order: KDSOrder; onAdvance: () => void }) {
   const minsAgo = Math.floor((Date.now() - new Date(order.createdAt).getTime()) / (1000 * 60));
   const isUrgent = minsAgo > 12;
@@ -155,7 +167,7 @@ function KDSCard({ order, onAdvance }: { order: KDSOrder; onAdvance: () => void 
           <span className={`text-xs font-black px-2.5 py-1 rounded-xl flex items-center gap-1.5 ${
             isUrgent ? 'bg-rose-500 text-white animate-pulse' : 'bg-slate-100 text-slate-700'
           }`}>
-            <Clock className="size-3.5" /> {minsAgo} min
+            <Clock className="size-3.5" /> {formatElapsedTime(minsAgo)}
           </span>
         </div>
 
