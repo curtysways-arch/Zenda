@@ -516,38 +516,38 @@ function VentasContent() {
         {/* ─── VENTA POS ACTUAL & CHECKOUT ─── */}
         <div className="w-full lg:w-[360px] xl:w-[410px] bg-white rounded-2xl border border-slate-200 shadow-sm p-3 flex flex-col justify-between h-full overflow-hidden shrink-0">
           
-          {/* Top Controls */}
-          <div className="shrink-0 space-y-2">
-            
-            {/* Header Venta POS */}
-            <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 gap-2">
-              <div className="flex items-center gap-1.5">
-                <ShoppingBag className="w-3.5 h-3.5 text-[#ea580c]" />
-                <h2 className="font-extrabold text-xs text-slate-900 uppercase tracking-wider">Orden POS Activa</h2>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ea580c]/10 text-[#ea580c]">
-                  {totalItemsCount}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    fetchActiveOrders();
-                    setShowActiveOrdersModal(true);
-                  }}
-                  className="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 text-[10px] font-black tracking-tight transition-all flex items-center gap-1 cursor-pointer border border-amber-300"
-                >
-                  <span>📋</span> Adicionar a Pedido
-                </button>
-                <button
-                  onClick={clearCart}
-                  className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-1 cursor-pointer"
-                >
-                  <Trash2 className="w-3 h-3" /> Vaciar
-                </button>
-              </div>
+          {/* Header Venta POS (Shrink-0) */}
+          <div className="shrink-0 pb-1.5 border-b border-slate-100 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <ShoppingBag className="w-3.5 h-3.5 text-[#ea580c]" />
+              <h2 className="font-extrabold text-xs text-slate-900 uppercase tracking-wider">Orden POS Activa</h2>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ea580c]/10 text-[#ea580c]">
+                {totalItemsCount}
+              </span>
             </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  fetchActiveOrders();
+                  setShowActiveOrdersModal(true);
+                }}
+                className="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 text-[10px] font-black tracking-tight transition-all flex items-center gap-1 cursor-pointer border border-amber-300"
+              >
+                <span>📋</span> Adicionar a Pedido
+              </button>
+              <button
+                onClick={clearCart}
+                className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <Trash2 className="w-3 h-3" /> Vaciar
+              </button>
+            </div>
+          </div>
 
+          {/* Cuerpo Desplazable (Formulario + Productos en Carrito) */}
+          <div className="flex-1 overflow-y-auto space-y-2 py-2 pr-1 custom-scrollbar">
+            
             {/* Banner de Modo Adición si hay un pedido seleccionado */}
             {selectedOrderForAddition && (
               <div className="p-2 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 flex items-center justify-between gap-2 text-[11px] font-extrabold animate-in fade-in">
@@ -731,102 +731,103 @@ function VentasContent() {
                 ))}
               </div>
             </div>
-          </div>
 
-          {/* Tabla de Productos en Carrito (Flex-1 Amplio con Scroll Interno) */}
-          <div className="flex-1 my-1 overflow-hidden flex flex-col min-h-[140px]">
-            <div className="flex justify-between text-[9px] font-black uppercase tracking-wider text-slate-400 px-1 mb-1 shrink-0">
-              <span>Producto</span>
-              <span className="mr-4">Empaque / Cant.</span>
-              <span>Precio</span>
-            </div>
-
-            {selectedItems.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center p-3 border border-dashed border-slate-200 rounded-xl text-center text-xs text-slate-400">
-                Selecciona productos del menú POS.
+            {/* Tabla de Productos en Carrito */}
+            <div className="pt-1">
+              <div className="flex justify-between text-[9px] font-black uppercase tracking-wider text-slate-400 px-1 mb-1">
+                <span>Producto</span>
+                <span className="mr-4">Empaque / Cant.</span>
+                <span>Precio</span>
               </div>
-            ) : (
-              <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar max-h-[220px] xl:max-h-[280px]">
-                {selectedItems.map(item => (
-                  <div
-                    key={item.productoId}
-                    className="p-1.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-1.5 hover:bg-slate-100/80 transition-colors"
-                  >
-                    {/* Thumbnail & Nombre */}
-                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                      <img
-                        src={item.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=100'}
-                        alt={item.nombreProducto}
-                        className="w-7 h-7 rounded-md object-cover shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <p className="font-extrabold text-[11px] text-slate-900 truncate">{item.nombreProducto}</p>
-                        <p className="text-[8px] text-slate-400 font-semibold">${item.precioUnitario.toFixed(2)} c/u</p>
-                      </div>
-                    </div>
 
-                    {/* Controles de Empaque & Cantidad Inline */}
-                    <div className="flex items-center gap-1 shrink-0">
-                      {item.llevaEmpaque ? (
-                        <div className="flex items-center gap-0.5 bg-amber-50 border border-amber-200 px-1 py-0.5 rounded-md text-amber-900" title={`Precio empaque: $${item.precioEmpaque.toFixed(2)}`}>
-                          <ShoppingBag className="w-2.5 h-2.5 text-amber-600" />
+              {selectedItems.length === 0 ? (
+                <div className="p-3 border border-dashed border-slate-200 rounded-xl text-center text-xs text-slate-400">
+                  Selecciona productos del menú POS.
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {selectedItems.map(item => (
+                    <div
+                      key={item.productoId}
+                      className="p-1.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-1.5 hover:bg-slate-100/80 transition-colors"
+                    >
+                      {/* Thumbnail & Nombre */}
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <img
+                          src={item.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=100'}
+                          alt={item.nombreProducto}
+                          className="w-7 h-7 rounded-md object-cover shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <p className="font-extrabold text-[11px] text-slate-900 truncate">{item.nombreProducto}</p>
+                          <p className="text-[8px] text-slate-400 font-semibold">${item.precioUnitario.toFixed(2)} c/u</p>
+                        </div>
+                      </div>
+
+                      {/* Controles de Empaque & Cantidad Inline */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {item.llevaEmpaque ? (
+                          <div className="flex items-center gap-0.5 bg-amber-50 border border-amber-200 px-1 py-0.5 rounded-md text-amber-900" title={`Precio empaque: $${item.precioEmpaque.toFixed(2)}`}>
+                            <ShoppingBag className="w-2.5 h-2.5 text-amber-600" />
+                            <button
+                              type="button"
+                              onClick={() => updateTakeawayQty(item.productoId, -1)}
+                              disabled={item.takeawayQty === 0}
+                              className="w-3 h-3 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[9px] cursor-pointer"
+                            >
+                              -
+                            </button>
+                            <span className="w-2 text-center font-black text-[9px] text-amber-950">{item.takeawayQty}</span>
+                            <button
+                              type="button"
+                              onClick={() => updateTakeawayQty(item.productoId, 1)}
+                              disabled={item.takeawayQty >= item.cantidad}
+                              className="w-3 h-3 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[9px] cursor-pointer"
+                            >
+                              +
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-[8px] font-extrabold text-slate-400 px-1">Sin Empaque</span>
+                        )}
+
+                        <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-md border border-slate-200 bg-white">
                           <button
-                            type="button"
-                            onClick={() => updateTakeawayQty(item.productoId, -1)}
-                            disabled={item.takeawayQty === 0}
-                            className="w-3 h-3 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[9px] cursor-pointer"
+                            onClick={() => updateQty(item.productoId, -1)}
+                            className="w-3.5 h-3.5 flex items-center justify-center font-black text-[10px] text-slate-600 hover:text-rose-500"
                           >
                             -
                           </button>
-                          <span className="w-2 text-center font-black text-[9px] text-amber-950">{item.takeawayQty}</span>
+                          <span className="font-extrabold text-[10px] w-2.5 text-center text-slate-900">{item.cantidad}</span>
                           <button
-                            type="button"
-                            onClick={() => updateTakeawayQty(item.productoId, 1)}
-                            disabled={item.takeawayQty >= item.cantidad}
-                            className="w-3 h-3 flex items-center justify-center font-black bg-amber-200 hover:bg-amber-300 disabled:opacity-30 rounded text-amber-950 text-[9px] cursor-pointer"
+                            onClick={() => updateQty(item.productoId, 1)}
+                            className="w-3.5 h-3.5 flex items-center justify-center font-black text-[10px] text-slate-600 hover:text-emerald-600"
                           >
                             +
                           </button>
                         </div>
-                      ) : (
-                        <span className="text-[8px] font-extrabold text-slate-400 px-1">Sin Empaque</span>
-                      )}
+                      </div>
 
-                      <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-md border border-slate-200 bg-white">
+                      {/* Total & Delete */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="font-black text-[11px] text-slate-900">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
                         <button
-                          onClick={() => updateQty(item.productoId, -1)}
-                          className="w-3.5 h-3.5 flex items-center justify-center font-black text-[10px] text-slate-600 hover:text-rose-500"
+                          onClick={() => removeItem(item.productoId)}
+                          className="text-slate-400 hover:text-rose-500 p-0.5 cursor-pointer"
                         >
-                          -
-                        </button>
-                        <span className="font-extrabold text-[10px] w-2.5 text-center text-slate-900">{item.cantidad}</span>
-                        <button
-                          onClick={() => updateQty(item.productoId, 1)}
-                          className="w-3.5 h-3.5 flex items-center justify-center font-black text-[10px] text-slate-600 hover:text-emerald-600"
-                        >
-                          +
+                          <X className="w-3 h-3" />
                         </button>
                       </div>
                     </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-                    {/* Total & Delete */}
-                    <div className="flex items-center gap-1 shrink-0">
-                      <span className="font-black text-[11px] text-slate-900">${(item.precioUnitario * item.cantidad).toFixed(2)}</span>
-                      <button
-                        onClick={() => removeItem(item.productoId)}
-                        className="text-slate-400 hover:text-rose-500 p-0.5 cursor-pointer"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
-          {/* Bottom Totals & Submit Action */}
-          <div className="shrink-0 space-y-1.5 pt-1 border-t border-slate-100">
+          {/* Bottom Totals & Submit Action (Fijo Abajo Siempre Visible) */}
+          <div className="shrink-0 space-y-1.5 pt-2 border-t border-slate-100 bg-white">
             {/* Totales */}
             <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 space-y-0.5">
               <div className="flex justify-between text-[10px] text-slate-500 font-semibold">
@@ -863,7 +864,7 @@ function VentasContent() {
               </button>
             </div>
 
-            {/* Submit Action Button */}
+            {/* Submit Action Button (PINNED 100% VISIBLE) */}
             <button
               onClick={handleSubmitOrder}
               disabled={submitting || selectedItems.length === 0}
