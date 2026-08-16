@@ -1299,7 +1299,7 @@ export default function PedidosOnlinePage() {
                                         setItemsAvailability(prev => ({ ...prev, [item.id]: true }));
                                       }
                                     }}
-                                    className="w-9 text-center font-mono font-black text-xs text-slate-900 py-1 outline-none"
+                                    className="w-10 text-center font-mono font-black text-xs bg-white text-slate-900 !text-slate-900 py-1 border-x border-slate-200 outline-none"
                                   />
                                   <button
                                     type="button"
@@ -1339,10 +1339,9 @@ export default function PedidosOnlinePage() {
                         type="button"
                         onClick={() => handleSaveDisponibilidad(order)}
                         disabled={processingId === order.id}
-                        className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase rounded-2xl shadow-lg shadow-blue-600/20 cursor-pointer transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md active:scale-95 disabled:opacity-50"
                       >
-                        {processingId === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                        Guardar Disponibilidad / Enviar Cambios
+                        <Check className="w-4 h-4" /> Guardar Disponibilidad / Enviar Cambios
                       </button>
                     </>
                   )}
@@ -1374,7 +1373,7 @@ export default function PedidosOnlinePage() {
 
                       {/* DESGLOSE FINANCIERO DE COBRO Y LIQUIDACIÓN CON DRIVER */}
                       {(() => {
-                        const drvFee = 3.04;
+                        const drvFee = Number(order.costoEnvio) || 0;
                         const netCashToRestaurant = Math.max(0, totalVal - drvFee);
                         const isCashOrder = (order as any).metodoPago === 'EFECTIVO' || (!isPaymentVerified && (order as any).payment?.metodo === 'EFECTIVO');
 
