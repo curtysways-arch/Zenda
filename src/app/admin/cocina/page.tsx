@@ -134,11 +134,12 @@ function KDSCard({ order, onAdvance }: { order: KDSOrder; onAdvance: () => void 
   const checkedCount = Object.values(checkedItems).filter(Boolean).length;
   const allChecked = totalItemsCount > 0 && checkedCount === totalItemsCount;
   const isDelivery = ['DELIVERY_ORDER', 'DOMICILIO', 'DELIVERY'].includes((order.tipoEntrega || '').toUpperCase());
-
+  
   // Extraer información de Mesa y Recomendaciones para Cocina
   const extra = (order.extraInfo as any) || {};
   const rawTable = extra.mesaCode || extra.tableName || (order as any).referenciaCliente || (order as any).referencia || '';
   const mesaLabel = rawTable ? (rawTable.toLowerCase().includes('mesa') ? rawTable : `Mesa ${rawTable}`) : null;
+  const isTableOrder = Boolean(mesaLabel) || ['TABLE_ORDER', 'MESA', 'TABLE'].includes((order.tipoEntrega || '').toUpperCase());
   const kitchenNotes = extra.kitchenNotes || (order as any).notas || (order as any).observaciones || null;
 
   return (
@@ -159,17 +160,18 @@ function KDSCard({ order, onAdvance }: { order: KDSOrder; onAdvance: () => void 
         </div>
 
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-lg flex items-center gap-1 ${
-            isDelivery ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-purple-50 text-purple-700 border border-purple-200'
-          }`}>
-            {isDelivery ? <Bike className="size-3" /> : <ShoppingBag className="size-3" />}
-            {isDelivery ? 'Delivery' : 'Retiro'}
-          </span>
-
-          {/* BADGE DESTACADO DE MESA */}
-          {mesaLabel && (
+          {isTableOrder ? (
+            /* BADGE DESTACADO DE MESA (SIN MOSTRAR RETIRO) */
             <span className="bg-amber-100 text-amber-950 border border-amber-300 text-[11px] font-black px-2.5 py-0.5 rounded-lg flex items-center gap-1 shadow-2xs">
-              🍽️ {mesaLabel}
+              🍽️ {mesaLabel || 'En Mesa'}
+            </span>
+          ) : isDelivery ? (
+            <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-lg flex items-center gap-1">
+              <Bike className="size-3" /> Delivery
+            </span>
+          ) : (
+            <span className="bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-lg flex items-center gap-1">
+              <ShoppingBag className="size-3" /> Para Llevar
             </span>
           )}
         </div>
