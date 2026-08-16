@@ -45,6 +45,7 @@ function VentasContent() {
   const [kitchenNotes, setKitchenNotes] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [pagarInmediato, setPagarInmediato] = useState(true);
+  const [montoRecibido, setMontoRecibido] = useState<string>('');
 
   // Business & Delivery GPS Config
   const [bizLat, setBizLat] = useState<number>(-0.180653);
@@ -249,6 +250,7 @@ function VentasContent() {
   const clearCart = () => {
     setCart({});
     setKitchenNotes('');
+    setMontoRecibido('');
   };
 
   // Selected Cart Items Summary (incorporando llevaEmpaque y precioEmpaque por producto)
@@ -290,6 +292,9 @@ function VentasContent() {
 
     setSubmitting(true);
     try {
+      const numRecibido = parseFloat(montoRecibido) || 0;
+      const numVuelto = Math.max(0, numRecibido - grandTotal);
+
       if (selectedOrderForAddition) {
         // MODO ADICIÓN A PEDIDO EXISTENTE
         const res = await fetch('/api/admin/pedidos', {
@@ -328,6 +333,8 @@ function VentasContent() {
             referenciaCliente: tipoEntrega === 'DELIVERY_ORDER' ? referenciaCliente : null,
             tipoEntrega,
             metodoPago,
+            montoRecibido: numRecibido > 0 ? numRecibido : grandTotal,
+            vuelto: numRecibido > 0 ? numVuelto : 0,
             mesaCode: tipoEntrega === 'TABLE_ORDER' ? mesaCode : 'POS',
             kitchenNotes: kitchenNotes.trim() || null,
             autoConfirm: true,
@@ -342,7 +349,7 @@ function VentasContent() {
         });
 
         if (res.ok) {
-          alert(pagarInmediato ? '¡Venta POS Cobrada y enviada a cocina!' : '¡Orden POS enviada a cocina! Pendiente de cobro en Caja.');
+          alert(pagarInmediato ? `¡Venta POS Cobrada! (Cambio: $${numVuelto.toFixed(2)})` : '¡Orden POS enviada a cocina! Pendiente de cobro en Caja.');
           clearCart();
         } else {
           const errData = await res.json();
@@ -863,6 +870,51 @@ function VentasContent() {
                 {pagarInmediato ? 'SÍ (Pagado)' : 'NO (Ir a Caja)'}
               </button>
             </div>
+
+            {/* Panel de Método de Pago y Vuelto / Cambio */}
+            {pagarInmediato && (
+              <div className="p-2 rounded-xl bg-slate-900 text-white space-y-1.5 shadow-sm">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-[10px] font-extrabold text-slate-300 uppercase">Forma de Pago:</span>
+                  <div className="flex gap-1">
+                    {(['EFECTIVO', 'TRANSFERENCIA', 'TARJETA'] as const).map(m => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setMetodoPago(m)}
+                        className={`px-2 py-0.5 rounded text-[9px] font-black transition-all cursor-pointer ${
+                          metodoPago === m ? 'bg-amber-400 text-slate-950 font-black' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        }`}
+                      >
+                        {m === 'EFECTIVO' ? '💵 Efectivo' : m === 'TRANSFERENCIA' ? '🏦 Transf.' : '💳 Tarjeta'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {metodoPago === 'EFECTIVO' && (
+                  <div className="space-y-1 pt-1 border-t border-slate-800">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-bold text-slate-300">Paga con ($):</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder={grandTotal > 0 ? grandTotal.toFixed(2) : '0.00'}
+                        value={montoRecibido}
+                        onChange={e => setMontoRecibido(e.target.value)}
+                        className="w-24 px-2 py-1 bg-slate-800 border border-slate-700 rounded-lg text-xs font-black text-right text-amber-300 outline-none focus:border-amber-400"
+                      />
+                    </div>
+                    <div className="flex justify-between items-center text-[10px] pt-1">
+                      <span className="font-extrabold text-slate-400 uppercase">Vuelto / Cambio:</span>
+                      <span className="font-black text-xs text-emerald-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                        ${(Math.max(0, (parseFloat(montoRecibido) || grandTotal) - grandTotal)).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Submit Action Button (PINNED 100% VISIBLE) */}
             <button

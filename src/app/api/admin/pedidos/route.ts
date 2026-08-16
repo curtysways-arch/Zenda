@@ -426,7 +426,8 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { 
             nombreCliente, telefonoCliente, direccionCliente, referenciaCliente, 
-            tipoEntrega, items, autoConfirm, descuentoAmount, mesaCode, kitchenNotes 
+            tipoEntrega, items, autoConfirm, descuentoAmount, mesaCode, kitchenNotes,
+            metodoPago, montoRecibido, vuelto, paymentStatus
         } = body;
 
         if (!items || !Array.isArray(items) || items.length === 0) {
@@ -436,6 +437,11 @@ export async function POST(req: Request) {
         const negocio = await prisma.negocio.findUnique({ where: { id: negocioId } });
         if (!negocio) {
             return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
+        }
+
+        let cleanRef = referenciaCliente || null;
+        if (!cleanRef && mesaCode && mesaCode !== 'POS' && mesaCode !== 'POS-Virtual') {
+            cleanRef = mesaCode.toLowerCase().startsWith('mesa') ? mesaCode : `Mesa ${mesaCode}`;
         }
 
         const config = (negocio.configuracion as any) || {};
@@ -466,6 +472,9 @@ export async function POST(req: Request) {
 
             const estadoInicial = autoConfirm ? 'EN_PREPARACION' : 'WAITING_CONFIRMATION';
 
+            const numRecibido = montoRecibido !== undefined && montoRecibido !== null ? parseFloat(montoRecibido) : pricingResult.total;
+            const numVuelto = vuelto !== undefined && vuelto !== null ? parseFloat(vuelto) : Math.max(0, numRecibido - pricingResult.total);
+
             const newOrder = await (tx as any).pedido.create({
                 data: {
                     negocioId,
@@ -474,7 +483,7 @@ export async function POST(req: Request) {
                     nombreCliente: nombreCliente || 'Cliente Caja',
                     telefonoCliente: telefonoCliente || '0999999999',
                     direccionCliente: direccionCliente || null,
-                    referenciaCliente: referenciaCliente || (mesaCode ? `Mesa: ${mesaCode}` : null),
+                    referenciaCliente: cleanRef,
                     fechaEntrega: new Date(),
                     franjaHoraria: 'Inmediata',
                     subtotal: pricingResult.subtotal,
@@ -487,8 +496,20 @@ export async function POST(req: Request) {
                         kitchenNotes: kitchenNotes || null,
                         packagingCost: pricingResult.packagingCost,
                         discountAmount: pricingResult.discountAmount,
-                        pricingBreakdown: pricingResult
+                        pricingBreakdown: pricingResult,
+                        metodoPago: metodoPago || 'EFECTIVO',
+                        montoRecibido: numRecibido,
+                        vuelto: numVuelto,
+                        paymentStatus: paymentStatus || 'PAGADO'
                     },
+                    payment: paymentStatus === 'PAGADO' || metodoPago ? {
+                        create: {
+                            montoTotal: pricingResult.total,
+                            montoPagado: numRecibido,
+                            montoExcedente: numVuelto,
+                            estado: paymentStatus === 'PAGADO' ? 'CONFIRMADO' : 'PENDIENTE'
+                        }
+                    } : undefined,
                     items: {
                         create: items.map((i: any) => ({
                             productoId: i.productoId || i.id,
@@ -498,7 +519,7 @@ export async function POST(req: Request) {
                         }))
                     }
                 },
-                include: { items: true }
+                include: { items: true, payment: true }
             });
 
             return newOrder;

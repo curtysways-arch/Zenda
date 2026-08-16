@@ -29,42 +29,28 @@ interface Order {
   estado: string;
   createdAt: string;
   items: OrderItem[];
-}
-
-interface DispatchResource {
-  resourceId: string;
-  name: string;
-  phone?: string;
-  type: string;
-  status: string;
-}
-
-interface DispatchTask {
-  taskId: string;
-  orderId: string;
-  channel: string;
-  status: string;
-  dispatchResourceId?: string;
-  assignedResource?: DispatchResource;
+  extraInfo?: any;
+  payment?: any;
 }
 
 export default function AdminDespachoPage() {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [tasks, setTasks] = useState<DispatchTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterChannel, setFilterChannel] = useState<'ALL' | 'DELIVERY' | 'TABLE' | 'PICKUP'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterDate, setFilterDate] = useState<'today' | 'yesterday' | 'all' | 'custom'>('today');
+  const [customDate, setCustomDate] = useState<string>('');
   const [selectedOrderForMap, setSelectedOrderForMap] = useState<Order | null>(null);
   const [selectedOrderForPrint, setSelectedOrderForPrint] = useState<Order | null>(null);
 
   const fetchDespachoData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/despacho');
+      const dParam = filterDate === 'custom' ? (customDate || 'today') : filterDate;
+      const res = await fetch(`/api/admin/despacho?date=${dParam}`);
       if (res.ok) {
         const data = await res.json();
         setOrders(data.orders || []);
-        setTasks(data.dispatchTasks || []);
       }
     } catch (err) {
       console.error('Error cargando datos de despacho:', err);
@@ -77,7 +63,7 @@ export default function AdminDespachoPage() {
     fetchDespachoData();
     const interval = setInterval(fetchDespachoData, 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [filterDate, customDate]);
 
   const filteredOrders = orders.filter(order => {
     const t = (order.tipoEntrega || '').toUpperCase();
@@ -132,9 +118,20 @@ export default function AdminDespachoPage() {
     const ref = (order.referenciaCliente || '').toLowerCase();
     const isTable    = t === 'MESA' || t === 'TABLE' || t === 'TABLE_ORDER' || ref.includes('mesa');
     const isDelivery = t === 'DOMICILIO' || t === 'DELIVERY' || t === 'DELIVERY_ORDER';
-    if (isTable)    return { label: '🍽️ Mesa',      color: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
-    if (isDelivery) return { label: '🛵 Delivery',  color: 'bg-amber-50 text-amber-800 border-amber-200' };
-    return              { label: '🛍️ Para Llevar', color: 'bg-sky-50 text-sky-800 border-sky-200' };
+
+    let cleanMesaName = '';
+    if (isTable) {
+      if (order.referenciaCliente) {
+        cleanMesaName = order.referenciaCliente.replace(/^Mesa:\s*/i, '').replace(/^Mesa\s+/i, 'Mesa ');
+      }
+      if (!cleanMesaName || cleanMesaName.toLowerCase() === 'mesa') {
+        cleanMesaName = 'Mesa';
+      }
+    }
+
+    if (isTable)    return { label: `🍽️ ${cleanMesaName}`, color: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+    if (isDelivery) return { label: '🛵 Delivery',       color: 'bg-amber-50 text-amber-800 border-amber-200' };
+    return              { label: '🛍️ Para Llevar',      color: 'bg-sky-50 text-sky-800 border-sky-200' };
   };
 
   return (
@@ -152,7 +149,7 @@ export default function AdminDespachoPage() {
               <span className="px-2.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-black rounded-md uppercase tracking-wider">Historial Oficial</span>
             </div>
             <p className="text-xs text-slate-500 font-semibold mt-0.5">
-              Mesa · Para Llevar · Delivery — todos los estados y detalles completos.
+              Mesa · Para Llevar · Delivery — todos los estados, forma de pago y detalles completos.
             </p>
           </div>
         </div>
@@ -165,35 +162,88 @@ export default function AdminDespachoPage() {
         </button>
       </div>
 
-      {/* ── FILTROS ── */}
-      <div className="flex flex-wrap items-center gap-2 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
-        {[
-          { key: 'ALL',      label: `Todos (${orders.length})`, icon: null },
-          { key: 'DELIVERY', label: 'Delivery',   icon: <Bike className="size-3.5 text-amber-500" /> },
-          { key: 'TABLE',    label: 'En Mesa',    icon: <Utensils className="size-3.5 text-emerald-600" /> },
-          { key: 'PICKUP',   label: 'Para Llevar', icon: <ShoppingBag className="size-3.5 text-sky-600" /> },
-        ].map(f => (
-          <button
-            key={f.key}
-            onClick={() => setFilterChannel(f.key as any)}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer border ${
-              filterChannel === f.key
-                ? 'bg-slate-900 text-white border-slate-900'
-                : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-400'
-            }`}
-          >
-            {f.icon}{f.label}
-          </button>
-        ))}
-        <div className="relative ml-auto w-full sm:w-64">
-          <Search className="size-4 text-slate-400 absolute left-3 top-2.5" />
-          <input
-            type="text"
-            placeholder="Buscar cliente o # pedido..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-indigo-400 transition-colors"
-          />
+      {/* ── FILTROS (CANAL & FECHA) ── */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+        {/* Filtros por Canal */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {[
+            { key: 'ALL',      label: `Todos (${orders.length})`, icon: null },
+            { key: 'DELIVERY', label: 'Delivery',   icon: <Bike className="size-3.5 text-amber-500" /> },
+            { key: 'TABLE',    label: 'En Mesa',    icon: <Utensils className="size-3.5 text-emerald-600" /> },
+            { key: 'PICKUP',   label: 'Para Llevar', icon: <ShoppingBag className="size-3.5 text-sky-600" /> },
+          ].map(f => (
+            <button
+              key={f.key}
+              onClick={() => setFilterChannel(f.key as any)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer border ${
+                filterChannel === f.key
+                  ? 'bg-slate-900 text-white border-slate-900'
+                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-400'
+              }`}
+            >
+              {f.icon}{f.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Filtros por Fecha & Búsqueda */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Selector Rápido de Fecha */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setFilterDate('today')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
+                filterDate === 'today' ? 'bg-white text-indigo-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Hoy
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterDate('yesterday')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
+                filterDate === 'yesterday' ? 'bg-white text-indigo-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Ayer
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterDate('all')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
+                filterDate === 'all' ? 'bg-white text-indigo-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Todas
+            </button>
+          </div>
+
+          {/* Input de Fecha Específica (Calendario) */}
+          <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1">
+            <span className="text-[10px] font-black text-slate-400 uppercase">📅 Fecha:</span>
+            <input
+              type="date"
+              value={customDate}
+              onChange={e => {
+                setCustomDate(e.target.value);
+                if (e.target.value) setFilterDate('custom');
+              }}
+              className="bg-transparent text-xs font-bold text-slate-800 outline-none cursor-pointer"
+            />
+          </div>
+
+          {/* Búsqueda */}
+          <div className="relative w-full sm:w-48">
+            <Search className="size-3.5 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              placeholder="Buscar cliente o #..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-indigo-400 transition-colors"
+            />
+          </div>
         </div>
       </div>
 
@@ -212,7 +262,7 @@ export default function AdminDespachoPage() {
       ) : (
         <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
           {/* Encabezado tabla — desktop */}
-          <div className="hidden lg:grid grid-cols-[56px_1fr_130px_130px_140px_120px_90px] gap-3 px-6 py-3 bg-slate-50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          <div className="hidden lg:grid grid-cols-[56px_1fr_130px_140px_140px_120px_90px] gap-3 px-6 py-3 bg-slate-50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
             <span>#</span>
             <span>Cliente</span>
             <span>Hora</span>
@@ -228,22 +278,31 @@ export default function AdminDespachoPage() {
             );
             const displayTotal = computedTotal > 0 ? computedTotal : (Number(order.total) || 0);
             const channel = getChannelInfo(order);
-            const ref = (order.referenciaCliente || '').toLowerCase();
-            const mesaRef = ref.includes('mesa') ? order.referenciaCliente : null;
             const hora = new Date(order.createdAt).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+
+            let extra: any = {};
+            if (typeof order.extraInfo === 'string') {
+              try { extra = JSON.parse(order.extraInfo); } catch { extra = {}; }
+            } else if (order.extraInfo && typeof order.extraInfo === 'object') {
+              extra = order.extraInfo;
+            }
+
+            const metodoPago = extra.metodoPago || order.payment?.method?.nombre || 'EFECTIVO';
+            const montoRecibido = extra.montoRecibido ?? order.payment?.montoPagado ?? null;
+            const vuelto = extra.vuelto ?? order.payment?.montoExcedente ?? null;
+            const isPagado = extra.paymentStatus === 'PAGADO' || order.payment?.estado === 'CONFIRMADO';
 
             return (
               <details key={order.id} className={`group border-b border-slate-100 last:border-0 ${idx % 2 !== 0 ? 'bg-slate-50/40' : ''}`}>
                 <summary className="list-none cursor-pointer select-none">
                   {/* Desktop row */}
-                  <div className="hidden lg:grid grid-cols-[56px_1fr_130px_130px_140px_120px_90px] gap-3 items-center px-6 py-4 hover:bg-indigo-50/30 transition-colors">
+                  <div className="hidden lg:grid grid-cols-[56px_1fr_130px_140px_140px_120px_90px] gap-3 items-center px-6 py-4 hover:bg-indigo-50/30 transition-colors">
                     <span className="text-xs font-black text-slate-400">#{order.numeroPedido}</span>
                     <div className="min-w-0">
                       <p className="text-sm font-black text-slate-900 truncate">{order.nombreCliente}</p>
                       <p className="text-[11px] text-slate-400 font-semibold flex items-center gap-1">
                         <Phone className="size-2.5 shrink-0" />
                         <span className="truncate">{order.telefonoCliente}</span>
-                        {mesaRef && <span className="ml-1 text-emerald-700 font-black shrink-0">· {mesaRef}</span>}
                       </p>
                     </div>
                     <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
@@ -281,7 +340,6 @@ export default function AdminDespachoPage() {
                       <div className="min-w-0">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">#{order.numeroPedido} · {hora}</p>
                         <p className="text-sm font-black text-slate-900 truncate">{order.nombreCliente}</p>
-                        {mesaRef && <p className="text-xs text-emerald-700 font-bold">{mesaRef}</p>}
                       </div>
                       <div className="flex flex-col items-end gap-1 shrink-0">
                         {getStatusBadge(order.estado)}
@@ -326,31 +384,53 @@ export default function AdminDespachoPage() {
                       </div>
                     </div>
 
-                    {/* Info entrega + acciones */}
+                    {/* Info entrega & pago */}
                     <div className="bg-white rounded-2xl border border-slate-200/80 p-4 flex flex-col gap-3">
-                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Detalles de entrega</p>
-                      <div className="space-y-2.5">
+                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Detalles de Entrega & Pago</p>
+                      <div className="space-y-2.5 text-xs font-semibold text-slate-700">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-slate-400 font-bold">Canal</span>
-                          <span className={`text-[11px] font-black px-2 py-0.5 rounded-md border ${channel.color}`}>{channel.label}</span>
+                          <span className="text-slate-400 font-bold">Canal / Ubicación</span>
+                          <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-md border ${channel.color}`}>{channel.label}</span>
                         </div>
-                        {order.referenciaCliente && (
+
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                          <span className="text-slate-400 font-bold">Forma de Pago</span>
+                          <span className="font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
+                            {metodoPago === 'EFECTIVO' ? '💵 Efectivo' : metodoPago === 'TRANSFERENCIA' ? '🏦 Transferencia' : metodoPago === 'TARJETA' ? '💳 Tarjeta' : metodoPago}
+                          </span>
+                        </div>
+
+                        {montoRecibido !== null && Number(montoRecibido) > 0 && (
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-slate-400 font-bold">Referencia</span>
-                            <span className="text-xs font-bold text-slate-800 text-right max-w-[60%]">{order.referenciaCliente}</span>
+                            <span className="text-slate-400 font-bold">Pagó con</span>
+                            <span className="font-bold text-slate-800">${Number(montoRecibido).toFixed(2)}</span>
                           </div>
                         )}
+
+                        {vuelto !== null && Number(vuelto) > 0 && (
+                          <div className="flex items-center justify-between text-emerald-700">
+                            <span className="font-extrabold">Cambio / Vuelto</span>
+                            <span className="font-black bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">${Number(vuelto).toFixed(2)}</span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                          <span className="text-slate-400 font-bold">Estado de Pago</span>
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase border ${
+                            isPagado ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-amber-100 text-amber-900 border-amber-300'
+                          }`}>
+                            {isPagado ? 'PAGADO' : 'PENDIENTE EN CAJA'}
+                          </span>
+                        </div>
+
                         {order.direccionCliente && (
                           <div className="flex items-start gap-2 pt-1 border-t border-slate-100">
                             <MapPin className="size-3.5 text-slate-400 shrink-0 mt-0.5" />
                             <span className="text-xs font-semibold text-slate-800">{order.direccionCliente}</span>
                           </div>
                         )}
-                        <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-                          <span className="text-xs text-slate-400 font-bold">Estado</span>
-                          {getStatusBadge(order.estado)}
-                        </div>
                       </div>
+
                       <div className="flex gap-2 mt-auto pt-2 border-t border-slate-100">
                         <button
                           onClick={() => setSelectedOrderForPrint(order)}
@@ -382,6 +462,18 @@ export default function AdminDespachoPage() {
           (sum, it) => sum + (Number(it.precioUnitario) || 0) * (Number(it.cantidad) || 1), 0
         );
         const dt = ct > 0 ? ct : (Number(selectedOrderForPrint.total) || 0);
+
+        let extra: any = {};
+        if (typeof selectedOrderForPrint.extraInfo === 'string') {
+          try { extra = JSON.parse(selectedOrderForPrint.extraInfo); } catch { extra = {}; }
+        } else if (selectedOrderForPrint.extraInfo && typeof selectedOrderForPrint.extraInfo === 'object') {
+          extra = selectedOrderForPrint.extraInfo;
+        }
+
+        const metodo = extra.metodoPago || selectedOrderForPrint.payment?.method?.nombre || 'EFECTIVO';
+        const recibido = extra.montoRecibido ?? selectedOrderForPrint.payment?.montoPagado ?? null;
+        const vuelto = extra.vuelto ?? selectedOrderForPrint.payment?.montoExcedente ?? null;
+
         return (
           <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl font-mono text-xs">
@@ -390,12 +482,16 @@ export default function AdminDespachoPage() {
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Citiox Enterprise</p>
                 <p className="font-black text-slate-800">PEDIDO #{selectedOrderForPrint.numeroPedido}</p>
               </div>
+
               <div className="space-y-1 border-b border-dashed border-slate-300 pb-4">
                 <p><strong>Cliente:</strong> {selectedOrderForPrint.nombreCliente}</p>
                 <p><strong>Teléfono:</strong> {selectedOrderForPrint.telefonoCliente}</p>
-                {selectedOrderForPrint.referenciaCliente && <p><strong>Referencia:</strong> {selectedOrderForPrint.referenciaCliente}</p>}
                 {selectedOrderForPrint.direccionCliente && <p><strong>Dirección:</strong> {selectedOrderForPrint.direccionCliente}</p>}
+                <p><strong>Pago:</strong> {metodo}</p>
+                {recibido !== null && Number(recibido) > 0 && <p><strong>Paga con:</strong> ${Number(recibido).toFixed(2)}</p>}
+                {vuelto !== null && Number(vuelto) > 0 && <p><strong>Cambio:</strong> ${Number(vuelto).toFixed(2)}</p>}
               </div>
+
               <div className="space-y-1.5 border-b border-dashed border-slate-300 pb-4">
                 <p className="font-bold uppercase mb-2">Items:</p>
                 {selectedOrderForPrint.items.map(item => (
@@ -405,10 +501,12 @@ export default function AdminDespachoPage() {
                   </div>
                 ))}
               </div>
+
               <div className="flex justify-between font-black text-sm">
                 <span>TOTAL:</span>
                 <span className="text-emerald-700">${dt.toFixed(2)}</span>
               </div>
+
               <div className="flex gap-2 font-sans pt-1">
                 <button
                   onClick={() => window.print()}

@@ -9,7 +9,7 @@ import { OrderRuntime } from '@/core/runtimes/OrderRuntime';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -21,25 +21,51 @@ export async function GET() {
   }
 
   try {
+    const { searchParams } = new URL(request.url);
+    const dateParam = searchParams.get('date'); // 'today' | 'yesterday' | 'all' | 'YYYY-MM-DD'
+
     const dispatchEngine = DispatchEngine.getInstance();
     const resourceRuntime = DispatchResourceRuntime.getInstance();
-    const fulfillmentEngine = FulfillmentEngine.getInstance();
 
     // 1. Tareas de despacho activas en memoria
     const memoryDispatchTasks = dispatchEngine.getTasks(negocioId);
     const memoryResources = resourceRuntime.getResources(negocioId);
 
-    // 2. Pedidos en base de datos para sincronización y vista unificada de la jornada
+    // 2. Construcción de filtro por fecha
+    const whereCondition: any = { negocioId };
+
+    if (dateParam && dateParam !== 'all') {
+      let targetDate = new Date();
+      if (dateParam === 'yesterday') {
+        targetDate.setDate(targetDate.getDate() - 1);
+      } else if (dateParam !== 'today') {
+        const parts = dateParam.split('-');
+        if (parts.length === 3) {
+          targetDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        }
+      }
+
+      const startOfDay = new Date(targetDate);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(targetDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      whereCondition.createdAt = {
+        gte: startOfDay,
+        lte: endOfDay
+      };
+    }
+
+    // 3. Pedidos en base de datos para sincronización y vista unificada
     const dbOrders = await (prisma as any).pedido.findMany({
-      where: {
-        negocioId
-      },
+      where: whereCondition,
       include: {
         items: true,
         payment: true
       },
       orderBy: { createdAt: 'desc' },
-      take: 100
+      take: 200
     });
 
     // Sembrar recursos por defecto si la lista está vacía (repartidores demo/personal)
