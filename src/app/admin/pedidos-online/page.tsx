@@ -1266,12 +1266,12 @@ export default function PedidosOnlinePage() {
 
                               {/* CONTROLES DE MODIFICAR CANTIDAD */}
                               <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-black uppercase text-slate-400">Cant:</span>
-                                <div className="flex items-center border border-slate-200 rounded-xl bg-white overflow-hidden shadow-2xs">
+                                <span className="text-[10px] font-black uppercase text-slate-500">Cant:</span>
+                                <div className="flex items-center border border-slate-300 rounded-xl bg-slate-100 overflow-hidden shadow-xs">
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      const current = itemsQuantities[item.id] !== undefined ? itemsQuantities[item.id] : item.cantidad;
+                                      const current = itemsQuantities[item.id] !== undefined ? itemsQuantities[item.id] : (item.cantidad || 1);
                                       if (current > 0) {
                                         const nextQty = current - 1;
                                         setItemsQuantities(prev => ({ ...prev, [item.id]: nextQty }));
@@ -1280,38 +1280,34 @@ export default function PedidosOnlinePage() {
                                         }
                                       }
                                     }}
-                                    className="w-7 h-7 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs flex items-center justify-center cursor-pointer transition-all active:scale-90"
+                                    className="w-8 h-8 bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-sm flex items-center justify-center cursor-pointer transition-all active:scale-90 select-none"
                                   >
                                     -
                                   </button>
                                   <input
-                                    type="number"
-                                    min="0"
-                                    max={item.cantidad}
-                                    value={currentQty}
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={itemsQuantities[item.id] !== undefined ? itemsQuantities[item.id] : (item.cantidad || 1)}
                                     onChange={(e) => {
-                                      const val = parseInt(e.target.value) || 0;
-                                      const clamped = Math.max(0, val);
-                                      setItemsQuantities(prev => ({ ...prev, [item.id]: clamped }));
-                                      if (clamped === 0) {
-                                        setItemsAvailability(prev => ({ ...prev, [item.id]: false }));
-                                      } else {
-                                        setItemsAvailability(prev => ({ ...prev, [item.id]: true }));
-                                      }
+                                      const raw = e.target.value.replace(/\D/g, '');
+                                      const val = raw === '' ? 0 : parseInt(raw, 10);
+                                      setItemsQuantities(prev => ({ ...prev, [item.id]: val }));
+                                      setItemsAvailability(prev => ({ ...prev, [item.id]: val > 0 }));
                                     }}
-                                    className="w-10 text-center font-mono font-black text-xs bg-white text-slate-900 !text-slate-900 py-1 border-x border-slate-200 outline-none"
+                                    className="w-10 text-center font-mono font-black text-sm py-1 border-x border-slate-300 outline-none"
+                                    style={{ color: '#09090b', backgroundColor: '#ffffff', WebkitTextFillColor: '#09090b' }}
                                   />
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      const current = itemsQuantities[item.id] !== undefined ? itemsQuantities[item.id] : item.cantidad;
+                                      const current = itemsQuantities[item.id] !== undefined ? itemsQuantities[item.id] : (item.cantidad || 1);
                                       const nextQty = current + 1;
                                       setItemsQuantities(prev => ({ ...prev, [item.id]: nextQty }));
                                       if (nextQty > 0) {
                                         setItemsAvailability(prev => ({ ...prev, [item.id]: true }));
                                       }
                                     }}
-                                    className="w-7 h-7 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs flex items-center justify-center cursor-pointer transition-all active:scale-90"
+                                    className="w-8 h-8 bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-sm flex items-center justify-center cursor-pointer transition-all active:scale-90 select-none"
                                   >
                                     +
                                   </button>
