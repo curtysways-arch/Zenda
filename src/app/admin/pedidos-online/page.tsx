@@ -1264,14 +1264,15 @@ export default function PedidosOnlinePage() {
                                 </label>
                               </div>
 
-                              {/* CONTROLES DE MODIFICAR CANTIDAD */}
+                              {/* CONTROLES DE MODIFICAR CANTIDAD (MÁXIMO = SOLICITADO) */}
                               <div className="flex items-center gap-2">
                                 <span className="text-[10px] font-black uppercase text-slate-500">Cant:</span>
                                 <div className="flex items-center border border-slate-300 rounded-xl bg-slate-100 overflow-hidden shadow-xs">
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      const current = itemsQuantities[item.id] !== undefined ? itemsQuantities[item.id] : (item.cantidad || 1);
+                                      const maxQty = item.cantidad || 1;
+                                      const current = itemsQuantities[item.id] !== undefined ? itemsQuantities[item.id] : maxQty;
                                       if (current > 0) {
                                         const nextQty = current - 1;
                                         setItemsQuantities(prev => ({ ...prev, [item.id]: nextQty }));
@@ -1280,7 +1281,8 @@ export default function PedidosOnlinePage() {
                                         }
                                       }
                                     }}
-                                    className="w-8 h-8 bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-sm flex items-center justify-center cursor-pointer transition-all active:scale-90 select-none"
+                                    disabled={(itemsQuantities[item.id] !== undefined ? itemsQuantities[item.id] : (item.cantidad || 1)) <= 0}
+                                    className="w-8 h-8 bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-sm flex items-center justify-center cursor-pointer transition-all active:scale-90 select-none disabled:opacity-40 disabled:cursor-not-allowed"
                                   >
                                     -
                                   </button>
@@ -1290,7 +1292,8 @@ export default function PedidosOnlinePage() {
                                     value={itemsQuantities[item.id] !== undefined ? itemsQuantities[item.id] : (item.cantidad || 1)}
                                     onChange={(e) => {
                                       const raw = e.target.value.replace(/\D/g, '');
-                                      const val = raw === '' ? 0 : parseInt(raw, 10);
+                                      const maxQty = item.cantidad || 1;
+                                      const val = raw === '' ? 0 : Math.min(maxQty, parseInt(raw, 10));
                                       setItemsQuantities(prev => ({ ...prev, [item.id]: val }));
                                       setItemsAvailability(prev => ({ ...prev, [item.id]: val > 0 }));
                                     }}
@@ -1300,14 +1303,18 @@ export default function PedidosOnlinePage() {
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      const current = itemsQuantities[item.id] !== undefined ? itemsQuantities[item.id] : (item.cantidad || 1);
-                                      const nextQty = current + 1;
-                                      setItemsQuantities(prev => ({ ...prev, [item.id]: nextQty }));
-                                      if (nextQty > 0) {
-                                        setItemsAvailability(prev => ({ ...prev, [item.id]: true }));
+                                      const maxQty = item.cantidad || 1;
+                                      const current = itemsQuantities[item.id] !== undefined ? itemsQuantities[item.id] : maxQty;
+                                      if (current < maxQty) {
+                                        const nextQty = current + 1;
+                                        setItemsQuantities(prev => ({ ...prev, [item.id]: nextQty }));
+                                        if (nextQty > 0) {
+                                          setItemsAvailability(prev => ({ ...prev, [item.id]: true }));
+                                        }
                                       }
                                     }}
-                                    className="w-8 h-8 bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-sm flex items-center justify-center cursor-pointer transition-all active:scale-90 select-none"
+                                    disabled={(itemsQuantities[item.id] !== undefined ? itemsQuantities[item.id] : (item.cantidad || 1)) >= (item.cantidad || 1)}
+                                    className="w-8 h-8 bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-sm flex items-center justify-center cursor-pointer transition-all active:scale-90 select-none disabled:opacity-40 disabled:cursor-not-allowed"
                                   >
                                     +
                                   </button>
