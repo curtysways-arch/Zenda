@@ -59,6 +59,24 @@ export default function AdminDespachoPage() {
     }
   };
 
+  const handleMarkAsPaid = async (orderId: string) => {
+    try {
+      const res = await fetch('/api/admin/pedidos', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: orderId,
+          action: 'MARCAR_PAGADO'
+        })
+      });
+      if (res.ok) {
+        await fetchDespachoData();
+      }
+    } catch (err) {
+      console.error('Error al marcar pedido como pagado:', err);
+    }
+  };
+
   useEffect(() => {
     fetchDespachoData();
     const interval = setInterval(fetchDespachoData, 15000);
@@ -290,7 +308,11 @@ export default function AdminDespachoPage() {
             const metodoPago = extra.metodoPago || order.payment?.method?.nombre || 'EFECTIVO';
             const montoRecibido = extra.montoRecibido ?? order.payment?.montoPagado ?? null;
             const vuelto = extra.vuelto ?? order.payment?.montoExcedente ?? null;
-            const isPagado = extra.paymentStatus === 'PAGADO' || order.payment?.estado === 'CONFIRMADO';
+            const isPagado = 
+              extra.paymentStatus === 'PAGADO' || 
+              order.payment?.estado === 'CONFIRMADO' || 
+              order.payment?.estado === 'PAGO_VERIFICADO' ||
+              (extra.origin === 'POS_CAJA' && extra.paymentStatus !== 'PENDIENTE');
 
             return (
               <details key={order.id} className={`group border-b border-slate-100 last:border-0 ${idx % 2 !== 0 ? 'bg-slate-50/40' : ''}`}>
@@ -416,11 +438,22 @@ export default function AdminDespachoPage() {
 
                         <div className="flex items-center justify-between pt-1 border-t border-slate-100">
                           <span className="text-slate-400 font-bold">Estado de Pago</span>
-                          <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase border ${
-                            isPagado ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-amber-100 text-amber-900 border-amber-300'
-                          }`}>
-                            {isPagado ? 'PAGADO' : 'PENDIENTE EN CAJA'}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase border ${
+                              isPagado ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-amber-100 text-amber-900 border-amber-300'
+                            }`}>
+                              {isPagado ? 'PAGADO' : 'PENDIENTE EN CAJA'}
+                            </span>
+                            {!isPagado && (
+                              <button
+                                type="button"
+                                onClick={() => handleMarkAsPaid(order.id)}
+                                className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-black uppercase transition-all cursor-pointer shadow-xs"
+                              >
+                                ✓ Marcar Pagado
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         {order.direccionCliente && (
