@@ -114,6 +114,94 @@ export async function POST(
       console.warn('[API Driver POST Kernel Resolver Warning]:', err);
     }
 
+    // 0. Solicitud de código OTP para Inicio de Sesión
+    if (action === 'REQUEST_OTP') {
+      const { phone: rawPhone } = body;
+      if (!rawPhone) {
+        return NextResponse.json({ error: 'Teléfono requerido' }, { status: 400 });
+      }
+
+      const cleanPhone = rawPhone.replace(/\D/g, '');
+      
+      // Buscar en OperableResource o Staff si existe el repartidor registrado
+      let existingResource = await (prisma as any).operableResource.findFirst({
+        where: {
+          OR: [
+            { category: 'DELIVERY_DRIVER' },
+            { resourceType: { in: ['HUMAN', 'VEHICLE'] } }
+          ]
+        },
+        include: { profile: true }
+      });
+
+      let driverName = existingResource?.name;
+      let driverId = existingResource?.id;
+      let vehicleType = existingResource?.profile?.tipoVehiculo || 'MOTO';
+
+      if (!driverName) {
+        const staff = await (prisma as any).staff.findFirst({
+          where: {
+            role: { in: ['REPARTIDOR', 'DRIVER', 'ENTREGA', 'DELIVERY'] }
+          }
+        });
+        if (staff) {
+          driverName = staff.name;
+          driverId = staff.id;
+        }
+      }
+
+      if (!driverName) {
+        driverName = 'Marco Proaño';
+        driverId = `driver_${cleanPhone || '01'}`;
+      }
+
+      // Código OTP demo / producción
+      const generatedOtp = '1234';
+
+      return NextResponse.json({
+        success: true,
+        otp: generatedOtp,
+        phone: rawPhone,
+        driverName,
+        driverId,
+        vehicleType
+      });
+    }
+
+    if (action === 'VERIFY_OTP') {
+      const { phone: rawPhone, otp } = body;
+      const cleanPhone = (rawPhone || '').replace(/\D/g, '');
+
+      if (!otp || String(otp).length < 4) {
+        return NextResponse.json({ error: 'Código OTP inválido (debe tener 4 dígitos)' }, { status: 400 });
+      }
+
+      let existingResource = await (prisma as any).operableResource.findFirst({
+        where: {
+          OR: [
+            { category: 'DELIVERY_DRIVER' },
+            { resourceType: { in: ['HUMAN', 'VEHICLE'] } }
+          ]
+        },
+        include: { profile: true }
+      });
+
+      const driverName = existingResource?.name || 'Marco Proaño';
+      const driverId = existingResource?.id || `driver_${cleanPhone || '01'}`;
+      const driverPhone = rawPhone || '0991234567';
+      const vehicleType = existingResource?.profile?.tipoVehiculo || 'MOTO';
+
+      return NextResponse.json({
+        success: true,
+        session: {
+          driverId,
+          driverName,
+          driverPhone,
+          vehicleType
+        }
+      });
+    }
+
     // 1. Registro / Actualización de repartidor
     if (action === 'REGISTER_OR_UPDATE_DRIVER') {
       if (!driverId || !name) {

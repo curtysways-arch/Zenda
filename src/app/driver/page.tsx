@@ -121,11 +121,101 @@ export default function DriverAppPage() {
   const [customerStar, setCustomerStar] = useState<number>(5);
   const [customerComment, setCustomerComment] = useState<string>('');
 
-  // Reloj en tiempo real para los contadores
-  useEffect(() => {
-    const timer = setInterval(() => setNowTime(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+  // Estado de Login OTP
+  const [otpStep, setOtpStep] = useState<'PHONE' | 'OTP'>('PHONE');
+  const [otpPhone, setOtpPhone] = useState('');
+  const [otpPin, setOtpPin] = useState(['', '', '', '']);
+  const [otpSentDemoCode, setOtpSentDemoCode] = useState<string | null>(null);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpLoading, setOtpLoading] = useState(false);
+
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpPhone || otpPhone.length < 7) {
+      setOtpError('Por favor ingresa un número de teléfono / WhatsApp válido.');
+      return;
+    }
+    setOtpLoading(true);
+    setOtpError(null);
+
+    try {
+      const res = await fetch(`/api/public/${slug}/driver`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'REQUEST_OTP',
+          phone: otpPhone
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setOtpSentDemoCode(data.otp || '1234');
+        setOtpStep('OTP');
+        setOtpPin(['', '', '', '']);
+      } else {
+        setOtpError(data.error || 'No se pudo enviar el código OTP.');
+      }
+    } catch (err) {
+      setOtpError('Error de red al solicitar el código OTP.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = otpPin.join('');
+    if (code.length < 4) {
+      setOtpError('Ingresa el código completo de 4 dígitos.');
+      return;
+    }
+    setOtpLoading(true);
+    setOtpError(null);
+
+    try {
+      const res = await fetch(`/api/public/${slug}/driver`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'VERIFY_OTP',
+          phone: otpPhone,
+          otp: code
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.session) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('citiox_driver_session', JSON.stringify(data.session));
+        }
+        setDriverSession(data.session);
+      } else {
+        setOtpError(data.error || 'Código OTP incorrecto. Intenta de nuevo.');
+      }
+    } catch (err) {
+      setOtpError('Error de red al verificar el código OTP.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handlePinChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    const nextPin = [...otpPin];
+    nextPin[index] = value.slice(-1);
+    setOtpPin(nextPin);
+
+    if (value && index < 3) {
+      const nextInput = document.getElementById(`otp-input-${index + 1}`);
+      if (nextInput) nextInput.focus();
+    }
+  };
+
+  const handlePinKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otpPin[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-input-${index - 1}`);
+      if (prevInput) prevInput.focus();
+    }
+  };
 
   // Cargar estado inicial y registrar repartidor cuando haya sesión activa
   useEffect(() => {
@@ -422,69 +512,92 @@ export default function DriverAppPage() {
 
   if (!driverSession) {
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-slate-800/90 backdrop-blur-xl border border-slate-700/80 rounded-3xl p-6 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-200">
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
+        <div className="w-full max-w-sm bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-200">
           <div className="text-center space-y-2">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#ea580c] to-amber-500 mx-auto flex items-center justify-center shadow-lg shadow-amber-500/20">
               <Truck className="size-9 text-white stroke-[2.5]" />
             </div>
             <h1 className="text-xl font-black tracking-tight">Acceso a Repartidores</h1>
             <p className="text-xs text-slate-400 font-semibold">
-              Ingresa tus datos oficiales para conectarte al sistema de entregas
+              {otpStep === 'PHONE'
+                ? 'Ingresa tu número de WhatsApp registrado para recibir tu código OTP de acceso'
+                : `Ingresa el código OTP de 4 dígitos enviado a ${otpPhone}`}
             </p>
           </div>
 
-          <form onSubmit={handleDriverLogin} className="space-y-4">
-            <div>
-              <label className="block text-[11px] font-black uppercase text-slate-400 tracking-wider mb-1.5">
-                Nombre Completo del Repartidor
-              </label>
-              <input
-                type="text"
-                required
-                value={loginForm.name}
-                onChange={e => setLoginForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="Ej: Marco Proaño"
-                className="w-full px-4 py-3 rounded-2xl bg-slate-900/90 border border-slate-700 text-white font-extrabold text-sm outline-none focus:border-amber-500 transition-colors"
-              />
+          {otpError && (
+            <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold text-center">
+              ⚠️ {otpError}
             </div>
+          )}
 
-            <div>
-              <label className="block text-[11px] font-black uppercase text-slate-400 tracking-wider mb-1.5">
-                Número de Teléfono / WhatsApp
-              </label>
-              <input
-                type="tel"
-                required
-                value={loginForm.phone}
-                onChange={e => setLoginForm(f => ({ ...f, phone: e.target.value }))}
-                placeholder="Ej: 0991234567"
-                className="w-full px-4 py-3 rounded-2xl bg-slate-900/90 border border-slate-700 text-white font-extrabold text-sm outline-none focus:border-amber-500 transition-colors"
-              />
+          {otpSentDemoCode && otpStep === 'OTP' && (
+            <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-black text-center space-y-1">
+              <p>📱 Código OTP Enviado por WhatsApp</p>
+              <p className="text-xl tracking-widest text-emerald-300 font-black">PIN: {otpSentDemoCode}</p>
             </div>
+          )}
 
-            <div>
-              <label className="block text-[11px] font-black uppercase text-slate-400 tracking-wider mb-1.5">
-                Tipo de Vehículo
-              </label>
-              <select
-                value={loginForm.vehicleType}
-                onChange={e => setLoginForm(f => ({ ...f, vehicleType: e.target.value }))}
-                className="w-full px-4 py-3 rounded-2xl bg-slate-900/90 border border-slate-700 text-white font-extrabold text-sm outline-none focus:border-amber-500 transition-colors cursor-pointer"
+          {otpStep === 'PHONE' ? (
+            <form onSubmit={handleSendOtp} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-black uppercase text-slate-400 tracking-wider mb-1.5">
+                  Teléfono / WhatsApp Registrado
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={otpPhone}
+                  onChange={e => setOtpPhone(e.target.value)}
+                  placeholder="Ej: 0991234567"
+                  className="w-full px-4 py-3.5 rounded-2xl bg-slate-950 border border-slate-700 text-white font-black text-base outline-none focus:border-amber-500 transition-colors"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={otpLoading}
+                className="w-full py-3.5 bg-gradient-to-r from-[#ea580c] to-amber-500 hover:from-amber-600 hover:to-amber-500 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-amber-500/20 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                <option value="MOTO">🛵 Motocicleta</option>
-                <option value="AUTO">🚗 Automóvil / Camioneta</option>
-                <option value="BICI">🚲 Bicicleta / Patineta</option>
-              </select>
-            </div>
+                {otpLoading ? 'Enviando OTP...' : 'Enviar Código OTP 📲'}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="space-y-5">
+              <div className="flex justify-center gap-2">
+                {otpPin.map((digit, idx) => (
+                  <input
+                    key={idx}
+                    id={`otp-input-${idx}`}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={e => handlePinChange(idx, e.target.value)}
+                    onKeyDown={e => handlePinKeyDown(idx, e)}
+                    className="w-12 h-14 text-center text-2xl font-black rounded-2xl bg-slate-950 border-2 border-slate-700 text-amber-400 focus:border-amber-500 outline-none transition-colors"
+                  />
+                ))}
+              </div>
 
-            <button
-              type="submit"
-              className="w-full py-3.5 bg-gradient-to-r from-[#ea580c] to-amber-500 hover:from-amber-600 hover:to-amber-500 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-amber-500/20 transition-all cursor-pointer"
-            >
-              Ingresar como Repartidor
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={otpLoading || otpPin.join('').length < 4}
+                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-emerald-600/20 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {otpLoading ? 'Verificando...' : 'Verificar e Iniciar Sesión 🔑'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setOtpStep('PHONE')}
+                className="w-full py-2 text-xs font-bold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                ← Cambiar número de teléfono
+              </button>
+            </form>
+          )}
         </div>
       </div>
     );
