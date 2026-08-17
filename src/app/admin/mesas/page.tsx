@@ -236,8 +236,7 @@ export default function AdminMesasPage() {
 
     orders.forEach(p => {
       const isFinished = ['CANCELADO', 'CANCELLED', 'RECHAZADO', 'FINALIZADO', 'COMPLETADO'].includes(p.estado);
-      const isPaid = checkIsOrderPaid(p);
-      if (isFinished || isPaid) return;
+      if (isFinished) return;
 
       let extra: any = {};
       if (typeof p.extraInfo === 'string') {
