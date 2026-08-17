@@ -1160,9 +1160,11 @@ export default function AdminMesasPage() {
                       <div key={item.id} className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 space-y-2">
                         <div className="flex justify-between items-center">
                           <div>
-                            <span className="font-extrabold text-xs text-slate-900 block">{item.nombreProducto}</span>
-                            <span className="text-[10px] text-slate-500">
-                              ${Number(item.precioUnitario).toFixed(2)} c/u • Cantidad Total: <strong>{item.cantidad}</strong>
+                            <span className="font-black text-sm text-slate-900 block">
+                              {item.cantidad} {item.nombreProducto}
+                            </span>
+                            <span className="text-xs font-bold text-emerald-600">
+                              ${Number(item.precioUnitario).toFixed(2)} c/u
                             </span>
                           </div>
 
