@@ -120,6 +120,7 @@ function VentasContent() {
     if (tableNameParam) {
       setTipoEntrega('TABLE_ORDER');
       setMesaCode(tableNameParam);
+      setPagarInmediato(false);
     }
 
     if (addOrderId) {
@@ -631,6 +632,7 @@ function VentasContent() {
                   type="button"
                   onClick={() => {
                     setTipoEntrega('TABLE_ORDER');
+                    setPagarInmediato(false);
                     if (tables.length > 0 && (!mesaCode || mesaCode === 'POS-Virtual')) {
                       setMesaCode(tables[0].name);
                     }

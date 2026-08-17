@@ -61,6 +61,7 @@ interface Pedido {
   items: OrderItem[];
   notas?: string;
   extraInfo?: any;
+  payment?: any;
 }
 
 const TABLE_STATES = ['LIBRE', 'OCUPADA', 'EN_PREPARACION', 'LISTA', 'PENDIENTE_COBRO', 'RESERVADA'];
@@ -207,13 +208,36 @@ export default function AdminMesasPage() {
     }
   }
 
-  // Mapa de Órdenes Activas por ID de Mesa
+  // Evaluar si una orden ya fue pagada en su totalidad en Caja / POS
+  function checkIsOrderPaid(p: Pedido): boolean {
+    if (!p) return false;
+    let extra: any = {};
+    if (typeof p.extraInfo === 'string') {
+      try { extra = JSON.parse(p.extraInfo); } catch { extra = {}; }
+    } else if (p.extraInfo && typeof p.extraInfo === 'object') {
+      extra = p.extraInfo;
+    }
+
+    const paymentStatus = (extra.paymentStatus || '').toUpperCase();
+    const orderPaymentEstado = (p.payment?.estado || '').toUpperCase();
+    const estado = (p.estado || '').toUpperCase();
+
+    return (
+      paymentStatus === 'PAGADO' ||
+      paymentStatus === 'CONFIRMADO' ||
+      orderPaymentEstado === 'CONFIRMADO' ||
+      ['FINALIZADO', 'COMPLETADO', 'ENTREGADO'].includes(estado)
+    );
+  }
+
+  // Mapa de Órdenes Activas por ID de Mesa (Excluye órdenes finalizadas o pagadas)
   const activeOrdersByMesa = useMemo(() => {
     const map: Record<string, Pedido> = {};
 
     orders.forEach(p => {
       const isFinished = ['CANCELADO', 'CANCELLED', 'RECHAZADO', 'FINALIZADO', 'COMPLETADO'].includes(p.estado);
-      if (isFinished) return;
+      const isPaid = checkIsOrderPaid(p);
+      if (isFinished || isPaid) return;
 
       let extra: any = {};
       if (typeof p.extraInfo === 'string') {
@@ -1018,23 +1042,13 @@ export default function AdminMesasPage() {
                       </button>
                     </div>
 
-                    {/* Botones Secundarios */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={sendOrderToKitchen}
-                        disabled={actionLoading}
-                        className="py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl font-extrabold text-[11px] flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
-                      >
-                        <ChefHat className="size-3.5" /> Enviar a Cocina
-                      </button>
-
-                      <button
-                        onClick={() => setShowMoveTableModal(true)}
-                        className="py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer"
-                      >
-                        <ArrowRightLeft className="size-3.5" /> Cambiar Mesa
-                      </button>
-                    </div>
+                    {/* Botón Cambiar Mesa */}
+                    <button
+                      onClick={() => setShowMoveTableModal(true)}
+                      className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <ArrowRightLeft className="size-3.5" /> Cambiar de Mesa
+                    </button>
 
                     {/* Enviar a Caja Completo */}
                     {existingSplitAccounts.length === 0 && (
