@@ -181,7 +181,11 @@ function VentasContent() {
                 const dT = await resT.json();
                 if (dT.tables && Array.isArray(dT.tables)) {
                   setTables(dT.tables);
-                  if (dT.tables.length > 0 && mesaCode === 'POS-Virtual') {
+                  const urlTable = searchParams.get('tableName');
+                  if (urlTable) {
+                    setTipoEntrega('TABLE_ORDER');
+                    setMesaCode(urlTable);
+                  } else if (dT.tables.length > 0 && (mesaCode === 'POS-Virtual' || !mesaCode)) {
                     setMesaCode(dT.tables[0].name);
                   }
                 }

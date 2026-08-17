@@ -409,10 +409,10 @@ export default function AdminMesasPage() {
     setNumPeople(2);
     setSplitMode('POR_PRODUCTOS');
 
-    // Inicializar asignaciones de items
+    // Inicializar asignaciones de items a 0 para que el usuario distribuya cada unidad
     const alloc: Record<string, Record<string, number>> = {};
     activeOrderForSelectedTable.items.forEach(item => {
-      alloc[item.id] = { split_1: item.cantidad, split_2: 0 };
+      alloc[item.id] = { split_1: 0, split_2: 0 };
     });
     setItemAllocations(alloc);
 
@@ -442,16 +442,12 @@ export default function AdminMesasPage() {
         total: idx === validCount - 1 ? Math.round((activeOrderForSelectedTable.total - (evenTotal * (validCount - 1))) * 100) / 100 : evenTotal
       })));
     } else {
-      // Repartir equitativamente los ítems entre las cuentas
+      // Inicializar cada subcuenta en 0 asignados para distribución manual limpia
       const alloc: Record<string, Record<string, number>> = {};
       activeOrderForSelectedTable.items.forEach(item => {
         alloc[item.id] = {};
-        const baseQty = Math.floor(item.cantidad / validCount);
-        let rem = item.cantidad % validCount;
-
-        newAccs.forEach((acc, idx) => {
-          alloc[item.id][acc.id] = baseQty + (rem > 0 ? 1 : 0);
-          if (rem > 0) rem--;
+        newAccs.forEach(acc => {
+          alloc[item.id][acc.id] = 0;
         });
       });
       setItemAllocations(alloc);
