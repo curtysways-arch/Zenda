@@ -9,7 +9,7 @@ import { useSearchParams } from 'next/navigation';
 import { 
   Flame, Search, Bike, ShoppingBag, Utensils, Trash2, Plus, Minus, X, 
   MapPin, Phone, User, Check, ChevronDown, LayoutGrid, List,
-  ChefHat, Loader2, Navigation, Percent, Award, Store
+  ChefHat, Loader2, Navigation, Percent, Award, Store, Sparkles, Clock, ArrowRight, CheckCircle2
 } from 'lucide-react';
 import MapSelectionModal from '@/components/public/MapSelectionModal';
 
@@ -69,11 +69,18 @@ function VentasContent() {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // Active Orders Modal & Addition Mode
+  // Active Orders Modal, Toast & Addition Mode
   const [showActiveOrdersModal, setShowActiveOrdersModal] = useState(false);
   const [activeOrders, setActiveOrders] = useState<any[]>([]);
   const [loadingActiveOrders, setLoadingActiveOrders] = useState(false);
   const [selectedOrderForAddition, setSelectedOrderForAddition] = useState<any | null>(null);
+  const [pendingConfirmOrder, setPendingConfirmOrder] = useState<any | null>(null);
+  const [toastMsg, setToastMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (text: string, type: 'success' | 'error' = 'success') => {
+    setToastMsg({ text, type });
+    setTimeout(() => setToastMsg(null), 3500);
+  };
 
   const fetchActiveOrders = async () => {
     try {
@@ -104,6 +111,36 @@ function VentasContent() {
       setLoadingActiveOrders(false);
     }
   };
+
+  // Escuchar parámetros de URL (addOrderId, tableName) al venir del centro de mesas
+  useEffect(() => {
+    const addOrderId = searchParams.get('addOrderId');
+    const tableNameParam = searchParams.get('tableName');
+
+    if (tableNameParam) {
+      setTipoEntrega('TABLE_ORDER');
+      setMesaCode(tableNameParam);
+    }
+
+    if (addOrderId) {
+      async function loadTargetOrder() {
+        try {
+          const res = await fetch('/api/admin/pedidos');
+          if (res.ok) {
+            const data = await res.json();
+            const found = (Array.isArray(data) ? data : []).find((p: any) => p.id === addOrderId);
+            if (found) {
+              setSelectedOrderForAddition(found);
+              showToast(`Modo Adición activado para ${found.referenciaCliente || `Orden #${found.numeroPedido}`}`);
+            }
+          }
+        } catch (e) {
+          console.error('Error cargando orden seleccionada:', e);
+        }
+      }
+      loadTargetOrder();
+    }
+  }, [searchParams]);
 
   // Load Catalogue & Business Data
   useEffect(() => {
@@ -286,7 +323,7 @@ function VentasContent() {
   // Submit Order directly to kitchen
   const handleSubmitOrder = async () => {
     if (selectedItems.length === 0) {
-      alert('Selecciona al menos un producto para tomar la orden');
+      showToast('Selecciona al menos un producto para tomar la orden', 'error');
       return;
     }
 
@@ -314,12 +351,12 @@ function VentasContent() {
         });
 
         if (res.ok) {
-          alert(`¡Adición enviada con éxito a la Orden #${selectedOrderForAddition.numeroPedido}!`);
+          showToast(`¡Productos adicionados con éxito a la Orden #${selectedOrderForAddition.numeroPedido}!`);
           clearCart();
           setSelectedOrderForAddition(null);
         } else {
           const errData = await res.json();
-          alert(errData.error || 'Error al adicionar productos al pedido');
+          showToast(errData.error || 'Error al adicionar productos al pedido', 'error');
         }
       } else {
         // NUEVA ORDEN POS
@@ -349,16 +386,16 @@ function VentasContent() {
         });
 
         if (res.ok) {
-          alert(pagarInmediato ? `¡Venta POS Cobrada! (Cambio: $${numVuelto.toFixed(2)})` : '¡Orden POS enviada a cocina! Pendiente de cobro en Caja.');
+          showToast(pagarInmediato ? `¡Venta POS Cobrada! (Cambio: $${numVuelto.toFixed(2)})` : '¡Orden POS enviada a cocina! Pendiente de cobro en Caja.');
           clearCart();
         } else {
           const errData = await res.json();
-          alert(errData.error || 'Error al enviar orden');
+          showToast(errData.error || 'Error al enviar orden', 'error');
         }
       }
     } catch (e) {
       console.error(e);
-      alert('Error de conexión al enviar la orden');
+      showToast('Error de conexión al enviar la orden', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -713,31 +750,6 @@ function VentasContent() {
               />
             </div>
 
-            {/* Forma de Pago Selector */}
-            <div className="space-y-0.5">
-              <label className="block text-[8px] font-black uppercase text-slate-400 tracking-wider">Forma de Pago</label>
-              <div className="grid grid-cols-4 gap-1">
-                {[
-                  { id: 'EFECTIVO', label: 'Efectivo', icon: '💵' },
-                  { id: 'TRANSFERENCIA', label: 'Transf.', icon: '🏦' },
-                  { id: 'TARJETA', label: 'Tarjeta', icon: '💳' },
-                  { id: 'MIXTO', label: 'Mixto', icon: '⚖️' }
-                ].map(m => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setMetodoPago(m.id as any)}
-                    className={`py-1 px-0.5 rounded-md text-[9px] font-extrabold transition-all cursor-pointer flex items-center justify-center gap-0.5 ${
-                      metodoPago === m.id
-                        ? 'bg-slate-900 text-white shadow-sm'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    <span>{m.icon}</span> {m.label}
-                  </button>
-                ))}
-              </div>
-            </div>
 
             {/* Tabla de Productos en Carrito */}
             <div className="pt-1">
@@ -949,69 +961,145 @@ function VentasContent() {
           setDireccionCliente(`Ubicación GPS (${dist} km) - Lat: ${newLat.toFixed(4)}, Lng: ${newLng.toFixed(4)}`);
         }}
       />
+      {/* Toast Floating Notification */}
+      {toastMsg && (
+        <div className={`fixed top-5 right-5 z-[200] px-4 py-3 rounded-2xl shadow-2xl text-xs font-black flex items-center gap-2 animate-in slide-in-from-top-4 ${
+          toastMsg.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+        }`}>
+          <Sparkles className="w-4 h-4" />
+          <span>{toastMsg.text}</span>
+        </div>
+      )}
+
       {/* Modal de Pedidos Activos para Adición */}
       {showActiveOrdersModal && (
         <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="font-black text-lg text-slate-900 flex items-center gap-2">
-                <span>🍽️</span> Seleccionar Mesa Activa para Adición
+                <span>🍽️</span> {pendingConfirmOrder ? 'Confirmar Adición a Cuenta' : 'Seleccionar Mesa Activa para Adición'}
               </h3>
               <button 
-                onClick={() => setShowActiveOrdersModal(false)} 
+                onClick={() => {
+                  setShowActiveOrdersModal(false);
+                  setPendingConfirmOrder(null);
+                }} 
                 className="p-1.5 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5 text-slate-400" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-500 font-medium">
-              Elige la comanda de mesa activa a la cual deseas agregar nuevos productos desde el catálogo POS.
-            </p>
-
-            <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
-              {loadingActiveOrders ? (
-                <div className="py-10 text-center text-xs font-bold text-slate-400">
-                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-amber-500 mb-2" />
-                  Cargando comandas de mesa activas...
-                </div>
-              ) : activeOrders.length === 0 ? (
-                <div className="py-10 text-center text-xs font-bold text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">
-                  No hay comandas de mesa activas actualmente en preparación.
-                </div>
-              ) : (
-                activeOrders.map((ord: any) => (
-                  <div key={ord.id} className="p-4 bg-slate-50 hover:bg-amber-50/50 border border-slate-200 hover:border-amber-300 rounded-2xl flex items-center justify-between gap-3 transition-all">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-black text-sm text-slate-900">Orden #{ord.numeroPedido}</span>
-                        {ord.referenciaCliente && (
-                          <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-black rounded-full border border-amber-200">
-                            {ord.referenciaCliente}
-                          </span>
-                        )}
-                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full">
-                          {ord.estado}
-                        </span>
-                      </div>
-                      <div className="text-xs text-slate-500 font-semibold mt-1">
-                        Cliente: {ord.nombreCliente} • Total Actual: <span className="text-slate-900 font-bold">${ord.total?.toFixed(2) || '0.00'}</span>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        setSelectedOrderForAddition(ord);
-                        setShowActiveOrdersModal(false);
-                      }}
-                      className="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1 shrink-0"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Adicionar
-                    </button>
+            {pendingConfirmOrder ? (
+              /* PASO DE CONFIRMACIÓN PREVIO A ADICIONAR */
+              <div className="space-y-4 animate-in fade-in">
+                <div className="bg-slate-900 text-white p-4 rounded-2xl space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-amber-400 font-black text-xs uppercase tracking-wider">
+                      {pendingConfirmOrder.referenciaCliente || `Mesa Orden #${pendingConfirmOrder.numeroPedido}`}
+                    </span>
+                    <span className="px-2 py-0.5 bg-amber-500 text-slate-950 font-black text-[10px] rounded-full">
+                      {pendingConfirmOrder.estado}
+                    </span>
                   </div>
-                ))
-              )}
-            </div>
+
+                  <div className="text-xs text-slate-300 flex justify-between pt-1 border-t border-slate-800">
+                    <span>Cliente: <strong>{pendingConfirmOrder.nombreCliente}</strong></span>
+                    <span>Productos actuales: <strong>{pendingConfirmOrder.items?.length || 0} ítems</strong></span>
+                  </div>
+                </div>
+
+                {/* Resumen de totales */}
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl space-y-1.5 text-xs font-bold text-amber-950">
+                  <div className="flex justify-between text-slate-600">
+                    <span>Total actual de la cuenta:</span>
+                    <span>${Number(pendingConfirmOrder.total || 0).toFixed(2)}</span>
+                  </div>
+                  {selectedItems.length > 0 && (
+                    <div className="flex justify-between text-emerald-700">
+                      <span>Nuevos productos a agregar ({totalItemsCount} uds):</span>
+                      <span>+${grandTotal.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm font-black text-slate-900 pt-1.5 border-t border-amber-200/60">
+                    <span>Nuevo Total Estimado:</span>
+                    <span className="text-emerald-600">${(Number(pendingConfirmOrder.total || 0) + grandTotal).toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => setPendingConfirmOrder(null)}
+                    className="flex-1 py-2.5 bg-slate-100 text-slate-700 font-extrabold text-xs rounded-xl hover:bg-slate-200"
+                  >
+                    ← Volver
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedOrderForAddition(pendingConfirmOrder);
+                      setPendingConfirmOrder(null);
+                      setShowActiveOrdersModal(false);
+                      showToast(`Modo Adición activado para Orden #${pendingConfirmOrder.numeroPedido}`);
+                    }}
+                    className="flex-1 py-2.5 bg-[#ea580c] hover:bg-[#c2410c] text-white font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> Confirmar Adición
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* PASO 1: LISTADO DE CUENTAS ABIERTAS */
+              <>
+                <p className="text-xs text-slate-500 font-medium">
+                  Elige la comanda de mesa activa a la cual deseas agregar nuevos productos desde el catálogo POS.
+                </p>
+
+                <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
+                  {loadingActiveOrders ? (
+                    <div className="py-10 text-center text-xs font-bold text-slate-400">
+                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-amber-500 mb-2" />
+                      Cargando comandas de mesa activas...
+                    </div>
+                  ) : activeOrders.length === 0 ? (
+                    <div className="py-10 text-center text-xs font-bold text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">
+                      No hay comandas de mesa activas actualmente en preparación.
+                    </div>
+                  ) : (
+                    activeOrders.map((ord: any) => (
+                      <div key={ord.id} className="p-4 bg-slate-50 hover:bg-amber-50/50 border border-slate-200 hover:border-amber-300 rounded-2xl flex items-center justify-between gap-3 transition-all">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-black text-sm text-slate-900">Orden #{ord.numeroPedido}</span>
+                            {ord.referenciaCliente && (
+                              <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-black rounded-full border border-amber-200">
+                                {ord.referenciaCliente}
+                              </span>
+                            )}
+                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full">
+                              {ord.estado}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-500 font-semibold mt-1.5 flex items-center gap-3">
+                            <span>Cliente: <strong>{ord.nombreCliente}</strong></span>
+                            <span>Ítems: <strong>{ord.items?.length || 0}</strong></span>
+                            <span>Total: <strong className="text-slate-900">${ord.total?.toFixed(2) || '0.00'}</strong></span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            setPendingConfirmOrder(ord);
+                          }}
+                          className="px-3.5 py-2 bg-[#ea580c] hover:bg-[#c2410c] text-white font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                        >
+                          <span>Seleccionar</span> <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

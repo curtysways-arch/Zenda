@@ -514,14 +514,14 @@ export async function POST(req: Request) {
                         vuelto: numVuelto,
                         paymentStatus: paymentStatus || 'PAGADO'
                     },
-                    payment: paymentStatus === 'PAGADO' || metodoPago ? {
+                    payment: {
                         create: {
-                            montoTotal: pricingResult.total,
-                            montoPagado: numRecibido,
+                            negocioId,
+                            monto: pricingResult.total,
                             montoExcedente: numVuelto,
                             estado: paymentStatus === 'PAGADO' ? 'CONFIRMADO' : 'PENDIENTE'
                         }
-                    } : undefined,
+                    },
                     items: {
                         create: items.map((i: any) => ({
                             productoId: i.productoId || i.id,
