@@ -171,6 +171,36 @@ export async function PUT(req: Request) {
                     data: { estado: 'CONFIRMADO' }
                 }).catch(() => {});
             }
+        } else if (action === 'PAY_SPLIT_ACCOUNT' && body.splitAccountId) {
+            const splits = currentExtra.splitAccounts || [];
+            const updatedSplits = splits.map((s: any) => {
+                if (s.id === body.splitAccountId) {
+                    return {
+                        ...s,
+                        estado: 'PAGADO',
+                        metodoPago: body.metodoPago || 'EFECTIVO',
+                        paidAt: new Date().toISOString(),
+                        montoRecibido: body.montoRecibido || s.total,
+                        vuelto: body.vuelto || 0
+                    };
+                }
+                return s;
+            });
+
+            currentExtra.splitAccounts = updatedSplits;
+
+            // Verificar si todas las cuentas divididas están pagadas
+            const allPaid = updatedSplits.length > 0 && updatedSplits.every((s: any) => s.estado === 'PAGADO');
+            if (allPaid) {
+                updateData.estado = 'FINALIZADO';
+                currentExtra.paymentStatus = 'PAGADO';
+                if (pedido.payment) {
+                    await (prisma as any).orderPayment.update({
+                        where: { id: pedido.payment.id },
+                        data: { estado: 'CONFIRMADO' }
+                    }).catch(() => {});
+                }
+            }
         } else if (estado) {
             updateData.estado = estado;
         }
