@@ -306,13 +306,21 @@ export default function AdminDespachoPage() {
             }
 
             const metodoPago = extra.metodoPago || order.payment?.method?.nombre || 'EFECTIVO';
-            const montoRecibido = extra.montoRecibido ?? order.payment?.montoPagado ?? null;
+            const rawMontoRecibido = extra.montoRecibido ?? order.payment?.montoPagado ?? null;
             const vuelto = extra.vuelto ?? order.payment?.montoExcedente ?? null;
-            const isPagado = 
-              extra.paymentStatus === 'PAGADO' || 
-              order.payment?.estado === 'CONFIRMADO' || 
-              order.payment?.estado === 'PAGO_VERIFICADO' ||
-              (extra.origin === 'POS_CAJA' && extra.paymentStatus !== 'PENDIENTE');
+
+            const isInitialPaid = extra.paymentStatus === 'PAGADO' || order.payment?.estado === 'CONFIRMADO' || order.payment?.estado === 'PAGO_VERIFICADO';
+
+            const montoPagado = extra.montoPagadoAcumulado !== undefined 
+              ? Number(extra.montoPagadoAcumulado) 
+              : (isInitialPaid ? Math.min(Number(rawMontoRecibido) || displayTotal, displayTotal) : 0);
+
+            const saldoPendiente = extra.saldoPendiente !== undefined 
+              ? Number(extra.saldoPendiente) 
+              : Math.max(0, Math.round((displayTotal - montoPagado) * 100) / 100);
+
+            const isParcial = montoPagado > 0 && saldoPendiente > 0.01;
+            const isPagadoTotal = saldoPendiente <= 0.01 && (isInitialPaid || (extra.origin === 'POS_CAJA' && extra.paymentStatus !== 'PENDIENTE'));
 
             return (
               <details key={order.id} className={`group border-b border-slate-100 last:border-0 ${idx % 2 !== 0 ? 'bg-slate-50/40' : ''}`}>
@@ -422,17 +430,24 @@ export default function AdminDespachoPage() {
                           </span>
                         </div>
 
-                        {montoRecibido !== null && Number(montoRecibido) > 0 && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-400 font-bold">Pagó con</span>
-                            <span className="font-bold text-slate-800">${Number(montoRecibido).toFixed(2)}</span>
+                        {montoPagado > 0 && (
+                          <div className="flex items-center justify-between text-emerald-800">
+                            <span className="text-slate-400 font-bold">Monto Cobrado</span>
+                            <span className="font-black bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-emerald-700">${montoPagado.toFixed(2)}</span>
+                          </div>
+                        )}
+
+                        {saldoPendiente > 0 && (
+                          <div className="flex items-center justify-between text-amber-800">
+                            <span className="text-slate-400 font-bold">Saldo Pendiente</span>
+                            <span className="font-black bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-amber-700">${saldoPendiente.toFixed(2)}</span>
                           </div>
                         )}
 
                         {vuelto !== null && Number(vuelto) > 0 && (
-                          <div className="flex items-center justify-between text-emerald-700">
-                            <span className="font-extrabold">Cambio / Vuelto</span>
-                            <span className="font-black bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">${Number(vuelto).toFixed(2)}</span>
+                          <div className="flex items-center justify-between text-slate-600">
+                            <span className="font-semibold">Cambio / Vuelto</span>
+                            <span className="font-bold text-slate-800">${Number(vuelto).toFixed(2)}</span>
                           </div>
                         )}
 
@@ -440,11 +455,11 @@ export default function AdminDespachoPage() {
                           <span className="text-slate-400 font-bold">Estado de Pago</span>
                           <div className="flex items-center gap-1.5">
                             <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase border ${
-                              isPagado ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-amber-100 text-amber-900 border-amber-300'
+                              isPagadoTotal ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : isParcial ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-rose-100 text-rose-900 border-rose-300'
                             }`}>
-                              {isPagado ? 'PAGADO' : 'PENDIENTE EN CAJA'}
+                              {isPagadoTotal ? 'PAGADO' : isParcial ? 'PARCIALMENTE PAGADO' : 'PENDIENTE EN CAJA'}
                             </span>
-                            {!isPagado && (
+                            {!isPagadoTotal && (
                               <button
                                 type="button"
                                 onClick={() => handleMarkAsPaid(order.id)}

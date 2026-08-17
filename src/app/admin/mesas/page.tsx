@@ -907,28 +907,68 @@ export default function AdminMesasPage() {
                 <div className="space-y-4">
                   
                   {/* Card Resumen Orden Principal */}
-                  <div className="bg-slate-900 text-white rounded-2xl p-4 space-y-2 shadow-md">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider block">
-                          ORDEN PRINCIPAL # {activeOrderForSelectedTable.numeroPedido}
-                        </span>
-                        <span className="text-xs font-bold text-slate-300">
-                          {activeOrderForSelectedTable.nombreCliente}
-                        </span>
-                      </div>
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-500 text-slate-950 uppercase">
-                        {activeOrderForSelectedTable.estado}
-                      </span>
-                    </div>
+                  {(() => {
+                    const order = activeOrderForSelectedTable;
+                    const computedTotal = order.items.reduce((sum, it) => sum + (Number(it.precioUnitario) || 0) * (Number(it.cantidad) || 1), 0);
+                    const displayTotal = computedTotal > 0 ? computedTotal : (Number(order.total) || 0);
 
-                    <div className="flex justify-between items-center text-xs text-slate-400 pt-2 border-t border-slate-800">
-                      <span>Abierta hace: <strong>{getElapsedTime(activeOrderForSelectedTable.createdAt)}</strong></span>
-                      <span className="text-emerald-400 font-black text-base">
-                        Total: ${Number(activeOrderForSelectedTable.total).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
+                    let extra: any = {};
+                    if (typeof order.extraInfo === 'string') {
+                      try { extra = JSON.parse(order.extraInfo); } catch {}
+                    } else if (order.extraInfo && typeof order.extraInfo === 'object') {
+                      extra = order.extraInfo;
+                    }
+
+                    const rawMontoRecibido = extra.montoRecibido ?? order.payment?.montoPagado ?? 0;
+                    const isInitialPaid = extra.paymentStatus === 'PAGADO' || order.payment?.estado === 'CONFIRMADO';
+
+                    const montoPagado = extra.montoPagadoAcumulado !== undefined 
+                      ? Number(extra.montoPagadoAcumulado) 
+                      : (isInitialPaid ? Math.min(Number(rawMontoRecibido) || displayTotal, displayTotal) : 0);
+
+                    const saldoPendiente = extra.saldoPendiente !== undefined 
+                      ? Number(extra.saldoPendiente) 
+                      : Math.max(0, Math.round((displayTotal - montoPagado) * 100) / 100);
+
+                    return (
+                      <div className="bg-slate-900 text-white rounded-2xl p-4 space-y-2.5 shadow-md">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider block">
+                              ORDEN PRINCIPAL # {order.numeroPedido}
+                            </span>
+                            <span className="text-xs font-bold text-slate-300">
+                              {order.nombreCliente}
+                            </span>
+                          </div>
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-500 text-slate-950 uppercase">
+                            {order.estado}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1 pt-2 border-t border-slate-800 text-xs">
+                          <div className="flex justify-between items-center text-slate-400 font-semibold">
+                            <span>Consumo Total ({order.items.length} prod):</span>
+                            <span className="font-black text-white text-sm">${displayTotal.toFixed(2)}</span>
+                          </div>
+
+                          {montoPagado > 0 && (
+                            <div className="flex justify-between items-center text-emerald-400 font-extrabold">
+                              <span>✓ Cobrado en Caja/POS:</span>
+                              <span>${montoPagado.toFixed(2)}</span>
+                            </div>
+                          )}
+
+                          <div className="flex justify-between items-center text-amber-400 font-extrabold pt-1 border-t border-slate-800/80">
+                            <span>⏳ Saldo Pendiente:</span>
+                            <span className="font-black text-base text-amber-400">
+                              ${(montoPagado > 0 ? saldoPendiente : displayTotal).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* ─── VISTA DE CUENTAS DIVIDIDAS (SI YA EXISTEN) ─── */}
                   {existingSplitAccounts.length > 0 ? (
