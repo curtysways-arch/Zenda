@@ -261,8 +261,8 @@ export default function RestaurantOrderTrackingClient({ order: initialOrder, neg
                             {stateInfo.description}
                         </p>
 
-                        {/* CÓDIGO PIN DE CONFIRMACIÓN DE ENTREGA PARA EL CLIENTE */}
-                        {(() => {
+                        {/* CÓDIGO PIN DE CONFIRMACIÓN DE ENTREGA — Solo visible cuando el repartidor está en camino o llegó */}
+                        {['ON_DELIVERY', 'WAITING_CLIENT', 'DELIVERED'].includes(normState) && (() => {
                             let dCode = parsedExtraInfo?.deliveryCode;
                             if (!dCode) {
                                 let num = 0; const str = (order.id || '') + 'delivery';
