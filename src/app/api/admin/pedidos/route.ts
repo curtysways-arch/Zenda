@@ -78,6 +78,11 @@ export async function PUT(req: Request) {
 
         // 1. ACCIÓN: ADICIONAR PRODUCTOS A PEDIDO EXISTENTE
         if (action === 'ADD_ITEMS_TO_ORDER' && body.newItems && Array.isArray(body.newItems) && body.newItems.length > 0) {
+            const isPreviouslyPaid = currentExtra.paymentStatus === 'PAGADO' || pedido.payment?.estado === 'CONFIRMADO';
+            const previousPaidAmount = isPreviouslyPaid 
+                ? (currentExtra.montoPagadoAcumulado || pedido.total) 
+                : (currentExtra.montoPagadoAcumulado || 0);
+
             await (prisma as any).pedidoItem.createMany({
                 data: body.newItems.map((i: any) => ({
                     id: `pi_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -92,7 +97,44 @@ export async function PUT(req: Request) {
             const updatedAllItems = await (prisma as any).pedidoItem.findMany({ where: { pedidoId: id } });
             const newSubtotal = updatedAllItems.reduce((sum: number, item: any) => sum + (item.precioUnitario * item.cantidad), 0);
             updateData.subtotal = newSubtotal;
-            updateData.total = newSubtotal + (pedido.costoEnvio || 0) + (currentExtra.packagingCost || 0) - (currentExtra.discountAmount || 0);
+            const newTotal = newSubtotal + (pedido.costoEnvio || 0) + (currentExtra.packagingCost || 0) - (currentExtra.discountAmount || 0);
+            updateData.total = newTotal;
+
+            if (previousPaidAmount > 0) {
+                currentExtra.montoPagadoAcumulado = previousPaidAmount;
+                currentExtra.saldoPendiente = Math.round(Math.max(0, newTotal - previousPaidAmount) * 100) / 100;
+                currentExtra.paymentStatus = currentExtra.saldoPendiente > 0 ? 'PARCIALMENTE_PAGADO' : 'PAGADO';
+            }
+
+            // Si existen cuentas divididas, asignar la adición a una subcuenta pendiente o crear una nueva subcuenta adicional
+            if (currentExtra.splitAccounts && Array.isArray(currentExtra.splitAccounts)) {
+                const addedSubtotal = body.newItems.reduce((s: number, i: any) => s + (parseFloat(i.precioUnitario || 0) * parseInt(i.cantidad || 1, 10)), 0);
+                const unpaidAccount = currentExtra.splitAccounts.find((sa: any) => sa.estado === 'PENDIENTE');
+
+                if (unpaidAccount) {
+                    unpaidAccount.items.push(...body.newItems.map((i: any) => ({
+                        productoId: i.productoId || i.id,
+                        nombreProducto: i.nombreProducto || i.nombre,
+                        cantidad: parseInt(i.cantidad || 1, 10),
+                        precioUnitario: parseFloat(i.precioUnitario || 0)
+                    })));
+                    unpaidAccount.total = Math.round((unpaidAccount.total + addedSubtotal) * 100) / 100;
+                } else {
+                    const nextIdx = currentExtra.splitAccounts.length + 1;
+                    currentExtra.splitAccounts.push({
+                        id: `split_${Date.now()}`,
+                        name: `Cuenta ${nextIdx} (Adición)`,
+                        total: Math.round(addedSubtotal * 100) / 100,
+                        items: body.newItems.map((i: any) => ({
+                            productoId: i.productoId || i.id,
+                            nombreProducto: i.nombreProducto || i.nombre,
+                            cantidad: parseInt(i.cantidad || 1, 10),
+                            precioUnitario: parseFloat(i.precioUnitario || 0)
+                        })),
+                        estado: 'PENDIENTE'
+                    });
+                }
+            }
 
             if (body.kitchenNotes) {
                 currentExtra.kitchenNotes = (currentExtra.kitchenNotes ? `${currentExtra.kitchenNotes} | ` : '') + body.kitchenNotes;
