@@ -51,9 +51,58 @@ interface DbOrder {
 
 export default function DriverAppPage() {
   const slug = 'parrilla-citiox-demo'; // Negocio piloto por defecto
-  const [driverId] = useState<string>('driver-01');
-  const [driverName] = useState<string>('Marco Proaño');
-  const [driverPhone] = useState<string>('0991234567');
+  // Estado de Sesión Dinámica de Repartidor
+  const [driverSession, setDriverSession] = useState<{
+    driverId: string;
+    driverName: string;
+    driverPhone: string;
+    vehicleType: string;
+  } | null>(null);
+
+  const [loginForm, setLoginForm] = useState({
+    name: '',
+    phone: '',
+    vehicleType: 'MOTO'
+  });
+
+  const [isInitializingSession, setIsInitializingSession] = useState(true);
+
+  // Inicializar Sesión desde localStorage o Parámetros URL
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const searchParams = new URLSearchParams(window.location.search);
+        const qId = searchParams.get('driverId');
+        const qName = searchParams.get('name');
+        const qPhone = searchParams.get('phone');
+
+        if (qId && qName) {
+          const newS = {
+            driverId: qId,
+            driverName: qName,
+            driverPhone: qPhone || '0991234567',
+            vehicleType: 'MOTO'
+          };
+          localStorage.setItem('citiox_driver_session', JSON.stringify(newS));
+          setDriverSession(newS);
+        } else {
+          const saved = localStorage.getItem('citiox_driver_session');
+          if (saved) {
+            try {
+              setDriverSession(JSON.parse(saved));
+            } catch (_) {}
+          }
+        }
+      }
+    } finally {
+      setIsInitializingSession(false);
+    }
+  }, []);
+
+  const driverId = driverSession?.driverId || '';
+  const driverName = driverSession?.driverName || '';
+  const driverPhone = driverSession?.driverPhone || '';
+
   const [status, setStatus] = useState<'DISPONIBLE' | 'DESCANSO' | 'DESCONECTADO'>('DISPONIBLE');
   const [activeTab, setActiveTab] = useState<'INICIO' | 'GANANCIAS' | 'HISTORIAL' | 'NEGOCIOS' | 'PERFIL'>('INICIO');
 
@@ -78,14 +127,16 @@ export default function DriverAppPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Cargar estado inicial y registrar repartidor
+  // Cargar estado inicial y registrar repartidor cuando haya sesión activa
   useEffect(() => {
+    if (!driverId) return;
     registerDriver();
     const interval = setInterval(fetchDriverData, 4000); // Polling cada 4s
     return () => clearInterval(interval);
-  }, []);
+  }, [driverId, driverName, driverPhone]);
 
   const registerDriver = async () => {
+    if (!driverId || !driverName) return;
     try {
       await fetch(`/api/public/${slug}/driver`, {
         method: 'POST',
@@ -95,7 +146,7 @@ export default function DriverAppPage() {
           driverId,
           name: driverName,
           phone: driverPhone,
-          vehicleType: 'MOTO',
+          vehicleType: driverSession?.vehicleType || 'MOTO',
           status,
         }),
       });
@@ -106,6 +157,7 @@ export default function DriverAppPage() {
   };
 
   const fetchDriverData = async () => {
+    if (!driverId) return;
     setLoading(true);
     try {
       const res = await fetch(`/api/public/${slug}/driver?driverId=${driverId}`);
@@ -118,6 +170,26 @@ export default function DriverAppPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Función de Login Manual de Repartidor
+  const handleDriverLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginForm.name || !loginForm.phone) return;
+
+    const cleanPhone = loginForm.phone.replace(/\D/g, '');
+    const generatedId = `driver_${cleanPhone || Date.now()}`;
+    const newS = {
+      driverId: generatedId,
+      driverName: loginForm.name,
+      driverPhone: loginForm.phone,
+      vehicleType: loginForm.vehicleType
+    };
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('citiox_driver_session', JSON.stringify(newS));
+    }
+    setDriverSession(newS);
   };
 
   const handleStatusChange = async (newStatus: 'DISPONIBLE' | 'DESCANSO' | 'DESCONECTADO') => {
@@ -229,9 +301,12 @@ export default function DriverAppPage() {
   };
 
   const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('citiox_driver_session');
+    }
+    setDriverSession(null);
     setShowLogoutModal(false);
-    alert('Sesión cerrada correctamente. Redirigiendo a inicio...');
-    window.location.reload();
+    setAvailableDbOrders([]);
   };
 
   const parseExtraInfo = (extra: any) => {
@@ -344,6 +419,76 @@ export default function DriverAppPage() {
 
     return (orderFee > 0 ? orderFee : 2.50).toFixed(2);
   };
+
+  if (!driverSession) {
+    return (
+      <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-4">
+        <div className="w-full max-w-sm bg-slate-800/90 backdrop-blur-xl border border-slate-700/80 rounded-3xl p-6 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-200">
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#ea580c] to-amber-500 mx-auto flex items-center justify-center shadow-lg shadow-amber-500/20">
+              <Truck className="size-9 text-white stroke-[2.5]" />
+            </div>
+            <h1 className="text-xl font-black tracking-tight">Acceso a Repartidores</h1>
+            <p className="text-xs text-slate-400 font-semibold">
+              Ingresa tus datos oficiales para conectarte al sistema de entregas
+            </p>
+          </div>
+
+          <form onSubmit={handleDriverLogin} className="space-y-4">
+            <div>
+              <label className="block text-[11px] font-black uppercase text-slate-400 tracking-wider mb-1.5">
+                Nombre Completo del Repartidor
+              </label>
+              <input
+                type="text"
+                required
+                value={loginForm.name}
+                onChange={e => setLoginForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="Ej: Marco Proaño"
+                className="w-full px-4 py-3 rounded-2xl bg-slate-900/90 border border-slate-700 text-white font-extrabold text-sm outline-none focus:border-amber-500 transition-colors"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-black uppercase text-slate-400 tracking-wider mb-1.5">
+                Número de Teléfono / WhatsApp
+              </label>
+              <input
+                type="tel"
+                required
+                value={loginForm.phone}
+                onChange={e => setLoginForm(f => ({ ...f, phone: e.target.value }))}
+                placeholder="Ej: 0991234567"
+                className="w-full px-4 py-3 rounded-2xl bg-slate-900/90 border border-slate-700 text-white font-extrabold text-sm outline-none focus:border-amber-500 transition-colors"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-black uppercase text-slate-400 tracking-wider mb-1.5">
+                Tipo de Vehículo
+              </label>
+              <select
+                value={loginForm.vehicleType}
+                onChange={e => setLoginForm(f => ({ ...f, vehicleType: e.target.value }))}
+                className="w-full px-4 py-3 rounded-2xl bg-slate-900/90 border border-slate-700 text-white font-extrabold text-sm outline-none focus:border-amber-500 transition-colors cursor-pointer"
+              >
+                <option value="MOTO">🛵 Motocicleta</option>
+                <option value="AUTO">🚗 Automóvil / Camioneta</option>
+                <option value="BICI">🚲 Bicicleta / Patineta</option>
+              </select>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3.5 bg-gradient-to-r from-[#ea580c] to-amber-500 hover:from-amber-600 hover:to-amber-500 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-amber-500/20 transition-all cursor-pointer"
+            >
+              Ingresar como Repartidor
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-slate-100 text-slate-900 font-sans pb-32">
