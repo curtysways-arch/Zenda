@@ -203,10 +203,16 @@ export async function PUT(req: Request) {
             }
         } else if (action === 'MARCAR_PAGADO' || action === 'VERIFICAR_PAGO' || estado === 'PAGO_VERIFICADO') {
             currentExtra.paymentStatus = 'PAGADO';
+            currentExtra.montoPagadoAcumulado = pedido.total;
+            currentExtra.saldoPendiente = 0;
+            if (body.metodoPago) currentExtra.metodoPago = body.metodoPago;
+            if (body.montoRecibido !== undefined) currentExtra.montoRecibido = parseFloat(body.montoRecibido);
+            if (body.vuelto !== undefined) currentExtra.vuelto = parseFloat(body.vuelto);
+
             if (pedido.payment) {
                 await (prisma as any).orderPayment.update({
                     where: { id: pedido.payment.id },
-                    data: { estado: 'CONFIRMADO' }
+                    data: { estado: 'CONFIRMADO', monto: pedido.total }
                 }).catch(() => {});
             } else {
                 await (prisma as any).orderPayment.create({

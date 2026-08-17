@@ -37,14 +37,14 @@ function VentasContent() {
   // State
   const [nombreCliente, setNombreCliente] = useState('Cliente POS');
   const [telefonoCliente, setTelefonoCliente] = useState('0991234567');
-  const [tipoEntrega, setTipoEntrega] = useState<'DELIVERY_ORDER' | 'PICKUP_ORDER' | 'TABLE_ORDER'>('PICKUP_ORDER');
+  const [tipoEntrega, setTipoEntrega] = useState<'DELIVERY_ORDER' | 'PICKUP_ORDER' | 'TABLE_ORDER'>('TABLE_ORDER');
   const [metodoPago, setMetodoPago] = useState<'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA' | 'MIXTO' | 'OTRO'>('EFECTIVO');
   const [direccionCliente, setDireccionCliente] = useState('Venta Directa Mostrador');
   const [referenciaCliente, setReferenciaCliente] = useState('');
   const [mesaCode, setMesaCode] = useState('POS-Virtual');
   const [kitchenNotes, setKitchenNotes] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [pagarInmediato, setPagarInmediato] = useState(true);
+  const [pagarInmediato, setPagarInmediato] = useState(false);
   const [montoRecibido, setMontoRecibido] = useState<string>('');
 
   // Business & Delivery GPS Config
