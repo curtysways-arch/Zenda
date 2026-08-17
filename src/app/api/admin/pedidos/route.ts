@@ -548,7 +548,6 @@ export async function POST(req: Request) {
                         create: {
                             negocioId,
                             monto: pricingResult.total,
-                            montoExcedente: numVuelto,
                             estado: paymentStatus === 'PAGADO' ? 'CONFIRMADO' : 'PENDIENTE'
                         }
                     },
