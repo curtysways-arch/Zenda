@@ -175,8 +175,33 @@ export async function PUT(req: Request) {
             }
         }
 
-        // 3. ACCIÓN: VERIFICAR O RECHAZAR PAGO
-        if (action === 'MARCAR_PAGADO' || action === 'VERIFICAR_PAGO' || estado === 'PAGO_VERIFICADO') {
+        // 3. ACCIÓN: VERIFICAR O RECHAZAR PAGO / COBRAR ORDEN DE MESA DIRECTAMENTE
+        if (action === 'COBRAR_ORDEN_MESA') {
+            currentExtra.paymentStatus = 'PAGADO';
+            currentExtra.montoPagadoAcumulado = pedido.total;
+            currentExtra.saldoPendiente = 0;
+            if (body.metodoPago) currentExtra.metodoPago = body.metodoPago;
+            if (body.montoRecibido !== undefined) currentExtra.montoRecibido = parseFloat(body.montoRecibido);
+            if (body.vuelto !== undefined) currentExtra.vuelto = parseFloat(body.vuelto);
+
+            updateData.estado = 'FINALIZADO';
+
+            if (pedido.payment) {
+                await (prisma as any).orderPayment.update({
+                    where: { id: pedido.payment.id },
+                    data: { estado: 'CONFIRMADO', monto: pedido.total }
+                }).catch(() => {});
+            } else {
+                await (prisma as any).orderPayment.create({
+                    data: {
+                        pedidoId: id,
+                        negocioId: pedido.negocioId,
+                        monto: pedido.total,
+                        estado: 'CONFIRMADO'
+                    }
+                }).catch(() => {});
+            }
+        } else if (action === 'MARCAR_PAGADO' || action === 'VERIFICAR_PAGO' || estado === 'PAGO_VERIFICADO') {
             currentExtra.paymentStatus = 'PAGADO';
             if (pedido.payment) {
                 await (prisma as any).orderPayment.update({
@@ -187,9 +212,8 @@ export async function PUT(req: Request) {
                 await (prisma as any).orderPayment.create({
                     data: {
                         pedidoId: id,
-                        montoTotal: pedido.total,
-                        montoPagado: pedido.total,
-                        montoExcedente: 0,
+                        negocioId: pedido.negocioId,
+                        monto: pedido.total,
                         estado: 'CONFIRMADO'
                     }
                 }).catch(() => {});

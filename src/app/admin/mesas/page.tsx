@@ -153,6 +153,11 @@ export default function AdminMesasPage() {
   const [splitPayMethod, setSplitPayMethod] = useState<'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA' | 'MIXTO' | 'OTRO'>('EFECTIVO');
   const [splitMontoRecibido, setSplitMontoRecibido] = useState<string>('');
 
+  // Direct Full Table Payment State
+  const [showPayFullOrderModal, setShowPayFullOrderModal] = useState(false);
+  const [payFullMethod, setPayFullMethod] = useState<'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA' | 'MIXTO' | 'OTRO'>('EFECTIVO');
+  const [payFullMontoRecibido, setPayFullMontoRecibido] = useState<string>('');
+
   const [targetTableId, setTargetTableId] = useState('');
   const [tableForm, setTableForm] = useState({ id: '', name: '', capacity: 4, estado: 'DISPONIBLE' });
   const [actionLoading, setActionLoading] = useState(false);
@@ -667,6 +672,66 @@ export default function AdminMesasPage() {
     }
   }
 
+  // COBRAR ORDEN COMPLETA DE MESA DIRECTAMENTE (SIN ENVIAR A CAJA)
+  async function confirmPayFullTableOrder() {
+    if (!activeOrderForSelectedTable) return;
+    setActionLoading(true);
+
+    const order = activeOrderForSelectedTable;
+    const computedTotal = order.items.reduce((sum, it) => sum + (Number(it.precioUnitario) || 0) * (Number(it.cantidad) || 1), 0);
+    const displayTotal = computedTotal > 0 ? computedTotal : (Number(order.total) || 0);
+
+    let extra: any = {};
+    if (typeof order.extraInfo === 'string') {
+      try { extra = JSON.parse(order.extraInfo); } catch {}
+    } else if (order.extraInfo && typeof order.extraInfo === 'object') {
+      extra = order.extraInfo;
+    }
+
+    const rawMontoRecibido = extra.montoRecibido ?? order.payment?.montoPagado ?? 0;
+    const isInitialPaid = extra.paymentStatus === 'PAGADO' || order.payment?.estado === 'CONFIRMADO';
+
+    const montoPagado = extra.montoPagadoAcumulado !== undefined 
+      ? Number(extra.montoPagadoAcumulado) 
+      : (isInitialPaid ? Math.min(Number(rawMontoRecibido) || displayTotal, displayTotal) : 0);
+
+    const saldoPendiente = extra.saldoPendiente !== undefined 
+      ? Number(extra.saldoPendiente) 
+      : Math.max(0, Math.round((displayTotal - montoPagado) * 100) / 100);
+
+    const amountToPay = montoPagado > 0 ? saldoPendiente : displayTotal;
+    const numRecibido = parseFloat(payFullMontoRecibido) || amountToPay;
+    const numVuelto = Math.max(0, numRecibido - amountToPay);
+
+    try {
+      const res = await fetch('/api/admin/pedidos', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: order.id,
+          action: 'COBRAR_ORDEN_MESA',
+          metodoPago: payFullMethod,
+          montoRecibido: numRecibido,
+          vuelto: numVuelto
+        })
+      });
+
+      if (res.ok) {
+        if (selectedTable) {
+          await changeTableState(selectedTable.id, 'DISPONIBLE');
+        }
+        setShowPayFullOrderModal(false);
+        showToast(`🎉 ${selectedTable?.name || 'Mesa'} cobrada exitosamente ($${amountToPay.toFixed(2)}). Mesa libre.`);
+        setSelectedTable(null);
+        loadData();
+      } else {
+        showToast('Error al registrar el cobro de la mesa', 'error');
+      }
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="p-8 flex flex-col items-center justify-center min-h-[500px] space-y-3">
@@ -1089,16 +1154,45 @@ export default function AdminMesasPage() {
                       <ArrowRightLeft className="size-3.5" /> Cambiar de Mesa
                     </button>
 
-                    {/* Enviar a Caja Completo */}
-                    {existingSplitAccounts.length === 0 && (
-                      <button
-                        onClick={sendTableToCashier}
-                        disabled={actionLoading}
-                        className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
-                      >
-                        <CreditCard className="size-4" /> Enviar a Caja para Cobro
-                      </button>
-                    )}
+                    {/* Botón Cobro Directo de Mesa */}
+                    {existingSplitAccounts.length === 0 && (() => {
+                      const order = activeOrderForSelectedTable;
+                      const computedTotal = order.items.reduce((sum, it) => sum + (Number(it.precioUnitario) || 0) * (Number(it.cantidad) || 1), 0);
+                      const displayTotal = computedTotal > 0 ? computedTotal : (Number(order.total) || 0);
+
+                      let extra: any = {};
+                      if (typeof order.extraInfo === 'string') {
+                        try { extra = JSON.parse(order.extraInfo); } catch {}
+                      } else if (order.extraInfo && typeof order.extraInfo === 'object') {
+                        extra = order.extraInfo;
+                      }
+
+                      const rawMontoRecibido = extra.montoRecibido ?? order.payment?.montoPagado ?? 0;
+                      const isInitialPaid = extra.paymentStatus === 'PAGADO' || order.payment?.estado === 'CONFIRMADO';
+
+                      const montoPagado = extra.montoPagadoAcumulado !== undefined 
+                        ? Number(extra.montoPagadoAcumulado) 
+                        : (isInitialPaid ? Math.min(Number(rawMontoRecibido) || displayTotal, displayTotal) : 0);
+
+                      const saldoPendiente = extra.saldoPendiente !== undefined 
+                        ? Number(extra.saldoPendiente) 
+                        : Math.max(0, Math.round((displayTotal - montoPagado) * 100) / 100);
+
+                      const amountToPay = montoPagado > 0 ? saldoPendiente : displayTotal;
+
+                      return (
+                        <button
+                          onClick={() => {
+                            setPayFullMontoRecibido(amountToPay.toFixed(2));
+                            setShowPayFullOrderModal(true);
+                          }}
+                          disabled={actionLoading}
+                          className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50"
+                        >
+                          <CreditCard className="size-4" /> Cobrar Cuenta (${amountToPay.toFixed(2)})
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               ) : (
@@ -1461,6 +1555,158 @@ export default function AdminMesasPage() {
         </div>
       )}
 
+      {/* ─── MODAL COBRO DIRECTO DE MESA COMPLETA / SALDO ─── */}
+      {showPayFullOrderModal && selectedTable && activeOrderForSelectedTable && (() => {
+        const order = activeOrderForSelectedTable;
+        const computedTotal = order.items.reduce((sum, it) => sum + (Number(it.precioUnitario) || 0) * (Number(it.cantidad) || 1), 0);
+        const displayTotal = computedTotal > 0 ? computedTotal : (Number(order.total) || 0);
+
+        let extra: any = {};
+        if (typeof order.extraInfo === 'string') {
+          try { extra = JSON.parse(order.extraInfo); } catch {}
+        } else if (order.extraInfo && typeof order.extraInfo === 'object') {
+          extra = order.extraInfo;
+        }
+
+        const rawMontoRecibido = extra.montoRecibido ?? order.payment?.montoPagado ?? 0;
+        const isInitialPaid = extra.paymentStatus === 'PAGADO' || order.payment?.estado === 'CONFIRMADO';
+
+        const montoPagado = extra.montoPagadoAcumulado !== undefined 
+          ? Number(extra.montoPagadoAcumulado) 
+          : (isInitialPaid ? Math.min(Number(rawMontoRecibido) || displayTotal, displayTotal) : 0);
+
+        const saldoPendiente = extra.saldoPendiente !== undefined 
+          ? Number(extra.saldoPendiente) 
+          : Math.max(0, Math.round((displayTotal - montoPagado) * 100) / 100);
+
+        const amountToPay = montoPagado > 0 ? saldoPendiente : displayTotal;
+        const rec = parseFloat(payFullMontoRecibido) || amountToPay;
+        const vuelt = Math.max(0, Math.round((rec - amountToPay) * 100) / 100);
+
+        return (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[10px] font-black uppercase text-emerald-600 tracking-wider block">
+                    Cobro Directo en Mesas
+                  </span>
+                  <h3 className="font-black text-lg text-slate-900">
+                    Cobrar {selectedTable.name} (Orden #{order.numeroPedido})
+                  </h3>
+                </div>
+                <button 
+                  onClick={() => setShowPayFullOrderModal(false)}
+                  className="p-1 rounded-full hover:bg-slate-100 text-slate-400"
+                >
+                  <X className="size-5" />
+                </button>
+              </div>
+
+              {/* Resumen del Importe a Cobrar */}
+              <div className="p-3.5 rounded-2xl bg-slate-900 text-white space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-400 font-bold">Consumo Total de Mesa:</span>
+                  <span className="font-extrabold text-white">${displayTotal.toFixed(2)}</span>
+                </div>
+                {montoPagado > 0 && (
+                  <div className="flex justify-between items-center text-xs text-emerald-400 font-bold">
+                    <span>✓ Cobrado Anteriormente:</span>
+                    <span>${montoPagado.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center text-sm pt-2 border-t border-slate-800">
+                  <span className="font-black text-amber-400 uppercase tracking-wider">Total a Cobrar Ahora:</span>
+                  <span className="font-black text-emerald-400 text-xl">${amountToPay.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Método de Pago */}
+              <div>
+                <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-2">
+                  Método de Pago
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'EFECTIVO', label: '💵 Efectivo' },
+                    { id: 'TRANSFERENCIA', label: '🏦 Transf.' },
+                    { id: 'TARJETA', label: '💳 Tarjeta' },
+                    { id: 'MIXTO', label: '🔀 Mixto' },
+                    { id: 'OTRO', label: '⚡ Otro' }
+                  ].map(m => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setPayFullMethod(m.id as any)}
+                      className={`py-2 px-2 rounded-xl text-xs font-black transition-all cursor-pointer border ${
+                        payFullMethod === m.id
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Monto Recibido y Cambio */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700">Monto Recibido ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={payFullMontoRecibido}
+                  onChange={e => setPayFullMontoRecibido(e.target.value)}
+                  className="w-full text-base font-black p-3 border border-slate-200 rounded-xl bg-slate-50 outline-none text-slate-900"
+                />
+
+                {/* Accesos Rápidos */}
+                <div className="flex gap-1.5 pt-1">
+                  {[amountToPay, 10, 20, 50, 100]
+                    .filter((v, i, self) => v >= amountToPay && self.indexOf(v) === i)
+                    .map(val => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setPayFullMontoRecibido(val.toFixed(2))}
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-[11px] rounded-lg transition-colors"
+                      >
+                        ${val.toFixed(2)}
+                      </button>
+                    ))}
+                </div>
+              </div>
+
+              {/* Vuelto / Cambio */}
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex justify-between items-center text-xs">
+                <span className="font-extrabold text-emerald-900">Vuelto / Cambio a entregar:</span>
+                <span className="font-black text-emerald-700 text-lg">${vuelt.toFixed(2)}</span>
+              </div>
+
+              {/* Botones de Confirmación */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPayFullOrderModal(false)}
+                  className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmPayFullTableOrder}
+                  disabled={actionLoading || rec < amountToPay - 0.01}
+                  className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md disabled:opacity-40 cursor-pointer"
+                >
+                  {actionLoading ? 'Procesando...' : '✓ Confirmar Cobro & Liberar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+      
       {/* ─── MODAL AGREGAR / EDITAR MESA (INFRAESTRUCTURA) ─── */}
       {showTableModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
