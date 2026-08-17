@@ -1429,8 +1429,18 @@ export default function PedidosOnlinePage() {
                       )}
                     </div>
 
-                    {/* CÓDIGO DE SEGURIDAD PIN (RETIRO EN LOCAL) */}
+                    {/* CÓDIGO DE SEGURIDAD PIN (RETIRO EN LOCAL) — Solo visible cuando hay driver asignado */}
                     {(() => {
+                      const currentAsgn = assignmentsMap[order.id];
+                      const hasDriver = !!(
+                        currentAsgn ||
+                        order.extraInfo?.assignedDriver ||
+                        order.extraInfo?.assignedDriverName ||
+                        ['REPARTIDOR_EN_LOCAL', 'REPARTIDOR_ASIGNADO', 'EN_CAMINO', 'LLEGO', 'ENTREGADO_A_REPARTIDOR'].includes(order.estado)
+                      );
+
+                      if (!hasDriver) return null;
+
                       let pCode = order.extraInfo?.pickupCode;
                       if (!pCode) {
                         let num = 0; const str = (order.id || '') + 'pickup';
