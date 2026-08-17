@@ -280,12 +280,13 @@ export default function AdminDespachoPage() {
       ) : (
         <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
           {/* Encabezado tabla — desktop */}
-          <div className="hidden lg:grid grid-cols-[56px_1fr_130px_140px_140px_120px_90px] gap-3 px-6 py-3 bg-slate-50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          <div className="hidden lg:grid grid-cols-[56px_1fr_100px_120px_130px_130px_100px_80px] gap-2.5 px-6 py-3 bg-slate-50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest items-center">
             <span>#</span>
             <span>Cliente</span>
             <span>Hora</span>
             <span>Canal</span>
             <span>Estado</span>
+            <span>Estado Pago</span>
             <span className="text-right">Total</span>
             <span></span>
           </div>
@@ -326,7 +327,7 @@ export default function AdminDespachoPage() {
               <details key={order.id} className={`group border-b border-slate-100 last:border-0 ${idx % 2 !== 0 ? 'bg-slate-50/40' : ''}`}>
                 <summary className="list-none cursor-pointer select-none">
                   {/* Desktop row */}
-                  <div className="hidden lg:grid grid-cols-[56px_1fr_130px_140px_140px_120px_90px] gap-3 items-center px-6 py-4 hover:bg-indigo-50/30 transition-colors">
+                  <div className="hidden lg:grid grid-cols-[56px_1fr_100px_120px_130px_130px_100px_80px] gap-2.5 items-center px-6 py-4 hover:bg-indigo-50/30 transition-colors">
                     <span className="text-xs font-black text-slate-400">#{order.numeroPedido}</span>
                     <div className="min-w-0">
                       <p className="text-sm font-black text-slate-900 truncate">{order.nombreCliente}</p>
@@ -342,6 +343,17 @@ export default function AdminDespachoPage() {
                       {channel.label}
                     </span>
                     <div>{getStatusBadge(order.estado)}</div>
+                    <div>
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border inline-flex items-center uppercase ${
+                        isPagadoTotal
+                          ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                          : isParcial
+                          ? 'bg-amber-100 text-amber-900 border-amber-300'
+                          : 'bg-rose-100 text-rose-900 border-rose-300'
+                      }`}>
+                        {isPagadoTotal ? '✓ PAGADO' : isParcial ? '⏳ PARCIAL' : '🔴 PENDIENTE'}
+                      </span>
+                    </div>
                     <span className="text-sm font-black text-emerald-700 text-right">${displayTotal.toFixed(2)}</span>
                     <div className="flex items-center gap-1.5 justify-end">
                       <button
@@ -373,7 +385,14 @@ export default function AdminDespachoPage() {
                       </div>
                       <div className="flex flex-col items-end gap-1 shrink-0">
                         {getStatusBadge(order.estado)}
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${channel.color}`}>{channel.label}</span>
+                        <div className="flex items-center gap-1">
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${channel.color}`}>{channel.label}</span>
+                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border uppercase ${
+                            isPagadoTotal ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : isParcial ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-rose-100 text-rose-900 border-rose-300'
+                          }`}>
+                            {isPagadoTotal ? 'PAGADO' : isParcial ? 'PARCIAL' : 'PENDIENTE'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
