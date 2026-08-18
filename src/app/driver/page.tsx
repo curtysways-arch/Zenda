@@ -13,9 +13,10 @@ import {
   Map, Sparkles, Store, Building2, ExternalLink, Lock, ArrowLeft, Share2,
   MessageCircle, MoreHorizontal, ChefHat, AlertTriangle, Check,
   TrendingUp, History, User, LogOut, ChevronRight, Star, Award, FileText,
-  Filter, Search, Calendar, CreditCard, ShieldCheck, ThumbsUp, Eye
+  Filter, Search, Calendar, CreditCard, ShieldCheck, ThumbsUp, Eye, ArrowRight, Key, ChevronLeft
 } from 'lucide-react';
 import DriverOrderMapModal from '@/components/driver/DriverOrderMapModal';
+import PhoneInput from '@/components/ui/PhoneInput';
 
 interface DbOrder {
   id: string;
@@ -512,93 +513,156 @@ export default function DriverAppPage() {
 
   if (!driverSession) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-200">
-          <div className="text-center space-y-2">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#ea580c] to-amber-500 mx-auto flex items-center justify-center shadow-lg shadow-amber-500/20">
-              <Truck className="size-9 text-white stroke-[2.5]" />
-            </div>
-            <h1 className="text-xl font-black tracking-tight">Acceso a Repartidores</h1>
-            <p className="text-xs text-slate-400 font-semibold">
-              {otpStep === 'PHONE'
-                ? 'Ingresa tu número de WhatsApp registrado para recibir tu código OTP de acceso'
-                : `Ingresa el código OTP de 4 dígitos enviado a ${otpPhone}`}
-            </p>
+      <div className="min-h-screen bg-slate-50 flex flex-col justify-between text-slate-900 font-sans">
+        {/* Header Superior estilo Mi Perfil */}
+        <header className="px-6 py-5 bg-white border-b border-slate-100 flex items-center gap-4">
+          <button 
+            type="button" 
+            onClick={() => window.history.back()} 
+            className="size-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700 transition-colors"
+          >
+            <ChevronLeft className="size-5" />
+          </button>
+          <div>
+            <h1 className="text-base font-black text-slate-900 tracking-tight leading-none">Mi Perfil</h1>
+            <p className="text-[11px] font-semibold text-slate-400 mt-0.5">Gestiona tu cuenta y preferencias</p>
           </div>
+        </header>
 
-          {otpError && (
-            <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-bold text-center">
-              ⚠️ {otpError}
-            </div>
-          )}
-
-          {otpSentDemoCode && otpStep === 'OTP' && (
-            <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-black text-center space-y-1">
-              <p>📱 Código OTP Enviado por WhatsApp</p>
-              <p className="text-xl tracking-widest text-emerald-300 font-black">PIN: {otpSentDemoCode}</p>
-            </div>
-          )}
-
+        {/* Cuerpo Principal */}
+        <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 my-auto">
           {otpStep === 'PHONE' ? (
-            <form onSubmit={handleSendOtp} className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-black uppercase text-slate-400 tracking-wider mb-1.5">
-                  Teléfono / WhatsApp Registrado
-                </label>
-                <input
-                  type="tel"
-                  required
-                  value={otpPhone}
-                  onChange={e => setOtpPhone(e.target.value)}
-                  placeholder="Ej: 0991234567"
-                  className="w-full px-4 py-3.5 rounded-2xl bg-slate-950 border border-slate-700 text-white font-black text-base outline-none focus:border-amber-500 transition-colors"
-                />
+            <section className="w-full max-w-sm flex flex-col items-center text-center space-y-6 animate-in fade-in duration-300">
+              <div className="space-y-1">
+                <h2 className="text-5xl font-black italic uppercase tracking-tighter leading-none text-slate-900">
+                  HOLA,
+                </h2>
+                <p className="font-black italic tracking-widest text-[11px] uppercase text-slate-500">
+                  IDENTIFÍCATE PARA VER TU PERFIL
+                </p>
               </div>
 
-              <button
-                type="submit"
-                disabled={otpLoading}
-                className="w-full py-3.5 bg-gradient-to-r from-[#ea580c] to-amber-500 hover:from-amber-600 hover:to-amber-500 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-amber-500/20 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {otpLoading ? 'Enviando OTP...' : 'Enviar Código OTP 📲'}
-              </button>
-            </form>
+              <div className="w-full bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-2xl border border-slate-100 text-left">
+                <div className="flex items-center gap-3 mb-6 justify-center">
+                  <div className="size-10 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center shadow-xs">
+                    <Sparkles className="size-5" />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-[0.2em] italic text-pink-600">
+                    VERIFICACIÓN SEGURA
+                  </span>
+                </div>
+
+                <form onSubmit={handleSendOtp} className="space-y-5">
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-2">
+                      NÚMERO MÓVIL
+                    </label>
+                    <PhoneInput
+                      value={otpPhone}
+                      onChange={setOtpPhone}
+                      placeholder="WHATSAPP"
+                      className="w-full"
+                    />
+                  </div>
+
+                  {otpError && (
+                    <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center gap-2 border border-rose-200/80">
+                      <AlertCircle className="size-4 shrink-0" />
+                      <span>{otpError}</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={otpLoading || otpPhone.replace(/\D/g, '').length < 7}
+                    className="w-full h-15 bg-gradient-to-r from-pink-400 via-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-pink-500/25 active:scale-95 transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50"
+                  >
+                    <span>CONTINUAR</span>
+                    <ArrowRight className="size-5" />
+                  </button>
+                </form>
+              </div>
+            </section>
           ) : (
-            <form onSubmit={handleVerifyOtp} className="space-y-5">
-              <div className="flex justify-center gap-2">
-                {otpPin.map((digit, idx) => (
-                  <input
-                    key={idx}
-                    id={`otp-input-${idx}`}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={e => handlePinChange(idx, e.target.value)}
-                    onKeyDown={e => handlePinKeyDown(idx, e)}
-                    className="w-12 h-14 text-center text-2xl font-black rounded-2xl bg-slate-950 border-2 border-slate-700 text-amber-400 focus:border-amber-500 outline-none transition-colors"
-                  />
-                ))}
+            <section className="w-full max-w-sm flex flex-col items-center text-center space-y-6 animate-in fade-in duration-300">
+              <div className="space-y-3">
+                <div className="mx-auto size-16 rounded-2xl bg-white border border-slate-200 flex items-center justify-center shadow-xl text-pink-600">
+                  <Key className="size-8 stroke-[2.5]" />
+                </div>
+                <div className="space-y-1">
+                  <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">
+                    CÓDIGO OTP
+                  </h2>
+                  <p className="text-slate-500 text-xs font-medium">
+                    Revisa tu WhatsApp <strong>{otpPhone}</strong>
+                  </p>
+                </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={otpLoading || otpPin.join('').length < 4}
-                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-emerald-600/20 transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {otpLoading ? 'Verificando...' : 'Verificar e Iniciar Sesión 🔑'}
-              </button>
+              {otpSentDemoCode && (
+                <div className="w-full p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-black text-center space-y-1">
+                  <p className="uppercase text-[10px] tracking-wider text-emerald-600">📱 Código de Verificación Enviado</p>
+                  <p className="text-xl font-mono tracking-[0.3em] text-emerald-900">PIN: {otpSentDemoCode}</p>
+                </div>
+              )}
 
-              <button
-                type="button"
-                onClick={() => setOtpStep('PHONE')}
-                className="w-full py-2 text-xs font-bold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
-              >
-                ← Cambiar número de teléfono
-              </button>
-            </form>
+              <div className="w-full bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-2xl border border-slate-100">
+                <form onSubmit={handleVerifyOtp} className="space-y-6">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">
+                      Ingresa el Código de 4 dígitos
+                    </label>
+                    <div className="flex justify-center gap-2">
+                      {otpPin.map((digit, idx) => (
+                        <input
+                          key={idx}
+                          id={`otp-input-${idx}`}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={digit}
+                          onChange={e => handlePinChange(idx, e.target.value)}
+                          onKeyDown={e => handlePinKeyDown(idx, e)}
+                          className="w-12 h-14 text-center text-2xl font-mono font-black rounded-2xl bg-slate-50 border-2 border-pink-400 text-pink-600 focus:border-pink-600 outline-none transition-colors"
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {otpError && (
+                    <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center gap-2 border border-rose-200/80">
+                      <AlertCircle className="size-4 shrink-0" />
+                      <span>{otpError}</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    <button
+                      type="submit"
+                      disabled={otpLoading || otpPin.join('').length < 4}
+                      className="w-full h-14 bg-pink-500 hover:bg-pink-600 text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-pink-500/30 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      <span>VERIFICAR CÓDIGO</span>
+                      <ArrowRight className="size-5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setOtpStep('PHONE')}
+                      className="w-full text-xs font-bold text-slate-500 hover:text-slate-800 uppercase tracking-wider py-2 cursor-pointer"
+                    >
+                      ← Cambiar Número
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </section>
           )}
-        </div>
+        </main>
+
+        <footer className="py-4 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+          CiTiOX Enterprise Runtime System
+        </footer>
       </div>
     );
   }
