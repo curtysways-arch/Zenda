@@ -160,7 +160,7 @@ const VehicleIcon = ({ tipo }: { tipo?: string }) => {
   return <Footprints className="w-4 h-4" />;
 };
 
-// ─── MODAL NUEVO / INVITAR REPARTIDOR ────────────────────────────────────────
+// ─── MODAL INVITAR / VINCULAR REPARTIDOR (SISTEMA MULTINEGOCIO CITIOX) ────────
 function InviteDriverModal({
   onClose,
   onSave,
@@ -168,15 +168,13 @@ function InviteDriverModal({
   onClose: () => void;
   onSave: () => void;
 }) {
-  const [mode, setMode] = useState<'DIRECT' | 'INVITE'>('DIRECT');
   const [countryCode, setCountryCode] = useState('+593'); // 🇪🇨 Ecuador por defecto
   const [form, setForm] = useState({
     nombre: '',
     telefono: '',
-    tipoVehiculo: 'MOTO',
-    placa: '',
-    documento: '',
   });
+  const [searching, setSearching] = useState(false);
+  const [existingDriver, setExistingDriver] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [inviteResult, setInviteResult] = useState<{ inviteUrl: string; whatsapp: any } | null>(null);
@@ -193,46 +191,75 @@ function InviteDriverModal({
     { code: '+34', flag: '🇪🇸', name: 'España (+34)' },
   ];
 
-  const handleCreateDirect = async () => {
-    if (!form.nombre.trim()) {
-      setError('El nombre completo es obligatorio');
-      return;
+  // Buscar si el teléfono ya pertenece a un repartidor de la Red Citiox
+  const handlePhoneChange = async (val: string) => {
+    setForm(f => ({ ...f, telefono: val }));
+    setExistingDriver(null);
+    setError('');
+
+    const clean = val.trim();
+    if (clean.length < 7) return;
+
+    const fullPhone = clean.startsWith('+') ? clean : `${countryCode}${clean}`;
+    setSearching(true);
+    try {
+      const res = await fetch(`/api/logistics/verify/search-driver?phone=${encodeURIComponent(fullPhone)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.exists) {
+          setExistingDriver(data);
+          if (data.driverName && !form.nombre) {
+            setForm(f => ({ ...f, nombre: data.driverName }));
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error buscando repartidor:', e);
+    } finally {
+      setSearching(false);
     }
+  };
+
+  // 1. Vincular repartidor existente en la Red Citiox
+  const handleLinkExistingDriver = async () => {
+    if (!existingDriver) return;
     setSaving(true);
     setError('');
 
-    const fullPhone = form.telefono.trim()
-      ? (form.telefono.startsWith('+') ? form.telefono : `${countryCode}${form.telefono.trim()}`)
-      : '';
+    const fullPhone = form.telefono.startsWith('+')
+      ? form.telefono
+      : `${countryCode}${form.telefono.trim()}`;
 
     try {
       const res = await fetch('/api/logistics/resources', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: form.nombre.trim(),
+          name: existingDriver.driverName || form.nombre || 'Repartidor Registrado',
           telefono: fullPhone,
-          tipoVehiculo: form.tipoVehiculo,
-          placa: form.placa.trim(),
-          documento: form.documento.trim(),
-          autoApprove: true,
-          estado: 'DISPONIBLE'
+          tipoVehiculo: existingDriver.tipoVehiculo || 'MOTO',
+          placa: existingDriver.placa || '',
+          documento: existingDriver.documento || '',
+          autoApprove: false, // Entra a Verificaciones pendientes de este local
+          estado: 'FUERA_DE_SERVICIO'
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error creando repartidor');
+      if (!res.ok) throw new Error(data.error || 'Error vinculando repartidor');
+      alert(`¡Repartidor ${existingDriver.driverName} vinculado! Revisa la pestaña 'Verificaciones' para aprobar sus documentos.`);
       onSave();
       onClose();
     } catch (e: any) {
-      setError(e.message || 'Error al registrar repartidor');
+      setError(e.message || 'Error al vincular repartidor');
     } finally {
       setSaving(false);
     }
   };
 
+  // 2. Generar invitación para un repartidor totalmente nuevo
   const handleCreateInvite = async () => {
-    if (!form.nombre.trim() || !form.telefono.trim()) {
-      setError('Nombre y teléfono son requeridos para la invitación');
+    if (!form.telefono.trim()) {
+      setError('El teléfono de WhatsApp es obligatorio');
       return;
     }
     setSaving(true);
@@ -246,7 +273,11 @@ function InviteDriverModal({
       const res = await fetch('/api/logistics/invitations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, telefono: fullPhone }),
+        body: JSON.stringify({
+          nombre: form.nombre.trim() || 'Repartidor',
+          telefono: fullPhone,
+          tipoVehiculo: 'MOTO'
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Error creando invitación');
@@ -260,19 +291,19 @@ function InviteDriverModal({
 
   if (inviteResult) {
     return (
-      <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 text-center space-y-5">
+      <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 text-center space-y-5">
           <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto text-purple-600">
             <Send className="w-8 h-8" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-900">¡Invitación Creada!</h3>
-            <p className="text-xs text-slate-500 mt-1">
-              El repartidor debe ingresar al enlace para completar sus datos y expediente privado.
+            <h3 className="text-lg font-black text-slate-900">¡Invitación de Auto-Registro Creada!</h3>
+            <p className="text-xs text-slate-500 mt-1 font-medium">
+              El repartidor recibirá el enlace por WhatsApp para completar sus datos e ingresar sus documentos (Cédula, Licencia, Matrícula).
             </p>
           </div>
 
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-700 break-all text-left">
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-mono text-slate-700 break-all text-left">
             {inviteResult.inviteUrl}
           </div>
 
@@ -281,23 +312,23 @@ function InviteDriverModal({
               href={inviteResult.whatsapp.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500 text-white rounded-xl font-bold text-sm hover:bg-emerald-600 transition-colors shadow-md"
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-lg shadow-emerald-600/20 cursor-pointer"
             >
               <Phone className="w-4 h-4" />
-              Enviar Enlace por WhatsApp
+              Enviar Invitación por WhatsApp
             </a>
             <button
               onClick={() => {
                 navigator.clipboard.writeText(inviteResult.inviteUrl);
                 alert('Enlace copiado al portapapeles');
               }}
-              className="px-4 py-2.5 border border-slate-200 text-slate-700 rounded-xl font-semibold text-xs hover:bg-slate-50"
+              className="px-4 py-3 border border-slate-200 text-slate-700 rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-slate-50 cursor-pointer"
             >
               Copiar Enlace
             </button>
             <button
               onClick={() => { onSave(); onClose(); }}
-              className="px-4 py-2 text-xs text-slate-500 hover:text-slate-700 font-semibold"
+              className="px-4 py-2 text-xs text-slate-400 hover:text-slate-700 font-bold uppercase tracking-wider cursor-pointer"
             >
               Cerrar
             </button>
@@ -309,66 +340,30 @@ function InviteDriverModal({
 
   return (
     <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
         <div className="flex items-center justify-between p-5 border-b bg-slate-50">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Nuevo Repartidor</h2>
-            <p className="text-xs text-slate-500">Registra un repartidor o envía un enlace de auto-registro</p>
+            <h2 className="text-base font-black text-slate-900">Invitar Nuevo Repartidor</h2>
+            <p className="text-xs text-slate-500 font-medium">El repartidor completará sus documentos mediante su App</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-lg">
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-xl cursor-pointer">
             <XCircle className="w-5 h-5 text-slate-400" />
           </button>
         </div>
 
-        {/* Modal Mode Selector Tabs */}
-        <div className="flex border-b bg-slate-100 p-1.5 gap-1">
-          <button
-            type="button"
-            onClick={() => setMode('DIRECT')}
-            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
-              mode === 'DIRECT'
-                ? 'bg-purple-600 text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            🚀 Registro Directo
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode('INVITE')}
-            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
-              mode === 'INVITE'
-                ? 'bg-purple-600 text-white shadow-sm'
-                : 'text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            📱 Enlace WhatsApp
-          </button>
-        </div>
-
-        <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+        <div className="p-5 space-y-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-              Nombre Completo del Repartidor *
-            </label>
-            <input
-              type="text"
-              value={form.nombre}
-              onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
-              placeholder="Ej: Juan García"
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 font-semibold"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-              Teléfono WhatsApp {mode === 'INVITE' ? '*' : '(Opcional)'}
+            <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
+              Teléfono WhatsApp del Repartidor *
             </label>
             <div className="flex gap-2">
               <select
                 value={countryCode}
-                onChange={e => setCountryCode(e.target.value)}
-                className="px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer"
+                onChange={e => {
+                  setCountryCode(e.target.value);
+                  handlePhoneChange(form.telefono);
+                }}
+                className="px-3 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 focus:outline-none focus:border-purple-600 cursor-pointer"
               >
                 {countries.map(c => (
                   <option key={c.code} value={c.code}>
@@ -376,91 +371,98 @@ function InviteDriverModal({
                   </option>
                 ))}
               </select>
-              <input
-                type="tel"
-                value={form.telefono}
-                onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))}
-                placeholder="099 888 7777"
-                className="flex-1 px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 font-semibold"
-              />
+              <div className="relative flex-1">
+                <input
+                  type="tel"
+                  value={form.telefono}
+                  onChange={e => handlePhoneChange(e.target.value)}
+                  placeholder="099 888 7777"
+                  className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-purple-600"
+                />
+                {searching && (
+                  <RefreshCw className="w-4 h-4 text-purple-600 animate-spin absolute right-3 top-1/2 -translate-y-1/2" />
+                )}
+              </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
-              Tipo de Transporte
+            <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
+              Nombre Completo (Opcional)
             </label>
-            <div className="grid grid-cols-4 gap-2">
-              {[
-                { val: 'MOTO', label: 'Moto', icon: Bike },
-                { val: 'AUTO', label: 'Auto', icon: Car },
-                { val: 'BICICLETA', label: 'Bici', icon: Bike },
-                { val: 'A_PIE', label: 'A pie', icon: Footprints },
-              ].map(({ val, label, icon: Icon }) => (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, tipoVehiculo: val }))}
-                  className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 text-xs font-bold transition-all cursor-pointer ${
-                    form.tipoVehiculo === val
-                      ? 'border-purple-600 bg-purple-50 text-purple-700'
-                      : 'border-slate-200 text-slate-500 hover:border-slate-300'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {label}
-                </button>
-              ))}
-            </div>
+            <input
+              type="text"
+              value={form.nombre}
+              onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
+              placeholder="Ej: Juan García"
+              className="w-full px-3 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-purple-600"
+            />
           </div>
 
-          {mode === 'DIRECT' && (
-            <div className="grid grid-cols-2 gap-3 pt-1 border-t border-slate-100">
-              <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Placa Vehículo</label>
-                <input
-                  type="text"
-                  value={form.placa}
-                  onChange={e => setForm(f => ({ ...f, placa: e.target.value }))}
-                  placeholder="Ej. ABC-1234"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-semibold uppercase"
-                />
+          {/* TARJETA DETECCIÓN DE REPARTIDOR EXISTENTE EN LA RED CITIOX */}
+          {existingDriver ? (
+            <div className="p-4 bg-purple-50 border border-purple-200 rounded-2xl space-y-2 animate-in fade-in">
+              <div className="flex items-center gap-2 text-purple-900">
+                <Sparkles className="w-4 h-4 text-purple-600 shrink-0" />
+                <span className="font-black text-xs uppercase tracking-wider">Repartidor Verificado en Citiox</span>
               </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Cédula / DNI</label>
-                <input
-                  type="text"
-                  value={form.documento}
-                  onChange={e => setForm(f => ({ ...f, documento: e.target.value }))}
-                  placeholder="Ej. 1712345678"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-semibold"
-                />
+              <p className="text-xs text-purple-950 font-semibold leading-relaxed">
+                El repartidor <strong>{existingDriver.driverName}</strong> ya posee un perfil activo en la plataforma y trabaja para {existingDriver.negociosCount} negocio(s).
+              </p>
+              <div className="p-2.5 bg-white/80 rounded-xl text-[11px] text-slate-600 font-bold space-y-0.5">
+                <p>🚗 Vehículo: {existingDriver.vehiculo || 'Moto'} {existingDriver.placa ? `(${existingDriver.placa})` : ''}</p>
+                <p>📑 Documentación: Cédula / Licencia ya verificadas en Citiox</p>
               </div>
+              <p className="text-[10px] text-purple-700 font-medium">
+                Al vincularlo, su expediente quedará en tu pestaña <strong>Verificaciones</strong> para tu aprobación final sin pedirle documentos de nuevo.
+              </p>
+            </div>
+          ) : (
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-600 space-y-1">
+              <p className="font-bold text-slate-900 flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5 text-purple-600" /> Auto-Registro del Repartidor
+              </p>
+              <p className="text-[11px] text-slate-500 leading-normal">
+                Al enviar la invitación por WhatsApp, el repartidor abrirá su formulario de registro privado donde ingresará su Cédula, Licencia y Matrícula.
+              </p>
             </div>
           )}
 
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-rose-50 rounded-lg text-rose-700 text-sm">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              {error}
+            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-bold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
             </div>
           )}
-        </div>
 
-        <div className="flex gap-3 p-5 border-t bg-slate-50">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-white text-xs uppercase"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={mode === 'DIRECT' ? handleCreateDirect : handleCreateInvite}
-            disabled={saving}
-            className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-xl font-black text-xs uppercase tracking-wider hover:bg-purple-700 disabled:opacity-50 transition-colors shadow-md cursor-pointer"
-          >
-            {saving ? 'Guardando...' : mode === 'DIRECT' ? '✅ Crear Repartidor' : '📱 Crear Enlace'}
-          </button>
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={onClose}
+              className="flex-1 py-3 border border-slate-200 text-slate-700 font-black text-xs uppercase tracking-wider rounded-2xl hover:bg-slate-50 cursor-pointer"
+            >
+              Cancelar
+            </button>
+
+            {existingDriver ? (
+              <button
+                onClick={handleLinkExistingDriver}
+                disabled={saving}
+                className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-purple-600/20 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{saving ? 'Vinculando...' : 'Vincular Repartidor'}</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleCreateInvite}
+                disabled={saving || !form.telefono.trim()}
+                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-600/20 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                <Send className="w-4 h-4" />
+                <span>{saving ? 'Enviando...' : 'Enviar Invitación'}</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
