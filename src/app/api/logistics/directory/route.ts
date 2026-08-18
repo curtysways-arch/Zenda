@@ -73,12 +73,12 @@ export async function GET(req: Request) {
       publicDrivers = publicDrivers.filter(d => d.nombre.toLowerCase().includes(q));
     }
 
-    // Calcular métricas reales desde la base de datos (conteo de entregas completadas en Pedido y DeliveryAssignment)
+    // Calcular métricas reales estrictas por repartidor desde la base de datos
     const realDrivers = await Promise.all(
       publicDrivers.map(async (d: any) => {
         let completedCount = 0;
         try {
-          // Contar asignaciones completadas
+          // 1. Contar asignaciones completadas expresamente por este recurso
           const asgnCount = await (prisma as any).deliveryAssignment.count({
             where: {
               resourceId: d.resourceId,
@@ -86,15 +86,27 @@ export async function GET(req: Request) {
             }
           });
 
-          // Contar pedidos entregados
-          const pedCount = await (prisma as any).pedido.count({
+          // 2. Contar pedidos entregados asignados expresamente a este repartidor
+          const pedOrders = await (prisma as any).pedido.findMany({
             where: {
               estado: 'ENTREGADO'
-            }
+            },
+            select: { extraInfo: true }
           });
 
-          completedCount = asgnCount + (pedCount > 0 ? 1 : 0);
-        } catch (_) {}
+          const pedCount = pedOrders.filter((ord: any) => {
+            const extra = (ord.extraInfo as any) || {};
+            return (
+              extra.repartidorId === d.resourceId ||
+              extra.repartidorId === d.id ||
+              (extra.repartidorNombre && String(extra.repartidorNombre).toLowerCase() === String(d.nombre).toLowerCase())
+            );
+          }).length;
+
+          completedCount = asgnCount + pedCount;
+        } catch (e) {
+          console.warn('Error contando entregas para repartidor:', e);
+        }
 
         return {
           ...d,
