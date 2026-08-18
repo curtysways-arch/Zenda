@@ -255,6 +255,16 @@ export default function DriverAppPage() {
       if (res.ok) {
         const data = await res.json();
         setAvailableDbOrders(data.availableDbOrders || []);
+        if (data.driverProfile) {
+          setDriverSession(prev => prev ? {
+            ...prev,
+            driverName: data.driverProfile.driverName || prev.driverName,
+            vehicleType: data.driverProfile.vehicleType || prev.vehicleType,
+            vehicleName: data.driverProfile.vehicleName || (prev as any).vehicleName,
+            placa: data.driverProfile.placa || (prev as any).placa,
+            verificationStatus: data.driverProfile.verificationStatus || (prev as any).verificationStatus
+          } : prev);
+        }
       }
     } catch (e) {
       console.error('Error cargando pedidos de repartidor:', e);
@@ -1414,42 +1424,58 @@ export default function DriverAppPage() {
       )}
 
       {/* ───────────────────────────────────────────────────────────────────────── */}
-      {/* PESTAÑA 4: NEGOCIOS REGISTRADOS EN LA RED (EDGE-TO-EDGE) */}
+      {/* PESTAÑA 4: NEGOCIOS REGISTRADOS Y ASIGNADOS (EDGE-TO-EDGE) */}
       {/* ───────────────────────────────────────────────────────────────────────── */}
       {activeTab === 'NEGOCIOS' && (
         <div className="w-full p-4 space-y-4 text-left animate-in fade-in duration-300">
           <div className="flex items-center justify-between px-1">
             <h2 className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center gap-2">
-              <Store className="w-5 h-5 text-blue-600" /> Negocios Aliados Registrados ({registeredBusinesses.length})
+              <Store className="w-5 h-5 text-blue-600" /> Negocios Autorizados & Aliados ({registeredBusinesses.length})
             </h2>
           </div>
 
-          <div className="w-full space-y-3">
-            {registeredBusinesses.map(b => (
-              <div key={b.id} className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-2xl flex items-center justify-center shrink-0">
-                      {b.logo}
-                    </div>
-                    <div>
-                      <h3 className="font-black text-slate-900 text-base leading-tight">{b.nombre}</h3>
-                      <p className="text-xs text-slate-500 font-semibold mt-0.5">{b.direccion}</p>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 font-bold text-[10px] uppercase rounded-full">
-                    🟢 Operativo
-                  </span>
-                </div>
+          <div className="p-3 bg-blue-50 border border-blue-200/80 rounded-2xl text-xs text-blue-900 font-semibold space-y-1">
+            <p className="font-black flex items-center gap-1.5 text-blue-700">
+              <ShieldCheck className="w-4 h-4 text-blue-600" /> Responsabilidad e Inspección por Local
+            </p>
+            <p className="text-[11px] text-blue-800">
+              Cada local verifica la vigencia de tus documentos antes de permitirte tomar sus pedidos.
+            </p>
+          </div>
 
-                <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs text-slate-600 font-semibold">
-                  <span>📱 Tel: {b.telefono}</span>
-                  <a href={`tel:${b.telefono}`} className="text-blue-600 font-black hover:underline">
-                    Llamar al local
-                  </a>
+          <div className="w-full space-y-3">
+            {registeredBusinesses.map(b => {
+              const isAssigned = ((driverSession as any)?.negociosAsignados || []).some((n: any) => n.id === b.id);
+              return (
+                <div key={b.id} className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-50 text-2xl flex items-center justify-center shrink-0">
+                        {b.logo}
+                      </div>
+                      <div>
+                        <h3 className="font-black text-slate-900 text-base leading-tight">{b.nombre}</h3>
+                        <p className="text-xs text-slate-500 font-semibold mt-0.5">{b.direccion}</p>
+                      </div>
+                    </div>
+                    <span className={`px-2.5 py-1 font-bold text-[10px] uppercase rounded-full border ${
+                      isAssigned 
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                      {isAssigned ? '🟢 Local Verificado' : '⏳ Pendiente Local'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs text-slate-600 font-semibold">
+                    <span>📱 Tel: {b.telefono}</span>
+                    <a href={`tel:${b.telefono}`} className="text-blue-600 font-black hover:underline">
+                      Llamar al local
+                    </a>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -1461,13 +1487,15 @@ export default function DriverAppPage() {
         <div className="w-full p-4 space-y-4 text-left animate-in fade-in duration-300">
           {/* FICHA DE REPARTIDOR */}
           <div className="w-full bg-white rounded-3xl p-6 shadow-md shadow-slate-200/70 text-center space-y-4 relative">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white mx-auto flex items-center justify-center font-black text-2xl shadow-xl shadow-blue-500/20">
-              MP
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white mx-auto flex items-center justify-center font-black text-2xl shadow-xl shadow-blue-500/20 uppercase">
+              {driverName ? driverName.trim().split(/\s+/).map(n => n[0]).join('').slice(0, 2) : 'DR'}
             </div>
 
             <div>
               <h2 className="text-xl font-black text-slate-900">{driverName}</h2>
-              <p className="text-xs text-blue-600 font-bold uppercase tracking-wider mt-0.5">Repartidor Oficial • ID: DRIVER-01</p>
+              <p className="text-xs text-blue-600 font-bold uppercase tracking-wider mt-0.5">
+                Repartidor Oficial • ID: {driverId.slice(-8).toUpperCase()}
+              </p>
             </div>
 
             {/* REPUTACIÓN Y DATOS REALES DE CALIFICACIÓN */}
@@ -1492,12 +1520,14 @@ export default function DriverAppPage() {
 
               <div className="flex justify-between items-center text-slate-700 font-semibold border-t border-slate-100 pt-3">
                 <span className="flex items-center gap-2">🛵 Vehículo</span>
-                <span className="font-bold text-slate-900">Moto Honda Twister</span>
+                <span className="font-bold text-slate-900">
+                  {(driverSession as any)?.vehicleName || (driverSession?.vehicleType === 'AUTO' ? 'Automóvil' : 'Motocicleta')}
+                </span>
               </div>
 
               <div className="flex justify-between items-center text-slate-700 font-semibold border-t border-slate-100 pt-3">
                 <span className="flex items-center gap-2">🔢 Placa</span>
-                <span className="font-bold text-slate-900">ABC-1234</span>
+                <span className="font-bold text-slate-900">{(driverSession as any)?.placa || 'Registrada'}</span>
               </div>
 
               <div className="flex justify-between items-center text-slate-700 font-semibold border-t border-slate-100 pt-3">

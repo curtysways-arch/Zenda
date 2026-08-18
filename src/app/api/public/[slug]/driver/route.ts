@@ -47,6 +47,26 @@ export async function GET(
       console.warn('[API Driver GET Kernel Resolver Warning]:', err);
     }
 
+    // Si se pasa driverId, consultar la información del perfil del repartidor
+    let driverProfileInfo: any = null;
+    if (driverId) {
+      const res = await (prisma as any).operableResource.findFirst({
+        where: { id: driverId },
+        include: { profile: true, negocio: true }
+      });
+      if (res) {
+        driverProfileInfo = {
+          driverId: res.id,
+          driverName: res.name,
+          driverPhone: res.profile?.telefono || '',
+          vehicleType: res.profile?.tipoVehiculo || 'MOTO',
+          vehicleName: res.profile?.vehiculo || 'Motocicleta',
+          placa: res.profile?.placa || '',
+          verificationStatus: res.profile?.verificationStatus || (res.active ? 'APPROVED' : 'SUSPENDED')
+        };
+      }
+    }
+
     // Obtener pedidos de delivery activos de todos los negocios asociados al repartidor
     const dbDeliveryOrders = await (prisma as any).pedido.findMany({
       where: {
@@ -79,13 +99,103 @@ export async function GET(
       success: true,
       drivers,
       tasks: driverTasks,
+      driverProfile: driverProfileInfo,
       pendingQueue: tasks.filter(t => t.state === 'WAITING_DISPATCH'),
       availableDbOrders: dbDeliveryOrders,
     });
   } catch (e: any) {
     console.error('[API Driver GET Error]:', e);
-    return NextResponse.json({ error: e.message || 'Error interno' }, { status: 500 });
+    return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
   }
+}
+
+// Función auxiliar para buscar repartidor por teléfono y verificar su estado oficial
+async function findVerifiedDriverByPhone(phoneInput: string) {
+  if (!phoneInput) return null;
+  const digitsOnly = phoneInput.replace(/\D/g, '');
+  const last8or9 = digitsOnly.length >= 8 ? digitsOnly.slice(-8) : digitsOnly;
+
+  // 1. Buscar en OperableResource + ResourceProfile
+  const resources = await (prisma as any).operableResource.findMany({
+    where: {
+      OR: [
+        { category: 'DELIVERY_DRIVER' },
+        { resourceType: { in: ['HUMAN', 'VEHICLE'] } }
+      ]
+    },
+    include: {
+      profile: true,
+      negocio: {
+        select: { id: true, nombre: true, logoUrl: true }
+      }
+    }
+  });
+
+  const matchedResource = resources.find((r: any) => {
+    const profPhone = (r.profile?.telefono || '').replace(/\D/g, '');
+    return profPhone && (profPhone.endsWith(last8or9) || last8or9.endsWith(profPhone.slice(-8)));
+  });
+
+  if (matchedResource) {
+    const allMatchingResources = resources.filter((r: any) => {
+      const profPhone = (r.profile?.telefono || '').replace(/\D/g, '');
+      return profPhone && (profPhone.endsWith(last8or9) || last8or9.endsWith(profPhone.slice(-8)));
+    });
+
+    const approvedResources = allMatchingResources.filter(
+      (r: any) => (r.profile?.verificationStatus || 'APPROVED') === 'APPROVED' && r.active !== false
+    );
+
+    return {
+      type: 'OPERABLE_RESOURCE',
+      resource: matchedResource,
+      approvedResources,
+      isApproved: approvedResources.length > 0,
+      status: matchedResource.profile?.verificationStatus || (matchedResource.active ? 'APPROVED' : 'INVITED'),
+      driverId: matchedResource.id,
+      driverName: matchedResource.name,
+      driverPhone: matchedResource.profile?.telefono || phoneInput,
+      vehicleType: matchedResource.profile?.tipoVehiculo || 'MOTO',
+      vehicleName: matchedResource.profile?.vehiculo || 'Motocicleta',
+      placa: matchedResource.profile?.placa || '',
+      negociosAsignados: approvedResources.map((r: any) => ({
+        id: r.negocioId,
+        nombre: r.negocio?.nombre || 'Negocio',
+        logoUrl: r.negocio?.logoUrl
+      }))
+    };
+  }
+
+  // 2. Buscar en Staff si no está en OperableResource
+  const staffMembers = await (prisma as any).staff.findMany({
+    where: {
+      role: { in: ['REPARTIDOR', 'DRIVER', 'ENTREGA', 'DELIVERY'] }
+    }
+  });
+
+  const matchedStaff = staffMembers.find((s: any) => {
+    const sPhone = (s.phone || '').replace(/\D/g, '');
+    return sPhone && (sPhone.endsWith(last8or9) || last8or9.endsWith(sPhone.slice(-8)));
+  });
+
+  if (matchedStaff) {
+    return {
+      type: 'STAFF',
+      resource: matchedStaff,
+      approvedResources: [matchedStaff],
+      isApproved: matchedStaff.active !== false,
+      status: matchedStaff.active ? 'APPROVED' : 'SUSPENDED',
+      driverId: matchedStaff.id,
+      driverName: matchedStaff.name,
+      driverPhone: matchedStaff.phone || phoneInput,
+      vehicleType: 'MOTO',
+      vehicleName: 'Moto Oficial',
+      placa: '',
+      negociosAsignados: [{ id: matchedStaff.negocioId, nombre: 'Negocio Asignado' }]
+    };
+  }
+
+  return null;
 }
 
 export async function POST(
@@ -123,38 +233,26 @@ export async function POST(
         return NextResponse.json({ error: 'Teléfono requerido' }, { status: 400 });
       }
 
-      const cleanPhone = rawPhone.replace(/\D/g, '');
-      
-      // Buscar en OperableResource o Staff si existe el repartidor registrado
-      let existingResource = await (prisma as any).operableResource.findFirst({
-        where: {
-          OR: [
-            { category: 'DELIVERY_DRIVER' },
-            { resourceType: { in: ['HUMAN', 'VEHICLE'] } }
-          ]
-        },
-        include: { profile: true }
-      });
+      const driverData = await findVerifiedDriverByPhone(rawPhone);
 
-      let driverName = existingResource?.name;
-      let driverId = existingResource?.id;
-      let vehicleType = existingResource?.profile?.tipoVehiculo || 'MOTO';
-
-      if (!driverName) {
-        const staff = await (prisma as any).staff.findFirst({
-          where: {
-            role: { in: ['REPARTIDOR', 'DRIVER', 'ENTREGA', 'DELIVERY'] }
-          }
-        });
-        if (staff) {
-          driverName = staff.name;
-          driverId = staff.id;
-        }
+      // Si no existe ningún repartidor registrado con ese número
+      if (!driverData) {
+        return NextResponse.json({
+          error: `El número ${rawPhone} no está registrado como repartidor. Solicita a tu negocio que te envíe una invitación de registro.`
+        }, { status: 404 });
       }
 
-      if (!driverName) {
-        driverName = 'Marco Proaño';
-        driverId = `driver_${cleanPhone || '01'}`;
+      // Si existe pero no está aprobado por ningún negocio
+      if (!driverData.isApproved) {
+        let msg = `Tu cuenta de repartidor está en estado: ${driverData.status}.`;
+        if (driverData.status === 'INVITED') {
+          msg = 'Tu registro de repartidor está pendiente. Revisa el enlace de invitación enviado por tu negocio para completar tus documentos.';
+        } else if (driverData.status === 'PENDING_VERIFICATION') {
+          msg = 'Tus documentos están en revisión por parte de tu negocio. Te notificaremos por WhatsApp cuando tu perfil sea aprobado.';
+        } else if (driverData.status === 'REJECTED' || driverData.status === 'SUSPENDED') {
+          msg = 'Tu cuenta de repartidor se encuentra inactiva o suspendida. Comunícate con administración.';
+        }
+        return NextResponse.json({ error: msg }, { status: 403 });
       }
 
       // Generar código OTP real de 4 dígitos
@@ -189,15 +287,14 @@ export async function POST(
         success: true,
         message: 'Código de verificación enviado por WhatsApp.',
         phone: rawPhone,
-        driverName,
-        driverId,
-        vehicleType
+        driverName: driverData.driverName,
+        driverId: driverData.driverId,
+        vehicleType: driverData.vehicleType
       });
     }
 
     if (action === 'VERIFY_OTP') {
       const { phone: rawPhone, otp } = body;
-      const cleanPhone = (rawPhone || '').replace(/\D/g, '');
 
       if (!otp || String(otp).length < 4) {
         return NextResponse.json({ error: 'Código OTP inválido (debe tener 4 dígitos)' }, { status: 400 });
@@ -226,28 +323,23 @@ export async function POST(
         return NextResponse.json({ error: 'Código de verificación incorrecto o expirado. Revisa tu WhatsApp e intenta de nuevo.' }, { status: 400 });
       }
 
-      let existingResource = await (prisma as any).operableResource.findFirst({
-        where: {
-          OR: [
-            { category: 'DELIVERY_DRIVER' },
-            { resourceType: { in: ['HUMAN', 'VEHICLE'] } }
-          ]
-        },
-        include: { profile: true }
-      });
+      const driverData = await findVerifiedDriverByPhone(rawPhone);
 
-      const driverName = existingResource?.name || 'Marco Proaño';
-      const driverId = existingResource?.id || `driver_${cleanPhone || '01'}`;
-      const driverPhone = rawPhone || '0991234567';
-      const vehicleType = existingResource?.profile?.tipoVehiculo || 'MOTO';
+      if (!driverData || !driverData.isApproved) {
+        return NextResponse.json({ error: 'Tu cuenta de repartidor no está activa o verificada por ningún negocio.' }, { status: 403 });
+      }
 
       return NextResponse.json({
         success: true,
         session: {
-          driverId,
-          driverName,
-          driverPhone,
-          vehicleType
+          driverId: driverData.driverId,
+          driverName: driverData.driverName,
+          driverPhone: driverData.driverPhone,
+          vehicleType: driverData.vehicleType,
+          vehicleName: driverData.vehicleName,
+          placa: driverData.placa,
+          verificationStatus: driverData.status,
+          negociosAsignados: driverData.negociosAsignados
         }
       });
     }
