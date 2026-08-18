@@ -84,49 +84,47 @@ export async function GET(req: Request) {
     }));
 
     if (enriched.length === 0) {
-      return NextResponse.json([
-        {
-          id: 'asgn_demo_1',
-          tipo: 'ENTREGA',
-          estado: 'ASIGNADO',
-          clienteNombre: 'Carlos Caicedo',
-          clienteTelefono: '0991234567',
-          clienteDireccion: 'Av. 6 de Diciembre y Orellana, Edificio Zenda Piso 4',
-          referenciaDireccion: 'Frente a la gasolinera Primax',
-          notas: 'Llamar al timbre 402',
-          fechaEntrega: new Date().toISOString(),
-          horaAsignacion: new Date().toISOString(),
-          ordenReferenciaId: 'f8d21af6-ac02-4f59-bec8-e6b8d02c4ef2',
-          subtotal: 20,
-          total: 25,
-          resource: { id: 'drv_demo_1', name: 'Carlos Caicedo', estado: 'DISPONIBLE' },
-          items: [{ id: 'i1', nombreProducto: 'Lavado Completo Sneakers', cantidad: 1, precioUnitario: 25 }],
-          pinRetiro: '483291',
-          pinEntrega: '812544',
-          distanciaKm: '2.4 km',
-          tipoServicio: 'Lavado de Calzado / Delivery'
+      // Consultar pedidos reales de la base de datos que sean de delivery/domicilio
+      const realDbOrders = await prisma.pedido.findMany({
+        where: {
+          tipoEntrega: { in: ['DELIVERY_ORDER', 'DOMICILIO', 'DELIVERY'] }
         },
-        {
-          id: 'asgn_demo_2',
-          tipo: 'RETIRO',
-          estado: 'COMPLETADO',
-          clienteNombre: 'María Fernanda Ruiz',
-          clienteTelefono: '0998765432',
-          clienteDireccion: 'Calle Los Cerezos y Av. Eloy Alfaro',
-          referenciaDireccion: 'Casa de 2 pisos color blanco',
-          resource: { id: 'drv_demo_2', name: 'Roberto Gómez', estado: 'DISPONIBLE' },
-          fechaEntrega: new Date(Date.now() - 86400000).toISOString(),
-          horaAsignacion: new Date(Date.now() - 86400000).toISOString(),
-          ordenReferenciaId: 'e1d23bf7-bd01-4f12-9ab8-f7c8d01a3cd1',
-          subtotal: 18,
-          total: 18,
-          items: [{ id: 'i2', nombreProducto: 'Retiro de Calzado a Domicilio', cantidad: 1, precioUnitario: 18 }],
-          pinRetiro: '123456',
-          pinEntrega: '654321',
-          distanciaKm: '1.8 km',
-          tipoServicio: 'Retiro a Domicilio'
-        }
-      ]);
+        include: {
+          items: true,
+          negocio: true
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 15
+      });
+
+      const realAssignments = realDbOrders.map(ord => {
+        const extra = (ord.extraInfo as any) || {};
+        const driverName = extra.repartidorNombre || extra.repartidorAsignado || (ord.estado === 'EN_CAMINO' ? 'Repartidor En Ruta' : null);
+
+        return {
+          id: ord.id,
+          tipo: 'ENTREGA',
+          estado: ord.estado === 'ENTREGADO' ? 'COMPLETADO' : (ord.estado === 'EN_CAMINO' ? 'EN_RUTA' : 'ASIGNADO'),
+          clienteNombre: ord.nombreCliente || 'Cliente Registrado',
+          clienteTelefono: ord.telefonoCliente || '—',
+          clienteDireccion: ord.direccionCliente || 'Dirección de Entrega',
+          referenciaDireccion: extra.referenciaDireccion || '—',
+          notas: ord.notas || '',
+          fechaEntrega: ord.createdAt.toISOString(),
+          horaAsignacion: ord.createdAt.toISOString(),
+          ordenReferenciaId: (ord as any).codigo || (ord.numeroPedido ? `PED-${ord.numeroPedido}` : ord.id.slice(-6).toUpperCase()),
+          subtotal: ord.subtotal || 0,
+          total: ord.total || 0,
+          resource: driverName ? {
+            id: extra.repartidorId || `drv_${ord.id.slice(-4)}`,
+            name: driverName,
+            estado: 'DISPONIBLE'
+          } : null,
+          items: ord.items || []
+        };
+      });
+
+      return NextResponse.json(realAssignments);
     }
 
     return NextResponse.json(enriched);
