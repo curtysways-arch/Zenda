@@ -122,21 +122,21 @@ export default function SuperAdminRepartidoresPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header Central SuperAdmin */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/20">
             <Truck className="w-6 h-6 stroke-[2.5]" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Gestión Global de Repartidores</h1>
-              <span className="px-2.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-wider rounded-full border border-indigo-200">
+              <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Gestión Global de Repartidores</h1>
+              <span className="px-2.5 py-0.5 bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 text-[10px] font-black uppercase tracking-wider rounded-full border border-indigo-200 dark:border-indigo-800">
                 SuperAdmin
               </span>
             </div>
-            <p className="text-xs text-slate-500 font-semibold mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-0.5">
               Políticas de plataforma, auditoría y control de bloqueo centralizado para Citiox Enterprise
             </p>
           </div>
@@ -145,7 +145,7 @@ export default function SuperAdminRepartidoresPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={loadGlobalDrivers}
-            className="p-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl transition-colors cursor-pointer"
+            className="p-3 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 rounded-2xl transition-colors cursor-pointer"
             title="Actualizar Repartidores"
           >
             <RefreshCw className="w-4 h-4" />
@@ -154,7 +154,7 @@ export default function SuperAdminRepartidoresPage() {
       </div>
 
       {/* Navegación por Pestañas SuperAdmin */}
-      <div className="flex gap-2 border-b border-slate-200 pb-1">
+      <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
         {[
           { key: 'EXPE', label: 'Expedientes Globales', icon: UsersIcon },
           { key: 'REGLAS', label: 'Reglas y Documentos Requeridos', icon: Settings },
@@ -166,7 +166,7 @@ export default function SuperAdminRepartidoresPage() {
             className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === t.key
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10'
             }`}
           >
             <t.icon className="w-4 h-4" />

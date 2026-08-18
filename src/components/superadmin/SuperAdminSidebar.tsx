@@ -27,7 +27,8 @@ import {
     Calendar,
     Briefcase,
     Tag,
-    Sliders
+    Sliders,
+    Truck
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -72,6 +73,7 @@ export default function SuperAdminSidebar() {
     const menuItems = [
         { name: 'Dashboard', href: '/superadmin', icon: LayoutDashboard },
         { name: 'Negocios', href: '/superadmin/negocios', icon: Building2 },
+        { name: 'Repartidores', href: '/superadmin/repartidores', icon: Truck },
         { name: 'Citiox Studio', href: '/superadmin/citiox-studio', icon: Briefcase },
         { name: 'Tipos de Negocio', href: '/superadmin/tipos-negocio', icon: Briefcase },
         { name: 'WhatsApp', href: '/superadmin/whatsapp', icon: MessageCircle },

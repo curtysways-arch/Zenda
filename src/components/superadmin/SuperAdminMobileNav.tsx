@@ -24,7 +24,8 @@ import {
     Store,
     Award,
     Calendar,
-    Briefcase
+    Briefcase,
+    Truck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
@@ -67,6 +68,7 @@ export default function SuperAdminMobileNav() {
     const mainNavItems = [
         { name: 'Dashboard', href: '/superadmin', icon: LayoutDashboard },
         { name: 'Negocios', href: '/superadmin/negocios', icon: Building2 },
+        { name: 'Repartidores', href: '/superadmin/repartidores', icon: Truck },
         { name: 'WhatsApp', href: '/superadmin/whatsapp', icon: MessageCircle },
         { 
             name: 'Solicitudes', 
