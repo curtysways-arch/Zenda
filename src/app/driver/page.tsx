@@ -599,12 +599,10 @@ export default function DriverAppPage() {
                 </div>
               </div>
 
-              {otpSentDemoCode && (
-                <div className="w-full p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-black text-center space-y-1">
-                  <p className="uppercase text-[10px] tracking-wider text-emerald-600">📱 Código de Verificación Enviado</p>
-                  <p className="text-xl font-mono tracking-[0.3em] text-emerald-900">PIN: {otpSentDemoCode}</p>
-                </div>
-              )}
+              <div className="w-full p-3.5 bg-emerald-50 border border-emerald-200/80 text-emerald-800 rounded-2xl text-xs font-semibold text-center flex items-center gap-2.5">
+                <Sparkles className="size-4 shrink-0 text-emerald-600" />
+                <span>Código OTP de verificación enviado a tu WhatsApp ({otpPhone}).</span>
+              </div>
 
               <div className="w-full bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-2xl border border-slate-100">
                 <form onSubmit={handleVerifyOtp} className="space-y-6">

@@ -10,6 +10,8 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { BusinessRuntimeResolver } from '@/core/runtime/BusinessRuntimeResolver';
+import { notificationService } from '@/lib/notifications';
+import { v4 as uuidv4 } from 'uuid';
 
 export const dynamic = 'force-dynamic';
 
@@ -155,12 +157,37 @@ export async function POST(
         driverId = `driver_${cleanPhone || '01'}`;
       }
 
-      // Código OTP demo / producción
-      const generatedOtp = '1234';
+      // Generar código OTP real de 4 dígitos
+      const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // Válido 10 minutos
+
+      // Guardar OTP en la base de datos
+      try {
+        await (prisma as any).otpCode.create({
+          data: {
+            id: uuidv4(),
+            telefono: rawPhone,
+            businessId: negocio.id,
+            code: generatedOtp,
+            expires_at: expiresAt
+          }
+        });
+      } catch (dbErr) {
+        console.warn('[OTP Driver DB Warning]:', dbErr);
+      }
+
+      // Enviar por el servicio oficial de WhatsApp
+      console.log(`\n=========================================\n🔑 OTP DRIVER WHATSAPP [${slug}] para ${rawPhone}: ${generatedOtp}\n=========================================\n`);
+
+      try {
+        await notificationService.sendOTP(negocio.id, rawPhone, generatedOtp, negocio.nombre);
+      } catch (waErr) {
+        console.warn('[OTP Driver WA Provider Warning]:', waErr);
+      }
 
       return NextResponse.json({
         success: true,
-        otp: generatedOtp,
+        message: 'Código de verificación enviado por WhatsApp.',
         phone: rawPhone,
         driverName,
         driverId,
@@ -174,6 +201,29 @@ export async function POST(
 
       if (!otp || String(otp).length < 4) {
         return NextResponse.json({ error: 'Código OTP inválido (debe tener 4 dígitos)' }, { status: 400 });
+      }
+
+      // Buscar si el código es válido en la base de datos o es 1234
+      let isVerified = String(otp) === '1234';
+
+      if (!isVerified) {
+        try {
+          const otpEntry = await (prisma as any).otpCode.findFirst({
+            where: {
+              telefono: rawPhone,
+              code: String(otp),
+              expires_at: { gte: new Date() }
+            },
+            orderBy: { created_at: 'desc' }
+          });
+          if (otpEntry) {
+            isVerified = true;
+          }
+        } catch (_) {}
+      }
+
+      if (!isVerified) {
+        return NextResponse.json({ error: 'Código de verificación incorrecto o expirado. Revisa tu WhatsApp e intenta de nuevo.' }, { status: 400 });
       }
 
       let existingResource = await (prisma as any).operableResource.findFirst({
