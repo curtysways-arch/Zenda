@@ -117,7 +117,8 @@ export default function DriverAppPage() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [historySearch, setHistorySearch] = useState('');
 
-  // Rating state driver -> customer
+  // Availability for new businesses switch
+  const [availableForNewBusinesses, setAvailableForNewBusinesses] = useState<boolean>(true);
   const [ratingModalOrderId, setRatingModalOrderId] = useState<string | null>(null);
   const [customerStar, setCustomerStar] = useState<number>(5);
   const [customerComment, setCustomerComment] = useState<string>('');
@@ -1516,6 +1517,41 @@ export default function DriverAppPage() {
               <Star className="w-6 h-6 fill-amber-400 text-amber-400" />
               <span>{avgRating}</span>
               <span className="text-xs text-slate-500 font-semibold ml-1">({totalRatingsCount} valoraciones reales)</span>
+            </div>
+          </div>
+
+          {/* CONTROL DISPONIBILIDAD PARA NUEVOS NEGOCIOS */}
+          <div className="w-full bg-white rounded-3xl p-5 shadow-md shadow-slate-200/70 space-y-3 text-left">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider">
+                  DISPONIBLE PARA NUEVOS NEGOCIOS
+                </h3>
+                <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                  Permite que nuevos comercios puedan encontrarte en el directorio y enviarte invitaciones de trabajo.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const nextVal = !availableForNewBusinesses;
+                  setAvailableForNewBusinesses(nextVal);
+                  alert(
+                    nextVal
+                      ? '🟢 ¡Ahora eres visible en el directorio de nuevos negocios Citiox!'
+                      : '⚪ Visibilidad desactivada. Tus negocios actuales siguen operando normalmente.'
+                  );
+                }}
+                className={`w-14 h-8 rounded-full p-1 transition-colors cursor-pointer shrink-0 ${
+                  availableForNewBusinesses ? 'bg-emerald-500' : 'bg-slate-300'
+                }`}
+              >
+                <div
+                  className={`w-6 h-6 rounded-full bg-white shadow-md transition-transform ${
+                    availableForNewBusinesses ? 'translate-x-6' : 'translate-x-0'
+                  }`}
+                />
+              </button>
             </div>
           </div>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import {
   Truck,
   Users,
@@ -37,6 +38,7 @@ import {
   Mail,
   Share2,
   Sparkles,
+  Search,
 } from 'lucide-react';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -1480,23 +1482,26 @@ export default function LogisticaPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
-                Asignación Autónoma /driver
-              </span>
+              <Link
+                href="/admin/logistica/buscar"
+                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-slate-800 transition-colors shadow-md cursor-pointer"
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span>Buscar Repartidores</span>
+              </Link>
+              <button
+                onClick={() => setShowCreateDriverModal(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-purple-700 transition-colors shadow-md cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Agregar Repartidor</span>
+              </button>
               <button
                 onClick={loadData}
-                className="p-2.5 border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-50 transition-colors"
+                className="p-2.5 border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-50 transition-colors cursor-pointer"
                 title="Actualizar datos"
               >
                 <RefreshCw className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setShowCreateDriverModal(true)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 transition-colors shadow-md cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                Nuevo Repartidor
               </button>
             </div>
           </div>
