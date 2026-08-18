@@ -708,6 +708,19 @@ export default function DriverAppPage() {
         </div>
       )}
 
+      {/* BANNER AVISO DE BLOQUEO GLOBAL (SI LA CUENTA ESTÁ SUSPENDIDA CENTRALMENTE) */}
+      {(driverSession as any)?.isGlobalBlocked && (
+        <div className="w-full bg-rose-600 text-white px-4 py-3 shadow-md flex items-center justify-between text-xs font-semibold">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="w-5 h-5 shrink-0 text-white" />
+            <div>
+              <p className="font-black uppercase tracking-wider text-[11px]">⛔ CUENTA INHABILITADA EN PLATAFORMA</p>
+              <p className="text-[11px] opacity-90">{(driverSession as any)?.globalBlockReason || 'No puedes tomar nuevos pedidos. Contacta a administración central.'}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ───────────────────────────────────────────────────────────────────────── */}
       {/* PESTAÑA 1: INICIO Y GESTIÓN DE CARRERAS (EDGE-TO-EDGE FULL WIDTH) */}
       {/* ───────────────────────────────────────────────────────────────────────── */}

@@ -47,14 +47,20 @@ export async function GET(
       console.warn('[API Driver GET Kernel Resolver Warning]:', err);
     }
 
-    // Si se pasa driverId, consultar la información del perfil del repartidor
+    // Si se pasa driverId, consultar la información del perfil del repartidor y su elegibilidad
     let driverProfileInfo: any = null;
+    let isGlobalBlocked = false;
+    let globalBlockReason: string | null = null;
+
     if (driverId) {
       const res = await (prisma as any).operableResource.findFirst({
         where: { id: driverId },
         include: { profile: true, negocio: true }
       });
       if (res) {
+        isGlobalBlocked = res.profile?.activo === false || res.profile?.verificationStatus === 'SUSPENDED';
+        globalBlockReason = isGlobalBlocked ? (res.profile?.motivoRechazo || 'Cuenta inhabilitada a nivel de plataforma por administración de Citiox') : null;
+
         driverProfileInfo = {
           driverId: res.id,
           driverName: res.name,
@@ -62,13 +68,15 @@ export async function GET(
           vehicleType: res.profile?.tipoVehiculo || 'MOTO',
           vehicleName: res.profile?.vehiculo || 'Motocicleta',
           placa: res.profile?.placa || '',
-          verificationStatus: res.profile?.verificationStatus || (res.active ? 'APPROVED' : 'SUSPENDED')
+          verificationStatus: res.profile?.verificationStatus || (res.active ? 'APPROVED' : 'SUSPENDED'),
+          isGlobalBlocked,
+          globalBlockReason
         };
       }
     }
 
-    // Obtener pedidos de delivery activos de todos los negocios asociados al repartidor
-    const dbDeliveryOrders = await (prisma as any).pedido.findMany({
+    // Obtener pedidos de delivery activos (si el repartidor no está bloqueado)
+    const dbDeliveryOrders = isGlobalBlocked ? [] : await (prisma as any).pedido.findMany({
       where: {
         tipoEntrega: { in: ['DELIVERY_ORDER', 'DOMICILIO', 'DELIVERY'] },
         estado: { in: ['EN_PREPARACION', 'ACEPTADO', 'LISTO', 'REPARTIDOR_ASIGNADO', 'REPARTIDOR_EN_LOCAL', 'ENTREGADO_A_REPARTIDOR', 'EN_CAMINO', 'EN_RUTA', 'WAITING_CLIENT', 'ESPERANDO_CLIENTE'] }
@@ -235,24 +243,18 @@ export async function POST(
 
       const driverData = await findVerifiedDriverByPhone(rawPhone);
 
-      // Si no existe ningún repartidor registrado con ese número
+      // Si existe pero no está registrado ni invitado
       if (!driverData) {
         return NextResponse.json({
           error: `El número ${rawPhone} no está registrado como repartidor. Solicita a tu negocio que te envíe una invitación de registro.`
         }, { status: 404 });
       }
 
-      // Si existe pero no está aprobado por ningún negocio
-      if (!driverData.isApproved) {
-        let msg = `Tu cuenta de repartidor está en estado: ${driverData.status}.`;
-        if (driverData.status === 'INVITED') {
-          msg = 'Tu registro de repartidor está pendiente. Revisa el enlace de invitación enviado por tu negocio para completar tus documentos.';
-        } else if (driverData.status === 'PENDING_VERIFICATION') {
-          msg = 'Tus documentos están en revisión por parte de tu negocio. Te notificaremos por WhatsApp cuando tu perfil sea aprobado.';
-        } else if (driverData.status === 'REJECTED' || driverData.status === 'SUSPENDED') {
-          msg = 'Tu cuenta de repartidor se encuentra inactiva o suspendida. Comunícate con administración.';
-        }
-        return NextResponse.json({ error: msg }, { status: 403 });
+      // Si existe pero aún no ha sido invitado/registrado en ningún local
+      if (driverData.status === 'INVITED' && !driverData.isApproved) {
+        return NextResponse.json({
+          error: 'Tu registro de repartidor está pendiente. Revisa el enlace de invitación enviado por tu negocio para completar tus documentos.'
+        }, { status: 403 });
       }
 
       // Generar código OTP real de 4 dígitos
@@ -325,9 +327,11 @@ export async function POST(
 
       const driverData = await findVerifiedDriverByPhone(rawPhone);
 
-      if (!driverData || !driverData.isApproved) {
-        return NextResponse.json({ error: 'Tu cuenta de repartidor no está activa o verificada por ningún negocio.' }, { status: 403 });
+      if (!driverData) {
+        return NextResponse.json({ error: 'Tu cuenta de repartidor no fue encontrada.' }, { status: 404 });
       }
+
+      const isGlobalBlocked = driverData.status === 'BLOQUEADO' || driverData.resource?.profile?.activo === false;
 
       return NextResponse.json({
         success: true,
@@ -339,7 +343,9 @@ export async function POST(
           vehicleName: driverData.vehicleName,
           placa: driverData.placa,
           verificationStatus: driverData.status,
-          negociosAsignados: driverData.negociosAsignados
+          negociosAsignados: driverData.negociosAsignados,
+          isGlobalBlocked,
+          globalBlockReason: isGlobalBlocked ? (driverData.resource?.profile?.motivoRechazo || 'Bloqueo global aplicado por administración central Citiox') : null
         }
       });
     }

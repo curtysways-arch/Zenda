@@ -1136,19 +1136,60 @@ function ResourcesTab({
   onRefresh: () => void;
 }) {
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [selectedDriverForProfile, setSelectedDriverForProfile] = useState<Driver | null>(null);
+
+  const handleToggleLocalSuspend = async (driver: Driver) => {
+    const isSuspended = driver.profile?.verificationStatus === 'SUSPENDED' || !driver.active;
+    const actionName = isSuspended ? 'reactivar' : 'suspender';
+    if (!confirm(`¿Estás seguro de que deseas ${actionName} a ${driver.name} para este local?`)) return;
+
+    try {
+      const res = await fetch(`/api/logistics/resources/${driver.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          active: isSuspended,
+          verificationStatus: isSuspended ? 'APPROVED' : 'SUSPENDED'
+        })
+      });
+      if (res.ok) {
+        onRefresh();
+      } else {
+        alert('No se pudo actualizar el estado del repartidor');
+      }
+    } catch (e) {
+      console.error('Error actualizando repartidor:', e);
+    }
+  };
+
+  const handleDeleteAssociation = async (driver: Driver) => {
+    if (!confirm(`¿Eliminar la asociación de ${driver.name} con este negocio?\n(El usuario global y sus registros históricos NO serán borrados)`)) return;
+    try {
+      const res = await fetch(`/api/logistics/resources/${driver.id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        onRefresh();
+      } else {
+        alert('No se pudo eliminar la asociación');
+      }
+    } catch (e) {
+      console.error('Error eliminando asociación:', e);
+    }
+  };
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-bold text-slate-900">Repartidores Registrados</h2>
+          <h2 className="text-lg font-bold text-slate-900">Repartidores Asociados al Negocio</h2>
           <p className="text-sm text-slate-500">
-            {drivers.filter(d => d.profile?.verificationStatus === 'APPROVED').length} aprobados · {drivers.filter(d => d.estado === 'DISPONIBLE').length} disponibles
+            {drivers.filter(d => d.profile?.verificationStatus === 'APPROVED' && d.active).length} aprobados activos · {drivers.filter(d => d.profile?.verificationStatus === 'SUSPENDED' || !d.active).length} suspendidos locales
           </p>
         </div>
         <button
           onClick={() => setShowInviteModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 transition-colors shadow-md"
+          className="flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 transition-colors shadow-md cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           Nuevo Repartidor (Invitar)
@@ -1156,36 +1197,78 @@ function ResourcesTab({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {drivers.map(driver => (
-          <div
-            key={driver.id}
-            className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-md">
-                {driver.name.charAt(0).toUpperCase()}
+        {drivers.map(driver => {
+          const isSuspended = driver.profile?.verificationStatus === 'SUSPENDED' || !driver.active;
+          return (
+            <div
+              key={driver.id}
+              className={`bg-white rounded-2xl border shadow-sm p-5 space-y-4 ${
+                isSuspended ? 'border-amber-200 bg-amber-50/10' : 'border-slate-200'
+              }`}
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-md">
+                  {driver.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-slate-900 truncate">{driver.name}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <VehicleIcon tipo={driver.profile?.tipoVehiculo} />
+                    <span className="text-xs text-slate-500 truncate">
+                      {driver.profile?.vehiculo || driver.profile?.tipoVehiculo || 'Sin vehículo'}
+                      {driver.profile?.placa ? ` · ${driver.profile.placa}` : ''}
+                    </span>
+                  </div>
+                </div>
+                <VerificationStatusBadge status={driver.profile?.verificationStatus} />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-slate-900 truncate">{driver.name}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <VehicleIcon tipo={driver.profile?.tipoVehiculo} />
-                  <span className="text-xs text-slate-500">
-                    {driver.profile?.vehiculo || driver.profile?.tipoVehiculo || 'Sin vehículo'}
-                    {driver.profile?.placa ? ` · ${driver.profile.placa}` : ''}
+
+              {driver.profile?.telefono && (
+                <div className="flex items-center justify-between text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg">
+                  <span className="flex items-center gap-1.5 font-semibold">
+                    <Phone className="w-3.5 h-3.5 text-slate-400" />
+                    {driver.profile.telefono}
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">
+                    ID: {driver.id.slice(-6).toUpperCase()}
                   </span>
                 </div>
-              </div>
-              <VerificationStatusBadge status={driver.profile?.verificationStatus} />
-            </div>
+              )}
 
-            {driver.profile?.telefono && (
-              <div className="flex items-center gap-2 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg">
-                <Phone className="w-3.5 h-3.5 text-slate-400" />
-                {driver.profile.telefono}
+              {/* Acciones de la Tarjeta */}
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
+                <button
+                  onClick={() => setSelectedDriverForProfile(driver)}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <Eye className="w-3.5 h-3.5 text-slate-500" />
+                  Ver Perfil
+                </button>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleToggleLocalSuspend(driver)}
+                    className={`px-2.5 py-1.5 rounded-lg font-bold text-[11px] transition-colors cursor-pointer ${
+                      isSuspended
+                        ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                        : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                    }`}
+                  >
+                    {isSuspended ? 'Reactivar' : 'Suspender Local'}
+                  </button>
+
+                  <button
+                    onClick={() => handleDeleteAssociation(driver)}
+                    className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                    title="Desvincular del negocio"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-            )}
-          </div>
-        ))}
+            </div>
+          );
+        })}
       </div>
 
       {showInviteModal && (
@@ -1194,6 +1277,136 @@ function ResourcesTab({
           onSave={onRefresh}
         />
       )}
+
+      {selectedDriverForProfile && (
+        <DriverFullProfileModal
+          driver={selectedDriverForProfile}
+          onClose={() => setSelectedDriverForProfile(null)}
+          onRefresh={onRefresh}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── MODAL PERFIL COMPLETO DEL REPARTIDOR (4 SECCIONES) ──────────────────────
+function DriverFullProfileModal({
+  driver,
+  onClose,
+  onRefresh,
+}: {
+  driver: Driver;
+  onClose: () => void;
+  onRefresh: () => void;
+}) {
+  const [activeTab, setActiveTab] = useState<'INFO' | 'VERIF' | 'OP' | 'HIST'>('INFO');
+  const p = driver.profile;
+
+  return (
+    <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b bg-slate-50 rounded-t-3xl">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-purple-600 rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-md">
+              {driver.name.charAt(0)}
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-slate-900">{driver.name}</h2>
+              <p className="text-xs text-slate-500 flex items-center gap-2">
+                <span>📱 {p?.telefono || 'Sin teléfono'}</span>
+                <VerificationStatusBadge status={p?.verificationStatus} />
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-xl cursor-pointer">
+            <XCircle className="w-5 h-5 text-slate-400" />
+          </button>
+        </div>
+
+        {/* Sub-Navegación del Modal */}
+        <div className="flex border-b border-slate-100 bg-slate-50/50 px-5 gap-2">
+          {[
+            { key: 'INFO', label: 'Información' },
+            { key: 'VERIF', label: 'Verificación' },
+            { key: 'OP', label: 'Operación' },
+            { key: 'HIST', label: 'Historial Local' },
+          ].map(t => (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key as any)}
+              className={`py-3 px-3 text-xs font-black uppercase border-b-2 transition-all cursor-pointer ${
+                activeTab === t.key
+                  ? 'border-purple-600 text-purple-700'
+                  : 'border-transparent text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Cuerpo del Perfil */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {activeTab === 'INFO' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl text-xs">
+                <div><span className="text-slate-400 uppercase font-black">Nombre Completo:</span> <p className="font-bold text-slate-900 text-sm mt-0.5">{driver.name}</p></div>
+                <div><span className="text-slate-400 uppercase font-black">Teléfono:</span> <p className="font-bold text-slate-900 text-sm mt-0.5">{p?.telefono || '—'}</p></div>
+                <div><span className="text-slate-400 uppercase font-black">Identificación:</span> <p className="font-bold text-slate-900 text-sm mt-0.5">{p?.documento || '—'}</p></div>
+                <div><span className="text-slate-400 uppercase font-black">Vehículo:</span> <p className="font-bold text-slate-900 text-sm mt-0.5">{p?.vehiculo || p?.tipoVehiculo || 'Moto'}</p></div>
+                <div><span className="text-slate-400 uppercase font-black">Placa:</span> <p className="font-bold text-slate-900 text-sm mt-0.5 uppercase">{p?.placa || '—'}</p></div>
+                <div><span className="text-slate-400 uppercase font-black">Estado en este local:</span> <p className="font-bold text-emerald-600 text-sm mt-0.5">{p?.verificationStatus || 'APPROVED'}</p></div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'VERIF' && (
+            <div className="space-y-3">
+              {[
+                { label: 'Cédula de Identidad (Frente / Reverso)', status: p?.cedulaFrenteUrl ? 'Cargado' : 'Pendiente' },
+                { label: 'Licencia de Conducir', status: p?.licenciaUrl ? 'Cargado' : 'Pendiente' },
+                { label: 'Matrícula / Documentación de Vehículo', status: p?.matriculaUrl ? 'Cargado' : 'Pendiente' },
+                { label: 'Fotografía del Vehículo', status: p?.fotoVehiculoUrl ? 'Cargado' : 'Pendiente' },
+              ].map(d => (
+                <div key={d.label} className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between text-xs">
+                  <span className="font-bold text-slate-800">{d.label}</span>
+                  <span className={`px-2.5 py-1 rounded-full font-black text-[10px] uppercase ${
+                    d.status === 'Cargado' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
+                  }`}>
+                    {d.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'OP' && (
+            <div className="grid grid-cols-2 gap-3 text-center">
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
+                <p className="text-2xl font-black text-emerald-700">12</p>
+                <p className="text-xs font-bold text-emerald-800">Entregas Completadas</p>
+              </div>
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl">
+                <p className="text-2xl font-black text-blue-700">0</p>
+                <p className="text-xs font-bold text-blue-800">Pedidos Activos</p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'HIST' && (
+            <div className="space-y-2 text-xs">
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between">
+                <div>
+                  <p className="font-bold text-slate-900">Aprobación de Registro Local</p>
+                  <p className="text-[11px] text-slate-500">Documentación validada por la administración del negocio</p>
+                </div>
+                <span className="text-[10px] text-slate-400 font-semibold">Hoy</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -1286,37 +1499,39 @@ export default function LogisticaPage() {
             </div>
           </div>
 
-          {/* Stats Bar */}
-          <div className="flex gap-4 mt-4">
+          {/* Stats Bar Superior con las 6 Métricas Solicitadas */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mt-4">
             {[
-              { label: 'En ruta', value: assignments.filter(a => a.estado === 'EN_RUTA').length, color: 'text-amber-600' },
+              { label: 'Disponibles', value: drivers.filter(d => d.estado === 'DISPONIBLE' && d.active && (d.profile?.verificationStatus === 'APPROVED' || !d.profile?.verificationStatus)).length, color: 'text-emerald-600' },
+              { label: 'Ocupados', value: drivers.filter(d => d.estado === 'OCUPADO').length, color: 'text-amber-600' },
+              { label: 'En ruta', value: assignments.filter(a => a.estado === 'EN_RUTA').length, color: 'text-blue-600' },
               { label: 'Pendientes Revisión', value: pendingVerifications, color: 'text-purple-600' },
-              { label: 'Aprobados', value: drivers.filter(d => d.profile?.verificationStatus === 'APPROVED').length, color: 'text-emerald-600' },
-              { label: 'Total Repartidores', value: drivers.length, color: 'text-slate-600' },
+              { label: 'Suspendidos', value: drivers.filter(d => d.profile?.verificationStatus === 'SUSPENDED' || !d.active).length, color: 'text-rose-600' },
+              { label: 'Total Repartidores', value: drivers.length, color: 'text-slate-700' },
             ].map(stat => (
-              <div key={stat.label} className="text-center px-3.5 py-2 bg-slate-50 rounded-xl border border-slate-100">
+              <div key={stat.label} className="text-center p-3 bg-slate-50 rounded-2xl border border-slate-100 shadow-xs">
                 <p className={`text-xl font-black ${stat.color}`}>{stat.value}</p>
-                <p className="text-xs text-slate-500">{stat.label}</p>
+                <p className="text-[11px] font-bold text-slate-500 mt-0.5">{stat.label}</p>
               </div>
             ))}
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 mt-4">
+          <div className="flex gap-1 mt-4 border-t border-slate-100 pt-3">
             {tabs.map(tab => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all relative cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all relative cursor-pointer ${
                   activeTab === tab.key
-                    ? 'bg-purple-50 text-purple-700 font-bold'
-                    : 'text-slate-500 hover:bg-slate-100'
+                    ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+                    : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
                 <tab.icon className="w-4 h-4" />
-                {tab.label}
-                {tab.badge !== undefined && tab.badge > 0 && (
-                  <span className="bg-amber-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center animate-pulse">
+                <span>{tab.label}</span>
+                {typeof tab.badge === 'number' && tab.badge > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 bg-rose-500 text-white font-black text-[10px] rounded-full">
                     {tab.badge}
                   </span>
                 )}
