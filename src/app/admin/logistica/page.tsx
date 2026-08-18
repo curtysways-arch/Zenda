@@ -36,6 +36,7 @@ import {
   Calendar,
   Mail,
   Share2,
+  Sparkles,
 } from 'lucide-react';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -1031,35 +1032,97 @@ function KanbanCard({ assignment, onUpdate }: { assignment: Assignment; onUpdate
 }
 
 function KanbanBoard({ assignments, onUpdate }: { assignments: Assignment[]; onUpdate: () => void }) {
-  const columns: { key: AssignmentEstado; label: string; color: string }[] = [
-    { key: 'ASIGNADO', label: 'Asignados', color: 'bg-blue-50 border-blue-200' },
-    { key: 'EN_RUTA', label: 'En Ruta', color: 'bg-amber-50 border-amber-200' },
-    { key: 'LLEGO', label: 'Llegó', color: 'bg-purple-50 border-purple-200' },
-    { key: 'COMPLETADO', label: 'Completado', color: 'bg-emerald-50 border-emerald-200' },
-  ];
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-      {columns.map(col => {
-        const colAssignments = assignments.filter(a => a.estado === col.key);
-        return (
-          <div key={col.key} className={`${col.color} rounded-2xl border p-4`}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-slate-700">{col.label}</h3>
-              <span className="bg-white/80 text-slate-600 text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
-                {colAssignments.length}
-              </span>
+    <div className="space-y-6">
+      {/* Banner Informativo Asignación InDrive */}
+      <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <span className="px-3 py-1 bg-amber-400/20 text-amber-300 rounded-full text-xs font-black uppercase tracking-wider border border-amber-400/30 inline-flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5" /> MÓDULO AUTÓNOMO MODO INDRIVE
+          </span>
+          <h2 className="text-xl font-black text-white">Asignación Automática de Pedidos</h2>
+          <p className="text-xs text-slate-300 max-w-xl">
+            Los pedidos no se asignan manualmente desde administración. Los repartidores verificados por tu local ven la bolsa de domicilios disponibles en su App <strong>/driver</strong> y aceptan las carreras libremente.
+          </p>
+        </div>
+        <a
+          href="/driver"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-5 py-3 bg-white text-slate-900 rounded-2xl text-xs font-black uppercase hover:bg-slate-100 transition-colors shadow-lg shrink-0 flex items-center gap-2"
+        >
+          <span>Abrir App Repartidor</span>
+          <ArrowUpRight className="w-4 h-4 text-purple-600" />
+        </a>
+      </div>
+
+      {/* Grid de Monitoreo */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Entregas Activas en Tiempo Real */}
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+              <Truck className="w-4 h-4 text-purple-600" /> Carreras / Entregas en Curso ({assignments.length})
+            </h3>
+            <span className="text-xs font-bold text-slate-500">Monitoreo Live</span>
+          </div>
+
+          <div className="space-y-3">
+            {assignments.length === 0 ? (
+              <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <Truck className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-50" />
+                <p className="text-xs font-bold text-slate-600">No hay entregas activas en este momento</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Los repartidores tomarán los nuevos domicilios cuando se preparen en cocina.</p>
+              </div>
+            ) : (
+              assignments.map(a => (
+                <div key={a.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-black text-xs text-slate-900">#{a.ordenReferenciaId || a.id.slice(-6)}</span>
+                      <AssignmentEstadoBadge estado={a.estado} />
+                    </div>
+                    <p className="text-xs font-bold text-slate-800">{a.clienteNombre}</p>
+                    <p className="text-[11px] text-slate-500">{a.clienteDireccion}</p>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-xs font-bold text-purple-600 block">{a.resource?.name || 'Repartidor Libre'}</span>
+                    <span className="text-[10px] text-slate-400">{a.horaAsignacion}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Resumen de Flota y Responsabilidad */}
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
+          <h3 className="text-sm font-black uppercase tracking-wider text-slate-800 flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" /> Verificación de Repartidores por Local
+          </h3>
+
+          <div className="space-y-3 text-xs">
+            <div className="p-3.5 bg-emerald-50 border border-emerald-200/80 rounded-2xl text-emerald-900 space-y-1">
+              <p className="font-bold flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Responsabilidad del Local
+              </p>
+              <p className="text-emerald-800 leading-relaxed text-[11px]">
+                Cada negocio administra la lista de repartidores autorizados para su establecimiento. Puedes revisar licencias, matrículas y antecedentes en la pestaña <strong>Verificaciones</strong>.
+              </p>
             </div>
-            <div className="space-y-3">
-              {colAssignments.length === 0 ? (
-                <p className="text-xs text-slate-400 text-center py-6">Sin asignaciones</p>
-              ) : (
-                colAssignments.map(a => <KanbanCard key={a.id} assignment={a} onUpdate={onUpdate} />)
-              )}
+
+            <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-slate-700 space-y-1">
+              <p className="font-bold text-slate-900 flex items-center gap-1.5">
+                <Lock className="w-4 h-4 text-slate-600" /> Control de Suspensión
+              </p>
+              <p className="text-slate-500 leading-relaxed text-[11px]">
+                Si un repartidor no cumple los estándares de tu local, puedes inactivarlo localmente sin afectar sus licencias globales con otros negocios.
+              </p>
             </div>
           </div>
-        );
-      })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -1197,11 +1260,15 @@ export default function LogisticaPage() {
                 <Truck className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-black text-slate-900">Logística</h1>
-                <p className="text-xs text-slate-500">Módulo Transversal · Citiox Enterprise</p>
+                <h1 className="text-xl font-black text-slate-900">Gestión de Repartidores</h1>
+                <p className="text-xs text-slate-500">Verificación de Documentos & Flota Autónoma (Modo InDrive)</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+                Asignación Autónoma /driver
+              </span>
               <button
                 onClick={loadData}
                 className="p-2.5 border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-50 transition-colors"
@@ -1215,13 +1282,6 @@ export default function LogisticaPage() {
               >
                 <Plus className="w-4 h-4" />
                 Nuevo Repartidor
-              </button>
-              <button
-                onClick={() => setShowAssignModal(true)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-md cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                Nueva Asignación
               </button>
             </div>
           </div>
