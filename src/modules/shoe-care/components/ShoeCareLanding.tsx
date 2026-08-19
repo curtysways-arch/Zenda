@@ -1061,6 +1061,75 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
         </div>
       )}
 
+      {/* 🌟 MODAL DETALLE DE SERVICIO */}
+      {selectedServiceDetail && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl relative animate-in zoom-in-95 border border-purple-100">
+            <button
+              onClick={() => setSelectedServiceDetail(null)}
+              className="absolute top-4 right-4 size-9 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 flex items-center justify-center font-bold text-sm cursor-pointer transition-all z-10"
+            >
+              ✕
+            </button>
+
+            {selectedServiceDetail.imagen && (
+              <div className="relative h-48 w-full rounded-2xl overflow-hidden border border-slate-100 shadow-sm">
+                <img 
+                  src={selectedServiceDetail.imagen} 
+                  alt={selectedServiceDetail.nombre}
+                  className="w-full h-full object-cover"
+                />
+                <span className="absolute bottom-3 right-3 bg-purple-600 text-white font-black text-sm px-3 py-1 rounded-xl shadow-md">
+                  ${selectedServiceDetail.precio}
+                </span>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <span className="text-[10px] font-black uppercase tracking-widest text-purple-600 block">Detalle del Servicio</span>
+              <h3 className="text-xl font-black text-slate-900">{selectedServiceDetail.nombre}</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {selectedServiceDetail.descripcion || 'Servicio profesional especializado de lavado y cuidado de calzado.'}
+              </p>
+            </div>
+
+            <div className="bg-purple-50/70 p-4 rounded-2xl border border-purple-100 space-y-2">
+              <p className="text-[11px] font-bold text-purple-950 uppercase flex items-center gap-1.5">
+                <Sparkles size={14} className="text-purple-600" /> ¿Qué incluye este servicio?
+              </p>
+              <ul className="text-xs text-slate-700 space-y-1 font-medium pl-1">
+                <li>• Lavado artesanal exterior e interior</li>
+                <li>• Desinfección antibacteriana y desodorización</li>
+                <li>• Limpieza de pasadores y plantillas</li>
+                {selectedServiceDetail.duracion && <li>• Tiempo estimado: {selectedServiceDetail.duracion} min / 24h</li>}
+              </ul>
+            </div>
+
+            <div className="pt-2 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedServiceDetail(null)}
+                className="w-1/3 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs rounded-2xl cursor-pointer transition-all"
+              >
+                Cerrar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const srvName = selectedServiceDetail.nombre;
+                  setSelectedServiceDetail(null);
+                  setForm(prev => ({ ...prev, notas: `Servicio solicitado: ${srvName}` }));
+                  setShowPickupModal(true);
+                }}
+                className="w-2/3 py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl shadow-purple-600/20 cursor-pointer transition-all"
+              >
+                Solicitar Servicio
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 📱 MODAL CONSULTAR MIS ÓRDENES & PERFIL (ESTILO APP CON OTP) */}
       {showLookupModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4">
