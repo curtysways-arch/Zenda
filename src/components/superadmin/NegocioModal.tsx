@@ -208,51 +208,6 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
         setMounted(true);
     }, []);
 
-    if (!isOpen || !mounted) return null;
-
-    // Renderizar el Wizard Maestro Universal para nuevos negocios
-    if (!isEdit) {
-        if (creadoExitosamente && negocioCreadoInfo) {
-            return createPortal(
-                <div className="fixed inset-0 z-[999999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-                    <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center space-y-6 text-white">
-                        <div className="size-16 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
-                            <Check strokeWidth={3} className="w-8 h-8" />
-                        </div>
-                        <div className="space-y-2">
-                            <h3 className="text-xl font-black italic">¡Negocio Aprovisionado!</h3>
-                            <p className="text-xs text-slate-400">El negocio <span className="text-emerald-400 font-bold">{negocioCreadoInfo.slug}</span> ha sido instanciado exitosamente.</p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                onClose();
-                                router.refresh();
-                            }}
-                            className="w-full py-4 bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-emerald-400"
-                        >
-                            Finalizar e ir a Citiox Studio
-                        </button>
-                    </div>
-                </div>,
-                document.body
-            );
-        }
-
-        return createPortal(
-            <div className="fixed inset-0 z-[999999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-                <BusinessProvisioningWizard
-                    onClose={onClose}
-                    onSuccess={(info) => {
-                        setNegocioCreadoInfo(info);
-                        setCreadoExitosamente(true);
-                    }}
-                />
-            </div>,
-            document.body
-        );
-    }
-
     // Reiniciar estados al abrir/cerrar
     useEffect(() => {
         if (negocio) {
@@ -329,6 +284,51 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
         }
         setError(null);
     }, [negocio, isOpen]);
+
+    if (!isOpen || !mounted) return null;
+
+    // Renderizar el Wizard Maestro Universal para nuevos negocios
+    if (!isEdit) {
+        if (creadoExitosamente && negocioCreadoInfo) {
+            return createPortal(
+                <div className="fixed inset-0 z-[999999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+                    <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 text-center space-y-6 text-white">
+                        <div className="size-16 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
+                            <Check strokeWidth={3} className="w-8 h-8" />
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-xl font-black italic">¡Negocio Aprovisionado!</h3>
+                            <p className="text-xs text-slate-400">El negocio <span className="text-emerald-400 font-bold">{negocioCreadoInfo.slug}</span> ha sido instanciado exitosamente.</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onClose();
+                                router.refresh();
+                            }}
+                            className="w-full py-4 bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-emerald-400"
+                        >
+                            Finalizar e ir a Citiox Studio
+                        </button>
+                    </div>
+                </div>,
+                document.body
+            );
+        }
+
+        return createPortal(
+            <div className="fixed inset-0 z-[999999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+                <BusinessProvisioningWizard
+                    onClose={onClose}
+                    onSuccess={(info) => {
+                        setNegocioCreadoInfo(info);
+                        setCreadoExitosamente(true);
+                    }}
+                />
+            </div>,
+            document.body
+        );
+    }
 
     // Autogenerar slug y frase principal al escribir nombre del negocio
     const handleNombreChange = (val: string) => {
