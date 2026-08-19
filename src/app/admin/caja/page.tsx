@@ -436,158 +436,198 @@ export default function CajaDashboardPage() {
 
             {/* Modal para Registrar Ingreso Manual */}
             {showIncomeModal && (
-                <div className="fixed inset-0 z-[999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-                    <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl my-auto max-h-[90vh] overflow-y-auto animate-in zoom-in-95 border border-slate-100">
-                        <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                            <h3 className="font-black text-lg text-emerald-800 uppercase italic">Registrar Ingreso Manual</h3>
-                            <button onClick={() => setShowIncomeModal(false)} className="text-slate-400 hover:text-slate-700 cursor-pointer p-1">✕</button>
-                        </div>
-                        
-                        <div className="space-y-3">
-                            <div>
-                                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Descripción / Concepto</label>
-                                <input
-                                    type="text"
-                                    value={conceptoForm}
-                                    onChange={e => setConceptoForm(e.target.value)}
-                                    placeholder="Ej. Inyección de base / Fondo inicial"
-                                    className="w-full p-3 border border-slate-200 rounded-xl font-semibold text-xs bg-slate-50 outline-none focus:border-emerald-600"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
+                <div className="fixed inset-0 z-[99999] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 overflow-y-auto">
+                    <div className="bg-white w-full h-full sm:h-auto sm:max-w-md rounded-none sm:rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xl flex flex-col justify-between sm:block overflow-y-auto animate-in zoom-in-95">
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Cantidad</label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        step="1"
-                                        value={cantidadForm}
-                                        onChange={e => setCantidadForm(e.target.value)}
-                                        placeholder="1"
-                                        className="w-full p-3 border border-slate-200 rounded-xl font-bold text-sm bg-slate-50 outline-none focus:border-emerald-600"
-                                    />
+                                    <span className="text-[10px] font-black uppercase text-emerald-600 tracking-widest block">Operación de Caja</span>
+                                    <h3 className="font-black text-lg text-emerald-950 uppercase italic">Registrar Ingreso Manual</h3>
                                 </div>
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Precio Unitario ($)</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        value={precioUnitarioForm}
-                                        onChange={e => setPrecioUnitarioForm(e.target.value)}
-                                        placeholder="0.00"
-                                        className="w-full p-3 border border-slate-200 rounded-xl font-bold text-sm bg-slate-50 outline-none focus:border-emerald-600"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="bg-emerald-50 p-3 rounded-2xl border border-emerald-200 flex justify-between items-center">
-                                <span className="text-xs font-black text-emerald-900 uppercase">Monto Total a Ingresar:</span>
-                                <span className="text-lg font-black text-emerald-700">
-                                    ${((parseFloat(cantidadForm) || 1) * (parseFloat(precioUnitarioForm) || 0)).toFixed(2)}
-                                </span>
-                            </div>
-
-                            <div>
-                                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Método de Pago</label>
-                                <select
-                                    value={metodoForm}
-                                    onChange={e => setMetodoForm(e.target.value as any)}
-                                    className="w-full p-3 border border-slate-200 rounded-xl font-bold text-xs bg-slate-50 outline-none cursor-pointer"
+                                <button 
+                                    onClick={() => setShowIncomeModal(false)} 
+                                    className="size-9 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 flex items-center justify-center font-bold text-sm cursor-pointer transition-all"
                                 >
-                                    <option value="EFECTIVO">💵 Efectivo (Gaveta)</option>
-                                    <option value="TRANSFERENCIA">🏦 Transferencia Bancaria</option>
-                                    <option value="TARJETA">💳 Tarjeta / POS</option>
-                                </select>
+                                    ✕
+                                </button>
+                            </div>
+                            
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Descripción / Concepto</label>
+                                    <input
+                                        type="text"
+                                        value={conceptoForm}
+                                        onChange={e => setConceptoForm(e.target.value)}
+                                        placeholder="Ej. Inyección de base / Fondo inicial"
+                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold text-sm bg-slate-50 outline-none focus:border-emerald-600 transition-all"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Cantidad</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            step="1"
+                                            value={cantidadForm}
+                                            onChange={e => setCantidadForm(e.target.value)}
+                                            placeholder="1"
+                                            className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-slate-50 outline-none focus:border-emerald-600 transition-all text-center"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Precio Unit. ($)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={precioUnitarioForm}
+                                            onChange={e => setPrecioUnitarioForm(e.target.value)}
+                                            placeholder="0.00"
+                                            className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-slate-50 outline-none focus:border-emerald-600 transition-all text-center"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="bg-emerald-50 p-4 rounded-2xl border-2 border-emerald-200 flex justify-between items-center">
+                                    <span className="text-xs font-black text-emerald-950 uppercase tracking-wider">Total a Ingresar:</span>
+                                    <span className="text-2xl font-black text-emerald-700">
+                                        ${((parseFloat(cantidadForm) || 1) * (parseFloat(precioUnitarioForm) || 0)).toFixed(2)}
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Método de Pago</label>
+                                    <select
+                                        value={metodoForm}
+                                        onChange={e => setMetodoForm(e.target.value as any)}
+                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-xs bg-slate-50 outline-none cursor-pointer focus:border-emerald-600"
+                                    >
+                                        <option value="EFECTIVO">💵 Efectivo (Gaveta de Caja)</option>
+                                        <option value="TRANSFERENCIA">🏦 Transferencia Bancaria</option>
+                                        <option value="TARJETA">💳 Tarjeta / POS</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
-                        <button
-                            onClick={() => handleCreateMovement('ADD_INCOME')}
-                            disabled={submittingForm}
-                            className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-lg cursor-pointer transition-all disabled:opacity-50"
-                        >
-                            {submittingForm ? 'Guardando...' : 'Confirmar Ingreso Manual'}
-                        </button>
+                        <div className="pt-4 border-t border-slate-100 flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowIncomeModal(false)}
+                                className="w-1/3 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-extrabold text-xs uppercase tracking-wider cursor-pointer transition-all"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleCreateMovement('ADD_INCOME')}
+                                disabled={submittingForm}
+                                className="w-2/3 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-xl cursor-pointer transition-all disabled:opacity-50"
+                            >
+                                {submittingForm ? 'Guardando...' : '➕ Confirmar Ingreso'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
 
             {/* Modal para Registrar Egreso / Gasto */}
             {showExpenseModal && (
-                <div className="fixed inset-0 z-[999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-                    <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl my-auto max-h-[90vh] overflow-y-auto animate-in zoom-in-95 border border-slate-100">
-                        <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                            <h3 className="font-black text-lg text-rose-800 uppercase italic">Registrar Gasto / Egreso</h3>
-                            <button onClick={() => setShowExpenseModal(false)} className="text-slate-400 hover:text-slate-700 cursor-pointer p-1">✕</button>
-                        </div>
-
-                        <div className="space-y-3">
-                            <div>
-                                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Descripción / Detalle del Gasto</label>
-                                <input
-                                    type="text"
-                                    value={conceptoForm}
-                                    onChange={e => setConceptoForm(e.target.value)}
-                                    placeholder="Ej. Compra de bolsas de hielo / Insumos"
-                                    className="w-full p-3 border border-slate-200 rounded-xl font-semibold text-xs bg-slate-50 outline-none focus:border-rose-600"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
+                <div className="fixed inset-0 z-[99999] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 overflow-y-auto">
+                    <div className="bg-white w-full h-full sm:h-auto sm:max-w-md rounded-none sm:rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xl flex flex-col justify-between sm:block overflow-y-auto animate-in zoom-in-95">
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Cantidad</label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        step="1"
-                                        value={cantidadForm}
-                                        onChange={e => setCantidadForm(e.target.value)}
-                                        placeholder="1"
-                                        className="w-full p-3 border border-slate-200 rounded-xl font-bold text-sm bg-slate-50 outline-none focus:border-rose-600"
-                                    />
+                                    <span className="text-[10px] font-black uppercase text-rose-600 tracking-widest block">Operación de Caja</span>
+                                    <h3 className="font-black text-lg text-rose-950 uppercase italic">Registrar Gasto / Egreso</h3>
                                 </div>
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Precio Unitario ($)</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        value={precioUnitarioForm}
-                                        onChange={e => setPrecioUnitarioForm(e.target.value)}
-                                        placeholder="0.00"
-                                        className="w-full p-3 border border-slate-200 rounded-xl font-bold text-sm bg-slate-50 outline-none focus:border-rose-600"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="bg-rose-50 p-3 rounded-2xl border border-rose-200 flex justify-between items-center">
-                                <span className="text-xs font-black text-rose-900 uppercase">Monto Total de Egreso:</span>
-                                <span className="text-lg font-black text-rose-700">
-                                    -${((parseFloat(cantidadForm) || 1) * (parseFloat(precioUnitarioForm) || 0)).toFixed(2)}
-                                </span>
-                            </div>
-
-                            <div>
-                                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Método de Salida de Dinero</label>
-                                <select
-                                    value={metodoForm}
-                                    onChange={e => setMetodoForm(e.target.value as any)}
-                                    className="w-full p-3 border border-slate-200 rounded-xl font-bold text-xs bg-slate-50 outline-none cursor-pointer"
+                                <button 
+                                    onClick={() => setShowExpenseModal(false)} 
+                                    className="size-9 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 flex items-center justify-center font-bold text-sm cursor-pointer transition-all"
                                 >
-                                    <option value="EFECTIVO">💵 Efectivo (Gaveta de Caja)</option>
-                                    <option value="TRANSFERENCIA">🏦 Transferencia Bancaria</option>
-                                    <option value="TARJETA">💳 Tarjeta / Débito</option>
-                                </select>
+                                    ✕
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Descripción / Detalle del Gasto</label>
+                                    <input
+                                        type="text"
+                                        value={conceptoForm}
+                                        onChange={e => setConceptoForm(e.target.value)}
+                                        placeholder="Ej. Compra de bolsas de hielo / Insumos"
+                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold text-sm bg-slate-50 outline-none focus:border-rose-600 transition-all"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Cantidad</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            step="1"
+                                            value={cantidadForm}
+                                            onChange={e => setCantidadForm(e.target.value)}
+                                            placeholder="1"
+                                            className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-slate-50 outline-none focus:border-rose-600 transition-all text-center"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Precio Unit. ($)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={precioUnitarioForm}
+                                            onChange={e => setPrecioUnitarioForm(e.target.value)}
+                                            placeholder="0.00"
+                                            className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-slate-50 outline-none focus:border-rose-600 transition-all text-center"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="bg-rose-50 p-4 rounded-2xl border-2 border-rose-200 flex justify-between items-center">
+                                    <span className="text-xs font-black text-rose-950 uppercase tracking-wider">Total de Egreso:</span>
+                                    <span className="text-2xl font-black text-rose-700">
+                                        -${((parseFloat(cantidadForm) || 1) * (parseFloat(precioUnitarioForm) || 0)).toFixed(2)}
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Método de Salida de Dinero</label>
+                                    <select
+                                        value={metodoForm}
+                                        onChange={e => setMetodoForm(e.target.value as any)}
+                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-xs bg-slate-50 outline-none cursor-pointer focus:border-rose-600"
+                                    >
+                                        <option value="EFECTIVO">💵 Efectivo (Gaveta de Caja)</option>
+                                        <option value="TRANSFERENCIA">🏦 Transferencia Bancaria</option>
+                                        <option value="TARJETA">💳 Tarjeta / Débito</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
-                        <button
-                            onClick={() => handleCreateMovement('ADD_EXPENSE')}
-                            disabled={submittingForm}
-                            className="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-lg cursor-pointer transition-all disabled:opacity-50"
-                        >
-                            {submittingForm ? 'Guardando...' : 'Confirmar Egreso / Gasto'}
-                        </button>
+                        <div className="pt-4 border-t border-slate-100 flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowExpenseModal(false)}
+                                className="w-1/3 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-extrabold text-xs uppercase tracking-wider cursor-pointer transition-all"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleCreateMovement('ADD_EXPENSE')}
+                                disabled={submittingForm}
+                                className="w-2/3 py-3.5 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-xl cursor-pointer transition-all disabled:opacity-50"
+                            >
+                                {submittingForm ? 'Guardando...' : '➖ Confirmar Gasto'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
