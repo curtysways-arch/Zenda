@@ -37,12 +37,33 @@ export async function GET(req: Request) {
             endDate = endOfDay(now);
         }
 
-        // Fetch all payments for this business in the date range
+        // 1. Obtener todas las ventas reales creadas en el negocio (POS, Mesas, Landing, Pickup)
+        const pedidos = await prisma.pedido.findMany({
+            where: {
+                negocioId,
+                createdAt: {
+                    gte: startDate,
+                    lte: endDate
+                },
+                estado: { notIn: ['CANCELADO', 'CANCELLED', 'RECHAZADO'] }
+            },
+            include: {
+                payment: true
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        // 2. Obtener pagos de citas y movimientos manuales de caja (Ingresos / Gastos)
         const payments = await prisma.pagoReserva.findMany({
             where: {
-                Appointment: {
-                    negocioId
-                },
+                OR: [
+                    { Appointment: { negocioId } },
+                    { notas: { contains: negocioId } },
+                    { referencia: { contains: 'GASTO' } },
+                    { referencia: { contains: 'INGRESO_MANUAL' } }
+                ],
                 fecha: {
                     gte: startDate,
                     lte: endDate
@@ -61,12 +82,12 @@ export async function GET(req: Request) {
             }
         });
 
-        // Filter by cashier if parameter passed
+        // Filtrar por cajero si se pasa el parámetro
         const filteredPayments = cashierParam
             ? payments.filter(p => p.notas?.includes(cashierParam) || p.referencia?.includes(cashierParam))
             : payments;
 
-        // Financial Metrics Breakdown
+        // Desglose de Métricas Financieras Reales
         let totalVentas = 0;
         let ingresosManuales = 0;
         let gastos = 0;
@@ -75,6 +96,53 @@ export async function GET(req: Request) {
         let ventasTransferencia = 0;
         let ventasOtros = 0;
 
+        // Sumar ventas reales desde Pedidos
+        pedidos.forEach((p: any) => {
+            let extra: any = {};
+            if (typeof p.extraInfo === 'string') {
+                try { extra = JSON.parse(p.extraInfo); } catch {}
+            } else if (p.extraInfo && typeof p.extraInfo === 'object') {
+                extra = p.extraInfo;
+            }
+
+            const pStatus = (p.paymentStatus || extra.paymentStatus || '').toUpperCase();
+            const payEstado = (p.payment?.estado || p.payment?.status || '').toUpperCase();
+            const orderEstado = (p.estado || '').toUpperCase();
+            const saldoPendiente = extra.saldoPendiente !== undefined ? Number(extra.saldoPendiente) : null;
+            const montoPagadoAcumulado = Number(extra.montoPagadoAcumulado || 0);
+            const totalOrder = Number(p.total || 0);
+
+            const isPaid = (
+                pStatus === 'PAGADO' ||
+                pStatus === 'CONFIRMADO' ||
+                payEstado === 'CONFIRMADO' ||
+                payEstado === 'PAGADO' ||
+                payEstado === 'PAID' ||
+                orderEstado === 'FINALIZADO' ||
+                orderEstado === 'COMPLETADO' ||
+                (saldoPendiente !== null && saldoPendiente <= 0) ||
+                (montoPagadoAcumulado >= totalOrder && totalOrder > 0)
+            );
+
+            let amountPaid = 0;
+            if (isPaid) {
+                amountPaid = totalOrder;
+            } else if (montoPagadoAcumulado > 0) {
+                amountPaid = montoPagadoAcumulado;
+            }
+
+            if (amountPaid > 0) {
+                const metodo = (extra.metodoPago || p.payment?.metodo || p.payment?.method || 'EFECTIVO').toUpperCase();
+                totalVentas += amountPaid;
+
+                if (metodo.includes('TARJETA')) ventasTarjeta += amountPaid;
+                else if (metodo.includes('TRANSF')) ventasTransferencia += amountPaid;
+                else if (metodo.includes('OTRO') || metodo.includes('MIXTO')) ventasOtros += amountPaid;
+                else ventasEfectivo += amountPaid;
+            }
+        });
+
+        // Sumar movimientos manuales (Ingresos / Gastos / Citas)
         filteredPayments.forEach(p => {
             const amount = Number(p.monto) || 0;
             const metodo = (p.metodo || 'EFECTIVO').toUpperCase();
@@ -95,8 +163,40 @@ export async function GET(req: Request) {
             }
         });
 
-        // Expected Cash in Register = (Ventas Efectivo + Ingresos Manuales Efectivo) - Gastos
+        // Total Esperado en Gaveta = (Ventas Efectivo + Ingresos Manuales) - Gastos
         const totalEsperadoEfectivo = Math.max(0, ventasEfectivo + ingresosManuales - gastos);
+
+        // Lista unificada para el historial de transacciones
+        const allTransactions = [
+            ...pedidos.map((p: any) => {
+                let extra: any = {};
+                if (typeof p.extraInfo === 'string') {
+                    try { extra = JSON.parse(p.extraInfo); } catch {}
+                } else if (p.extraInfo && typeof p.extraInfo === 'object') {
+                    extra = p.extraInfo;
+                }
+                return {
+                    id: p.id,
+                    monto: p.total,
+                    metodo: (extra.metodoPago || p.payment?.metodo || 'EFECTIVO').toUpperCase(),
+                    referencia: `VENTA #${p.numeroPedido} (${p.tipoEntrega || 'POS'})`,
+                    fecha: p.createdAt,
+                    clienteNombre: p.nombreCliente || 'Cliente POS',
+                    servicioNombre: `Venta Directa (${p.items?.length || 0} prod)`,
+                    cashier: 'Cajero Principal'
+                };
+            }),
+            ...filteredPayments.map(p => ({
+                id: p.id,
+                monto: p.monto,
+                metodo: p.metodo || 'EFECTIVO',
+                referencia: p.referencia,
+                fecha: p.fecha,
+                clienteNombre: p.Appointment?.cliente?.nombre || 'Caja Central',
+                servicioNombre: (p.referencia || '').startsWith('GASTO') ? 'Egreso / Gasto' : (p.referencia || '').startsWith('INGRESO_MANUAL') ? 'Ingreso Manual' : 'Pago Cita',
+                cashier: 'Cajero Principal'
+            }))
+        ].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
 
         return NextResponse.json({
             success: true,
@@ -113,16 +213,7 @@ export async function GET(req: Request) {
                 totalEsperadoEfectivo,
                 totalGeneral: totalVentas + ingresosManuales - gastos
             },
-            payments: filteredPayments.map(p => ({
-                id: p.id,
-                monto: p.monto,
-                metodo: p.metodo || 'EFECTIVO',
-                referencia: p.referencia,
-                fecha: p.fecha,
-                clienteNombre: p.Appointment?.cliente?.nombre || 'Cliente Presencial',
-                servicioNombre: p.Appointment?.service?.nombre || 'Venta POS / Pedido',
-                cashier: 'Cajero Principal'
-            }))
+            payments: allTransactions
         });
     } catch (error) {
         console.error('Error in finance GET API:', error);
