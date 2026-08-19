@@ -140,8 +140,22 @@ export default function CajaDashboardPage() {
 
                 <div className="flex items-center gap-2">
                     <button
+                        onClick={() => setShowIncomeModal(true)}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
+                    >
+                        <PlusCircle className="size-4" /> <span>+ Ingreso</span>
+                    </button>
+
+                    <button
+                        onClick={() => setShowExpenseModal(true)}
+                        className="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
+                    >
+                        <MinusCircle className="size-4" /> <span>- Gasto</span>
+                    </button>
+
+                    <button
                         onClick={fetchFinanceData}
-                        className="bg-white border border-slate-200 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 flex items-center gap-2 hover:bg-slate-100 cursor-pointer shadow-sm"
+                        className="bg-white border border-slate-200 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 flex items-center gap-2 hover:bg-slate-100 cursor-pointer shadow-sm ml-1"
                     >
                         <RefreshCw className={cn("size-4", loading && "animate-spin")} /> Actualizar
                     </button>
@@ -149,6 +163,30 @@ export default function CajaDashboardPage() {
             </header>
 
             <main className="p-6 max-w-7xl mx-auto space-y-8">
+                {/* Banner de Acciones Directas de Caja */}
+                <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white p-5 rounded-3xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 border border-slate-800">
+                    <div>
+                        <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">Operaciones Diarias de Caja</span>
+                        <h2 className="text-lg font-black italic tracking-tight">Gestión Inmediata de Ingresos & Gastos</h2>
+                        <p className="text-xs text-slate-300 font-medium">Registra entradas manuales de dinero o salidas por egresos/compras en segundos.</p>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+                        <button
+                            onClick={() => setShowIncomeModal(true)}
+                            className="flex-1 sm:flex-none px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105"
+                        >
+                            <PlusCircle className="size-4" /> <span>➕ Registrar Ingreso</span>
+                        </button>
+                        <button
+                            onClick={() => setShowExpenseModal(true)}
+                            className="flex-1 sm:flex-none px-5 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105"
+                        >
+                            <MinusCircle className="size-4" /> <span>➖ Registrar Gasto</span>
+                        </button>
+                    </div>
+                </div>
+
                 {/* Selector de Filtros de Fecha */}
                 <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-3 rounded-3xl border border-slate-200/80 shadow-sm">
                     <div className="flex bg-slate-100 p-1.5 rounded-2xl gap-1">
@@ -202,40 +240,44 @@ export default function CajaDashboardPage() {
                     </div>
 
                     {/* Ingresos Manuales */}
-                    <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-2 relative overflow-hidden">
-                        <div className="flex items-center justify-between text-slate-400">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Ingresos Manuales</span>
-                            <div className="size-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black">
-                                <TrendingUp size={20} />
+                    <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-3 relative overflow-hidden flex flex-col justify-between">
+                        <div>
+                            <div className="flex items-center justify-between text-slate-400 mb-2">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Ingresos Manuales</span>
+                                <div className="size-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black">
+                                    <TrendingUp size={20} />
+                                </div>
                             </div>
+                            <p className="text-3xl font-black text-emerald-700 italic tracking-tight">
+                                +${(metrics.ingresosManuales || 0).toFixed(2)}
+                            </p>
                         </div>
-                        <p className="text-3xl font-black text-emerald-700 italic tracking-tight">
-                            +${(metrics.ingresosManuales || 0).toFixed(2)}
-                        </p>
                         <button
                             onClick={() => setShowIncomeModal(true)}
-                            className="text-[10px] font-black uppercase text-emerald-600 hover:underline flex items-center gap-1 cursor-pointer"
+                            className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl text-[10px] font-black uppercase text-emerald-800 tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-all"
                         >
-                            + Registrar Ingreso Manual
+                            <PlusCircle className="size-3 text-emerald-600" /> + Registrar Ingreso
                         </button>
                     </div>
 
                     {/* Gastos / Egresos */}
-                    <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-2 relative overflow-hidden">
-                        <div className="flex items-center justify-between text-slate-400">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-rose-700">Gastos / Egresos</span>
-                            <div className="size-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-black">
-                                <TrendingDown size={20} />
+                    <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-3 relative overflow-hidden flex flex-col justify-between">
+                        <div>
+                            <div className="flex items-center justify-between text-slate-400 mb-2">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-rose-700">Gastos / Egresos</span>
+                                <div className="size-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-black">
+                                    <TrendingDown size={20} />
+                                </div>
                             </div>
+                            <p className="text-3xl font-black text-rose-700 italic tracking-tight">
+                                -${(metrics.gastos || 0).toFixed(2)}
+                            </p>
                         </div>
-                        <p className="text-3xl font-black text-rose-700 italic tracking-tight">
-                            -${(metrics.gastos || 0).toFixed(2)}
-                        </p>
                         <button
                             onClick={() => setShowExpenseModal(true)}
-                            className="text-[10px] font-black uppercase text-rose-600 hover:underline flex items-center gap-1 cursor-pointer"
+                            className="w-full py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl text-[10px] font-black uppercase text-rose-800 tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-all"
                         >
-                            - Registrar Egreso / Gasto
+                            <MinusCircle className="size-3 text-rose-600" /> - Registrar Gasto
                         </button>
                     </div>
 
