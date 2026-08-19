@@ -47,6 +47,9 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
 
     const [activeTab, setActiveTab] = useState<'info' | 'subscription' | 'payments' | 'loyalty'>('info');
 
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
     const [resetPasswordModal, setResetPasswordModal] = useState<{
         show: boolean;
         usuarioId: string;
@@ -62,6 +65,26 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
         generatedPass: '',
         isSaved: false
     });
+
+    const handleDeleteBusiness = async () => {
+        setDeleting(true);
+        try {
+            const res = await fetch(`/api/superadmin/negocios/${negocio.id}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                router.push('/superadmin/negocios');
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Error al eliminar el negocio');
+            }
+        } catch (err) {
+            console.error('Error eliminando negocio:', err);
+            alert('Error al eliminar el negocio');
+        } finally {
+            setDeleting(false);
+        }
+    };
 
     useEffect(() => {
         if (tabParam === 'subscription' || tabParam === 'payments' || tabParam === 'info') {
@@ -601,12 +624,25 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                     <Settings size={20} />
                                     <span className="text-[10px] font-black uppercase tracking-widest">Configuraciones rápidas</span>
                                 </div>
-                                <button className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all text-left flex items-center justify-between group">
+                                <button
+                                    onClick={() => {
+                                        const targetUser = (negocio?.Usuario && negocio.Usuario.length > 0)
+                                            ? negocio.Usuario[0]
+                                            : (negocio?.usuarios && negocio.usuarios.length > 0)
+                                            ? negocio.usuarios[0]
+                                            : { id: `admin_${negocio.id}`, nombre: negocio.nombre, email: negocio.emailContacto || negocio.email };
+                                        handleOpenResetModal(targetUser);
+                                    }}
+                                    className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all text-left flex items-center justify-between group cursor-pointer"
+                                >
                                     <span className="text-xs font-bold uppercase">Resetear Contraseña</span>
                                     <Power size={18} className="text-white/40 group-hover:text-white" />
                                 </button>
-                                <button className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all text-left flex items-center justify-between group">
-                                    <span className="text-xs font-bold uppercase">Eliminar Negocio</span>
+                                <button
+                                    onClick={() => setShowDeleteModal(true)}
+                                    className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all text-left flex items-center justify-between group cursor-pointer"
+                                >
+                                    <span className="text-xs font-bold uppercase text-rose-300">Eliminar Negocio</span>
                                     <Trash2 size={18} className="text-white/40 group-hover:text-rose-400" />
                                 </button>
                             </div>
@@ -1415,6 +1451,40 @@ export default function BusinessDetailClient({ negocio, planes }: BusinessDetail
                                     </div>
                                 </>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Confirmación de Eliminación de Negocio */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-2xl relative border border-slate-100 text-center">
+                        <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                            <Trash2 size={32} />
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-xl font-black text-slate-900">¿Eliminar {negocio.nombre}?</h3>
+                            <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                                Esta acción eliminará de forma permanente el negocio, todos sus usuarios, pedidos, catálogo y configuraciones asociadas. Esta operación no se puede deshacer.
+                            </p>
+                        </div>
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowDeleteModal(false)}
+                                className="w-1/2 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs rounded-2xl transition-all cursor-pointer"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleDeleteBusiness}
+                                disabled={deleting}
+                                className="w-1/2 py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-rose-600/25 transition-all cursor-pointer flex items-center justify-center gap-2"
+                            >
+                                {deleting ? <Loader2 className="animate-spin" size={16} /> : 'Sí, Eliminar'}
+                            </button>
                         </div>
                     </div>
                 </div>
