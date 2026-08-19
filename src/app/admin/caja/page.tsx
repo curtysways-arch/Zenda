@@ -140,22 +140,8 @@ export default function CajaDashboardPage() {
 
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={() => setShowIncomeModal(true)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
-                    >
-                        <PlusCircle className="size-4" /> <span>+ Ingreso</span>
-                    </button>
-
-                    <button
-                        onClick={() => setShowExpenseModal(true)}
-                        className="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-md cursor-pointer transition-all"
-                    >
-                        <MinusCircle className="size-4" /> <span>- Gasto</span>
-                    </button>
-
-                    <button
                         onClick={fetchFinanceData}
-                        className="bg-white border border-slate-200 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 flex items-center gap-2 hover:bg-slate-100 cursor-pointer shadow-sm ml-1"
+                        className="bg-white border border-slate-200 px-4 py-2 rounded-xl text-xs font-bold text-slate-700 flex items-center gap-2 hover:bg-slate-100 cursor-pointer shadow-sm"
                     >
                         <RefreshCw className={cn("size-4", loading && "animate-spin")} /> Actualizar
                     </button>
@@ -163,7 +149,7 @@ export default function CajaDashboardPage() {
             </header>
 
             <main className="p-6 max-w-7xl mx-auto space-y-8">
-                {/* Banner de Acciones Directas de Caja */}
+                {/* Banner ÚNICO de Acciones Directas de Caja */}
                 <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white p-5 rounded-3xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 border border-slate-800">
                     <div>
                         <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">Operaciones Diarias de Caja</span>
@@ -240,45 +226,31 @@ export default function CajaDashboardPage() {
                     </div>
 
                     {/* Ingresos Manuales */}
-                    <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-3 relative overflow-hidden flex flex-col justify-between">
-                        <div>
-                            <div className="flex items-center justify-between text-slate-400 mb-2">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Ingresos Manuales</span>
-                                <div className="size-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black">
-                                    <TrendingUp size={20} />
-                                </div>
+                    <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-2 relative overflow-hidden">
+                        <div className="flex items-center justify-between text-slate-400">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Ingresos Manuales</span>
+                            <div className="size-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black">
+                                <TrendingUp size={20} />
                             </div>
-                            <p className="text-3xl font-black text-emerald-700 italic tracking-tight">
-                                +${(metrics.ingresosManuales || 0).toFixed(2)}
-                            </p>
                         </div>
-                        <button
-                            onClick={() => setShowIncomeModal(true)}
-                            className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl text-[10px] font-black uppercase text-emerald-800 tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-all"
-                        >
-                            <PlusCircle className="size-3 text-emerald-600" /> + Registrar Ingreso
-                        </button>
+                        <p className="text-3xl font-black text-emerald-700 italic tracking-tight">
+                            +${(metrics.ingresosManuales || 0).toFixed(2)}
+                        </p>
+                        <p className="text-[10px] font-bold text-emerald-600 uppercase">Entradas manuales registradas</p>
                     </div>
 
                     {/* Gastos / Egresos */}
-                    <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-3 relative overflow-hidden flex flex-col justify-between">
-                        <div>
-                            <div className="flex items-center justify-between text-slate-400 mb-2">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-rose-700">Gastos / Egresos</span>
-                                <div className="size-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-black">
-                                    <TrendingDown size={20} />
-                                </div>
+                    <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-2 relative overflow-hidden">
+                        <div className="flex items-center justify-between text-slate-400">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-rose-700">Gastos / Egresos</span>
+                            <div className="size-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-black">
+                                <TrendingDown size={20} />
                             </div>
-                            <p className="text-3xl font-black text-rose-700 italic tracking-tight">
-                                -${(metrics.gastos || 0).toFixed(2)}
-                            </p>
                         </div>
-                        <button
-                            onClick={() => setShowExpenseModal(true)}
-                            className="w-full py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl text-[10px] font-black uppercase text-rose-800 tracking-wider flex items-center justify-center gap-1 cursor-pointer transition-all"
-                        >
-                            <MinusCircle className="size-3 text-rose-600" /> - Registrar Gasto
-                        </button>
+                        <p className="text-3xl font-black text-rose-700 italic tracking-tight">
+                            -${(metrics.gastos || 0).toFixed(2)}
+                        </p>
+                        <p className="text-[10px] font-bold text-rose-600 uppercase">Salidas / Compras de caja</p>
                     </div>
 
                     {/* Total Esperado en Caja */}
@@ -436,79 +408,77 @@ export default function CajaDashboardPage() {
 
             {/* Modal para Registrar Ingreso Manual */}
             {showIncomeModal && (
-                <div className="fixed inset-0 z-[99999] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 overflow-y-auto">
-                    <div className="bg-white w-full h-full sm:h-auto sm:max-w-md rounded-none sm:rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xl flex flex-col justify-between sm:block overflow-y-auto animate-in zoom-in-95">
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                                <div>
-                                    <span className="text-[10px] font-black uppercase text-emerald-600 tracking-widest block">Operación de Caja</span>
-                                    <h3 className="font-black text-lg text-emerald-950 uppercase italic">Registrar Ingreso Manual</h3>
-                                </div>
-                                <button 
-                                    onClick={() => setShowIncomeModal(false)} 
-                                    className="size-9 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 flex items-center justify-center font-bold text-sm cursor-pointer transition-all"
-                                >
-                                    ✕
-                                </button>
+                <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-start sm:items-center justify-center p-4 overflow-y-auto pt-10 sm:pt-4">
+                    <div className="bg-white w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl animate-in zoom-in-95 my-auto border-2 border-slate-200">
+                        <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                            <div>
+                                <span className="text-[10px] font-black uppercase text-emerald-600 tracking-widest block">Operación de Caja</span>
+                                <h3 className="font-black text-lg text-emerald-950 uppercase italic">Registrar Ingreso Manual</h3>
                             </div>
-                            
-                            <div className="space-y-4">
+                            <button 
+                                onClick={() => setShowIncomeModal(false)} 
+                                className="size-9 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 flex items-center justify-center font-bold text-sm cursor-pointer transition-all"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Descripción / Concepto</label>
+                                <input
+                                    type="text"
+                                    value={conceptoForm}
+                                    onChange={e => setConceptoForm(e.target.value)}
+                                    placeholder="Ej. Inyección de base / Fondo inicial"
+                                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold text-sm bg-slate-50 outline-none focus:border-emerald-600 transition-all"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Descripción / Concepto</label>
+                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Cantidad</label>
                                     <input
-                                        type="text"
-                                        value={conceptoForm}
-                                        onChange={e => setConceptoForm(e.target.value)}
-                                        placeholder="Ej. Inyección de base / Fondo inicial"
-                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold text-sm bg-slate-50 outline-none focus:border-emerald-600 transition-all"
+                                        type="number"
+                                        min="1"
+                                        step="1"
+                                        value={cantidadForm}
+                                        onChange={e => setCantidadForm(e.target.value)}
+                                        placeholder="1"
+                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-slate-50 outline-none focus:border-emerald-600 transition-all text-center"
                                     />
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Cantidad</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            step="1"
-                                            value={cantidadForm}
-                                            onChange={e => setCantidadForm(e.target.value)}
-                                            placeholder="1"
-                                            className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-slate-50 outline-none focus:border-emerald-600 transition-all text-center"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Precio Unit. ($)</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            value={precioUnitarioForm}
-                                            onChange={e => setPrecioUnitarioForm(e.target.value)}
-                                            placeholder="0.00"
-                                            className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-slate-50 outline-none focus:border-emerald-600 transition-all text-center"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="bg-emerald-50 p-4 rounded-2xl border-2 border-emerald-200 flex justify-between items-center">
-                                    <span className="text-xs font-black text-emerald-950 uppercase tracking-wider">Total a Ingresar:</span>
-                                    <span className="text-2xl font-black text-emerald-700">
-                                        ${((parseFloat(cantidadForm) || 1) * (parseFloat(precioUnitarioForm) || 0)).toFixed(2)}
-                                    </span>
-                                </div>
-
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Método de Pago</label>
-                                    <select
-                                        value={metodoForm}
-                                        onChange={e => setMetodoForm(e.target.value as any)}
-                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-xs bg-slate-50 outline-none cursor-pointer focus:border-emerald-600"
-                                    >
-                                        <option value="EFECTIVO">💵 Efectivo (Gaveta de Caja)</option>
-                                        <option value="TRANSFERENCIA">🏦 Transferencia Bancaria</option>
-                                        <option value="TARJETA">💳 Tarjeta / POS</option>
-                                    </select>
+                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Precio Unit. ($)</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={precioUnitarioForm}
+                                        onChange={e => setPrecioUnitarioForm(e.target.value)}
+                                        placeholder="0.00"
+                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-slate-50 outline-none focus:border-emerald-600 transition-all text-center"
+                                    />
                                 </div>
+                            </div>
+
+                            <div className="bg-emerald-50 p-4 rounded-2xl border-2 border-emerald-200 flex justify-between items-center">
+                                <span className="text-xs font-black text-emerald-950 uppercase tracking-wider">Total a Ingresar:</span>
+                                <span className="text-2xl font-black text-emerald-700">
+                                    ${((parseFloat(cantidadForm) || 1) * (parseFloat(precioUnitarioForm) || 0)).toFixed(2)}
+                                </span>
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Método de Pago</label>
+                                <select
+                                    value={metodoForm}
+                                    onChange={e => setMetodoForm(e.target.value as any)}
+                                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-xs bg-slate-50 outline-none cursor-pointer focus:border-emerald-600"
+                                >
+                                    <option value="EFECTIVO">💵 Efectivo (Gaveta de Caja)</option>
+                                    <option value="TRANSFERENCIA">🏦 Transferencia Bancaria</option>
+                                    <option value="TARJETA">💳 Tarjeta / POS</option>
+                                </select>
                             </div>
                         </div>
 
@@ -535,79 +505,77 @@ export default function CajaDashboardPage() {
 
             {/* Modal para Registrar Egreso / Gasto */}
             {showExpenseModal && (
-                <div className="fixed inset-0 z-[99999] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 overflow-y-auto">
-                    <div className="bg-white w-full h-full sm:h-auto sm:max-w-md rounded-none sm:rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xl flex flex-col justify-between sm:block overflow-y-auto animate-in zoom-in-95">
+                <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-start sm:items-center justify-center p-4 overflow-y-auto pt-10 sm:pt-4">
+                    <div className="bg-white w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl animate-in zoom-in-95 my-auto border-2 border-slate-200">
+                        <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                            <div>
+                                <span className="text-[10px] font-black uppercase text-rose-600 tracking-widest block">Operación de Caja</span>
+                                <h3 className="font-black text-lg text-rose-950 uppercase italic">Registrar Gasto / Egreso</h3>
+                            </div>
+                            <button 
+                                onClick={() => setShowExpenseModal(false)} 
+                                className="size-9 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 flex items-center justify-center font-bold text-sm cursor-pointer transition-all"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
                         <div className="space-y-4">
-                            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                                <div>
-                                    <span className="text-[10px] font-black uppercase text-rose-600 tracking-widest block">Operación de Caja</span>
-                                    <h3 className="font-black text-lg text-rose-950 uppercase italic">Registrar Gasto / Egreso</h3>
-                                </div>
-                                <button 
-                                    onClick={() => setShowExpenseModal(false)} 
-                                    className="size-9 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 flex items-center justify-center font-bold text-sm cursor-pointer transition-all"
-                                >
-                                    ✕
-                                </button>
+                            <div>
+                                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Descripción / Detalle del Gasto</label>
+                                <input
+                                    type="text"
+                                    value={conceptoForm}
+                                    onChange={e => setConceptoForm(e.target.value)}
+                                    placeholder="Ej. Compra de bolsas de hielo / Insumos"
+                                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold text-sm bg-slate-50 outline-none focus:border-rose-600 transition-all"
+                                />
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Descripción / Detalle del Gasto</label>
+                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Cantidad</label>
                                     <input
-                                        type="text"
-                                        value={conceptoForm}
-                                        onChange={e => setConceptoForm(e.target.value)}
-                                        placeholder="Ej. Compra de bolsas de hielo / Insumos"
-                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold text-sm bg-slate-50 outline-none focus:border-rose-600 transition-all"
+                                        type="number"
+                                        min="1"
+                                        step="1"
+                                        value={cantidadForm}
+                                        onChange={e => setCantidadForm(e.target.value)}
+                                        placeholder="1"
+                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-slate-50 outline-none focus:border-rose-600 transition-all text-center"
                                     />
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Cantidad</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            step="1"
-                                            value={cantidadForm}
-                                            onChange={e => setCantidadForm(e.target.value)}
-                                            placeholder="1"
-                                            className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-slate-50 outline-none focus:border-rose-600 transition-all text-center"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Precio Unit. ($)</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            value={precioUnitarioForm}
-                                            onChange={e => setPrecioUnitarioForm(e.target.value)}
-                                            placeholder="0.00"
-                                            className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-slate-50 outline-none focus:border-rose-600 transition-all text-center"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="bg-rose-50 p-4 rounded-2xl border-2 border-rose-200 flex justify-between items-center">
-                                    <span className="text-xs font-black text-rose-950 uppercase tracking-wider">Total de Egreso:</span>
-                                    <span className="text-2xl font-black text-rose-700">
-                                        -${((parseFloat(cantidadForm) || 1) * (parseFloat(precioUnitarioForm) || 0)).toFixed(2)}
-                                    </span>
-                                </div>
-
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Método de Salida de Dinero</label>
-                                    <select
-                                        value={metodoForm}
-                                        onChange={e => setMetodoForm(e.target.value as any)}
-                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-xs bg-slate-50 outline-none cursor-pointer focus:border-rose-600"
-                                    >
-                                        <option value="EFECTIVO">💵 Efectivo (Gaveta de Caja)</option>
-                                        <option value="TRANSFERENCIA">🏦 Transferencia Bancaria</option>
-                                        <option value="TARJETA">💳 Tarjeta / Débito</option>
-                                    </select>
+                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Precio Unit. ($)</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={precioUnitarioForm}
+                                        onChange={e => setPrecioUnitarioForm(e.target.value)}
+                                        placeholder="0.00"
+                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-slate-50 outline-none focus:border-rose-600 transition-all text-center"
+                                    />
                                 </div>
+                            </div>
+
+                            <div className="bg-rose-50 p-4 rounded-2xl border-2 border-rose-200 flex justify-between items-center">
+                                <span className="text-xs font-black text-rose-950 uppercase tracking-wider">Total de Egreso:</span>
+                                <span className="text-2xl font-black text-rose-700">
+                                    -${((parseFloat(cantidadForm) || 1) * (parseFloat(precioUnitarioForm) || 0)).toFixed(2)}
+                                </span>
+                            </div>
+
+                            <div>
+                                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Método de Salida de Dinero</label>
+                                <select
+                                    value={metodoForm}
+                                    onChange={e => setMetodoForm(e.target.value as any)}
+                                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-xs bg-slate-50 outline-none cursor-pointer focus:border-rose-600"
+                                >
+                                    <option value="EFECTIVO">💵 Efectivo (Gaveta de Caja)</option>
+                                    <option value="TRANSFERENCIA">🏦 Transferencia Bancaria</option>
+                                    <option value="TARJETA">💳 Tarjeta / Débito</option>
+                                </select>
                             </div>
                         </div>
 
