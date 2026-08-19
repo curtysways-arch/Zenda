@@ -138,6 +138,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       ...(horaEstimadaEntrega ? { horaEstimadaEntrega } : {}),
       ...(prioridad ? { prioridad } : {}),
       ...(notasInternas !== undefined ? { notasInternas } : {}),
+      ...(body.articulos ? { articulos: body.articulos } : {}),
+      ...(body.propuestaNegocio ? { propuestaNegocio: body.propuestaNegocio } : {}),
     };
 
     // Actualizar Fotos si se envían nuevas

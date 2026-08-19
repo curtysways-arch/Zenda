@@ -102,8 +102,36 @@ export async function POST(req: Request) {
     const requiereRetiro = modo === 'DOMICILIO' || modo === 'RETIRO_SOLO';
     const estadoInicial = requiereRetiro ? 'PENDIENTE_RETIRO' : 'RECIBIDO';
     const numPares = parseInt(cantidadPares) || 1;
-    const precioBase = parseFloat(precioServicio) || parseFloat(precioEstimado) || 6.00;
-    const totalCalculado = precioBase * numPares;
+    
+    // Procesar artículos multi-atributo si se reciben
+    const rawArticulos = Array.isArray(body.articulos) ? body.articulos : [];
+    
+    let totalCalculado = 0;
+    let itemsToCreate: any[] = [];
+
+    if (rawArticulos.length > 0) {
+      totalCalculado = rawArticulos.reduce((sum: number, art: any) => {
+        const pUnit = parseFloat(art.precioUnitario) || 0;
+        const qty = parseInt(art.cantidad) || 1;
+        return sum + (pUnit * qty);
+      }, 0);
+
+      itemsToCreate = rawArticulos.map((art: any) => ({
+        nombreProducto: `${art.tipo || 'Artículo'} (${art.variante || 'Estándar'}): ${art.servicioNombre || 'Servicio'}${art.extras?.length ? ` + ${art.extras.join(', ')}` : ''}`,
+        precioUnitario: parseFloat(art.precioUnitario) || 0,
+        cantidad: parseInt(art.cantidad) || 1
+      }));
+    } else {
+      const precioBase = parseFloat(precioServicio) || parseFloat(precioEstimado) || 6.00;
+      totalCalculado = precioBase * numPares;
+      itemsToCreate = [
+        {
+          nombreProducto: servicioNombre ? `${servicioNombre} (${numPares} par/es)` : `Servicio Lavado de Calzado (${numPares} par/es)`,
+          precioUnitario: precioBase,
+          cantidad: numPares
+        }
+      ];
+    }
 
     const fechaEntregaFinal = fechaEstimadaEntrega ? new Date(fechaEstimadaEntrega) : new Date(Date.now() + 86400000 * 2);
 
@@ -111,7 +139,8 @@ export async function POST(req: Request) {
       modoIngreso: modo || (esDomicilio ? 'DOMICILIO' : 'LOCAL'),
       cantidadPares: numPares,
       servicioNombre: servicioNombre || 'Lavado Completo',
-      precioUnitario: precioBase,
+      articulos: rawArticulos,
+      requiereConfirmacionPrecio: Boolean(body.requiereConfirmacionPrecio),
       fechaHoraRetiro: fechaHoraRetiro || null,
       fechaEstimadaEntrega: fechaEntregaFinal.toISOString(),
       fotosRecepcion: Array.isArray(fotosRecepcion) ? fotosRecepcion : [],
@@ -129,8 +158,8 @@ export async function POST(req: Request) {
     const configMap: Record<string, string> = {};
     configsDB.forEach(c => { configMap[c.clave] = c.valor; });
 
-    let costoEnvioCalculado = 0;
-    if (esDomicilio) {
+    let costoEnvioCalculado = body.costoEnvio !== undefined ? parseFloat(body.costoEnvio) : 0;
+    if (esDomicilio && body.costoEnvio === undefined) {
       const baseCost = configMap.costoEnvio !== undefined ? parseFloat(configMap.costoEnvio) : 1.50;
       if (latitud && longitud) {
         const latNegocio = configMap.latitudNegocio !== undefined ? parseFloat(configMap.latitudNegocio) : -0.180653;
@@ -166,7 +195,7 @@ export async function POST(req: Request) {
         latitud: latitud ? parseFloat(latitud.toString()) : null,
         longitud: longitud ? parseFloat(longitud.toString()) : null,
         fechaEntrega: fechaEntregaFinal,
-        franjaHoraria: '10:00 - 18:00',
+        franjaHoraria: fechaHoraRetiro || '10:00 - 18:00',
         subtotal: totalCalculado,
         costoEnvio: costoEnvioCalculado,
         total: totalCalculado + costoEnvioCalculado,
@@ -174,13 +203,7 @@ export async function POST(req: Request) {
         notas: observaciones || notas || null,
         extraInfo,
         items: {
-          create: [
-            {
-              nombreProducto: servicioNombre ? `${servicioNombre} (${numPares} par/es)` : `Servicio Lavado de Calzado (${numPares} par/es)`,
-              precioUnitario: precioBase,
-              cantidad: numPares
-            }
-          ]
+          create: itemsToCreate
         }
       },
       include: {

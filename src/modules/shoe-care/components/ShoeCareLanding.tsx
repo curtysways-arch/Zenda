@@ -38,6 +38,7 @@ import CoverageMapPublic from '@/components/public/CoverageMapPublic';
 import PublicMobileNav from '@/components/public/PublicMobileNav';
 import PhoneInput from '@/components/ui/PhoneInput';
 import { isPointInPolygon } from '@/lib/geoUtils';
+import UniversalServiceRequestModal from '@/components/public/UniversalServiceRequestModal';
 
 interface ShoeCareLandingProps {
   negocio: any;
@@ -1000,200 +1001,12 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
         </div>
       )}
 
-      {/* 📦 MODAL DE SOLICITUD DE RETIRO A DOMICILIO */}
-      {showPickupModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onClick={() => setShowPickupModal(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-600">
-              <X size={20} />
-            </button>
-
-            {successOrder ? (
-              <div className="text-center space-y-4 py-6">
-                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
-                  <CheckCircle2 size={36} />
-                </div>
-                <h3 className="text-xl font-black text-slate-900">¡Orden Registrada con Éxito!</h3>
-                <p className="text-xs text-slate-600 font-medium">
-                  Orden <strong className="text-purple-600">#{successOrder.numeroPedido}</strong> creada. Nos comunicaremos contigo por WhatsApp para confirmar los detalles.
-                </p>
-                <button
-                  onClick={() => {
-                    setSuccessOrder(null);
-                    setShowPickupModal(false);
-                  }}
-                  className="px-6 py-3 bg-purple-600 text-white font-black text-xs rounded-xl shadow-md w-full"
-                >
-                  Entendido
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handlePickupSubmit} className="space-y-4">
-                <div>
-                  <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                    <Truck className="text-purple-600" size={22} />
-                    Solicitud de Servicio de Limpieza
-                  </h3>
-                  <p className="text-xs text-slate-500 font-medium mt-1">Ingresa tus datos para agendar el retiro o la recepción.</p>
-                </div>
-
-                <div className="space-y-3">
-                  {/* REQUIREMENT 4: Si hay sesión iniciada, mostrar badge sin pedir nombre/teléfono */}
-                  {isCustomerLoggedIn && form.nombreCliente ? (
-                    <div className="p-3 bg-purple-50/80 border border-purple-200/80 rounded-2xl flex items-center justify-between shadow-xs">
-                      <div className="flex items-center gap-3">
-                        <div className="size-9 rounded-xl bg-purple-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
-                          {form.nombreCliente.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <span className="text-[9px] font-black uppercase text-purple-700 tracking-wider block">Sesión Iniciada</span>
-                          <p className="text-xs font-bold text-slate-900">{form.nombreCliente} <span className="text-slate-500 font-mono text-[11px]">({form.telefonoCliente})</span></p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div>
-                        <label className="text-[11px] font-black uppercase text-slate-500 block mb-1">Nombre Completo *</label>
-                        <input 
-                          type="text" 
-                          required 
-                          value={form.nombreCliente}
-                          onChange={e => setForm({ ...form, nombreCliente: e.target.value })}
-                          placeholder="Ej. Carlos Rodríguez"
-                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-purple-600"
-                        />
-                      </div>
-
-                      {/* REQUIREMENT 2: Código de País Predeterminado Ecuador (+593) con PhoneInput */}
-                      <div>
-                        <PhoneInput
-                          value={form.telefonoCliente}
-                          onChange={val => setForm({ ...form, telefonoCliente: val })}
-                          placeholder="WhatsApp"
-                          label="TELÉFONO WHATSAPP *"
-                          required
-                        />
-                      </div>
-                    </>
-                  )}
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[11px] font-black uppercase text-slate-500">Dirección de Retiro *</label>
-                      <button
-                        type="button"
-                        onClick={() => setShowMapModal(true)}
-                        className="text-[10px] font-bold text-purple-600 hover:underline flex items-center gap-1 cursor-pointer"
-                      >
-                        📍 Ubicar en Mapa GPS
-                      </button>
-                    </div>
-                    <input 
-                      type="text" 
-                      required
-                      value={form.direccionCliente}
-                      onChange={e => setForm({ ...form, direccionCliente: e.target.value })}
-                      placeholder="Ej. Av. Amazonas 123 y Colón"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-purple-600"
-                    />
-                  </div>
-
-                  {/* REQUIREMENT 1: Pedir referencia cuando la ubicación está presente en texto */}
-                  {form.direccionCliente.trim() !== '' && (
-                    <div className="space-y-1 animate-in fade-in duration-200">
-                      <label className="text-[11px] font-black uppercase text-slate-500 block mb-1">
-                        Referencia de Ubicación *
-                      </label>
-                      <input 
-                        type="text" 
-                        required
-                        value={form.referenciaCliente}
-                        onChange={e => setForm({ ...form, referenciaCliente: e.target.value })}
-                        placeholder="Ej. Casa azul de 2 pisos, portón negro / Frente al parque"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-purple-600"
-                      />
-                    </div>
-                  )}
-
-                  {/* REQUIREMENT 3: Alerta y Bloqueo si la posición GPS está fuera de la cobertura configurada */}
-                  {isOutsideCoverage && (
-                    <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5 text-amber-900 text-xs font-medium animate-in zoom-in-95 duration-200">
-                      <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
-                      <div>
-                        <strong className="block text-[11px] font-black uppercase text-amber-900">Ubicación Fuera de Cobertura</strong>
-                        <span>Tu ubicación seleccionada está fuera de nuestra zona configurada para retiros a domicilio. Selecciona una ubicación dentro del mapa o contáctanos directamente por WhatsApp.</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Selector Intuitivo de Horario */}
-                  <div className="space-y-2 pt-2">
-                    <label className="text-[11px] font-black uppercase text-slate-500 block">Día y Horario Preferido</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { id: 'HOY', label: 'HOY' },
-                        { id: 'MANANA', label: 'MAÑANA' },
-                        { id: 'PASADO', label: 'PASADO' }
-                      ].map(d => (
-                        <button
-                          key={d.id}
-                          type="button"
-                          onClick={() => setSelectedDayOption(d.id as any)}
-                          className={`py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                            selectedDayOption === d.id ? 'bg-purple-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                          }`}
-                        >
-                          {d.label}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* REQUIREMENT 5: Bloqueo de turnos pasados cuando es HOY */}
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      {TIME_SLOTS.map(slot => {
-                        const disabled = isSlotDisabled(slot);
-                        const isSelected = selectedSlot === slot.id && !disabled;
-
-                        return (
-                          <button
-                            key={slot.id}
-                            type="button"
-                            disabled={disabled}
-                            onClick={() => setSelectedSlot(slot.id)}
-                            className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all ${
-                              disabled 
-                                ? 'opacity-40 bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed line-through select-none'
-                                : isSelected 
-                                  ? 'bg-purple-50 border-purple-600 text-purple-900 font-black cursor-pointer shadow-xs' 
-                                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-purple-300 cursor-pointer'
-                            }`}
-                          >
-                            <span className="block text-[10px] text-purple-600">{slot.icon}</span>
-                            <span>{slot.label} {disabled ? '(Pasado)' : ''}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={submitting || isOutsideCoverage}
-                  className={`w-full py-4 font-black text-xs uppercase rounded-2xl shadow-xl transition-all ${
-                    isOutsideCoverage 
-                      ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
-                      : 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-600/25 cursor-pointer'
-                  }`}
-                >
-                  {submitting ? <Loader2 className="animate-spin mx-auto" size={18} /> : (isOutsideCoverage ? 'Ubicación Fuera de Cobertura' : 'Confirmar y Solicitar Retiro')}
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
+      {/* 📦 MODAL DE SOLICITUD DE RETIRO / SERVICIO MULTI-ARTÍCULOS */}
+      <UniversalServiceRequestModal
+        isOpen={showPickupModal}
+        onClose={() => setShowPickupModal(false)}
+        negocio={negocio}
+      />
 
       {/* 🌟 MODAL DETALLE DE SERVICIO */}
       {selectedServiceDetail && (
@@ -1350,6 +1163,51 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
                         <div>Fecha: <strong className="text-slate-800">{new Date(ord.createdAt).toLocaleDateString('es-PE')}</strong></div>
                         <div>Total: <strong className="text-purple-700 font-bold">${ord.total?.toFixed(2)}</strong></div>
                       </div>
+
+                      {/* PROPUESTA DEL NEGOCIO / CONFIRMACIÓN DE PRECIO */}
+                      {(ord.estado === 'CAMBIOS_SOLICITADOS' || ord.estado === 'PRODUCTOS_CONFIRMADOS') && (
+                        <div className="p-3.5 bg-purple-50 border border-purple-200 rounded-2xl space-y-2.5 animate-in zoom-in-95 duration-200">
+                          <div className="flex items-center gap-2 text-purple-900">
+                            <Sparkles size={16} className="text-purple-600 shrink-0" />
+                            <span className="text-xs font-black uppercase">Propuesta y Confirmación del Negocio</span>
+                          </div>
+                          <p className="text-xs text-slate-700 font-medium leading-normal">
+                            El negocio ha inspeccionado tus artículos y ha determinado el precio final de <strong className="text-purple-700 font-mono text-sm">${ord.total?.toFixed(2)}</strong>.
+                          </p>
+                          <div className="flex gap-2 pt-1">
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                await fetch(`/api/shoe-care/orders/${ord.id}`, {
+                                  method: 'PUT',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ estado: 'ACEPTADO' })
+                                });
+                                const res = await fetch(`/api/shoe-care/orders?phone=${encodeURIComponent(lookupPhone.trim())}&businessId=${negocio?.id || 'sneaker-wash-id'}`);
+                                if (res.ok) setCustomerOrders(await res.json());
+                              }}
+                              className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer text-center"
+                            >
+                              ✓ Aceptar y Procesar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                await fetch(`/api/shoe-care/orders/${ord.id}`, {
+                                  method: 'PUT',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ estado: 'CANCELADO' })
+                                });
+                                const res = await fetch(`/api/shoe-care/orders?phone=${encodeURIComponent(lookupPhone.trim())}&businessId=${negocio?.id || 'sneaker-wash-id'}`);
+                                if (res.ok) setCustomerOrders(await res.json());
+                              }}
+                              className="py-2 px-3 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                            >
+                              Rechazar
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Tracker Visual de Progreso */}
                       <div className="space-y-1.5 pt-1">

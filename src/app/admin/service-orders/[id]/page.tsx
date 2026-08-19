@@ -445,6 +445,7 @@ export default function ServiceOrderWorkspacePage() {
           {/* Detalle del Servicio (Ítems Solicitados & Totales) */}
           <ServiceItemsCard
             items={items}
+            articulos={order?.extraInfo?.articulos}
             subtotal={subtotal}
             descuento={descuento}
             costoEnvio={costoEnvio}
