@@ -162,7 +162,7 @@ export default async function PublicServicesPage({
             return luma < 140 ? '#f8fafc' : '#1e293b';
         })();
 
-    const uniqueCategories = ['Todos', 'Faciales', 'Masajes', 'Corporales', 'Paquetes'];
+    const tipoNegocio = (negocio as any)?.tipoNegocio || (negocio as any)?.configuracion?.tipoNegocio || '';
 
     return (
         <main className="min-h-screen font-sans pb-32 md:pb-12 relative overflow-x-hidden" style={{ backgroundColor: neutralColor }}>
@@ -173,6 +173,7 @@ export default async function PublicServicesPage({
                 textColor={textColor}
                 neutralColor={neutralColor}
                 nextAppointment={nextAppointment}
+                tipoNegocio={tipoNegocio}
             />
         </main>
     );

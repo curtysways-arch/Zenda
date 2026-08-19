@@ -13,6 +13,7 @@ interface ServicesListClientProps {
     textColor: string;
     neutralColor: string;
     nextAppointment?: any;
+    tipoNegocio?: string;
 }
 
 export default function ServicesListClient({
@@ -22,10 +23,13 @@ export default function ServicesListClient({
     textColor,
     neutralColor,
     nextAppointment,
+    tipoNegocio,
 }: ServicesListClientProps) {
     const [favorites, setFavorites] = useState<string[]>([]);
     const [filterOnlyFavorites, setFilterOnlyFavorites] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
+
+    const isShoeCare = tipoNegocio === 'SHOE_CARE' || tipoNegocio === 'LAVANDERIA' || slug.includes('lavado') || slug.includes('zapatilla');
 
     // Cargar favoritos de localStorage en el montaje
     useEffect(() => {
@@ -59,6 +63,18 @@ export default function ServicesListClient({
     // Helper para calificar el beneficio del servicio
     const getServiceBenefit = (nombre: string) => {
         const lower = nombre.toLowerCase();
+        if (isShoeCare) {
+            if (lower.includes('express') || lower.includes('rápido')) {
+                return 'Limpieza express en 24h a 48h';
+            }
+            if (lower.includes('premium') || lower.includes('completo')) {
+                return 'Lavado artesanal de suela, plantilla y pasadores';
+            }
+            if (lower.includes('restauración') || lower.includes('custom')) {
+                return 'Reparación, pegado y renovación de color';
+            }
+            return 'Cuidado y lavado especializado de calzado';
+        }
         if (lower.includes('hidratación') || lower.includes('gel')) {
             return 'Ideal para piel seca y deshidratada';
         }
@@ -172,10 +188,16 @@ export default function ServicesListClient({
                         displayedServices.map((service: any, index: number) => {
                             const mockRating = (4.7 + (index * 0.1) % 0.3).toFixed(1);
                             const mockReviews = 180 + (index * 35);
-                            const tagLabel = index === 0 ? "MÁS RESERVADO" : (index === 1 ? "POPULAR" : (index === 2 ? "NUEVO" : ""));
+                            const tagLabel = index === 0 ? (isShoeCare ? "MÁS POPULAR" : "MÁS RESERVADO") : (index === 1 ? "POPULAR" : (index === 2 ? "NUEVO" : ""));
                             const benefitText = getServiceBenefit(service.nombre);
                             const isFavorite = favorites.includes(service.id);
                             
+                            const targetHref = isShoeCare 
+                                ? `/${slug}?service=${encodeURIComponent(service.nombre)}` 
+                                : `/${slug}/servicio/${service.id}`;
+
+                            const buttonLabel = isShoeCare ? "Solicitar" : "Reservar";
+
                             return (
                                 <div 
                                     key={service.id} 
@@ -183,21 +205,21 @@ export default function ServicesListClient({
                                 >
                                     {/* Link invisible absoluto que cubre todo el contenedor */}
                                     <Link 
-                                        href={`/${slug}/servicio/${service.id}`}
+                                        href={targetHref}
                                         className="absolute inset-0 z-10 rounded-[24px]"
                                     />
 
                                     {/* Lado Izquierdo: Imagen del servicio (38%) */}
                                     <div className="relative w-[38%] h-full rounded-[20px] overflow-hidden bg-slate-50 shrink-0 select-none">
                                         <img 
-                                            src={getServicePrimaryImage(service, 'medium')} 
+                                            src={getServicePrimaryImage(service, 'medium', tipoNegocio)} 
                                             className="w-full h-full object-cover" 
                                             alt={service.nombre} 
                                         />
                                         
                                         {/* Tag de popularidad/novedad */}
                                         {tagLabel && (
-                                            <div className="absolute top-2 left-2 bg-pink-500 text-white text-[6px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-md select-none z-20" style={{ backgroundColor: primaryColor }}>
+                                            <div className="absolute top-2 left-2 text-white text-[6px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-md select-none z-20" style={{ backgroundColor: primaryColor }}>
                                                 {tagLabel}
                                             </div>
                                         )}
@@ -229,7 +251,7 @@ export default function ServicesListClient({
                                                 {service.nombre}
                                             </h2>
                                             <p className="text-[10px] text-slate-400 font-semibold line-clamp-1 leading-normal">
-                                                {service.extraInfo?.descripcion || service.descripcion || 'Tratamiento diseñado exclusivamente para tu bienestar.'}
+                                                {service.extraInfo?.descripcion || service.descripcion || (isShoeCare ? 'Servicio profesional de limpieza y cuidado de calzado.' : 'Tratamiento diseñado exclusivamente para tu bienestar.')}
                                             </p>
                                             
                                             {/* Calificación y opiniones */}
@@ -243,24 +265,24 @@ export default function ServicesListClient({
 
                                         {/* Caja de Beneficio Destacado */}
                                         <div className="rounded-xl p-2 flex items-center gap-1.5 select-none" style={{ backgroundColor: `${primaryColor}0a` }}>
-                                            <Droplet size={11} className="text-pink-500 shrink-0" style={{ color: primaryColor }} />
+                                            <Droplet size={11} className="shrink-0" style={{ color: primaryColor }} />
                                             <span className="text-[8.5px] text-slate-600 font-semibold truncate leading-none">
                                                 {benefitText}
                                             </span>
                                         </div>
 
-                                        {/* Precio y Botón Reservar */}
+                                        {/* Precio y Botón Acción */}
                                         <div className="flex items-center justify-between gap-2 pt-0.5">
                                             <div className="text-sm font-black" style={{ color: primaryColor }}>
-                                                ${service.precio || 30}
+                                                ${service.precio || 15}
                                             </div>
 
-                                            {/* Botón Reservar (Visual, no enlace anidado) */}
+                                            {/* Botón Acción (Visual, no enlace anidado) */}
                                             <div 
                                                 className="px-4 py-2 rounded-[14px] font-black text-[9px] uppercase tracking-widest text-white shadow-sm flex items-center gap-0.5"
                                                 style={{ backgroundColor: primaryColor }}
                                             >
-                                                Reservar
+                                                {buttonLabel}
                                                 <ChevronRight size={9} strokeWidth={3} />
                                             </div>
                                         </div>

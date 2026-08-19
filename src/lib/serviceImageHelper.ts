@@ -1,20 +1,26 @@
 import { getImageUrl } from './utils';
 
 // Elegant curated spa and beauty Unsplash placeholder
-const SERVICE_PLACEHOLDER = 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&q=80&w=600';
+const SERVICE_PLACEHOLDER_SPA = 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&q=80&w=600';
+const SERVICE_PLACEHOLDER_SHOES = 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&q=80&w=600';
 
 /**
  * Obtiene la imagen de portada principal de un servicio de forma centralizada y optimizada.
  * 
  * @param service Objeto del servicio
  * @param size Tamaño deseado: 'thumb' | 'medium' | 'original'
+ * @param tipoNegocio Opcional tipo de negocio para ajustar la imagen por defecto
  * @returns URL de la imagen principal o placeholder elegante
  */
 export function getServicePrimaryImage(
   service: any,
-  size: 'thumb' | 'medium' | 'original' = 'original'
+  size: 'thumb' | 'medium' | 'original' = 'original',
+  tipoNegocio?: string
 ): string {
-  if (!service) return SERVICE_PLACEHOLDER;
+  const isShoeCare = tipoNegocio === 'SHOE_CARE' || tipoNegocio === 'LAVANDERIA' || (service?.nombre && /lavado|calzado|zapatilla|zapato/i.test(service.nombre));
+  const defaultPlaceholder = isShoeCare ? SERVICE_PLACEHOLDER_SHOES : SERVICE_PLACEHOLDER_SPA;
+
+  if (!service) return defaultPlaceholder;
 
   // 1. Priorizar nuevo sistema de Media (imageMedia)
   if (service.imageMedia) {
@@ -36,8 +42,8 @@ export function getServicePrimaryImage(
     return getImageUrl(service.imagenes[0].url, size);
   }
 
-  // 3. Fallback a placeholder premium
-  return SERVICE_PLACEHOLDER;
+  // 3. Fallback a placeholder premium según rubro
+  return defaultPlaceholder;
 }
 
 /**

@@ -156,6 +156,16 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
         })
         .catch(() => {});
     }
+
+    // Detectar si el usuario viene de la lista de servicios con ?service=...
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const requestedService = urlParams.get('service');
+      if (requestedService) {
+        setForm(prev => ({ ...prev, notas: `Servicio solicitado: ${requestedService}` }));
+        setShowPickupModal(true);
+      }
+    }
   }, [negocio?.id]);
 
   // Carrusel del Banner Hero
