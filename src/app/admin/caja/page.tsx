@@ -415,11 +415,11 @@ export default function CajaDashboardPage() {
             {/* Modal para Registrar Ingreso Manual */}
             {mounted && showIncomeModal && createPortal(
                 <div className="fixed inset-0 z-[999999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-                    <div className="bg-white w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl animate-in zoom-in-95 border-2 border-slate-200 my-auto max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white text-slate-900 w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl animate-in zoom-in-95 border-2 border-slate-200 my-auto max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                             <div>
                                 <span className="text-[10px] font-black uppercase text-emerald-600 tracking-widest block">Operación de Caja</span>
-                                <h3 className="font-black text-lg text-emerald-950 uppercase italic">Registrar Ingreso Manual</h3>
+                                <h3 className="font-black text-lg text-slate-900 uppercase italic">Registrar Ingreso Manual</h3>
                             </div>
                             <button 
                                 onClick={() => setShowIncomeModal(false)} 
@@ -431,19 +431,19 @@ export default function CajaDashboardPage() {
                         
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Descripción / Concepto</label>
+                                <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">Descripción / Concepto</label>
                                 <input
                                     type="text"
                                     value={conceptoForm}
                                     onChange={e => setConceptoForm(e.target.value)}
                                     placeholder="Ej. Inyección de base / Fondo inicial"
-                                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold text-sm bg-slate-50 outline-none focus:border-emerald-600 transition-all"
+                                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold text-sm bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-600 transition-all shadow-sm"
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Cantidad</label>
+                                    <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">Cantidad</label>
                                     <input
                                         type="number"
                                         min="1"
@@ -451,18 +451,18 @@ export default function CajaDashboardPage() {
                                         value={cantidadForm}
                                         onChange={e => setCantidadForm(e.target.value)}
                                         placeholder="1"
-                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-slate-50 outline-none focus:border-emerald-600 transition-all text-center"
+                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-600 transition-all text-center shadow-sm"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Precio Unit. ($)</label>
+                                    <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">Precio Unit. ($)</label>
                                     <input
                                         type="number"
                                         step="0.01"
                                         value={precioUnitarioForm}
                                         onChange={e => setPrecioUnitarioForm(e.target.value)}
                                         placeholder="0.00"
-                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-slate-50 outline-none focus:border-emerald-600 transition-all text-center"
+                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-emerald-600 transition-all text-center shadow-sm"
                                     />
                                 </div>
                             </div>
@@ -475,15 +475,15 @@ export default function CajaDashboardPage() {
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Método de Pago</label>
+                                <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">Método de Pago</label>
                                 <select
                                     value={metodoForm}
                                     onChange={e => setMetodoForm(e.target.value as any)}
-                                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-xs bg-slate-50 outline-none cursor-pointer focus:border-emerald-600"
+                                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-xs bg-white text-slate-900 outline-none cursor-pointer focus:border-emerald-600 shadow-sm"
                                 >
-                                    <option value="EFECTIVO">💵 Efectivo (Gaveta de Caja)</option>
-                                    <option value="TRANSFERENCIA">🏦 Transferencia Bancaria</option>
-                                    <option value="TARJETA">💳 Tarjeta / POS</option>
+                                    <option value="EFECTIVO" className="text-slate-900 bg-white">💵 Efectivo (Gaveta de Caja)</option>
+                                    <option value="TRANSFERENCIA" className="text-slate-900 bg-white">🏦 Transferencia Bancaria</option>
+                                    <option value="TARJETA" className="text-slate-900 bg-white">💳 Tarjeta / POS</option>
                                 </select>
                             </div>
                         </div>
@@ -513,11 +513,11 @@ export default function CajaDashboardPage() {
             {/* Modal para Registrar Egreso / Gasto */}
             {mounted && showExpenseModal && createPortal(
                 <div className="fixed inset-0 z-[999999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-                    <div className="bg-white w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl animate-in zoom-in-95 border-2 border-slate-200 my-auto max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white text-slate-900 w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl animate-in zoom-in-95 border-2 border-slate-200 my-auto max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                             <div>
                                 <span className="text-[10px] font-black uppercase text-rose-600 tracking-widest block">Operación de Caja</span>
-                                <h3 className="font-black text-lg text-rose-950 uppercase italic">Registrar Gasto / Egreso</h3>
+                                <h3 className="font-black text-lg text-slate-900 uppercase italic">Registrar Gasto / Egreso</h3>
                             </div>
                             <button 
                                 onClick={() => setShowExpenseModal(false)} 
@@ -529,19 +529,19 @@ export default function CajaDashboardPage() {
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Descripción / Detalle del Gasto</label>
+                                <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">Descripción / Detalle del Gasto</label>
                                 <input
                                     type="text"
                                     value={conceptoForm}
                                     onChange={e => setConceptoForm(e.target.value)}
                                     placeholder="Ej. Compra de bolsas de hielo / Insumos"
-                                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold text-sm bg-slate-50 outline-none focus:border-rose-600 transition-all"
+                                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-bold text-sm bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-rose-600 transition-all shadow-sm"
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Cantidad</label>
+                                    <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">Cantidad</label>
                                     <input
                                         type="number"
                                         min="1"
@@ -549,18 +549,18 @@ export default function CajaDashboardPage() {
                                         value={cantidadForm}
                                         onChange={e => setCantidadForm(e.target.value)}
                                         placeholder="1"
-                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-slate-50 outline-none focus:border-rose-600 transition-all text-center"
+                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-rose-600 transition-all text-center shadow-sm"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Precio Unit. ($)</label>
+                                    <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">Precio Unit. ($)</label>
                                     <input
                                         type="number"
                                         step="0.01"
                                         value={precioUnitarioForm}
                                         onChange={e => setPrecioUnitarioForm(e.target.value)}
                                         placeholder="0.00"
-                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-slate-50 outline-none focus:border-rose-600 transition-all text-center"
+                                        className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-base bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-rose-600 transition-all text-center shadow-sm"
                                     />
                                 </div>
                             </div>
@@ -573,15 +573,15 @@ export default function CajaDashboardPage() {
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-black uppercase text-slate-500 mb-1">Método de Salida de Dinero</label>
+                                <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">Método de Salida de Dinero</label>
                                 <select
                                     value={metodoForm}
                                     onChange={e => setMetodoForm(e.target.value as any)}
-                                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-xs bg-slate-50 outline-none cursor-pointer focus:border-rose-600"
+                                    className="w-full p-3.5 border-2 border-slate-200 rounded-2xl font-black text-xs bg-white text-slate-900 outline-none cursor-pointer focus:border-rose-600 shadow-sm"
                                 >
-                                    <option value="EFECTIVO">💵 Efectivo (Gaveta de Caja)</option>
-                                    <option value="TRANSFERENCIA">🏦 Transferencia Bancaria</option>
-                                    <option value="TARJETA">💳 Tarjeta / Débito</option>
+                                    <option value="EFECTIVO" className="text-slate-900 bg-white">💵 Efectivo (Gaveta de Caja)</option>
+                                    <option value="TRANSFERENCIA" className="text-slate-900 bg-white">🏦 Transferencia Bancaria</option>
+                                    <option value="TARJETA" className="text-slate-900 bg-white">💳 Tarjeta / Débito</option>
                                 </select>
                             </div>
                         </div>
