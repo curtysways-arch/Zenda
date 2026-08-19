@@ -19,9 +19,9 @@ export default function NegociosGrid({ initialNegocios }: { initialNegocios: any
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedNegocio, setSelectedNegocio] = useState<any>(null);
 
-    const filteredNegocios = negocios.filter(n =>
-        n.nombre.toLowerCase().includes(search.toLowerCase()) ||
-        n.slug.toLowerCase().includes(search.toLowerCase())
+    const filteredNegocios = (negocios || []).filter(n =>
+        (n?.nombre || "").toLowerCase().includes(search.toLowerCase()) ||
+        (n?.slug || "").toLowerCase().includes(search.toLowerCase())
     );
 
     const handleEdit = (negocio: any) => {
@@ -111,15 +111,15 @@ export default function NegociosGrid({ initialNegocios }: { initialNegocios: any
                     <div key={negocio.id} className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 border border-slate-100 dark:border-white/5 shadow-lg active:scale-[0.98] transition-all relative overflow-hidden group">
                         <Link href={`/superadmin/negocios/${negocio.id}`} className="flex items-center gap-5">
                             <div className="size-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center text-white font-black text-2xl italic shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
-                                {negocio.nombre.charAt(0).toUpperCase()}
+                                {(negocio?.nombre || "N").charAt(0).toUpperCase()}
                             </div>
                             <div className="flex-1 space-y-1">
-                                <h4 className="font-black text-slate-900 dark:text-white uppercase italic tracking-tight text-lg leading-tight">{negocio.nombre}</h4>
+                                <h4 className="font-black text-slate-900 dark:text-white uppercase italic tracking-tight text-lg leading-tight">{negocio?.nombre || "Sin Nombre"}</h4>
                                 <div className="flex items-center gap-2">
                                     <span className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest ${getStatusColor(negocio.estado)}`}>
                                         {negocio.estado}
                                     </span>
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{negocio.ciudad}</span>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{negocio.ciudad || "N/A"}</span>
                                 </div>
                             </div>
                         </Link>
@@ -160,22 +160,22 @@ export default function NegociosGrid({ initialNegocios }: { initialNegocios: any
                                     <td className="px-10 py-8">
                                         <div className="flex items-center gap-6">
                                             <div className="size-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-[1.5rem] flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-emerald-500/10 group-hover:scale-110 transition-transform uppercase italic">
-                                                {negocio.nombre.charAt(0)}
+                                                {(negocio?.nombre || "N").charAt(0).toUpperCase()}
                                             </div>
                                             <div className="space-y-1">
                                                 <Link
                                                     href={`/superadmin/negocios/${negocio.id}`}
                                                     className="font-black text-slate-900 dark:text-white text-xl leading-tight uppercase tracking-tighter hover:text-emerald-500 transition-colors cursor-pointer italic"
                                                 >
-                                                    {negocio.nombre}
+                                                    {negocio?.nombre || "Sin Nombre"}
                                                 </Link>
-                                                <div className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] opacity-60">slug/{negocio.slug}</div>
+                                                <div className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] opacity-60">slug/{negocio?.slug || "N/A"}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-8 py-8">
                                         <div className="text-base font-black text-slate-800 dark:text-slate-200 uppercase italic tracking-tight">{negocio.ciudad || 'N/A'}</div>
-                                        <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{negocio.direccion?.substring(0, 30)}...</div>
+                                        <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{negocio.direccion?.substring(0, 30) || 'Sin dirección'}...</div>
                                     </td>
                                     <td className="px-8 py-8">
                                         <div className="flex items-center justify-center gap-6">
