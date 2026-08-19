@@ -279,8 +279,12 @@ export default function MiPerfilPage() {
                 body: JSON.stringify({ telefono, code }),
             });
             if (res.ok) {
+                const storageKey = `${slug}_client_phone`;
+                localStorage.setItem(storageKey, telefono);
                 localStorage.setItem('pinchos_client_phone', telefono);
                 localStorage.setItem('user_phone', telefono);
+                localStorage.setItem('customer_phone', telefono);
+                localStorage.setItem('customerInfo', JSON.stringify({ telefono }));
                 await fetchProfile();
             } else {
                 const data = await res.json();

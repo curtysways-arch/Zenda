@@ -169,10 +169,30 @@ export default function QuestList({ slug, primaryColor, textColor, negocioNombre
         }
     };
 
-    // Cargar datos de referidos
+    // Cargar datos de referidos y restaurar sesión automáticamente si existe teléfono en localStorage
     const fetchReferralData = async () => {
+        let savedPhone = '';
+        if (typeof window !== 'undefined') {
+            const storageKey = `${slug}_client_phone`;
+            savedPhone = localStorage.getItem(storageKey) || localStorage.getItem('user_phone') || localStorage.getItem('pinchos_client_phone') || localStorage.getItem('customer_phone') || '';
+        }
+
         try {
-            const res = await fetch(`/api/${slug}/referrals/me?t=${Date.now()}`);
+            let res = await fetch(`/api/${slug}/referrals/me?t=${Date.now()}`);
+
+            if (!res.ok && savedPhone) {
+                // Restaurar la cookie universal customer_token si el teléfono está en localStorage
+                const restoreRes = await fetch('/api/public/auth/otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'restore_session', phone: savedPhone, slug })
+                });
+
+                if (restoreRes.ok) {
+                    res = await fetch(`/api/${slug}/referrals/me?t=${Date.now()}`);
+                }
+            }
+
             if (res.ok) {
                 const data = await res.json();
                 setReferralData(data);

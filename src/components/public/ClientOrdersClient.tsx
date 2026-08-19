@@ -82,16 +82,16 @@ export default function ClientOrdersClient({ negocio }: Props) {
     const secondaryColor = negocio?.colorSecundario || '#1a0a00';
 
     const [phone, setPhone] = useState<string>(() => {
-        const storageKey = `${negocio?.slug || 'generic'}_client_phone`;
         if (typeof window !== 'undefined') {
-            return localStorage.getItem(storageKey) || '';
+            const storageKey = `${negocio?.slug || 'generic'}_client_phone`;
+            return localStorage.getItem(storageKey) || localStorage.getItem('user_phone') || localStorage.getItem('pinchos_client_phone') || localStorage.getItem('customer_phone') || '';
         }
         return '';
     });
     const [isVerified, setIsVerified] = useState<boolean>(() => {
-        const storageKey = `${negocio?.slug || 'generic'}_client_phone`;
         if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem(storageKey);
+            const storageKey = `${negocio?.slug || 'generic'}_client_phone`;
+            const saved = localStorage.getItem(storageKey) || localStorage.getItem('user_phone') || localStorage.getItem('pinchos_client_phone') || localStorage.getItem('customer_phone');
             return !!saved;
         }
         return false;
@@ -188,6 +188,9 @@ export default function ClientOrdersClient({ negocio }: Props) {
                 const storageKey = `${negocio?.slug || 'generic'}_client_phone`;
                 localStorage.setItem(storageKey, formattedPhone);
                 localStorage.setItem('user_phone', formattedPhone);
+                localStorage.setItem('pinchos_client_phone', formattedPhone);
+                localStorage.setItem('customer_phone', formattedPhone);
+                localStorage.setItem('customerInfo', JSON.stringify({ telefono: formattedPhone }));
                 setPhone(formattedPhone);
                 setIsVerified(true);
                 fetchOrders(formattedPhone);

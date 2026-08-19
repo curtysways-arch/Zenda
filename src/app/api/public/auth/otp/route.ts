@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { notificationService } from '@/lib/notifications';
 import { whatsappService } from '@/lib/whatsapp';
 import { v4 as uuidv4 } from 'uuid';
+import { SignJWT } from 'jose';
 
 // Memoria caché de respaldo rápida para entornos de desarrollo y producción
 const otpStore = new Map<string, { code: string; expiresAt: number }>();
@@ -131,16 +132,88 @@ export async function POST(req: NextRequest) {
             }
 
             if (isValidStored || isValidDb) {
-                return NextResponse.json({
+                // Generar token JWT universal de cliente (customer_token)
+                const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "default_otp_secret_key_change_me");
+                const token = await new SignJWT({
+                    telefono: cleanPhone,
+                    negocioId: negocio?.id || '',
+                    slug: slug
+                })
+                    .setProtectedHeader({ alg: "HS256" })
+                    .setIssuedAt()
+                    .setExpirationTime("30d")
+                    .sign(secret);
+
+                const response = NextResponse.json({
                     success: true,
-                    message: 'Sesión verificada exitosamente.'
+                    message: 'Sesión verificada exitosamente.',
+                    phone: cleanPhone,
+                    token
                 });
+
+                // Cookie principal httpOnly de sesión cliente en todo el dominio
+                response.cookies.set("customer_token", token, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === "production",
+                    sameSite: "lax",
+                    maxAge: 60 * 60 * 24 * 30, // 30 días
+                    path: "/",
+                });
+
+                // Cookie de señal pública para JS del navegador
+                response.cookies.set("cs", "1", {
+                    httpOnly: false,
+                    secure: process.env.NODE_ENV === "production",
+                    sameSite: "lax",
+                    maxAge: 60 * 60 * 24 * 30, // 30 días
+                    path: "/",
+                });
+
+                return response;
             }
 
             return NextResponse.json(
                 { success: false, error: 'El código OTP ingresado es incorrecto o ha expirado.' },
                 { status: 400 }
             );
+        }
+
+        if (action === 'restore_session') {
+            const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "default_otp_secret_key_change_me");
+            const token = await new SignJWT({
+                telefono: cleanPhone,
+                negocioId: negocio?.id || '',
+                slug: slug
+            })
+                .setProtectedHeader({ alg: "HS256" })
+                .setIssuedAt()
+                .setExpirationTime("30d")
+                .sign(secret);
+
+            const response = NextResponse.json({
+                success: true,
+                message: 'Sesión restaurada exitosamente.',
+                phone: cleanPhone,
+                token
+            });
+
+            response.cookies.set("customer_token", token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                maxAge: 60 * 60 * 24 * 30, // 30 días
+                path: "/",
+            });
+
+            response.cookies.set("cs", "1", {
+                httpOnly: false,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                maxAge: 60 * 60 * 24 * 30, // 30 días
+                path: "/",
+            });
+
+            return response;
         }
 
         return NextResponse.json(

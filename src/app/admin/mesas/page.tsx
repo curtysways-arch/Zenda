@@ -293,15 +293,30 @@ export default function AdminMesasPage() {
     return `${hrs}h ${remMins}m`;
   }
 
-  // Determinar estado visual exacto de la mesa
+  // Determinar estado visual exacto de la mesa (sincronizado con la orden activa)
   function getEffectiveTableState(table: Table): string {
+    if (!table) return 'LIBRE';
     const order = activeOrdersByMesa[table.id];
-    if (table.estado === 'PENDIENTE_COBRO') return 'PENDIENTE_COBRO';
-    if (!order) return table.estado === 'RESERVADA' ? 'RESERVADA' : 'LIBRE';
+    
+    // Si NO hay orden activa en la mesa
+    if (!order) {
+      if (['RESERVADA', 'RESERVADO'].includes((table.estado || '').toUpperCase())) return 'RESERVADA';
+      if (table.estado && TABLE_STATES.includes(table.estado.toUpperCase()) && table.estado.toUpperCase() !== 'LIBRE') {
+        return table.estado.toUpperCase();
+      }
+      return 'LIBRE';
+    }
 
+    // Si TIENE orden activa
     const s = (order.estado || '').toUpperCase();
-    if (['LISTO', 'READY'].includes(s)) return 'LISTA';
+    if (['LISTO', 'READY', 'LISTA'].includes(s)) return 'LISTA';
     if (['EN_PREPARACION', 'PREPARANDO', 'PREPARACION'].includes(s)) return 'EN_PREPARACION';
+    if (['PENDIENTE_COBRO', 'POR_COBRAR'].includes(s) || table.estado === 'PENDIENTE_COBRO') return 'PENDIENTE_COBRO';
+    
+    if (table.estado && ['EN_PREPARACION', 'LISTA', 'PENDIENTE_COBRO', 'RESERVADA'].includes(table.estado.toUpperCase())) {
+      return table.estado.toUpperCase();
+    }
+
     return 'OCUPADA';
   }
 
@@ -335,16 +350,50 @@ export default function AdminMesasPage() {
     showToast('Mesa eliminada');
   }
 
-  // Cambiar Estado Manual de la Mesa
-  async function changeTableState(tableId: string, estado: string) {
-    await fetch(`/api/${slug}/tables/${tableId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ estado })
-    });
-    setTables(prev => prev.map(t => t.id === tableId ? { ...t, estado } : t));
-    if (selectedTable?.id === tableId) {
-      setSelectedTable(prev => prev ? { ...prev, estado } : null);
+  // Cambiar Estado Manual de la Mesa y Sincronizar con la Orden Activa
+  async function changeTableState(tableId: string, newEstado: string) {
+    setActionLoading(true);
+    try {
+      // 1. Actualizar estado de la mesa en la base de datos
+      await fetch(`/api/${slug}/tables/${tableId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: newEstado })
+      });
+
+      // 2. Si la mesa tiene una orden activa asociada, actualizar el estado de la orden en la BD
+      const order = activeOrdersByMesa[tableId];
+      if (order) {
+        let nextOrderState = order.estado;
+        if (newEstado === 'EN_PREPARACION') nextOrderState = 'EN_PREPARACION';
+        else if (newEstado === 'LISTA') nextOrderState = 'LISTO';
+        else if (newEstado === 'PENDIENTE_COBRO') nextOrderState = 'POR_COBRAR';
+        else if (newEstado === 'LIBRE') nextOrderState = 'FINALIZADO';
+
+        if (nextOrderState !== order.estado) {
+          await fetch('/api/admin/pedidos', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: order.id,
+              estado: nextOrderState
+            })
+          });
+        }
+      }
+
+      setTables(prev => prev.map(t => t.id === tableId ? { ...t, estado: newEstado } : t));
+      if (selectedTable?.id === tableId) {
+        setSelectedTable(prev => prev ? { ...prev, estado: newEstado } : null);
+      }
+
+      const cfg = TABLE_CONFIGS[newEstado] || TABLE_CONFIGS['LIBRE'];
+      showToast(`Estado de la mesa cambiado a: ${cfg.label}`);
+      await loadData();
+    } catch (err) {
+      showToast('Error al actualizar el estado de la mesa', 'error');
+    } finally {
+      setActionLoading(false);
     }
   }
 
@@ -951,16 +1000,23 @@ export default function AdminMesasPage() {
 
                 <div className="flex items-center gap-2">
                   <select 
-                    value={selectedTable.estado}
+                    value={getEffectiveTableState(selectedTable)}
                     onChange={(e) => changeTableState(selectedTable.id, e.target.value)}
-                    className="text-xs font-black p-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 outline-none"
+                    className="text-xs font-black p-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 outline-none cursor-pointer hover:border-slate-300"
                   >
-                    {TABLE_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                    {TABLE_STATES.map(s => {
+                      const cfg = TABLE_CONFIGS[s] || TABLE_CONFIGS['LIBRE'];
+                      return (
+                        <option key={s} value={s}>
+                          {cfg.icon} {cfg.label}
+                        </option>
+                      );
+                    })}
                   </select>
 
                   <button 
                     onClick={() => setSelectedTable(null)}
-                    className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400"
+                    className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 cursor-pointer"
                   >
                     <X className="size-5" />
                   </button>
@@ -971,7 +1027,7 @@ export default function AdminMesasPage() {
               {activeOrderForSelectedTable ? (
                 <div className="space-y-4">
                   
-                  {/* Card Resumen Orden Principal */}
+                  {/* Card Resumen Orden Principal con Estado del Pago */}
                   {(() => {
                     const order = activeOrderForSelectedTable;
                     const computedTotal = order.items.reduce((sum, it) => sum + (Number(it.precioUnitario) || 0) * (Number(it.cantidad) || 1), 0);
@@ -985,7 +1041,7 @@ export default function AdminMesasPage() {
                     }
 
                     const rawMontoRecibido = extra.montoRecibido ?? order.payment?.montoPagado ?? 0;
-                    const isInitialPaid = extra.paymentStatus === 'PAGADO' || order.payment?.estado === 'CONFIRMADO';
+                    const isInitialPaid = extra.paymentStatus === 'PAGADO' || order.payment?.estado === 'CONFIRMADO' || checkIsOrderPaid(order);
 
                     const montoPagado = extra.montoPagadoAcumulado !== undefined 
                       ? Number(extra.montoPagadoAcumulado) 
@@ -995,8 +1051,10 @@ export default function AdminMesasPage() {
                       ? Number(extra.saldoPendiente) 
                       : Math.max(0, Math.round((displayTotal - montoPagado) * 100) / 100);
 
+                    const isFullyPaid = isInitialPaid || (montoPagado >= displayTotal && displayTotal > 0);
+
                     return (
-                      <div className="bg-slate-900 text-white rounded-2xl p-4 space-y-2.5 shadow-md">
+                      <div className="bg-slate-900 text-white rounded-2xl p-4 space-y-3 shadow-md">
                         <div className="flex justify-between items-start">
                           <div>
                             <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider block">
@@ -1008,6 +1066,20 @@ export default function AdminMesasPage() {
                           </div>
                           <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-500 text-slate-950 uppercase">
                             {order.estado}
+                          </span>
+                        </div>
+
+                        {/* ESTADO DEL PAGO CLARO Y PROMINENTE */}
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
+                          <span className="font-extrabold text-slate-300 flex items-center gap-1.5">
+                            <CreditCard className="size-3.5 text-amber-400" /> Estado del Pago:
+                          </span>
+                          <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                            isFullyPaid 
+                              ? 'bg-emerald-500 text-white shadow-sm' 
+                              : 'bg-rose-500 text-white shadow-sm animate-pulse'
+                          }`}>
+                            {isFullyPaid ? '💳 PAGADO EN CAJA' : '⏳ PAGO PENDIENTE'}
                           </span>
                         </div>
 
@@ -1027,7 +1099,7 @@ export default function AdminMesasPage() {
                           <div className="flex justify-between items-center text-amber-400 font-extrabold pt-1 border-t border-slate-800/80">
                             <span>⏳ Saldo Pendiente:</span>
                             <span className="font-black text-base text-amber-400">
-                              ${(montoPagado > 0 ? saldoPendiente : displayTotal).toFixed(2)}
+                              ${(isFullyPaid ? 0 : (montoPagado > 0 ? saldoPendiente : displayTotal)).toFixed(2)}
                             </span>
                           </div>
                         </div>

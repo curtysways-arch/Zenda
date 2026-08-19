@@ -148,6 +148,8 @@ export default function PinchoProfileView({
                 if (typeof window !== 'undefined') {
                     localStorage.setItem('pinchos_client_phone', formattedPhone);
                     localStorage.setItem('user_phone', formattedPhone);
+                    localStorage.setItem('customer_phone', formattedPhone);
+                    localStorage.setItem('customerInfo', JSON.stringify({ nombre: finalName, telefono: formattedPhone }));
                     localStorage.setItem('pinchos_client_name', finalName);
                     localStorage.setItem('user_name', finalName);
                 }
