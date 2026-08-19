@@ -108,7 +108,8 @@ export default function CajaDashboardPage() {
                 setConceptoForm('');
                 fetchFinanceData();
             } else {
-                alert('Error registrando movimiento');
+                const errData = await res.json().catch(() => ({}));
+                alert(errData.error || 'Error registrando movimiento');
             }
         } catch (e) {
             console.error(e);

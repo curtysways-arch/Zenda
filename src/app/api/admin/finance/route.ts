@@ -238,7 +238,7 @@ export async function POST(req: Request) {
         const cashierName = (session.user as any).name || (session.user as any).email || 'Cajero';
         const refCode = action === 'ADD_EXPENSE' ? `GASTO: ${concepto || 'Egreso de caja'}` : `INGRESO_MANUAL: ${concepto || 'Ingreso manual de caja'}`;
 
-        // Find existing appointment for business or create container if necessary
+        // Garantizar o buscar cita/servicio/cliente base para el negocio
         let apptId: string | null = null;
         const existingAppt = await prisma.appointment.findFirst({
             where: { negocioId },
@@ -248,29 +248,50 @@ export async function POST(req: Request) {
         if (existingAppt) {
             apptId = existingAppt.id;
         } else {
-            const service = await prisma.service.findFirst({ where: { negocioId }, select: { id: true } });
-            const cliente = await prisma.cliente.findFirst({ where: { negocioId }, select: { id: true } });
-            if (service && cliente) {
-                const fakeAppt = await prisma.appointment.create({
+            let service = await prisma.service.findFirst({ where: { negocioId }, select: { id: true } });
+            if (!service) {
+                service = await prisma.service.create({
                     data: {
-                        id: `appt-fin-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+                        id: `serv-fin-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
                         negocioId,
-                        clienteId: cliente.id,
-                        serviceId: service.id,
-                        fecha: now,
-                        horaInicio: now.toISOString().substring(11, 16),
-                        horaFin: now.toISOString().substring(11, 16),
-                        estado: 'COMPLETED',
-                        total: parseFloat(monto),
+                        nombre: 'Caja & Finanzas General',
+                        precio: 0,
+                        duracion: 30,
                         updatedAt: now
-                    }
+                    },
+                    select: { id: true }
                 });
-                apptId = fakeAppt.id;
             }
-        }
 
-        if (!apptId) {
-            return NextResponse.json({ error: 'No se encontró cita ni servicio base para vincular el pago' }, { status: 400 });
+            let cliente = await prisma.cliente.findFirst({ where: { negocioId }, select: { id: true } });
+            if (!cliente) {
+                cliente = await prisma.cliente.create({
+                    data: {
+                        id: `cli-fin-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+                        negocioId,
+                        nombre: 'Caja Central / Movimientos Manuales',
+                        telefono: '0000000000',
+                        updatedAt: now
+                    },
+                    select: { id: true }
+                });
+            }
+
+            const fakeAppt = await prisma.appointment.create({
+                data: {
+                    id: `appt-fin-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+                    negocioId,
+                    clienteId: cliente.id,
+                    serviceId: service.id,
+                    fecha: now,
+                    horaInicio: now.toISOString().substring(11, 16),
+                    horaFin: now.toISOString().substring(11, 16),
+                    estado: 'COMPLETED',
+                    total: parseFloat(monto),
+                    updatedAt: now
+                }
+            });
+            apptId = fakeAppt.id;
         }
 
         const payment = await prisma.pagoReserva.create({
@@ -280,7 +301,7 @@ export async function POST(req: Request) {
                 monto: parseFloat(monto),
                 metodo,
                 referencia: refCode,
-                notas: `Registrado por: ${cashierName}`,
+                notas: `Registrado por: ${cashierName} [Negocio: ${negocioId}]`,
                 fecha: now
             }
         });
@@ -289,8 +310,8 @@ export async function POST(req: Request) {
             success: true,
             movement: payment
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error in finance POST API:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: error?.message || 'Error interno registrando movimiento' }, { status: 500 });
     }
 }
