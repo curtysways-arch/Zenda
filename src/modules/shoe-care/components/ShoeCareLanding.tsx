@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import DynamicFavicon from '@/components/DynamicFavicon';
 import { 
   Sparkles, 
@@ -36,6 +36,8 @@ import {
 import MapSelectionModal from '@/components/public/MapSelectionModal';
 import CoverageMapPublic from '@/components/public/CoverageMapPublic';
 import PublicMobileNav from '@/components/public/PublicMobileNav';
+import PhoneInput from '@/components/ui/PhoneInput';
+import { isPointInPolygon } from '@/lib/geoUtils';
 
 interface ShoeCareLandingProps {
   negocio: any;
@@ -65,10 +67,10 @@ function formatWhatsAppPhone(phone: string): string {
 }
 
 const TIME_SLOTS = [
-  { id: '09-11', label: '09:00 - 11:00 AM', icon: '🌅 Mañana' },
-  { id: '11-13', label: '11:00 AM - 01:00 PM', icon: '☀️ Mediodía' },
-  { id: '14-16', label: '02:00 - 04:00 PM', icon: '🌤️ Tarde' },
-  { id: '16-18', label: '04:00 - 06:00 PM', icon: '🌆 Víspera' }
+  { id: '09-11', label: '09:00 - 11:00 AM', icon: '🌅 Mañana', startHour: 9, endHour: 11 },
+  { id: '11-13', label: '11:00 AM - 01:00 PM', icon: '☀️ Mediodía', startHour: 11, endHour: 13 },
+  { id: '14-16', label: '02:00 - 04:00 PM', icon: '🌤️ Tarde', startHour: 14, endHour: 16 },
+  { id: '16-18', label: '04:00 - 06:00 PM', icon: '🌆 Víspera', startHour: 16, endHour: 18 }
 ];
 
 const SERVICIOS_CATALOGO = [
@@ -187,6 +189,69 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
     notas: ''
   });
 
+  const [coveragePolygon, setCoveragePolygon] = useState<Array<[number, number]>>([]);
+  const [isCustomerLoggedIn, setIsCustomerLoggedIn] = useState(false);
+  const [customerProfile, setCustomerProfile] = useState<{ nombre?: string; telefono?: string } | null>(null);
+
+  // Cargar la cobertura oficial del negocio (Requirement 3)
+  useEffect(() => {
+    if (negocio?.id) {
+      fetch(`/api/shoe-care/coverage?negocioId=${negocio.id}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data && Array.isArray(data.poligono) && data.poligono.length >= 3) {
+            setCoveragePolygon(data.poligono);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [negocio?.id]);
+
+  // Cargar perfil del cliente si existe sesión iniciada (Requirement 4)
+  useEffect(() => {
+    if (negocio?.slug) {
+      fetch(`/api/${negocio.slug}/perfil`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data && (data.nombre || data.telefono)) {
+            setIsCustomerLoggedIn(true);
+            setCustomerProfile(data);
+            setForm(prev => ({
+              ...prev,
+              nombreCliente: data.nombre || prev.nombreCliente,
+              telefonoCliente: data.telefono || prev.telefonoCliente
+            }));
+          }
+        })
+        .catch(() => {});
+    }
+  }, [negocio?.slug]);
+
+  // Determinar si la posición GPS seleccionada está fuera de cobertura (Requirement 3)
+  const isOutsideCoverage = useMemo(() => {
+    if (!coords.lat || !coords.lng || !coveragePolygon || coveragePolygon.length < 3) {
+      return false;
+    }
+    return !isPointInPolygon([coords.lat, coords.lng], coveragePolygon);
+  }, [coords.lat, coords.lng, coveragePolygon]);
+
+  // Helper para verificar si un horario está pasado para HOY (Requirement 5)
+  const isSlotDisabled = (slot: typeof TIME_SLOTS[0]) => {
+    if (selectedDayOption !== 'HOY') return false;
+    const currentHour = new Date().getHours();
+    return currentHour >= slot.startHour;
+  };
+
+  // Ajustar horario automáticamente al cambiar el día preferido (Requirement 5)
+  useEffect(() => {
+    if (selectedDayOption === 'HOY') {
+      const available = TIME_SLOTS.find(s => !isSlotDisabled(s));
+      if (available) {
+        setSelectedSlot(available.id);
+      }
+    }
+  }, [selectedDayOption]);
+
   const nombreNegocio = negocio?.nombre || 'BubbleWash';
   const logoUrl = negocio?.logoUrl || '';
   const whatsappNum = negocio?.whatsapp || negocio?.telefono || '0991234567';
@@ -274,7 +339,7 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
 
   const handlePickupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.nombreCliente || !form.telefonoCliente || !form.direccionCliente) return;
+    if (!form.nombreCliente || !form.telefonoCliente || !form.direccionCliente || isOutsideCoverage) return;
 
     setSubmitting(true);
     try {
@@ -973,29 +1038,45 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
                 </div>
 
                 <div className="space-y-3">
-                  <div>
-                    <label className="text-[11px] font-black uppercase text-slate-500 block mb-1">Nombre Completo *</label>
-                    <input 
-                      type="text" 
-                      required 
-                      value={form.nombreCliente}
-                      onChange={e => setForm({ ...form, nombreCliente: e.target.value })}
-                      placeholder="Ej. Carlos Rodríguez"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-purple-600"
-                    />
-                  </div>
+                  {/* REQUIREMENT 4: Si hay sesión iniciada, mostrar badge sin pedir nombre/teléfono */}
+                  {isCustomerLoggedIn && form.nombreCliente ? (
+                    <div className="p-3 bg-purple-50/80 border border-purple-200/80 rounded-2xl flex items-center justify-between shadow-xs">
+                      <div className="flex items-center gap-3">
+                        <div className="size-9 rounded-xl bg-purple-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
+                          {form.nombreCliente.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <span className="text-[9px] font-black uppercase text-purple-700 tracking-wider block">Sesión Iniciada</span>
+                          <p className="text-xs font-bold text-slate-900">{form.nombreCliente} <span className="text-slate-500 font-mono text-[11px]">({form.telefonoCliente})</span></p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="text-[11px] font-black uppercase text-slate-500 block mb-1">Nombre Completo *</label>
+                        <input 
+                          type="text" 
+                          required 
+                          value={form.nombreCliente}
+                          onChange={e => setForm({ ...form, nombreCliente: e.target.value })}
+                          placeholder="Ej. Carlos Rodríguez"
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-purple-600"
+                        />
+                      </div>
 
-                  <div>
-                    <label className="text-[11px] font-black uppercase text-slate-500 block mb-1">Teléfono WhatsApp *</label>
-                    <input 
-                      type="tel" 
-                      required 
-                      value={form.telefonoCliente}
-                      onChange={e => setForm({ ...form, telefonoCliente: e.target.value })}
-                      placeholder="Ej. 0991234567"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-purple-600"
-                    />
-                  </div>
+                      {/* REQUIREMENT 2: Código de País Predeterminado Ecuador (+593) con PhoneInput */}
+                      <div>
+                        <PhoneInput
+                          value={form.telefonoCliente}
+                          onChange={val => setForm({ ...form, telefonoCliente: val })}
+                          placeholder="WhatsApp"
+                          label="TELÉFONO WHATSAPP *"
+                          required
+                        />
+                      </div>
+                    </>
+                  )}
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
@@ -1003,7 +1084,7 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
                       <button
                         type="button"
                         onClick={() => setShowMapModal(true)}
-                        className="text-[10px] font-bold text-purple-600 hover:underline flex items-center gap-1"
+                        className="text-[10px] font-bold text-purple-600 hover:underline flex items-center gap-1 cursor-pointer"
                       >
                         📍 Ubicar en Mapa GPS
                       </button>
@@ -1017,6 +1098,34 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-purple-600"
                     />
                   </div>
+
+                  {/* REQUIREMENT 1: Pedir referencia cuando la ubicación está presente en texto */}
+                  {form.direccionCliente.trim() !== '' && (
+                    <div className="space-y-1 animate-in fade-in duration-200">
+                      <label className="text-[11px] font-black uppercase text-slate-500 block mb-1">
+                        Referencia de Ubicación *
+                      </label>
+                      <input 
+                        type="text" 
+                        required
+                        value={form.referenciaCliente}
+                        onChange={e => setForm({ ...form, referenciaCliente: e.target.value })}
+                        placeholder="Ej. Casa azul de 2 pisos, portón negro / Frente al parque"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:border-purple-600"
+                      />
+                    </div>
+                  )}
+
+                  {/* REQUIREMENT 3: Alerta y Bloqueo si la posición GPS está fuera de la cobertura configurada */}
+                  {isOutsideCoverage && (
+                    <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5 text-amber-900 text-xs font-medium animate-in zoom-in-95 duration-200">
+                      <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="block text-[11px] font-black uppercase text-amber-900">Ubicación Fuera de Cobertura</strong>
+                        <span>Tu ubicación seleccionada está fuera de nuestra zona configurada para retiros a domicilio. Selecciona una ubicación dentro del mapa o contáctanos directamente por WhatsApp.</span>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Selector Intuitivo de Horario */}
                   <div className="space-y-2 pt-2">
@@ -1032,7 +1141,7 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
                           type="button"
                           onClick={() => setSelectedDayOption(d.id as any)}
                           className={`py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                            selectedDayOption === d.id ? 'bg-purple-600 text-white shadow-md' : 'bg-slate-100 text-slate-600'
+                            selectedDayOption === d.id ? 'bg-purple-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                           }`}
                         >
                           {d.label}
@@ -1040,30 +1149,45 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
                       ))}
                     </div>
 
+                    {/* REQUIREMENT 5: Bloqueo de turnos pasados cuando es HOY */}
                     <div className="grid grid-cols-2 gap-2 mt-2">
-                      {TIME_SLOTS.map(slot => (
-                        <button
-                          key={slot.id}
-                          type="button"
-                          onClick={() => setSelectedSlot(slot.id)}
-                          className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all cursor-pointer ${
-                            selectedSlot === slot.id ? 'bg-purple-50 border-purple-600 text-purple-900 font-black' : 'bg-slate-50 border-slate-200 text-slate-600'
-                          }`}
-                        >
-                          <span className="block text-[10px] text-purple-600">{slot.icon}</span>
-                          <span>{slot.label}</span>
-                        </button>
-                      ))}
+                      {TIME_SLOTS.map(slot => {
+                        const disabled = isSlotDisabled(slot);
+                        const isSelected = selectedSlot === slot.id && !disabled;
+
+                        return (
+                          <button
+                            key={slot.id}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => setSelectedSlot(slot.id)}
+                            className={`p-2.5 rounded-xl border text-left text-xs font-bold transition-all ${
+                              disabled 
+                                ? 'opacity-40 bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed line-through select-none'
+                                : isSelected 
+                                  ? 'bg-purple-50 border-purple-600 text-purple-900 font-black cursor-pointer shadow-xs' 
+                                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-purple-300 cursor-pointer'
+                            }`}
+                          >
+                            <span className="block text-[10px] text-purple-600">{slot.icon}</span>
+                            <span>{slot.label} {disabled ? '(Pasado)' : ''}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
 
                 <button
                   type="submit"
-                  disabled={submitting}
-                  className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs uppercase rounded-2xl shadow-xl shadow-purple-600/25 transition-all cursor-pointer"
+                  disabled={submitting || isOutsideCoverage}
+                  className={`w-full py-4 font-black text-xs uppercase rounded-2xl shadow-xl transition-all ${
+                    isOutsideCoverage 
+                      ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
+                      : 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-600/25 cursor-pointer'
+                  }`}
                 >
-                  {submitting ? <Loader2 className="animate-spin mx-auto" size={18} /> : 'Confirmar y Solicitar Retiro'}
+                  {submitting ? <Loader2 className="animate-spin mx-auto" size={18} /> : (isOutsideCoverage ? 'Ubicación Fuera de Cobertura' : 'Confirmar y Solicitar Retiro')}
                 </button>
               </form>
             )}
