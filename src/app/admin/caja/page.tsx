@@ -436,11 +436,11 @@ export default function CajaDashboardPage() {
 
             {/* Modal para Registrar Ingreso Manual */}
             {showIncomeModal && (
-                <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-in zoom-in-95">
-                        <div className="flex justify-between items-center border-b pb-3">
+                <div className="fixed inset-0 z-[999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+                    <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl my-auto max-h-[90vh] overflow-y-auto animate-in zoom-in-95 border border-slate-100">
+                        <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                             <h3 className="font-black text-lg text-emerald-800 uppercase italic">Registrar Ingreso Manual</h3>
-                            <button onClick={() => setShowIncomeModal(false)} className="text-slate-400 hover:text-slate-700 cursor-pointer">✕</button>
+                            <button onClick={() => setShowIncomeModal(false)} className="text-slate-400 hover:text-slate-700 cursor-pointer p-1">✕</button>
                         </div>
                         
                         <div className="space-y-3">
@@ -515,11 +515,11 @@ export default function CajaDashboardPage() {
 
             {/* Modal para Registrar Egreso / Gasto */}
             {showExpenseModal && (
-                <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-in zoom-in-95">
-                        <div className="flex justify-between items-center border-b pb-3">
+                <div className="fixed inset-0 z-[999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+                    <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl my-auto max-h-[90vh] overflow-y-auto animate-in zoom-in-95 border border-slate-100">
+                        <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                             <h3 className="font-black text-lg text-rose-800 uppercase italic">Registrar Gasto / Egreso</h3>
-                            <button onClick={() => setShowExpenseModal(false)} className="text-slate-400 hover:text-slate-700 cursor-pointer">✕</button>
+                            <button onClick={() => setShowExpenseModal(false)} className="text-slate-400 hover:text-slate-700 cursor-pointer p-1">✕</button>
                         </div>
 
                         <div className="space-y-3">
