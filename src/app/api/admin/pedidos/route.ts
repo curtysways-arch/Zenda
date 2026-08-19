@@ -209,6 +209,11 @@ export async function PUT(req: Request) {
             if (body.montoRecibido !== undefined) currentExtra.montoRecibido = parseFloat(body.montoRecibido);
             if (body.vuelto !== undefined) currentExtra.vuelto = parseFloat(body.vuelto);
 
+            // Si la orden ya está en estado LISTO o es Para Llevar / POS cobrada, finalizarla automáticamente
+            if (['LISTO', 'LISTA', 'READY'].includes((pedido.estado || '').toUpperCase()) || pedido.tipoEntrega === 'PICKUP_ORDER') {
+                updateData.estado = 'FINALIZADO';
+            }
+
             if (pedido.payment) {
                 await (prisma as any).orderPayment.update({
                     where: { id: pedido.payment.id },

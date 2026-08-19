@@ -140,6 +140,24 @@ export default function AdminDespachoPage() {
     }
   };
 
+  const handleUpdateOrderState = async (orderId: string, newEstado: string) => {
+    try {
+      const res = await fetch('/api/admin/pedidos', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: orderId,
+          estado: newEstado
+        })
+      });
+      if (res.ok) {
+        await fetchDespachoData();
+      }
+    } catch (err) {
+      console.error('Error actualizando estado del pedido:', err);
+    }
+  };
+
   useEffect(() => {
     fetchDespachoData();
     const interval = setInterval(fetchDespachoData, 15000);
@@ -405,7 +423,24 @@ export default function AdminDespachoPage() {
                     <span className={`text-[11px] font-black px-2.5 py-1 rounded-lg border inline-flex items-center w-fit ${channel.color}`}>
                       {channel.label}
                     </span>
-                    <div>{getStatusBadge(order.estado)}</div>
+                    <div className="flex items-center gap-1.5">
+                      {getStatusBadge(order.estado)}
+                      {['LISTO', 'LISTA', 'READY'].includes((order.estado || '').toUpperCase()) && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleUpdateOrderState(order.id, 'FINALIZADO');
+                          }}
+                          className="px-2 py-0.5 bg-slate-900 hover:bg-slate-800 text-emerald-400 font-black text-[9px] uppercase tracking-wider rounded-md transition-all cursor-pointer shadow-xs flex items-center gap-1 shrink-0"
+                          title="Entregar al cliente y finalizar pedido"
+                        >
+                          <CheckCircle2 className="size-3 text-emerald-400" />
+                          <span>Finalizar</span>
+                        </button>
+                      )}
+                    </div>
                     <div>
                       <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border inline-flex items-center uppercase ${
                         isPagadoTotal

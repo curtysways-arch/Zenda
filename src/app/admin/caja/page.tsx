@@ -478,10 +478,35 @@ function PendingCollectionOrdersList({ onCollectionSuccess }: { onCollectionSucc
             const res = await fetch('/api/admin/pedidos');
             if (res.ok) {
                 const data = await res.json();
-                // Regla de Caja: Filtrar ÚNICAMENTE órdenes con estadoFinanciero === 'PENDIENTE'
+                // Regla de Caja: Filtrar ÚNICAMENTE órdenes que NO estén pagadas ni finalizadas
                 const pending = (Array.isArray(data) ? data : []).filter((p: any) => {
-                    const isPaid = p.paymentStatus === 'PAGADO' || p.payment?.status === 'PAID';
-                    return !isPaid && p.estado !== 'CANCELADO';
+                    let extra: any = {};
+                    if (typeof p.extraInfo === 'string') {
+                        try { extra = JSON.parse(p.extraInfo); } catch {}
+                    } else if (p.extraInfo && typeof p.extraInfo === 'object') {
+                        extra = p.extraInfo;
+                    }
+
+                    const pStatus = (p.paymentStatus || extra.paymentStatus || '').toUpperCase();
+                    const payEstado = (p.payment?.estado || p.payment?.status || '').toUpperCase();
+                    const orderEstado = (p.estado || '').toUpperCase();
+                    const saldoPendiente = extra.saldoPendiente !== undefined ? Number(extra.saldoPendiente) : null;
+                    const montoPagado = Number(extra.montoPagadoAcumulado || 0);
+                    const total = Number(p.total || 0);
+
+                    const isPaid = (
+                        pStatus === 'PAGADO' ||
+                        pStatus === 'CONFIRMADO' ||
+                        payEstado === 'CONFIRMADO' ||
+                        payEstado === 'PAGADO' ||
+                        payEstado === 'PAID' ||
+                        orderEstado === 'FINALIZADO' ||
+                        orderEstado === 'COMPLETADO' ||
+                        (saldoPendiente !== null && saldoPendiente <= 0) ||
+                        (montoPagado >= total && total > 0)
+                    );
+
+                    return !isPaid && orderEstado !== 'CANCELADO' && orderEstado !== 'CANCELLED';
                 });
                 setPendingOrders(pending);
             }
@@ -504,6 +529,7 @@ function PendingCollectionOrdersList({ onCollectionSuccess }: { onCollectionSucc
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     id: orderId,
+                    action: 'MARCAR_PAGADO',
                     paymentStatus: 'PAGADO',
                     metodoPago: selectedMethod
                 })
