@@ -6,6 +6,7 @@
 // Filtros: Día, Semana, Mes, Personalizado, Cajero.
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
     DollarSign, Calendar, ArrowLeft, TrendingUp, TrendingDown,
     PlusCircle, MinusCircle, CheckCircle2, AlertTriangle,
@@ -18,6 +19,11 @@ import { cn } from '@/lib/utils';
 
 export default function CajaDashboardPage() {
     const router = useRouter();
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const [filter, setFilter] = useState<'day' | 'week' | 'month' | 'custom'>('day');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
@@ -407,9 +413,9 @@ export default function CajaDashboardPage() {
             </main>
 
             {/* Modal para Registrar Ingreso Manual */}
-            {showIncomeModal && (
-                <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-start sm:items-center justify-center p-4 overflow-y-auto pt-10 sm:pt-4">
-                    <div className="bg-white w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl animate-in zoom-in-95 my-auto border-2 border-slate-200">
+            {mounted && showIncomeModal && createPortal(
+                <div className="fixed inset-0 z-[999999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+                    <div className="bg-white w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl animate-in zoom-in-95 border-2 border-slate-200 my-auto max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                             <div>
                                 <span className="text-[10px] font-black uppercase text-emerald-600 tracking-widest block">Operación de Caja</span>
@@ -500,13 +506,14 @@ export default function CajaDashboardPage() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Modal para Registrar Egreso / Gasto */}
-            {showExpenseModal && (
-                <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-sm flex items-start sm:items-center justify-center p-4 overflow-y-auto pt-10 sm:pt-4">
-                    <div className="bg-white w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl animate-in zoom-in-95 my-auto border-2 border-slate-200">
+            {mounted && showExpenseModal && createPortal(
+                <div className="fixed inset-0 z-[999999] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+                    <div className="bg-white w-full max-w-md rounded-3xl p-6 space-y-4 shadow-2xl animate-in zoom-in-95 border-2 border-slate-200 my-auto max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                             <div>
                                 <span className="text-[10px] font-black uppercase text-rose-600 tracking-widest block">Operación de Caja</span>
@@ -597,7 +604,8 @@ export default function CajaDashboardPage() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
