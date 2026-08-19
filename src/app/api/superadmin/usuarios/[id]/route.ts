@@ -29,12 +29,55 @@ export async function PATCH(
         const body = await req.json();
         const { nombre, email, phone, role, password } = body;
 
+        let targetId = id;
+        let existingUser = await prisma.usuario.findUnique({ where: { id: targetId } });
+
+        // Si el usuario no existe directamente por ID (ej. ID sintético de negocio "admin_sneaker-wash-id" o ID de negocio)
+        if (!existingUser) {
+            const negocioId = targetId.startsWith('admin_') ? targetId.replace('admin_', '') : targetId;
+            
+            // Buscar si existe algún usuario administrador del negocio
+            const foundUser = await prisma.usuario.findFirst({
+                where: { negocioId }
+            });
+
+            if (foundUser) {
+                targetId = foundUser.id;
+                existingUser = foundUser;
+            } else {
+                // Si el negocio existe en DB, crear la cuenta de administrador automáticamente
+                const negocio = await prisma.negocio.findUnique({
+                    where: { id: negocioId },
+                    select: { id: true, nombre: true, emailContacto: true, whatsapp: true }
+                });
+
+                if (negocio) {
+                    const hashedPassword = password ? await bcrypt.hash(password, 10) : await bcrypt.hash("Acceso123456", 10);
+                    const newUser = await prisma.usuario.create({
+                        data: {
+                            id: `usr_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+                            nombre: nombre || negocio.nombre || 'Administrador',
+                            email: (email ? email.toLowerCase() : (negocio.emailContacto ? negocio.emailContacto.toLowerCase() : `admin@${negocio.id}.com`)),
+                            phone: phone || negocio.whatsapp || null,
+                            password: hashedPassword,
+                            role: role || 'ADMIN',
+                            negocioId: negocio.id,
+                            updatedAt: new Date()
+                        }
+                    });
+                    return NextResponse.json({ success: true, usuario: newUser });
+                } else {
+                    return NextResponse.json({ error: "Usuario o negocio no encontrado" }, { status: 404 });
+                }
+            }
+        }
+
         // ── Validación: teléfono único (excluye el mismo usuario) ───
         if (phone) {
             const phoneConflict = await prisma.usuario.findFirst({
                 where: {
                     phone: phone,
-                    NOT: { id }
+                    NOT: { id: targetId }
                 },
                 include: { Negocio: { select: { nombre: true } } }
             });
@@ -53,7 +96,7 @@ export async function PATCH(
             const emailConflict = await prisma.usuario.findFirst({
                 where: {
                     email: email.toLowerCase(),
-                    NOT: { id }
+                    NOT: { id: targetId }
                 },
                 select: { id: true }
             });
@@ -76,7 +119,7 @@ export async function PATCH(
         }
 
         const usuario = await prisma.usuario.update({
-            where: { id },
+            where: { id: targetId },
             data: updateData,
         });
 
