@@ -66,17 +66,31 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
           }
           const caps = cfg.activeCapabilities || cfg.capabilities || {};
           
+          const tipoUpper = (data.tipoNegocio || '').toUpperCase();
+          const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT';
+          const isServiceBiz = !isRestaurant && (
+            tipoUpper === 'SPA' ||
+            tipoUpper === 'CENTRO_ESTETICA' ||
+            tipoUpper === 'PELUQUERIA' ||
+            tipoUpper === 'BARBERIA' ||
+            tipoUpper === 'SHOE_CARE' ||
+            tipoUpper === 'LAVANDERIA' ||
+            tipoUpper === 'ORDENES-SERVICIO' ||
+            tipoUpper === 'BEAUTY_SPA' ||
+            caps.services !== false
+          );
+          
           // Mapeo automático de fallback para negocios legacy
           const normalizedCaps: Record<string, boolean> = {
-            orders: Boolean(caps.orders || data.tipoNegocio === 'PRODUCTOS' || data.tipoNegocio === 'RESTAURANT'),
-            catalog: Boolean(caps.catalog || caps.products || data.tipoNegocio === 'PRODUCTOS' || data.tipoNegocio === 'RESTAURANT'),
+            orders: Boolean(caps.orders || isRestaurant || tipoUpper === 'PRODUCTOS'),
+            catalog: Boolean(caps.catalog || caps.products || isRestaurant || tipoUpper === 'PRODUCTOS'),
             tables: Boolean(caps.tables),
             kitchen: Boolean(caps.kitchen),
             delivery: Boolean(caps.delivery),
-            dispatch: Boolean(caps.dispatch || caps.delivery || caps.orders || data.tipoNegocio === 'PRODUCTOS' || data.tipoNegocio === 'RESTAURANT'),
-            appointments: Boolean(caps.appointments || data.tipoNegocio === 'RESERVA' || data.tipoNegocio === 'SPA'),
-            courts: Boolean(caps.courts || data.tipoNegocio === 'SPORTS_COURTS'),
-            services: Boolean(caps.services || data.tipoNegocio === 'SHOE_CARE' || data.tipoNegocio === 'ordenes-servicio'),
+            dispatch: Boolean(caps.dispatch || caps.delivery || caps.orders || isRestaurant || tipoUpper === 'PRODUCTOS'),
+            appointments: Boolean(caps.appointments || isServiceBiz || tipoUpper === 'RESERVA'),
+            courts: Boolean(caps.courts || tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS'),
+            services: Boolean(isServiceBiz),
             promotions: Boolean(caps.promotions !== false),
             courses: Boolean(caps.courses),
             loyalty: Boolean(caps.loyalty)
@@ -131,17 +145,17 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
     if (capabilities.appointments) {
       items.push({ name: 'Agenda / Citas', href: '/admin/citas', icon: CalendarDays, section: 'GESTIÓN OPERATIVA' });
     }
+    if (capabilities.services) {
+      items.push({ name: 'Servicios', href: '/admin/servicios', icon: Scissors, section: 'GESTIÓN OPERATIVA', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    }
     if (capabilities.courts) {
       items.push({ name: 'Mis Canchas', href: '/admin/canchas', icon: Dribbble, section: 'GESTIÓN OPERATIVA' });
     }
 
-    // Catalog Capabilities
+    // Catalog Capabilities (para Restaurantes y Comercio)
     if (capabilities.catalog) {
       items.push({ name: 'Productos', href: '/admin/productos', icon: Sparkles, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
       items.push({ name: 'Categorías', href: '/admin/categorias', icon: Tags, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
-    }
-    if (capabilities.services) {
-      items.push({ name: 'Servicios', href: '/admin/servicios', icon: Scissors, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     }
 
     // Marketing Capabilities (Universal)
