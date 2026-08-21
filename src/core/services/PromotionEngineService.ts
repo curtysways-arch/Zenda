@@ -1,24 +1,29 @@
 /**
  * @file PromotionEngineService.ts
  * @module core/services
- * @description Motor de Evaluación y Aplicación de Promociones (FASE 5 - RESTAURANT PROMOTIONS v1.0).
- * @responsibility Evaluar promociones activas sobre un carrito u orden en POS, Landing y Meseros.
+ * @description Motor Universal de Evaluación y Aplicación de Promociones de Citiox.
+ * @responsibility Evaluar promociones activas para cualquier vertical (Restaurantes, Spas, Lavanderías, Tiendas, Canchas, Citas).
  * @status Stable (Core Business Engine)
  */
 
 export interface CartItemInput {
   productId?: string;
+  serviceId?: string;
   categoryId?: string;
   nombre: string;
   precio: number;
   cantidad: number;
   variantId?: string;
+  professionalId?: string;
+  resourceId?: string;
 }
 
 export interface PromotionEvaluationContext {
   cartItems: CartItemInput[];
-  channel: 'POS' | 'MESEROS' | 'DELIVERY' | 'PICKUP' | 'LANDING';
+  channel: string; // 'POS' | 'ONLINE' | 'MESEROS' | 'DELIVERY' | 'PICKUP' | 'CITAS' | 'LANDING'
   subtotal: number;
+  shippingAmount?: number;
+  distanceKm?: number;
   customerType?: 'NEW' | 'RECURRING' | 'ANY';
   couponCode?: string;
   now?: Date;
@@ -32,6 +37,9 @@ export interface AppliedPromotionResult {
   tipoPromo: string;
   discountAmount: number;
   freeDelivery: boolean;
+  shippingDiscount: number;
+  merchantShippingSubsidy: number;
+  customerShippingAmount: number;
   finalSubtotal: number;
   finalTotal: number;
   metadata: Record<string, any>;
@@ -45,22 +53,42 @@ export class PromotionEngineService {
     appliedPromotions: AppliedPromotionResult[];
     totalDiscount: number;
     freeDelivery: boolean;
+    shippingDiscount: number;
+    merchantShippingSubsidy: number;
+    customerShippingAmount: number;
     finalSubtotal: number;
+    finalTotal: number;
     bestPromotionSummary: string | null;
   } {
-    const { cartItems, channel, subtotal, customerType = 'ANY', couponCode, now = new Date(), promotions } = context;
+    const {
+      cartItems = [],
+      channel = 'ONLINE',
+      subtotal = 0,
+      shippingAmount = 0,
+      distanceKm = 0,
+      customerType = 'ANY',
+      couponCode,
+      now = new Date(),
+      promotions = []
+    } = context;
 
-    if (!promotions || promotions.length === 0 || cartItems.length === 0) {
+    if (!promotions || promotions.length === 0 || (cartItems.length === 0 && subtotal === 0)) {
       return {
         appliedPromotions: [],
         totalDiscount: 0,
         freeDelivery: false,
+        shippingDiscount: 0,
+        merchantShippingSubsidy: 0,
+        customerShippingAmount: shippingAmount,
         finalSubtotal: subtotal,
+        finalTotal: subtotal + shippingAmount,
         bestPromotionSummary: null
       };
     }
 
     const currentDayIdx = now.getDay(); // 0 = Dom, 1 = Lun...
+    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const currentDayName = dayNames[currentDayIdx];
     const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
     const validPromos: any[] = [];
@@ -75,11 +103,9 @@ export class PromotionEngineService {
 
       // 3. Validar Días de la semana
       if (promo.diasValidos && typeof promo.diasValidos === 'string' && promo.diasValidos.trim() !== '') {
-        const validDays = promo.diasValidos.split(',').map((d: string) => d.trim());
-        const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-        const currentDayName = dayNames[currentDayIdx];
+        const validDays = promo.diasValidos.split(',').map((d: string) => d.trim().toLowerCase());
         const isDayValid = validDays.some((d: string) => 
-          d.toLowerCase() === currentDayName.toLowerCase() || d === String(currentDayIdx)
+          d === currentDayName.toLowerCase() || d === String(currentDayIdx)
         );
         if (!isDayValid) continue;
       }
@@ -93,7 +119,14 @@ export class PromotionEngineService {
 
       // 5. Validar Canal
       if (promo.canales && Array.isArray(promo.canales) && promo.canales.length > 0) {
-        if (!promo.canales.includes(channel)) continue;
+        const channelUpper = channel.toUpperCase();
+        const promoChannelsUpper = promo.canales.map((c: string) => c.toUpperCase());
+        // Mapeos de compatibilidad de canales
+        const matchesChannel = promoChannelsUpper.includes(channelUpper) ||
+          (channelUpper === 'ONLINE' && (promoChannelsUpper.includes('LANDING') || promoChannelsUpper.includes('CITAS') || promoChannelsUpper.includes('SOLICITUDES'))) ||
+          (channelUpper === 'LANDING' && promoChannelsUpper.includes('ONLINE')) ||
+          (channelUpper === 'CITAS' && (promoChannelsUpper.includes('LOCAL') || promoChannelsUpper.includes('ONLINE')));
+        if (!matchesChannel) continue;
       }
 
       // 6. Validar Cupón si la promo lo requiere
@@ -112,32 +145,35 @@ export class PromotionEngineService {
         }
       }
 
-      // 8. Validar Compra Mínima
-      if (promo.montoMinimo && subtotal < Number(promo.montoMinimo)) {
+      // 8. Validar Alcance y Subtotal Elegible
+      let eligibleSubtotal = subtotal;
+      if (promo.alcance === 'PRODUCTOS' || promo.alcance === 'SERVICIOS') {
+        const eligibleItems = cartItems.filter(it => {
+          if (promo.productoRequeridoId) return (it.productId || (it as any).id) === promo.productoRequeridoId;
+          if (promo.servicioRequeridoId) return (it.serviceId || (it as any).id) === promo.servicioRequeridoId;
+          if (promo.categoriaRequeridaId) return it.categoryId === promo.categoriaRequeridaId;
+          return true;
+        });
+        eligibleSubtotal = eligibleItems.reduce((acc, it) => acc + ((it.precio || 0) * (it.cantidad || 1)), 0);
+      }
+
+      // 9. Validar Compra Mínima sobre Subtotal Elegible
+      if (promo.montoMinimo && eligibleSubtotal < Number(promo.montoMinimo)) {
         continue;
       }
 
-      // 9. Validar Cantidad Mínima
+      // 10. Validar Cantidad Mínima
       const totalItemQty = cartItems.reduce((acc, it) => acc + (it.cantidad || 1), 0);
       if (promo.cantidadMinima && totalItemQty < Number(promo.cantidadMinima)) {
         continue;
       }
 
-      // 10. Validar Productos / Categorías Requeridas
-      if (promo.productoRequeridoId) {
-        const hasReqProd = cartItems.some(it => {
-          const pid = it.productId || (it as any).id || (it as any).productoId;
-          return pid === promo.productoRequeridoId || (it.nombre && promo.titulo && promo.titulo.toLowerCase().includes(it.nombre.toLowerCase()));
-        });
-        if (!hasReqProd) continue;
+      // 11. Validar Distancia Máxima para Envío Gratis / Subsidiado
+      if (promo.tipoPromo === 'ENVIO_GRATIS' && promo.distanciaMaximaKm && distanceKm > Number(promo.distanciaMaximaKm)) {
+        continue;
       }
 
-      if (promo.categoriaRequeridaId) {
-        const hasReqCat = cartItems.some(it => it.categoryId === promo.categoriaRequeridaId);
-        if (!hasReqCat) continue;
-      }
-
-      validPromos.push(promo);
+      validPromos.push({ ...promo, eligibleSubtotal });
     }
 
     if (validPromos.length === 0) {
@@ -145,52 +181,43 @@ export class PromotionEngineService {
         appliedPromotions: [],
         totalDiscount: 0,
         freeDelivery: false,
+        shippingDiscount: 0,
+        merchantShippingSubsidy: 0,
+        customerShippingAmount: shippingAmount,
         finalSubtotal: subtotal,
+        finalTotal: subtotal + shippingAmount,
         bestPromotionSummary: null
       };
     }
 
-    // Calcular descuento para cada promoción válida
-    let bestResult: {
-      appliedPromotions: AppliedPromotionResult[];
-      totalDiscount: number;
-      freeDelivery: boolean;
-      finalSubtotal: number;
-      bestPromotionSummary: string | null;
-    } = {
-      appliedPromotions: [],
-      totalDiscount: 0,
-      freeDelivery: false,
-      finalSubtotal: subtotal,
-      bestPromotionSummary: null
-    };
-
+    // Evaluar cada promoción válida
     const evaluatedResults: AppliedPromotionResult[] = [];
 
     for (const promo of validPromos) {
       let discount = 0;
       let isFreeDelivery = false;
+      let shippingDisc = 0;
+      let merchantSubsidy = 0;
+      let customerShipping = shippingAmount;
 
       const promoType = (promo.tipoPromo || 'PORCENTAJE').toUpperCase();
+      const baseSubtotal = promo.eligibleSubtotal !== undefined ? promo.eligibleSubtotal : subtotal;
 
       if (promoType === 'PORCENTAJE' || promoType === 'PERCENTAGE') {
         const pct = Number(promo.porcentajeDescuento || promo.precioPromo || 0);
         if (pct > 0) {
-          discount = (subtotal * (pct > 1 ? pct / 100 : pct));
+          discount = baseSubtotal * (pct > 1 ? pct / 100 : pct);
         }
       } else if (promoType === 'DESCUENTO_FIJO' || promoType === 'FIXED') {
         discount = Number(promo.precioPromo || promo.montoDescuento || 0);
       } else if (promoType === 'DOS_POR_UNO' || promoType === '2X1') {
-        // En 2x1, descuenta 1 unidad por cada 2 ítems elegibles
         cartItems.forEach(it => {
-          const pid = it.productId || (it as any).id || (it as any).productoId;
-          const isEligible = !promo.productoRequeridoId || pid === promo.productoRequeridoId || (it.nombre && promo.titulo && promo.titulo.toLowerCase().includes(it.nombre.toLowerCase()));
+          const pid = it.productId || it.serviceId || (it as any).id;
+          const isEligible = !promo.productoRequeridoId || pid === promo.productoRequeridoId;
           if (isEligible) {
             if (it.cantidad >= 2) {
               const freeCount = Math.floor(it.cantidad / 2);
               discount += freeCount * (it.precio || 0);
-            } else if (it.cantidad === 1 && promo.productoRequeridoId) {
-              discount += (it.precio || 0) * 0.5;
             }
           }
         });
@@ -203,37 +230,40 @@ export class PromotionEngineService {
         });
       } else if (promoType === 'ENVIO_GRATIS' || promoType === 'FREE_DELIVERY') {
         isFreeDelivery = true;
-        discount = 0; // El precio de los productos se cobra al 100% (cero descuento a producto)
-      } else if (promoType === 'COMBO') {
-        const comboPrice = Number(promo.precioPromo || 0);
-        if (comboPrice > 0 && subtotal > comboPrice) {
-          discount = subtotal - comboPrice;
+        if (promo.esCostoCompleto ?? true) {
+          shippingDisc = shippingAmount;
+          merchantSubsidy = shippingAmount;
+          customerShipping = 0;
+        } else {
+          const maxSub = Number(promo.costoMaximoSubsidiado || 0);
+          shippingDisc = Math.min(shippingAmount, maxSub);
+          merchantSubsidy = shippingDisc;
+          customerShipping = Math.max(0, shippingAmount - shippingDisc);
         }
-      } else if (promoType === 'PRECIO_ESPECIAL') {
+      } else if (promoType === 'COMBO' || promoType === 'PRECIO_ESPECIAL') {
         const promoPrice = Number(promo.precioPromo || 0);
-        if (promoPrice > 0 && subtotal > promoPrice) {
-          discount = subtotal - promoPrice;
+        if (promoPrice > 0 && baseSubtotal > promoPrice) {
+          discount = baseSubtotal - promoPrice;
         }
       } else if (promoType === 'CUPON') {
         const pct = Number(promo.porcentajeDescuento || promo.precioPromo || 0);
         if (pct > 0) {
-          discount = subtotal * (pct > 1 ? pct / 100 : pct);
+          discount = baseSubtotal * (pct > 1 ? pct / 100 : pct);
         } else if (promo.montoDescuento) {
           discount = Number(promo.montoDescuento);
         }
       }
 
-      // Aplicar límite de presupuesto si existe
+      // Límite de presupuesto si existe
       if (promo.presupuestoMaximo && discount > Number(promo.presupuestoMaximo)) {
         discount = Number(promo.presupuestoMaximo);
       }
 
-      // Asegurar que el descuento no supere el subtotal
-      if (discount > subtotal) {
-        discount = subtotal;
-      }
-
+      discount = Math.min(discount, baseSubtotal);
       discount = Math.round(discount * 100) / 100;
+
+      const finalSub = Math.max(0, subtotal - discount);
+      const finalTot = finalSub + customerShipping;
 
       evaluatedResults.push({
         promotionId: promo.id,
@@ -242,30 +272,39 @@ export class PromotionEngineService {
         tipoPromo: promoType,
         discountAmount: discount,
         freeDelivery: isFreeDelivery,
-        finalSubtotal: Math.max(0, subtotal - discount),
-        finalTotal: Math.max(0, subtotal - discount),
+        shippingDiscount: shippingDisc,
+        merchantShippingSubsidy: merchantSubsidy,
+        customerShippingAmount: customerShipping,
+        finalSubtotal: finalSub,
+        finalTotal: finalTot,
         metadata: {
           descripcion: promo.descripcion,
+          goalPreset: promo.goalPreset || 'CUSTOM',
+          alcance: promo.alcance || 'PEDIDO_COMPLETO',
           canales: promo.canales || [],
-          tipoCliente: promo.tipoCliente || 'ANY'
+          financiamiento: promo.financiamiento || 'NEGOCIO'
         }
       });
     }
 
-    // Seleccionar la mejor combinación o la promoción con mayor ahorro
-    evaluatedResults.sort((a, b) => b.discountAmount - a.discountAmount);
+    // Seleccionar la mejor oferta por descuento total acumulado (descuento producto + descuento envío)
+    evaluatedResults.sort((a, b) => (b.discountAmount + b.shippingDiscount) - (a.discountAmount + a.shippingDiscount));
     const topResult = evaluatedResults[0];
 
-    if (topResult) {
-      bestResult = {
-        appliedPromotions: [topResult],
-        totalDiscount: topResult.discountAmount,
-        freeDelivery: topResult.freeDelivery,
-        finalSubtotal: topResult.finalSubtotal,
-        bestPromotionSummary: `🎉 ${topResult.promotionTitle}: Ahorraste $${topResult.discountAmount.toFixed(2)}`
-      };
-    }
+    const totalSavings = topResult ? (topResult.discountAmount + topResult.shippingDiscount) : 0;
 
-    return bestResult;
+    return {
+      appliedPromotions: topResult ? [topResult] : [],
+      totalDiscount: topResult ? topResult.discountAmount : 0,
+      freeDelivery: topResult ? topResult.freeDelivery : false,
+      shippingDiscount: topResult ? topResult.shippingDiscount : 0,
+      merchantShippingSubsidy: topResult ? topResult.merchantShippingSubsidy : 0,
+      customerShippingAmount: topResult ? topResult.customerShippingAmount : shippingAmount,
+      finalSubtotal: topResult ? topResult.finalSubtotal : subtotal,
+      finalTotal: topResult ? topResult.finalTotal : (subtotal + shippingAmount),
+      bestPromotionSummary: topResult
+        ? `🎉 ${topResult.promotionTitle}: Ahorraste $${totalSavings.toFixed(2)}`
+        : null
+    };
   }
 }

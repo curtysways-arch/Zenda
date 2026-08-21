@@ -18,10 +18,6 @@ export default function PromotionCard({
   onDuplicate,
   onViewStats,
 }: PromotionCardProps) {
-  const isActiva = promotion.estado === 'ACTIVA' || promotion.estado === 'activa';
-  const isPausada = promotion.estado === 'PAUSADA' || promotion.estado === 'borrador';
-  const isFinalizada = promotion.estado === 'FINALIZADA' || promotion.estado === 'caducada';
-
   const formatCurrency = (val?: number) => `$${(Number(val) || 0).toFixed(2)}`;
 
   const tipoNegocio = promotion?.negocio?.tipoNegocio || promotion?.tipoNegocio || '';
@@ -92,6 +88,13 @@ export default function PromotionCard({
     });
   };
 
+  const now = new Date();
+  const isProgramada = promotion.fechaInicio && new Date(promotion.fechaInicio) > now;
+  const isExpired = promotion.fechaFin && new Date(promotion.fechaFin) < now;
+  const isActiva = (promotion.estado === 'ACTIVA' || promotion.estado === 'activa') && !isProgramada && !isExpired;
+  const isPausada = promotion.estado === 'PAUSADA' || promotion.estado === 'borrador';
+  const isFinalizada = promotion.estado === 'FINALIZADA' || promotion.estado === 'caducada' || isExpired;
+
   return (
     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden group">
       {/* Header & Badges */}
@@ -101,9 +104,15 @@ export default function PromotionCard({
             {typeInfo.label}
           </span>
           <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-            isActiva ? 'bg-emerald-500 text-white shadow-xs' : isPausada ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-slate-100 text-slate-500'
+            isActiva 
+              ? 'bg-emerald-500 text-white shadow-xs' 
+              : isProgramada 
+                ? 'bg-amber-500 text-white shadow-xs' 
+                : isPausada 
+                  ? 'bg-slate-200 text-slate-800 border border-slate-300' 
+                  : 'bg-rose-100 text-rose-800 border border-rose-200'
           }`}>
-            {isActiva ? '🟢 ACTIVA' : isPausada ? '⏸️ PAUSADA' : 'FINALIZADA'}
+            {isActiva ? '🟢 ACTIVA' : isProgramada ? '🟡 PROGRAMADA' : isPausada ? '⚪ PAUSADA' : '🔴 FINALIZADA'}
           </span>
         </div>
 

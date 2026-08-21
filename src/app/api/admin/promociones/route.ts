@@ -28,16 +28,31 @@ function extractMetadata(p: any, productsMap: Map<string, any>) {
     ...p,
     descripcion: cleanDesc,
     imagenUrl: finalImagenUrl,
+    goalPreset: meta.goalPreset || 'CUSTOM',
+    alcance: meta.alcance || 'PEDIDO_COMPLETO',
     productoRequeridoId,
+    servicioRequeridoId: meta.servicioRequeridoId || null,
     categoriaRequeridaId: meta.categoriaRequeridaId || null,
+    categoriaServicioRequeridaId: meta.categoriaServicioRequeridaId || null,
+    profesionalId: meta.profesionalId || null,
+    recursoId: meta.recursoId || null,
     productosRelacionados: meta.productosRelacionados || [],
+    serviciosRelacionados: meta.serviciosRelacionados || [],
     cuponCodigo: meta.cuponCodigo || null,
-    canales: meta.canales || ['POS', 'MESEROS', 'DELIVERY', 'PICKUP', 'LANDING'],
+    canales: meta.canales || ['POS', 'ONLINE', 'DELIVERY', 'PICKUP', 'LANDING'],
     montoMinimo: meta.montoMinimo || 0,
+    cantidadMinima: meta.cantidadMinima || 0,
     tipoCliente: meta.tipoCliente || 'ANY',
+    usosTotalesMaximo: meta.usosTotalesMaximo || null,
+    usosPorClienteMaximo: meta.usosPorClienteMaximo || null,
     distanciaMaximaKm: meta.distanciaMaximaKm || null,
     costoMaximoSubsidiado: meta.costoMaximoSubsidiado || null,
-    esCostoCompleto: meta.esCostoCompleto ?? true
+    esCostoCompleto: meta.esCostoCompleto ?? true,
+    financiamiento: meta.financiamiento || 'NEGOCIO',
+    merchantShippingSubsidy: meta.merchantShippingSubsidy || null,
+    customerShippingAmount: meta.customerShippingAmount || null,
+    driverEarnings: meta.driverEarnings || null,
+    esCombinable: meta.esCombinable ?? false
   };
 }
 
@@ -112,10 +127,10 @@ export async function GET(request: Request) {
     });
 
     const enrichedPromotions = promotions.map((p: any) => {
+      const parsed = extractMetadata(p, productsMap);
       const stats = promoStatsMap[p.id] || { ordersCount: 0, salesTotal: 0, discountTotal: 0 };
-      const baseWithMeta = extractMetadata(p, productsMap);
       return {
-        ...baseWithMeta,
+        ...parsed,
         ordersGenerated: stats.ordersCount,
         salesGenerated: stats.salesTotal,
         discountGiven: stats.discountTotal
@@ -126,10 +141,7 @@ export async function GET(request: Request) {
     const avgTicketPromo = totalOrdersWithPromo > 0 ? totalSalesWithPromo / totalOrdersWithPromo : 0;
 
     return NextResponse.json({
-      success: true,
       promotions: enrichedPromotions,
-      products,
-      categories,
       metrics: {
         totalSalesWithPromo,
         totalOrdersWithPromo,
@@ -169,13 +181,29 @@ export async function POST(request: Request) {
       diasValidos,
       horaInicioValida,
       horaFinValida,
-      canales = ['POS', 'MESEROS', 'DELIVERY', 'PICKUP', 'LANDING'],
+      canales = ['POS', 'ONLINE', 'DELIVERY', 'PICKUP', 'LANDING'],
       montoMinimo = 0,
+      cantidadMinima = 0,
       productoRequeridoId,
+      servicioRequeridoId,
       categoriaRequeridaId,
+      categoriaServicioRequeridaId,
+      profesionalId,
+      recursoId,
       cuponCodigo,
       tipoCliente = 'ANY',
       productosRelacionados = [],
+      serviciosRelacionados = [],
+      goalPreset = 'CUSTOM',
+      alcance = 'PEDIDO_COMPLETO',
+      distanciaMaximaKm,
+      costoMaximoSubsidiado,
+      esCostoCompleto = true,
+      financiamiento = 'NEGOCIO',
+      merchantShippingSubsidy,
+      customerShippingAmount,
+      driverEarnings,
+      esCombinable = false,
       estado = 'ACTIVA'
     } = body;
 
@@ -184,16 +212,29 @@ export async function POST(request: Request) {
     }
 
     const metaObj = {
+      goalPreset,
+      alcance,
       productoRequeridoId,
+      servicioRequeridoId,
       categoriaRequeridaId,
+      categoriaServicioRequeridaId,
+      profesionalId,
+      recursoId,
       productosRelacionados,
+      serviciosRelacionados,
       cuponCodigo,
       canales,
       montoMinimo,
+      cantidadMinima,
       tipoCliente,
-      distanciaMaximaKm: body.distanciaMaximaKm || null,
-      costoMaximoSubsidiado: body.costoMaximoSubsidiado || null,
-      esCostoCompleto: body.esCostoCompleto ?? true
+      distanciaMaximaKm: distanciaMaximaKm || null,
+      costoMaximoSubsidiado: costoMaximoSubsidiado || null,
+      esCostoCompleto: esCostoCompleto ?? true,
+      financiamiento,
+      merchantShippingSubsidy: merchantShippingSubsidy || null,
+      customerShippingAmount: customerShippingAmount || null,
+      driverEarnings: driverEarnings || null,
+      esCombinable: esCombinable ?? false
     };
 
     const finalDescription = `${descripcion.trim()}\n<!-- CITIOX_META: ${JSON.stringify(metaObj)} -->`;
@@ -233,13 +274,7 @@ export async function POST(request: Request) {
       promotion: {
         ...newPromo,
         descripcion,
-        productoRequeridoId,
-        categoriaRequeridaId,
-        productosRelacionados,
-        cuponCodigo,
-        canales,
-        montoMinimo,
-        tipoCliente
+        ...metaObj
       }
     });
   } catch (error: any) {
@@ -302,16 +337,29 @@ export async function PUT(request: Request) {
     }
 
     const metaObj = {
-      productoRequeridoId: updateFields.productoRequeridoId,
-      categoriaRequeridaId: updateFields.categoriaRequeridaId,
+      goalPreset: updateFields.goalPreset || 'CUSTOM',
+      alcance: updateFields.alcance || 'PEDIDO_COMPLETO',
+      productoRequeridoId: updateFields.productoRequeridoId || null,
+      servicioRequeridoId: updateFields.servicioRequeridoId || null,
+      categoriaRequeridaId: updateFields.categoriaRequeridaId || null,
+      categoriaServicioRequeridaId: updateFields.categoriaServicioRequeridaId || null,
+      profesionalId: updateFields.profesionalId || null,
+      recursoId: updateFields.recursoId || null,
       productosRelacionados: updateFields.productosRelacionados || [],
-      cuponCodigo: updateFields.cuponCodigo,
-      canales: updateFields.canales,
-      montoMinimo: updateFields.montoMinimo,
-      tipoCliente: updateFields.tipoCliente,
+      serviciosRelacionados: updateFields.serviciosRelacionados || [],
+      cuponCodigo: updateFields.cuponCodigo || null,
+      canales: updateFields.canales || ['POS', 'ONLINE', 'DELIVERY', 'PICKUP', 'LANDING'],
+      montoMinimo: updateFields.montoMinimo || 0,
+      cantidadMinima: updateFields.cantidadMinima || 0,
+      tipoCliente: updateFields.tipoCliente || 'ANY',
       distanciaMaximaKm: updateFields.distanciaMaximaKm || null,
       costoMaximoSubsidiado: updateFields.costoMaximoSubsidiado || null,
-      esCostoCompleto: updateFields.esCostoCompleto ?? true
+      esCostoCompleto: updateFields.esCostoCompleto ?? true,
+      financiamiento: updateFields.financiamiento || 'NEGOCIO',
+      merchantShippingSubsidy: updateFields.merchantShippingSubsidy || null,
+      customerShippingAmount: updateFields.customerShippingAmount || null,
+      driverEarnings: updateFields.driverEarnings || null,
+      esCombinable: updateFields.esCombinable ?? false
     };
 
     let cleanDesc = updateFields.descripcion || '';
