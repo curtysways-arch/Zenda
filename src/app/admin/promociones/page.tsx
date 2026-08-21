@@ -25,6 +25,7 @@ export default async function PromocionesPage() {
       id: true,
       slug: true,
       nombre: true,
+      tipoNegocio: true,
       isDemo: true,
       horarioApertura: true,
       horarioCierre: true,

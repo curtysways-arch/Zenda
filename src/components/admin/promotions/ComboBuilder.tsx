@@ -7,15 +7,46 @@ interface ComboBuilderProps {
   products: any[];
   categories: any[];
   onSaveCombo: (comboData: any) => void;
+  negocio?: any;
 }
 
 export default function ComboBuilder({
   products,
   categories,
   onSaveCombo,
+  negocio,
 }: ComboBuilderProps) {
-  const [comboName, setComboName] = useState('🍔 Combo Dúo Especial');
-  const [comboDescription, setComboDescription] = useState('Plato Principal + Acompañante + Bebida a precio especial.');
+  const tipoUpper = (negocio?.tipoNegocio || '').toUpperCase();
+  const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA';
+  const isBeautySpa = tipoUpper === 'SPA' || tipoUpper === 'CENTRO_ESTETICA' || tipoUpper === 'PELUQUERIA' || tipoUpper === 'BARBERIA';
+  const isLaundry = tipoUpper === 'SHOE_CARE' || tipoUpper === 'LAVANDERIA';
+
+  const defaultName = isRestaurant
+    ? '🍔 Combo Dúo Especial'
+    : isBeautySpa
+    ? '✨ Paquete Spa Relax Total'
+    : isLaundry
+    ? '👟 Kit de Limpieza Profunda'
+    : '🎁 Paquete Promocional Especial';
+
+  const defaultDesc = isRestaurant
+    ? 'Plato Principal + Acompañante + Bebida a precio especial.'
+    : isBeautySpa
+    ? 'Servicio Principal + Servicio Complementario a tarifa preferencial.'
+    : isLaundry
+    ? 'Limpieza Principal + Servicio Extra a precio promocional.'
+    : 'Combinación de servicios seleccionados con descuento preferencial.';
+
+  const defaultChannels = isRestaurant
+    ? ['POS', 'MESEROS', 'DELIVERY', 'PICKUP', 'LANDING']
+    : isBeautySpa
+    ? ['POS', 'CITAS', 'DOMICILIO', 'LOCAL', 'LANDING']
+    : isLaundry
+    ? ['POS', 'SOLICITUDES', 'RETIRO', 'LOCAL', 'LANDING']
+    : ['POS', 'ONLINE', 'DELIVERY', 'LOCAL', 'LANDING'];
+
+  const [comboName, setComboName] = useState(defaultName);
+  const [comboDescription, setComboDescription] = useState(defaultDesc);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [comboPrice, setComboPrice] = useState<number>(10.99);
   const [imagenUrl, setImagenUrl] = useState<string>('');
@@ -40,11 +71,11 @@ export default function ComboBuilder({
 
   const handleSave = () => {
     if (selectedProductIds.length === 0) {
-      alert('Por favor selecciona al menos 1 producto para armar el combo.');
+      alert('Por favor selecciona al menos 1 producto o servicio para armar el paquete.');
       return;
     }
 
-    const finalDesc = comboDescription && comboDescription !== 'Plato Principal + Acompañante + Bebida a precio especial.' 
+    const finalDesc = comboDescription && comboDescription !== defaultDesc
       ? comboDescription 
       : (selectedProducts.length > 0 ? `Incluye: ${selectedProducts.map(p => p.nombre).join(' + ')}` : comboDescription);
 
@@ -56,7 +87,7 @@ export default function ComboBuilder({
       precioAnterior: normalTotalPrice > 0 ? normalTotalPrice : undefined,
       imagenUrl: finalComboImage,
       productosRelacionados: selectedProductIds,
-      canales: ['POS', 'MESEROS', 'DELIVERY', 'PICKUP', 'LANDING'],
+      canales: defaultChannels,
       estado: 'ACTIVA'
     });
   };

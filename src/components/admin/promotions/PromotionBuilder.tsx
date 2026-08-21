@@ -9,6 +9,7 @@ interface PromotionBuilderProps {
   initialData?: any;
   onSave: (promoData: any) => void;
   onCancel: () => void;
+  negocio?: any;
 }
 
 export default function PromotionBuilder({
@@ -17,6 +18,7 @@ export default function PromotionBuilder({
   initialData,
   onSave,
   onCancel,
+  negocio,
 }: PromotionBuilderProps) {
   const [goalPreset, setGoalPreset] = useState<string>(initialData?.goalPreset || 'TODAY');
 
@@ -537,27 +539,54 @@ export default function PromotionBuilder({
         <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
           <label className="text-xs font-black text-slate-900 uppercase tracking-wider block">📍 Canales Permitidos</label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {[
-              { id: 'POS', label: '🏬 POS / Ventas' },
-              { id: 'MESEROS', label: '🍽️ Meseros' },
-              { id: 'DELIVERY', label: '🛵 Delivery' },
-              { id: 'PICKUP', label: '🛍️ Pickup' },
-              { id: 'LANDING', label: '🌐 Landing' },
-            ].map(ch => {
-              const isChecked = canales.includes(ch.id);
-              return (
-                <button
-                  key={ch.id}
-                  type="button"
-                  onClick={() => toggleChannel(ch.id)}
-                  className={`p-2.5 rounded-xl border text-[10px] font-black transition-all cursor-pointer ${
-                    isChecked ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200'
-                  }`}
-                >
-                  {ch.label}
-                </button>
-              );
-            })}
+            {(() => {
+              const tipoUpper = (negocio?.tipoNegocio || '').toUpperCase();
+              const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA';
+              const isBeautySpa = tipoUpper === 'SPA' || tipoUpper === 'CENTRO_ESTETICA' || tipoUpper === 'PELUQUERIA' || tipoUpper === 'BARBERIA';
+              const isLaundry = tipoUpper === 'SHOE_CARE' || tipoUpper === 'LAVANDERIA';
+
+              const channelsList = isRestaurant ? [
+                { id: 'POS', label: '🏬 POS / Ventas' },
+                { id: 'MESEROS', label: '🍽️ Meseros' },
+                { id: 'DELIVERY', label: '🛵 Delivery' },
+                { id: 'PICKUP', label: '🛍️ Pickup' },
+                { id: 'LANDING', label: '🌐 Landing' },
+              ] : isBeautySpa ? [
+                { id: 'POS', label: '🏬 POS / Recepción' },
+                { id: 'CITAS', label: '📅 Citas Online' },
+                { id: 'DOMICILIO', label: '🚗 A Domicilio' },
+                { id: 'LOCAL', label: '📍 En Local' },
+                { id: 'LANDING', label: '🌐 Web' },
+              ] : isLaundry ? [
+                { id: 'POS', label: '🏬 POS / Recepción' },
+                { id: 'SOLICITUDES', label: '📦 Solicitud Online' },
+                { id: 'RETIRO', label: '🛵 Retiro / Entrega' },
+                { id: 'LOCAL', label: '📍 En Taller' },
+                { id: 'LANDING', label: '🌐 Web' },
+              ] : [
+                { id: 'POS', label: '🏬 POS / Caja' },
+                { id: 'ONLINE', label: '🛒 Pedidos Online' },
+                { id: 'DELIVERY', label: '🛵 Delivery / Envío' },
+                { id: 'LOCAL', label: '📍 En Local' },
+                { id: 'LANDING', label: '🌐 Web' },
+              ];
+
+              return channelsList.map(ch => {
+                const isChecked = canales.includes(ch.id);
+                return (
+                  <button
+                    key={ch.id}
+                    type="button"
+                    onClick={() => toggleChannel(ch.id)}
+                    className={`p-2.5 rounded-xl border text-[10px] font-black transition-all cursor-pointer ${
+                      isChecked ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200'
+                    }`}
+                  >
+                    {ch.label}
+                  </button>
+                );
+              });
+            })()}
           </div>
         </div>
 

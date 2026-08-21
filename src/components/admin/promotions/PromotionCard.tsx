@@ -24,18 +24,73 @@ export default function PromotionCard({
 
   const formatCurrency = (val?: number) => `$${(Number(val) || 0).toFixed(2)}`;
 
+  const tipoNegocio = promotion?.negocio?.tipoNegocio || promotion?.tipoNegocio || '';
+  const tipoUpper = (tipoNegocio || '').toUpperCase();
+  const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA';
+  const isBeautySpa = tipoUpper === 'SPA' || tipoUpper === 'CENTRO_ESTETICA' || tipoUpper === 'PELUQUERIA' || tipoUpper === 'BARBERIA';
+  const isLaundry = tipoUpper === 'SHOE_CARE' || tipoUpper === 'LAVANDERIA';
+
   const getTypeBadge = (type?: string) => {
     const t = (type || 'PORCENTAJE').toUpperCase();
     if (t === '2X1' || t === 'DOS_POR_UNO') return { label: '2x1 🎁', color: 'bg-purple-100 text-purple-800 border-purple-200' };
     if (t === '3X2' || t === 'TRES_POR_DOS') return { label: '3x2 🎉', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' };
     if (t === 'ENVIO_GRATIS') return { label: 'Envío Gratis 🛵', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' };
-    if (t === 'COMBO') return { label: 'Combo 🍔', color: 'bg-amber-100 text-amber-900 border-amber-200' };
+    if (t === 'COMBO') {
+      const comboLabel = isRestaurant ? 'Combo 🍔' : isLaundry ? 'Kit 📦' : 'Paquete 🎁';
+      return { label: comboLabel, color: 'bg-amber-100 text-amber-900 border-amber-200' };
+    }
     if (t === 'CUPON') return { label: 'Cupón 🎫', color: 'bg-blue-100 text-blue-800 border-blue-200' };
     if (t === 'DESCUENTO_FIJO') return { label: 'Descuento Fijo 💵', color: 'bg-teal-100 text-teal-800 border-teal-200' };
     return { label: 'Porcentaje %', color: 'bg-orange-100 text-orange-800 border-orange-200' };
   };
 
   const typeInfo = getTypeBadge(promotion.tipoPromo);
+
+  // Canales dinámicos según el tipo de negocio
+  const getActiveChannelsList = () => {
+    const channelsMap: Record<string, { label: string; icon: any }> = isRestaurant ? {
+      POS: { label: 'POS', icon: Store },
+      MESEROS: { label: 'Meseros', icon: Utensils },
+      DELIVERY: { label: 'Delivery', icon: Truck },
+      PICKUP: { label: 'Pickup', icon: ShoppingBag },
+      LANDING: { label: 'Landing', icon: Globe }
+    } : isBeautySpa ? {
+      POS: { label: 'POS / Recepción', icon: Store },
+      CITAS: { label: 'Citas', icon: Calendar },
+      DOMICILIO: { label: 'A Domicilio', icon: Truck },
+      LOCAL: { label: 'En Local', icon: ShoppingBag },
+      LANDING: { label: 'Landing', icon: Globe },
+      MESEROS: { label: 'Citas Directas', icon: Calendar } // Fallback si venía de un preset
+    } : isLaundry ? {
+      POS: { label: 'POS / Recepción', icon: Store },
+      SOLICITUDES: { label: 'Solicitud Online', icon: ShoppingCart },
+      RETIRO: { label: 'Retiro / Entrega', icon: Truck },
+      LOCAL: { label: 'En Taller', icon: ShoppingBag },
+      LANDING: { label: 'Landing', icon: Globe },
+      MESEROS: { label: 'Retiro en Local', icon: ShoppingBag } // Fallback
+    } : {
+      POS: { label: 'POS', icon: Store },
+      ONLINE: { label: 'Online', icon: ShoppingCart },
+      DELIVERY: { label: 'Delivery', icon: Truck },
+      PICKUP: { label: 'Pickup', icon: ShoppingBag },
+      LANDING: { label: 'Landing', icon: Globe },
+      MESEROS: { label: 'Atención Directa', icon: Store } // Fallback
+    };
+
+    const activeList = Array.isArray(promotion.canales) && promotion.canales.length > 0
+      ? promotion.canales
+      : ['POS', 'LANDING', isRestaurant ? 'MESEROS' : isBeautySpa ? 'CITAS' : 'DELIVERY'];
+
+    return activeList.map((ch: string) => {
+      const info = channelsMap[ch.toUpperCase()] || { label: ch, icon: Store };
+      const IconComponent = info.icon;
+      return (
+        <span key={ch} className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-bold flex items-center gap-1">
+          <IconComponent className="size-3" /> {info.label}
+        </span>
+      );
+    });
+  };
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden group">
@@ -78,21 +133,7 @@ export default function PromotionCard({
         <div className="space-y-1 pt-1">
           <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Canales Activos:</span>
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-bold flex items-center gap-1">
-              <Store className="size-3" /> POS
-            </span>
-            <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-bold flex items-center gap-1">
-              <Utensils className="size-3" /> Meseros
-            </span>
-            <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-bold flex items-center gap-1">
-              <Truck className="size-3" /> Delivery
-            </span>
-            <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-bold flex items-center gap-1">
-              <ShoppingBag className="size-3" /> Pickup
-            </span>
-            <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[10px] font-bold flex items-center gap-1">
-              <Globe className="size-3" /> Landing
-            </span>
+            {getActiveChannelsList()}
           </div>
         </div>
 

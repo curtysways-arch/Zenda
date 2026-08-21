@@ -119,6 +119,30 @@ export default function PromotionDashboard({
 
   const formatCurrency = (val?: number) => `$${(Number(val) || 0).toFixed(2)}`;
 
+  const tipoUpper = (negocio?.tipoNegocio || '').toUpperCase();
+  const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA';
+  const isBeautySpa = tipoUpper === 'SPA' || tipoUpper === 'CENTRO_ESTETICA' || tipoUpper === 'PELUQUERIA' || tipoUpper === 'BARBERIA';
+  const isLaundry = tipoUpper === 'SHOE_CARE' || tipoUpper === 'LAVANDERIA';
+
+  const comboTabLabel = isRestaurant ? 'Combos' : isBeautySpa ? 'Paquetes de Servicios' : isLaundry ? 'Kits de Servicios' : 'Paquetes & Combos';
+  const comboTabIcon = isRestaurant ? Utensils : Sparkles;
+
+  const headerDescription = isRestaurant
+    ? 'Aumenta tus ventas, incrementa el ticket promedio y llena horas de baja demanda reutilizando tu infraestructura actual de Citiox.'
+    : isBeautySpa
+    ? 'Atrae más clientes a tu agenda, ofrece paquetes de servicios preferenciales y maximiza tus reservas en horas de baja demanda.'
+    : isLaundry
+    ? 'Genera más solicitudes de servicio, ofrece kits de limpieza y optimiza los retiros a domicilio de tu taller.'
+    : 'Aumenta tus ventas, atrae nuevos clientes y ofrece promociones exclusivas en la plataforma Citiox.';
+
+  const emptyText = isRestaurant
+    ? 'Incrementa las ventas de tu restaurante creando tu primera oferta, combo o cupón de descuento.'
+    : isBeautySpa
+    ? 'Incrementa las reservas de tu spa o centro creando tu primer paquete de servicios o cupón promocional.'
+    : isLaundry
+    ? 'Impulsa tus solicitudes de servicio ofreciendo tus primeros kits de limpieza o cupones de descuento.'
+    : 'Incrementa tus ventas creando tu primera oferta o cupón de descuento.';
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Header Principal */}
@@ -129,7 +153,7 @@ export default function PromotionDashboard({
             <h1 className="text-2xl font-black italic uppercase tracking-tight text-white !text-white">Módulo de Promociones & Crecimiento</h1>
           </div>
           <p className="text-slate-300 text-xs font-medium max-w-xl">
-            Aumenta tus ventas, incrementa el ticket promedio y llena horas de baja demanda reutilizando tu infraestructura actual de Citiox.
+            {headerDescription}
           </p>
         </div>
 
@@ -176,7 +200,7 @@ export default function PromotionDashboard({
         {[
           { id: 'DASHBOARD', label: 'Dashboard & Activas', icon: Tags },
           { id: 'BUILDER', label: 'Constructor', icon: Plus },
-          { id: 'COMBO', label: 'Combos', icon: Utensils },
+          { id: 'COMBO', label: comboTabLabel, icon: comboTabIcon },
           { id: 'COUPONS', label: 'Cupones', icon: Ticket },
           { id: 'OPPORTUNITIES', label: '💡 Oportunidades', icon: Lightbulb },
           { id: 'ANALYTICS', label: 'Analytics', icon: BarChart3 },
@@ -213,7 +237,7 @@ export default function PromotionDashboard({
               </div>
               <h3 className="text-base font-extrabold text-slate-800">Aún no tienes promociones creadas</h3>
               <p className="text-slate-500 text-xs font-medium max-w-xs mx-auto">
-                Incrementa las ventas de tu restaurante creando tu primera oferta, combo o cupón de descuento.
+                {emptyText}
               </p>
               <button
                 type="button"
@@ -228,7 +252,7 @@ export default function PromotionDashboard({
               {promotions.map(promo => (
                 <PromotionCard
                   key={promo.id}
-                  promotion={promo}
+                  promotion={{ ...promo, negocio: promo.negocio || negocio }}
                   onEdit={handleEditPromo}
                   onToggleStatus={handleToggleStatus}
                   onDuplicate={handleDuplicate}
@@ -247,6 +271,7 @@ export default function PromotionDashboard({
           initialData={builderPrefilledData}
           onSave={handleSavePromotion}
           onCancel={() => setActiveTab('DASHBOARD')}
+          negocio={negocio}
         />
       )}
 
@@ -255,6 +280,7 @@ export default function PromotionDashboard({
           products={products}
           categories={categories}
           onSaveCombo={handleSavePromotion}
+          negocio={negocio}
         />
       )}
 
@@ -270,6 +296,7 @@ export default function PromotionDashboard({
           products={products}
           categories={categories}
           onSelectOpportunity={handleCreatePromoClick}
+          negocio={negocio}
         />
       )}
 

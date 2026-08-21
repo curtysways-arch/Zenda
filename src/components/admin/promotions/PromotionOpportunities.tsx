@@ -7,86 +7,253 @@ interface PromotionOpportunitiesProps {
   products: any[];
   categories: any[];
   onSelectOpportunity: (prefilledData: any) => void;
+  negocio?: any;
 }
 
 export default function PromotionOpportunities({
   products,
   categories,
   onSelectOpportunity,
+  negocio,
 }: PromotionOpportunitiesProps) {
+  const tipoUpper = (negocio?.tipoNegocio || '').toUpperCase();
+  const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA';
+  const isBeautySpa = tipoUpper === 'SPA' || tipoUpper === 'CENTRO_ESTETICA' || tipoUpper === 'PELUQUERIA' || tipoUpper === 'BARBERIA';
+  const isLaundry = tipoUpper === 'SHOE_CARE' || tipoUpper === 'LAVANDERIA';
 
-  const opportunities = [
-    {
-      id: 'opp_happy_hour',
-      icon: Clock,
-      title: '🕐 Llenar horas de baja demanda (Happy Hour)',
-      badge: 'Baja Demanda (15:00 - 17:00)',
-      color: 'border-amber-200 bg-amber-50/50 text-amber-900',
-      description: 'Tus ventas bajan un 40% durante las tardes de lunes a jueves. Crea una promoción temporal entre 15:00 y 17:00 para impulsar la ocupación de cocina.',
-      presetData: {
-        goalPreset: 'HAPPY_HOUR',
-        titulo: '🔥 Happy Hour del Chef (15:00 - 17:00)',
-        descripcion: 'Disfruta de 20% OFF en consumo durante las horas seleccionadas.',
-        tipoPromo: 'PORCENTAJE',
-        precioPromo: 20,
-        diasValidos: ['1', '2', '3', '4'],
-        horaInicioValida: '15:00',
-        horaFinValida: '17:00',
-        canales: ['POS', 'MESEROS', 'DELIVERY', 'PICKUP', 'LANDING']
-      }
-    },
-    {
-      id: 'opp_combo_bundle',
-      icon: ShoppingBag,
-      title: '🍔 Combo de Hamburguesa + Acompañamiento + Bebida',
-      badge: 'Venta Cruzada Impulsada',
-      color: 'border-indigo-200 bg-indigo-50/50 text-indigo-900',
-      description: 'El 65% de los clientes que piden platos fuertes también compran bebidas o acompañantes. Aumenta el ticket promedio creando un Combo especial.',
-      presetData: {
-        goalPreset: 'BUNDLE',
-        titulo: '🍔 Combo Parrillero Especial',
-        descripcion: 'Plato principal + Acompañante + Bebida fría por precio especial.',
-        tipoPromo: 'COMBO',
-        precioPromo: 10.99,
-        precioAnterior: 14.00,
-        canales: ['POS', 'MESEROS', 'DELIVERY', 'PICKUP', 'LANDING']
-      }
-    },
-    {
-      id: 'opp_new_customer',
-      icon: Users,
-      title: '🆕 Cupón de Bienvenida para Clientes Nuevos',
-      badge: 'Captación de Clientes',
-      color: 'border-emerald-200 bg-emerald-50/50 text-emerald-900',
-      description: 'Conduce a nuevos comensales a probar tu restaurante regalando $3.00 en su primer pedido online con el código BIENVENIDO.',
-      presetData: {
-        goalPreset: 'NEW_CLIENT',
-        titulo: '🎁 15% OFF en Tu Primer Pedido Online',
-        descripcion: 'Ingresa el código BIENVENIDO al finalizar tu pedido.',
-        tipoPromo: 'CUPON',
-        cuponCodigo: 'BIENVENIDO',
-        precioPromo: 15,
-        tipoCliente: 'NEW',
-        montoMinimo: 12.00,
-        canales: ['LANDING', 'DELIVERY', 'PICKUP']
-      }
-    },
-    {
-      id: 'opp_slow_moving',
-      icon: TrendingUp,
-      title: '⚡ Impulsar Producto de Baja Rotación',
-      badge: 'Rotación de Inventario',
-      color: 'border-purple-200 bg-purple-50/50 text-purple-900',
-      description: 'Crea una promoción de 2x1 o Descuento Fijo en productos seleccionados para acelerar las ventas de la semana.',
-      presetData: {
-        goalPreset: 'PRODUCT_BOOST',
-        titulo: '⚡ 2x1 en Bebidas & Especiales',
-        descripcion: 'Pide 2 y paga solo 1 en la categoría seleccionada.',
-        tipoPromo: 'DOS_POR_UNO',
-        canales: ['POS', 'MESEROS', 'DELIVERY', 'PICKUP', 'LANDING']
-      }
+  const defaultChannels = isRestaurant
+    ? ['POS', 'MESEROS', 'DELIVERY', 'PICKUP', 'LANDING']
+    : isBeautySpa
+    ? ['POS', 'CITAS', 'DOMICILIO', 'LOCAL', 'LANDING']
+    : isLaundry
+    ? ['POS', 'SOLICITUDES', 'RETIRO', 'LOCAL', 'LANDING']
+    : ['POS', 'ONLINE', 'DELIVERY', 'LOCAL', 'LANDING'];
+
+  const getOpportunitiesList = () => {
+    if (isBeautySpa) {
+      return [
+        {
+          id: 'opp_happy_hour',
+          icon: Clock,
+          title: '🕐 Llenar agenda en horas de baja demanda (Happy Spa)',
+          badge: 'Baja Ocupación (14:00 - 16:00)',
+          color: 'border-amber-200 bg-amber-50/50 text-amber-900',
+          description: 'La asistencia suele bajar durante las primeras horas de la tarde. Ofrece 20% OFF en citas agendadas entre 14:00 y 16:00 de lunes a jueves.',
+          presetData: {
+            goalPreset: 'HAPPY_HOUR',
+            titulo: '✨ Citas con 20% OFF en Tardes (14:00 - 16:00)',
+            descripcion: 'Disfruta de descuento especial en todos tus servicios agendados en horario preferencial.',
+            tipoPromo: 'PORCENTAJE',
+            precioPromo: 20,
+            diasValidos: ['Lunes', 'Martes', 'Miércoles', 'Jueves'],
+            horaInicioValida: '14:00',
+            horaFinValida: '16:00',
+            canales: defaultChannels
+          }
+        },
+        {
+          id: 'opp_combo_bundle',
+          icon: ShoppingBag,
+          title: '💆 Paquete Especial: Servicio Principal + Tratamiento Extra',
+          badge: 'Venta Cruzada Impulsada',
+          color: 'border-indigo-200 bg-indigo-50/50 text-indigo-900',
+          description: 'Aumenta el ticket promedio ofreciendo un paquete combinado de Servicio de Masaje / Limpieza + Mascarilla / Manicura a precio especial.',
+          presetData: {
+            goalPreset: 'BUNDLE',
+            titulo: '✨ Paquete Spa Renacer Total',
+            descripcion: 'Servicio Principal + Tratamiento Extra con descuento exclusivo.',
+            tipoPromo: 'COMBO',
+            precioPromo: 25.00,
+            precioAnterior: 35.00,
+            canales: defaultChannels
+          }
+        },
+        {
+          id: 'opp_new_customer',
+          icon: Users,
+          title: '🆕 Cupón de Bienvenida para Primeras Citas',
+          badge: 'Captación de Clientes',
+          color: 'border-emerald-200 bg-emerald-50/50 text-emerald-900',
+          description: 'Atrae nuevos clientes regalando $5.00 de descuento en su primera reserva online con el código BIENVENIDO.',
+          presetData: {
+            goalPreset: 'NEW_CLIENT',
+            titulo: '🎁 $5.00 OFF en Tu Primera Reserva',
+            descripcion: 'Ingresa el código BIENVENIDO al agendar tu primera cita.',
+            tipoPromo: 'CUPON',
+            cuponCodigo: 'BIENVENIDO',
+            precioPromo: 5,
+            tipoCliente: 'NEW',
+            montoMinimo: 20.00,
+            canales: defaultChannels
+          }
+        },
+        {
+          id: 'opp_slow_moving',
+          icon: TrendingUp,
+          title: '⚡ Impulsar Servicios con 2x1 o Descuento Especial',
+          badge: 'Impulso de Servicios',
+          color: 'border-purple-200 bg-purple-50/50 text-purple-900',
+          description: 'Lanza una oferta 2x1 en servicios seleccionados (ej. 2x1 en manicura para amigas) para llenar tu local.',
+          presetData: {
+            goalPreset: 'PRODUCT_BOOST',
+            titulo: '👯 Promo Amigas: 2x1 en Servicios Seleccionados',
+            descripcion: 'Ven con un acompañante y disfruten la promoción 2x1.',
+            tipoPromo: 'DOS_POR_UNO',
+            canales: defaultChannels
+          }
+        }
+      ];
     }
-  ];
+
+    if (isLaundry) {
+      return [
+        {
+          id: 'opp_happy_hour',
+          icon: Clock,
+          title: '🕐 Descuento en Retiros a Domicilio Semanales',
+          badge: 'Impulso Logístico',
+          color: 'border-amber-200 bg-amber-50/50 text-amber-900',
+          description: 'Incentiva los pedidos a domicilio a inicio de semana con 15% OFF en recolecciones programadas.',
+          presetData: {
+            goalPreset: 'HAPPY_HOUR',
+            titulo: '🚚 Lunes & Martes de Limpieza: 15% OFF',
+            descripcion: 'Aprovecha descuento especial en el retiro de tu calzado o prendas.',
+            tipoPromo: 'PORCENTAJE',
+            precioPromo: 15,
+            diasValidos: ['Lunes', 'Martes'],
+            canales: defaultChannels
+          }
+        },
+        {
+          id: 'opp_combo_bundle',
+          icon: ShoppingBag,
+          title: '👟 Kit de Limpieza Profunda + Impermeabilizante',
+          badge: 'Venta Cruzada',
+          color: 'border-indigo-200 bg-indigo-50/50 text-indigo-900',
+          description: 'Combina el servicio de lavado de zapatos o mochilas con desinfección / impermeabilizante a tarifa preferencial.',
+          presetData: {
+            goalPreset: 'BUNDLE',
+            titulo: '👟 Kit Limpieza Profunda + Protecciones',
+            descripcion: 'Limpieza de Calzado + Impermeabilizante a precio especial.',
+            tipoPromo: 'COMBO',
+            precioPromo: 12.00,
+            precioAnterior: 16.00,
+            canales: defaultChannels
+          }
+        },
+        {
+          id: 'opp_new_customer',
+          icon: Users,
+          title: '🆕 Cupón de Bienvenida para Nuevos Retiros',
+          badge: 'Captación de Clientes',
+          color: 'border-emerald-200 bg-emerald-50/50 text-emerald-900',
+          description: 'Regala un cupón de $3.00 OFF en la primera solicitud online de recolección.',
+          presetData: {
+            goalPreset: 'NEW_CLIENT',
+            titulo: '🎁 $3.00 OFF en Tu Primera Solicitud',
+            descripcion: 'Usa el código LIMPIEZA10 en tu primera solicitud a domicilio.',
+            tipoPromo: 'CUPON',
+            cuponCodigo: 'LIMPIEZA10',
+            precioPromo: 3,
+            tipoCliente: 'NEW',
+            montoMinimo: 10.00,
+            canales: defaultChannels
+          }
+        },
+        {
+          id: 'opp_slow_moving',
+          icon: TrendingUp,
+          title: '⚡ Promo 3x2 en Lavado de Calzado o Prendas',
+          badge: 'Volumen de Artículos',
+          color: 'border-purple-200 bg-purple-50/50 text-purple-900',
+          description: 'Lanza una oferta 3x2 (Lleva 3 pares y paga 2) para aumentar la cantidad de artículos por solicitud.',
+          presetData: {
+            goalPreset: 'PRODUCT_BOOST',
+            titulo: '👟 Promo 3x2: Limpia 3 Pares y Paga 2',
+            descripcion: 'Válido para calzado deportivo y prendas seleccionadas.',
+            tipoPromo: 'TRES_POR_DOS',
+            canales: defaultChannels
+          }
+        }
+      ];
+    }
+
+    // Default / Restaurant
+    return [
+      {
+        id: 'opp_happy_hour',
+        icon: Clock,
+        title: '🕐 Llenar horas de baja demanda (Happy Hour)',
+        badge: 'Baja Demanda (15:00 - 17:00)',
+        color: 'border-amber-200 bg-amber-50/50 text-amber-900',
+        description: 'Tus ventas bajan un 40% durante las tardes de lunes a jueves. Crea una promoción temporal entre 15:00 y 17:00 para impulsar la ocupación.',
+        presetData: {
+          goalPreset: 'HAPPY_HOUR',
+          titulo: '🔥 Happy Hour Especial (15:00 - 17:00)',
+          descripcion: 'Disfruta de 20% OFF durante las horas seleccionadas.',
+          tipoPromo: 'PORCENTAJE',
+          precioPromo: 20,
+          diasValidos: ['Lunes', 'Martes', 'Miércoles', 'Jueves'],
+          horaInicioValida: '15:00',
+          horaFinValida: '17:00',
+          canales: defaultChannels
+        }
+      },
+      {
+        id: 'opp_combo_bundle',
+        icon: ShoppingBag,
+        title: '🍔 Combo de Productos / Servicios Principales',
+        badge: 'Venta Cruzada Impulsada',
+        color: 'border-indigo-200 bg-indigo-50/50 text-indigo-900',
+        description: 'Aumenta el ticket promedio creando un Combo especial con varios productos o servicios incluidos.',
+        presetData: {
+          goalPreset: 'BUNDLE',
+          titulo: '🎁 Combo Especial Dúo',
+          descripcion: 'Producto Principal + Acompañante a precio especial.',
+          tipoPromo: 'COMBO',
+          precioPromo: 10.99,
+          precioAnterior: 14.00,
+          canales: defaultChannels
+        }
+      },
+      {
+        id: 'opp_new_customer',
+        icon: Users,
+        title: '🆕 Cupón de Bienvenida para Clientes Nuevos',
+        badge: 'Captación de Clientes',
+        color: 'border-emerald-200 bg-emerald-50/50 text-emerald-900',
+        description: 'Conduce a nuevos clientes a probar tu negocio regalando un descuento especial en su primer pedido u orden online con el código BIENVENIDO.',
+        presetData: {
+          goalPreset: 'NEW_CLIENT',
+          titulo: '🎁 15% OFF en Tu Primer Pedido Online',
+          descripcion: 'Ingresa el código BIENVENIDO al finalizar tu pedido.',
+          tipoPromo: 'CUPON',
+          cuponCodigo: 'BIENVENIDO',
+          precioPromo: 15,
+          tipoCliente: 'NEW',
+          montoMinimo: 12.00,
+          canales: defaultChannels
+        }
+      },
+      {
+        id: 'opp_slow_moving',
+        icon: TrendingUp,
+        title: '⚡ Impulsar Producto / Servicio de Baja Rotación',
+        badge: 'Rotación de Inventario',
+        color: 'border-purple-200 bg-purple-50/50 text-purple-900',
+        description: 'Crea una promoción de 2x1 o Descuento Fijo en productos o servicios seleccionados para acelerar las ventas de la semana.',
+        presetData: {
+          goalPreset: 'PRODUCT_BOOST',
+          titulo: '⚡ 2x1 en Selección Especial',
+          descripcion: 'Pide 2 y paga solo 1 en la categoría seleccionada.',
+          tipoPromo: 'DOS_POR_UNO',
+          canales: defaultChannels
+        }
+      }
+    ];
+  };
+
+  const opportunities = getOpportunitiesList();
 
   return (
     <div className="space-y-6">
