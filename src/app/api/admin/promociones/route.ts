@@ -18,7 +18,7 @@ function extractMetadata(p: any, productsMap: Map<string, any>) {
     } catch (_) {}
   }
 
-  const productoRequeridoId = meta.productoRequeridoId || (p.PromotionToService && p.PromotionToService[0]?.B) || null;
+  const productoRequeridoId = meta.productoRequeridoId || meta.servicioRequeridoId || (p.PromotionToService && p.PromotionToService[0]?.B) || null;
   const linkedProduct = productoRequeridoId ? productsMap.get(productoRequeridoId) : null;
   const finalImagenUrl = p.imagenUrl && p.imagenUrl.trim() !== '' 
     ? p.imagenUrl 
@@ -31,7 +31,9 @@ function extractMetadata(p: any, productsMap: Map<string, any>) {
     goalPreset: meta.goalPreset || 'CUSTOM',
     alcance: meta.alcance || 'PEDIDO_COMPLETO',
     productoRequeridoId,
-    servicioRequeridoId: meta.servicioRequeridoId || null,
+    servicioRequeridoId: meta.servicioRequeridoId || productoRequeridoId || null,
+    productoNombre: linkedProduct?.nombre || null,
+    servicioNombre: linkedProduct?.nombre || null,
     categoriaRequeridaId: meta.categoriaRequeridaId || null,
     categoriaServicioRequeridaId: meta.categoriaServicioRequeridaId || null,
     profesionalId: meta.profesionalId || null,

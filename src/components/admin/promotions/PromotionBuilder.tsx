@@ -470,19 +470,54 @@ export default function PromotionBuilder({
               ))}
             </div>
 
-            {alcance === 'PRODUCTOS' && products && products.length > 0 && (
-              <div>
-                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Producto Requerido Específico</label>
-                <select
-                  value={productoRequeridoId}
-                  onChange={e => setProductoRequeridoId(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 outline-none"
-                >
-                  <option value="">-- Todos los Productos del Catálogo --</option>
-                  {products.map(p => (
-                    <option key={p.id} value={p.id}>{p.nombre} (${(Number(p.precio) || 0).toFixed(2)})</option>
-                  ))}
-                </select>
+            {(alcance === 'PRODUCTOS' || alcance === 'SERVICIOS') && (
+              <div className="space-y-3 pt-2 border-t border-slate-100">
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
+                    {isBeautySpa || isLaundry ? '📌 Servicio Específico Asignado' : '📌 Producto Específico Asignado'}
+                  </label>
+                  <select
+                    value={servicioRequeridoId || productoRequeridoId}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setServicioRequeridoId(val);
+                      setProductoRequeridoId(val);
+                    }}
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 outline-none focus:border-amber-500"
+                  >
+                    <option value="">
+                      {isBeautySpa || isLaundry ? '-- Todos los Servicios del Catálogo --' : '-- Todos los Productos del Catálogo --'}
+                    </option>
+                    {products && products.map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.nombre} {p.precio ? `($${(Number(p.precio) || 0).toFixed(2)})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                    {isBeautySpa || isLaundry
+                      ? 'Asigna la promoción a un servicio en particular o déjalo en blanco para aplicar a todos los servicios.'
+                      : 'Asigna la promoción a un producto en particular o déjalo en blanco para aplicar a todo el catálogo.'}
+                  </p>
+                </div>
+
+                {categories && categories.length > 0 && (
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">
+                      🏷️ Categoría Específica Asignada
+                    </label>
+                    <select
+                      value={categoriaRequeridaId}
+                      onChange={e => setCategoriaRequeridaId(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 outline-none focus:border-amber-500"
+                    >
+                      <option value="">-- Todas las Categorías --</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>{c.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
             )}
           </div>

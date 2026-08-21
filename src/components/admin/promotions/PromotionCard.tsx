@@ -138,6 +138,20 @@ export default function PromotionCard({
           </div>
         </div>
 
+        {/* Alcance / Asignación a Servicio o Producto */}
+        <div className="bg-amber-50/60 p-2.5 rounded-xl border border-amber-200/60 flex items-center justify-between text-[11px]">
+          <span className="text-amber-800 font-extrabold">Asignado a:</span>
+          <span className="font-black text-amber-950 truncate max-w-[170px]">
+            {promotion.productoRequeridoId || promotion.servicioRequeridoId
+              ? `📌 ${promotion.productoNombre || promotion.servicioNombre || 'Servicio / Producto Específico'}`
+              : promotion.alcance === 'SERVICIOS'
+                ? '💆 Todos los Servicios'
+                : promotion.alcance === 'PRODUCTOS'
+                  ? '🛍️ Todos los Productos'
+                  : '🛒 Todo el Catálogo'}
+          </span>
+        </div>
+
         {/* Canales Activos */}
         <div className="space-y-1 pt-1">
           <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Canales Activos:</span>
