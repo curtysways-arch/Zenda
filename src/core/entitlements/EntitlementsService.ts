@@ -56,7 +56,8 @@ export class EntitlementsService {
     const slugUpper = (slug || '').toUpperCase();
     const nameUpper = (nombre || '').toUpperCase();
 
-    const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT';
+    const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT' ||
+      nameUpper.includes('PARRILLA') || nameUpper.includes('RESTAURANTE') || nameUpper.includes('GASTRONOMIA') || nameUpper.includes('BURGER') || nameUpper.includes('PIZZA') || nameUpper.includes('TACO');
     const isPinchos = tipoUpper === 'PINCHOS' || slugUpper === 'PINCHOS';
     const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || slugUpper === 'CANCHAS';
     const isServiceBiz = !isRestaurant && !isPinchos && !isCanchas && (

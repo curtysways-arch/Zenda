@@ -91,7 +91,8 @@ export default function AdminSidebar({
           const slugUpper = (data.slug || '').toUpperCase();
           const nameUpper = (data.nombre || businessName || '').toUpperCase();
 
-          const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT';
+          const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT' ||
+            nameUpper.includes('PARRILLA') || nameUpper.includes('RESTAURANTE') || nameUpper.includes('GASTRONOMIA') || nameUpper.includes('BURGER') || nameUpper.includes('PIZZA') || nameUpper.includes('TACO');
           const isPinchos = tipoUpper === 'PINCHOS' || slugUpper === 'PINCHOS';
           const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || slugUpper === 'CANCHAS';
           const isServiceBiz = !isRestaurant && !isPinchos && !isCanchas && (
@@ -176,10 +177,7 @@ export default function AdminSidebar({
       items.push({ name: 'Mesas', href: '/admin/mesas', icon: Layout, section: 'GESTIÓN OPERATIVA' });
     }
     if (capabilities.kitchen) {
-      items.push({ name: 'Cocina KDS', href: '/admin/cocina', icon: Utensils, section: 'GESTIÓN OPERATIVA' });
-    }
-    if (capabilities.delivery) {
-      items.push({ name: 'Logística & Delivery', href: '/admin/logistica', icon: Truck, section: 'GESTIÓN OPERATIVA' });
+      items.push({ name: 'Comandas / Cocina', href: '/admin/cocina', icon: Utensils, section: 'GESTIÓN OPERATIVA' });
     }
     if (capabilities.appointments) {
       items.push({ name: 'Agenda / Citas', href: '/admin/citas', icon: CalendarDays, section: 'GESTIÓN OPERATIVA' });
@@ -212,6 +210,9 @@ export default function AdminSidebar({
     // Administration (Universal for all Citiox businesses)
     items.push({ name: 'Clientes', href: '/admin/clientes', icon: Contact, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     items.push({ name: 'Personal & Equipo', href: '/admin/usuarios', icon: Users, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    if (capabilities.delivery) {
+      items.push({ name: 'Repartidores', href: '/admin/logistica', icon: Truck, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    }
     items.push({ name: 'Reportes', href: '/admin/reportes', icon: BarChart3, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
 
     // Settings & Configuration
