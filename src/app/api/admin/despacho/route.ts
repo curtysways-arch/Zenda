@@ -31,88 +31,56 @@ export async function GET(request: Request) {
     const memoryDispatchTasks = dispatchEngine.getTasks(negocioId);
     const memoryResources = resourceRuntime.getResources(negocioId);
 
-    // 2. Construcción de filtro por fecha
-    const whereCondition: any = { negocioId };
+    // Helper para obtener YYYY-MM-DD en fecha local
+    function toYYYYMMDD(d: Date): string {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
 
-    if (dateParam && dateParam !== 'all') {
-      let targetDate = new Date();
-      if (dateParam === 'yesterday') {
-        targetDate.setDate(targetDate.getDate() - 1);
-      } else if (dateParam !== 'today') {
-        const parts = dateParam.split('-');
-        if (parts.length === 3) {
-          targetDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-        }
-      }
+    const todayDate = new Date();
+    const todayStr = toYYYYMMDD(todayDate);
 
-      const startOfDay = new Date(targetDate);
-      startOfDay.setHours(0, 0, 0, 0);
+    const yesterdayDate = new Date();
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterdayStr = toYYYYMMDD(yesterdayDate);
 
-      const endOfDay = new Date(targetDate);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      if (dateParam === 'today') {
-        whereCondition.OR = [
-          {
-            createdAt: {
-              gte: startOfDay,
-              lte: endOfDay
-            }
-          },
-          {
-            estado: {
-              in: ['PENDIENTE', 'EN_PREPARACION', 'PREPARADO', 'EN_CAMINO', 'EN_MESA', 'POR_COBRAR']
-            }
-          }
-        ];
-      } else {
-        whereCondition.createdAt = {
-          gte: startOfDay,
-          lte: endOfDay
-        };
-      }
+    let targetDateStr = '';
+    if (dateParam === 'yesterday') {
+      targetDateStr = yesterdayStr;
+    } else if (dateParam === 'today') {
+      targetDateStr = todayStr;
+    } else if (dateParam && dateParam !== 'all') {
+      targetDateStr = dateParam; // 'YYYY-MM-DD'
     }
 
     // 3. Pedidos en base de datos para sincronización y vista unificada
     let dbOrders = await (prisma as any).pedido.findMany({
-      where: whereCondition,
+      where: { negocioId },
       include: {
         items: true,
         payment: true
       },
       orderBy: { createdAt: 'desc' },
-      take: 200
+      take: 300
     });
 
-    // 4. Refinamiento estricto en memoria para garantizar exactitud de fechas
+    // 4. Filtrado estricto por YYYY-MM-DD en memoria (Timezone-proof)
     if (dateParam && dateParam !== 'all') {
-      let targetDate = new Date();
-      if (dateParam === 'yesterday') {
-        targetDate.setDate(targetDate.getDate() - 1);
-      } else if (dateParam !== 'today') {
-        const parts = dateParam.split('-');
-        if (parts.length === 3) {
-          targetDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-        }
-      }
-
-      const startOfDay = new Date(targetDate);
-      startOfDay.setHours(0, 0, 0, 0);
-
-      const endOfDay = new Date(targetDate);
-      endOfDay.setHours(23, 59, 59, 999);
-
       if (dateParam === 'yesterday' || (dateParam !== 'today' && dateParam !== 'all')) {
+        // Pestaña "Ayer" o Fecha seleccionada: ÚNICAMENTE órdenes de ese día exacto
         dbOrders = dbOrders.filter((ord: any) => {
-          const oDate = new Date(ord.createdAt);
-          return oDate >= startOfDay && oDate <= endOfDay;
+          const ordDateStr = toYYYYMMDD(new Date(ord.createdAt));
+          return ordDateStr === targetDateStr;
         });
       } else if (dateParam === 'today') {
+        // Pestaña "Hoy": órdenes creadas hoy O que sigan activas en cocina/mesas
         dbOrders = dbOrders.filter((ord: any) => {
-          const oDate = new Date(ord.createdAt);
-          const isTodayDate = oDate >= startOfDay && oDate <= endOfDay;
+          const ordDateStr = toYYYYMMDD(new Date(ord.createdAt));
+          const isToday = ordDateStr === todayStr;
           const isActive = ['PENDIENTE', 'EN_PREPARACION', 'PREPARADO', 'EN_CAMINO', 'EN_MESA', 'POR_COBRAR'].includes(ord.estado);
-          return isTodayDate || isActive;
+          return isToday || isActive;
         });
       }
     }
