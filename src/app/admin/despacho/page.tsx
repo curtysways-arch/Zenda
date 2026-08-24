@@ -175,6 +175,26 @@ export default function AdminDespachoPage() {
     if (filterChannel === 'TABLE'    && !isTable)    return false;
     if (filterChannel === 'PICKUP'   && !isPickup)   return false;
 
+    // Filtro por fecha estricto en el cliente (Garantiza exactitud de vista)
+    const oDate = new Date(order.createdAt);
+    const ordDateStr = `${oDate.getFullYear()}-${String(oDate.getMonth() + 1).padStart(2, '0')}-${String(oDate.getDate()).padStart(2, '0')}`;
+    
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    
+    const yest = new Date();
+    yest.setDate(yest.getDate() - 1);
+    const yesterdayStr = `${yest.getFullYear()}-${String(yest.getMonth() + 1).padStart(2, '0')}-${String(yest.getDate()).padStart(2, '0')}`;
+
+    if (filterDate === 'yesterday') {
+      if (ordDateStr !== yesterdayStr) return false;
+    } else if (filterDate === 'today') {
+      const isActive = ['PENDIENTE', 'EN_PREPARACION', 'PREPARADO', 'EN_CAMINO', 'EN_MESA', 'POR_COBRAR'].includes(order.estado);
+      if (ordDateStr !== todayStr && !isActive) return false;
+    } else if (filterDate === 'custom' && customDate) {
+      if (ordDateStr !== customDate) return false;
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (
