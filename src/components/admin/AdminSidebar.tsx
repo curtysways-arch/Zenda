@@ -39,8 +39,13 @@ interface MenuItem {
   badge?: number;
   roles?: string[];
 }
-
-export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColor?: string }) {
+export default function AdminSidebar({ 
+  primaryColor = '#0ea5e9',
+  initialBusinessName
+}: { 
+  primaryColor?: string;
+  initialBusinessName?: string;
+}) {
   const { confirm } = useConfirm();
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -50,6 +55,7 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
   const [pendingOrders, setPendingOrders] = useState(0);
   const [pendingAppointments, setPendingAppointments] = useState(0);
   const [capabilities, setCapabilities] = useState<Record<string, boolean>>({});
+  const [businessName, setBusinessName] = useState<string>(initialBusinessName || '');
 
   // Cargar capacidades activas del negocio dinámicamente mediante EntitlementsService
   useEffect(() => {
@@ -71,6 +77,9 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
 
         if (resNeg.ok) {
           const data = await resNeg.json();
+          if (data.nombre) {
+            setBusinessName(data.nombre);
+          }
           let cfg: any = {};
           if (typeof data.configuracion === 'string') {
             try { cfg = JSON.parse(data.configuracion); } catch { cfg = {}; }
@@ -196,7 +205,7 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
     items.push({ name: 'Configuración', href: '/admin/config', icon: Settings, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     items.push({ name: 'Métodos de Pago', href: '/admin/metodos-pago', icon: CreditCard, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     items.push({ name: 'Perfil de Negocio', href: '/admin/perfil', icon: Building2, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
-    items.push({ name: 'Mi Plan', href: '/admin/plan', icon: Package, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    items.push({ name: 'Mi Plan', href: '/admin/plan', icon: Sparkles, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     items.push({ name: 'Super Panel', href: '/superadmin', icon: ShieldCheck, section: 'CONFIGURACIÓN', roles: ['SUPERADMIN'] });
 
     return items.filter(item => !item.roles || item.roles.some(r => r === role || (role === 'ADMIN_NEGOCIO' && r === 'ADMIN')));
@@ -226,14 +235,14 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
       )}>
         <div className="p-6 border-b border-slate-100 hidden md:block relative overflow-hidden group">
           <div className="flex items-center gap-3 relative z-10">
-            <div className="size-10 rounded-xl flex items-center justify-center text-white shadow-md transition-all flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
+            <div className="size-10 rounded-xl flex items-center justify-center text-white shadow-md transition-all shrink-0" style={{ backgroundColor: primaryColor }}>
               <ZendaLogo size={20} />
             </div>
-            <div>
-              <h2 className="font-black text-slate-900 uppercase tracking-tighter leading-none italic text-lg">
-                Citi<span style={{ color: primaryColor }}>Ox</span>
+            <div className="min-w-0 flex-1">
+              <h2 className="font-black text-slate-900 tracking-tight leading-snug text-base truncate" title={businessName || 'CitiOx'}>
+                {businessName || <>Citi<span style={{ color: primaryColor }}>Ox</span></>}
               </h2>
-              <p className="text-[11px] font-semibold text-slate-400 mt-0.5">Core Runtime Admin</p>
+              <p className="text-[11px] font-semibold text-slate-400 mt-0.5 truncate">Panel de Administración</p>
             </div>
           </div>
         </div>

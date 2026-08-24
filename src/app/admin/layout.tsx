@@ -99,7 +99,7 @@ export default async function AdminLayout({
             <div className="flex h-screen bg-slate-50 overflow-hidden light-theme" style={{ '--primary-color': primaryColor } as any}>
                 
                 {/* Sidebar Unificado para todos los negocios de Citiox */}
-                <AdminSidebar primaryColor={primaryColor} />
+                <AdminSidebar primaryColor={primaryColor} initialBusinessName={negocio?.nombre} />
 
                 {/* ── ÁREA PRINCIPAL ── */}
                 <div className="flex-1 flex justify-center md:justify-start overflow-hidden relative">
