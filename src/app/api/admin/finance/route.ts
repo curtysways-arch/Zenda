@@ -79,14 +79,38 @@ export async function GET(req: Request) {
             take: 500
         });
 
+        const isSameCalendarDay = (d1: Date, d2: Date) => {
+          return d1.getFullYear() === d2.getFullYear() &&
+                 d1.getMonth() === d2.getMonth() &&
+                 d1.getDate() === d2.getDate();
+        };
+
+        const isSameUTCDay = (d1: Date, d2: Date) => {
+          return d1.getUTCFullYear() === d2.getUTCFullYear() &&
+                 d1.getUTCMonth() === d2.getUTCMonth() &&
+                 d1.getUTCDate() === d2.getUTCDate();
+        };
+
         const pedidos = allPedidos.filter((p: any) => {
             const pDate = parseSafeDate(p.createdAt);
+            const uDate = parseSafeDate(p.updatedAt);
+
+            const isTodayCreated = (pDate >= startDate && pDate <= endDate) || 
+                                   toYYYYMMDD(pDate) === todayStr || 
+                                   isSameCalendarDay(pDate, now) || 
+                                   isSameUTCDay(pDate, now);
+                                   
+            const isTodayUpdated = (uDate >= startDate && uDate <= endDate) || 
+                                   toYYYYMMDD(uDate) === todayStr || 
+                                   isSameCalendarDay(uDate, now) || 
+                                   isSameUTCDay(uDate, now);
+
             if (filter === 'day') {
-                return (pDate >= startDate && pDate <= endDate) || toYYYYMMDD(pDate) === todayStr || toYYYYMMDD(pDate) === toYYYYMMDD(startDate);
+                return isTodayCreated || isTodayUpdated;
             } else if (filter === 'week' || filter === 'month' || filter === 'custom') {
                 return pDate >= startDate && pDate <= endDate;
             }
-            return (pDate >= startDate && pDate <= endDate) || toYYYYMMDD(pDate) === todayStr;
+            return isTodayCreated || isTodayUpdated;
         });
 
         // 2. Obtener pagos de citas y movimientos manuales de caja (Ingresos / Gastos)
@@ -115,12 +139,17 @@ export async function GET(req: Request) {
 
         const payments = allPayments.filter((p: any) => {
             const pDate = parseSafeDate(p.fecha);
+            const isToday = (pDate >= startDate && pDate <= endDate) || 
+                            toYYYYMMDD(pDate) === todayStr || 
+                            isSameCalendarDay(pDate, now) || 
+                            isSameUTCDay(pDate, now);
+
             if (filter === 'day') {
-                return (pDate >= startDate && pDate <= endDate) || toYYYYMMDD(pDate) === todayStr || toYYYYMMDD(pDate) === toYYYYMMDD(startDate);
+                return isToday;
             } else if (filter === 'week' || filter === 'month' || filter === 'custom') {
                 return pDate >= startDate && pDate <= endDate;
             }
-            return (pDate >= startDate && pDate <= endDate) || toYYYYMMDD(pDate) === todayStr;
+            return isToday;
         });
 
         // Filtrar por cajero si se pasa el parámetro
@@ -146,45 +175,19 @@ export async function GET(req: Request) {
                 extra = p.extraInfo;
             }
 
-            const pStatus = (p.paymentStatus || extra.paymentStatus || '').toUpperCase();
-            const payEstado = (p.payment?.estado || p.payment?.status || '').toUpperCase();
+            const itemsTotal = (p.items || []).reduce((acc: number, it: any) => acc + (Number(it.precioUnitario) || 0) * (Number(it.cantidad) || 1), 0);
+            const totalOrder = Number(p.total) > 0 ? Number(p.total) : itemsTotal;
             const orderEstado = (p.estado || '').toUpperCase();
-            const saldoPendiente = extra.saldoPendiente !== undefined ? Number(extra.saldoPendiente) : null;
-            const montoPagadoAcumulado = Number(extra.montoPagadoAcumulado || 0);
-            const totalOrder = Number(p.total || 0);
 
-            const isPaid = (
-                pStatus === 'PAGADO' ||
-                pStatus === 'CONFIRMADO' ||
-                payEstado === 'CONFIRMADO' ||
-                payEstado === 'PAGADO' ||
-                payEstado === 'PAID' ||
-                orderEstado === 'FINALIZADO' ||
-                orderEstado === 'COMPLETADO' ||
-                orderEstado === 'EN_PREPARACION' ||
-                orderEstado === 'EN_MESA' ||
-                orderEstado === 'EN_CAMINO' ||
-                orderEstado === 'PENDIENTE' ||
-                orderEstado === 'RECIBIDO' ||
-                (saldoPendiente !== null && saldoPendiente <= 0) ||
-                (montoPagadoAcumulado >= totalOrder && totalOrder > 0)
-            );
-
-            let amountPaid = 0;
-            if (isPaid) {
-                amountPaid = totalOrder;
-            } else if (montoPagadoAcumulado > 0) {
-                amountPaid = montoPagadoAcumulado;
-            }
-
-            if (amountPaid > 0) {
+            // Incluir cualquier pedido que no haya sido cancelado o rechazado
+            if (totalOrder > 0 && !['CANCELADO', 'CANCELLED', 'RECHAZADO'].includes(orderEstado)) {
                 const metodo = (extra.metodoPago || p.payment?.metodo || p.payment?.method || 'EFECTIVO').toUpperCase();
-                totalVentas += amountPaid;
+                totalVentas += totalOrder;
 
-                if (metodo.includes('TARJETA')) ventasTarjeta += amountPaid;
-                else if (metodo.includes('TRANSF')) ventasTransferencia += amountPaid;
-                else if (metodo.includes('OTRO') || metodo.includes('MIXTO')) ventasOtros += amountPaid;
-                else ventasEfectivo += amountPaid;
+                if (metodo.includes('TARJETA')) ventasTarjeta += totalOrder;
+                else if (metodo.includes('TRANSF')) ventasTransferencia += totalOrder;
+                else if (metodo.includes('OTRO') || metodo.includes('MIXTO')) ventasOtros += totalOrder;
+                else ventasEfectivo += totalOrder;
             }
         });
 
