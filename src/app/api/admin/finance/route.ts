@@ -65,11 +65,11 @@ export async function GET(req: Request) {
         const pedidos = allPedidos.filter((p: any) => {
             const pDate = new Date(p.createdAt);
             if (filter === 'day') {
-                return toYYYYMMDD(pDate) === todayStr;
+                return (pDate >= startDate && pDate <= endDate) || toYYYYMMDD(pDate) === todayStr || toYYYYMMDD(pDate) === toYYYYMMDD(startDate);
             } else if (filter === 'week' || filter === 'month' || filter === 'custom') {
                 return pDate >= startDate && pDate <= endDate;
             }
-            return toYYYYMMDD(pDate) === todayStr;
+            return (pDate >= startDate && pDate <= endDate) || toYYYYMMDD(pDate) === todayStr;
         });
 
         // 2. Obtener pagos de citas y movimientos manuales de caja (Ingresos / Gastos)
@@ -99,11 +99,11 @@ export async function GET(req: Request) {
         const payments = allPayments.filter((p: any) => {
             const pDate = new Date(p.fecha);
             if (filter === 'day') {
-                return toYYYYMMDD(pDate) === todayStr;
+                return (pDate >= startDate && pDate <= endDate) || toYYYYMMDD(pDate) === todayStr || toYYYYMMDD(pDate) === toYYYYMMDD(startDate);
             } else if (filter === 'week' || filter === 'month' || filter === 'custom') {
                 return pDate >= startDate && pDate <= endDate;
             }
-            return toYYYYMMDD(pDate) === todayStr;
+            return (pDate >= startDate && pDate <= endDate) || toYYYYMMDD(pDate) === todayStr;
         });
 
         // Filtrar por cajero si se pasa el parámetro
