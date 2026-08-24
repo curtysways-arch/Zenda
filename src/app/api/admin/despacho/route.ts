@@ -51,20 +51,28 @@ export async function GET(request: Request) {
       const endOfDay = new Date(targetDate);
       endOfDay.setHours(23, 59, 59, 999);
 
-      // Incluir órdenes de la fecha seleccionada O que continúen activas/pendientes
-      whereCondition.OR = [
-        {
-          createdAt: {
-            gte: startOfDay,
-            lte: endOfDay
+      if (dateParam === 'today') {
+        // Para "Hoy": sólo órdenes creadas hoy O órdenes activas pendientes
+        whereCondition.OR = [
+          {
+            createdAt: {
+              gte: startOfDay,
+              lte: endOfDay
+            }
+          },
+          {
+            estado: {
+              in: ['PENDIENTE', 'EN_PREPARACION', 'PREPARADO', 'EN_CAMINO', 'EN_MESA', 'POR_COBRAR']
+            }
           }
-        },
-        {
-          estado: {
-            notIn: ['ENTREGADO', 'COMPLETADO', 'CANCELADO', 'RECHAZADO']
-          }
-        }
-      ];
+        ];
+      } else {
+        // Para fecha específica o 'Ayer': filtro estricto por rango de fecha
+        whereCondition.createdAt = {
+          gte: startOfDay,
+          lte: endOfDay
+        };
+      }
     }
 
     // 3. Pedidos en base de datos para sincronización y vista unificada

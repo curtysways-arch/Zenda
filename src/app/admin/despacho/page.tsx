@@ -378,7 +378,9 @@ export default function AdminDespachoPage() {
             );
             const displayTotal = computedTotal > 0 ? computedTotal : (Number(order.total) || 0);
             const channel = getChannelInfo(order);
-            const hora = new Date(order.createdAt).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+            const dateObj = new Date(order.createdAt);
+            const hora = dateObj.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+            const fechaStr = dateObj.toLocaleDateString('es-EC', { day: '2-digit', month: 'short' });
 
             let extra: any = {};
             if (typeof order.extraInfo === 'string') {
@@ -408,7 +410,7 @@ export default function AdminDespachoPage() {
               <details key={order.id} className={`group border-b border-slate-100 last:border-0 ${idx % 2 !== 0 ? 'bg-slate-50/40' : ''}`}>
                 <summary className="list-none cursor-pointer select-none">
                   {/* Desktop row */}
-                  <div className="hidden lg:grid grid-cols-[56px_1fr_100px_120px_130px_130px_100px_80px] gap-2.5 items-center px-6 py-4 hover:bg-indigo-50/30 transition-colors">
+                  <div className="hidden lg:grid grid-cols-[56px_1fr_115px_120px_130px_130px_100px_80px] gap-2.5 items-center px-6 py-4 hover:bg-indigo-50/30 transition-colors">
                     <span className="text-xs font-black text-slate-400">#{order.numeroPedido}</span>
                     <div className="min-w-0">
                       <p className="text-sm font-black text-slate-900 truncate">{order.nombreCliente}</p>
@@ -417,9 +419,15 @@ export default function AdminDespachoPage() {
                         <span className="truncate">{order.telefonoCliente}</span>
                       </p>
                     </div>
-                    <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-                      <Clock className="size-3 text-slate-300 shrink-0" />{hora}
-                    </span>
+                    <div className="flex flex-col text-[11px] font-semibold text-slate-600">
+                      <span className="flex items-center gap-1 text-slate-900 font-extrabold">
+                        <Clock className="size-3 text-indigo-500 shrink-0" />
+                        {hora}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-bold pl-4 uppercase">
+                        {fechaStr}
+                      </span>
+                    </div>
                     <span className={`text-[11px] font-black px-2.5 py-1 rounded-lg border inline-flex items-center w-fit ${channel.color}`}>
                       {channel.label}
                     </span>
