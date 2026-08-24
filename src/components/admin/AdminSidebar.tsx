@@ -130,7 +130,8 @@ export default function AdminSidebar({
             promotions: Boolean(effectiveCaps.PROMOTIONS ?? (caps.promotions !== false)),
             courses: Boolean(effectiveCaps.COURSES ?? caps.courses),
             loyalty: Boolean(effectiveCaps.LOYALTY ?? (caps.loyalty || isPinchos)),
-            inventory: Boolean(effectiveCaps.INVENTORY ?? caps.inventory)
+            inventory: Boolean(effectiveCaps.INVENTORY ?? caps.inventory),
+            payments: Boolean(effectiveCaps.PAYMENTS ?? !isServiceBiz)
           };
 
           setCapabilities(normalizedCaps);
@@ -213,9 +214,11 @@ export default function AdminSidebar({
     items.push({ name: 'Personal & Equipo', href: '/admin/usuarios', icon: Users, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     items.push({ name: 'Reportes', href: '/admin/reportes', icon: BarChart3, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
 
-    // Settings & Configuration (Universal)
+    // Settings & Configuration
     items.push({ name: 'Configuración', href: '/admin/config', icon: Settings, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
-    items.push({ name: 'Métodos de Pago', href: '/admin/metodos-pago', icon: CreditCard, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    if (capabilities.payments) {
+      items.push({ name: 'Métodos de Pago', href: '/admin/metodos-pago', icon: CreditCard, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    }
     items.push({ name: 'Perfil de Negocio', href: '/admin/perfil', icon: Building2, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     items.push({ name: 'Mi Plan', href: '/admin/plan', icon: Sparkles, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     items.push({ name: 'Super Panel', href: '/superadmin', icon: ShieldCheck, section: 'CONFIGURACIÓN', roles: ['SUPERADMIN'] });

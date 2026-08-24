@@ -252,6 +252,33 @@ function VentasContent() {
   })();
 
   // Cart Steppers & Controls
+  const handleSelectTipoEntrega = (newType: 'DELIVERY_ORDER' | 'PICKUP_ORDER' | 'TABLE_ORDER') => {
+    setTipoEntrega(newType);
+    if (newType === 'TABLE_ORDER') {
+      setPagarInmediato(false);
+      if (tables.length > 0 && (!mesaCode || mesaCode === 'POS-Virtual')) {
+        setMesaCode(tables[0].name);
+      }
+    }
+
+    // Auto-asignar empaque si se selecciona Para Llevar o Domicilio para productos que requieren empaque
+    if (newType === 'PICKUP_ORDER' || newType === 'DELIVERY_ORDER') {
+      setCart(prev => {
+        const nextCart = { ...prev };
+        let modified = false;
+        Object.keys(nextCart).forEach(id => {
+          const item = nextCart[id];
+          const p = products.find(prod => prod.id === id);
+          if (p?.llevaEmpaque !== false && item.takeawayQty < item.qty) {
+            nextCart[id] = { ...item, takeawayQty: item.qty };
+            modified = true;
+          }
+        });
+        return modified ? nextCart : prev;
+      });
+    }
+  };
+
   const updateQty = (id: string, delta: number) => {
     setCart(prev => {
       const current = prev[id] || { qty: 0, takeawayQty: 0 };
@@ -261,7 +288,21 @@ function VentasContent() {
         delete copy[id];
         return copy;
       }
-      const nextTakeaway = Math.min(current.takeawayQty, nextQty);
+      
+      const p = products.find(prod => prod.id === id);
+      const productLlevaEmpaque = p?.llevaEmpaque !== false;
+      const isTakeawayOrDelivery = tipoEntrega === 'PICKUP_ORDER' || tipoEntrega === 'DELIVERY_ORDER';
+
+      let nextTakeaway = current.takeawayQty;
+
+      if (delta > 0 && isTakeawayOrDelivery && productLlevaEmpaque) {
+        // Al añadir o incrementar en Para Llevar o Domicilio, asignar empaque automáticamente por cada unidad
+        nextTakeaway = Math.min(nextQty, current.takeawayQty + delta);
+      } else if (delta < 0) {
+        // Al reducir unidades del producto, ajustar el empaque para que no supere la cantidad de producto
+        nextTakeaway = Math.min(current.takeawayQty, nextQty);
+      }
+
       return {
         ...prev,
         [id]: { qty: nextQty, takeawayQty: nextTakeaway }
@@ -619,7 +660,7 @@ function VentasContent() {
               <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg bg-slate-100 border border-slate-200">
                 <button
                   type="button"
-                  onClick={() => setTipoEntrega('PICKUP_ORDER')}
+                  onClick={() => handleSelectTipoEntrega('PICKUP_ORDER')}
                   className={`py-1 px-0.5 rounded-md text-[10px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                     tipoEntrega === 'PICKUP_ORDER'
                       ? 'bg-[#ea580c] text-white shadow-sm'
@@ -630,13 +671,7 @@ function VentasContent() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setTipoEntrega('TABLE_ORDER');
-                    setPagarInmediato(false);
-                    if (tables.length > 0 && (!mesaCode || mesaCode === 'POS-Virtual')) {
-                      setMesaCode(tables[0].name);
-                    }
-                  }}
+                  onClick={() => handleSelectTipoEntrega('TABLE_ORDER')}
                   className={`py-1 px-0.5 rounded-md text-[10px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                     tipoEntrega === 'TABLE_ORDER'
                       ? 'bg-[#ea580c] text-white shadow-sm'
@@ -647,7 +682,7 @@ function VentasContent() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setTipoEntrega('DELIVERY_ORDER')}
+                  onClick={() => handleSelectTipoEntrega('DELIVERY_ORDER')}
                   className={`py-1 px-0.5 rounded-md text-[10px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                     tipoEntrega === 'DELIVERY_ORDER'
                       ? 'bg-[#ea580c] text-white shadow-sm'
