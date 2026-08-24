@@ -37,11 +37,28 @@ export async function GET(req: Request) {
             endDate = endOfDay(now);
         }
 
+        // Helper seguro para parsear fechas de SQLite / ISO
+        function parseSafeDate(rawDate: any): Date {
+          if (!rawDate) return new Date();
+          if (rawDate instanceof Date) return rawDate;
+          if (typeof rawDate === 'number') return new Date(rawDate);
+          if (typeof rawDate === 'string') {
+            const isoString = rawDate.includes(' ') && !rawDate.includes('T') 
+              ? rawDate.replace(' ', 'T') 
+              : rawDate;
+            const parsed = new Date(isoString);
+            if (!isNaN(parsed.getTime())) return parsed;
+          }
+          const fallback = new Date(rawDate);
+          return isNaN(fallback.getTime()) ? new Date() : fallback;
+        }
+
         // Helper para obtener YYYY-MM-DD en fecha local
         function toYYYYMMDD(d: Date): string {
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
+          const validDate = parseSafeDate(d);
+          const y = validDate.getFullYear();
+          const m = String(validDate.getMonth() + 1).padStart(2, '0');
+          const day = String(validDate.getDate()).padStart(2, '0');
           return `${y}-${m}-${day}`;
         }
 
@@ -63,7 +80,7 @@ export async function GET(req: Request) {
         });
 
         const pedidos = allPedidos.filter((p: any) => {
-            const pDate = new Date(p.createdAt);
+            const pDate = parseSafeDate(p.createdAt);
             if (filter === 'day') {
                 return (pDate >= startDate && pDate <= endDate) || toYYYYMMDD(pDate) === todayStr || toYYYYMMDD(pDate) === toYYYYMMDD(startDate);
             } else if (filter === 'week' || filter === 'month' || filter === 'custom') {
@@ -97,7 +114,7 @@ export async function GET(req: Request) {
         });
 
         const payments = allPayments.filter((p: any) => {
-            const pDate = new Date(p.fecha);
+            const pDate = parseSafeDate(p.fecha);
             if (filter === 'day') {
                 return (pDate >= startDate && pDate <= endDate) || toYYYYMMDD(pDate) === todayStr || toYYYYMMDD(pDate) === toYYYYMMDD(startDate);
             } else if (filter === 'week' || filter === 'month' || filter === 'custom') {
