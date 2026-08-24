@@ -37,14 +37,20 @@ export async function GET(req: Request) {
             endDate = endOfDay(now);
         }
 
-        // 1. Obtener todas las ventas reales creadas en el negocio (POS, Mesas, Landing, Pickup)
-        const pedidos = await prisma.pedido.findMany({
+        // Helper para obtener YYYY-MM-DD en fecha local
+        function toYYYYMMDD(d: Date): string {
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${y}-${m}-${day}`;
+        }
+
+        const todayStr = toYYYYMMDD(now);
+
+        // 1. Obtener todas las ventas reales creadas en el negocio
+        const allPedidos = await prisma.pedido.findMany({
             where: {
                 negocioId,
-                createdAt: {
-                    gte: startDate,
-                    lte: endDate
-                },
                 estado: { notIn: ['CANCELADO', 'CANCELLED', 'RECHAZADO'] }
             },
             include: {
@@ -52,22 +58,29 @@ export async function GET(req: Request) {
             },
             orderBy: {
                 createdAt: 'desc'
+            },
+            take: 500
+        });
+
+        const pedidos = allPedidos.filter((p: any) => {
+            const pDate = new Date(p.createdAt);
+            if (filter === 'day') {
+                return toYYYYMMDD(pDate) === todayStr;
+            } else if (filter === 'week' || filter === 'month' || filter === 'custom') {
+                return pDate >= startDate && pDate <= endDate;
             }
+            return toYYYYMMDD(pDate) === todayStr;
         });
 
         // 2. Obtener pagos de citas y movimientos manuales de caja (Ingresos / Gastos)
-        const payments = await prisma.pagoReserva.findMany({
+        const allPayments = await prisma.pagoReserva.findMany({
             where: {
                 OR: [
                     { Appointment: { negocioId } },
                     { notas: { contains: negocioId } },
                     { referencia: { contains: 'GASTO' } },
                     { referencia: { contains: 'INGRESO_MANUAL' } }
-                ],
-                fecha: {
-                    gte: startDate,
-                    lte: endDate
-                }
+                ]
             },
             include: {
                 Appointment: {
@@ -79,7 +92,18 @@ export async function GET(req: Request) {
             },
             orderBy: {
                 fecha: 'desc'
+            },
+            take: 500
+        });
+
+        const payments = allPayments.filter((p: any) => {
+            const pDate = new Date(p.fecha);
+            if (filter === 'day') {
+                return toYYYYMMDD(pDate) === todayStr;
+            } else if (filter === 'week' || filter === 'month' || filter === 'custom') {
+                return pDate >= startDate && pDate <= endDate;
             }
+            return toYYYYMMDD(pDate) === todayStr;
         });
 
         // Filtrar por cajero si se pasa el parámetro
@@ -120,6 +144,11 @@ export async function GET(req: Request) {
                 payEstado === 'PAID' ||
                 orderEstado === 'FINALIZADO' ||
                 orderEstado === 'COMPLETADO' ||
+                orderEstado === 'EN_PREPARACION' ||
+                orderEstado === 'EN_MESA' ||
+                orderEstado === 'EN_CAMINO' ||
+                orderEstado === 'PENDIENTE' ||
+                orderEstado === 'RECIBIDO' ||
                 (saldoPendiente !== null && saldoPendiente <= 0) ||
                 (montoPagadoAcumulado >= totalOrder && totalOrder > 0)
             );
