@@ -88,9 +88,12 @@ export default function AdminSidebar({
           }
           const caps = cfg.activeCapabilities || cfg.capabilities || {};
           const tipoUpper = (data.tipoNegocio || '').toUpperCase();
+          const slugUpper = (data.slug || '').toUpperCase();
+          const nameUpper = (data.nombre || businessName || '').toUpperCase();
+
           const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT';
-          const isPinchos = tipoUpper === 'PINCHOS' || data.slug === 'pinchos';
-          const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || data.slug === 'canchas';
+          const isPinchos = tipoUpper === 'PINCHOS' || slugUpper === 'PINCHOS';
+          const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || slugUpper === 'CANCHAS';
           const isServiceBiz = !isRestaurant && !isPinchos && !isCanchas && (
             tipoUpper === 'SPA' ||
             tipoUpper === 'CENTRO_ESTETICA' ||
@@ -100,7 +103,16 @@ export default function AdminSidebar({
             tipoUpper === 'LAVANDERIA' ||
             tipoUpper === 'ORDENES-SERVICIO' ||
             tipoUpper === 'BEAUTY_SPA' ||
-            tipoUpper === 'RESERVA'
+            tipoUpper === 'RESERVA' ||
+            slugUpper.includes('SPA') ||
+            slugUpper.includes('BARBER') ||
+            slugUpper.includes('NAILS') ||
+            slugUpper.includes('DENTAL') ||
+            slugUpper.includes('CITAS') ||
+            nameUpper.includes('SPA') ||
+            nameUpper.includes('ESTETICA') ||
+            nameUpper.includes('PELUQUERIA') ||
+            nameUpper.includes('BARBERIA')
           );
           const isStore = !isRestaurant && !isPinchos && !isCanchas && !isServiceBiz;
           

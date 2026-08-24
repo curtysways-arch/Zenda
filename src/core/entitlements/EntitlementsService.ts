@@ -51,11 +51,14 @@ export class EntitlementsService {
   /**
    * Genera los presets de capabilities base según el tipo de negocio.
    */
-  public static getPresetCapabilities(tipoNegocio?: string, slug?: string): Record<string, boolean> {
+  public static getPresetCapabilities(tipoNegocio?: string, slug?: string, nombre?: string): Record<string, boolean> {
     const tipoUpper = (tipoNegocio || '').toUpperCase();
+    const slugUpper = (slug || '').toUpperCase();
+    const nameUpper = (nombre || '').toUpperCase();
+
     const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT';
-    const isPinchos = tipoUpper === 'PINCHOS' || slug === 'pinchos';
-    const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || slug === 'canchas';
+    const isPinchos = tipoUpper === 'PINCHOS' || slugUpper === 'PINCHOS';
+    const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || slugUpper === 'CANCHAS';
     const isServiceBiz = !isRestaurant && !isPinchos && !isCanchas && (
       tipoUpper === 'SPA' ||
       tipoUpper === 'CENTRO_ESTETICA' ||
@@ -64,7 +67,17 @@ export class EntitlementsService {
       tipoUpper === 'SHOE_CARE' ||
       tipoUpper === 'LAVANDERIA' ||
       tipoUpper === 'ORDENES-SERVICIO' ||
-      tipoUpper === 'BEAUTY_SPA'
+      tipoUpper === 'BEAUTY_SPA' ||
+      tipoUpper === 'RESERVA' ||
+      slugUpper.includes('SPA') ||
+      slugUpper.includes('BARBER') ||
+      slugUpper.includes('NAILS') ||
+      slugUpper.includes('DENTAL') ||
+      slugUpper.includes('CITAS') ||
+      nameUpper.includes('SPA') ||
+      nameUpper.includes('ESTETICA') ||
+      nameUpper.includes('PELUQUERIA') ||
+      nameUpper.includes('BARBERIA')
     );
 
     if (isPinchos) {
@@ -218,7 +231,7 @@ export class EntitlementsService {
     }
 
     // Preset según tipoNegocio
-    const presetCaps = this.getPresetCapabilities(negocio.tipoNegocio, negocio.slug);
+    const presetCaps = this.getPresetCapabilities(negocio.tipoNegocio, negocio.slug, negocio.nombre);
 
     // Consolidar capacidades (Preset ➔ Legacy Config ➔ Plan Features)
     const capabilities: Record<string, boolean> = {
@@ -343,8 +356,8 @@ export class EntitlementsService {
   /**
    * Fallback seguro en desarrollo o modo demo respetando el tipoNegocio.
    */
-  private static getFallbackEntitlements(businessId: string, tipoNegocio?: string, slug?: string): EffectiveEntitlements {
-    const preset = this.getPresetCapabilities(tipoNegocio, slug);
+  private static getFallbackEntitlements(businessId: string, tipoNegocio?: string, slug?: string, nombre?: string): EffectiveEntitlements {
+    const preset = this.getPresetCapabilities(tipoNegocio, slug, nombre);
     const caps: Record<string, boolean> = {};
 
     Object.keys(preset).forEach(k => {
