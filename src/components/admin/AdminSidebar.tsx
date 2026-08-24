@@ -106,12 +106,12 @@ export default function AdminSidebar({
           
           // Entitlements efectivos con fallback de negocio y legacy capabilities
           const normalizedCaps: Record<string, boolean> = {
-            orders: Boolean(effectiveCaps.ORDERS ?? effectiveCaps.orders ?? caps.orders ?? (isRestaurant || isPinchos || tipoUpper === 'PRODUCTOS' || tipoUpper === 'TIENDA' || tipoUpper === 'ECOMMERCE')),
-            catalog: Boolean(effectiveCaps.PRODUCTS ?? effectiveCaps.products ?? caps.catalog ?? caps.products ?? (isRestaurant || isPinchos || tipoUpper === 'PRODUCTOS' || tipoUpper === 'TIENDA' || tipoUpper === 'ECOMMERCE')),
-            tables: Boolean(effectiveCaps.TABLES ?? effectiveCaps.tables ?? caps.tables),
+            orders: Boolean(effectiveCaps.ORDERS ?? effectiveCaps.orders ?? (caps.orders || isRestaurant || isPinchos || tipoUpper === 'PRODUCTOS' || tipoUpper === 'TIENDA' || tipoUpper === 'ECOMMERCE')),
+            catalog: Boolean(effectiveCaps.PRODUCTS ?? effectiveCaps.products ?? (caps.catalog || caps.products || isRestaurant || isPinchos || tipoUpper === 'PRODUCTOS' || tipoUpper === 'TIENDA' || tipoUpper === 'ECOMMERCE')),
+            tables: Boolean(effectiveCaps.TABLES ?? effectiveCaps.tables ?? caps.tables ?? isRestaurant),
             kitchen: Boolean(effectiveCaps.KITCHEN ?? effectiveCaps.kitchen ?? caps.kitchen ?? (isRestaurant || isPinchos)),
             delivery: Boolean(effectiveCaps.DELIVERY ?? effectiveCaps.delivery ?? caps.delivery ?? (isRestaurant || isPinchos || tipoUpper === 'PRODUCTOS' || tipoUpper === 'TIENDA' || tipoUpper === 'ECOMMERCE')),
-            dispatch: Boolean(effectiveCaps.DISPATCH ?? effectiveCaps.dispatch ?? caps.dispatch ?? (isRestaurant || isPinchos || tipoUpper === 'PRODUCTOS' || tipoUpper === 'TIENDA' || tipoUpper === 'ECOMMERCE')),
+            dispatch: Boolean(effectiveCaps.DISPATCH ?? effectiveCaps.dispatch ?? caps.dispatch),
             appointments: Boolean(effectiveCaps.APPOINTMENTS ?? effectiveCaps.appointments ?? caps.appointments ?? (isServiceBiz || isCanchas || tipoUpper === 'RESERVA')),
             courts: Boolean(effectiveCaps.COURTS ?? effectiveCaps.courts ?? caps.courts ?? isCanchas),
             services: Boolean(effectiveCaps.SERVICES ?? effectiveCaps.services ?? caps.services ?? isServiceBiz),

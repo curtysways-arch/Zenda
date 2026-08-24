@@ -190,6 +190,10 @@ export class EntitlementsService {
     const suscripcion = negocio.Suscripcion;
     const plan = suscripcion?.Plan;
 
+    if (!suscripcion && !plan) {
+      return this.getFallbackEntitlements(businessId, negocio.tipoNegocio, negocio.slug);
+    }
+
     // Extraer configuración legacy
     let legacyCfg: any = {};
     if (typeof negocio.configuracion === 'string') {
@@ -337,30 +341,24 @@ export class EntitlementsService {
   }
 
   /**
-   * Fallback seguro en desarrollo o modo demo.
+   * Fallback seguro en desarrollo o modo demo respetando el tipoNegocio.
    */
-  private static getFallbackEntitlements(businessId: string): EffectiveEntitlements {
+  private static getFallbackEntitlements(businessId: string, tipoNegocio?: string, slug?: string): EffectiveEntitlements {
+    const preset = this.getPresetCapabilities(tipoNegocio, slug);
+    const caps: Record<string, boolean> = {};
+
+    Object.keys(preset).forEach(k => {
+      caps[k.toUpperCase()] = preset[k];
+      caps[k.toLowerCase()] = preset[k];
+    });
+
     return {
       businessId,
       planId: 'ENTERPRISE_DEMO',
       planName: 'Plan Citiox Enterprise Demo',
-      businessType: 'RESTAURANTE',
+      businessType: tipoNegocio || 'PRODUCTOS',
       status: 'active',
-      capabilities: {
-        PRODUCTS: true, products: true,
-        ORDERS: true, orders: true,
-        POS: true, pos: true,
-        DELIVERY: true, delivery: true,
-        DISPATCH: true, dispatch: true,
-        TABLES: true, tables: true,
-        KITCHEN: true, kitchen: true,
-        APPOINTMENTS: true, appointments: true,
-        SERVICES: true, services: true,
-        COURTS: true, courts: true,
-        PROMOTIONS: true, promotions: true,
-        LOYALTY: true, loyalty: true,
-        INVENTORY: true, inventory: true
-      },
+      capabilities: caps,
       limits: {
         branches: 999,
         professionals: 999,
