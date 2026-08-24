@@ -51,13 +51,26 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
   const [pendingAppointments, setPendingAppointments] = useState(0);
   const [capabilities, setCapabilities] = useState<Record<string, boolean>>({});
 
-  // Cargar capacidades activas del negocio dinámicamente
+  // Cargar capacidades activas del negocio dinámicamente mediante EntitlementsService
   useEffect(() => {
     async function loadBusinessContext() {
       try {
-        const res = await fetch('/api/negocio');
-        if (res.ok) {
-          const data = await res.json();
+        const [resNeg, resEnt] = await Promise.all([
+          fetch('/api/negocio'),
+          fetch('/api/admin/entitlements')
+        ]);
+
+        let effectiveCaps: Record<string, boolean> = {};
+
+        if (resEnt.ok) {
+          const entData = await resEnt.json();
+          if (entData.success && entData.entitlements?.capabilities) {
+            effectiveCaps = entData.entitlements.capabilities;
+          }
+        }
+
+        if (resNeg.ok) {
+          const data = await resNeg.json();
           let cfg: any = {};
           if (typeof data.configuracion === 'string') {
             try { cfg = JSON.parse(data.configuracion); } catch { cfg = {}; }
@@ -68,7 +81,9 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
           
           const tipoUpper = (data.tipoNegocio || '').toUpperCase();
           const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT';
-          const isServiceBiz = !isRestaurant && (
+          const isPinchos = tipoUpper === 'PINCHOS' || data.slug === 'pinchos';
+          const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || data.slug === 'canchas';
+          const isServiceBiz = !isRestaurant && !isPinchos && !isCanchas && (
             tipoUpper === 'SPA' ||
             tipoUpper === 'CENTRO_ESTETICA' ||
             tipoUpper === 'PELUQUERIA' ||
@@ -80,25 +95,27 @@ export default function AdminSidebar({ primaryColor = '#0ea5e9' }: { primaryColo
             caps.services !== false
           );
           
-          // Mapeo automático de fallback para negocios legacy
+          // Entitlements efectivos con fallback de negocio y legacy capabilities
           const normalizedCaps: Record<string, boolean> = {
-            orders: Boolean(caps.orders || isRestaurant || tipoUpper === 'PRODUCTOS'),
-            catalog: Boolean(caps.catalog || caps.products || isRestaurant || tipoUpper === 'PRODUCTOS'),
-            tables: Boolean(caps.tables),
-            kitchen: Boolean(caps.kitchen),
-            delivery: Boolean(caps.delivery),
-            dispatch: Boolean(caps.dispatch || caps.delivery || caps.orders || isRestaurant || tipoUpper === 'PRODUCTOS'),
-            appointments: Boolean(caps.appointments || isServiceBiz || tipoUpper === 'RESERVA'),
-            courts: Boolean(caps.courts || tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS'),
-            services: Boolean(isServiceBiz),
-            promotions: Boolean(caps.promotions !== false),
-            courses: Boolean(caps.courses),
-            loyalty: Boolean(caps.loyalty)
+            orders: Boolean(effectiveCaps.ORDERS ?? effectiveCaps.orders ?? caps.orders ?? (isRestaurant || isPinchos || tipoUpper === 'PRODUCTOS' || tipoUpper === 'TIENDA' || tipoUpper === 'ECOMMERCE')),
+            catalog: Boolean(effectiveCaps.PRODUCTS ?? effectiveCaps.products ?? caps.catalog ?? caps.products ?? (isRestaurant || isPinchos || tipoUpper === 'PRODUCTOS' || tipoUpper === 'TIENDA' || tipoUpper === 'ECOMMERCE')),
+            tables: Boolean(effectiveCaps.TABLES ?? effectiveCaps.tables ?? caps.tables),
+            kitchen: Boolean(effectiveCaps.KITCHEN ?? effectiveCaps.kitchen ?? caps.kitchen ?? (isRestaurant || isPinchos)),
+            delivery: Boolean(effectiveCaps.DELIVERY ?? effectiveCaps.delivery ?? caps.delivery ?? (isRestaurant || isPinchos || tipoUpper === 'PRODUCTOS' || tipoUpper === 'TIENDA' || tipoUpper === 'ECOMMERCE')),
+            dispatch: Boolean(effectiveCaps.DISPATCH ?? effectiveCaps.dispatch ?? caps.dispatch ?? (isRestaurant || isPinchos || tipoUpper === 'PRODUCTOS' || tipoUpper === 'TIENDA' || tipoUpper === 'ECOMMERCE')),
+            appointments: Boolean(effectiveCaps.APPOINTMENTS ?? effectiveCaps.appointments ?? caps.appointments ?? (isServiceBiz || isCanchas || tipoUpper === 'RESERVA')),
+            courts: Boolean(effectiveCaps.COURTS ?? effectiveCaps.courts ?? caps.courts ?? isCanchas),
+            services: Boolean(effectiveCaps.SERVICES ?? effectiveCaps.services ?? caps.services ?? isServiceBiz),
+            promotions: Boolean(effectiveCaps.PROMOTIONS ?? effectiveCaps.promotions ?? (caps.promotions !== false)),
+            courses: Boolean(effectiveCaps.COURSES ?? effectiveCaps.courses ?? caps.courses),
+            loyalty: Boolean(effectiveCaps.LOYALTY ?? effectiveCaps.loyalty ?? caps.loyalty ?? isPinchos),
+            inventory: Boolean(effectiveCaps.INVENTORY ?? effectiveCaps.inventory ?? caps.inventory)
           };
+
           setCapabilities(normalizedCaps);
         }
       } catch (err) {
-        console.error("Error cargando capabilities del negocio", err);
+        console.error("Error cargando entitlements y context del negocio", err);
       }
     }
     loadBusinessContext();

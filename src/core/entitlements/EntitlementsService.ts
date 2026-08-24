@@ -2,7 +2,7 @@
  * @file EntitlementsService.ts
  * @module core/entitlements
  * @description Fuente única de verdad para la resolución de Entitlements (Derechos Efectivos, Capacidades, Límites y Add-ons) de Citiox.
- * @responsibility Consolidar el Plan del negocio, sus add-ons y límites reales sin modificar ningún motor funcional de la aplicación.
+ * @responsibility Consolidar los Presets por Tipo de Negocio, el Plan del negocio, sus Add-ons, la configuración legacy y los límites reales.
  */
 
 import prisma from '@/lib/prisma';
@@ -12,6 +12,7 @@ export interface EffectiveEntitlements {
   businessId: string;
   planId: string;
   planName: string;
+  businessType: string;
   status: 'active' | 'trial' | 'expired' | 'canceled';
   capabilities: Record<string, boolean>;
   limits: {
@@ -48,7 +49,122 @@ export interface LimitCheckResult {
 
 export class EntitlementsService {
   /**
-   * Resuelve los derechos efectivos completos (capabilities, límites, uso y add-ons) para un negocio.
+   * Genera los presets de capabilities base según el tipo de negocio.
+   */
+  public static getPresetCapabilities(tipoNegocio?: string, slug?: string): Record<string, boolean> {
+    const tipoUpper = (tipoNegocio || '').toUpperCase();
+    const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT';
+    const isPinchos = tipoUpper === 'PINCHOS' || slug === 'pinchos';
+    const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || slug === 'canchas';
+    const isServiceBiz = !isRestaurant && !isPinchos && !isCanchas && (
+      tipoUpper === 'SPA' ||
+      tipoUpper === 'CENTRO_ESTETICA' ||
+      tipoUpper === 'PELUQUERIA' ||
+      tipoUpper === 'BARBERIA' ||
+      tipoUpper === 'SHOE_CARE' ||
+      tipoUpper === 'LAVANDERIA' ||
+      tipoUpper === 'ORDENES-SERVICIO' ||
+      tipoUpper === 'BEAUTY_SPA'
+    );
+
+    if (isPinchos) {
+      return {
+        PRODUCTS: true,
+        CATEGORIES: true,
+        ORDERS: true,
+        POS: true,
+        DELIVERY: true,
+        DISPATCH: true,
+        KITCHEN: true,
+        PROMOTIONS: true,
+        LOYALTY: true,
+        TABLES: false,
+        APPOINTMENTS: false,
+        SERVICES: false,
+        COURTS: false,
+        INVENTORY: false
+      };
+    }
+
+    if (isRestaurant) {
+      return {
+        PRODUCTS: true,
+        CATEGORIES: true,
+        ORDERS: true,
+        POS: true,
+        DELIVERY: true,
+        DISPATCH: true,
+        TABLES: true,
+        KITCHEN: true,
+        PROMOTIONS: true,
+        LOYALTY: false,
+        APPOINTMENTS: false,
+        SERVICES: false,
+        COURTS: false,
+        INVENTORY: false
+      };
+    }
+
+    if (isCanchas) {
+      return {
+        COURTS: true,
+        APPOINTMENTS: true,
+        PAYMENTS: true,
+        PROMOTIONS: true,
+        PRODUCTS: false,
+        CATEGORIES: false,
+        ORDERS: false,
+        POS: false,
+        DELIVERY: false,
+        DISPATCH: false,
+        TABLES: false,
+        KITCHEN: false,
+        SERVICES: false,
+        INVENTORY: false
+      };
+    }
+
+    if (isServiceBiz) {
+      const isLaundryOrShoe = tipoUpper === 'SHOE_CARE' || tipoUpper === 'LAVANDERIA' || tipoUpper === 'ORDENES-SERVICIO';
+      return {
+        SERVICES: true,
+        APPOINTMENTS: !isLaundryOrShoe,
+        ORDERS: isLaundryOrShoe,
+        DISPATCH: isLaundryOrShoe,
+        DELIVERY: isLaundryOrShoe,
+        PAYMENTS: true,
+        PROMOTIONS: true,
+        PRODUCTS: false,
+        CATEGORIES: false,
+        POS: false,
+        TABLES: false,
+        KITCHEN: false,
+        COURTS: false,
+        INVENTORY: false
+      };
+    }
+
+    // Preset de TIENDA / ECOMMERCE / PRODUCTOS
+    return {
+      PRODUCTS: true,
+      CATEGORIES: true,
+      ORDERS: true,
+      POS: true,
+      DELIVERY: true,
+      DISPATCH: true,
+      PAYMENTS: true,
+      PROMOTIONS: true,
+      TABLES: false,
+      KITCHEN: false,
+      APPOINTMENTS: false,
+      COURTS: false,
+      SERVICES: false,
+      INVENTORY: false
+    };
+  }
+
+  /**
+   * Resuelve los derechos efectivos completos para un negocio.
    */
   public static async resolve(businessId: string): Promise<EffectiveEntitlements> {
     if (!businessId) {
@@ -68,19 +184,26 @@ export class EntitlementsService {
     });
 
     if (!negocio) {
-      // Fallback seguro de desarrollo o demo
       return this.getFallbackEntitlements(businessId);
     }
 
     const suscripcion = negocio.Suscripcion;
     const plan = suscripcion?.Plan;
 
-    // 2. Extraer información base del plan
+    // Extraer configuración legacy
+    let legacyCfg: any = {};
+    if (typeof negocio.configuracion === 'string') {
+      try { legacyCfg = JSON.parse(negocio.configuracion); } catch { legacyCfg = {}; }
+    } else {
+      legacyCfg = negocio.configuracion || {};
+    }
+    const legacyCaps = legacyCfg.activeCapabilities || legacyCfg.capabilities || {};
+
+    // 2. Extraer información base del plan y presets
     const planId = plan?.id || 'ENTERPRISE_DEMO';
     const planName = plan?.name || 'Plan Citiox Enterprise';
     const subStatus = (suscripcion?.estado || 'active').toLowerCase() as any;
 
-    // Capabilities base declaradas en el plan
     let rawPlanFeatures: Record<string, boolean> = {};
     if (plan?.features) {
       if (typeof plan.features === 'string') {
@@ -90,23 +213,37 @@ export class EntitlementsService {
       }
     }
 
-    // Si el plan no tiene features JSON explícito, dar acceso por defecto completo a las funciones base
+    // Preset según tipoNegocio
+    const presetCaps = this.getPresetCapabilities(negocio.tipoNegocio, negocio.slug);
+
+    // Consolidar capacidades (Preset ➔ Legacy Config ➔ Plan Features)
     const capabilities: Record<string, boolean> = {
-      PRODUCTS: rawPlanFeatures.PRODUCTS !== false,
-      APPOINTMENTS: rawPlanFeatures.APPOINTMENTS !== false,
-      RESERVATIONS: rawPlanFeatures.RESERVATIONS !== false,
-      POS: rawPlanFeatures.POS !== false,
-      DELIVERY: rawPlanFeatures.DELIVERY !== false,
-      PROMOTIONS: rawPlanFeatures.PROMOTIONS !== false,
-      ECOMMERCE: Boolean(rawPlanFeatures.ECOMMERCE),
-      RESTAURANT: rawPlanFeatures.RESTAURANT !== false,
-      SPA: rawPlanFeatures.SPA !== false,
-      LAUNDRY: rawPlanFeatures.LAUNDRY !== false,
-      COURTS: rawPlanFeatures.COURTS !== false,
+      ...presetCaps,
       ...rawPlanFeatures
     };
 
-    // 3. Límites base del plan (campos reales de la BD)
+    // Aplicar overrides de legacyConfig si existen explícitamente
+    if (legacyCaps.orders !== undefined) capabilities.ORDERS = Boolean(legacyCaps.orders);
+    if (legacyCaps.catalog !== undefined || legacyCaps.products !== undefined) capabilities.PRODUCTS = Boolean(legacyCaps.catalog || legacyCaps.products);
+    if (legacyCaps.tables !== undefined) capabilities.TABLES = Boolean(legacyCaps.tables);
+    if (legacyCaps.kitchen !== undefined) capabilities.KITCHEN = Boolean(legacyCaps.kitchen);
+    if (legacyCaps.delivery !== undefined) capabilities.DELIVERY = Boolean(legacyCaps.delivery);
+    if (legacyCaps.dispatch !== undefined) capabilities.DISPATCH = Boolean(legacyCaps.dispatch);
+    if (legacyCaps.appointments !== undefined) capabilities.APPOINTMENTS = Boolean(legacyCaps.appointments);
+    if (legacyCaps.courts !== undefined) capabilities.COURTS = Boolean(legacyCaps.courts);
+    if (legacyCaps.services !== undefined) capabilities.SERVICES = Boolean(legacyCaps.services);
+    if (legacyCaps.promotions !== undefined) capabilities.PROMOTIONS = Boolean(legacyCaps.promotions);
+    if (legacyCaps.inventory !== undefined) capabilities.INVENTORY = Boolean(legacyCaps.inventory);
+
+    // Mapeo bidireccional en minúsculas y mayúsculas para compatibilidad
+    Object.keys({ ...capabilities }).forEach(k => {
+      const lowerKey = k.toLowerCase();
+      const upperKey = k.toUpperCase();
+      capabilities[lowerKey] = capabilities[k];
+      capabilities[upperKey] = capabilities[k];
+    });
+
+    // 3. Límites base del plan
     const baseLimits = {
       branches: plan?.max_locations ?? 1,
       professionals: plan?.maxStaff ?? 5,
@@ -114,7 +251,7 @@ export class EntitlementsService {
       products: plan?.max_fields ?? 1000
     };
 
-    // 4. Procesar Add-ons contratados (desde customFeatures de Suscripcion)
+    // 4. Procesar Add-ons contratados
     const activeAddonsList: EffectiveEntitlements['addons'] = [];
     let customFeaturesObj: any = {};
     if (suscripcion?.customFeatures) {
@@ -151,6 +288,8 @@ export class EntitlementsService {
 
           if (addonDef.type === 'CAPABILITY') {
             capabilities[addonDef.targetKey] = true;
+            capabilities[addonDef.targetKey.toLowerCase()] = true;
+            capabilities[addonDef.targetKey.toUpperCase()] = true;
           } else if (addonDef.type === 'LIMIT') {
             const currentBonus = limitAddonBonus[addonDef.targetKey] || 0;
             limitAddonBonus[addonDef.targetKey] = currentBonus + ((addonDef.amount || 0) * qty);
@@ -167,7 +306,7 @@ export class EntitlementsService {
       products: (baseLimits.products === -1 || baseLimits.products >= 9999) ? 9999 : baseLimits.products + (limitAddonBonus.products || 0)
     };
 
-    // 5. Contar uso real actual en la BD de forma delegada
+    // 5. Contar uso real actual en la BD
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
@@ -183,6 +322,7 @@ export class EntitlementsService {
       businessId,
       planId,
       planName,
+      businessType: negocio.tipoNegocio || 'PRODUCTOS',
       status: subStatus,
       capabilities,
       limits: effectiveLimits,
@@ -197,102 +337,86 @@ export class EntitlementsService {
   }
 
   /**
-   * Verifica si un negocio tiene habilitada una capacidad dada.
-   */
-  public static async hasCapability(businessId: string, capabilityId: string): Promise<boolean> {
-    const ent = await this.resolve(businessId);
-    return Boolean(ent.capabilities[capabilityId] || ent.capabilities[capabilityId.toUpperCase()]);
-  }
-
-  /**
-   * Verifica límite para la creación de Sucursales.
-   */
-  public static async checkBranchLimit(businessId: string): Promise<LimitCheckResult> {
-    const ent = await this.resolve(businessId);
-    const current = ent.usage.branches;
-    const limit = ent.limits.branches;
-    const allowed = current < limit;
-
-    return {
-      allowed,
-      current,
-      limit,
-      remaining: Math.max(0, limit - current),
-      message: allowed ? undefined : `Has alcanzado el límite de ${limit} sucursales de tu plan. Actualiza tu plan o contrata una sucursal adicional.`
-    };
-  }
-
-  /**
-   * Verifica límite para la creación de Profesionales / Personal de Agenda.
-   */
-  public static async checkProfessionalLimit(businessId: string): Promise<LimitCheckResult> {
-    const ent = await this.resolve(businessId);
-    const current = ent.usage.professionals;
-    const limit = ent.limits.professionals;
-    const allowed = current < limit;
-
-    return {
-      allowed,
-      current,
-      limit,
-      remaining: Math.max(0, limit - current),
-      message: allowed ? undefined : `Has alcanzado el límite de ${limit} profesionales de tu plan. Actualiza tu plan o agrega profesionales adicionales.`
-    };
-  }
-
-  /**
-   * Verifica límite para la creación de Citas mensuales.
-   */
-  public static async checkAppointmentLimit(businessId: string): Promise<LimitCheckResult> {
-    const ent = await this.resolve(businessId);
-    const current = ent.usage.appointmentsMonthly;
-    const limit = ent.limits.appointmentsMonthly;
-    const allowed = current < limit;
-
-    return {
-      allowed,
-      current,
-      limit,
-      remaining: Math.max(0, limit - current),
-      message: allowed ? undefined : `Has alcanzado la cuota de ${limit} citas mensuales de tu plan para este mes.`
-    };
-  }
-
-  /**
-   * Fallback seguro cuando un negocio no tiene suscripción explícita.
+   * Fallback seguro en desarrollo o modo demo.
    */
   private static getFallbackEntitlements(businessId: string): EffectiveEntitlements {
     return {
       businessId,
-      planId: 'PLAN_STARTER_DEFAULT',
-      planName: 'Plan Starter Citiox',
+      planId: 'ENTERPRISE_DEMO',
+      planName: 'Plan Citiox Enterprise Demo',
+      businessType: 'RESTAURANTE',
       status: 'active',
       capabilities: {
-        PRODUCTS: true,
-        APPOINTMENTS: true,
-        RESERVATIONS: true,
-        POS: true,
-        DELIVERY: true,
-        PROMOTIONS: true,
-        ECOMMERCE: true,
-        RESTAURANT: true,
-        SPA: true,
-        LAUNDRY: true,
-        COURTS: true
+        PRODUCTS: true, products: true,
+        ORDERS: true, orders: true,
+        POS: true, pos: true,
+        DELIVERY: true, delivery: true,
+        DISPATCH: true, dispatch: true,
+        TABLES: true, tables: true,
+        KITCHEN: true, kitchen: true,
+        APPOINTMENTS: true, appointments: true,
+        SERVICES: true, services: true,
+        COURTS: true, courts: true,
+        PROMOTIONS: true, promotions: true,
+        LOYALTY: true, loyalty: true,
+        INVENTORY: true, inventory: true
       },
       limits: {
-        branches: 3,
-        professionals: 10,
-        appointmentsMonthly: 500,
-        products: 1000
+        branches: 999,
+        professionals: 999,
+        appointmentsMonthly: 9999,
+        products: 9999
       },
       usage: {
         branches: 1,
         professionals: 1,
         appointmentsMonthly: 0,
-        products: 10
+        products: 0
       },
       addons: []
     };
+  }
+
+  /**
+   * Verifica si un negocio tiene habilitada una capacidad dada.
+   */
+  public static async hasCapability(businessId: string, capabilityKey: string): Promise<boolean> {
+    const entitlements = await this.resolve(businessId);
+    return Boolean(entitlements.capabilities[capabilityKey.toUpperCase()] || entitlements.capabilities[capabilityKey.toLowerCase()]);
+  }
+
+  /**
+   * Verifica el estado de un límite para un negocio.
+   */
+  public static async checkLimit(businessId: string, limitKey: 'branches' | 'professionals' | 'appointmentsMonthly' | 'products'): Promise<LimitCheckResult> {
+    const entitlements = await this.resolve(businessId);
+    const limit = entitlements.limits[limitKey] ?? 9999;
+    const current = entitlements.usage[limitKey] ?? 0;
+    const allowed = current < limit;
+    const remaining = Math.max(0, limit - current);
+
+    return {
+      allowed,
+      current,
+      limit,
+      remaining,
+      message: allowed ? undefined : `Has alcanzado el límite permitido de ${limitKey} (${current}/${limit}) para tu plan actual.`
+    };
+  }
+
+  public static async checkProfessionalLimit(businessId: string): Promise<LimitCheckResult> {
+    return this.checkLimit(businessId, 'professionals');
+  }
+
+  public static async checkAppointmentLimit(businessId: string): Promise<LimitCheckResult> {
+    return this.checkLimit(businessId, 'appointmentsMonthly');
+  }
+
+  public static async checkBranchLimit(businessId: string): Promise<LimitCheckResult> {
+    return this.checkLimit(businessId, 'branches');
+  }
+
+  public static async checkProductLimit(businessId: string): Promise<LimitCheckResult> {
+    return this.checkLimit(businessId, 'products');
   }
 }

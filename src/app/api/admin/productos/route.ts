@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { EntitlementsService } from '@/core/entitlements/EntitlementsService';
 
 export async function GET() {
     const session = await getServerSession(authOptions);
@@ -41,6 +42,11 @@ export async function POST(req: Request) {
     const negocioId = (session.user as any).negocioId;
     if (!negocioId) {
         return NextResponse.json({ error: 'No tienes un negocio asociado' }, { status: 400 });
+    }
+
+    const limitCheck = await EntitlementsService.checkLimit(negocioId, 'products');
+    if (!limitCheck.allowed) {
+        return NextResponse.json({ error: limitCheck.message || 'Límite de productos alcanzado en tu plan actual' }, { status: 403 });
     }
 
     try {
