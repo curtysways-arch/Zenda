@@ -87,7 +87,6 @@ export default function AdminSidebar({
             cfg = data.configuracion || {};
           }
           const caps = cfg.activeCapabilities || cfg.capabilities || {};
-          
           const tipoUpper = (data.tipoNegocio || '').toUpperCase();
           const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT';
           const isPinchos = tipoUpper === 'PINCHOS' || data.slug === 'pinchos';
@@ -101,24 +100,25 @@ export default function AdminSidebar({
             tipoUpper === 'LAVANDERIA' ||
             tipoUpper === 'ORDENES-SERVICIO' ||
             tipoUpper === 'BEAUTY_SPA' ||
-            caps.services !== false
+            tipoUpper === 'RESERVA'
           );
+          const isStore = !isRestaurant && !isPinchos && !isCanchas && !isServiceBiz;
           
-          // Entitlements efectivos con fallback de negocio y legacy capabilities
+          // Entitlements efectivos estrictos por vertical
           const normalizedCaps: Record<string, boolean> = {
-            orders: Boolean(effectiveCaps.ORDERS ?? effectiveCaps.orders ?? (caps.orders || isRestaurant || isPinchos || tipoUpper === 'PRODUCTOS' || tipoUpper === 'TIENDA' || tipoUpper === 'ECOMMERCE')),
-            catalog: Boolean(effectiveCaps.PRODUCTS ?? effectiveCaps.products ?? (caps.catalog || caps.products || isRestaurant || isPinchos || tipoUpper === 'PRODUCTOS' || tipoUpper === 'TIENDA' || tipoUpper === 'ECOMMERCE')),
-            tables: Boolean(effectiveCaps.TABLES ?? effectiveCaps.tables ?? caps.tables ?? isRestaurant),
-            kitchen: Boolean(effectiveCaps.KITCHEN ?? effectiveCaps.kitchen ?? caps.kitchen ?? (isRestaurant || isPinchos)),
-            delivery: Boolean(effectiveCaps.DELIVERY ?? effectiveCaps.delivery ?? caps.delivery ?? (isRestaurant || isPinchos || tipoUpper === 'PRODUCTOS' || tipoUpper === 'TIENDA' || tipoUpper === 'ECOMMERCE')),
-            dispatch: Boolean(effectiveCaps.DISPATCH ?? effectiveCaps.dispatch ?? caps.dispatch),
-            appointments: Boolean(effectiveCaps.APPOINTMENTS ?? effectiveCaps.appointments ?? caps.appointments ?? (isServiceBiz || isCanchas || tipoUpper === 'RESERVA')),
-            courts: Boolean(effectiveCaps.COURTS ?? effectiveCaps.courts ?? caps.courts ?? isCanchas),
-            services: Boolean(effectiveCaps.SERVICES ?? effectiveCaps.services ?? caps.services ?? isServiceBiz),
-            promotions: Boolean(effectiveCaps.PROMOTIONS ?? effectiveCaps.promotions ?? (caps.promotions !== false)),
-            courses: Boolean(effectiveCaps.COURSES ?? effectiveCaps.courses ?? caps.courses),
-            loyalty: Boolean(effectiveCaps.LOYALTY ?? effectiveCaps.loyalty ?? caps.loyalty ?? isPinchos),
-            inventory: Boolean(effectiveCaps.INVENTORY ?? effectiveCaps.inventory ?? caps.inventory)
+            orders: Boolean(effectiveCaps.ORDERS ?? (isServiceBiz ? caps.orders === true : (isRestaurant || isPinchos || isStore))),
+            catalog: Boolean(effectiveCaps.PRODUCTS ?? (isServiceBiz ? caps.catalog === true : (isRestaurant || isPinchos || isStore))),
+            tables: Boolean(effectiveCaps.TABLES ?? (caps.tables || isRestaurant)),
+            kitchen: Boolean(effectiveCaps.KITCHEN ?? (caps.kitchen || isRestaurant || isPinchos)),
+            delivery: Boolean(effectiveCaps.DELIVERY ?? (isServiceBiz ? caps.delivery === true : (isRestaurant || isPinchos || isStore))),
+            dispatch: Boolean(effectiveCaps.DISPATCH ?? caps.dispatch),
+            appointments: Boolean(effectiveCaps.APPOINTMENTS ?? (isServiceBiz || isCanchas || tipoUpper === 'RESERVA')),
+            courts: Boolean(effectiveCaps.COURTS ?? (caps.courts || isCanchas)),
+            services: Boolean(effectiveCaps.SERVICES ?? (isServiceBiz || Boolean(caps.services))),
+            promotions: Boolean(effectiveCaps.PROMOTIONS ?? (caps.promotions !== false)),
+            courses: Boolean(effectiveCaps.COURSES ?? caps.courses),
+            loyalty: Boolean(effectiveCaps.LOYALTY ?? (caps.loyalty || isPinchos)),
+            inventory: Boolean(effectiveCaps.INVENTORY ?? caps.inventory)
           };
 
           setCapabilities(normalizedCaps);
