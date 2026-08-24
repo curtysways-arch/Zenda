@@ -52,7 +52,6 @@ export async function GET(request: Request) {
       endOfDay.setHours(23, 59, 59, 999);
 
       if (dateParam === 'today') {
-        // Para "Hoy": sólo órdenes creadas hoy O órdenes activas pendientes
         whereCondition.OR = [
           {
             createdAt: {
@@ -67,7 +66,6 @@ export async function GET(request: Request) {
           }
         ];
       } else {
-        // Para fecha específica o 'Ayer': filtro estricto por rango de fecha
         whereCondition.createdAt = {
           gte: startOfDay,
           lte: endOfDay
@@ -76,7 +74,7 @@ export async function GET(request: Request) {
     }
 
     // 3. Pedidos en base de datos para sincronización y vista unificada
-    const dbOrders = await (prisma as any).pedido.findMany({
+    let dbOrders = await (prisma as any).pedido.findMany({
       where: whereCondition,
       include: {
         items: true,
@@ -85,6 +83,39 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
       take: 200
     });
+
+    // 4. Refinamiento estricto en memoria para garantizar exactitud de fechas
+    if (dateParam && dateParam !== 'all') {
+      let targetDate = new Date();
+      if (dateParam === 'yesterday') {
+        targetDate.setDate(targetDate.getDate() - 1);
+      } else if (dateParam !== 'today') {
+        const parts = dateParam.split('-');
+        if (parts.length === 3) {
+          targetDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        }
+      }
+
+      const startOfDay = new Date(targetDate);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(targetDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      if (dateParam === 'yesterday' || (dateParam !== 'today' && dateParam !== 'all')) {
+        dbOrders = dbOrders.filter((ord: any) => {
+          const oDate = new Date(ord.createdAt);
+          return oDate >= startOfDay && oDate <= endOfDay;
+        });
+      } else if (dateParam === 'today') {
+        dbOrders = dbOrders.filter((ord: any) => {
+          const oDate = new Date(ord.createdAt);
+          const isTodayDate = oDate >= startOfDay && oDate <= endOfDay;
+          const isActive = ['PENDIENTE', 'EN_PREPARACION', 'PREPARADO', 'EN_CAMINO', 'EN_MESA', 'POR_COBRAR'].includes(ord.estado);
+          return isTodayDate || isActive;
+        });
+      }
+    }
 
     // Sembrar recursos por defecto si la lista está vacía (repartidores demo/personal)
     if (memoryResources.length === 0) {
