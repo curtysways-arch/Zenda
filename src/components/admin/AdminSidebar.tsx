@@ -119,20 +119,20 @@ export default function AdminSidebar({
           
           // Entitlements efectivos estrictos por vertical
           const normalizedCaps: Record<string, boolean> = {
-            orders: Boolean(effectiveCaps.ORDERS ?? (isServiceBiz ? caps.orders === true : (isRestaurant || isPinchos || isStore))),
-            catalog: Boolean(effectiveCaps.PRODUCTS ?? (isServiceBiz ? caps.catalog === true : (isRestaurant || isPinchos || isStore))),
-            tables: Boolean(effectiveCaps.TABLES ?? (caps.tables || isRestaurant)),
-            kitchen: Boolean(effectiveCaps.KITCHEN ?? (caps.kitchen || isRestaurant || isPinchos)),
-            delivery: Boolean(effectiveCaps.DELIVERY ?? (isServiceBiz ? caps.delivery === true : (isRestaurant || isPinchos || isStore))),
-            dispatch: Boolean(effectiveCaps.DISPATCH ?? caps.dispatch),
-            appointments: Boolean(effectiveCaps.APPOINTMENTS ?? (isServiceBiz || isCanchas || tipoUpper === 'RESERVA')),
-            courts: Boolean(effectiveCaps.COURTS ?? (caps.courts || isCanchas)),
-            services: Boolean(effectiveCaps.SERVICES ?? (isServiceBiz || Boolean(caps.services))),
-            promotions: Boolean(effectiveCaps.PROMOTIONS ?? (caps.promotions !== false)),
-            courses: Boolean(effectiveCaps.COURSES ?? caps.courses),
-            loyalty: Boolean(effectiveCaps.LOYALTY ?? (caps.loyalty || isPinchos)),
-            inventory: Boolean(effectiveCaps.INVENTORY ?? caps.inventory),
-            payments: Boolean(effectiveCaps.PAYMENTS ?? !isServiceBiz)
+            orders: Boolean((effectiveCaps.ORDERS ?? effectiveCaps.orders) ?? (isServiceBiz ? caps.orders === true : (isRestaurant || isPinchos || isStore))),
+            catalog: Boolean((effectiveCaps.PRODUCTS ?? effectiveCaps.products) ?? (isServiceBiz ? caps.catalog === true : (isRestaurant || isPinchos || isStore))),
+            tables: Boolean((effectiveCaps.TABLES ?? effectiveCaps.tables) || isRestaurant || caps.tables),
+            kitchen: Boolean((effectiveCaps.KITCHEN ?? effectiveCaps.kitchen) || isRestaurant || isPinchos || caps.kitchen),
+            delivery: Boolean((effectiveCaps.DELIVERY ?? effectiveCaps.delivery) ?? (isServiceBiz ? caps.delivery === true : (isRestaurant || isPinchos || isStore))),
+            dispatch: Boolean(effectiveCaps.DISPATCH ?? effectiveCaps.dispatch ?? caps.dispatch ?? isRestaurant),
+            appointments: Boolean(effectiveCaps.APPOINTMENTS ?? effectiveCaps.appointments ?? (isServiceBiz || isCanchas || tipoUpper === 'RESERVA')),
+            courts: Boolean(effectiveCaps.COURTS ?? effectiveCaps.courts ?? caps.courts ?? isCanchas),
+            services: Boolean(effectiveCaps.SERVICES ?? effectiveCaps.services ?? (isServiceBiz || Boolean(caps.services))),
+            promotions: Boolean(effectiveCaps.PROMOTIONS ?? effectiveCaps.promotions ?? (caps.promotions !== false)),
+            courses: Boolean(effectiveCaps.COURSES ?? effectiveCaps.courses ?? caps.courses),
+            loyalty: Boolean(effectiveCaps.LOYALTY ?? effectiveCaps.loyalty ?? caps.loyalty ?? isPinchos),
+            inventory: Boolean(effectiveCaps.INVENTORY ?? effectiveCaps.inventory ?? caps.inventory),
+            payments: Boolean(effectiveCaps.PAYMENTS ?? effectiveCaps.payments ?? !isServiceBiz)
           };
 
           setCapabilities(normalizedCaps);

@@ -205,7 +205,7 @@ export class EntitlementsService {
     const plan = suscripcion?.Plan;
 
     if (!suscripcion && !plan) {
-      return this.getFallbackEntitlements(businessId, negocio.tipoNegocio, negocio.slug);
+      return this.getFallbackEntitlements(businessId, negocio.tipoNegocio, negocio.slug, negocio.nombre);
     }
 
     // Extraer configuración legacy
