@@ -42,6 +42,8 @@ import { es } from "date-fns/locale";
 import CheckInCard from "@/components/client/CheckInCard";
 import RatingModal from "@/components/RatingModal";
 
+import CanchaMisReservas from "@/modules/sports-courts/components/CanchaMisReservas";
+
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
@@ -51,9 +53,28 @@ type FilterType = 'proximas' | 'pasadas';
 
 export default function MisReservasPage() {
     const params = useParams();
-    const slug = params.slug as string;
+    const slug = (params.slug as string) || '';
     const router = useRouter();
     const searchParams = useSearchParams();
+
+    const [negocio, setNegocio] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchBusiness = async () => {
+            try {
+                const res = await fetch(`/api/public/negocio/${slug}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data) setNegocio(data);
+                }
+            } catch (e) {}
+        };
+        fetchBusiness();
+    }, [slug]);
+
+    if (negocio?.tipoNegocio === 'SPORTS_COURTS' || (negocio?.configuracion as any)?.tipoNegocio === 'SPORTS_COURTS' || slug.includes('canchas')) {
+        return <CanchaMisReservas negocio={negocio} />;
+    }
 
     const [step, setStep] = useState<'phone' | 'otp' | 'history'>('phone');
     const [verifyingSession, setVerifyingSession] = useState(true);
@@ -79,7 +100,6 @@ export default function MisReservasPage() {
     const [countdown, setCountdown] = useState(0);
     const [reservas, setReservas] = useState<any[]>([]);
     const [cliente, setCliente] = useState<any>(null);
-    const [negocio, setNegocio] = useState<any>(null);
     const [pendingModal, setPendingModal] = useState<any>(null);
     
     const otpInputRef = useRef<HTMLInputElement>(null);
