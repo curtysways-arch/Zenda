@@ -8,7 +8,7 @@ dotenv.config({ path: path.join(process.cwd(), '.env') });
 import prisma from '../src/lib/prisma';
 
 async function seedDemoCanchas() {
-    console.log('🌱 Iniciando siembra del demo Canchas & Pádel Club...');
+    console.log('🌱 Iniciando siembra enriquecida del demo Canchas...');
 
     try {
         await prisma.$connect();
@@ -31,7 +31,7 @@ async function seedDemoCanchas() {
         const negocio = await prisma.negocio.upsert({
             where: { slug },
             update: {
-                nombre: 'PÁDEL CLUB CITIOX',
+                nombre: 'CANCHA LOS CAMPEONES',
                 tipoNegocio: 'SPORTS_COURTS',
                 whatsapp: '+593991234567',
                 direccion: 'Av. de los Granados y Eloy Alfaro, Quito',
@@ -43,8 +43,8 @@ async function seedDemoCanchas() {
                 updatedAt: new Date(),
                 configuracion: JSON.stringify({
                     tipoNegocio: 'SPORTS_COURTS',
-                    heroTitulo: 'Reserva tu Cancha en Segundos',
-                    heroSubtitulo: 'Pádel, Fútbol Sintético y Tenis con Iluminación LED Pro',
+                    heroTitulo: 'Nuestras Canchas',
+                    heroSubtitulo: 'Selecciona el escenario perfecto para tu próximo partido.',
                     bannerUrl: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=1200&h=400&fit=crop',
                     colorPrimario: '#10b981',
                     colorSecundario: '#047857'
@@ -52,7 +52,7 @@ async function seedDemoCanchas() {
             },
             create: {
                 id: businessId,
-                nombre: 'PÁDEL CLUB CITIOX',
+                nombre: 'CANCHA LOS CAMPEONES',
                 slug,
                 tipoNegocio: 'SPORTS_COURTS',
                 whatsapp: '+593991234567',
@@ -65,8 +65,8 @@ async function seedDemoCanchas() {
                 updatedAt: new Date(),
                 configuracion: JSON.stringify({
                     tipoNegocio: 'SPORTS_COURTS',
-                    heroTitulo: 'Reserva tu Cancha en Segundos',
-                    heroSubtitulo: 'Pádel, Fútbol Sintético y Tenis con Iluminación LED Pro',
+                    heroTitulo: 'Nuestras Canchas',
+                    heroSubtitulo: 'Selecciona el escenario perfecto para tu próximo partido.',
                     bannerUrl: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=1200&h=400&fit=crop',
                     colorPrimario: '#10b981',
                     colorSecundario: '#047857'
@@ -81,7 +81,7 @@ async function seedDemoCanchas() {
         const adminUser = await prisma.usuario.upsert({
             where: { email: 'canchas@citiox.com' },
             update: {
-                nombre: 'Admin Pádel Club',
+                nombre: 'Admin Cancha Los Campeones',
                 role: 'ADMIN',
                 negocioId: negocio.id,
                 password: hashedPassword,
@@ -89,7 +89,7 @@ async function seedDemoCanchas() {
             },
             create: {
                 id: crypto.randomUUID(),
-                nombre: 'Admin Pádel Club',
+                nombre: 'Admin Cancha Los Campeones',
                 email: 'canchas@citiox.com',
                 password: hashedPassword,
                 role: 'ADMIN',
@@ -119,41 +119,52 @@ async function seedDemoCanchas() {
             console.log('✅ Suscripción Pro creada');
         }
 
-        // 5. Sembrar Canchas / Servicios por defecto
+        // 5. Sembrar Canchas / Servicios por defecto con Imágenes
         const canchasDefecto = [
             {
-                nombre: 'Cancha 01 - Pádel Cristal (Techada)',
+                nombre: 'CANCHA ELITE',
                 duracion: 60,
                 precio: 25.00,
-                tipo: 'PÁDEL'
+                tipo: 'FÚTBOL 7',
+                imagenUrl: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?auto=format&fit=crop&q=80&w=800'
             },
             {
-                nombre: 'Cancha 02 - Pádel Panorámica',
+                nombre: 'CANCHA PREMIUM',
                 duracion: 60,
-                precio: 25.00,
-                tipo: 'PÁDEL'
+                precio: 45.00,
+                tipo: 'FÚTBOL 7',
+                imagenUrl: 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&q=80&w=800'
             },
             {
-                nombre: 'Cancha 03 - Fútbol 7 Sintético',
+                nombre: 'CANCHA BASQUET',
                 duracion: 60,
                 precio: 35.00,
-                tipo: 'FÚTBOL'
+                tipo: 'BÁSQUET',
+                imagenUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&q=80&w=800'
             },
             {
-                nombre: 'Cancha 04 - Tenis Polvo de Ladrillo',
+                nombre: 'CANCHA 01 - PÁDEL CRISTAL',
+                duracion: 60,
+                precio: 25.00,
+                tipo: 'PÁDEL',
+                imagenUrl: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&q=80&w=800'
+            },
+            {
+                nombre: 'CANCHA 02 - TENIS ARCILLA',
                 duracion: 60,
                 precio: 20.00,
-                tipo: 'TENIS'
+                tipo: 'TENIS',
+                imagenUrl: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&q=80&w=800'
             }
         ];
 
         for (const c of canchasDefecto) {
-            const existe = await prisma.service.findFirst({
+            let service = await prisma.service.findFirst({
                 where: { negocioId: negocio.id, nombre: c.nombre }
             });
 
-            if (!existe) {
-                await prisma.service.create({
+            if (!service) {
+                service = await prisma.service.create({
                     data: {
                         id: crypto.randomUUID(),
                         negocioId: negocio.id,
@@ -164,10 +175,38 @@ async function seedDemoCanchas() {
                     }
                 });
                 console.log('🎾 Cancha creada:', c.nombre);
+            } else {
+                await prisma.service.update({
+                    where: { id: service.id },
+                    data: { precio: c.precio, duracion: c.duracion }
+                });
+                console.log('🎾 Cancha actualizada:', c.nombre);
+            }
+
+            // Asociar imagen a la cancha
+            const imagenExiste = await prisma.imagen.findFirst({
+                where: { serviceId: service.id }
+            });
+
+            if (!imagenExiste) {
+                await prisma.imagen.create({
+                    data: {
+                        id: crypto.randomUUID(),
+                        url: c.imagenUrl,
+                        tipo: 'GALERIA',
+                        negocioId: negocio.id,
+                        serviceId: service.id
+                    }
+                });
+            } else {
+                await prisma.imagen.update({
+                    where: { id: imagenExiste.id },
+                    data: { url: c.imagenUrl }
+                });
             }
         }
 
-        console.log('✨ Demo Canchas & Pádel Club sembrado exitosamente!');
+        console.log('✨ Demo Canchas & Pádel Club sembrado exitosamente con imágenes!');
     } catch (err) {
         console.error('❌ Error sembrando demo canchas:', err);
     } finally {
