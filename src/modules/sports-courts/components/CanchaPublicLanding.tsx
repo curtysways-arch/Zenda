@@ -71,11 +71,25 @@ export default function CanchaPublicLanding({
     return () => clearInterval(interval);
   }, [heroImages.length]);
 
-  const canchasConDisponibilidad = (canchas && canchas.length > 0) ? canchas : (negocio.services || [
-    { id: 'c1', nombre: 'CANCHA ELITE', tipo: 'FÚTBOL 7', horasDisponiblesHoy: 15, precioHora: 25, imageUrl: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&q=80&w=1200' },
-    { id: 'c2', nombre: 'CANCHA PREMIUM', tipo: 'FÚTBOL 7', horasDisponiblesHoy: 15, precioHora: 45, imageUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200' },
-    { id: 'c3', nombre: 'CANCHA BASQUET', tipo: 'BÁSQUET', horasDisponiblesHoy: 15, precioHora: 35, imageUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&q=80&w=1200' },
+  const rawCanchas = (canchas && canchas.length > 0) ? canchas : (negocio.services || [
+    { id: 'c1', nombre: 'CANCHA ELITE', tipo: 'FÚTBOL 7', horasDisponiblesHoy: 15, precio: 25, imageUrl: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?auto=format&fit=crop&q=80&w=800' },
+    { id: 'c2', nombre: 'CANCHA PREMIUM', tipo: 'FÚTBOL 7', horasDisponiblesHoy: 15, precio: 45, imageUrl: 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&q=80&w=800' },
+    { id: 'c3', nombre: 'CANCHA BASQUET', tipo: 'BÁSQUET', horasDisponiblesHoy: 15, precio: 35, imageUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&q=80&w=800' },
   ]);
+
+  const canchasConDisponibilidad = rawCanchas.map((c: any) => {
+    let img = c.imageUrl || c.imagenUrl;
+    if (!img && Array.isArray(c.imagenes) && c.imagenes.length > 0) {
+      img = typeof c.imagenes[0] === 'string' ? c.imagenes[0] : c.imagenes[0]?.url;
+    }
+    if (!img && Array.isArray(c.Imagen) && c.Imagen.length > 0) {
+      img = typeof c.Imagen[0] === 'string' ? c.Imagen[0] : c.Imagen[0]?.url;
+    }
+    return {
+      ...c,
+      imageUrl: img || defaultBanner
+    };
+  });
 
   return (
     <div className="min-h-screen bg-[#0a0f1d] text-white font-sans pb-32 relative overflow-x-hidden">
