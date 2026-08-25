@@ -71,11 +71,17 @@ export default function CanchaPublicLanding({
     return () => clearInterval(interval);
   }, [heroImages.length]);
 
-  const rawCanchas = (canchas && canchas.length > 0) ? canchas : (negocio.services || [
+  const defaultCanchas = [
     { id: 'c1', nombre: 'CANCHA ELITE', tipo: 'FÚTBOL 7', horasDisponiblesHoy: 15, precio: 25, imageUrl: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?auto=format&fit=crop&q=80&w=800' },
     { id: 'c2', nombre: 'CANCHA PREMIUM', tipo: 'FÚTBOL 7', horasDisponiblesHoy: 15, precio: 45, imageUrl: 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&q=80&w=800' },
     { id: 'c3', nombre: 'CANCHA BASQUET', tipo: 'BÁSQUET', horasDisponiblesHoy: 15, precio: 35, imageUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&q=80&w=800' },
-  ]);
+    { id: 'c4', nombre: 'CANCHA 01 - PÁDEL CRISTAL', tipo: 'PÁDEL', horasDisponiblesHoy: 15, precio: 25, imageUrl: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&q=80&w=800' },
+    { id: 'c5', nombre: 'CANCHA 02 - TENIS ARCILLA', tipo: 'TENIS', horasDisponiblesHoy: 15, precio: 20, imageUrl: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&q=80&w=800' },
+  ];
+
+  const rawCanchas = (Array.isArray(canchas) && canchas.length > 0)
+    ? canchas
+    : (Array.isArray(negocio?.services) && negocio.services.length > 0 ? negocio.services : defaultCanchas);
 
   const canchasConDisponibilidad = rawCanchas.map((c: any) => {
     let img = c.imageUrl || c.imagenUrl;
