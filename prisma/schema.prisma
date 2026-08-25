@@ -33,7 +33,7 @@ enum RewardStatus {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
 model Attendance {
