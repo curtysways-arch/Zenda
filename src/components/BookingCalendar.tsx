@@ -311,7 +311,7 @@ export default function BookingCalendar({
         if (!isRangeAvailable(hour)) return;
         setSelectedHour(hour);
         
-        if (selectedDate && (selectedCanchaId || staffId)) {
+        if (staffId && selectedDate) {
             const currentService = canchas.find(c => c.id === selectedCanchaId) || canchas[0];
             const promo = resolveSlotPromotion(hour, selectedDate, currentService, automaticDiscount);
             onSelectSlot(selectedDate, hour, selectedCanchaId, selectedDuracion, promo.discountPercent);
