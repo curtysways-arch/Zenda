@@ -503,7 +503,12 @@ export default function BookingCalendar({
                                         </div>
                                     )}
                                     
-                                    <span className={cn(isPending ? "text-[12px] mb-0.5" : "")}>{hour}</span>
+                                    <span className={cn(
+                                        isPending ? "text-[12px] mb-0.5" : "",
+                                        isSelected ? "text-white font-black text-sm z-10 opacity-100" : ""
+                                    )}>
+                                        {hour}
+                                    </span>
                                     
                                     {isPending && (
                                         <div className="flex flex-col items-center">

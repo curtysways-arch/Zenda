@@ -129,10 +129,14 @@ export default function CanchaDetailView({ negocio, cancha }: CanchaDetailViewPr
         header.sticky.top-0:not(.cancha-native-header) {
             display: none !important;
         }
+        header.cancha-native-header {
+            background-color: #07090f !important;
+            color: #ffffff !important;
+        }
       ` }} />
 
       {/* STICKY TOP HEADER - NATIVE STYLE */}
-      <header className="cancha-native-header sticky top-0 z-[100] h-14 flex items-center bg-[#07090f]/80 backdrop-blur-xl border-b border-white/5">
+      <header className="cancha-native-header sticky top-0 z-[100] h-14 flex items-center bg-[#07090f] backdrop-blur-xl border-b border-white/10 text-white">
         <div className="max-w-xl mx-auto w-full px-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link

@@ -36,12 +36,21 @@ export default async function CanchaDetailPage({
         notFound();
     }
 
-    if (negocio.tipoNegocio === 'SPORTS_COURTS' || (negocio.configuracion as any)?.tipoNegocio === 'SPORTS_COURTS' || slug.includes('canchas')) {
-        const cancha = (negocio.services || []).find((c: any) => c.id === id) || {
+    const isSportsOrCancha = 
+        negocio.tipoNegocio === 'SPORTS_COURTS' || 
+        negocio.tipoNegocio === 'CANCHAS' ||
+        negocio.tipoNegocio === 'SPORTS' ||
+        (negocio.configuracion as any)?.tipoNegocio === 'SPORTS_COURTS' ||
+        (negocio.configuracion as any)?.tipoNegocio === 'CANCHAS' ||
+        slug.includes('cancha') ||
+        Boolean(negocio.precioHora && negocio.precioHora > 0);
+
+    if (isSportsOrCancha) {
+        const cancha = (negocio.services || []).find((c: any) => c.id === id) || (negocio.canchas || []).find((c: any) => c.id === id) || {
             id,
-            nombre: 'Cancha 1 (Cristal)',
-            tipo: 'PÁDEL CRISTAL',
-            precio: negocio.precioHora || 25000,
+            nombre: 'Cancha 1',
+            tipo: 'FÚTBOL 7',
+            precio: negocio.precioHora || 25,
         };
         const { default: CanchaDetailView } = await import('@/modules/sports-courts/components/CanchaDetailView');
         return <CanchaDetailView negocio={negocio} cancha={cancha} />;

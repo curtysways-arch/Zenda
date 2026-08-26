@@ -55,31 +55,31 @@ export default function CanchaInteractionButtons({ canchaId, canchaNombre, negoc
     };
 
     return (
-        <div className="flex items-center gap-1 relative">
+        <div className="flex items-center gap-2 relative">
             <button 
                 type="button"
                 onClick={handleShare}
-                className="p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-xl transition-colors active:scale-95 cursor-pointer"
+                className="size-9 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white flex items-center justify-center border border-white/10 transition-all cursor-pointer shadow-sm"
                 title="Compartir"
             >
-                <Share2 size={20} />
+                <Share2 size={18} className="text-white" />
             </button>
             {justCopied && (
-                <div className="absolute top-10 left-1/2 -translate-x-1/2 w-max bg-emerald-500 text-white font-black uppercase tracking-widest text-[9px] px-3 py-1.5 rounded-lg shadow-xl animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="absolute top-11 right-0 w-max bg-emerald-500 text-white font-black uppercase tracking-widest text-[9px] px-3 py-1.5 rounded-lg shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-300">
                     Enlace copiado!
                 </div>
             )}
             <button 
                 type="button"
                 onClick={toggleFavorite}
-                className={`p-2 rounded-xl transition-colors active:scale-95 cursor-pointer ${
+                className={`size-9 rounded-full flex items-center justify-center border transition-all active:scale-95 cursor-pointer shadow-sm ${
                     isFavorite 
-                        ? 'text-rose-500 hover:bg-rose-500/10' 
-                        : 'text-white/50 hover:text-rose-400 hover:bg-white/10'
+                        ? 'bg-rose-500/20 border-rose-500/50 text-rose-500' 
+                        : 'bg-white/10 hover:bg-white/20 border-white/10 text-white'
                 }`}
                 title="Favorito"
             >
-                <Heart size={20} fill={isFavorite ? "currentColor" : "none"} className={isFavorite ? "scale-110 transition-transform" : "scale-100 transition-transform"} />
+                <Heart size={18} fill={isFavorite ? "currentColor" : "none"} className={isFavorite ? "scale-110 text-rose-500 transition-transform" : "text-white transition-transform"} />
             </button>
         </div>
     );
