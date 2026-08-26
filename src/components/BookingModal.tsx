@@ -256,8 +256,15 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
                 <div className="absolute bottom-0 left-0 right-0 bg-[#07090f]/95 backdrop-blur-xl border-t border-white/5 p-5 sm:px-8 shrink-0 flex flex-col gap-3 z-30 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-[9px] font-black text-emerald-500/60 uppercase tracking-[0.2em] italic mb-0.5">TOTAL A PAGAR</span>
-                            <span className="text-3xl font-black text-emerald-400 italic tracking-tighter leading-none">${precioTotal}</span>
+                            <span className="text-[9px] font-black text-emerald-500/60 uppercase tracking-[0.2em] italic mb-0.5">TOTAL DE RESERVA</span>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-3xl font-black text-emerald-400 italic tracking-tighter leading-none">${precioTotal}</span>
+                                {bookingData?.pagoPorcentaje && (
+                                    <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
+                                        SEÑA: {bookingData.pagoPorcentaje}% (${((precioTotal * bookingData.pagoPorcentaje) / 100).toFixed(2)})
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { use, useEffect, useState } from 'react';
-import { CheckCircle2, ChevronRight, Calendar, MapPin, Clock, ArrowRight, Smartphone, Sparkles, User, Scissors, Users, AlertCircle, ClipboardCheck } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Calendar, MapPin, Clock, ArrowRight, Sparkles, User, Scissors, AlertCircle, ClipboardCheck, CreditCard, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -19,6 +19,7 @@ export default function ConfirmacionReservaPage({
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isRatingOpen, setIsRatingOpen] = useState(false);
+    const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
 
     const searchParams = useSearchParams();
     const queryCalificar = searchParams ? searchParams.get('calificar') : null;
@@ -40,30 +41,37 @@ export default function ConfirmacionReservaPage({
                     setAppointment(data);
                     setError(null);
                     
-                    // Auto-abrir modal si la cita ya finalizó y no ha calificado
                     const lowerEstado = data.estado?.toLowerCase();
                     const alreadyRated = data.ratings?.some((r: any) => r.raterRole === 'client');
                     if ((lowerEstado === 'completed' || lowerEstado === 'finalizada') && !alreadyRated) {
                         setIsRatingOpen(true);
                     }
+
+                    if (data.negocio?.pagosActivos) {
+                        try {
+                            const payRes = await fetch('/api/pagos/reserva', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ reservaId: data.id })
+                            });
+                            const payData = await payRes.json();
+                            if (payData.initPoint) {
+                                setPaymentUrl(payData.initPoint);
+                            }
+                        } catch (e) {
+                            console.error("Error obteniendo URL de pago:", e);
+                        }
+                    }
                 } else {
-                    // FALLBACK: Intentar cargar desde localStorage si la API falla
                     let backup = localStorage.getItem(`last_appointment_${id}`);
                     if (!backup) {
                         backup = localStorage.getItem('last_appointment_latest');
                     }
 
                     if (backup) {
-                        console.log("Cargando desde respaldo local...");
                         const backupData = JSON.parse(backup);
                         setAppointment(backupData);
                         setError(null);
-
-                        const lowerEstado = backupData.estado?.toLowerCase();
-                        const alreadyRated = backupData.ratings?.some((r: any) => r.raterRole === 'client');
-                        if ((lowerEstado === 'completed' || lowerEstado === 'finalizada') && !alreadyRated) {
-                            setIsRatingOpen(true);
-                        }
                     } else {
                         setError(data.error || "No se encontró la reserva");
                     }
@@ -77,9 +85,8 @@ export default function ConfirmacionReservaPage({
         };
 
         if (id) {
-            fetchDetails(); // Carga inicial
+            fetchDetails();
             
-            // Polling solo si la cita está en estado no finalizado y no ha calificado
             const interval = setInterval(async () => {
                 try {
                     const res = await fetch(`/api/appointments/${id}`);
@@ -91,33 +98,29 @@ export default function ConfirmacionReservaPage({
                         const lowerEstado = data.estado?.toLowerCase();
                         const alreadyRated = data.ratings?.some((r: any) => r.raterRole === 'client');
                         
-                        // Si se completó, abrimos modal y detenemos polling
                         if ((lowerEstado === 'completed' || lowerEstado === 'finalizada') && !alreadyRated) {
                             setIsRatingOpen(true);
                             clearInterval(interval);
                         } else if (lowerEstado === 'completed' || lowerEstado === 'finalizada' || lowerEstado === 'cancelled' || lowerEstado === 'no_show') {
-                            // Si se completó calificada o se canceló, detenemos polling
                             clearInterval(interval);
                         }
                     }
                 } catch (err) {
                     console.error("Error polling appointment:", err);
                 }
-            }, 6000); // Polling cada 6 segundos
+            }, 6000);
 
             return () => clearInterval(interval);
         }
     }, [id]);
 
-    // El layout ya inyecta --primary con el color correcto del negocio.
-    // Usamos el colorPrimario real solo si ya cargó; de lo contrario la CSS var evita el flash.
     const primaryColor = appointment?.negocio?.colorPrimario || 'var(--primary)';
 
     if (loading) {
         return (
             <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
                 <div className="w-16 h-16 border-4 border-gray-100 border-t-primary animate-spin rounded-full mb-4" style={{ borderTopColor: primaryColor }}></div>
-                <p className="text-sm font-black text-gray-400 uppercase tracking-widest animate-pulse">Confirmando tu turno...</p>
+                <p className="text-sm font-black text-gray-400 uppercase tracking-widest animate-pulse">Confirmando tu reserva...</p>
             </div>
         );
     }
@@ -131,59 +134,113 @@ export default function ConfirmacionReservaPage({
     const isCancelled = estadoNormalizado === 'cancelled' || estadoNormalizado === 'cancelada' || estadoNormalizado === 'no_show';
     const isPending = !isConfirmed && !isClientCheckedIn && !isInProgress && !isCompleted && !isCancelled;
 
+    const isCancha = appointment?.negocio?.tipoNegocio === 'SPORTS_COURTS' || 
+                    appointment?.negocio?.tipoNegocio === 'CANCHAS' || 
+                    slug.includes('cancha') || 
+                    (!appointment?.staffId && (!appointment?.staff || appointment?.staff?.nombre === 'Cualquier profesional' || appointment?.staff?.name === 'Cualquier profesional'));
+
+    const porcentajeSena = appointment?.negocio?.pagoPorcentaje || 50;
+    const precioTotalNum = Number(appointment?.precioTotal || appointment?.precio || 0);
+    const montoSena = (precioTotalNum * porcentajeSena) / 100;
+    const whatsapp = appointment?.negocio?.whatsapp || '';
+
     return (
-        <div className="min-h-screen bg-gray-50/50 flex flex-col items-center p-4 md:p-8">
-            {/* No sobreescribimos --primary aquí: el layout ya lo inyectó correctamente */}
+        <div className="min-h-screen bg-gray-50/50 flex flex-col items-center p-4 md:p-8 text-left">
             
-            <div className="w-full max-w-lg space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
-                {/* Header Exito */}
-                <div className="bg-white rounded-[3rem] p-10 shadow-2xl shadow-gray-200/50 border border-gray-100 text-center relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-2" style={{ backgroundColor: primaryColor }}></div>
-                    <div className="mx-auto w-24 h-24 rounded-full flex items-center justify-center mb-6 ring-8 ring-gray-50 shadow-inner overflow-hidden" style={{ backgroundColor: `${primaryColor}15` }}>
+            <div className="w-full max-w-lg space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
+                {/* Header Éxito */}
+                <div className="bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl shadow-gray-200/50 border border-gray-100 text-center relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-2" style={{ backgroundColor: isCancha ? '#1dc95c' : primaryColor }}></div>
+                    <div className="mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-5 ring-8 ring-gray-50 shadow-inner overflow-hidden" style={{ backgroundColor: isCancha ? '#1dc95c15' : `${primaryColor}15` }}>
                         {(appointment?.negocio?.logoUrl || appointment?.negocio?.logo) ? (
-                            <img src={appointment.negocio.logoUrl || appointment.negocio.logo} alt={appointment.negocio.nombre} className="w-16 h-16 object-contain" />
+                            <img src={appointment.negocio.logoUrl || appointment.negocio.logo} alt={appointment.negocio.nombre} className="w-14 h-14 object-contain" />
                         ) : (
                             isConfirmed || isClientCheckedIn ? (
-                                <CheckCircle2 size={48} style={{ color: primaryColor }} strokeWidth={2.5} />
-                            ) : isInProgress || isCompleted ? (
-                                <Sparkles size={48} style={{ color: primaryColor }} strokeWidth={2.5} />
+                                <CheckCircle2 size={40} className="text-emerald-500" strokeWidth={2.5} />
                             ) : isCancelled ? (
-                                <AlertCircle size={48} className="text-red-500" strokeWidth={2.5} />
+                                <AlertCircle size={40} className="text-red-500" strokeWidth={2.5} />
                             ) : (
-                                <ClipboardCheck size={48} className="text-amber-400" strokeWidth={2.5} />
+                                <ClipboardCheck size={40} className="text-amber-500" strokeWidth={2.5} />
                             )
                         )}
                     </div>
                     
-                    <h1 className="text-4xl font-black text-gray-900 tracking-tighter leading-tight italic uppercase">
+                    <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tighter leading-tight italic uppercase">
                         {isConfirmed ? (
-                            <>¡Reserva <br /> <span style={{ color: primaryColor }}>Confirmada!</span></>
-                        ) : isClientCheckedIn ? (
-                            <>¡Llegada <br /> <span style={{ color: primaryColor }}>Confirmada!</span></>
-                        ) : isInProgress ? (
-                            <>¡Servicio <br /> <span style={{ color: primaryColor }}>En Curso!</span></>
-                        ) : isCompleted ? (
-                            <>¡Visita <br /> <span style={{ color: primaryColor }}>Finalizada!</span></>
+                            <>¡Reserva <br /> <span className="text-emerald-500">Confirmada!</span></>
                         ) : isCancelled ? (
-                            <>¡Turno <br /> <span className="text-red-500">Cancelado!</span></>
+                            <>¡Reserva <br /> <span className="text-red-500">Cancelada!</span></>
                         ) : (
-                            <>¡Solicitud <br /> <span style={{ color: primaryColor }}>Recibida!</span></>
+                            <>¡Solicitud <br /> <span className="text-amber-500">Recibida!</span></>
                         )}
                     </h1>
-                    <p className="text-gray-400 font-bold mt-4 text-sm leading-relaxed max-w-[280px] mx-auto uppercase tracking-wide">
+                    <p className="text-gray-400 font-bold mt-3 text-xs md:text-sm leading-relaxed max-w-[300px] mx-auto uppercase tracking-wide">
                         {error ? 'Hubo un problema al cargar los detalles.' : (
-                            isConfirmed ? 'Todo listo. Nos vemos pronto.' :
-                            isClientCheckedIn ? 'Has hecho check-in. Te llamaremos en breve.' :
-                            isInProgress ? 'Disfruta de tu sesión de bienestar.' :
-                            isCompleted ? '¡Muchas gracias por elegirnos!' :
-                            isCancelled ? 'Este turno no se encuentra activo.' :
-                            'Revisaremos tu solicitud y te notificaremos por WhatsApp.'
+                            isConfirmed ? 'Todo listo. Tu lugar en la cancha está asegurado.' :
+                            isCancelled ? 'Esta reserva no se encuentra activa.' :
+                            'Paga tu seña para confirmar inmediatamente tu reserva.'
                         )}
                     </p>
                 </div>
 
-                {/* Banner de estado PENDIENTE */}
-                {!error && appointment && isPending && (
+                {/* TARJETA DE SEÑA / PAGO PARA CONFIRMAR RESERVA DE CANCHA */}
+                {isPending && (
+                    <div className="bg-gradient-to-br from-emerald-950 via-slate-900 to-[#07090f] text-white rounded-[2.5rem] p-7 border border-emerald-500/30 shadow-2xl space-y-6 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                        
+                        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                            <div className="flex items-center gap-2.5">
+                                <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                    <Clock size={18} className="animate-pulse" />
+                                </div>
+                                <div>
+                                    <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest block leading-none">ACCIÓN REQUERIDA</span>
+                                    <h3 className="text-sm font-black text-white italic uppercase mt-0.5">Seña para Confirmar Reserva</h3>
+                                </div>
+                            </div>
+                            <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[9px] font-black uppercase tracking-widest">
+                                {porcentajeSena}% SEÑA
+                            </span>
+                        </div>
+
+                        <div className="flex items-baseline justify-between">
+                            <div>
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">MONTO DE SEÑA</span>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-4xl font-black text-emerald-400 italic tracking-tighter">${montoSena.toFixed(2)}</span>
+                                    <span className="text-xs text-slate-400 font-bold">de ${precioTotalNum.toFixed(2)} Total</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3 pt-2">
+                            {paymentUrl && (
+                                <a
+                                    href={paymentUrl}
+                                    className="w-full h-15 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black rounded-2xl flex items-center justify-center gap-3 text-xs tracking-widest uppercase transition-all shadow-xl shadow-emerald-500/20"
+                                >
+                                    <CreditCard size={18} />
+                                    PAGAR SEÑA AHORA (${montoSena.toFixed(2)})
+                                </a>
+                            )}
+
+                            {whatsapp && (
+                                <a
+                                    href={`https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola! 👋 Acabo de hacer la reserva de las ${appointment?.service?.nombre || 'Cancha'} para el ${appointment?.fecha ? format(new Date(appointment.fecha), "d/MM", { locale: es }) : ''} a las ${appointment?.horaInicio || ''} HS. Mi ID de reserva es #${(appointment?.id || id).slice(-4).toUpperCase()}. Adjunto mi comprobante de seña ($${montoSena.toFixed(2)}).`)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-full h-14 bg-white/10 hover:bg-white/15 active:scale-95 text-emerald-400 border border-emerald-500/30 font-black rounded-2xl flex items-center justify-center gap-3 text-xs tracking-widest uppercase transition-all"
+                                >
+                                    <MessageSquare size={18} />
+                                    ENVIAR COMPROBANTE DE SEÑA
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Banner de estado PENDIENTE / CONFIRMADO */}
+                {!error && appointment && isPending && !paymentUrl && (
                     <div className="bg-amber-50 border border-amber-200 rounded-[2rem] px-6 py-5 flex items-start gap-4 shadow-sm animate-in fade-in duration-300">
                         <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0 mt-0.5">
                             <Clock size={20} className="text-amber-500" />
@@ -193,92 +250,7 @@ export default function ConfirmacionReservaPage({
                                 ⏳ Pendiente de Confirmación
                             </p>
                             <p className="text-xs font-bold text-amber-700 leading-relaxed">
-                                El negocio revisará tu solicitud y recibirás una confirmación por WhatsApp en breve. Tu lugar está reservado temporalmente.
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Banner de estado CONFIRMADO */}
-                {!error && appointment && isConfirmed && (
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-[2rem] px-6 py-5 flex items-start gap-4 shadow-sm animate-in fade-in duration-300">
-                        <div className="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-                            <CheckCircle2 size={20} className="text-emerald-500" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1.5">
-                                ✅ Cita Confirmada
-                            </p>
-                            <p className="text-xs font-bold text-emerald-700 leading-relaxed">
-                                Tu lugar está reservado con éxito. Te esperamos en la fecha y hora seleccionada.
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Banner de estado CHECK-IN REALIZADO */}
-                {!error && appointment && isClientCheckedIn && (
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-[2rem] px-6 py-5 flex items-start gap-4 shadow-sm animate-in fade-in duration-300">
-                        <div className="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-                            <CheckCircle2 size={20} className="text-emerald-500" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1.5">
-                                📍 Check-in Realizado
-                            </p>
-                            <p className="text-xs font-bold text-emerald-700 leading-relaxed">
-                                Has confirmado tu llegada al local. En breve el profesional te llamará para iniciar tu servicio.
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Banner de estado EN CURSO */}
-                {!error && appointment && isInProgress && (
-                    <div className="bg-purple-50 border border-purple-200 rounded-[2rem] px-6 py-5 flex items-start gap-4 shadow-sm animate-in fade-in duration-300">
-                        <div className="w-10 h-10 rounded-2xl bg-purple-100 flex items-center justify-center shrink-0 mt-0.5">
-                            <Sparkles size={20} className="text-purple-500" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest leading-none mb-1.5">
-                                ⚡ Servicio en Curso
-                            </p>
-                            <p className="text-xs font-bold text-purple-700 leading-relaxed">
-                                Tu servicio está siendo realizado en este momento. ¡Disfruta de tu experiencia!
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Banner de estado COMPLETADO */}
-                {!error && appointment && isCompleted && (
-                    <div className="bg-slate-50 border border-slate-200 rounded-[2rem] px-6 py-5 flex items-start gap-4 shadow-sm animate-in fade-in duration-300">
-                        <div className="w-10 h-10 rounded-2xl bg-slate-200 flex items-center justify-center shrink-0 mt-0.5">
-                            <CheckCircle2 size={20} className="text-slate-600" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest leading-none mb-1.5">
-                                ✨ Cita Completada
-                            </p>
-                            <p className="text-xs font-bold text-slate-700 leading-relaxed">
-                                Esta cita ha sido completada con éxito. ¡Gracias por confiar en nosotros!
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Banner de estado CANCELADO */}
-                {!error && appointment && isCancelled && (
-                    <div className="bg-red-50 border border-red-200 rounded-[2rem] px-6 py-5 flex items-start gap-4 shadow-sm animate-in fade-in duration-300">
-                        <div className="w-10 h-10 rounded-2xl bg-red-100 flex items-center justify-center shrink-0 mt-0.5">
-                            <AlertCircle size={20} className="text-red-500" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-red-600 uppercase tracking-widest leading-none mb-1.5">
-                                ❌ Cita Cancelada
-                            </p>
-                            <p className="text-xs font-bold text-red-700 leading-relaxed">
-                                Esta cita ha sido cancelada o marcada como inasistencia. Si crees que es un error, por favor contáctanos.
+                                El negocio revisará tu solicitud de cancha y recibirás la confirmación en breve. Tu lugar está reservado temporalmente.
                             </p>
                         </div>
                     </div>
@@ -287,8 +259,10 @@ export default function ConfirmacionReservaPage({
                 {/* Detalles del Turno */}
                 <div className="bg-white rounded-[3rem] p-8 shadow-xl border border-gray-100 space-y-6">
                     <div className="flex items-center gap-2 mb-2">
-                        <Sparkles size={14} style={{ color: primaryColor }} />
-                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Resumen de tu Visita</h3>
+                        <Sparkles size={14} className={isCancha ? 'text-emerald-500' : ''} style={{ color: isCancha ? '#1dc95c' : primaryColor }} />
+                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                            {isCancha ? 'Resumen de tu Reserva' : 'Resumen de tu Cita'}
+                        </h3>
                     </div>
 
                     {error ? (
@@ -305,50 +279,27 @@ export default function ConfirmacionReservaPage({
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {/* Servicio Principal */}
+                            {/* Cancha / Servicio */}
                             <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white shadow-sm border border-gray-100">
-                                        <Scissors size={20} className="text-gray-400" />
+                                        <Scissors size={20} className={isCancha ? 'text-emerald-500' : 'text-gray-400'} />
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Servicio</p>
-                                        <p className="text-base font-black text-gray-900 leading-none">{appointment?.service?.nombre || 'Servicio de Spa'}</p>
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
+                                            {isCancha ? 'Cancha' : 'Servicio'}
+                                        </p>
+                                        <p className="text-base font-black text-gray-900 leading-none">{appointment?.service?.nombre || 'Cancha'}</p>
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Servicios Adicionales */}
-                            {(() => {
-                                let extras = [];
-                                if (appointment?.extraServices && Array.isArray(appointment.extraServices)) {
-                                    extras = appointment.extraServices;
-                                } else if (appointment?.comentarios?.includes("Servicios extra:")) {
-                                    const part = appointment.comentarios.split("Servicios extra:")[1];
-                                    if (part) extras = part.split(", ").map((n: string) => ({ nombre: n.trim() }));
-                                }
-
-                                return extras.map((extra: any, index: number) => (
-                                    <div key={index} className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-500" style={{ animationDelay: `${(index + 1) * 100}ms` }}>
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white shadow-sm border border-gray-100">
-                                                <Sparkles size={16} className="text-gray-400" />
-                                            </div>
-                                            <div>
-                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Servicio Adicional</p>
-                                                <p className="text-base font-black text-gray-900 leading-none">{extra.nombre || extra}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ));
-                            })()}
 
                             {/* Fecha y Hora */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100">
                                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-2">Fecha</p>
                                     <div className="flex items-center gap-2">
-                                        <Calendar size={14} style={{ color: primaryColor }} />
+                                        <Calendar size={14} className={isCancha ? 'text-emerald-500' : ''} style={{ color: isCancha ? '#1dc95c' : primaryColor }} />
                                         <p className="text-sm font-black text-gray-900 leading-none">
                                             {appointment?.fecha ? (() => {
                                                 try {
@@ -368,37 +319,36 @@ export default function ConfirmacionReservaPage({
                                 <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100">
                                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-2">Horario</p>
                                     <div className="flex items-center gap-2">
-                                        <Clock size={14} style={{ color: primaryColor }} />
+                                        <Clock size={14} className={isCancha ? 'text-emerald-500' : ''} style={{ color: isCancha ? '#1dc95c' : primaryColor }} />
                                         <p className="text-sm font-black text-gray-900 leading-none italic">{appointment?.horaInicio || '--:--'} HS</p>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Especialista */}
-                            <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
-                                    {(appointment?.staff?.imageMedia || appointment?.staff?.avatar) ? (
-                                        <img 
-                                            src={appointment.staff.imageMedia?.url ?? appointment.staff.avatar} 
-                                            alt="Avatar" 
-                                            className="w-full h-full object-cover" 
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-                                            <User size={20} className="text-gray-300" />
-                                        </div>
-                                    )}
+                            {/* Especialista (SOLO SI NO ES CANCHA Y TIENE STAFF REAL) */}
+                            {!isCancha && appointment?.staff && appointment?.staff?.nombre !== 'Cualquier profesional' && (
+                                <div className="p-5 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+                                        {(appointment?.staff?.imageMedia || appointment?.staff?.avatar) ? (
+                                            <img 
+                                                src={appointment.staff.imageMedia?.url ?? appointment.staff.avatar} 
+                                                alt="Avatar" 
+                                                className="w-full h-full object-cover" 
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+                                                <User size={20} className="text-gray-300" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1.5">Tu Especialista</p>
+                                        <p className="text-sm font-black text-gray-900 leading-none">
+                                            {appointment?.staff?.name || appointment?.staff?.nombre}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1.5">Tu Especialista</p>
-                                    <p className="text-sm font-black text-gray-900 leading-none">
-                                        {appointment?.staff?.name || appointment?.staff?.nombre || 'Cualquier profesional'}
-                                    </p>
-                                    <p className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter mt-1 italic">
-                                        {appointment?.staff?.role || (appointment?.staffId ? 'Especialista' : 'Bienestar')}
-                                    </p>
-                                </div>
-                            </div>
+                            )}
 
                             {/* Ubicación */}
                             {(appointment?.service?.ubicacion || appointment?.negocio?.direccion) && (
@@ -424,7 +374,7 @@ export default function ConfirmacionReservaPage({
                         href={`/${slug}/mis-reservas`}
                         className="w-full py-6 bg-gray-900 text-white font-black rounded-[2rem] flex items-center justify-center gap-3 hover:bg-gray-800 transition shadow-2xl uppercase text-xs tracking-widest"
                     >
-                        Ver todas mis citas
+                        {isCancha ? 'Ver todas mis reservas' : 'Ver todas mis citas'}
                         <ArrowRight size={16} />
                     </Link>
 
@@ -437,8 +387,8 @@ export default function ConfirmacionReservaPage({
                 </div>
             </div>
 
-            {/* Modal de Calificación al Profesional */}
-            {appointment && (
+            {/* Modal de Calificación */}
+            {appointment && !isCancha && (
                 <RatingModal 
                     isOpen={isRatingOpen}
                     onClose={() => setIsRatingOpen(false)}
