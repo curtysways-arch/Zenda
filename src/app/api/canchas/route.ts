@@ -1,14 +1,13 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     let negocioId = searchParams.get('negocioId');
 
     if (!negocioId) {
-        const session = await getServerSession(authOptions);
+        const session = await getServerSession();
         negocioId = (session?.user as any)?.negocioId;
     }
 
@@ -17,8 +16,8 @@ export async function GET(req: Request) {
     }
 
     try {
-        const servicios = await prisma.service.findMany({
-            where: { negocioId, estaActivo: true },
+        const servicios = await (prisma as any).service.findMany({
+            where: { negocioId },
             include: { Imagen: true },
             orderBy: { createdAt: 'desc' },
         });
@@ -28,11 +27,14 @@ export async function GET(req: Request) {
             return {
                 id: s.id,
                 nombre: s.nombre,
-                tipo: extra.tipo || 'PÁDEL CRISTAL',
-                capacidad: extra.capacidad || 4,
-                precioHora: s.precio || 25,
+                tipo: extra.tipo || 'Fútbol 5',
+                tipoId: extra.tipoId || '',
+                capacidad: extra.capacidad || 10,
+                precioHora: s.precio || 0,
                 estaActiva: s.estaActivo ?? true,
+                ubicacionId: s.ubicacionId || null,
                 negocioId: s.negocioId,
+                extraInfo: extra,
                 imagenes: s.Imagen || []
             };
         });
@@ -47,11 +49,11 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { nombre, tipo, capacidad, precioHora, negocioId } = body;
+        const { nombre, tipo, tipoId, capacidad, precioHora, estaActiva, ubicacionId, extraInfo, negocioId } = body;
 
         let realNegocioId = negocioId;
         if (!realNegocioId) {
-            const session = await getServerSession(authOptions);
+            const session = await getServerSession();
             realNegocioId = (session?.user as any)?.negocioId;
         }
 
@@ -59,19 +61,22 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Negocio ID es requerido' }, { status: 400 });
         }
 
-        const cancha = await prisma.service.create({
+        const cancha = await (prisma as any).service.create({
             data: {
                 id: `cancha-${Date.now()}`,
                 negocioId: realNegocioId,
                 nombre,
-                precio: parseFloat(precioHora || '25'),
-                duracion: 90,
-                estaActivo: true,
+                precio: parseFloat(precioHora || '0'),
+                duracion: 60,
+                estaActivo: estaActiva ?? true,
+                ubicacionId: ubicacionId || null,
                 updatedAt: new Date(),
                 extraInfo: {
-                    tipo: tipo || 'PÁDEL CRISTAL',
-                    capacidad: parseInt(capacidad || '4')
-                } as any
+                    tipo: tipo || 'Fútbol 5',
+                    tipoId: tipoId || null,
+                    capacidad: parseInt(capacidad || '10'),
+                    features: extraInfo?.features || []
+                }
             }
         });
 
