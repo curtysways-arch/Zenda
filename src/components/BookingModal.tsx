@@ -233,7 +233,8 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
                             <PhoneInput
                                 value={formData.telefono}
                                 onChange={(val) => setFormData({ ...formData, telefono: val })}
-                                className="h-13 bg-white/5 border border-white/10 rounded-2xl text-white font-bold"
+                                placeholder="099 123 4567"
+                                darkMode={true}
                             />
                         </div>
 

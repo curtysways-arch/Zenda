@@ -121,8 +121,18 @@ export default function CanchaDetailView({ negocio, cancha }: CanchaDetailViewPr
   return (
     <div className="min-h-screen text-white font-sans selection:bg-emerald-500/30" style={{ backgroundColor: '#07090f' }}>
       
+      {/* Ocultar barra superior e inferior del sitio publico en la vista de detalle de cancha */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        nav.fixed.top-0,
+        nav.fixed.bottom-0,
+        header.fixed.top-0,
+        header.sticky.top-0:not(.cancha-native-header) {
+            display: none !important;
+        }
+      ` }} />
+
       {/* STICKY TOP HEADER - NATIVE STYLE */}
-      <header className="sticky top-0 z-[100] h-14 flex items-center bg-[#07090f]/80 backdrop-blur-xl border-b border-white/5">
+      <header className="cancha-native-header sticky top-0 z-[100] h-14 flex items-center bg-[#07090f]/80 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-xl mx-auto w-full px-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
