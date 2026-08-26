@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
+import crypto from 'crypto';
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -49,7 +50,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { nombre, tipo, tipoId, capacidad, precioHora, estaActiva, ubicacionId, extraInfo, negocioId } = body;
+        const { nombre, tipo, tipoId, capacidad, precioHora, estaActiva, ubicacionId, extraInfo, imagenes, negocioId } = body;
 
         let realNegocioId = negocioId;
         if (!realNegocioId) {
@@ -61,9 +62,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Negocio ID es requerido' }, { status: 400 });
         }
 
+        const canchaId = `cancha-${Date.now()}`;
+
         const cancha = await (prisma as any).service.create({
             data: {
-                id: `cancha-${Date.now()}`,
+                id: canchaId,
                 negocioId: realNegocioId,
                 nombre,
                 precio: parseFloat(precioHora || '0'),
@@ -76,8 +79,20 @@ export async function POST(req: Request) {
                     tipoId: tipoId || null,
                     capacidad: parseInt(capacidad || '10'),
                     features: extraInfo?.features || []
-                }
-            }
+                },
+                ...(Array.isArray(imagenes) && imagenes.length > 0 ? {
+                    Imagen: {
+                        create: imagenes.map((img: any) => ({
+                            id: crypto.randomUUID(),
+                            url: typeof img === 'string' ? img : img.url,
+                            tipo: 'CANCHA',
+                            negocioId: realNegocioId,
+                            updatedAt: new Date()
+                        }))
+                    }
+                } : {})
+            },
+            include: { Imagen: true }
         });
 
         return NextResponse.json(cancha);

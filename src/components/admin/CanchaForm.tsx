@@ -1,12 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, Dribbble, Users, DollarSign, Activity, Loader2, Plus, MapPin, ShieldAlert, ArrowUpCircle } from 'lucide-react';
+import { X, Dribbble, Users, DollarSign, Activity, Loader2, Plus, MapPin, ShieldAlert, Upload, Image as ImageIcon, Trash2, Link as LinkIcon } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-
-import GalleryAdmin from './GalleryAdmin';
 
 interface CanchaFormProps {
     onClose: () => void;
@@ -21,8 +19,9 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
     const [ubicaciones, setUbicaciones] = useState<any[]>([]);
     const router = useRouter();
     const { data: session } = useSession();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Estados individuales para mayor estabilidad
+    // Estados individuales para campos de la cancha
     const [nombre, setNombre] = useState(initialData?.nombre || '');
     const [tipo, setTipo] = useState(initialData?.tipo || 'Fútbol 5');
     const [tipoId, setTipoId] = useState(initialData?.tipoId || '');
@@ -36,6 +35,14 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
     const [cuerpo1, setCuerpo1] = useState(initialData?.extraInfo?.features?.[0]?.content || '');
     const [titulo2, setTitulo2] = useState(initialData?.extraInfo?.features?.[1]?.title || '');
     const [cuerpo2, setCuerpo2] = useState(initialData?.extraInfo?.features?.[1]?.content || '');
+
+    // Galería de Imágenes (inicializada desde initialData si existe)
+    const [imagenes, setImagenes] = useState<string[]>(
+        initialData?.imagenes?.map((img: any) => typeof img === 'string' ? img : img.url) || []
+    );
+    const [showUrlForm, setShowUrlForm] = useState(false);
+    const [newUrl, setNewUrl] = useState('');
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     const [error, setError] = useState<string | null>(null);
 
@@ -82,6 +89,57 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
         }
     };
 
+    // Subir imagen desde archivo local
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploadingImage(true);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('category', 'service');
+
+            const res = await fetch('/api/admin/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.url) {
+                    setImagenes(prev => [...prev, data.url]);
+                }
+            } else {
+                // Fallback a Base64 si falla upload
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    if (reader.result) {
+                        setImagenes(prev => [...prev, reader.result as string]);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        } catch (err) {
+            console.error('Error al subir archivo:', err);
+        } finally {
+            setUploadingImage(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    // Agregar imagen por URL
+    const handleAddUrlImage = () => {
+        if (!newUrl.trim()) return;
+        setImagenes(prev => [...prev, newUrl.trim()]);
+        setNewUrl('');
+        setShowUrlForm(false);
+    };
+
+    const handleRemoveImage = (index: number) => {
+        setImagenes(prev => prev.filter((_, i) => i !== index));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -110,6 +168,7 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                             { title: titulo2, content: cuerpo2 }
                         ]
                     },
+                    imagenes,
                     ...(initialData ? {} : { negocioId: realNegocioId })
                 }),
             });
@@ -197,7 +256,7 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                                         id="nombre"
                                         type="text"
                                         required
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-emerald-500 transition-colors text-gray-900"
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-emerald-500 transition-colors text-gray-900 font-bold"
                                         placeholder="Ej: Cancha Central 1"
                                         value={nombre}
                                         onChange={e => setNombre(e.target.value)}
@@ -263,7 +322,7 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                                             id="capacidad"
                                             type="number"
                                             required
-                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-gray-900 font-medium"
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-gray-900 font-bold"
                                             placeholder="10"
                                             value={capacidad}
                                             onChange={e => setCapacidad(e.target.value)}
@@ -278,7 +337,7 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                                         type="number"
                                         step="0.01"
                                         required
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-gray-900 font-medium"
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none text-gray-900 font-bold"
                                         placeholder="25.00"
                                         value={precioHora}
                                         onChange={e => setPrecioHora(e.target.value)}
@@ -325,7 +384,7 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                                             onChange={e => setTitulo1(e.target.value)}
                                         />
                                         <textarea
-                                            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-500 text-xs min-h-[80px] text-gray-900"
+                                            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-500 text-xs min-h-[80px] text-gray-900 font-medium"
                                             placeholder="Descripción corta de la ventaja..."
                                             value={cuerpo1}
                                             onChange={e => setCuerpo1(e.target.value)}
@@ -347,7 +406,7 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                                             onChange={e => setTitulo2(e.target.value)}
                                         />
                                         <textarea
-                                            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-500 text-xs min-h-[80px] text-gray-900"
+                                            className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-500 text-xs min-h-[80px] text-gray-900 font-medium"
                                             placeholder="Descripción corta de la ventaja..."
                                             value={cuerpo2}
                                             onChange={e => setCuerpo2(e.target.value)}
@@ -357,13 +416,91 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                             </div>
                         </div>
 
-                        {/* Galería de Imágenes */}
-                        {initialData && (
-                            <div className="pt-6 border-t border-gray-100 text-left">
-                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 block underline decoration-emerald-500/30 decoration-2">FOTOS DE ESTA CANCHA</label>
-                                <GalleryAdmin canchaId={initialData.id} />
+                        {/* 🖼️ GALERÍA DE FOTOS (DISPONIBLE TANTO EN CREACIÓN COMO EN EDICIÓN) */}
+                        <div className="pt-6 border-t border-gray-100 text-left space-y-4">
+                            <div className="flex justify-between items-center">
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block underline decoration-emerald-500/30 decoration-2">
+                                    FOTOS DE ESTA CANCHA ({imagenes.length})
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={uploadingImage}
+                                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition shadow-sm active:scale-95 cursor-pointer disabled:opacity-50"
+                                    >
+                                        {uploadingImage ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                                        SUBIR FOTO
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowUrlForm(!showUrlForm)}
+                                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+                                    >
+                                        <LinkIcon size={12} />
+                                        URL
+                                    </button>
+                                </div>
                             </div>
-                        )}
+
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleFileUpload}
+                            />
+
+                            {showUrlForm && (
+                                <div className="bg-gray-50 p-4 rounded-2xl border border-dashed border-gray-200 flex gap-2 animate-in slide-in-from-top-2">
+                                    <input
+                                        type="url"
+                                        placeholder="https://ejemplo.com/foto-cancha.jpg"
+                                        className="flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-900 outline-none focus:border-emerald-500"
+                                        value={newUrl}
+                                        onChange={e => setNewUrl(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleAddUrlImage();
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleAddUrlImage}
+                                        className="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                                    >
+                                        Añadir
+                                    </button>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {imagenes.map((url, idx) => (
+                                    <div key={idx} className="aspect-video bg-gray-100 rounded-2xl relative overflow-hidden group shadow-sm border border-slate-200">
+                                        <img src={url} alt={`Foto cancha ${idx + 1}`} className="w-full h-full object-cover" />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveImage(idx)}
+                                                className="bg-white/20 hover:bg-red-500 text-white p-2 rounded-xl transition backdrop-blur-sm"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {imagenes.length === 0 && (
+                                    <div onClick={() => fileInputRef.current?.click()} className="col-span-full py-8 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-[2rem] hover:bg-emerald-50/30 hover:border-emerald-300 transition-all cursor-pointer">
+                                        <ImageIcon size={28} className="mb-1 text-slate-300" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Añadir fotos a esta cancha</p>
+                                        <span className="text-[8px] text-slate-400 mt-0.5">Haz clic para elegir un archivo de tu equipo</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
 
                         {/* Botones de acción */}
                         <div className="flex flex-col gap-3 pt-4">
@@ -377,8 +514,8 @@ export default function CanchaForm({ onClose, onSuccess, initialData }: CanchaFo
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={loading}
-                                    className="flex-[2] px-4 py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-emerald-600 transition shadow-lg flex items-center justify-center gap-2 uppercase text-[10px] tracking-widest"
+                                    disabled={loading || uploadingImage}
+                                    className="flex-[2] px-4 py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-emerald-600 transition shadow-lg flex items-center justify-center gap-2 uppercase text-[10px] tracking-widest disabled:opacity-50"
                                 >
                                     {loading ? <Loader2 className="animate-spin" size={20} /> : (initialData ? 'GUARDAR CAMBIOS' : 'REGISTRAR CANCHA')}
                                 </button>

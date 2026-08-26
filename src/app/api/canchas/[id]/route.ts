@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next";
+import crypto from 'crypto';
 
 export async function PATCH(
     req: Request,
@@ -9,7 +9,7 @@ export async function PATCH(
     try {
         const { id } = await params;
         const body = await req.json();
-        const { nombre, tipo, tipoId, capacidad, precioHora, estaActiva, ubicacionId, extraInfo } = body;
+        const { nombre, tipo, tipoId, capacidad, precioHora, estaActiva, ubicacionId, extraInfo, imagenes } = body;
 
         const currentService = await (prisma as any).service.findUnique({
             where: { id }
@@ -40,6 +40,27 @@ export async function PATCH(
         if (precioHora !== undefined) updateData.precio = parseFloat(precioHora);
         if (estaActiva !== undefined) updateData.estaActivo = estaActiva;
         if (ubicacionId !== undefined) updateData.ubicacionId = ubicacionId || null;
+
+        // Si se enviaron imágenes nuevas/actualizadas
+        if (Array.isArray(imagenes)) {
+            // Eliminar imágenes anteriores de la cancha
+            await (prisma as any).imagen.deleteMany({
+                where: { serviceId: id }
+            });
+            
+            if (imagenes.length > 0) {
+                await (prisma as any).imagen.createMany({
+                    data: imagenes.map((img: any) => ({
+                        id: crypto.randomUUID(),
+                        url: typeof img === 'string' ? img : img.url,
+                        tipo: 'CANCHA',
+                        serviceId: id,
+                        negocioId: currentService.negocioId,
+                        updatedAt: new Date()
+                    }))
+                });
+            }
+        }
 
         const cancha = await (prisma as any).service.update({
             where: { id },
