@@ -187,6 +187,7 @@ export default function AdminSidebar({
     }
     if (capabilities.courts) {
       items.push({ name: 'Mis Canchas', href: '/admin/canchas', icon: Dribbble, section: 'GESTIÓN OPERATIVA' });
+      items.push({ name: 'Bloqueos', href: '/admin/bloqueos', icon: Lock, section: 'GESTIÓN OPERATIVA' });
     }
 
     // Catalog Capabilities (para Restaurantes y Comercio)

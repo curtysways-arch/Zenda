@@ -14,7 +14,6 @@ export async function DELETE(
 
         const negocioId = (session.user as any).negocioId;
 
-        // Verificar que el bloqueo pertenezca al negocio
         const bloqueo = await prisma.bloqueo.findUnique({
             where: { id }
         });

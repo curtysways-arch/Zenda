@@ -2,8 +2,6 @@ import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import { checkDemoRestriction } from '@/lib/demo-protection';
-import crypto from 'crypto';
 
 export async function GET(req: Request) {
     try {
@@ -14,14 +12,16 @@ export async function GET(req: Request) {
 
         const bloqueos = await prisma.bloqueo.findMany({
             where: { negocioId },
-            include: { 
-                Service: true,
-                Staff: true
-            },
+            include: { Service: true },
             orderBy: { fecha: 'asc' }
         });
 
-        return NextResponse.json(bloqueos);
+        const formatted = bloqueos.map((b: any) => ({
+            ...b,
+            cancha: b.Service
+        }));
+
+        return NextResponse.json(formatted);
     } catch (error) {
         console.error('Error fetching blocks:', error);
         return NextResponse.json({ error: 'Error al obtener bloqueos' }, { status: 500 });
@@ -33,27 +33,24 @@ export async function POST(req: Request) {
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
-        // PROTECCIÓN MODO DEMO
-        const demoCheck = await checkDemoRestriction();
-        if (demoCheck.restricted) {
-            return demoCheck.response;
+        const negocioId = (session.user as any).negocioId;
+        const { fecha, horaInicio, horaFin, canchaId, serviceId, motivo } = await req.json();
+
+        const targetServiceId = serviceId || canchaId;
+        if (!fecha || !horaInicio || !horaFin) {
+            return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
         }
 
-        const negocioId = (session.user as any).negocioId;
-        const { fecha, horaInicio, horaFin, staffId, serviceId, canchaId, motivo } = await req.json();
-
-        // Normalizar fecha a UTC medianoche para consistencia
         const [year, month, day] = fecha.split('-').map(Number);
         const fechaUTC = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
 
         const bloqueo = await prisma.bloqueo.create({
             data: {
-                id: crypto.randomUUID(),
+                id: `blk_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
                 fecha: fechaUTC,
                 horaInicio,
                 horaFin,
-                staffId: staffId || null,
-                serviceId: serviceId || canchaId || null,
+                serviceId: targetServiceId || null,
                 negocioId,
                 motivo
             }

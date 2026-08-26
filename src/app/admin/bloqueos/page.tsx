@@ -1,15 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { Shield, Plus, Trash2, Calendar, Clock, Loader2, Info, Users, User } from 'lucide-react';
+import { Shield, Plus, Trash2, Calendar, Clock, Loader2, Dribbble } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useSession } from 'next-auth/react';
 
 export default function BloqueosPage() {
     const [bloqueos, setBloqueos] = useState<any[]>([]);
-    const [staff, setStaff] = useState<any[]>([]);
+    const [canchas, setCanchas] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { data: session } = useSession();
@@ -19,8 +18,8 @@ export default function BloqueosPage() {
         fecha: format(new Date(), 'yyyy-MM-dd'),
         horaInicio: '08:00',
         horaFin: '09:00',
-        staffId: '',
-        motivo: 'Descanso / Almuerzo'
+        canchaId: '',
+        motivo: 'Mantenimiento'
     });
 
     const fetchData = async () => {
@@ -28,18 +27,18 @@ export default function BloqueosPage() {
         const negocioId = (session.user as any).negocioId;
 
         try {
-            const [resBloqueos, resStaff] = await Promise.all([
+            const [resBloqueos, resCanchas] = await Promise.all([
                 fetch('/api/bloqueos'),
-                fetch(`/api/staff?negocioId=${negocioId}`)
+                fetch(`/api/canchas?negocioId=${negocioId}`)
             ]);
             const bData = await resBloqueos.json();
-            const sData = await resStaff.json();
+            const cData = await resCanchas.json();
 
             setBloqueos(Array.isArray(bData) ? bData : []);
-            setStaff(Array.isArray(sData) ? sData : []);
+            setCanchas(Array.isArray(cData) ? cData : []);
 
-            if (Array.isArray(sData) && sData.length > 0) {
-                setFormData(prev => ({ ...prev, staffId: sData[0].id }));
+            if (Array.isArray(cData) && cData.length > 0) {
+                setFormData(prev => ({ ...prev, canchaId: cData[0].id }));
             }
         } catch (error) {
             console.error(error);
@@ -48,16 +47,11 @@ export default function BloqueosPage() {
         }
     };
 
-    const [mounted, setMounted] = useState(false);
-
     useEffect(() => {
-        setMounted(true);
         if (session) {
             fetchData();
         }
     }, [session]);
-
-    if (!mounted) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -98,187 +92,171 @@ export default function BloqueosPage() {
         );
     }
 
-    const modalContent = isModalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300 light-theme">
-            {/* Overlay con desenfoque real */}
-            <div 
-                className="fixed inset-0 bg-slate-950/40 backdrop-blur-md" 
-                onClick={() => setIsModalOpen(false)} 
-            />
-            
-            {/* Modal / Bottom Sheet */}
-            <div className="relative bg-white w-full max-w-lg rounded-t-[3rem] sm:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom sm:zoom-in-95 duration-500 border border-slate-100">
-                {/* Handle lateral para móvil */}
-                <div className="w-12 h-1 bg-slate-200 rounded-full mx-auto my-3 sm:hidden" />
-                
-                <div className="p-6 sm:p-8 bg-slate-900 text-white flex justify-between items-center shrink-0">
-                    <div className="flex items-center gap-4">
-                        <div className="size-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center">
-                            <Shield size={24} className="text-emerald-400" />
-                        </div>
-                        <div>
-                            <h2 className="text-lg font-black uppercase tracking-tight text-white !important">Nuevo Bloqueo</h2>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none mt-1">Configuración Especialista</p>
-                        </div>
-                    </div>
-                    <button 
-                        onClick={() => setIsModalOpen(false)} 
-                        className="size-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-all text-white/40 hover:text-white"
-                    >
-                        <Plus size={24} className="rotate-45" />
-                    </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 overflow-y-auto hide-scrollbar flex-1 pb-10 sm:pb-8">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Día del Bloqueo</label>
-                            <input
-                                type="date"
-                                required
-                                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-slate-950 shadow-sm"
-                                value={formData.fecha}
-                                onChange={e => setFormData({ ...formData, fecha: e.target.value })}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Especialista</label>
-                            <div className="relative group">
-                                <select
-                                    required
-                                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold appearance-none text-slate-950 pr-10 shadow-sm"
-                                    value={formData.staffId}
-                                    onChange={e => setFormData({ ...formData, staffId: e.target.value })}
-                                >
-                                    <option value="" className="text-slate-950">Seleccionar...</option>
-                                    {staff.map(s => <option key={s.id} value={s.id} className="text-slate-950">{s.name}</option>)}
-                                </select>
-                                <Users className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none group-focus-within:text-emerald-500 transition-colors" size={18} />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-5">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Hora Inicio</label>
-                            <input
-                                type="time"
-                                required
-                                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-slate-950 shadow-sm"
-                                value={formData.horaInicio}
-                                onChange={e => setFormData({ ...formData, horaInicio: e.target.value })}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Hora Fin</label>
-                            <input
-                                type="time"
-                                required
-                                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-slate-950 shadow-sm"
-                                value={formData.horaFin}
-                                onChange={e => setFormData({ ...formData, horaFin: e.target.value })}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Motivo Interno</label>
-                        <textarea
-                            rows={3}
-                            placeholder="Ej: Licencia médica, descanso programado..."
-                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-slate-950 resize-none shadow-sm"
-                            value={formData.motivo}
-                            onChange={e => setFormData({ ...formData, motivo: e.target.value })}
-                        />
-                    </div>
-
-                    <button
-                        disabled={saving}
-                        className="w-full py-5 bg-emerald-600 text-white font-black rounded-[2rem] text-sm uppercase tracking-[0.2em] hover:bg-emerald-700 transition shadow-xl shadow-emerald-500/20 disabled:opacity-50 mt-4 active:scale-95"
-                    >
-                        {saving ? 'Guardando...' : 'Crear Bloqueo'}
-                    </button>
-                </form>
-            </div>
-        </div>
-    );
-
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 relative">
-            {isModalOpen && createPortal(modalContent, document.body)}
-
-            <div className="flex justify-between items-center px-2">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 text-slate-900 font-sans animate-in fade-in duration-500 text-left">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight">Bloqueos de Agenda</h1>
-                    <p className="text-slate-500 text-sm font-medium">Inhabilita horarios específicos para tus especialistas.</p>
+                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-1">
+                        GESTIÓN OPERATIVA
+                    </span>
+                    <h1 className="text-3xl font-black text-slate-900 uppercase italic tracking-tight flex items-center gap-3">
+                        <Shield className="text-emerald-600" size={32} />
+                        Bloqueos de Horario
+                    </h1>
+                    <p className="text-slate-500 font-bold text-xs">Inhabilita horarios específicos de tus canchas por mantenimiento o eventos.</p>
                 </div>
                 <button
+                    type="button"
                     onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-3 bg-slate-900 text-white px-6 py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition shadow-xl shadow-slate-200 active:scale-95"
+                    className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-emerald-500/20 cursor-pointer"
                 >
-                    <Plus size={20} />
-                    Nuevo Bloqueo
+                    <Plus size={18} />
+                    NUEVO BLOQUEO
                 </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {bloqueos.map((bloqueo) => (
-                    <div key={bloqueo.id} className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden relative group transition-all hover:shadow-2xl hover:shadow-slate-200/60">
-                        <div className="p-8 space-y-5">
-                            <div className="flex justify-between items-start">
-                                <div className="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center">
-                                    <Shield size={24} />
+                {bloqueos.map((bloqueo) => {
+                    const canchaNombre = bloqueo.cancha?.nombre || bloqueo.Service?.nombre || 'General';
+                    return (
+                        <div key={bloqueo.id} className="bg-white rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/30 overflow-hidden relative group">
+                            <div className="p-8 space-y-4">
+                                <div className="flex justify-between items-start">
+                                    <div className="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center">
+                                        <Shield size={20} />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDelete(bloqueo.id)}
+                                        className="p-2 text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100 cursor-pointer"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => handleDelete(bloqueo.id)}
-                                    className="p-3 text-slate-300 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100 bg-slate-50 rounded-xl"
-                                >
-                                    <Trash2 size={20} />
-                                </button>
-                            </div>
 
-                            <div className="space-y-1">
-                                <h3 className="font-black text-slate-400 uppercase tracking-widest text-[10px]">Motivo</h3>
-                                <p className="text-base font-bold text-slate-800">{bloqueo.motivo || 'Sin motivo especificado'}</p>
-                            </div>
-
-                            <div className="pt-5 border-t border-slate-50 grid grid-cols-2 gap-6">
-                                <div className="space-y-1">
-                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Especialista</h4>
-                                    <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                        <div className="size-2 rounded-full bg-emerald-500" />
-                                        {bloqueo.staff?.name || 'General'}
-                                    </p>
+                                <div>
+                                    <h3 className="font-black text-gray-900 uppercase tracking-widest text-[10px] mb-2">Motivo</h3>
+                                    <p className="text-sm font-bold text-gray-700">{bloqueo.motivo || 'Sin motivo especificado'}</p>
                                 </div>
-                                <div className="space-y-1">
-                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Horario</h4>
-                                    <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                        <Clock size={16} className="text-emerald-500" />
-                                        {bloqueo.horaInicio} - {bloqueo.horaFin}
-                                    </p>
-                                </div>
-                            </div>
 
-                            <div className="bg-slate-50 p-4 rounded-2xl flex items-center justify-between">
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                    {format(new Date(bloqueo.fecha), "EEEE d 'de' MMMM", { locale: es })}
-                                </span>
-                                <Calendar size={18} className="text-slate-300" />
+                                <div className="pt-4 border-t border-gray-50 grid grid-cols-2 gap-4">
+                                    <div>
+                                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Cancha</h4>
+                                        <p className="text-xs font-bold text-gray-800 flex items-center gap-1">
+                                            <Dribbble size={12} className="text-emerald-500" />
+                                            {canchaNombre}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Horario</h4>
+                                        <p className="text-xs font-bold text-gray-800 flex items-center gap-1">
+                                            <Clock size={12} className="text-emerald-500" />
+                                            {bloqueo.horaInicio} - {bloqueo.horaFin}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gray-50 p-3 rounded-xl flex items-center gap-2">
+                                    <Calendar size={14} className="text-gray-400" />
+                                    <span className="text-[10px] font-black text-gray-500 uppercase">
+                                        {format(new Date(bloqueo.fecha), "EEEE d 'de' MMMM", { locale: es })}
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
 
                 {bloqueos.length === 0 && (
-                    <div className="lg:col-span-3 py-24 text-center bg-white rounded-[3rem] border border-dashed border-slate-200">
-                        <div className="size-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <Shield size={32} className="text-slate-200" />
-                        </div>
-                        <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">Cero Bloqueos</h3>
-                        <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-2">No hay horarios bloqueados activos</p>
+                    <div className="lg:col-span-3 py-20 text-center bg-white rounded-[2.5rem] border border-dashed border-gray-200">
+                        <Shield size={48} className="mx-auto text-gray-200 mb-4" />
+                        <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">No hay horarios bloqueados</p>
                     </div>
                 )}
             </div>
+
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 text-slate-900">
+                        <div className="p-8 bg-gray-900 text-white flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                                    <Shield size={20} className="text-red-400" />
+                                </div>
+                                <h2 className="text-lg font-black uppercase tracking-tight">Nuevo Bloqueo</h2>
+                            </div>
+                            <button type="button" onClick={() => setIsModalOpen(false)} className="text-white/40 hover:text-white transition">Cerrar</button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="p-8 space-y-6 text-left">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Fecha</label>
+                                    <input
+                                        type="date"
+                                        required
+                                        className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-900"
+                                        value={formData.fecha}
+                                        onChange={e => setFormData({ ...formData, fecha: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Cancha</label>
+                                    <select
+                                        required
+                                        className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold appearance-none text-gray-900"
+                                        value={formData.canchaId}
+                                        onChange={e => setFormData({ ...formData, canchaId: e.target.value })}
+                                    >
+                                        {canchas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Hora Inicio</label>
+                                    <input
+                                        type="time"
+                                        required
+                                        className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-900"
+                                        value={formData.horaInicio}
+                                        onChange={e => setFormData({ ...formData, horaInicio: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Hora Fin</label>
+                                    <input
+                                        type="time"
+                                        required
+                                        className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-900"
+                                        value={formData.horaFin}
+                                        onChange={e => setFormData({ ...formData, horaFin: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Motivo</label>
+                                <input
+                                    placeholder="Ej: Mantenimiento Preventivo"
+                                    className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-900"
+                                    value={formData.motivo}
+                                    onChange={e => setFormData({ ...formData, motivo: e.target.value })}
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={saving}
+                                className="w-full py-5 bg-emerald-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest hover:bg-emerald-700 transition shadow-xl shadow-emerald-100 disabled:opacity-50 mt-4 cursor-pointer"
+                            >
+                                {saving ? 'Guardando...' : 'Crear Bloqueo de Horario'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
