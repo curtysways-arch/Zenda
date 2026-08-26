@@ -4,14 +4,14 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import HeroCarousel from '@/components/HeroCarousel';
 import CanchaInteractionButtons from '@/components/public/CanchaInteractionButtons';
-import BookingClient from '@/app/[slug]/BookingClient';
+import BookingCalendar from '@/components/BookingCalendar';
+import BookingModal from '@/components/BookingModal';
 import { 
   ChevronLeft, 
   Clock, 
   Zap, 
   Trophy, 
   Users, 
-  Sparkles,
   MapPin
 } from 'lucide-react';
 
@@ -21,6 +21,8 @@ export interface CanchaDetailViewProps {
 }
 
 export default function CanchaDetailView({ negocio, cancha }: CanchaDetailViewProps) {
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+
   const defaultBanner = 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&q=80&w=1200';
   const canchaImages = (cancha.imagenes && cancha.imagenes.length > 0)
     ? cancha.imagenes.map((img: any) => img.url)
@@ -94,6 +96,26 @@ export default function CanchaDetailView({ negocio, cancha }: CanchaDetailViewPr
     tipo: canchaTipo,
     capacidad: capacidad,
     precioHora: precioHora
+  };
+
+  const handleSelectSlot = (date: Date, hour: string, canchaId: string, duracion: number = 1, discountPercentage: number = 0) => {
+    const totalBase = precioHora * duracion;
+    const totalConDescuento = totalBase * (1 - discountPercentage / 100);
+
+    setSelectedBooking({
+      date,
+      hour,
+      canchaId: cancha.id,
+      duracion,
+      canchaNombre,
+      precio: totalConDescuento,
+      precioBase: totalBase,
+      precioHora,
+      slug: negocio.slug,
+      pagosActivos: negocio.pagosActivos,
+      pagoPorcentaje: negocio.pagoPorcentaje,
+      whatsapp: negocio.whatsapp
+    });
   };
 
   return (
@@ -216,11 +238,20 @@ export default function CanchaDetailView({ negocio, cancha }: CanchaDetailViewPr
             </div>
           </div>
 
-          {/* BOOKING SECTION - THE HEART */}
+          {/* BOOKING CALENDAR DIRECT FOR COURTS - NO PROFESSIONALS REQUIRED */}
           <section id="reservar" className="space-y-6 pt-2">
-            <BookingClient
-              negocio={{ ...negocio, canchas: [canchaParaBooking] }}
-              slug={negocio.slug}
+            <BookingCalendar
+              canchas={[canchaParaBooking]}
+              horarioApertura={negocio.horarioApertura || "08:00"}
+              horarioCierre={negocio.horarioCierre || "23:00"}
+              onSelectSlot={handleSelectSlot}
+              darkMode={true}
+            />
+
+            <BookingModal
+              isOpen={!!selectedBooking}
+              onClose={() => setSelectedBooking(null)}
+              bookingData={selectedBooking}
             />
           </section>
           
