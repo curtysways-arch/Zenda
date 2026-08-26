@@ -104,9 +104,9 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
     );
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 text-slate-900">
             {/* Create Form */}
-            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm text-left">
                 <h3 className="text-sm font-black text-gray-900 uppercase mb-4 flex items-center gap-2">
                     <Plus size={16} className="text-emerald-500" /> Nueva Clase
                 </h3>
@@ -144,8 +144,9 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
                     </div>
                     <div className="md:col-span-1">
                         <button
+                            type="submit"
                             disabled={isCreating}
-                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-50 flex justify-center items-center gap-2"
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-50 flex justify-center items-center gap-2 cursor-pointer"
                         >
                             {isCreating ? <Loader2 size={16} className="animate-spin" /> : 'Añadir'}
                         </button>
@@ -160,7 +161,7 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
                     <p className="font-black text-gray-400 uppercase">Aún no hay clases registradas</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
                     {classes.map(c => {
                         const isEditing = editingClass?.id === c.id;
 
@@ -190,7 +191,6 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
                                                 required
                                                 type="datetime-local"
                                                 className="w-full bg-slate-50 border-none rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-emerald-500"
-                                                // Convert datetime to format suitable for datetime-local input
                                                 value={new Date(new Date(editingClass.class_date).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
                                                 onChange={(e) => setEditingClass({ ...editingClass, class_date: new Date(e.target.value).toISOString() })}
                                             />
@@ -206,8 +206,9 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
                                         </div>
                                         <div className="pt-2">
                                             <button
+                                                type="submit"
                                                 disabled={isUpdating}
-                                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-50 flex justify-center items-center gap-2"
+                                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-50 flex justify-center items-center gap-2 cursor-pointer"
                                             >
                                                 {isUpdating ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                                                 Guardar Cambios
@@ -228,6 +229,7 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
                                         </div>
                                         <div className="flex bg-gray-50 rounded-lg p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button
+                                                type="button"
                                                 onClick={() => setEditingClass({ ...c })}
                                                 className="p-1.5 text-emerald-600 hover:bg-white rounded-md transition-colors"
                                                 title="Editar"
@@ -235,6 +237,7 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
                                                 <Edit2 size={14} />
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={() => handleDelete(c.id)}
                                                 disabled={isDeleting === c.id}
                                                 className="p-1.5 text-rose-500 hover:bg-white rounded-md transition-colors"
@@ -260,7 +263,7 @@ export default function CourseClassesTab({ courseId }: { courseId: string }) {
                                         href={`/admin/cursos/${courseId}/clases/${c.id}`}
                                         className="block w-full text-center bg-white border border-gray-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 text-slate-700 px-4 py-2.5 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all"
                                     >
-                                        Gestionar Asistencia & \rarr;
+                                        Gestionar Asistencia &rarr;
                                     </Link>
                                 </div>
                             </div>

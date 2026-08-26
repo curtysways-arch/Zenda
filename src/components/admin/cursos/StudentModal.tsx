@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Save, Loader2, AlertCircle, Info, User, Phone, Mail, Calendar, UserPlus } from 'lucide-react';
-import PhoneInput from '../../ui/PhoneInput';
+import { X, Save, Loader2, AlertCircle, Info, User, Mail, Calendar, UserPlus } from 'lucide-react';
+import PhoneInput from '@/components/ui/PhoneInput';
 
 interface StudentModalProps {
     isOpen: boolean;
@@ -27,7 +27,7 @@ export default function StudentModal({ isOpen, onClose, onSuccess, student }: St
     useEffect(() => {
         if (student) {
             setFormData({
-                name: student.name,
+                name: student.name || '',
                 age: student.age?.toString() || '',
                 representative_name: student.representative_name || '',
                 phone: student.phone || '',
@@ -66,9 +66,9 @@ export default function StudentModal({ isOpen, onClose, onSuccess, student }: St
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl border border-gray-100 flex flex-col scale-in duration-300">
+            <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl border border-gray-100 flex flex-col scale-in duration-300 text-slate-900">
                 {/* Header */}
-                <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-white relative">
+                <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-white relative text-left">
                     <UserPlus className="absolute -top-4 -left-4 text-emerald-50/50" size={100} />
                     <div className="relative z-10">
                         <h2 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-3 uppercase">
@@ -76,12 +76,12 @@ export default function StudentModal({ isOpen, onClose, onSuccess, student }: St
                         </h2>
                         <p className="text-gray-400 font-bold italic text-sm">Completa la información del estudiante.</p>
                     </div>
-                    <button onClick={onClose} className="p-3 hover:bg-gray-100 rounded-full transition-all relative z-10">
+                    <button type="button" onClick={onClose} className="p-3 hover:bg-gray-100 rounded-full transition-all relative z-10">
                         <X size={24} className="text-gray-400 hover:text-gray-900" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-8 space-y-8 flex-1 overflow-y-auto max-h-[70vh] custom-scrollbar">
+                <form onSubmit={handleSubmit} className="p-8 space-y-8 flex-1 overflow-y-auto max-h-[70vh] custom-scrollbar text-left">
                     {error && (
                         <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 animate-in shake duration-500">
                             <AlertCircle size={20} />
@@ -98,7 +98,7 @@ export default function StudentModal({ isOpen, onClose, onSuccess, student }: St
                             <input
                                 required
                                 type="text"
-                                className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all text-sm font-black text-gray-700 shadow-sm"
+                                className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700 shadow-sm"
                                 placeholder="Nombre completo"
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -137,13 +137,13 @@ export default function StudentModal({ isOpen, onClose, onSuccess, student }: St
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Teléfono */}
-                                <PhoneInput
-                                    label="Teléfono de Contacto"
-                                    value={formData.phone}
-                                    onChange={(val) => setFormData({ ...formData, phone: val })}
-                                    placeholder="Número de teléfono"
-                                    className="w-full"
-                                />
+                            <PhoneInput
+                                label="Teléfono de Contacto"
+                                value={formData.phone}
+                                onChange={(val) => setFormData({ ...formData, phone: val })}
+                                placeholder="Número de teléfono"
+                                className="w-full"
+                            />
 
                             {/* Email */}
                             <div className="space-y-2">
@@ -165,15 +165,17 @@ export default function StudentModal({ isOpen, onClose, onSuccess, student }: St
                 {/* Footer */}
                 <div className="p-8 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-4">
                     <button
+                        type="button"
                         onClick={onClose}
                         className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors"
                     >
                         Cancelar
                     </button>
                     <button
+                        type="button"
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="flex items-center gap-3 bg-slate-900 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 disabled:opacity-50"
+                        className="flex items-center gap-3 bg-slate-900 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 disabled:opacity-50 cursor-pointer"
                     >
                         {loading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                         {isEdit ? 'Actualizar Alumno' : 'Registrar Alumno'}

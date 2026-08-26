@@ -24,9 +24,11 @@ export async function GET(
             }
         });
 
-        const formatted = classes.map(c => ({
+        const formatted = classes.map((c: any) => ({
             ...c,
-            _count: { attendances: c._count.course_attendance }
+            _count: {
+                attendances: c._count?.course_attendance || 0
+            }
         }));
 
         return NextResponse.json(formatted);
@@ -56,7 +58,7 @@ export async function POST(
 
         const courseClass = await prisma.course_classes.create({
             data: {
-                id: crypto.randomUUID(),
+                id: `class_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
                 course_id: id,
                 title,
                 description,

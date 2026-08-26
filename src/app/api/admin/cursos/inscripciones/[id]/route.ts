@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
-// PATCH: Aprobar o rechazar una inscripción
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const session = await getServerSession(authOptions);
@@ -19,8 +18,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
             return NextResponse.json({ error: 'Estado inválido' }, { status: 400 });
         }
 
-        // Verificar que la inscripción pertenezca al negocio del admin
-        const enrollment = await (prisma as any).CourseEnrollment.findFirst({
+        const enrollment = await prisma.courseEnrollment.findFirst({
             where: {
                 id,
                 Course: { businessId: negocioId }
@@ -32,9 +30,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
             return NextResponse.json({ error: 'Inscripción no encontrada' }, { status: 404 });
         }
 
-        // Si se está aprobando, verificar capacidad
         if (status === 'approved') {
-            const approvedCount = await (prisma as any).CourseEnrollment.count({
+            const approvedCount = await prisma.courseEnrollment.count({
                 where: {
                     courseId: enrollment.courseId,
                     status: 'approved'
@@ -49,7 +46,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
             }
         }
 
-        const updated = await (prisma as any).CourseEnrollment.update({
+        const rawUpdated = await prisma.courseEnrollment.update({
             where: { id },
             data: { status },
             include: {
@@ -58,20 +55,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
             }
         });
 
-        const formatted = {
-            ...updated,
-            student: updated.Student,
-            course: updated.Course
+        const updated = {
+            ...rawUpdated,
+            student: rawUpdated.Student,
+            course: rawUpdated.Course
         };
 
-        return NextResponse.json(formatted);
+        return NextResponse.json(updated);
     } catch (error) {
         console.error('Error updating enrollment:', error);
         return NextResponse.json({ error: 'Error al actualizar inscripción' }, { status: 500 });
     }
 }
 
-// DELETE: Eliminar una inscripción
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const session = await getServerSession(authOptions);
@@ -82,7 +78,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
         const { id } = await params;
 
-        const enrollment = await (prisma as any).CourseEnrollment.findFirst({
+        const enrollment = await prisma.courseEnrollment.findFirst({
             where: {
                 id,
                 Course: { businessId: negocioId }
@@ -93,7 +89,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
             return NextResponse.json({ error: 'Inscripción no encontrada' }, { status: 404 });
         }
 
-        await (prisma as any).CourseEnrollment.delete({ where: { id } });
+        await prisma.courseEnrollment.delete({ where: { id } });
 
         return NextResponse.json({ success: true });
     } catch (error) {

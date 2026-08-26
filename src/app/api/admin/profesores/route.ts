@@ -1,4 +1,3 @@
-
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
@@ -11,16 +10,12 @@ export async function GET() {
             return NextResponse.json({ error: "No autorizado" }, { status: 401 });
         }
 
-        // Obtener todos los usuarios que tienen el rol PROFESOR
+        const negocioId = (session.user as any)?.negocioId;
+
         const profesores = await prisma.usuario.findMany({
             where: {
-                UserRole: {
-                    some: {
-                        Role: {
-                            name: 'PROFESOR'
-                        }
-                    }
-                }
+                ...(negocioId ? { negocioId } : {}),
+                role: 'PROFESOR'
             },
             select: {
                 id: true,
@@ -28,6 +23,19 @@ export async function GET() {
                 phone: true
             }
         });
+
+        if (profesores.length === 0) {
+            const fallbackUsers = await prisma.usuario.findMany({
+                where: negocioId ? { negocioId } : {},
+                select: {
+                    id: true,
+                    nombre: true,
+                    phone: true
+                },
+                take: 20
+            });
+            return NextResponse.json(fallbackUsers);
+        }
 
         return NextResponse.json(profesores);
     } catch (error) {

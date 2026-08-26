@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Users, Search, Loader2, Phone, Mail, User, ArrowLeft, Trash2, Edit2, AlertCircle } from 'lucide-react';
+import { Plus, Users, Search, Loader2, Phone, Mail, User, ArrowLeft, Trash2, Edit2 } from 'lucide-react';
 import Link from 'next/link';
 import StudentModal from '@/components/admin/cursos/StudentModal';
 
@@ -31,8 +31,8 @@ export default function StudentsPage() {
     }, []);
 
     const filteredStudents = students.filter(s =>
-        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (s.email && s.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (s.representative_name && s.representative_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (s.phone && s.phone.includes(searchTerm))
     );
 
@@ -49,8 +49,8 @@ export default function StudentsPage() {
     };
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 text-slate-900 font-sans">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6 text-left">
                 <div className="space-y-1">
                     <Link href="/admin/cursos" className="text-emerald-600 font-bold text-xs flex items-center gap-1 hover:underline mb-2">
                         <ArrowLeft size={14} /> Volver a Cursos
@@ -62,8 +62,9 @@ export default function StudentsPage() {
                     <p className="text-gray-500 font-medium italic">Gestiona la base de datos de inscritos en tu academia.</p>
                 </div>
                 <button
+                    type="button"
                     onClick={() => { setSelectedStudent(null); setIsModalOpen(true); }}
-                    className="flex items-center gap-2 bg-slate-900 text-white px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200"
+                    className="flex items-center gap-2 bg-slate-900 text-white px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 cursor-pointer"
                 >
                     <Plus size={18} />
                     Registrar Alumno
@@ -74,7 +75,7 @@ export default function StudentsPage() {
                 <Search className="text-gray-400 ml-2" size={20} />
                 <input
                     type="text"
-                    placeholder="Buscar por nombre, correo o teléfono..."
+                    placeholder="Buscar por nombre, representante o teléfono..."
                     className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -97,12 +98,14 @@ export default function StudentsPage() {
                     </div>
                 </div>
             ) : (
-                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden text-left">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-gray-50/50">
                                     <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Alumno</th>
+                                    <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Edad</th>
+                                    <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Representante</th>
                                     <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Contacto</th>
                                     <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Cursos Activos</th>
                                     <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Acciones</th>
@@ -113,6 +116,12 @@ export default function StudentsPage() {
                                     <tr key={student.id} className="hover:bg-slate-50/50 transition-colors group">
                                         <td className="p-6">
                                             <p className="font-black text-gray-900 uppercase text-sm">{student.name}</p>
+                                        </td>
+                                        <td className="p-6 text-sm font-bold text-gray-500">
+                                            {student.age ? `${student.age} años` : 'N/A'}
+                                        </td>
+                                        <td className="p-6 text-sm font-bold text-gray-500">
+                                            {student.representative_name || '-'}
                                         </td>
                                         <td className="p-6 space-y-1">
                                             {student.phone && (
@@ -128,10 +137,10 @@ export default function StudentsPage() {
                                         </td>
                                         <td className="p-6">
                                             <div className="flex flex-wrap gap-1">
-                                                {student.enrollments.length > 0 ? (
+                                                {student.enrollments?.length > 0 ? (
                                                     student.enrollments.map((en: any) => (
                                                         <span key={en.id} className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase rounded-full">
-                                                            {en.course.name}
+                                                            {en.course?.name}
                                                         </span>
                                                     ))
                                                 ) : (
@@ -141,12 +150,14 @@ export default function StudentsPage() {
                                         </td>
                                         <td className="p-6 text-right space-x-2">
                                             <button
+                                                type="button"
                                                 onClick={() => { setSelectedStudent(student); setIsModalOpen(true); }}
                                                 className="p-3 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
                                             >
                                                 <Edit2 size={16} />
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={() => handleDelete(student.id)}
                                                 className="p-3 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
                                             >

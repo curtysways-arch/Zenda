@@ -11,7 +11,7 @@ export async function GET() {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        const count = await (prisma as any).courseEnrollment.count({
+        const count = await prisma.courseEnrollment.count({
             where: {
                 status: 'pending',
                 Course: {

@@ -9,12 +9,11 @@ export async function GET(req: Request) {
         if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
         const negocioId = (session.user as any).negocioId;
-        const p = prisma as any;
 
-        const students = await p.student.findMany({
+        const rawStudents = await prisma.student.findMany({
             where: { businessId: negocioId },
             include: {
-                enrollments: {
+                CourseEnrollment: {
                     include: {
                         Course: {
                             select: { name: true }
@@ -24,6 +23,14 @@ export async function GET(req: Request) {
             },
             orderBy: { name: 'asc' }
         });
+
+        const students = rawStudents.map((s: any) => ({
+            ...s,
+            enrollments: (s.CourseEnrollment || []).map((e: any) => ({
+                ...e,
+                course: e.Course
+            }))
+        }));
 
         return NextResponse.json(students);
     } catch (error: any) {
@@ -39,7 +46,6 @@ export async function POST(req: Request) {
 
         const negocioId = (session.user as any).negocioId;
         const body = await req.json();
-        const p = prisma as any;
 
         const { name, age, representative_name, phone, email } = body;
 
@@ -47,14 +53,16 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "El nombre es obligatorio" }, { status: 400 });
         }
 
-        const student = await p.student.create({
+        const student = await prisma.student.create({
             data: {
+                id: `std_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
                 name,
-                age: age ? parseInt(age) : null,
+                age: age ? parseInt(age.toString()) : null,
                 representative_name,
                 phone,
                 email,
-                businessId: negocioId
+                businessId: negocioId,
+                updatedAt: new Date()
             }
         });
 

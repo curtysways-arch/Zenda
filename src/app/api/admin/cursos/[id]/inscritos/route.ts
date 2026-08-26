@@ -11,17 +11,20 @@ export async function GET(
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-        const { id } = await params; // courseId
-        const negocioId = (session.user as any).negocioId;
-        const p = prisma as any;
+        const { id } = await params;
 
-        const enrollments = await p.courseEnrollment.findMany({
+        const rawEnrollments = await prisma.courseEnrollment.findMany({
             where: { courseId: id },
             include: {
                 Student: true
             },
             orderBy: { enrollment_date: 'desc' }
         });
+
+        const enrollments = rawEnrollments.map((e: any) => ({
+            ...e,
+            student: e.Student
+        }));
 
         return NextResponse.json(enrollments);
     } catch (error: any) {
@@ -38,9 +41,8 @@ export async function POST(
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-        const { id } = await params; // courseId
+        const { id } = await params;
         const negocioId = (session.user as any).negocioId;
-        const p = prisma as any;
 
         const body = await req.json();
         const { studentId } = body;
@@ -49,22 +51,20 @@ export async function POST(
             return NextResponse.json({ error: "ID de alumno obligatorio" }, { status: 400 });
         }
 
-        // Validar cupo
-        const course = await p.course.findUnique({
+        const course = await prisma.course.findUnique({
             where: { id },
-            include: { _count: { select: { enrollments: true } } }
+            include: { _count: { select: { CourseEnrollment: true } } }
         });
 
         if (!course || course.businessId !== negocioId) {
             return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });
         }
 
-        if (course._count.enrollments >= course.capacity) {
+        if ((course._count?.CourseEnrollment || 0) >= course.capacity) {
             return NextResponse.json({ error: "El curso ha alcanzado su cupo máximo" }, { status: 400 });
         }
 
-        // Validar si ya está inscrito
-        const existing = await p.courseEnrollment.findFirst({
+        const existing = await prisma.courseEnrollment.findFirst({
             where: { studentId, courseId: id }
         });
 
@@ -72,10 +72,12 @@ export async function POST(
             return NextResponse.json({ error: "El alumno ya está inscrito en este curso" }, { status: 400 });
         }
 
-        const enrollment = await p.courseEnrollment.create({
+        const enrollment = await prisma.courseEnrollment.create({
             data: {
+                id: `enr_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
                 studentId,
-                courseId: id
+                courseId: id,
+                status: 'approved'
             }
         });
 

@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
-// GET: Listar inscripciones del negocio del admin
 export async function GET(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
@@ -13,7 +12,7 @@ export async function GET(req: NextRequest) {
         }
 
         const { searchParams } = new URL(req.url);
-        const status = searchParams.get('status'); // pending | approved | rejected | all
+        const status = searchParams.get('status');
         const courseId = searchParams.get('courseId');
 
         const where: any = {
@@ -27,7 +26,7 @@ export async function GET(req: NextRequest) {
             where.courseId = courseId;
         }
 
-        const enrollments = await (prisma as any).CourseEnrollment.findMany({
+        const rawEnrollments = await prisma.courseEnrollment.findMany({
             where,
             include: {
                 Student: true,
@@ -38,13 +37,13 @@ export async function GET(req: NextRequest) {
             orderBy: { enrollment_date: 'desc' }
         });
 
-        const formatted = enrollments.map((e: any) => ({
+        const enrollments = rawEnrollments.map((e: any) => ({
             ...e,
-            course: e.Course,
-            student: e.Student
+            student: e.Student,
+            course: e.Course
         }));
 
-        return NextResponse.json(formatted);
+        return NextResponse.json(enrollments);
     } catch (error) {
         console.error('Error fetching enrollments:', error);
         return NextResponse.json({ error: 'Error al obtener inscripciones' }, { status: 500 });

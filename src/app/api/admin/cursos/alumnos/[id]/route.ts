@@ -13,12 +13,11 @@ export async function PATCH(
 
         const { id } = await params;
         const negocioId = (session.user as any).negocioId;
-        const p = prisma as any;
 
         const body = await req.json();
         const { name, age, representative_name, phone, email } = body;
 
-        const updated = await p.student.updateMany({
+        const updated = await prisma.student.updateMany({
             where: { id, businessId: negocioId },
             data: {
                 name,
@@ -46,10 +45,8 @@ export async function DELETE(
 
         const { id } = await params;
         const negocioId = (session.user as any).negocioId;
-        const p = prisma as any;
 
-        // Validar que el alumno no tenga inscripciones activas
-        const enrollmentsCount = await p.courseEnrollment.count({
+        const enrollmentsCount = await prisma.courseEnrollment.count({
             where: { studentId: id }
         });
 
@@ -57,7 +54,7 @@ export async function DELETE(
             return NextResponse.json({ error: "No se puede eliminar un alumno con inscripciones activas" }, { status: 400 });
         }
 
-        await p.student.deleteMany({
+        await prisma.student.deleteMany({
             where: { id, businessId: negocioId }
         });
 

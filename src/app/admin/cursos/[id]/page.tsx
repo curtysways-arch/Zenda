@@ -2,8 +2,8 @@
 
 import { useState, useEffect, use } from 'react';
 import {
-    ArrowLeft, GraduationCap, Users, Calendar, Clock, CheckCircle2, XCircle,
-    Loader2, Phone, Mail, UserCheck, UserX, FileText, Edit2, Trash2
+    ArrowLeft, Dribbble, Users, Calendar, Clock, CheckCircle2, XCircle,
+    Loader2, Phone, Mail, UserCheck, UserX, FileText, Edit2
 } from 'lucide-react';
 import Link from 'next/link';
 import CourseModal from '@/components/admin/cursos/CourseModal';
@@ -30,7 +30,7 @@ interface Enrollment {
 
 const STATUS_CFG: Record<string, { label: string; color: string; icon: any }> = {
     pending: { label: 'Pendiente', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Clock },
-    approved: { label: 'Aprobado', color: 'bg-slate-900 text-white border-slate-900', icon: CheckCircle2 },
+    approved: { label: 'Aprobado', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: CheckCircle2 },
     rejected: { label: 'Rechazado', color: 'bg-red-100 text-red-700 border-red-200', icon: XCircle },
 };
 
@@ -111,7 +111,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center py-40 gap-4">
-                <Loader2 className="animate-spin" size={40} style={{ color: 'var(--primary-color)' }} />
+                <Loader2 className="animate-spin text-emerald-600" size={40} />
                 <p className="text-gray-400 font-bold animate-pulse">Cargando curso...</p>
             </div>
         );
@@ -121,7 +121,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
         return (
             <div className="p-8 text-center">
                 <p className="text-gray-500">Curso no encontrado.</p>
-                <Link href="/admin/cursos" className="font-bold mt-4 inline-block hover:underline" style={{ color: 'var(--primary-color)' }}>← Volver</Link>
+                <Link href="/admin/cursos" className="text-emerald-600 font-bold mt-4 inline-block hover:underline">← Volver</Link>
             </div>
         );
     }
@@ -131,22 +131,23 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
     const isFull = approvedCount >= course.capacity;
 
     return (
-        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8">
+        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8 text-slate-900 font-sans">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 text-left">
                 <div className="space-y-1">
-                    <Link href="/admin/cursos" className="font-bold text-xs flex items-center gap-1 hover:underline mb-2" style={{ color: 'var(--primary-color)' }}>
+                    <Link href="/admin/cursos" className="text-emerald-600 font-bold text-xs flex items-center gap-1 hover:underline mb-2">
                         <ArrowLeft size={14} /> Volver a Cursos
                     </Link>
                     <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3 uppercase">
-                        <GraduationCap className="shrink-0" size={32} style={{ color: 'var(--primary-color)' }} />
+                        <Dribbble className="text-emerald-600 shrink-0" size={32} />
                         {course.name}
                     </h1>
-                    {course.coach && <p className="font-bold italic" style={{ color: 'var(--primary-color)' }}>Entrenador: {course.coach}</p>}
+                    {course.coach && <p className="text-emerald-600 font-bold italic">Entrenador: {course.coach}</p>}
                 </div>
                 <button
+                    type="button"
                     onClick={() => setIsEditOpen(true)}
-                    className="flex items-center gap-2 bg-white border border-gray-200 text-slate-800 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition-all shadow-sm self-start"
+                    className="flex items-center gap-2 bg-white border border-gray-200 text-slate-800 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition-all shadow-sm self-start cursor-pointer"
                 >
                     <Edit2 size={16} />
                     Editar Curso
@@ -154,10 +155,10 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
             </div>
 
             {/* Stats Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
                 <div className="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Estado</p>
-                    <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${course.status === 'active' ? '' : 'bg-gray-100 text-gray-500'}`} style={course.status === 'active' ? { backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' } : {}}>
+                    <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${course.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
                         {course.status === 'active' ? 'Activo' : 'Inactivo'}
                     </span>
                 </div>
@@ -175,19 +176,19 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                 </div>
                 <div className="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Precio</p>
-                    <p className="text-2xl font-black" style={{ color: 'var(--primary-color)' }}>${course.price?.toLocaleString()}</p>
+                    <p className="text-2xl font-black text-emerald-600">${Number(course.price || 0).toLocaleString()}</p>
                 </div>
             </div>
 
             {/* Schedules */}
             {course.schedules?.length > 0 && (
-                <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+                <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm text-left">
                     <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <Calendar size={14} style={{ color: 'var(--primary-color)' }} /> Horarios Semanales
+                        <Calendar size={14} className="text-emerald-500" /> Horarios Semanales
                     </h3>
                     <div className="flex flex-wrap gap-2">
                         {course.schedules.map((s: any) => (
-                            <div key={s.id} className="px-4 py-2 rounded-xl text-sm font-black" style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 95%)', border: '1px solid color-mix(in srgb, var(--primary-color), transparent 80%)', color: 'var(--primary-color)' }}>
+                            <div key={s.id} className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-2 rounded-xl text-sm font-black">
                                 {DAYS[s.day_of_week]} · {s.start_time} – {s.end_time}
                             </div>
                         ))}
@@ -200,13 +201,13 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                 {(['inscripciones', 'alumnos', 'clases'] as const).map(tab => (
                     <button
                         key={tab}
+                        type="button"
                         onClick={() => { 
                             setActiveTab(tab); 
                             setFilterStatus(tab === 'inscripciones' ? 'pending' : 'approved'); 
                             window.history.replaceState(null, '', `?tab=${tab}`);
                         }}
-                        className={`px-6 py-3 font-black text-sm uppercase tracking-widest border-b-2 transition-colors whitespace-nowrap ${activeTab === tab ? '' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
-                        style={activeTab === tab ? { borderColor: 'var(--primary-color)', color: 'var(--primary-color)' } : {}}
+                        className={`px-6 py-3 font-black text-sm uppercase tracking-widest border-b-2 transition-colors whitespace-nowrap cursor-pointer ${activeTab === tab ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
                     >
                         {tab === 'inscripciones' ? (
                             <span className="flex items-center gap-2">
@@ -225,7 +226,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
 
             {/* Inscripciones Tab */}
             {activeTab === 'inscripciones' && (
-                <div className="space-y-4">
+                <div className="space-y-4 text-left">
                     {/* Filter */}
                     <div className="flex gap-2 flex-wrap">
                         {(['pending', 'approved', 'rejected', 'all'] as const).map(s => {
@@ -235,8 +236,9 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                             return (
                                 <button
                                     key={s}
+                                    type="button"
                                     onClick={() => setFilterStatus(s)}
-                                    className={`px-4 py-1.5 rounded-xl border text-[11px] font-black uppercase tracking-widest transition-all ${filterStatus === s ? 'ring-2 ring-offset-1 ring-current ' + cfg.color : 'bg-white ' + cfg.color}`}
+                                    className={`px-4 py-1.5 rounded-xl border text-[11px] font-black uppercase tracking-widest transition-all cursor-pointer ${filterStatus === s ? 'ring-2 ring-offset-1 ring-current ' + cfg.color : 'bg-white ' + cfg.color}`}
                                 >
                                     {cfg.label}
                                 </button>
@@ -266,22 +268,27 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                 return (
                                     <div key={enrollment.id} className={`bg-white rounded-[2rem] border shadow-sm ${isPending ? 'border-amber-200' : 'border-gray-100'}`}>
                                         <div className="p-5 flex flex-col md:flex-row md:items-center gap-4">
-                                            {/* Avatar */}
-                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shrink-0 ${isPending ? 'bg-amber-100 text-amber-600' : enrollment.status === 'approved' ? 'bg-slate-100 text-slate-800' : 'bg-red-100 text-red-500'}`}>
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shrink-0 ${isPending ? 'bg-amber-100 text-amber-600' : enrollment.status === 'approved' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-500'}`}>
                                                 {studentName.charAt(0).toUpperCase()}
                                             </div>
 
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <p className="font-black text-gray-900 uppercase text-sm">{studentName}</p>
+                                                    {studentAge && (
+                                                        <span className="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-0.5 rounded-full">{studentAge} años</span>
+                                                    )}
                                                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-black uppercase ${cfg.color}`}>
                                                         <StatusIcon size={10} />
                                                         {cfg.label}
                                                     </span>
                                                 </div>
+                                                {guardianName && (
+                                                    <p className="text-xs text-gray-500 font-bold mt-0.5">Rep: {guardianName}</p>
+                                                )}
                                                 <div className="flex flex-wrap gap-3 mt-1">
                                                     {guardianPhone && (
-                                                        <a href={`tel:${guardianPhone}`} className="flex items-center gap-1 text-[11px] font-bold hover:underline" style={{ color: 'var(--primary-color)' }}>
+                                                        <a href={`tel:${guardianPhone}`} className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:underline">
                                                             <Phone size={11} /> {guardianPhone}
                                                         </a>
                                                     )}
@@ -300,17 +307,19 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                             {isPending && (
                                                 <div className="flex gap-2 shrink-0">
                                                     <button
+                                                        type="button"
                                                         onClick={() => handleAction(enrollment.id, 'approved')}
                                                         disabled={actionLoading !== null}
-                                                        className="flex items-center gap-1.5 bg-slate-900 hover:bg-black disabled:opacity-50 text-white px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-slate-200"
+                                                        className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-emerald-100 cursor-pointer"
                                                     >
                                                         {actionLoading === enrollment.id + 'approved' ? <Loader2 size={13} className="animate-spin" /> : <UserCheck size={13} />}
                                                         Aprobar
                                                     </button>
                                                     <button
+                                                        type="button"
                                                         onClick={() => handleAction(enrollment.id, 'rejected')}
                                                         disabled={actionLoading !== null}
-                                                        className="flex items-center gap-1.5 bg-white hover:bg-red-50 disabled:opacity-50 text-red-500 border border-red-200 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all"
+                                                        className="flex items-center gap-1.5 bg-white hover:bg-red-50 disabled:opacity-50 text-red-500 border border-red-200 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer"
                                                     >
                                                         {actionLoading === enrollment.id + 'rejected' ? <Loader2 size={13} className="animate-spin" /> : <UserX size={13} />}
                                                         Rechazar
@@ -337,7 +346,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
 
             {/* Alumnos Tab */}
             {activeTab === 'alumnos' && (
-                <div className="space-y-3">
+                <div className="space-y-3 text-left">
                     {enrollments.length === 0 ? (
                         <div className="bg-white rounded-[2.5rem] border-2 border-dashed border-gray-100 p-16 text-center">
                             <Users size={40} className="text-gray-200 mx-auto mb-4" />
@@ -349,6 +358,8 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                 <thead>
                                     <tr className="bg-gray-50/50">
                                         <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Alumno</th>
+                                        <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Edad</th>
+                                        <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Representante</th>
                                         <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Contacto</th>
                                         <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Inscrito el</th>
                                     </tr>
@@ -364,10 +375,12 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
                                         return (
                                             <tr key={e.id} className="hover:bg-slate-50/50 transition-colors">
                                                 <td className="p-5 font-black text-gray-900 uppercase text-sm">{sName}</td>
+                                                <td className="p-5 text-sm font-bold text-gray-500">{sAge ? `${sAge} años` : '—'}</td>
+                                                <td className="p-5 text-sm font-bold text-gray-500">{gName || '—'}</td>
                                                 <td className="p-5 space-y-1">
                                                     {gPhone && (
                                                         <div className="flex items-center gap-1 text-[11px] font-bold text-gray-500">
-                                                            <Phone size={11} style={{ color: 'var(--primary-color)' }} /> {gPhone}
+                                                            <Phone size={11} className="text-emerald-500" /> {gPhone}
                                                         </div>
                                                     )}
                                                     {gEmail && (

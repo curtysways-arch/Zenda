@@ -88,8 +88,8 @@ export default function ClassAttendancePage({ params }: { params: Promise<{ id: 
     const absentCount = Object.values(attendances).filter(v => v === 'absent').length;
 
     return (
-        <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
-            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+        <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6 text-slate-900 font-sans">
+            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 text-left">
                 <div>
                     <Link href={`/admin/cursos/${courseId}?tab=clases`} className="text-emerald-600 font-bold text-xs flex items-center gap-1 hover:underline mb-2">
                         <ArrowLeft size={14} /> Volver a Clases
@@ -103,16 +103,17 @@ export default function ClassAttendancePage({ params }: { params: Promise<{ id: 
                     </p>
                 </div>
                 <button
+                    type="button"
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-emerald-200 disabled:opacity-50"
+                    className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-emerald-200 disabled:opacity-50 cursor-pointer"
                 >
                     {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                     Guardar Cambios
                 </button>
             </div>
 
-            <div className="bg-white rounded-[2rem] border border-gray-100 p-6 shadow-sm flex flex-wrap gap-6 justify-center md:justify-start">
+            <div className="bg-white rounded-[2rem] border border-gray-100 p-6 shadow-sm flex flex-wrap gap-6 justify-center md:justify-start text-left">
                 <div className="text-center">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Inscritos</p>
                     <p className="text-2xl font-black text-gray-900">{totalStudents}</p>
@@ -127,7 +128,7 @@ export default function ClassAttendancePage({ params }: { params: Promise<{ id: 
                 </div>
             </div>
 
-            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden text-left">
                 <div className="p-6 border-b border-gray-50 flex items-center gap-3">
                     <Users className="text-gray-400" size={20} />
                     <h3 className="font-black text-gray-900 uppercase">Lista de Alumnos</h3>
@@ -155,14 +156,16 @@ export default function ClassAttendancePage({ params }: { params: Promise<{ id: 
                                     </div>
                                     <div className="flex bg-gray-100 p-1 rounded-xl">
                                         <button
+                                            type="button"
                                             onClick={() => setStatus(enrollment.id, 'present')}
-                                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest transition-all ${status === 'present' ? 'bg-white text-emerald-600 shadow-sm ring-1 ring-emerald-500/20' : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'}`}
+                                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest transition-all cursor-pointer ${status === 'present' ? 'bg-white text-emerald-600 shadow-sm ring-1 ring-emerald-500/20' : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'}`}
                                         >
                                             <CheckCircle2 size={14} /> Presente
                                         </button>
                                         <button
+                                            type="button"
                                             onClick={() => setStatus(enrollment.id, 'absent')}
-                                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest transition-all ${status === 'absent' ? 'bg-white text-red-500 shadow-sm ring-1 ring-red-500/20' : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'}`}
+                                            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest transition-all cursor-pointer ${status === 'absent' ? 'bg-white text-red-500 shadow-sm ring-1 ring-red-500/20' : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'}`}
                                         >
                                             <XCircle size={14} /> Ausente
                                         </button>

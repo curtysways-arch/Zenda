@@ -129,7 +129,7 @@ export default function AdminSidebar({
             courts: Boolean(effectiveCaps.COURTS ?? effectiveCaps.courts ?? caps.courts ?? isCanchas),
             services: Boolean(effectiveCaps.SERVICES ?? effectiveCaps.services ?? (isServiceBiz || Boolean(caps.services))),
             promotions: Boolean(effectiveCaps.PROMOTIONS ?? effectiveCaps.promotions ?? (caps.promotions !== false)),
-            courses: Boolean(effectiveCaps.COURSES ?? effectiveCaps.courses ?? caps.courses),
+            courses: Boolean(effectiveCaps.COURSES ?? effectiveCaps.courses ?? caps.courses ?? isCanchas ?? true),
             loyalty: Boolean(effectiveCaps.LOYALTY ?? effectiveCaps.loyalty ?? caps.loyalty ?? isPinchos),
             inventory: Boolean(effectiveCaps.INVENTORY ?? effectiveCaps.inventory ?? caps.inventory),
             payments: Boolean(effectiveCaps.PAYMENTS ?? effectiveCaps.payments ?? !isServiceBiz)

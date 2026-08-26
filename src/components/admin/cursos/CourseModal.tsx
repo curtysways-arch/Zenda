@@ -1,17 +1,8 @@
 'use client';
 
-// HMR trace: v8_course_rich_content
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { X, Dribbble, Save, Loader2, AlertCircle, Info, Trash2, Plus, Clock, Calendar, CheckCircle2, ImageIcon, LayoutTemplate, FileText, ChevronRight, ChevronLeft, Users } from 'lucide-react';
-import ImageUploader from '@/components/ui/ImageUploader';
-
-// Editor dinámico para evitar errores de window is not defined
-const ReactQuill = dynamic(() => import('react-quill-new'), { 
-    ssr: false,
-    loading: () => <div className="h-60 bg-gray-50 animate-pulse rounded-2xl border-2 border-dashed border-gray-100 flex items-center justify-center text-gray-400 font-bold">Cargando editor de contenido...</div>
-});
-import 'react-quill-new/dist/quill.snow.css';
+import { X, Loader2, AlertCircle, Info, Trash2, Plus, Clock, Calendar, CheckCircle2, FileText, ChevronRight, ChevronLeft, Users } from 'lucide-react';
 
 interface CourseModalProps {
     isOpen: boolean;
@@ -31,7 +22,6 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
         name: '',
         description: '',
         imageUrl: '',
-        imageMediaId: '',
         min_age: '',
         max_age: '',
         coach: '',
@@ -47,28 +37,27 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
 
     const [schedules, setSchedules] = useState<any[]>([]);
     const [canchas, setCanchas] = useState<any[]>([]);
+    const [instructors, setInstructors] = useState<any[]>([]);
     const [newSchedule, setNewSchedule] = useState({
         day_of_week: '1',
         start_time: '14:00',
         end_time: '15:00',
-        title: '',
         courtId: ''
     });
 
     useEffect(() => {
         if (course) {
             setFormData({
-                name: course.name,
+                name: course.name || '',
                 description: course.description || '',
-                imageUrl: course.imageMedia?.url || course.imageUrl || '',
-                imageMediaId: course.imageMediaId || '',
+                imageUrl: course.imageUrl || '',
                 min_age: course.min_age?.toString() || '',
                 max_age: course.max_age?.toString() || '',
                 coach: course.coach || '',
-                price: course.price.toString(),
-                payment_type: course.payment_type,
-                capacity: course.capacity.toString(),
-                status: course.status,
+                price: course.price?.toString() || '',
+                payment_type: course.payment_type || 'mensual',
+                capacity: course.capacity?.toString() || '20',
+                status: course.status || 'active',
                 start_date: course.start_date ? new Date(course.start_date).toISOString().split('T')[0] : '',
                 end_date: course.end_date ? new Date(course.end_date).toISOString().split('T')[0] : '',
                 content: course.content || '',
@@ -81,11 +70,9 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
         fetchInstructors();
     }, [course]);
 
-    const [instructors, setInstructors] = useState<any[]>([]);
-
     const fetchInstructors = async () => {
         try {
-            const res = await fetch('/api/staff');
+            const res = await fetch('/api/admin/profesores');
             if (res.ok) {
                 const data = await res.json();
                 setInstructors(data);
@@ -141,7 +128,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                 setSavedCourse(data);
                 return data;
             } else {
-                setError(data.detail || data.error || 'Error al guardar');
+                setError(data.detail || data.error || 'Error al guardar curso');
                 return null;
             }
         } catch (err: any) {
@@ -172,15 +159,10 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
             });
 
             if (res.ok) {
-                setNewSchedule({
-                    ...newSchedule,
-                    title: ''
-                });
                 fetchSchedules(courseToUse.id);
             } else {
                 const data = await res.json();
-                const errorMsg = data.detail || data.error || 'Error al añadir horario';
-                alert('Error: ' + errorMsg);
+                alert(data.error || 'Error al añadir horario');
             }
         } catch (err: any) {
             alert('Error de red al añadir horario');
@@ -196,7 +178,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
         if (!confirm('¿Seguro quieres eliminar esta sesión?')) return;
         setLoading(true);
         try {
-            const res = await fetch(`/api/admin/cursos/${courseToUse.id}/horarios/${id}`, {
+            const res = await fetch(`/api/admin/cursos/${courseToUse.id}/horarios?scheduleId=${id}`, {
                 method: 'DELETE'
             });
 
@@ -222,25 +204,10 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
         { id: '0', label: 'Domingo' },
     ];
 
-    const quillModules = {
-        toolbar: [
-            [{ 'header': [1, 2, 3, 4, false] }],
-            [{ 'size': ['small', false, 'large', 'huge'] }],
-            ['bold', 'italic', 'underline', 'strike'],
-            [{ 'color': [] }, { 'background': [] }],
-            [{ 'align': [] }],
-            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-            [{ 'indent': '-1' }, { 'indent': '+1' }],
-            ['blockquote', 'code-block'],
-            ['link', 'image', 'video'],
-            ['clean']
-        ],
-    };
-
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-white w-full max-w-5xl max-h-[90vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="relative bg-white w-full max-w-5xl max-h-[90vh] rounded-[3rem] shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300 text-slate-900">
                 {/* Header */}
                 <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
                     <div>
@@ -249,34 +216,37 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                         </h2>
                         <p className="text-gray-400 font-bold italic text-sm">Paso {step}: {step === 1 ? 'Información Básica' : step === 2 ? 'Contenido Detallado' : 'Configuración de Horarios'}</p>
                     </div>
-                    <button onClick={onClose} className="p-3 hover:bg-gray-100 rounded-full transition-all relative z-10 group">
+                    <button type="button" onClick={onClose} className="p-3 hover:bg-gray-100 rounded-full transition-all relative z-10 group">
                         <X size={24} className="text-gray-400 group-hover:text-gray-900 transition-colors" />
                     </button>
                 </div>
 
-                {/* Tabs / Steps Optimizados */}
-                <div className="px-6 md:px-8 pt-4 flex justify-between md:justify-start md:gap-12 border-b border-gray-50">
+                {/* Tabs / Steps */}
+                <div className="px-8 pt-4 flex gap-8 border-b border-gray-50">
                     <button
+                        type="button"
                         onClick={() => setStep(1)}
-                        className={`pb-4 px-2 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] transition-all relative flex items-center gap-2 ${step === 1 ? 'text-emerald-600' : 'text-gray-400'}`}
+                        className={`pb-4 px-2 text-[10px] font-black uppercase tracking-widest transition-all relative flex items-center gap-2 ${step === 1 ? 'text-emerald-600' : 'text-gray-400'}`}
                     >
-                        <Info size={14} /> <span className="hidden sm:inline">1.</span> General
+                        <Info size={14} /> 1. General
                         {step === 1 && <div className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-600 rounded-full" />}
                     </button>
                     <button
+                        type="button"
                         disabled={!isEdit && step < 2}
                         onClick={() => setStep(2)}
-                        className={`pb-4 px-2 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] transition-all relative flex items-center gap-2 ${step === 2 ? 'text-emerald-600' : 'text-gray-400'} disabled:opacity-30`}
+                        className={`pb-4 px-2 text-[10px] font-black uppercase tracking-widest transition-all relative flex items-center gap-2 ${step === 2 ? 'text-emerald-600' : 'text-gray-400'} disabled:opacity-30`}
                     >
-                        <FileText size={14} /> <span className="hidden sm:inline">2.</span> Contenido
+                        <FileText size={14} /> 2. Contenido
                         {step === 2 && <div className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-600 rounded-full" />}
                     </button>
                     <button
+                        type="button"
                         disabled={!isEdit && step < 3}
                         onClick={() => setStep(3)}
-                        className={`pb-4 px-2 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] transition-all relative flex items-center gap-2 ${step === 3 ? 'text-emerald-600' : 'text-gray-400'} disabled:opacity-30`}
+                        className={`pb-4 px-2 text-[10px] font-black uppercase tracking-widest transition-all relative flex items-center gap-2 ${step === 3 ? 'text-emerald-600' : 'text-gray-400'} disabled:opacity-30`}
                     >
-                        <Calendar size={14} /> <span className="hidden sm:inline">3.</span> Horario
+                        <Calendar size={14} /> 3. Horarios
                         {step === 3 && <div className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-600 rounded-full" />}
                     </button>
                 </div>
@@ -290,7 +260,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                     )}
 
                     {step === 1 ? (
-                        <form id="course-form" className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                        <form id="course-form" className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 text-left">
                             <div className="space-y-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 ml-1">
@@ -299,8 +269,8 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                     <input
                                         required
                                         type="text"
-                                        className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all text-sm font-black text-gray-700 shadow-sm"
-                                        placeholder="Ej: Taller de Masaje Relajante"
+                                        className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700 shadow-sm"
+                                        placeholder="Ej: Escuela de Fútbol Verano"
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     />
@@ -308,16 +278,20 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
 
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 ml-1">
-                                        Imagen del Curso
+                                        Imagen del Curso (URL)
                                     </label>
-                                    <ImageUploader
-                                        category="course"
-                                        currentUrl={formData.imageUrl}
-                                        onUploadSuccess={(media) => setFormData({ ...formData, imageUrl: media.url, imageMediaId: media.id })}
-                                        onRemove={() => setFormData({ ...formData, imageUrl: '', imageMediaId: '' })}
-                                        label="Subir imagen del curso"
-                                        aspect="landscape"
+                                    <input
+                                        type="url"
+                                        className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-bold text-gray-700 shadow-sm"
+                                        placeholder="https://ejemplo.com/imagen.jpg"
+                                        value={formData.imageUrl}
+                                        onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
                                     />
+                                    {formData.imageUrl && (
+                                        <div className="mt-2 rounded-2xl overflow-hidden h-32 border border-gray-100">
+                                            <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2">
@@ -333,40 +307,53 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                             </div>
 
                             <div className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Especialista</label>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Asignar Profesor</label>
                                         <select
                                             className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700"
                                             value={formData.instructor_id}
                                             onChange={(e) => setFormData({ ...formData, instructor_id: e.target.value })}
                                         >
-                                            <option value="">Seleccionar Especialista...</option>
+                                            <option value="">Seleccionar Profesor...</option>
                                             {instructors.map(prof => (
-                                                <option key={prof.id} value={prof.id}>{prof.name}</option>
+                                                <option key={prof.id} value={prof.id}>{prof.nombre} ({prof.phone || prof.telefono})</option>
                                             ))}
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Modalidad</label>
-                                        <select
-                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700 uppercase"
-                                            value={formData.payment_type}
-                                            onChange={(e) => setFormData({ ...formData, payment_type: e.target.value })}
-                                        >
-                                            <option value="mensual">Mensual (cobro cada mes)</option>
-                                            <option value="semanal">Semanal (cobro cada semana)</option>
-                                            <option value="total">Pago único por todo el curso</option>
-                                            <option value="unico">Por sesión / Pase diario</option>
-                                        </select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Inversión ({formData.payment_type})</label>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Inversión ($)</label>
                                         <input
                                             type="number"
                                             className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700"
                                             value={formData.price}
                                             onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                            <Users size={12} className="text-emerald-500" /> Edad Mínima
+                                        </label>
+                                        <input
+                                            type="number"
+                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700 shadow-sm"
+                                            placeholder="Ej: 5"
+                                            value={formData.min_age}
+                                            onChange={(e) => setFormData({ ...formData, min_age: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                            <Users size={12} className="text-emerald-500" /> Edad Máxima
+                                        </label>
+                                        <input
+                                            type="number"
+                                            className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700 shadow-sm"
+                                            placeholder="Ej: 15"
+                                            value={formData.max_age}
+                                            onChange={(e) => setFormData({ ...formData, max_age: e.target.value })}
                                         />
                                     </div>
                                 </div>
@@ -415,30 +402,28 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                             </div>
                         </form>
                     ) : step === 2 ? (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
                             <div className="flex items-center justify-between mb-2">
                                 <label className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                                    <FileText size={16} className="text-emerald-500" /> Constructor de Página del Curso
+                                    <FileText size={16} className="text-emerald-500" /> Contenido del Curso
                                 </label>
-                                <span className="text-[10px] font-bold text-gray-400 italic">Este contenido se mostrará en la página de detalles del curso.</span>
+                                <span className="text-[10px] font-bold text-gray-400 italic">Este contenido se mostrará en la página del curso.</span>
                             </div>
-                            <div className="rounded-[2rem] overflow-hidden border-2 border-slate-100 shadow-inner min-h-[400px] bg-white">
-                                <ReactQuill 
-                                    theme="snow"
-                                    value={formData.content}
-                                    onChange={(val) => setFormData({ ...formData, content: val })}
-                                    modules={quillModules}
-                                    className="h-[350px] text-slate-900"
-                                />
-                            </div>
+                            <textarea
+                                rows={12}
+                                className="w-full p-6 bg-gray-50 border border-gray-200 rounded-[2rem] focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-medium text-gray-800 shadow-inner"
+                                placeholder="Escribe el programa completo, requisitos, objetivos y beneficios del curso..."
+                                value={formData.content}
+                                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                            />
                         </div>
                     ) : (
-                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500">
+                        <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 text-left">
                              <div className="bg-emerald-50 p-8 rounded-[2.5rem] border border-emerald-100/50 space-y-6">
                                 <h4 className="font-black text-emerald-800 text-sm uppercase tracking-tight flex items-center gap-2">
-                                    <Plus size={18} /> Agregar Sesión
+                                    <Plus size={18} /> Agregar Sesión de Entrenamiento
                                 </h4>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                                     <div className="space-y-2">
                                         <label className="text-[9px] font-black text-emerald-700/50 uppercase tracking-widest ml-1">Día</label>
                                         <select
@@ -449,7 +434,16 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                             {days.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}
                                         </select>
                                     </div>
-
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-black text-emerald-700/50 uppercase tracking-widest ml-1">Cancha</label>
+                                        <select
+                                            value={newSchedule.courtId}
+                                            onChange={(e) => setNewSchedule({ ...newSchedule, courtId: e.target.value })}
+                                            className="w-full p-4 bg-white border-transparent rounded-2xl text-xs font-black text-emerald-900 shadow-sm"
+                                        >
+                                            {canchas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                                        </select>
+                                    </div>
                                     <div className="grid grid-cols-2 gap-2">
                                         <div className="space-y-2">
                                             <label className="text-[9px] font-black text-emerald-700/50 uppercase tracking-widest ml-1">Inicio</label>
@@ -460,22 +454,10 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                             <input type="time" value={newSchedule.end_time} onChange={(e) => setNewSchedule({ ...newSchedule, end_time: e.target.value })} className="w-full p-4 bg-white border-transparent rounded-2xl text-xs font-black text-emerald-900 shadow-sm" />
                                         </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[9px] font-black text-emerald-700/50 uppercase tracking-widest ml-1">Tema / Título de la Sesión</label>
-                                        <input 
-                                            type="text" 
-                                            placeholder="Ej: Teoría de Masajes o Práctica 1" 
-                                            value={newSchedule.title} 
-                                            onChange={(e) => setNewSchedule({ ...newSchedule, title: e.target.value })} 
-                                            className="w-full p-4 bg-white border-transparent rounded-2xl text-xs font-black text-emerald-900 shadow-sm placeholder:text-emerald-900/20" 
-                                        />
-                                    </div>
-                                    <div className="flex justify-end pt-2">
-                                        <button onClick={handleAddSchedule} disabled={loading} className="bg-emerald-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-100">
-                                            {loading ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
-                                            Agregar Sesión al Programa
-                                        </button>
-                                    </div>
+                                    <button type="button" onClick={handleAddSchedule} disabled={loading} className="bg-emerald-600 text-white p-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 cursor-pointer">
+                                        {loading ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
+                                        Agregar
+                                    </button>
                                 </div>
                             </div>
                             <div className="space-y-4">
@@ -490,15 +472,13 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                         {schedules.map((s) => (
                                             <div key={s.id} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between group">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 font-black text-xs"> {days.find(d => d.id === s.day_of_week.toString())?.label.substring(0, 3)} </div>
+                                                    <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 font-black text-xs"> {days.find(d => d.id === s.day_of_week?.toString())?.label.substring(0, 3)} </div>
                                                     <div>
                                                         <p className="text-sm font-black text-gray-900 tracking-tight">{s.start_time} - {s.end_time}</p>
-                                                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest truncate max-w-[150px]">
-                                                            {s.title || 'Sesión de Formación'}
-                                                        </p>
+                                                        <p className="text-[10px] font-bold text-gray-400 italic">Cancha: {s.court?.nombre || 'General'}</p>
                                                     </div>
                                                 </div>
-                                                <button onClick={() => handleDeleteSchedule(s.id)} className="p-3 text-red-100 group-hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"> <Trash2 size={16} /> </button>
+                                                <button type="button" onClick={() => handleDeleteSchedule(s.id)} className="p-3 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"> <Trash2 size={16} /> </button>
                                             </div>
                                         ))}
                                     </div>
@@ -508,56 +488,41 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                     )}
                 </div>
 
-                {/* Footer Optimizado para Mobile/App */}
-                <div className="p-6 md:p-8 border-t border-gray-100 bg-white flex items-center justify-between gap-4">
-                    <div className="flex items-center">
-                        {step > 1 ? (
-                            <button
-                                onClick={() => setStep(prev => Math.max(1, prev - 1))}
-                                className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] hover:text-slate-900 transition-colors"
-                            >
-                                <ChevronLeft size={16} /> Volver
-                            </button>
-                        ) : (
-                            <button 
-                                onClick={onClose} 
-                                className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] hover:text-slate-900 transition-colors"
-                            > 
-                                Cancelar 
-                            </button>
-                        )}
-                    </div>
+                {/* Footer */}
+                <div className="p-8 border-t border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                    <button
+                        type="button"
+                        onClick={() => setStep(prev => Math.max(1, prev - 1))}
+                        disabled={step === 1}
+                        className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors disabled:opacity-0"
+                    >
+                        <ChevronLeft size={16} /> Volver
+                    </button>
                     
-                    <div className="flex items-center gap-3">
-                        {step > 1 && (
-                            <button 
-                                onClick={onClose} 
-                                className="hidden md:block px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] hover:text-slate-900 transition-colors"
-                            > 
-                                Cancelar 
-                            </button>
-                        )}
-
+                    <div className="flex gap-4">
+                        <button type="button" onClick={onClose} className="px-8 py-4 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors"> Cancelar </button>
+                        
                         {step < 3 ? (
                             <button
+                                type="button"
                                 onClick={handleNextStep}
                                 disabled={loading}
-                                className="flex items-center gap-3 bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-slate-800 transition-all shadow-xl active:scale-95"
+                                className="flex items-center gap-3 bg-slate-900 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 cursor-pointer"
                             >
-                                {loading ? 'Guardando...' : step === 1 ? 'Continuar' : 'Siguiente'}
-                                {!loading && <ChevronRight size={16} />}
-                                {loading && <Loader2 className="animate-spin" size={16} />}
+                                {loading ? <Loader2 className="animate-spin" size={16} /> : <ChevronRight size={16} />}
+                                {step === 1 ? 'Guardar y Continuar' : 'Siguiente Paso'}
                             </button>
                         ) : (
                             <button
+                                type="button"
                                 onClick={async () => {
                                     await handleSave();
                                     onClose();
                                 }}
-                                className="flex items-center gap-3 bg-emerald-600 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 active:scale-95"
+                                className="flex items-center gap-3 bg-emerald-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 cursor-pointer"
                             >
                                 <CheckCircle2 size={16} />
-                                Finalizar
+                                Finalizar Todo
                             </button>
                         )}
                     </div>

@@ -14,15 +14,17 @@ export async function GET(
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        // Get enrollments directly from course
-        const enrollments = await prisma.courseEnrollment.findMany({
+        const rawEnrollments = await prisma.courseEnrollment.findMany({
             where: { courseId: id, status: 'approved' },
             include: { Student: true }
         });
 
-        // Get existing attendances
-        const model = (prisma as any).courseAttendance || (prisma as any).CourseAttendance;
-        const attendances = await model.findMany({
+        const enrollments = rawEnrollments.map((e: any) => ({
+            ...e,
+            student: e.Student
+        }));
+
+        const attendances = await prisma.course_attendance.findMany({
             where: { class_id: classId }
         });
 
@@ -45,30 +47,18 @@ export async function PUT(
         }
 
         const body = await request.json();
-        const { attendances: incomingAttendances } = body; // Array of { user_id, status }
-
-        console.log('Attendance PUT body:', JSON.stringify(body));
+        const { attendances: incomingAttendances } = body;
 
         if (!Array.isArray(incomingAttendances)) {
             return NextResponse.json({ error: 'Formato inválido' }, { status: 400 });
         }
 
         if (incomingAttendances.length === 0) {
-            console.log('No attendances to update');
             return NextResponse.json({ success: true, message: 'No data provided' });
         }
 
-        // Use a transaction to update all attendances
-        // Checking for both PascalCase and camelCase properties just in case
-        const model = (prisma as any).courseAttendance || (prisma as any).CourseAttendance;
-        
-        if (!model) {
-            console.error('Prisma model CourseAttendance not found in client properties');
-            return NextResponse.json({ error: 'Internal Error: Model not found' }, { status: 500 });
-        }
-
         const updates = incomingAttendances.map(att =>
-            model.upsert({
+            prisma.course_attendance.upsert({
                 where: {
                     class_id_user_id: {
                         class_id: classId,
@@ -77,6 +67,7 @@ export async function PUT(
                 },
                 update: { status: att.status },
                 create: {
+                    id: `att_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
                     class_id: classId,
                     user_id: att.user_id,
                     status: att.status
@@ -84,9 +75,7 @@ export async function PUT(
             })
         );
 
-        console.log(`Executing ${updates.length} updates...`);
         const results = await prisma.$transaction(updates);
-        console.log('Transaction results:', results.length);
 
         return NextResponse.json({ success: true, updatedCount: results.length });
     } catch (error) {

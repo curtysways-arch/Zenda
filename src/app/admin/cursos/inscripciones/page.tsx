@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
     Users, Search, Loader2, CheckCircle2, XCircle, Clock,
-    ArrowLeft, Phone, Mail, FileText, Filter, ChevronDown,
-    GraduationCap, RefreshCw, AlertTriangle, UserCheck, UserX
+    ArrowLeft, Phone, Mail, FileText, ChevronDown,
+    Dribbble, RefreshCw, UserCheck, UserX
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -102,30 +102,22 @@ export default function InscripcionesPage() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('¿Eliminar esta inscripción?')) return;
-        try {
-            await fetch(`/api/admin/cursos/inscripciones/${id}`, { method: 'DELETE' });
-            fetchEnrollments();
-        } catch { }
-    };
-
     const filtered = enrollments.filter(e => {
         const term = searchTerm.toLowerCase();
         return (
-            e.student.name.toLowerCase().includes(term) ||
-            (e.student.email || '').toLowerCase().includes(term) ||
-            (e.student.phone || '').includes(term) ||
-            e.course.name.toLowerCase().includes(term)
+            e.student?.name?.toLowerCase().includes(term) ||
+            (e.student?.representative_name || '').toLowerCase().includes(term) ||
+            (e.student?.phone || '').includes(term) ||
+            e.course?.name?.toLowerCase().includes(term)
         );
     });
 
     const pendingCount = enrollments.filter(e => e.status === 'pending').length;
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 text-slate-900 font-sans">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6 text-left">
                 <div className="space-y-1">
                     <Link href="/admin/cursos" className="text-emerald-600 font-bold text-xs flex items-center gap-1 hover:underline mb-2">
                         <ArrowLeft size={14} /> Volver a Cursos
@@ -142,8 +134,9 @@ export default function InscripcionesPage() {
                     <p className="text-gray-500 font-medium italic">Revisa y gestiona las solicitudes de inscripción a tus cursos.</p>
                 </div>
                 <button
+                    type="button"
                     onClick={fetchEnrollments}
-                    className="flex items-center gap-2 bg-white border border-gray-200 text-slate-700 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition-all shadow-sm self-start"
+                    className="flex items-center gap-2 bg-white border border-gray-200 text-slate-700 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition-all shadow-sm self-start cursor-pointer"
                 >
                     <RefreshCw size={16} />
                     Actualizar
@@ -162,8 +155,9 @@ export default function InscripcionesPage() {
                         return (
                             <button
                                 key={s}
+                                type="button"
                                 onClick={() => setFilterStatus(s)}
-                                className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all ${isActive ? (s === 'all' ? 'bg-slate-800 text-white border-slate-800' : cfg.color + ' ring-2 ring-offset-1 ring-current') : 'bg-white ' + cfg.color}`}
+                                className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all cursor-pointer ${isActive ? (s === 'all' ? 'bg-slate-800 text-white border-slate-800' : cfg.color + ' ring-2 ring-offset-1 ring-current') : 'bg-white ' + cfg.color}`}
                             >
                                 {cfg.label}
                             </button>
@@ -192,7 +186,7 @@ export default function InscripcionesPage() {
                 <Search className="text-gray-400 ml-2" size={20} />
                 <input
                     type="text"
-                    placeholder="Buscar por alumno, teléfono, correo o curso..."
+                    placeholder="Buscar por alumno, representante, teléfono o curso..."
                     className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
@@ -218,7 +212,7 @@ export default function InscripcionesPage() {
                     </div>
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="space-y-4 text-left">
                     {filtered.map(enrollment => {
                         const cfg = STATUS_LABELS[enrollment.status] || STATUS_LABELS.pending;
                         const StatusIcon = cfg.icon;
@@ -233,21 +227,32 @@ export default function InscripcionesPage() {
                                     {/* Avatar + Info */}
                                     <div className="flex items-center gap-4 flex-1 min-w-0">
                                         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 font-black text-xl ${isPending ? 'bg-amber-100 text-amber-600' : enrollment.status === 'approved' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-500'}`}>
-                                            {enrollment.student.name.charAt(0).toUpperCase()}
+                                            {enrollment.student?.name ? enrollment.student.name.charAt(0).toUpperCase() : 'A'}
                                         </div>
 
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <h3 className="font-black text-gray-900 uppercase text-sm truncate">{enrollment.student.name}</h3>
+                                                <h3 className="font-black text-gray-900 uppercase text-sm truncate">{enrollment.student?.name}</h3>
+                                                {enrollment.student?.age && (
+                                                    <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                                                        {enrollment.student.age} años
+                                                    </span>
+                                                )}
                                             </div>
 
+                                            {enrollment.student?.representative_name && (
+                                                <p className="text-xs font-bold text-gray-500 mt-0.5">
+                                                    Representante: {enrollment.student.representative_name}
+                                                </p>
+                                            )}
+
                                             <div className="flex flex-wrap gap-3 mt-1.5">
-                                                {enrollment.student.phone && (
+                                                {enrollment.student?.phone && (
                                                     <a href={`tel:${enrollment.student.phone}`} className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:underline">
                                                         <Phone size={11} /> {enrollment.student.phone}
                                                     </a>
                                                 )}
-                                                {enrollment.student.email && (
+                                                {enrollment.student?.email && (
                                                     <a href={`mailto:${enrollment.student.email}`} className="flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:underline">
                                                         <Mail size={11} /> {enrollment.student.email}
                                                     </a>
@@ -259,13 +264,13 @@ export default function InscripcionesPage() {
                                     {/* Course + Date */}
                                     <div className="flex flex-col gap-1 min-w-[180px]">
                                         <div className="flex items-center gap-2">
-                                            <GraduationCap size={14} className="shrink-0" style={{ color: 'var(--primary-color)' }} />
-                                            <span className="text-sm font-black text-gray-800 truncate">{enrollment.course.name}</span>
+                                            <Dribbble size={14} className="text-emerald-500 shrink-0" />
+                                            <span className="text-sm font-black text-gray-800 truncate">{enrollment.course?.name}</span>
                                         </div>
                                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest pl-5">
-                                            {new Date(enrollment.createdAt).toLocaleDateString('es-ES', {
+                                            {enrollment.createdAt ? new Date(enrollment.createdAt).toLocaleDateString('es-ES', {
                                                 day: '2-digit', month: 'short', year: 'numeric'
-                                            })}
+                                            }) : ''}
                                         </p>
                                         <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase border w-fit ${cfg.color}`}>
                                             <StatusIcon size={11} />
@@ -277,9 +282,10 @@ export default function InscripcionesPage() {
                                     {isPending && (
                                         <div className="flex gap-2 shrink-0">
                                             <button
+                                                type="button"
                                                 onClick={() => handleAction(enrollment.id, 'approved')}
                                                 disabled={actionLoading !== null}
-                                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-emerald-100 disabled:opacity-50"
+                                                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-emerald-100 disabled:opacity-50 cursor-pointer"
                                             >
                                                 {actionLoading === enrollment.id + 'approved'
                                                     ? <Loader2 size={14} className="animate-spin" />
@@ -288,9 +294,10 @@ export default function InscripcionesPage() {
                                                 Aprobar
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={() => handleAction(enrollment.id, 'rejected')}
                                                 disabled={actionLoading !== null}
-                                                className="flex items-center gap-2 bg-white hover:bg-red-50 text-red-500 border border-red-200 px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-50"
+                                                className="flex items-center gap-2 bg-white hover:bg-red-50 text-red-500 border border-red-200 px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-50 cursor-pointer"
                                             >
                                                 {actionLoading === enrollment.id + 'rejected'
                                                     ? <Loader2 size={14} className="animate-spin" />

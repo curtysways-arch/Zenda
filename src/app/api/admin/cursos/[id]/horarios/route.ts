@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma"; // v2_schema_sync_fix
+import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
@@ -11,12 +11,10 @@ export async function GET(
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-        const { id } = await params; // courseId
+        const { id } = await params;
         const negocioId = (session.user as any).negocioId;
-        const p = prisma as any;
 
-        // Verificar que el curso pertenezca al negocio
-        const course = await p.course.findFirst({
+        const course = await prisma.course.findFirst({
             where: { id, businessId: negocioId }
         });
 
@@ -24,10 +22,10 @@ export async function GET(
             return NextResponse.json({ error: "Curso no encontrado" }, { status: 404 });
         }
 
-        const schedules = await p.courseSchedule.findMany({
+        const schedules = await prisma.courseSchedule.findMany({
             where: { courseId: id },
             include: {
-                service: {
+                Service: {
                     select: { nombre: true, id: true }
                 }
             },
@@ -37,7 +35,12 @@ export async function GET(
             ]
         });
 
-        return NextResponse.json(schedules);
+        const formatted = schedules.map((s: any) => ({
+            ...s,
+            court: s.Service
+        }));
+
+        return NextResponse.json(formatted);
     } catch (error: any) {
         console.error("Error fetching schedules:", error);
         return NextResponse.json({ error: "Error al obtener horarios" }, { status: 500 });
@@ -52,12 +55,10 @@ export async function POST(
         const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-        const { id } = await params; // courseId
+        const { id } = await params;
         const negocioId = (session.user as any).negocioId;
-        const p = prisma as any;
 
-        // Verificar que el curso pertenezca al negocio
-        const course = await p.course.findFirst({
+        const course = await prisma.course.findFirst({
             where: { id, businessId: negocioId }
         });
 
@@ -66,28 +67,19 @@ export async function POST(
         }
 
         const body = await req.json();
-        const { day_of_week, start_time, end_time, title } = body;
+        const { day_of_week, start_time, end_time, courtId } = body;
 
-        if (day_of_week === undefined || !start_time || !end_time) {
+        if (day_of_week === undefined || !start_time || !end_time || !courtId) {
             return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
         }
 
-        // Auto-asignar el primer servicio (sala/cabina) disponible en este negocio
-        const primerServicio = await p.service.findFirst({
-            where: { negocioId: negocioId }
-        });
-
-        if (!primerServicio) {
-            return NextResponse.json({ error: "Debe haber al menos un servicio/sala creado en el negocio" }, { status: 400 });
-        }
-
-        const schedule = await p.courseSchedule.create({
+        const schedule = await prisma.courseSchedule.create({
             data: {
-                day_of_week: parseInt(day_of_week),
+                id: `csch_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+                day_of_week: parseInt(day_of_week.toString()),
                 start_time,
                 end_time,
-                title: title || null,
-                serviceId: primerServicio.id,
+                serviceId: courtId,
                 courseId: id
             }
         });
@@ -95,9 +87,32 @@ export async function POST(
         return NextResponse.json(schedule);
     } catch (error: any) {
         console.error("Error creating schedule:", error);
-        return NextResponse.json({ 
-            error: "Error al crear horario", 
-            detail: error.message || String(error)
-        }, { status: 500 });
+        return NextResponse.json({ error: "Error al crear horario" }, { status: 500 });
+    }
+}
+
+export async function DELETE(
+    req: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
+        const { searchParams } = new URL(req.url);
+        const scheduleId = searchParams.get('scheduleId');
+
+        if (!scheduleId) {
+            return NextResponse.json({ error: "ID de horario requerido" }, { status: 400 });
+        }
+
+        await prisma.courseSchedule.delete({
+            where: { id: scheduleId }
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (error: any) {
+        console.error("Error deleting schedule:", error);
+        return NextResponse.json({ error: "Error al eliminar horario" }, { status: 500 });
     }
 }
