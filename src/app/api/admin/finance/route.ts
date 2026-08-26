@@ -113,14 +113,12 @@ export async function GET(req: Request) {
             return isTodayCreated || isTodayUpdated;
         });
 
-        // 2. Obtener pagos de citas y movimientos manuales de caja (Ingresos / Gastos)
+        // 2. Obtener pagos de citas y movimientos manuales de caja del negocio autenticado
         const allPayments = await prisma.pagoReserva.findMany({
             where: {
                 OR: [
                     { Appointment: { negocioId } },
-                    { notas: { contains: negocioId } },
-                    { referencia: { contains: 'GASTO' } },
-                    { referencia: { contains: 'INGRESO_MANUAL' } }
+                    { notas: { contains: negocioId } }
                 ]
             },
             include: {
