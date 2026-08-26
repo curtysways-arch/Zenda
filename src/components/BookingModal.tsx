@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, User, Phone, MessageSquare, Loader2, CheckCircle2, Calendar, Clock, Check } from 'lucide-react';
+import { X, User, Clock, Loader2, CheckCircle2, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
@@ -21,8 +21,8 @@ interface BookingModalProps {
         precioBase?: number;
         precioHora: number;
         duracion: number;
-        pagosActivos: boolean;
-        pagoPorcentaje: number;
+        pagosActivos?: boolean;
+        pagoPorcentaje?: number;
         whatsapp?: string;
         staffId?: string;
         staffName?: string;
@@ -108,7 +108,6 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
                 precioTotal: precioTotal,
                 slug: bookingData.slug,
                 estado: 'pendiente',
-                // Incluir el código de referido desde localStorage si existe (fallback sin cookie)
                 referralCode: (typeof window !== 'undefined' ? localStorage.getItem('referral_code_backup') : null) || undefined,
             };
 
@@ -132,7 +131,7 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
             setTimeout(() => {
                 onClose();
                 router.push(`/${bookingData.slug}/confirmacion/${data.id}`);
-            }, 1500);
+            }, 1200);
 
         } catch (error) {
             console.error(error);
@@ -143,152 +142,149 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-[600] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300">
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={onClose} />
-            
-            {/* Modal Content - DARK THEME AS REQUESTED */}
-            <div className="relative w-full max-w-xl bg-[#0c140f] h-[92vh] sm:h-auto sm:rounded-[3rem] shadow-2xl overflow-y-auto hide-scrollbar flex flex-col border-t sm:border border-white/5">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300">
+            {/* Modal Container */}
+            <div className="bg-[#07090f] w-full h-[100dvh] sm:h-auto sm:max-h-[90dvh] max-w-lg shadow-2xl relative overflow-hidden sm:rounded-[2.5rem] flex flex-col border-t border-white/5 sm:border text-left">
                 
-                {/* Header */}
-                <div className="p-6 flex items-center justify-between sticky top-0 bg-[#0c140f] z-10">
-                    <button onClick={onClose} className="p-3 rounded-full bg-white/5 text-gray-400 hover:text-white transition-colors">
+                {/* Header Navbar */}
+                <div className="flex items-center justify-between p-6 sm:px-8 pb-4 shrink-0 relative z-20 border-b border-white/5">
+                    <button onClick={onClose} className="size-10 bg-white/5 rounded-2xl flex items-center justify-center text-white/50 hover:text-white transition-all border border-white/5 cursor-pointer">
                         <X size={20} />
                     </button>
-                    <div className="px-4 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/20">
-                        <span className="text-[10px] font-black italic text-pink-500 uppercase tracking-widest">Paso Final</span>
+                    <div className="px-4 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-500 text-[10px] font-black tracking-widest uppercase">
+                        PASO FINAL
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="px-6 pb-24 space-y-8">
-                    {/* Title */}
-                    <div className="space-y-1">
-                        <h2 className="text-4xl font-black italic tracking-tighter text-white uppercase leading-none">
-                            CONFIRMAR<br/>CITA
+                {/* Scrollable Form Content */}
+                <div className="flex-1 overflow-y-auto px-6 sm:px-8 pt-4 pb-44 space-y-6 hide-scrollbar relative z-10">
+                    {/* Header Texts */}
+                    <div>
+                        <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter leading-none mb-1">
+                            CONFIRMAR RESERVA
                         </h2>
-                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-2">
-                            Completa tu información para agendar tu turno.
+                        <p className="text-[10px] font-medium text-white/40 tracking-widest uppercase italic">
+                            COMPLETA TU INFORMACIÓN PARA AGENDAR TU TURNO.
                         </p>
                     </div>
 
-                    {/* Booking Card Summary */}
-                    <div className="bg-white/5 rounded-3xl p-5 border border-white/5 space-y-6">
-                        <div className="flex justify-between items-center border-b border-white/5 pb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="size-2 rounded-full bg-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]" />
-                                <span className="text-sm font-black italic text-white uppercase truncate max-w-[180px]">
+                    {/* Summary Card - ULTRA COMPACT */}
+                    <div className="p-4 rounded-2xl bg-[#11141d] border border-white/5 shadow-inner space-y-3">
+                        <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                            <div className="flex items-center gap-2">
+                                <div className="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(29,201,92,0.6)]" />
+                                <span className="text-xs font-black italic text-white uppercase truncate max-w-[200px]">
                                     {bookingData.canchaNombre}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-bold text-gray-400">{duracionMin} min</span>
-                                <span className="text-sm font-black text-white">${precioTotal}</span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-bold text-slate-400">{duracionMin} min</span>
+                                <span className="text-sm font-black text-emerald-400">${precioTotal}</span>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-4">
-                            <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-2 text-pink-500">
-                                    <Calendar size={14} />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Fecha</span>
-                                </div>
-                                <span className="text-sm font-black italic text-white uppercase">
+                        <div className="flex items-center justify-between">
+                            <div className="flex flex-col">
+                                <span className="flex items-center gap-1 text-[8px] font-black text-emerald-500/60 uppercase tracking-[0.2em]">
+                                    <Calendar size={10} className="text-emerald-500" /> FECHA
+                                </span>
+                                <span className="text-[12px] font-black text-white italic uppercase">
                                     {format(bookingData.date, "EEEE d MMM", { locale: es })}
                                 </span>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-2 text-pink-500">
-                                    <Clock size={14} />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Horario</span>
-                                </div>
-                                <span className="text-sm font-black italic text-white uppercase">
+                            
+                            <div className="w-px h-6 bg-white/5" />
+                            
+                            <div className="flex flex-col items-end text-right">
+                                <span className="flex items-center gap-1 text-[8px] font-black text-emerald-500/60 uppercase tracking-[0.2em]">
+                                    <Clock size={10} className="text-emerald-500" /> HORARIO
+                                </span>
+                                <span className="text-[12px] font-black text-white italic uppercase">
                                     {bookingData.hour} — {horaFin} HS
                                 </span>
                             </div>
-                            {bookingData.staffName && (
-                                <div className="flex justify-between items-center text-gray-100">
-                                    <div className="flex items-center gap-2 text-pink-500">
-                                        <User size={14} />
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Especialista</span>
-                                    </div>
-                                    <span className="text-sm font-black italic text-white uppercase">
-                                        {bookingData.staffName}
-                                    </span>
-                                </div>
-                            )}
                         </div>
+
+                        {bookingData.staffName && (
+                            <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Especialista</span>
+                                <span className="font-black text-white italic uppercase">{bookingData.staffName}</span>
+                            </div>
+                        )}
                     </div>
 
                     {/* Form Fields */}
-                    <div className="space-y-6">
+                    <form onSubmit={handleSubmit} id="booking-modal-form" className="space-y-4">
                         {/* Nombre */}
-                        <div className="space-y-2.5">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nombre Completo</label>
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Nombre Completo</label>
                             <input
                                 required
                                 value={formData.nombre}
                                 onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                                 placeholder="Escribe tu nombre"
-                                className="w-full h-16 bg-white/5 border border-white/5 rounded-2xl px-6 text-white font-bold focus:ring-2 focus:ring-pink-500/30 transition-all outline-none"
+                                className="w-full h-13 bg-white/5 border border-white/10 focus:border-emerald-500/50 rounded-2xl px-5 text-white font-bold text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
                             />
                         </div>
 
                         {/* Telefono */}
-                        <div className="space-y-2.5">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Celular de Contacto</label>
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Celular de Contacto</label>
                             <PhoneInput
                                 value={formData.telefono}
                                 onChange={(val) => setFormData({ ...formData, telefono: val })}
-                                className="h-16 bg-white/5 border border-white/5 rounded-2xl text-white font-bold"
+                                className="h-13 bg-white/5 border border-white/10 rounded-2xl text-white font-bold"
                             />
                         </div>
 
                         {/* Notas */}
-                        <div className="space-y-2.5">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Notas (Opcional)</label>
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] ml-1">Notas (Opcional)</label>
                             <textarea
                                 value={formData.comentarios}
-                                rows={3}
+                                rows={2}
                                 onChange={(e) => setFormData({ ...formData, comentarios: e.target.value })}
                                 placeholder="¿Algo que debamos saber?"
-                                className="w-full bg-white/5 border border-white/5 rounded-2xl p-6 text-white font-bold focus:ring-2 focus:ring-pink-500/30 transition-all outline-none resize-none"
+                                className="w-full bg-white/5 border border-white/10 focus:border-emerald-500/50 rounded-2xl p-4 text-white font-bold text-xs focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none resize-none"
                             />
                         </div>
-                    </div>
+                    </form>
+                </div>
 
-                    {/* Static Footer (inside form scrolling area but before the fixed button) */}
-                    <div className="pt-6 border-t border-white/5 flex justify-between items-end">
+                {/* Sticky Bottom Footer - Total and Button */}
+                <div className="absolute bottom-0 left-0 right-0 bg-[#07090f]/95 backdrop-blur-xl border-t border-white/5 p-5 sm:px-8 shrink-0 flex flex-col gap-3 z-30 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
+                    <div className="flex items-center justify-between">
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black italic text-emerald-500 uppercase tracking-widest mb-1">Total a Pagar</span>
-                            <span className="text-4xl font-black italic text-pink-500 tracking-tighter">${precioTotal}</span>
+                            <span className="text-[9px] font-black text-emerald-500/60 uppercase tracking-[0.2em] italic mb-0.5">TOTAL A PAGAR</span>
+                            <span className="text-3xl font-black text-emerald-400 italic tracking-tighter leading-none">${precioTotal}</span>
                         </div>
                     </div>
 
-                    {/* Fixed Submit Button at bottom */}
-                    <div className="fixed bottom-0 left-0 right-0 p-6 bg-[#0c140f] sm:relative sm:p-0 sm:pt-4">
-                        <button
-                            type="submit"
-                            disabled={loading || success}
-                            className={`w-full h-18 text-white rounded-[2rem] font-black text-sm tracking-[0.2em] transition-all flex items-center justify-center gap-4 uppercase shadow-lg shadow-pink-500/20 active:scale-[0.98] ${
-                                success ? 'bg-emerald-500' : 'bg-pink-500'
-                            }`}
-                        >
-                            {loading ? (
-                                <Loader2 size={24} className="animate-spin" />
-                            ) : success ? (
-                                <>
-                                    <span>RESERVA EXITOSA</span>
-                                    <CheckCircle2 size={24} />
-                                </>
-                            ) : (
-                                <>
-                                    <span>CONFIRMAR RESERVA</span>
-                                    <Check size={24} strokeWidth={3} />
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </form>
+                    <button
+                        type="submit"
+                        form="booking-modal-form"
+                        disabled={loading || success}
+                        className={`w-full h-15 rounded-2xl text-[12px] font-black text-white uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all shadow-xl cursor-pointer active:scale-[0.98] ${
+                            success 
+                                ? 'bg-emerald-500 shadow-emerald-500/20' 
+                                : 'bg-emerald-500 hover:bg-emerald-400 shadow-emerald-500/20'
+                        }`}
+                    >
+                        {loading ? (
+                            <Loader2 size={20} className="animate-spin" />
+                        ) : success ? (
+                            <>
+                                <span>RESERVA EXITOSA</span>
+                                <CheckCircle2 size={20} />
+                            </>
+                        ) : (
+                            <>
+                                <span>CONFIRMAR RESERVA</span>
+                                <CheckCircle2 size={20} />
+                            </>
+                        )}
+                    </button>
+                </div>
             </div>
         </div>,
         document.body
