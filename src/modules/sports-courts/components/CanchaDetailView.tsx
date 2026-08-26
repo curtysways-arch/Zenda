@@ -3,20 +3,16 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import HeroCarousel from '@/components/HeroCarousel';
+import CanchaInteractionButtons from '@/components/public/CanchaInteractionButtons';
+import BookingClient from '@/app/[slug]/BookingClient';
 import { 
   ChevronLeft, 
-  Star, 
   Clock, 
-  Calendar, 
-  CheckCircle2, 
   Zap, 
-  ShieldCheck, 
-  Share2, 
-  Heart,
-  Trophy,
-  Users,
+  Trophy, 
+  Users, 
   Sparkles,
-  ChevronRight
+  MapPin
 } from 'lucide-react';
 
 export interface CanchaDetailViewProps {
@@ -25,256 +21,245 @@ export interface CanchaDetailViewProps {
 }
 
 export default function CanchaDetailView({ negocio, cancha }: CanchaDetailViewProps) {
-  const [selectedDateIndex, setSelectedDateIndex] = useState<number>(2); // Default to Miércoles 5
-  const [selectedDuration, setSelectedDuration] = useState<string>('1h');
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-
   const defaultBanner = 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&q=80&w=1200';
-  const images = (cancha.imagenes && cancha.imagenes.length > 0)
+  const canchaImages = (cancha.imagenes && cancha.imagenes.length > 0)
     ? cancha.imagenes.map((img: any) => img.url)
     : [cancha.imageUrl || defaultBanner];
+  const negocioImages = negocio.imagenes?.map((img: any) => img.url) || [];
+  const imagesToUse = canchaImages.length > 0 ? canchaImages : negocioImages.length > 0 ? negocioImages : [defaultBanner];
 
-  const canchaTipo = cancha.tipo || 'FÚTBOL 7';
-  const precioDisplay = cancha.precio || cancha.precioHora || negocio.precioHora || 25;
+  const canchaNombre = cancha.nombre || cancha.name || 'CANCHA ELITE';
+  const canchaTipo = cancha.tipo || (cancha.extraInfo as any)?.tipo || 'FÚTBOL 7';
+  const precioHora = Number(cancha.precio || cancha.precioHora || negocio.precioHora || 25);
+  const capacidad = (cancha.extraInfo as any)?.capacidad || cancha.capacidad || 10;
 
-  const dateItems = [
-    { day: 'LUN', num: '3' },
-    { day: 'MAR', num: '4' },
-    { day: 'MIÉ', num: '5' },
-    { day: 'JUE', num: '6' },
-    { day: 'VIE', num: '7' },
-    { day: 'SÁB', num: '8' },
-    { day: 'DOM', num: '9' },
-  ];
+  const ubicacion = cancha.ubicacion || (negocio.ubicaciones && negocio.ubicaciones[0]);
 
-  const durations = ['1h', '1.5h', '2h', '2.5h', '3h'];
+  const getGoogleMapsUrls = (sede: any, neg: any) => {
+    let rawUrl = (sede?.mapUrl || '').trim();
+    let embedSrc = '';
+    let navUrl = '';
 
-  const availableSlots = [
-    { time: '08:00', status: 'PASADO', disabled: true },
-    { time: '09:00', status: 'PASADO', disabled: true },
-    { time: '10:00', status: 'PASADO', disabled: true },
-    { time: '11:00', status: 'PASADO', disabled: true },
-    { time: '12:00', status: 'PASADO', disabled: true },
-    { time: '13:00', status: 'PASADO', disabled: true },
-    { time: '14:00', status: 'LIBRE', disabled: false },
-    { time: '15:00', status: 'LIBRE', disabled: false },
-    { time: '16:00', status: 'LIBRE', disabled: false },
-  ];
+    const makeNav = (dest: string) => `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}`;
+
+    if (rawUrl.includes('<iframe')) {
+      const match = rawUrl.match(/src=["']([^"']+)["']/);
+      if (match && match[1]) rawUrl = match[1];
+    }
+
+    if (rawUrl) {
+      const coordMatch = rawUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || rawUrl.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+      if (coordMatch) {
+        embedSrc = `https://maps.google.com/maps?q=${coordMatch[1]},${coordMatch[2]}&t=&z=16&ie=UTF8&iwloc=addr&output=embed`;
+        navUrl = makeNav(`${coordMatch[1]},${coordMatch[2]}`);
+        return { embedSrc, navUrl };
+      }
+
+      const latMatch = rawUrl.match(/!3d(-?\d+\.\d+)/);
+      const lngMatch = rawUrl.match(/!2d(-?\d+\.\d+)/);
+      if (latMatch && lngMatch) {
+        const lat = latMatch[1];
+        const lng = lngMatch[1];
+        embedSrc = rawUrl.includes('/maps/embed') ? rawUrl : `https://maps.google.com/maps?q=${lat},${lng}&t=&z=16&ie=UTF8&iwloc=addr&output=embed`;
+        navUrl = makeNav(`${lat},${lng}`);
+        return { embedSrc, navUrl };
+      }
+
+      if (rawUrl.includes('/maps/embed') || rawUrl.includes('output=embed')) {
+        embedSrc = rawUrl;
+        navUrl = makeNav(`${sede.nombre || neg.nombre}, ${neg.nombre}`);
+        return { embedSrc, navUrl };
+      }
+    }
+
+    const queryParts = [neg.nombre];
+    if (sede?.nombre && sede.nombre !== neg.nombre) queryParts.push(sede.nombre);
+    if (sede?.direccion) queryParts.push(sede.direccion);
+    else if (neg.direccion) queryParts.push(neg.direccion);
+    if (neg.ciudad) queryParts.push(neg.ciudad);
+
+    const queryText = queryParts.join(', ').replace(/, ,/g, ',').trim();
+    embedSrc = `https://maps.google.com/maps?q=${encodeURIComponent(queryText)}&t=&z=16&ie=UTF8&iwloc=addr&output=embed`;
+    navUrl = makeNav(queryText);
+
+    return { embedSrc, navUrl };
+  };
+
+  const { embedSrc, navUrl } = ubicacion ? getGoogleMapsUrls(ubicacion, negocio) : { embedSrc: null, navUrl: null };
+
+  const canchaParaBooking = {
+    ...cancha,
+    id: cancha.id,
+    nombre: canchaNombre,
+    tipo: canchaTipo,
+    capacidad: capacidad,
+    precioHora: precioHora
+  };
 
   return (
-    <div className="min-h-screen bg-[#0a0f1d] text-white font-sans pb-32">
-      {/* Header Sticky Native Style */}
-      <header className="sticky top-0 z-50 h-16 bg-[#0a0f1d]/90 backdrop-blur-xl border-b border-white/5 flex items-center px-6">
-        <div className="max-w-3xl mx-auto w-full flex items-center justify-between">
+    <div className="min-h-screen text-white font-sans selection:bg-emerald-500/30" style={{ backgroundColor: '#07090f' }}>
+      
+      {/* STICKY TOP HEADER - NATIVE STYLE */}
+      <header className="sticky top-0 z-[100] h-14 flex items-center bg-[#07090f]/80 backdrop-blur-xl border-b border-white/5">
+        <div className="max-w-xl mx-auto w-full px-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href={`/${negocio.slug}`}
-              className="size-10 rounded-full bg-slate-900 flex items-center justify-center text-slate-300 hover:text-white transition-all border border-slate-800"
+              className="size-9 rounded-full bg-white/5 active:bg-white/10 flex items-center justify-center transition-all border border-white/10"
             >
-              <ChevronLeft className="size-5" />
+              <ChevronLeft size={20} strokeWidth={2.5} />
             </Link>
-            <div>
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block leading-none">
-                {negocio.nombre || 'CANCHA LOS CAMPEONES'}
-              </span>
-              <h1 className="font-black text-sm text-white uppercase italic tracking-tight leading-none mt-1">
-                {cancha.nombre || 'CANCHA ELITE'}
-              </h1>
+            <div className="flex flex-col text-left">
+              <span className="text-[7px] font-black text-emerald-500 uppercase tracking-widest italic leading-none mb-0.5">{negocio.nombre || 'CANCHA LOS CAMPEONES'}</span>
+              <h1 className="font-black text-[13px] uppercase italic tracking-tighter leading-none">{canchaNombre}</h1>
             </div>
           </div>
-
+          
           <div className="flex items-center gap-2">
-            <button className="p-2 text-slate-400 hover:text-white rounded-full bg-slate-900 border border-slate-800">
-              <Share2 className="size-4" />
-            </button>
-            <button className="p-2 text-slate-400 hover:text-rose-400 rounded-full bg-slate-900 border border-slate-800">
-              <Heart className="size-4" />
-            </button>
+            <CanchaInteractionButtons
+              canchaId={cancha.id}
+              canchaNombre={canchaNombre}
+              negocioNombre={negocio.nombre}
+            />
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-3xl mx-auto p-4 sm:p-6 space-y-6">
-        {/* Carousel de Fotos */}
-        <div className="relative aspect-[16/10] rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10 bg-slate-950">
-          <HeroCarousel images={images} opacityActive="opacity-100" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-black/30" />
+      <main className="max-w-xl mx-auto pb-10 overflow-x-hidden">
+        
+        {/* HERO CAROUSEL - COMPACT & PREMIUM */}
+        <div className="px-4 pt-4">
+          <div className="relative aspect-[16/10] rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl">
+            <HeroCarousel images={imagesToUse} opacityActive="opacity-100" />
+            
+            {/* Status Label Overlay */}
+            <div className="absolute top-4 left-4 z-20">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-full border border-white/10">
+                <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[8px] font-black text-white italic uppercase tracking-widest">DISPONIBLE</span>
+              </div>
+            </div>
 
-          {/* Badge Disponible top-left */}
-          <div className="absolute top-4 left-4 z-20">
-            <span className="px-3.5 py-1.5 bg-emerald-500/20 backdrop-blur-md rounded-full border border-emerald-500/40 text-[10px] font-black uppercase tracking-widest text-emerald-400">
-              ● DISPONIBLE
-            </span>
-          </div>
-
-          {/* Badge Tipo Cancha bottom-left */}
-          <div className="absolute bottom-4 left-4 z-20">
-            <span className="px-4 py-2 bg-slate-900/90 backdrop-blur-md rounded-xl text-xs font-black uppercase tracking-widest text-emerald-400 border border-slate-800">
-              {canchaTipo}
-            </span>
+            {/* Type Label Overlay */}
+            <div className="absolute bottom-4 left-4 z-20">
+              <div className="px-3 py-1.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/10">
+                <span className="text-[9px] font-black text-white italic uppercase tracking-widest">{canchaTipo}</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* 3 Tarjetas de Resumen (Precio, Capacidad, Horario de Atención) */}
-        <div className="space-y-3">
+        <div className="p-6 space-y-8 text-left">
+          {/* STATS STRIP - NATIVE GRID */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 space-y-1">
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">PRECIO HORA</span>
-              <span className="text-3xl font-black text-white">${Number(precioDisplay).toLocaleString()}</span>
+            {/* Price Píldora */}
+            <div className="col-span-1 bg-[#11141d] border border-white/5 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group">
+              <div className="absolute -top-4 -right-4 size-16 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors" />
+              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest italic">PRECIO HORA</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-3xl font-black text-white italic tracking-tighter">${precioHora}</span>
+              </div>
             </div>
 
-            <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 space-y-1">
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">CAPACIDAD</span>
-              <div className="flex items-center gap-2 text-white text-xl font-black">
-                <Users className="size-5 text-emerald-400" />
-                <span>10 JUG.</span>
+            {/* Capacity Píldora */}
+            <div className="col-span-1 bg-[#11141d] border border-white/5 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group">
+              <div className="absolute -top-4 -right-4 size-16 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors" />
+              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest italic">CAPACIDAD</span>
+              <div className="flex items-center gap-2">
+                <Users size={18} className="text-blue-500" />
+                <span className="text-2xl font-black text-white italic tracking-tighter uppercase">{capacidad} JUG.</span>
+              </div>
+            </div>
+
+            {/* Schedule Píldora - Full Width */}
+            <div className="col-span-2 bg-[#11141d] border border-white/5 rounded-[1.8rem] p-4 flex items-center justify-between px-6">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-2xl bg-white/5 flex items-center justify-center text-emerald-500">
+                  <Clock size={20} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[7px] font-black text-slate-500 uppercase italic tracking-widest">HORARIO DE ATENCIÓN</span>
+                  <span className="text-[11px] font-black text-white italic uppercase">{negocio.horarioApertura || '08:00'} - {negocio.horarioCierre || '23:00'}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 px-3 py-1 bg-emerald-500/10 rounded-lg text-emerald-400 text-[8px] font-black uppercase italic tracking-tighter">
+                ABIERTO AHORA
               </div>
             </div>
           </div>
 
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-2xl border border-emerald-500/20">
-                <Clock className="size-5" />
+          {/* KEY FEATURES - CLEAN LIST */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-1">
+              <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] italic">ESPECIFICACIONES</h3>
+              <Zap size={14} className="text-emerald-500" />
+            </div>
+            <div className="grid grid-cols-1 gap-2.5">
+              <div className="flex items-center gap-4 bg-[#11141d]/50 border border-white/5 p-4 rounded-2xl">
+                <div className="size-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400">
+                  <Trophy size={18} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-black text-white uppercase italic">Sintético Premium Pro</span>
+                  <span className="text-[9px] font-bold text-slate-500">Certificado FIFA Quality</span>
+                </div>
               </div>
-              <div>
-                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block">HORARIO DE ATENCIÓN</span>
-                <span className="text-sm font-bold text-white">08:00 - 23:00</span>
+              <div className="flex items-center gap-4 bg-[#11141d]/50 border border-white/5 p-4 rounded-2xl">
+                <div className="size-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400">
+                  <Zap size={18} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-black text-white uppercase italic">Iluminación LED 4K</span>
+                  <span className="text-[9px] font-bold text-slate-500">Cero sombras en juego nocturno</span>
+                </div>
               </div>
             </div>
-            <span className="px-3 py-1 bg-emerald-950/80 border border-emerald-800/80 text-emerald-400 text-[10px] font-black rounded-full uppercase tracking-wider">
-              ABIERTO AHORA
-            </span>
           </div>
+
+          {/* BOOKING SECTION - THE HEART */}
+          <section id="reservar" className="space-y-6 pt-2">
+            <BookingClient
+              negocio={{ ...negocio, canchas: [canchaParaBooking] }}
+              slug={negocio.slug}
+            />
+          </section>
+          
+          {/* UBICACION - NATIVE MAP PREVIEW */}
+          {ubicacion && (
+            <section className="space-y-4 pt-4">
+              <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] italic px-1">CÓMO LLEGAR</h3>
+              <div className="bg-[#11141d] border border-white/5 rounded-[2rem] overflow-hidden group">
+                <div className="h-40 relative">
+                  <iframe
+                    src={embedSrc || ''}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    className="grayscale invert opacity-30 contrast-125"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#11141d] to-transparent" />
+                  <div className="absolute bottom-5 left-6">
+                    <h4 className="text-sm font-black text-white italic uppercase tracking-tighter">{ubicacion.nombre || negocio.nombre}</h4>
+                    <p className="text-[10px] font-bold text-slate-500 italic uppercase">{ubicacion.direccion || negocio.direccion || 'Quito, Ecuador'}</p>
+                  </div>
+                </div>
+                <div className="px-6 pb-6 pt-2">
+                  {navUrl && (
+                    <a 
+                      href={navUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="w-full h-14 bg-white/5 active:bg-white/10 border border-white/10 rounded-2xl flex items-center justify-center gap-3 text-[10px] font-black text-white italic uppercase tracking-widest transition-all"
+                    >
+                      <MapPin size={16} className="text-emerald-500" /> GOOGLE MAPS
+                    </a>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
         </div>
-
-        {/* ESPECIFICACIONES */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">ESPECIFICACIONES</span>
-            <Sparkles className="size-4 text-emerald-400" />
-          </div>
-
-          <div className="space-y-2">
-            <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl flex items-center gap-3">
-              <div className="p-2 bg-slate-800 text-amber-400 rounded-xl">
-                <Trophy className="size-5" />
-              </div>
-              <div>
-                <h4 className="text-xs font-black text-white italic uppercase">SINTÉTICO PREMIUM PRO</h4>
-                <p className="text-[10px] text-slate-400 font-medium">Certificado FIFA Quality</p>
-              </div>
-            </div>
-
-            <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl flex items-center gap-3">
-              <div className="p-2 bg-slate-800 text-emerald-400 rounded-xl">
-                <Zap className="size-5" />
-              </div>
-              <div>
-                <h4 className="text-xs font-black text-white italic uppercase">ILUMINACIÓN LED 4K</h4>
-                <p className="text-[10px] text-slate-400 font-medium">Cero sombras en juego nocturno</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* FECHA DE JUEGO */}
-        <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-black uppercase tracking-wider text-white">FECHA DE JUEGO</span>
-            <div className="flex items-center gap-1 text-slate-400">
-              <button className="p-1 hover:text-white"><ChevronLeft size={16} /></button>
-              <button className="p-1 hover:text-white"><ChevronRight size={16} /></button>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {dateItems.map((item, idx) => {
-              const isSelected = selectedDateIndex === idx;
-              return (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedDateIndex(idx)}
-                  className={`shrink-0 w-14 py-3 rounded-2xl flex flex-col items-center justify-center transition-all border ${
-                    isSelected 
-                      ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-black shadow-lg shadow-emerald-500/20' 
-                      : 'bg-slate-950/80 text-slate-400 border-slate-800 hover:border-slate-700'
-                  }`}
-                >
-                  <span className="text-[9px] font-black uppercase tracking-wider">{item.day}</span>
-                  <span className="text-lg font-black leading-none mt-1">{item.num}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* TIEMPO DE JUEGO */}
-          <div className="space-y-3 pt-4 border-t border-slate-800">
-            <span className="text-xs font-black uppercase tracking-wider text-white block">TIEMPO DE JUEGO</span>
-            <div className="flex items-center gap-2 overflow-x-auto pb-2">
-              {durations.map((dur) => {
-                const isSel = selectedDuration === dur;
-                return (
-                  <button
-                    key={dur}
-                    onClick={() => setSelectedDuration(dur)}
-                    className={`px-5 py-2.5 rounded-2xl font-black text-xs transition-all border ${
-                      isSel 
-                        ? 'bg-emerald-500 text-slate-950 border-emerald-400' 
-                        : 'bg-slate-950/80 text-slate-300 border-slate-800'
-                    }`}
-                  >
-                    {dur}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* HORARIOS DISPONIBLES */}
-          <div className="space-y-3 pt-4 border-t border-slate-800">
-            <span className="text-xs font-black uppercase tracking-wider text-white block">HORARIOS DISPONIBLES</span>
-            <div className="grid grid-cols-3 gap-2.5">
-              {availableSlots.map((slot) => {
-                const isSelected = selectedSlot === slot.time;
-                return (
-                  <button
-                    key={slot.time}
-                    disabled={slot.disabled}
-                    onClick={() => setSelectedSlot(slot.time)}
-                    className={`py-3 px-2 rounded-2xl font-mono text-xs font-bold text-center flex flex-col items-center justify-center transition-all border ${
-                      slot.disabled
-                        ? 'bg-slate-950/40 text-slate-600 border-slate-800/50 cursor-not-allowed opacity-50'
-                        : isSelected
-                          ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-black shadow-lg shadow-emerald-500/20'
-                          : 'bg-slate-950/90 text-slate-200 border-slate-800 hover:border-slate-700'
-                    }`}
-                  >
-                    <span className="text-sm font-black">{slot.time}</span>
-                    <span className="text-[8px] font-mono tracking-widest uppercase mt-0.5">{slot.status}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* CTA FINAL */}
-        <button
-          onClick={() => {
-            if (!selectedSlot) return alert("Por favor selecciona una hora disponible.");
-            alert(`¡Turno reservado para el ${dateItems[selectedDateIndex].day} ${dateItems[selectedDateIndex].num} a las ${selectedSlot} (${selectedDuration})!`);
-          }}
-          disabled={!selectedSlot}
-          className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl ${
-            selectedSlot
-              ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 cursor-pointer shadow-emerald-500/20'
-              : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
-          }`}
-        >
-          {selectedSlot ? `Reservar ${selectedSlot} (${selectedDuration})` : 'Selecciona un Horario'}
-        </button>
       </main>
     </div>
   );
