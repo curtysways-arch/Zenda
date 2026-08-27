@@ -2,10 +2,12 @@
 /**
  * @file RestaurantLanding.tsx
  * @module modules/restaurant/components
- * @description Rediseño completo y fiel a la captura de pantalla de referencia para el Home de Restaurantes en Citiox.
- * Reconstruye minuciosamente cada sección: Header Oscuro, Selector de Dirección, Buscador Blanco, Banner Hero con
- * Imagen Grande y Badge Flotante Naranja, Categorías Horizontales, Bloque de Beneficios, Recomendados para ti
- * con tarjetas de productos, Banner Promocional de Envío Gratis y Navegación Inferior Fija de 5 pestañas.
+ * @description Rediseño optimizado del Home de Restaurante ajustado a las 5 correcciones requeridas:
+ * 1. Ocupa todo el ancho sin márgenes laterales vacíos.
+ * 2. Textos en el header oscuro y selector de dirección 100% blancos y nítidos con estilos explícitos.
+ * 3. Módulo de envío ultra-compacto idéntico a la imagen 2 de referencia (layout horizontal con divisores).
+ * 4. Banner Hero panorámico y rectangular (no cuadrado), con foto gigante en el lado derecho.
+ * 5. Categorías horizontales compactas (~54px de alto) para visibilidad inmediata de productos en la primera vista.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -84,7 +86,7 @@ export default function RestaurantLanding({
   );
 }
 
-// Fallback de demostración con productos reales idénticos a la imagen de referencia
+// Fallback de demostración con productos idénticos al mockup
 const FALLBACK_PRODUCTS: Product[] = [
   {
     id: 'demo-1',
@@ -162,7 +164,6 @@ function RestaurantLandingContent({
   const [products, setProducts] = useState<Product[]>(initialProducts.length > 0 ? initialProducts : FALLBACK_PRODUCTS);
   const [categories, setCategories] = useState<Category[]>(initialCategories.length > 0 ? initialCategories : DEFAULT_CATEGORIES);
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(initialHeroContent?.hero || []);
-  const [highlights, setHighlights] = useState<HighlightItem[]>(initialHeroContent?.highlights || []);
 
   const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -174,7 +175,7 @@ function RestaurantLandingContent({
   // Carrusel automático para el Hero Banner
   const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
 
-  // Carga de datos si no vienen desde SSR
+  // Carga de datos dinámicos si no provienen de SSR
   useEffect(() => {
     if (!negocio?.slug) return;
 
@@ -193,7 +194,6 @@ function RestaurantLandingContent({
         .then(res => res.json())
         .then(data => {
           if (data.hero && data.hero.length > 0) setHeroSlides(data.hero);
-          if (data.highlights && data.highlights.length > 0) setHighlights(data.highlights);
         })
         .catch(() => {});
     }
@@ -214,7 +214,7 @@ function RestaurantLandingContent({
     setFavorites(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // Filtrado de productos por categoría activa y caja de búsqueda
+  // Filtrado de productos
   const filteredProducts = products.filter(p => {
     if (p.activo === false) return false;
     if (selectedCategory !== 'TODOS') {
@@ -232,7 +232,7 @@ function RestaurantLandingContent({
     return true;
   });
 
-  // Lógica oficial de construcción de diapositivas Hero
+  // Lógica oficial de diapositivas del Hero Banner
   const displayHeroSlides = (heroSlides.length > 0)
     ? heroSlides.map(slide => {
         const titleText = (slide.title && slide.title.trim())
@@ -343,59 +343,65 @@ function RestaurantLandingContent({
   };
 
   return (
-    <div style={{ backgroundColor: cn }} className="min-h-screen font-sans pb-28 select-none text-slate-900">
-      {/* ── 1. HEADER SUPERIOR OSCURO (ESTRUCTURA IDÉNTICA A REFERENCIA) ── */}
+    <div style={{ backgroundColor: cn }} className="min-h-screen font-sans pb-28 select-none text-slate-900 w-full">
+      {/* ── 1. HEADER SUPERIOR OSCURO (ANCHO COMPLETO Y TEXTO BLANCO CORREGIDO) ── */}
       <header
         style={{ backgroundColor: '#121214', color: '#ffffff' }}
-        className="px-4 pt-4 pb-5 rounded-b-3xl shadow-2xl sticky top-0 z-30 transition-colors border-b border-zinc-800/80"
+        className="px-3 sm:px-5 pt-3.5 pb-4 rounded-b-3xl shadow-2xl sticky top-0 z-30 transition-colors border-b border-zinc-800/80 w-full"
       >
-        <div className="max-w-md mx-auto space-y-3.5">
+        <div className="w-full max-w-4xl mx-auto space-y-3">
           {/* Fila Izquierda: Menú Hamburguesa + Saludo | Fila Derecha: Notificaciones & Carrito */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <button
                 type="button"
                 className="text-slate-200 hover:text-white p-1 transition-colors"
                 aria-label="Menú"
               >
-                <Menu className="w-6 h-6" />
+                <Menu className="w-6 h-6" style={{ color: '#ffffff' }} />
               </button>
               <div>
-                <h1 className="font-extrabold text-base sm:text-lg tracking-tight flex items-center gap-1 text-white leading-none">
+                <h1
+                  style={{ color: '#ffffff' }}
+                  className="font-black text-base sm:text-lg tracking-tight flex items-center gap-1 leading-none"
+                >
                   ¡Hola, {customerData.nombre || 'Diego'}! 👋
                 </h1>
-                <p className="text-[11px] text-slate-400 font-medium leading-tight mt-0.5">
+                <p
+                  style={{ color: '#94a3b8' }}
+                  className="text-[11px] font-medium leading-tight mt-0.5"
+                >
                   ¿Qué se te antoja hoy?
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               {/* Notificaciones con Badge Naranja */}
               <button
                 type="button"
-                className="w-10 h-10 rounded-full bg-[#222226] border border-zinc-700/60 flex items-center justify-center relative text-slate-200 hover:text-white transition-colors"
+                className="w-9 h-9 rounded-full bg-[#222226] border border-zinc-700/60 flex items-center justify-center relative text-white transition-colors"
               >
-                <Bell className="w-5 h-5" />
+                <Bell className="w-4 h-4" style={{ color: '#ffffff' }} />
                 <span
-                  style={{ backgroundColor: cp }}
-                  className="absolute top-2 right-2 min-w-[14px] h-[14px] px-0.5 rounded-full text-[9px] font-black text-white flex items-center justify-center ring-2 ring-[#121214]"
+                  style={{ backgroundColor: cp, color: '#ffffff' }}
+                  className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] px-0.5 rounded-full text-[9px] font-black flex items-center justify-center ring-2 ring-[#121214]"
                 >
                   2
                 </span>
               </button>
 
-              {/* Carrito con Badge Naranja con cantidad */}
+              {/* Carrito con Badge Naranja */}
               <button
                 type="button"
                 onClick={() => setShowCartDrawer(true)}
-                className="w-10 h-10 rounded-full bg-[#222226] border border-zinc-700/60 flex items-center justify-center relative text-slate-200 hover:text-white transition-colors"
+                className="w-9 h-9 rounded-full bg-[#222226] border border-zinc-700/60 flex items-center justify-center relative text-white transition-colors"
               >
-                <ShoppingBag className="w-5 h-5" />
+                <ShoppingBag className="w-4 h-4" style={{ color: '#ffffff' }} />
                 {totalItemsCount > 0 && (
                   <span
-                    style={{ backgroundColor: cp }}
-                    className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black text-white flex items-center justify-center shadow-lg"
+                    style={{ backgroundColor: cp, color: '#ffffff' }}
+                    className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center shadow-lg"
                   >
                     {totalItemsCount}
                   </span>
@@ -404,24 +410,30 @@ function RestaurantLandingContent({
             </div>
           </div>
 
-          {/* ── 2. SELECTOR DE DIRECCIÓN OSCURO ── */}
+          {/* ── 2. SELECTOR DE DIRECCIÓN OSCURO CON TEXTOS BLANCOS NÍTI DOS ── */}
           <button
             type="button"
             onClick={() => setShowChannelModal(true)}
-            className="w-full bg-[#1c1c20] hover:bg-[#242429] border border-zinc-800/90 rounded-2xl px-3.5 py-2.5 flex items-center justify-between text-xs text-slate-200 transition-all group"
+            className="w-full bg-[#1c1c20] hover:bg-[#242429] border border-zinc-800/90 rounded-2xl px-3 py-2 flex items-center justify-between text-xs transition-all group"
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <div
                 style={{ backgroundColor: cp }}
-                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-white shadow-md"
+                className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0 text-white shadow-md"
               >
-                <MapPin className="w-4 h-4" />
+                <MapPin className="w-3.5 h-3.5" style={{ color: '#ffffff' }} />
               </div>
               <div className="text-left min-w-0">
-                <span className="text-[9px] text-slate-400 font-semibold block uppercase tracking-wider leading-tight">
+                <span
+                  style={{ color: '#94a3b8' }}
+                  className="text-[9px] font-semibold block uppercase tracking-wider leading-tight"
+                >
                   {deliveryType === 'DOMICILIO' ? 'Enviar a' : deliveryType === 'MESA' ? 'Consumo en' : 'Retiro en'}
                 </span>
-                <span className="font-bold text-white text-xs truncate block leading-tight">
+                <span
+                  style={{ color: '#ffffff' }}
+                  className="font-bold text-xs truncate block leading-tight"
+                >
                   {deliveryType === 'DOMICILIO'
                     ? (customerData.direccion || negocio?.direccion || 'Av. Amazonas N34-451 y Japón')
                     : deliveryType === 'MESA'
@@ -433,7 +445,7 @@ function RestaurantLandingContent({
             <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors shrink-0" />
           </button>
 
-          {/* ── 3. BUSCADOR BLANCO CON FILTROS ── */}
+          {/* ── 3. BUSCADOR BLANCO COMPACTO ── */}
           <div className="relative flex items-center">
             <Search className="w-4 h-4 absolute left-3.5 text-slate-400" />
             <input
@@ -441,7 +453,7 @@ function RestaurantLandingContent({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar platos, combos, bebidas..."
-              className="w-full bg-white text-slate-900 pl-10 pr-10 py-3 rounded-xl text-xs font-semibold placeholder-slate-400 shadow-sm focus:outline-none"
+              className="w-full bg-white text-slate-900 pl-10 pr-10 py-2.5 rounded-xl text-xs font-semibold placeholder-slate-400 shadow-sm focus:outline-none"
             />
             <button
               type="button"
@@ -454,52 +466,55 @@ function RestaurantLandingContent({
         </div>
       </header>
 
-      <main className="max-w-md mx-auto px-4 pt-5 space-y-6">
-        {/* ── 4. BANNER PRINCIPAL / HERO (IMAGEN GIGANTE Y CIENTO POR CIENTO FIEL AL MOCKUP) ── */}
+      <main className="w-full max-w-4xl mx-auto px-3 sm:px-5 pt-4 space-y-4">
+        {/* ── 4. BANNER PRINCIPAL / HERO PANORÁMICO RECTANGULAR (NO CUADRADO) ── */}
         <div
           style={{ backgroundColor: '#121214' }}
-          className="relative rounded-3xl overflow-hidden text-white shadow-2xl border border-zinc-800/80 min-h-[260px] sm:min-h-[290px] flex items-center transition-all duration-500"
+          className="relative rounded-3xl overflow-hidden text-white shadow-2xl border border-zinc-800/80 min-h-[165px] sm:min-h-[195px] max-h-[210px] flex items-center transition-all duration-500"
         >
-          {/* Imagen gigante ocupando el lado derecho de borde a borde */}
-          <div className="absolute right-0 top-0 bottom-0 w-[55%] sm:w-[60%] h-full z-0 overflow-hidden">
+          {/* Imagen gigante en el lado derecho ocupando borde a borde */}
+          <div className="absolute right-0 top-0 bottom-0 w-[55%] sm:w-[58%] h-full z-0 overflow-hidden">
             <img
               key={activeSlide.id}
               src={activeSlide.image}
               alt={activeSlide.titleText || 'Hero Banner'}
               className="w-full h-full object-cover object-center brightness-105 contrast-105 saturate-105 animate-in fade-in duration-500"
             />
-            {/* Degradado transparente suave en el borde izquierdo para legibilidad del texto */}
-            <div className="absolute inset-y-0 left-0 w-28 sm:w-40 bg-gradient-to-r from-[#121214] via-[#121214]/50 to-transparent" />
+            {/* Degradado suave sólo en la franja izquierda para máxima visibilidad de la imagen */}
+            <div className="absolute inset-y-0 left-0 w-24 sm:w-36 bg-gradient-to-r from-[#121214] via-[#121214]/40 to-transparent" />
           </div>
 
           {/* Insignia Circular Flotante Naranja con el Precio DESDE $6.99 */}
           {activeSlide.price > 0 && (
             <div
-              style={{ backgroundColor: cp }}
-              className="absolute top-4 left-[48%] sm:left-[45%] z-20 w-16 h-16 rounded-full flex flex-col items-center justify-center text-white shadow-2xl border-2 border-[#121214] text-center font-extrabold rotate-3"
+              style={{ backgroundColor: cp, color: '#ffffff' }}
+              className="absolute top-3 left-[46%] sm:left-[44%] z-20 w-14 h-14 rounded-full flex flex-col items-center justify-center text-white shadow-2xl border-2 border-[#121214] text-center font-extrabold rotate-3 shrink-0"
             >
-              <span className="text-[8px] tracking-wider leading-none uppercase text-amber-100 font-black">DESDE</span>
-              <span className="text-xs font-black leading-tight">${activeSlide.price.toFixed(2)}</span>
+              <span className="text-[7px] tracking-wider leading-none uppercase text-amber-100 font-black">DESDE</span>
+              <span className="text-[11px] font-black leading-tight">${activeSlide.price.toFixed(2)}</span>
             </div>
           )}
 
-          {/* Contenido Izquierdo: ESPECIAL DE LA CASA, Nombre Grande, Descripción y Botón Pedir Ahora */}
-          <div className="relative z-10 w-[60%] sm:w-[52%] p-5 sm:p-7 space-y-2">
+          {/* Contenido Izquierdo del Banner */}
+          <div className="relative z-10 w-[60%] sm:w-[52%] p-4 sm:p-5 space-y-1.5">
             {activeSlide.badgeText && (
               <span
                 style={{ color: cp }}
-                className="text-[10px] font-black tracking-widest uppercase block mb-0.5"
+                className="text-[9px] font-black tracking-widest uppercase block"
               >
                 {activeSlide.badgeText}
               </span>
             )}
 
             {activeSlide.titleText && (
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tight leading-none text-white uppercase pt-0.5 drop-shadow-md">
+              <h2
+                style={{ color: '#ffffff' }}
+                className="text-lg sm:text-2xl font-black tracking-tight leading-tight uppercase drop-shadow-md"
+              >
                 {activeSlide.titleText.includes(' ') ? (
                   <>
                     {activeSlide.titleText.split(' ')[0]} <br />
-                    <span style={{ color: cp }} className="font-serif italic font-normal normal-case text-2xl sm:text-3xl">
+                    <span style={{ color: cp }} className="font-serif italic font-normal normal-case text-lg sm:text-2xl">
                       {activeSlide.titleText.split(' ').slice(1).join(' ')}
                     </span>
                   </>
@@ -510,30 +525,33 @@ function RestaurantLandingContent({
             )}
 
             {activeSlide.descText && (
-              <p className="text-[11px] text-slate-300 font-normal leading-relaxed line-clamp-3 max-w-[230px] pt-1">
+              <p
+                style={{ color: '#cbd5e1' }}
+                className="text-[10px] font-normal leading-relaxed line-clamp-2 max-w-[210px]"
+              >
                 {activeSlide.descText}
               </p>
             )}
 
             {/* Botón Pedir ahora → */}
             {activeSlide.isButtonEnabled && (
-              <div className="pt-2">
+              <div className="pt-1">
                 <button
                   type="button"
                   onClick={() => handleHeroButtonClick(activeSlide)}
-                  style={{ backgroundColor: cp }}
-                  className="px-5 py-2.5 rounded-full text-xs font-black text-white shadow-xl flex items-center gap-1.5 hover:opacity-90 active:scale-95 transition-all"
+                  style={{ backgroundColor: cp, color: '#ffffff' }}
+                  className="px-4 py-1.5 rounded-full text-[11px] font-black text-white shadow-lg flex items-center gap-1 hover:opacity-90 active:scale-95 transition-all"
                 >
                   <span>{activeSlide.buttonText}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3 h-3" />
                 </button>
               </div>
             )}
           </div>
 
-          {/* Indicadores de Páginas (Carrusel Dots) */}
+          {/* Dots del Carrusel */}
           {displayHeroSlides.length > 1 && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
+            <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
               {displayHeroSlides.map((s, idx) => {
                 const isActive = idx === currentSlideIndex % displayHeroSlides.length;
                 return (
@@ -543,7 +561,7 @@ function RestaurantLandingContent({
                     onClick={() => setCurrentSlideIndex(idx)}
                     style={{ backgroundColor: isActive ? cp : undefined }}
                     className={`transition-all duration-300 ${
-                      isActive ? 'w-6 h-2 rounded-full shadow-sm' : 'w-2 h-2 rounded-full bg-white/40 hover:bg-white/70'
+                      isActive ? 'w-5 h-1.5 rounded-full shadow-sm' : 'w-1.5 h-1.5 rounded-full bg-white/40 hover:bg-white/70'
                     }`}
                   />
                 );
@@ -552,13 +570,13 @@ function RestaurantLandingContent({
           )}
         </div>
 
-        {/* ── 5. CATEGORÍAS HORIZONTALES (TARJETAS BLANCAS CON SCROLL HORIZONTAL) ── */}
+        {/* ── 5. CATEGORÍAS HORIZONTALES ULTRA-COMPACTAS (~54px ALTO) ── */}
         <div>
-          <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
+          <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none">
             <button
               type="button"
               onClick={() => setSelectedCategory('TODOS')}
-              className={`px-4 py-3.5 rounded-2xl border flex flex-col items-center justify-center min-w-[90px] shrink-0 transition-all shadow-xs ${
+              className={`px-3 py-2 rounded-2xl border flex flex-col items-center justify-center min-w-[76px] shrink-0 transition-all shadow-xs ${
                 selectedCategory === 'TODOS'
                   ? 'bg-white shadow-md border-2'
                   : 'bg-white border-slate-100 text-slate-700 hover:bg-slate-50'
@@ -568,8 +586,8 @@ function RestaurantLandingContent({
                 color: selectedCategory === 'TODOS' ? cp : undefined
               }}
             >
-              <span className="text-2xl mb-1">🍔</span>
-              <span className="text-xs font-extrabold whitespace-nowrap">Hamburguesas</span>
+              <span className="text-xl mb-0.5">🍔</span>
+              <span className="text-[10px] font-extrabold whitespace-nowrap">Hamburguesas</span>
             </button>
 
             {categories.map((cat) => {
@@ -579,7 +597,7 @@ function RestaurantLandingContent({
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-4 py-3.5 rounded-2xl border flex flex-col items-center justify-center min-w-[90px] shrink-0 transition-all shadow-xs ${
+                  className={`px-3 py-2 rounded-2xl border flex flex-col items-center justify-center min-w-[76px] shrink-0 transition-all shadow-xs ${
                     isActive
                       ? 'bg-white shadow-md border-2'
                       : 'bg-white border-slate-100 text-slate-700 hover:bg-slate-50'
@@ -589,45 +607,60 @@ function RestaurantLandingContent({
                     color: isActive ? cp : undefined
                   }}
                 >
-                  <span className="text-2xl mb-1">{cat.icono || '🍲'}</span>
-                  <span className="text-xs font-extrabold whitespace-nowrap">{cat.nombre}</span>
+                  <span className="text-xl mb-0.5">{cat.icono || '🍲'}</span>
+                  <span className="text-[10px] font-extrabold whitespace-nowrap">{cat.nombre}</span>
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* ── 6. BLOQUE DE BENEFICIOS (TARJETA HORIZONTAL CON 3 COLUMNAS) ── */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-xs p-4 grid grid-cols-3 divide-x divide-slate-100 text-center text-xs">
-          <div className="flex flex-col items-center justify-center px-1">
-            <div style={{ color: cp }} className="p-1.5 rounded-full bg-orange-50 mb-1">
+        {/* ── 6. MÓDULO DE ENVÍO Y BENEFICIOS COMPACTO (IDÉNTICO A LA IMAGEN 2) ── */}
+        <div className="bg-[#fff8f5] rounded-2xl border border-orange-100/70 p-2.5 flex items-center justify-between shadow-2xs text-xs">
+          {/* Beneficio 1: Envío Rápido */}
+          <div className="flex items-center gap-2 flex-1 justify-center px-1">
+            <div style={{ color: cp }} className="shrink-0">
               <Truck className="w-5 h-5" />
             </div>
-            <span className="font-extrabold text-slate-900 block leading-tight text-[11px]">Envío rápido</span>
-            <span className="text-[9px] text-slate-400">30-45 min</span>
+            <div className="text-left">
+              <span className="font-extrabold text-slate-900 block leading-tight text-[11px]">Envío rápido</span>
+              <span className="text-[9px] text-slate-500 block leading-none">30–45 min</span>
+            </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center px-1">
-            <div style={{ color: cp }} className="p-1.5 rounded-full bg-orange-50 mb-1">
+          {/* Divisor Vertical 1 */}
+          <div className="h-7 w-[1px] bg-orange-200/60 shrink-0" />
+
+          {/* Beneficio 2: Promociones */}
+          <div className="flex items-center gap-2 flex-1 justify-center px-1">
+            <div style={{ color: cp }} className="shrink-0">
               <Percent className="w-5 h-5" />
             </div>
-            <span className="font-extrabold text-slate-900 block leading-tight text-[11px]">Promociones</span>
-            <span className="text-[9px] text-slate-400">Todos los días</span>
+            <div className="text-left">
+              <span className="font-extrabold text-slate-900 block leading-tight text-[11px]">Promociones</span>
+              <span className="text-[9px] text-slate-500 block leading-none">Todos los días</span>
+            </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center px-1">
-            <div style={{ color: cp }} className="p-1.5 rounded-full bg-orange-50 mb-1">
+          {/* Divisor Vertical 2 */}
+          <div className="h-7 w-[1px] bg-orange-200/60 shrink-0" />
+
+          {/* Beneficio 3: Pago Seguro */}
+          <div className="flex items-center gap-2 flex-1 justify-center px-1">
+            <div style={{ color: cp }} className="shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <span className="font-extrabold text-slate-900 block leading-tight text-[11px]">Pago seguro</span>
-            <span className="text-[9px] text-slate-400">100% protegido</span>
+            <div className="text-left">
+              <span className="font-extrabold text-slate-900 block leading-tight text-[11px]">Pago seguro</span>
+              <span className="text-[9px] text-slate-500 block leading-none">100% protegido</span>
+            </div>
           </div>
         </div>
 
-        {/* ── 7. SECCIÓN "RECOMENDADOS PARA TI" CON TARJETAS DE PRODUCTOS ── */}
-        <div className="space-y-4">
+        {/* ── 7. SECCIÓN RECOMENDADOS PARA TI ── */}
+        <div className="space-y-3 pt-1">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-black text-slate-900 tracking-tight">
+            <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
               Recomendados para ti
             </h3>
             <button
@@ -642,13 +675,13 @@ function RestaurantLandingContent({
           </div>
 
           {filteredProducts.length === 0 ? (
-            <div className="text-center py-10 bg-white rounded-2xl border border-slate-100 p-6 space-y-2">
-              <Utensils className="w-10 h-10 text-slate-300 mx-auto" />
-              <h4 className="font-bold text-slate-700 text-sm">No encontramos platillos disponibles</h4>
-              <p className="text-xs text-slate-400">Intenta buscar otro término o seleccionar otra categoría.</p>
+            <div className="text-center py-8 bg-white rounded-2xl border border-slate-100 p-6 space-y-2">
+              <Utensils className="w-8 h-8 text-slate-300 mx-auto" />
+              <h4 className="font-bold text-slate-700 text-xs">No encontramos platillos disponibles</h4>
+              <p className="text-[11px] text-slate-400">Intenta buscar otro término o seleccionar otra categoría.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {filteredProducts.map((prod) => {
                 const qtyInCart = getItemQuantity(prod.id);
                 const isFav = !!favorites[prod.id];
@@ -658,8 +691,8 @@ function RestaurantLandingContent({
                     key={prod.id}
                     className="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all"
                   >
-                    {/* Imagen del Producto (Proporción 4:3) + Icono Corazón Arriba a la Derecha */}
-                    <div className="relative w-full h-36 bg-slate-100 overflow-hidden">
+                    {/* Imagen del Producto + Corazón Favorito */}
+                    <div className="relative w-full h-32 sm:h-36 bg-slate-100 overflow-hidden">
                       {prod.imagenUrl ? (
                         <img
                           src={prod.imagenUrl}
@@ -667,39 +700,37 @@ function RestaurantLandingContent({
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-3xl">🍲</div>
+                        <div className="w-full h-full flex items-center justify-center text-2xl">🍲</div>
                       )}
 
-                      {/* Icono Corazón Favorito */}
                       <button
                         type="button"
                         onClick={(e) => toggleFavorite(prod.id, e)}
-                        className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-slate-950/40 backdrop-blur-md flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-all"
+                        className="absolute top-2 right-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-950/40 backdrop-blur-md flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-all"
                       >
                         <Heart
-                          className="w-4 h-4"
+                          className="w-3.5 h-3.5"
                           fill={isFav ? '#ef4444' : 'transparent'}
                           color={isFav ? '#ef4444' : '#ffffff'}
                         />
                       </button>
                     </div>
 
-                    {/* Contenido del Producto: Nombre, Descripción, Precio Naranja y Botón + */}
-                    <div className="p-3 flex-1 flex flex-col justify-between space-y-2">
+                    {/* Nombre, Descripción, Precio y Botón + */}
+                    <div className="p-2.5 flex-1 flex flex-col justify-between space-y-1.5">
                       <div>
                         <h4 className="font-extrabold text-slate-900 text-xs leading-snug line-clamp-1">
                           {prod.nombre}
                         </h4>
                         {prod.descripcion && (
-                          <p className="text-[10px] text-slate-400 mt-1 line-clamp-2 font-normal leading-normal">
+                          <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-2 font-normal leading-normal">
                             {prod.descripcion}
                           </p>
                         )}
                       </div>
 
-                      {/* Pie de tarjeta: Precio Naranja & Botón + Naranja */}
-                      <div className="pt-2 flex items-center justify-between border-t border-slate-100 mt-1">
-                        <span style={{ color: cp }} className="font-extrabold text-sm">
+                      <div className="pt-1 flex items-center justify-between border-t border-slate-100 mt-1">
+                        <span style={{ color: cp }} className="font-extrabold text-xs sm:text-sm">
                           ${(Number(prod.precio) || 0).toFixed(2)}
                         </span>
 
@@ -712,7 +743,7 @@ function RestaurantLandingContent({
                             >
                               -
                             </button>
-                            <span className="text-xs font-extrabold text-slate-900 px-1">{qtyInCart}</span>
+                            <span className="text-xs font-extrabold text-slate-900 px-0.5">{qtyInCart}</span>
                             <button
                               type="button"
                               onClick={() => addToCart({
@@ -721,7 +752,7 @@ function RestaurantLandingContent({
                                 precio: prod.precio,
                                 imagenUrl: prod.imagenUrl
                               })}
-                              style={{ backgroundColor: cp }}
+                              style={{ backgroundColor: cp, color: '#ffffff' }}
                               className="w-5 h-5 rounded-lg text-white font-bold text-xs flex items-center justify-center shadow-xs"
                             >
                               +
@@ -736,10 +767,10 @@ function RestaurantLandingContent({
                               precio: prod.precio,
                               imagenUrl: prod.imagenUrl
                             })}
-                            style={{ backgroundColor: cp }}
-                            className="w-7 h-7 rounded-xl text-white flex items-center justify-center font-extrabold shadow-md hover:opacity-90 active:scale-95 transition-all"
+                            style={{ backgroundColor: cp, color: '#ffffff' }}
+                            className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl text-white flex items-center justify-center font-extrabold shadow-md hover:opacity-90 active:scale-95 transition-all"
                           >
-                            <Plus className="w-3.5 h-3.5" />
+                            <Plus className="w-3.5 h-3.5" style={{ color: '#ffffff' }} />
                           </button>
                         )}
                       </div>
@@ -751,24 +782,24 @@ function RestaurantLandingContent({
           )}
         </div>
 
-        {/* ── 8. BANNER PROMOCIONAL OSCURO (¡ENVÍO GRATIS!) ── */}
+        {/* ── 8. BANNER PROMOCIONAL OSCURO ── */}
         <div
           style={{ backgroundColor: '#121214' }}
-          className="rounded-2xl p-4 text-white shadow-xl flex items-center justify-between relative overflow-hidden border border-zinc-800"
+          className="rounded-2xl p-3.5 text-white shadow-xl flex items-center justify-between relative overflow-hidden border border-zinc-800"
         >
-          <div className="flex items-center gap-3 relative z-10">
+          <div className="flex items-center gap-2.5 relative z-10">
             <div
-              style={{ backgroundColor: cp }}
-              className="w-12 h-12 rounded-xl flex flex-col items-center justify-center text-white font-black text-center shadow-lg rotate-[-4deg] shrink-0"
+              style={{ backgroundColor: cp, color: '#ffffff' }}
+              className="w-10 h-10 rounded-xl flex flex-col items-center justify-center text-white font-black text-center shadow-lg rotate-[-4deg] shrink-0"
             >
               <span className="text-[8px] leading-tight">GRATIS</span>
-              <Truck className="w-5 h-5 mt-0.5" />
+              <Truck className="w-4 h-4 mt-0.5" style={{ color: '#ffffff' }} />
             </div>
             <div>
-              <h4 className="font-extrabold text-sm tracking-wide uppercase leading-tight text-white">
+              <h4 style={{ color: '#ffffff' }} className="font-extrabold text-xs sm:text-sm tracking-wide uppercase leading-tight">
                 ¡ENVÍO GRATIS!
               </h4>
-              <p style={{ color: cp }} className="text-xs font-bold mt-0.5">
+              <p style={{ color: cp }} className="text-[11px] font-bold mt-0.5">
                 Por compras desde $15
               </p>
             </div>
@@ -777,9 +808,9 @@ function RestaurantLandingContent({
           <div className="relative z-10 shrink-0">
             <div
               style={{ backgroundColor: `${cp}20`, color: cp, borderColor: `${cp}40` }}
-              className="px-3 py-1.5 rounded-xl text-[11px] font-black border flex items-center gap-1.5"
+              className="px-2.5 py-1 rounded-xl text-[10px] font-black border flex items-center gap-1"
             >
-              <Truck className="w-3.5 h-3.5" />
+              <Truck className="w-3 h-3" />
               <span>Aplica automático</span>
             </div>
           </div>
@@ -788,31 +819,31 @@ function RestaurantLandingContent({
 
       {/* ── BARRA FLOTANTE DEL CARRITO SI HAY PRODUCTOS AGREGADOS ── */}
       {totalItemsCount > 0 && (
-        <div className="fixed bottom-16 left-0 right-0 z-40 px-4 max-w-md mx-auto pointer-events-none">
+        <div className="fixed bottom-16 left-0 right-0 z-40 px-3 w-full max-w-4xl mx-auto pointer-events-none">
           <button
             type="button"
             onClick={() => setShowCartDrawer(true)}
-            style={{ backgroundColor: cp }}
-            className="pointer-events-auto w-full py-3.5 px-5 rounded-2xl text-white font-black text-xs uppercase tracking-wider flex items-center justify-between shadow-2xl hover:opacity-95 active:scale-95 transition-all"
+            style={{ backgroundColor: cp, color: '#ffffff' }}
+            className="pointer-events-auto w-full py-3 px-4 rounded-2xl text-white font-black text-xs uppercase tracking-wider flex items-center justify-between shadow-2xl hover:opacity-95 active:scale-95 transition-all"
           >
             <div className="flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5" />
+              <ShoppingBag className="w-4 h-4" style={{ color: '#ffffff' }} />
               <span>Ver mi pedido ({totalItemsCount})</span>
             </div>
-            <span className="text-sm font-black">${total.toFixed(2)}</span>
+            <span className="text-xs font-black">${total.toFixed(2)}</span>
           </button>
         </div>
       )}
 
-      {/* ── 9. NAVEGACIÓN INFERIOR FIJA DE 5 OPCIONES (REEMPLAZO COMPLETO) ── */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 py-2.5 px-4 flex justify-around items-center z-50 shadow-lg max-w-md mx-auto">
+      {/* ── 9. NAVEGACIÓN INFERIOR FIJA DE 5 OPCIONES ── */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 py-2 px-3 flex justify-around items-center z-50 shadow-lg w-full max-w-4xl mx-auto">
         <button
           type="button"
           onClick={() => setActiveNavTab('inicio')}
           className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors"
           style={{ color: activeNavTab === 'inicio' ? cp : '#64748b' }}
         >
-          <Home className="w-5 h-5" />
+          <Home className="w-4 h-4" />
           <span>Inicio</span>
         </button>
 
@@ -822,7 +853,7 @@ function RestaurantLandingContent({
           className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors"
           style={{ color: activeNavTab === 'categorias' ? cp : '#64748b' }}
         >
-          <Grid className="w-5 h-5" />
+          <Grid className="w-4 h-4" />
           <span>Categorías</span>
         </button>
 
@@ -832,7 +863,7 @@ function RestaurantLandingContent({
           className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors"
           style={{ color: activeNavTab === 'ofertas' ? cp : '#64748b' }}
         >
-          <Tag className="w-5 h-5" />
+          <Tag className="w-4 h-4" />
           <span>Ofertas</span>
         </button>
 
@@ -845,7 +876,7 @@ function RestaurantLandingContent({
           className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors"
           style={{ color: activeNavTab === 'pedidos' ? cp : '#64748b' }}
         >
-          <ClipboardList className="w-5 h-5" />
+          <ClipboardList className="w-4 h-4" />
           <span>Mis pedidos</span>
         </button>
 
@@ -855,7 +886,7 @@ function RestaurantLandingContent({
           className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors no-underline"
           style={{ color: activeNavTab === 'cuenta' ? cp : '#64748b' }}
         >
-          <User className="w-5 h-5" />
+          <User className="w-4 h-4" />
           <span>Mi cuenta</span>
         </Link>
       </nav>
@@ -863,37 +894,37 @@ function RestaurantLandingContent({
       {/* ── MODAL CANAL DE ATENCIÓN DE PEDIDO (DOMICILIO / MESA / RETIRO) ── */}
       {showChannelModal && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-slate-900 border border-slate-100">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h4 className="font-extrabold text-base text-slate-900">¿Cómo deseas tu pedido?</h4>
+          <div className="bg-white rounded-3xl p-5 max-w-sm w-full space-y-3.5 shadow-2xl text-slate-900 border border-slate-100">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <h4 className="font-extrabold text-sm text-slate-900">¿Cómo deseas tu pedido?</h4>
               <button
                 type="button"
                 onClick={() => setShowChannelModal(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500"
+                className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               <button
                 type="button"
                 onClick={() => {
                   setDeliveryType('DOMICILIO');
                   setShowChannelModal(false);
                 }}
-                className={`w-full p-3.5 rounded-2xl border text-xs font-bold flex items-center gap-3 transition-all ${
+                className={`w-full p-3 rounded-2xl border text-xs font-bold flex items-center gap-3 transition-all ${
                   deliveryType === 'DOMICILIO'
                     ? 'border-orange-500 bg-orange-50 text-slate-900 shadow-sm'
                     : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                <div style={{ backgroundColor: cp }} className="w-9 h-9 rounded-xl text-white flex items-center justify-center">
-                  <Truck className="w-5 h-5" />
+                <div style={{ backgroundColor: cp, color: '#ffffff' }} className="w-8 h-8 rounded-xl text-white flex items-center justify-center shrink-0">
+                  <Truck className="w-4 h-4" style={{ color: '#ffffff' }} />
                 </div>
                 <div className="text-left flex-1">
-                  <span className="block font-extrabold text-sm">Delivery a Domicilio</span>
-                  <span className="text-[11px] text-slate-400 font-normal">Entregas rápidas a tu ubicación</span>
+                  <span className="block font-extrabold text-xs">Delivery a Domicilio</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Entregas rápidas a tu ubicación</span>
                 </div>
               </button>
 
@@ -903,18 +934,18 @@ function RestaurantLandingContent({
                   setDeliveryType('MESA');
                   setShowChannelModal(false);
                 }}
-                className={`w-full p-3.5 rounded-2xl border text-xs font-bold flex items-center gap-3 transition-all ${
+                className={`w-full p-3 rounded-2xl border text-xs font-bold flex items-center gap-3 transition-all ${
                   deliveryType === 'MESA'
                     ? 'border-orange-500 bg-orange-50 text-slate-900 shadow-sm'
                     : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                <div style={{ backgroundColor: cp }} className="w-9 h-9 rounded-xl text-white flex items-center justify-center">
-                  <Utensils className="w-5 h-5" />
+                <div style={{ backgroundColor: cp, color: '#ffffff' }} className="w-8 h-8 rounded-xl text-white flex items-center justify-center shrink-0">
+                  <Utensils className="w-4 h-4" style={{ color: '#ffffff' }} />
                 </div>
                 <div className="text-left flex-1">
-                  <span className="block font-extrabold text-sm">Pedir a la Mesa</span>
-                  <span className="text-[11px] text-slate-400 font-normal">Consumo directo en el local</span>
+                  <span className="block font-extrabold text-xs">Pedir a la Mesa</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Consumo directo en el local</span>
                 </div>
               </button>
 
@@ -924,18 +955,18 @@ function RestaurantLandingContent({
                   setDeliveryType('RETIRO');
                   setShowChannelModal(false);
                 }}
-                className={`w-full p-3.5 rounded-2xl border text-xs font-bold flex items-center gap-3 transition-all ${
+                className={`w-full p-3 rounded-2xl border text-xs font-bold flex items-center gap-3 transition-all ${
                   deliveryType === 'RETIRO'
                     ? 'border-orange-500 bg-orange-50 text-slate-900 shadow-sm'
                     : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                <div style={{ backgroundColor: cp }} className="w-9 h-9 rounded-xl text-white flex items-center justify-center">
-                  <ShoppingBag className="w-5 h-5" />
+                <div style={{ backgroundColor: cp, color: '#ffffff' }} className="w-8 h-8 rounded-xl text-white flex items-center justify-center shrink-0">
+                  <ShoppingBag className="w-4 h-4" style={{ color: '#ffffff' }} />
                 </div>
                 <div className="text-left flex-1">
-                  <span className="block font-extrabold text-sm">Para Llevar / Retiro</span>
-                  <span className="text-[11px] text-slate-400 font-normal">Pasa a retirar por el local</span>
+                  <span className="block font-extrabold text-xs">Para Llevar / Retiro</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Pasa a retirar por el local</span>
                 </div>
               </button>
             </div>
