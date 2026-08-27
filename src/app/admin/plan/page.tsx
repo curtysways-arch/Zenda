@@ -1,7 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { subscriptionService } from "@/lib/services/subscriptionService";
-import { Package } from "lucide-react";
 import prisma from "@/lib/prisma";
 import PlanDashboardClient from "./PlanDashboardClient";
 
@@ -9,7 +8,7 @@ export default async function AdminPlanPage() {
     const session = await getServerSession(authOptions);
     const negocioId = (session?.user as any)?.negocioId;
 
-    if (!negocioId) return <div>No autorizado</div>;
+    if (!negocioId) return <div className="p-8 font-black uppercase text-center text-slate-500">No autorizado</div>;
 
     // Obtener datos del plan, planes disponibles y configuraciones globales
     const [data, allPlans, business, whatsappConfig, discountConfig] = await Promise.all([
@@ -23,6 +22,7 @@ export default async function AdminPlanPage() {
             select: {
                 id: true,
                 nombre: true,
+                tipoNegocio: true,
                 Suscripcion: {
                     select: { planId: true }
                 }
@@ -38,33 +38,42 @@ export default async function AdminPlanPage() {
 
     const adminWhatsApp = whatsappConfig?.valor || "5491112223334";
     const annualDiscountRaw = discountConfig?.valor || "20";
-    const annualDiscount = parseFloat(annualDiscountRaw) / 100; // Convertir 20 a 0.20
+    const annualDiscount = parseFloat(annualDiscountRaw) / 100;
 
-    const planData = data || {
-        planName: 'Plan Pro Canchas & Clubes',
+    const defaultLimits = {
+        staff: { used: 1, max: 10, percentage: 10 },
+        appointments: { used: 0, max: 500, percentage: 0 },
+        services: { used: 1, max: 20, percentage: 5 },
+        locations: { used: 1, max: 2, percentage: 50 }
+    };
+
+    const planData = data ? {
+        ...data,
+        limits: {
+            staff: data.limits?.staff || defaultLimits.staff,
+            appointments: data.limits?.appointments || defaultLimits.appointments,
+            services: data.limits?.services || defaultLimits.services,
+            locations: data.limits?.locations || defaultLimits.locations
+        }
+    } : {
+        planName: 'Plan Inicial',
         planStatus: 'active',
         startDate: new Date(),
         endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
         lockedPrice: 49,
         interval: 'monthly',
-        maxStaff: 10,
-        currentStaff: 2,
-        maxAppointments: 500,
-        appointmentsThisMonth: 15,
-        maxLocations: 2,
-        currentLocations: 1,
-        maxServices: 20,
-        currentServices: 3,
-        features: ['Canchas Ilimitadas', 'Gestión de Reservas', 'Notificaciones WhatsApp', 'Torneos & Academias']
+        limits: defaultLimits,
+        features: ['Gestión Comercial', 'Órdenes & Ventas', 'Notificaciones WhatsApp', 'Soporte 24/7']
     };
 
     return (
         <PlanDashboardClient
             data={planData}
-            allPlans={JSON.parse(JSON.stringify(allPlans))}
+            allPlans={JSON.parse(JSON.stringify(allPlans || []))}
             currentPlanId={business?.Suscripcion?.planId}
             businessName={business?.nombre || ''}
             businessId={business?.id || ''}
+            tipoNegocio={business?.tipoNegocio || 'GENERAL'}
             adminWhatsApp={adminWhatsApp}
             annualDiscount={annualDiscount}
         />

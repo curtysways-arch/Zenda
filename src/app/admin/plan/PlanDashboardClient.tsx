@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { 
     Zap, 
     Calendar, 
-    MapPin, 
-    Trophy, 
     Clock, 
     CheckCircle2, 
     AlertTriangle, 
@@ -16,10 +14,8 @@ import {
     Users,
     X
 } from "lucide-react";
-import Link from "next/link";
 import UpgradeModal from "@/components/ui/UpgradeModal";
 import { getFormattedPlanFeatures } from "@/lib/planFeaturesHelper";
-
 
 interface PlanDashboardClientProps {
     data: any;
@@ -27,16 +23,18 @@ interface PlanDashboardClientProps {
     currentPlanId?: string | null;
     businessName: string;
     businessId: string;
+    tipoNegocio?: string;
     adminWhatsApp: string;
     annualDiscount: number;
 }
 
 export default function PlanDashboardClient({
     data,
-    allPlans,
+    allPlans = [],
     currentPlanId,
     businessName,
     businessId,
+    tipoNegocio = 'GENERAL',
     adminWhatsApp,
     annualDiscount = 0.20
 }: PlanDashboardClientProps) {
@@ -45,7 +43,26 @@ export default function PlanDashboardClient({
 
     const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
     const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
-    const { planName, planStatus, startDate, endDate, lockedPrice, limits } = data;
+
+    const planName = data?.planName || 'Plan Pro';
+    const planStatus = data?.planStatus || 'active';
+    const startDate = data?.startDate;
+    const endDate = data?.endDate;
+    const lockedPrice = data?.lockedPrice;
+    
+    const limits = data?.limits || {};
+    const safeLimits = {
+        staff: limits?.staff || { used: 0, max: 10, percentage: 0 },
+        appointments: limits?.appointments || { used: 0, max: 500, percentage: 0 },
+        services: limits?.services || { used: 0, max: 20, percentage: 0 },
+        locations: limits?.locations || { used: 0, max: 2, percentage: 0 }
+    };
+
+    const isRestaurant = tipoNegocio === 'RESTAURANTE' || tipoNegocio === 'BAR' || tipoNegocio === 'GASTRONOMIA' || tipoNegocio === 'ORDERS';
+    const isCourt = tipoNegocio === 'SPORTS_COURTS' || tipoNegocio === 'CANCHAS' || tipoNegocio === 'SPORTS';
+
+    const staffLabel = isRestaurant ? "Personal / Usuarios" : isCourt ? "Personal / Accesos" : "Profesionales";
+    const usageLabel = isRestaurant ? "Órdenes del Mes" : isCourt ? "Reservas del Mes" : "Citas del Mes";
 
     // Calcular días restantes reales basados en la fecha de corte (endDate)
     let daysUntilExpiry: number | null = null;
@@ -65,7 +82,6 @@ export default function PlanDashboardClient({
         // Mostrar alerta de renovación si faltan 7 días o menos, o si el plan ya expiró
         showRenewal = daysUntilExpiry <= 7 || planStatus === 'expired';
     } else {
-        // Si no hay endDate (plan de por vida), solo mostramos si está expirado
         showRenewal = planStatus === 'expired';
     }
 
@@ -90,7 +106,7 @@ export default function PlanDashboardClient({
     };
 
     return (
-        <div className="space-y-6 max-w-5xl mx-auto animate-in fade-in duration-500">
+        <div className="space-y-6 max-w-5xl mx-auto animate-in fade-in duration-500 text-left">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Mi Plan de Suscripción</h2>
@@ -136,7 +152,7 @@ export default function PlanDashboardClient({
                                 setIsUpgradeModalOpen(true);
                             }
                         }}
-                        className={`px-6 py-3 font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95 flex items-center gap-2 flex-shrink-0`}
+                        className={`px-6 py-3 font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95 flex items-center gap-2 flex-shrink-0 cursor-pointer`}
                         style={planStatus === 'expired'
                             ? { backgroundColor: 'rgb(185, 28, 28)', color: 'white' }
                             : { backgroundColor: 'rgb(194, 65, 12)', color: 'white' }
@@ -157,13 +173,11 @@ export default function PlanDashboardClient({
                             <Package size={32} />
                         </div>
                         <h3 className="text-xs font-black uppercase tracking-widest mb-1.5" style={{ color: 'var(--primary-color)' }}>Nivel de Cuenta</h3>
-                        <h4 className="text-4xl font-black text-slate-900 mb-8">{planName}</h4>
+                        <h4 className="text-3xl lg:text-4xl font-black text-slate-900 mb-8">{planName}</h4>
 
                         <div className="space-y-5">
                              <div className="flex items-center gap-4 group/item">
-                                <div className="p-2 bg-white rounded-xl text-slate-400 group-hover/item:text-slate-900 transition-colors shadow-sm"
-                                     onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary-color)'}
-                                     onMouseLeave={(e) => e.currentTarget.style.color = 'rgb(156, 163, 175)'}>
+                                <div className="p-2 bg-white rounded-xl text-slate-400 group-hover/item:text-slate-900 transition-colors shadow-sm">
                                     <Clock size={18} />
                                 </div>
                                 <div className="text-sm">
@@ -172,9 +186,7 @@ export default function PlanDashboardClient({
                                 </div>
                             </div>
                              <div className="flex items-center gap-4 group/item">
-                                <div className="p-2 bg-white rounded-xl text-slate-400 group-hover/item:text-slate-900 transition-colors shadow-sm"
-                                     onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary-color)'}
-                                     onMouseLeave={(e) => e.currentTarget.style.color = 'rgb(156, 163, 175)'}>
+                                <div className="p-2 bg-white rounded-xl text-slate-400 group-hover/item:text-slate-900 transition-colors shadow-sm">
                                     <Calendar size={18} />
                                 </div>
                                 <div className="text-sm">
@@ -194,17 +206,11 @@ export default function PlanDashboardClient({
                                             setIsUpgradeModalOpen(true);
                                         }
                                     }}
-                                    className="w-full flex items-center justify-center gap-3 py-4 font-black rounded-2xl transition-all shadow-md active:scale-95 border-2 border-dashed"
+                                    className="w-full flex items-center justify-center gap-3 py-4 font-black rounded-2xl transition-all shadow-md active:scale-95 border-2 border-dashed cursor-pointer"
                                     style={{ 
                                         borderColor: 'var(--primary-color)',
                                         color: 'var(--primary-color)',
                                         backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 95%)'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--primary-color), transparent 90%)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--primary-color), transparent 95%)';
                                     }}
                                 >
                                     <RefreshCw size={22} />
@@ -217,10 +223,8 @@ export default function PlanDashboardClient({
                                     const section = document.getElementById('available-plans-section');
                                     if (section) section.scrollIntoView({ behavior: 'smooth' });
                                 }}
-                                className="w-full flex items-center justify-center gap-3 py-4 text-white font-black rounded-2xl transition-all shadow-lg active:scale-95"
+                                className="w-full flex items-center justify-center gap-3 py-4 text-white font-black rounded-2xl transition-all shadow-lg active:scale-95 cursor-pointer"
                                 style={{ backgroundColor: 'var(--primary-color)', boxShadow: '0 10px 15px -3px color-mix(in srgb, var(--primary-color), transparent 80%)' }}
-                                onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.1)'}
-                                onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}
                             >
                                 <ArrowUpCircle size={22} />
                                 Mejorar Plan
@@ -229,7 +233,7 @@ export default function PlanDashboardClient({
                     </div>
 
                     {/* Consumo y Límites */}
-                    <div className="lg:col-span-8 p-10 flex flex-col justify-center bg-white">
+                    <div className="lg:col-span-8 p-8 md:p-10 flex flex-col justify-center bg-white">
                         <div className="flex items-center justify-between mb-10">
                             <h3 className="text-xl font-black text-slate-900 flex items-center gap-3">
                                 <TrendingUp size={24} className="text-slate-400" />
@@ -243,16 +247,16 @@ export default function PlanDashboardClient({
                                          style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}>
                                         <Users size={16} />
                                     </div>
-                                    <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Profesionales</span>
+                                    <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">{staffLabel}</span>
                                 </div>
                                 <div className="flex items-baseline gap-2">
-                                    <span className="text-3xl font-black text-slate-900">{limits.staff.used}</span>
-                                    <span className="text-sm font-bold text-slate-400">/ {limits.staff.max >= 999999 ? '∞' : limits.staff.max}</span>
+                                    <span className="text-3xl font-black text-slate-900">{safeLimits.staff.used}</span>
+                                    <span className="text-sm font-bold text-slate-400">/ {safeLimits.staff.max >= 999999 ? '∞' : safeLimits.staff.max}</span>
                                 </div>
                                  <div className="mt-4 h-2 bg-slate-200 rounded-full overflow-hidden">
                                      <div 
                                         className={`h-full transition-all duration-1000`} 
-                                        style={{ width: `${Math.min(limits.staff.percentage, 100)}%`, backgroundColor: limits.staff.percentage >= 90 ? 'rgb(244, 63, 94)' : 'var(--primary-color)' }} 
+                                        style={{ width: `${Math.min(safeLimits.staff.percentage, 100)}%`, backgroundColor: safeLimits.staff.percentage >= 90 ? 'rgb(244, 63, 94)' : 'var(--primary-color)' }} 
                                      />
                                 </div>
                             </div>
@@ -263,16 +267,16 @@ export default function PlanDashboardClient({
                                          style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}>
                                         <Calendar size={16} />
                                     </div>
-                                    <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Citas del Mes</span>
+                                    <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">{usageLabel}</span>
                                 </div>
                                 <div className="flex items-baseline gap-2">
-                                    <span className="text-3xl font-black text-slate-900">{limits.appointments.used}</span>
-                                    <span className="text-sm font-bold text-slate-400">/ {limits.appointments.max >= 999999 ? '∞' : limits.appointments.max}</span>
+                                    <span className="text-3xl font-black text-slate-900">{safeLimits.appointments.used}</span>
+                                    <span className="text-sm font-bold text-slate-400">/ {safeLimits.appointments.max >= 999999 ? '∞' : safeLimits.appointments.max}</span>
                                 </div>
                                  <div className="mt-4 h-2 bg-slate-200 rounded-full overflow-hidden">
                                      <div 
                                         className={`h-full transition-all duration-1000`} 
-                                        style={{ width: `${Math.min(limits.appointments.percentage, 100)}%`, backgroundColor: limits.appointments.percentage >= 90 ? 'rgb(244, 63, 94)' : 'var(--primary-color)' }} 
+                                        style={{ width: `${Math.min(safeLimits.appointments.percentage, 100)}%`, backgroundColor: safeLimits.appointments.percentage >= 90 ? 'rgb(244, 63, 94)' : 'var(--primary-color)' }} 
                                      />
                                 </div>
                             </div>
@@ -284,22 +288,21 @@ export default function PlanDashboardClient({
             {/* Título de Planes Disponibles */}
              <div id="available-plans-section" className="pt-8 text-center">
                 <h3 className="text-3xl font-black text-slate-900 tracking-tight mb-2 italic underline" style={{ textDecorationColor: 'color-mix(in srgb, var(--primary-color), transparent 80%)' }}>Planes Disponibles</h3>
-                <p className="text-slate-500 font-medium">Elige el plan que mejor se adapte a las necesidades de tu complejo.</p>
+                <p className="text-slate-500 font-medium">Elige el plan que mejor se adapte a las necesidades de tu negocio.</p>
             </div>
 
             {/* Selector de periodo de facturación */}
-            <div className="flex justify-center pt-12 pb-6">
+            <div className="flex justify-center pt-8 pb-6">
                 <div className="bg-slate-100 p-1.5 rounded-[1.5rem] flex items-center gap-1 border border-slate-200">
                      <button
                         onClick={() => setBillingPeriod('monthly')}
-                        className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${billingPeriod === 'monthly' ? 'shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
-                        style={billingPeriod === 'monthly' ? { backgroundColor: 'white', color: 'var(--primary-color)' } : {}}
+                        className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer ${billingPeriod === 'monthly' ? 'shadow-md bg-white text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
                     >
                         Mensual
                     </button>
                     <button
                         onClick={() => setBillingPeriod('annual')}
-                        className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 ${billingPeriod === 'annual' ? 'text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 cursor-pointer ${billingPeriod === 'annual' ? 'text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
                         style={billingPeriod === 'annual' ? { backgroundColor: 'var(--primary-color)' } : {}}
                     >
                         Anual
@@ -312,24 +315,16 @@ export default function PlanDashboardClient({
                 {allPlans.map((plan) => {
                     const isCurrent = plan.id === currentPlanId;
                     
-                    // Cálculo de precios de lista
-                    const listMonthlyPrice = plan.price;
+                    const listMonthlyPrice = plan.price || 0;
                     const listAnnualPrice = (listMonthlyPrice * 12 * (1 - annualDiscount)) / 12;
                     const displayListPrice = billingPeriod === 'monthly' ? listMonthlyPrice : listAnnualPrice;
                     const totalListAnnual = listMonthlyPrice * 12 * (1 - annualDiscount);
 
-                    // Verificar si tiene precio especial congelado
                     const hasLockedPrice = isCurrent && lockedPrice !== null && lockedPrice !== undefined && lockedPrice < plan.price;
                     const displayLockedPrice = hasLockedPrice 
                         ? (billingPeriod === 'monthly' ? lockedPrice : (lockedPrice * 12 * (1 - annualDiscount)) / 12)
                         : null;
                     const totalLockedAnnual = hasLockedPrice ? lockedPrice * 12 * (1 - annualDiscount) : null;
-
-                    // Precio base para lógica de botones
-                    const monthlyPrice = hasLockedPrice ? lockedPrice : plan.price;
-                    const annualPrice = (monthlyPrice * 12 * (1 - annualDiscount)) / 12;
-                    const displayPrice = billingPeriod === 'monthly' ? monthlyPrice : annualPrice;
-                    const totalAnnual = monthlyPrice * 12 * (1 - annualDiscount);
 
                     const currentPlan = allPlans.find(p => p.id === currentPlanId);
                     const currentPrice = currentPlan?.price || 0;
@@ -343,8 +338,6 @@ export default function PlanDashboardClient({
                                 : 'border-slate-100 bg-white hover:shadow-xl hover:-translate-y-1'
                                 }`}
                             style={isCurrent ? { borderColor: 'var(--primary-color)', backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 95%)' } : {}}
-                            onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.borderColor = 'var(--primary-color)'; }}
-                            onMouseLeave={(e) => { if (!isCurrent) e.currentTarget.style.borderColor = 'rgb(241, 245, 249)'; }}
                         >
                              {isCurrent && (
                                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg"
@@ -356,7 +349,7 @@ export default function PlanDashboardClient({
                             <div className="mb-6">
                                 <h4 className="text-xl font-black text-slate-900 mb-1">{plan.name}</h4>
                                 <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-                                    {(plan as any).maxStaff >= 999999 ? 'Personal Ilimitado' : `${(plan as any).maxStaff} PROFESIONAL${(plan as any).maxStaff > 1 ? 'ES' : ''}`} • {plan.max_locations} SEDE{(plan as any).max_locations > 1 ? 'S' : ''}
+                                    {(plan as any).maxStaff >= 999999 ? (isRestaurant ? 'Usuarios Ilimitados' : 'Personal Ilimitado') : `${(plan as any).maxStaff} ${isRestaurant ? 'USUARIOS' : 'PROFESIONALES'}`} • {plan.max_locations || 1} SEDE{(plan as any).max_locations > 1 ? 'S' : ''}
                                 </p>
                             </div>
 
@@ -408,7 +401,6 @@ export default function PlanDashboardClient({
                                 ))}
                             </div>
 
-                            {/* Lógica de botón corregida: permitir cambio a ANUAL aunque sea el mismo plan */}
                             {isCurrent && billingPeriod === 'monthly' ? (
                                 <div className="w-full py-4 bg-slate-100 text-slate-400 rounded-2xl font-black text-xs uppercase tracking-widest text-center">
                                     Plan Actual (Mensual)
@@ -419,10 +411,8 @@ export default function PlanDashboardClient({
                                         setSelectedPlanId(plan.id);
                                         setIsUpgradeModalOpen(true);
                                     }}
-                                    className="w-full py-4 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95"
+                                    className="w-full py-4 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 cursor-pointer"
                                     style={{ backgroundColor: 'var(--primary-color)', boxShadow: '0 10px 15px -3px color-mix(in srgb, var(--primary-color), transparent 80%)' }}
-                                    onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.1)'}
-                                    onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}
                                 >
                                     {isCurrent ? 'Pasar a Anual -20%' : 'Solicitar activación'}
                                 </button>
@@ -432,7 +422,7 @@ export default function PlanDashboardClient({
                                         setSelectedPlanId(plan.id);
                                         setIsUpgradeModalOpen(true);
                                     }}
-                                    className="w-full py-4 bg-slate-800 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-900 transition-all active:scale-95"
+                                    className="w-full py-4 bg-slate-800 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-900 transition-all active:scale-95 cursor-pointer"
                                 >
                                     Cambiar Plan
                                 </button>
