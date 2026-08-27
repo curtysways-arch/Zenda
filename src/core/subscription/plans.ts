@@ -33,7 +33,7 @@ export const SUBSCRIPTION_PLANS: Record<PlanId, SubscriptionPlan> = {
       api: 'none',
       branding: 'citiox_watermark',
       customDomain: false,
-      customTheme: false,
+      customTheme: true,
       rolesAndPermissions: 'none',
       auditLogs: false,
       sso: false,

@@ -70,7 +70,7 @@ export const featureService = {
             whatsapp_otp: summary.features.communications !== 'none',
             whatsapp_reminders: summary.features.communications !== 'none',
             whatsapp_campaigns: summary.features.communications === 'advanced' || summary.features.communications === 'enterprise',
-            custom_colors: summary.features.customTheme,
+            custom_colors: true,
             custom_logo: summary.features.branding !== 'citiox_watermark',
             custom_phrases: summary.features.customTheme,
             remove_zenda_branding: summary.features.branding === 'white_label',
