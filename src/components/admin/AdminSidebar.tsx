@@ -180,9 +180,14 @@ export default function AdminSidebar({
       items.push({ name: 'Comandas / Cocina', href: '/admin/cocina', icon: Utensils, section: 'GESTIÓN OPERATIVA' });
     }
     if (capabilities.appointments) {
-      items.push({ name: 'Agenda / Citas', href: '/admin/citas', icon: CalendarDays, section: 'GESTIÓN OPERATIVA' });
+      items.push({ 
+        name: capabilities.courts ? 'Reservas / Agenda' : 'Agenda / Citas', 
+        href: '/admin/citas', 
+        icon: CalendarDays, 
+        section: 'GESTIÓN OPERATIVA' 
+      });
     }
-    if (capabilities.services) {
+    if (capabilities.services && !capabilities.courts) {
       items.push({ name: 'Servicios', href: '/admin/servicios', icon: Scissors, section: 'GESTIÓN OPERATIVA', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     }
     if (capabilities.courts) {
@@ -209,8 +214,20 @@ export default function AdminSidebar({
     items.push({ name: 'Páginas', href: '/admin/paginas', icon: Layout, section: 'MARKETING' });
 
     // Administration (Universal for all Citiox businesses)
-    items.push({ name: 'Clientes', href: '/admin/clientes', icon: Contact, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
-    items.push({ name: 'Personal & Equipo', href: '/admin/usuarios', icon: Users, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    items.push({ 
+      name: capabilities.courts ? 'Clientes & Jugadores' : 'Clientes', 
+      href: '/admin/clientes', 
+      icon: Contact, 
+      section: 'ADMINISTRACIÓN', 
+      roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] 
+    });
+    items.push({ 
+      name: capabilities.courts ? 'Personal & Acceso' : 'Personal & Equipo', 
+      href: '/admin/usuarios', 
+      icon: Users, 
+      section: 'ADMINISTRACIÓN', 
+      roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] 
+    });
     if (capabilities.delivery) {
       items.push({ name: 'Repartidores', href: '/admin/logistica', icon: Truck, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     }

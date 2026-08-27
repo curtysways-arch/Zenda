@@ -20,11 +20,13 @@ interface Cita {
     estado: string;
     total: number;
     clienteId: string;
+    staffId?: string;
     service?: {
         nombre: string;
     };
     staff?: {
-        name: string;
+        name?: string;
+        nombre?: string;
     };
     pagoReserva?: any[];
 }
@@ -231,7 +233,7 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                 {/* Grid KPI de Estadísticas del Cliente */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
                     <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Citas Totales</span>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Reservas Totales</span>
                         <div className="flex items-center gap-2">
                             <Calendar size={16} className="text-indigo-600" />
                             <span className="text-2xl font-black text-slate-900">{citas.length}</span>
@@ -264,7 +266,7 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
             {/* Pestañas de Navegación del Panel Completo */}
             <div className="bg-white rounded-3xl border border-slate-100 p-2 shadow-sm flex flex-wrap gap-2">
                 {[
-                    { id: 'citas', label: 'Historial de Citas', icon: Calendar, count: citas.length },
+                    { id: 'citas', label: 'Historial de Reservas', icon: Calendar, count: citas.length },
                     { id: 'fidelidad', label: 'Nivel y Puntos', icon: Gem },
                     { id: 'cupones', label: 'Cupones Asignados', icon: Tag, count: loyalty.cupones?.length },
                     { id: 'misiones', label: 'Misiones Activas', icon: Trophy, count: loyalty.misiones?.length },
@@ -300,17 +302,17 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
 
             {/* Contenido de la Pestaña Activa */}
             <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm min-h-[350px]">
-                {/* 1. CITAS */}
+                {/* 1. CITAS / RESERVAS */}
                 {activeTab === 'citas' && (
                     <div className="space-y-4">
                         <h3 className="text-base font-black text-slate-900 uppercase tracking-tight mb-4 flex items-center gap-2">
                             <Calendar size={18} className="text-indigo-600" />
-                            Historial Completo de Citas ({citas.length})
+                            Historial Completo de Reservas ({citas.length})
                         </h3>
                         {citas.length === 0 ? (
                             <div className="py-20 text-center space-y-3 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
                                 <Calendar size={40} className="mx-auto text-slate-300" />
-                                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Este cliente no ha registrado citas aún</p>
+                                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Este cliente no ha registrado reservas aún</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -321,6 +323,9 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                                         ? cita.fecha
                                         : format(fechaCita, "EEEE d 'de' MMMM, yyyy", { locale: es });
 
+                                    const staffNombre = cita.staff?.name || cita.staff?.nombre;
+                                    const hasStaff = Boolean(cita.staffId && staffNombre && staffNombre !== 'Cualquier profesional');
+
                                     return (
                                         <div
                                             key={cita.id}
@@ -329,16 +334,18 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                                             <div className="flex items-start justify-between gap-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="size-12 bg-white rounded-2xl flex items-center justify-center text-slate-600 shadow-sm border border-slate-100">
-                                                        <Scissors size={20} />
+                                                        <Calendar size={20} className="text-emerald-500" />
                                                     </div>
                                                     <div>
                                                         <h4 className="font-black text-slate-900 uppercase text-sm leading-tight">
-                                                            {cita.service?.nombre || 'Servicio'}
+                                                            {cita.service?.nombre || 'Cancha'}
                                                         </h4>
-                                                        <p className="text-xs font-bold text-slate-500 flex items-center gap-1 mt-1">
-                                                            <User size={12} className="text-indigo-600" />
-                                                            {cita.staff?.name || 'Profesional'}
-                                                        </p>
+                                                        {hasStaff && (
+                                                            <p className="text-xs font-bold text-slate-500 flex items-center gap-1 mt-1">
+                                                                <User size={12} className="text-indigo-600" />
+                                                                {cita.staff?.name || cita.staff?.nombre}
+                                                            </p>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <span className={clsx("px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider", badge.bg)}>
