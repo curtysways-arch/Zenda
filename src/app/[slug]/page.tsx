@@ -42,6 +42,39 @@ export default async function PublicNegocioPage({
         notFound();
     }
 
+    const restConfig = (negocio.configuracion as any) || {};
+    const blueprintId = restConfig.blueprintId;
+    const isRestaurantModule = 
+        blueprintId === 'RESTAURANT' ||
+        negocio.tipoNegocio === 'RESTAURANTE' ||
+        negocio.tipoNegocio === 'GASTRONOMIA' ||
+        negocio.tipoNegocio === 'RESTAURANT' ||
+        restConfig.tipoNegocio === 'RESTAURANTE' ||
+        restConfig.tipoNegocio === 'GASTRONOMIA' ||
+        restConfig.tipoNegocio === 'RESTAURANT' ||
+        slug.includes('parrilla') ||
+        slug.includes('restaurant') ||
+        slug.includes('gastro') ||
+        slug.includes('burger') ||
+        slug.includes('pizza') ||
+        slug.includes('taco');
+
+    if (isRestaurantModule) {
+        let initialProducts: any[] = [];
+        let initialCategories: any[] = [];
+        try {
+            const [prods, cats] = await Promise.all([
+                (prisma as any).producto.findMany({ where: { negocioId: negocio.id }, orderBy: { orden: 'asc' }, include: { categoria: true } }),
+                (prisma as any).categoriaProducto.findMany({ where: { negocioId: negocio.id, activo: true }, orderBy: { orden: 'asc' } })
+            ]);
+            initialProducts = prods;
+            initialCategories = cats;
+        } catch (_) {}
+
+        const { default: RestaurantLanding } = await import('@/modules/restaurant/components/RestaurantLanding');
+        return <RestaurantLanding negocio={negocio} initialProducts={initialProducts} initialCategories={initialCategories} />;
+    }
+
     if (negocio.tipoNegocio === 'PRODUCTOS') {
         // Dispatch via ModuleResolver — never hardcode slug here
         if (ModuleResolver.isPinchosModule(slug)) {
@@ -128,27 +161,6 @@ export default async function PublicNegocioPage({
 
         const { default: ShoeCareLanding } = await import('@/modules/shoe-care/components/ShoeCareLanding');
         return <ShoeCareLanding negocio={negocio} reviews={realReviews} paginasPersonalizadas={paginas} />;
-    }
-
-    // ── Blueprint RESTAURANT dispatch ─────────────────────────────────────────
-    const blueprintId = (negocio.configuracion as any)?.blueprintId;
-    if (blueprintId === 'RESTAURANT') {
-        let initialProducts: any[] = [];
-        let initialCategories: any[] = [];
-        try {
-            const [prods, cats] = await Promise.all([
-                (prisma as any).producto.findMany({ where: { negocioId: negocio.id }, orderBy: { orden: 'asc' }, include: { categoria: true } }),
-                (prisma as any).categoriaProducto.findMany({ where: { negocioId: negocio.id, activo: true }, orderBy: { orden: 'asc' } })
-            ]);
-            initialProducts = prods;
-            initialCategories = cats;
-        } catch (_) {}
-        const { resolveExperiencePack } = await import('@/core/experiences/ExperienceRegistry');
-        const pack = resolveExperiencePack('RESTAURANT', ['catalog', 'orders']);
-        if (pack) {
-            const { default: RestaurantLanding } = await import('@/modules/restaurant/components/RestaurantLanding');
-            return <RestaurantLanding negocio={negocio} initialProducts={initialProducts} initialCategories={initialCategories} />;
-        }
     }
 
     if (negocio.tipoNegocio === 'SPORTS_COURTS' || (negocio.configuracion as any)?.tipoNegocio === 'SPORTS_COURTS' || slug.includes('canchas')) {

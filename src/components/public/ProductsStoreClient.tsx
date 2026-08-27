@@ -62,9 +62,30 @@ interface Props {
 }
 
 export default function ProductsStoreClient({ negocio }: Props) {
+    const config: any = negocio?.configuracion || {};
+    const slug = (negocio?.slug || '').toLowerCase();
+    const isRestaurant = 
+        config.blueprintId === 'RESTAURANT' ||
+        (negocio as any)?.tipoNegocio === 'RESTAURANTE' ||
+        (negocio as any)?.tipoNegocio === 'GASTRONOMIA' ||
+        (negocio as any)?.tipoNegocio === 'RESTAURANT' ||
+        config.tipoNegocio === 'RESTAURANTE' ||
+        config.tipoNegocio === 'GASTRONOMIA' ||
+        config.tipoNegocio === 'RESTAURANT' ||
+        slug.includes('parrilla') ||
+        slug.includes('restaurant') ||
+        slug.includes('gastro') ||
+        slug.includes('burger') ||
+        slug.includes('pizza') ||
+        slug.includes('taco');
+
+    if (isRestaurant) {
+        const RestaurantLanding = require('@/modules/restaurant/components/RestaurantLanding').default;
+        return <RestaurantLanding negocio={negocio} />;
+    }
+
     const primaryColor = negocio.colorPrimario || '#1dc95c';
     const secondaryColor = negocio.colorSecundario || '#112117';
-    const config: any = negocio.configuracion || {};
 
     // Obtener todas las imágenes de portada/banner del negocio para el slider desde todas las fuentes (heroItems, config.bannerUrls, config.bannerUrl, imagenes, etc.)
     const heroItemsList = ((negocio as any).heroItems || []).filter((h: any) => h.isActive && h.image).map((h: any) => h.image);
