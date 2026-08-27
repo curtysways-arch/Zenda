@@ -2,8 +2,9 @@
 /**
  * @file RestaurantLanding.tsx
  * @module modules/restaurant/components
- * @description Rediseño optimizado del Home de Restaurante con aislamiento total contra la sobreescritura de CSS global.
- * Corrije la visibilidad de los textos en la barra de dirección oscura (forzando blanco nítido #ffffff) y en el módulo de envíos (forzando texto oscuro #0f172a / #475569).
+ * @description Rediseño optimizado del Home de Restaurante con aislamiento total contra la sobreescritura del CSS global de layout.tsx.
+ * Desactiva totalmente el selector global `[class*="bg-[#FFF"]` eliminando las clases de Tailwind con corchetes hex y
+ * aplicando clases scoped con alta especificidad (!important) para texto oscuro en categorías y beneficios, y texto blanco en el header.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -335,21 +336,32 @@ function RestaurantLandingContent({
   };
 
   return (
-    <div style={{ backgroundColor: cn }} className="restaurant-landing-root min-h-screen font-sans pb-28 select-none text-slate-900 w-full">
-      {/* Reglas de sobreescritura defensiva para forzar colores nítidos */}
+    <div style={{ backgroundColor: cn }} className="rest-root-scope min-h-screen font-sans pb-28 select-none text-slate-900 w-full">
+      {/* Reglas CSS Scoped con alta especificidad para anular totalmente la interferencia de layout.tsx */}
       <style dangerouslySetInnerHTML={{
         __html: `
-          .restaurant-landing-root .force-white {
+          .rest-root-scope .hdr-txt-white {
             color: #ffffff !important;
           }
-          .restaurant-landing-root .force-slate-400 {
+          .rest-root-scope .hdr-txt-sub {
             color: #94a3b8 !important;
           }
-          .restaurant-landing-root .force-dark {
+          .rest-root-scope .cat-btn-unselected {
+            color: #334155 !important;
+            background-color: #ffffff !important;
+            border-color: #e2e8f0 !important;
+          }
+          .rest-root-scope .benefit-title-dark {
             color: #0f172a !important;
           }
-          .restaurant-landing-root .force-subdark {
+          .rest-root-scope .benefit-sub-dark {
             color: #475569 !important;
+          }
+          .rest-root-scope .prod-title-dark {
+            color: #0f172a !important;
+          }
+          .rest-root-scope .prod-desc-dark {
+            color: #64748b !important;
           }
         `
       }} />
@@ -372,13 +384,13 @@ function RestaurantLandingContent({
               <div>
                 <h1
                   style={{ color: '#ffffff' }}
-                  className="force-white font-black text-base sm:text-lg tracking-tight flex items-center gap-1 leading-none"
+                  className="hdr-txt-white font-black text-base sm:text-lg tracking-tight flex items-center gap-1 leading-none"
                 >
                   ¡Hola, {customerData.nombre || 'Diego'}! 👋
                 </h1>
                 <p
                   style={{ color: '#94a3b8' }}
-                  className="force-slate-400 text-[11px] font-medium leading-tight mt-0.5"
+                  className="hdr-txt-sub text-[11px] font-medium leading-tight mt-0.5"
                 >
                   ¿Qué se te antoja hoy?
                 </p>
@@ -388,12 +400,13 @@ function RestaurantLandingContent({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="w-9 h-9 rounded-full bg-[#222226] border border-zinc-700/60 flex items-center justify-center relative text-white transition-colors"
+                className="w-9 h-9 rounded-full border flex items-center justify-center relative transition-colors"
+                style={{ backgroundColor: '#222226', borderColor: 'rgba(63, 63, 70, 0.6)' }}
               >
                 <Bell className="w-4 h-4" style={{ color: '#ffffff' }} />
                 <span
                   style={{ backgroundColor: cp, color: '#ffffff' }}
-                  className="force-white absolute top-1.5 right-1.5 min-w-[14px] h-[14px] px-0.5 rounded-full text-[9px] font-black flex items-center justify-center ring-2 ring-[#121214]"
+                  className="hdr-txt-white absolute top-1.5 right-1.5 min-w-[14px] h-[14px] px-0.5 rounded-full text-[9px] font-black flex items-center justify-center ring-2 ring-[#121214]"
                 >
                   2
                 </span>
@@ -402,13 +415,14 @@ function RestaurantLandingContent({
               <button
                 type="button"
                 onClick={() => setShowCartDrawer(true)}
-                className="w-9 h-9 rounded-full bg-[#222226] border border-zinc-700/60 flex items-center justify-center relative text-white transition-colors"
+                className="w-9 h-9 rounded-full border flex items-center justify-center relative transition-colors"
+                style={{ backgroundColor: '#222226', borderColor: 'rgba(63, 63, 70, 0.6)' }}
               >
                 <ShoppingBag className="w-4 h-4" style={{ color: '#ffffff' }} />
                 {totalItemsCount > 0 && (
                   <span
                     style={{ backgroundColor: cp, color: '#ffffff' }}
-                    className="force-white absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center shadow-lg"
+                    className="hdr-txt-white absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center shadow-lg"
                   >
                     {totalItemsCount}
                   </span>
@@ -417,11 +431,12 @@ function RestaurantLandingContent({
             </div>
           </div>
 
-          {/* ── 2. SELECTOR DE DIRECCIÓN OSCURO CON TEXTOS BLANCOS CORREGIDOS ── */}
+          {/* ── 2. SELECTOR DE DIRECCIÓN OSCURO CON TEXTO BLANCO INMUNIZADO ── */}
           <button
             type="button"
             onClick={() => setShowChannelModal(true)}
-            className="w-full bg-[#1c1c20] hover:bg-[#242429] border border-zinc-800/90 rounded-2xl px-3.5 py-2.5 flex items-center justify-between text-xs transition-all group"
+            style={{ backgroundColor: '#1c1c20', borderColor: 'rgba(39, 39, 42, 0.9)' }}
+            className="w-full border rounded-2xl px-3.5 py-2.5 flex items-center justify-between text-xs transition-all group"
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <div
@@ -433,13 +448,13 @@ function RestaurantLandingContent({
               <div className="text-left min-w-0">
                 <span
                   style={{ color: '#94a3b8' }}
-                  className="force-slate-400 text-[9px] font-bold block uppercase tracking-wider leading-tight"
+                  className="hdr-txt-sub text-[9px] font-bold block uppercase tracking-wider leading-tight"
                 >
                   {deliveryType === 'DOMICILIO' ? 'Enviar a' : deliveryType === 'MESA' ? 'Consumo en' : 'Retiro en'}
                 </span>
                 <span
                   style={{ color: '#ffffff' }}
-                  className="force-white font-extrabold text-xs truncate block leading-tight mt-0.5"
+                  className="hdr-txt-white font-extrabold text-xs truncate block leading-tight mt-0.5"
                 >
                   {deliveryType === 'DOMICILIO'
                     ? (customerData.direccion || negocio?.direccion || 'Av. Amazonas N34-451 y Japón')
@@ -449,7 +464,7 @@ function RestaurantLandingContent({
                 </span>
               </div>
             </div>
-            <ChevronDown className="w-4 h-4 force-slate-400 shrink-0" style={{ color: '#94a3b8' }} />
+            <ChevronDown className="w-4 h-4 hdr-txt-sub shrink-0" style={{ color: '#94a3b8' }} />
           </button>
 
           {/* ── 3. BUSCADOR BLANCO COMPACTO ── */}
@@ -460,7 +475,8 @@ function RestaurantLandingContent({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar platos, combos, bebidas..."
-              className="w-full bg-white text-slate-900 pl-10 pr-10 py-2.5 rounded-xl text-xs font-semibold placeholder-slate-400 shadow-sm focus:outline-none"
+              style={{ backgroundColor: '#ffffff', color: '#0f172a' }}
+              className="w-full pl-10 pr-10 py-2.5 rounded-xl text-xs font-semibold placeholder-slate-400 shadow-sm focus:outline-none border border-slate-200"
             />
             <button
               type="button"
@@ -492,7 +508,7 @@ function RestaurantLandingContent({
           {activeSlide.price > 0 && (
             <div
               style={{ backgroundColor: cp, color: '#ffffff' }}
-              className="force-white absolute top-3 left-[46%] sm:left-[44%] z-20 w-14 h-14 rounded-full flex flex-col items-center justify-center text-white shadow-2xl border-2 border-[#121214] text-center font-extrabold rotate-3 shrink-0"
+              className="hdr-txt-white absolute top-3 left-[46%] sm:left-[44%] z-20 w-14 h-14 rounded-full flex flex-col items-center justify-center text-white shadow-2xl border-2 border-[#121214] text-center font-extrabold rotate-3 shrink-0"
             >
               <span className="text-[7px] tracking-wider leading-none uppercase text-amber-100 font-black">DESDE</span>
               <span className="text-[11px] font-black leading-tight">${activeSlide.price.toFixed(2)}</span>
@@ -512,7 +528,7 @@ function RestaurantLandingContent({
             {activeSlide.titleText && (
               <h2
                 style={{ color: '#ffffff' }}
-                className="force-white text-lg sm:text-2xl font-black tracking-tight leading-tight uppercase drop-shadow-md"
+                className="hdr-txt-white text-lg sm:text-2xl font-black tracking-tight leading-tight uppercase drop-shadow-md"
               >
                 {activeSlide.titleText.includes(' ') ? (
                   <>
@@ -530,7 +546,7 @@ function RestaurantLandingContent({
             {activeSlide.descText && (
               <p
                 style={{ color: '#cbd5e1' }}
-                className="force-slate-400 text-[10px] font-normal leading-relaxed line-clamp-2 max-w-[210px]"
+                className="hdr-txt-sub text-[10px] font-normal leading-relaxed line-clamp-2 max-w-[210px]"
               >
                 {activeSlide.descText}
               </p>
@@ -542,7 +558,7 @@ function RestaurantLandingContent({
                   type="button"
                   onClick={() => handleHeroButtonClick(activeSlide)}
                   style={{ backgroundColor: cp, color: '#ffffff' }}
-                  className="force-white px-4 py-1.5 rounded-full text-[11px] font-black text-white shadow-lg flex items-center gap-1 hover:opacity-90 active:scale-95 transition-all"
+                  className="hdr-txt-white px-4 py-1.5 rounded-full text-[11px] font-black text-white shadow-lg flex items-center gap-1 hover:opacity-90 active:scale-95 transition-all"
                 >
                   <span>{activeSlide.buttonText}</span>
                   <ArrowRight className="w-3 h-3" />
@@ -571,24 +587,28 @@ function RestaurantLandingContent({
           )}
         </div>
 
-        {/* ── 5. CATEGORÍAS HORIZONTALES ULTRA-COMPACTAS ── */}
+        {/* ── 5. CATEGORÍAS HORIZONTALES (TEXTOS OSCURO #334155 VISIBLES Y NÍTI DOS) ── */}
         <div>
           <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none">
             <button
               type="button"
               onClick={() => setSelectedCategory('TODOS')}
-              className={`px-3 py-2 rounded-2xl border flex flex-col items-center justify-center min-w-[76px] shrink-0 transition-all shadow-xs ${
-                selectedCategory === 'TODOS'
-                  ? 'bg-white shadow-md border-2'
-                  : 'bg-white border-slate-100 text-slate-700 hover:bg-slate-50'
-              }`}
               style={{
-                borderColor: selectedCategory === 'TODOS' ? cp : undefined,
-                color: selectedCategory === 'TODOS' ? cp : undefined
+                borderColor: selectedCategory === 'TODOS' ? cp : '#e2e8f0',
+                color: selectedCategory === 'TODOS' ? cp : '#334155',
+                backgroundColor: '#ffffff'
               }}
+              className={`px-3 py-2 rounded-2xl border flex flex-col items-center justify-center min-w-[76px] shrink-0 transition-all shadow-xs ${
+                selectedCategory === 'TODOS' ? 'shadow-md border-2' : 'cat-btn-unselected'
+              }`}
             >
               <span className="text-xl mb-0.5">🍔</span>
-              <span className="text-[10px] font-extrabold whitespace-nowrap">Hamburguesas</span>
+              <span
+                style={{ color: selectedCategory === 'TODOS' ? cp : '#334155' }}
+                className={`text-[10px] font-extrabold whitespace-nowrap ${selectedCategory !== 'TODOS' ? 'cat-btn-unselected' : ''}`}
+              >
+                Hamburguesas
+              </span>
             </button>
 
             {categories.map((cat) => {
@@ -598,36 +618,43 @@ function RestaurantLandingContent({
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-2 rounded-2xl border flex flex-col items-center justify-center min-w-[76px] shrink-0 transition-all shadow-xs ${
-                    isActive
-                      ? 'bg-white shadow-md border-2'
-                      : 'bg-white border-slate-100 text-slate-700 hover:bg-slate-50'
-                  }`}
                   style={{
-                    borderColor: isActive ? cp : undefined,
-                    color: isActive ? cp : undefined
+                    borderColor: isActive ? cp : '#e2e8f0',
+                    color: isActive ? cp : '#334155',
+                    backgroundColor: '#ffffff'
                   }}
+                  className={`px-3 py-2 rounded-2xl border flex flex-col items-center justify-center min-w-[76px] shrink-0 transition-all shadow-xs ${
+                    isActive ? 'shadow-md border-2' : 'cat-btn-unselected'
+                  }`}
                 >
                   <span className="text-xl mb-0.5">{cat.icono || '🍲'}</span>
-                  <span className="text-[10px] font-extrabold whitespace-nowrap">{cat.nombre}</span>
+                  <span
+                    style={{ color: isActive ? cp : '#334155' }}
+                    className={`text-[10px] font-extrabold whitespace-nowrap ${!isActive ? 'cat-btn-unselected' : ''}`}
+                  >
+                    {cat.nombre}
+                  </span>
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* ── 6. MÓDULO DE ENVÍO Y BENEFICIOS COMPACTO CON TEXTO OSCURO NÍTIDO ── */}
-        <div className="bg-[#fff8f5] rounded-2xl border border-orange-100/70 p-2.5 flex items-center justify-between shadow-2xs text-xs">
+        {/* ── 6. MÓDULO DE ENVÍO Y BENEFICIOS COMPACTO CON TEXTO OSCURO (#0f172a / #475569) ── */}
+        <div
+          style={{ backgroundColor: '#fff8f5', borderColor: 'rgba(254, 215, 170, 0.7)' }}
+          className="rounded-2xl border p-2.5 flex items-center justify-between shadow-2xs text-xs"
+        >
           {/* Beneficio 1: Envío Rápido */}
           <div className="flex items-center gap-2 flex-1 justify-center px-1">
             <div style={{ color: cp }} className="shrink-0">
               <Truck className="w-5 h-5" />
             </div>
             <div className="text-left">
-              <span style={{ color: '#0f172a' }} className="force-dark font-extrabold block leading-tight text-[11px]">
+              <span style={{ color: '#0f172a' }} className="benefit-title-dark font-extrabold block leading-tight text-[11px]">
                 Envío rápido
               </span>
-              <span style={{ color: '#475569' }} className="force-subdark text-[9px] block leading-none mt-0.5">
+              <span style={{ color: '#475569' }} className="benefit-sub-dark text-[9px] block leading-none mt-0.5">
                 30–45 min
               </span>
             </div>
@@ -642,10 +669,10 @@ function RestaurantLandingContent({
               <Percent className="w-5 h-5" />
             </div>
             <div className="text-left">
-              <span style={{ color: '#0f172a' }} className="force-dark font-extrabold block leading-tight text-[11px]">
+              <span style={{ color: '#0f172a' }} className="benefit-title-dark font-extrabold block leading-tight text-[11px]">
                 Promociones
               </span>
-              <span style={{ color: '#475569' }} className="force-subdark text-[9px] block leading-none mt-0.5">
+              <span style={{ color: '#475569' }} className="benefit-sub-dark text-[9px] block leading-none mt-0.5">
                 Todos los días
               </span>
             </div>
@@ -660,10 +687,10 @@ function RestaurantLandingContent({
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div className="text-left">
-              <span style={{ color: '#0f172a' }} className="force-dark font-extrabold block leading-tight text-[11px]">
+              <span style={{ color: '#0f172a' }} className="benefit-title-dark font-extrabold block leading-tight text-[11px]">
                 Pago seguro
               </span>
-              <span style={{ color: '#475569' }} className="force-subdark text-[9px] block leading-none mt-0.5">
+              <span style={{ color: '#475569' }} className="benefit-sub-dark text-[9px] block leading-none mt-0.5">
                 100% protegido
               </span>
             </div>
@@ -673,7 +700,7 @@ function RestaurantLandingContent({
         {/* ── 7. SECCIÓN RECOMENDADOS PARA TI ── */}
         <div className="space-y-3 pt-1">
           <div className="flex items-center justify-between">
-            <h3 style={{ color: '#0f172a' }} className="force-dark text-base sm:text-lg font-black tracking-tight">
+            <h3 style={{ color: '#0f172a' }} className="benefit-title-dark text-base sm:text-lg font-black tracking-tight">
               Recomendados para ti
             </h3>
             <button
@@ -688,10 +715,10 @@ function RestaurantLandingContent({
           </div>
 
           {filteredProducts.length === 0 ? (
-            <div className="text-center py-8 bg-white rounded-2xl border border-slate-100 p-6 space-y-2">
+            <div style={{ backgroundColor: '#ffffff' }} className="text-center py-8 rounded-2xl border border-slate-100 p-6 space-y-2">
               <Utensils className="w-8 h-8 text-slate-300 mx-auto" />
-              <h4 className="font-bold text-slate-700 text-xs">No encontramos platillos disponibles</h4>
-              <p className="text-[11px] text-slate-400">Intenta buscar otro término o seleccionar otra categoría.</p>
+              <h4 style={{ color: '#334155' }} className="font-bold text-xs">No encontramos platillos disponibles</h4>
+              <p style={{ color: '#64748b' }} className="text-[11px]">Intenta buscar otro término o seleccionar otra categoría.</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -702,7 +729,8 @@ function RestaurantLandingContent({
                 return (
                   <div
                     key={prod.id}
-                    className="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all"
+                    style={{ backgroundColor: '#ffffff' }}
+                    className="rounded-2xl border border-slate-100 shadow-xs overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all"
                   >
                     {/* Imagen del Producto + Corazón Favorito */}
                     <div className="relative w-full h-32 sm:h-36 bg-slate-100 overflow-hidden">
@@ -732,11 +760,11 @@ function RestaurantLandingContent({
                     {/* Nombre, Descripción, Precio y Botón + */}
                     <div className="p-2.5 flex-1 flex flex-col justify-between space-y-1.5">
                       <div>
-                        <h4 style={{ color: '#0f172a' }} className="force-dark font-extrabold text-xs leading-snug line-clamp-1">
+                        <h4 style={{ color: '#0f172a' }} className="prod-title-dark font-extrabold text-xs leading-snug line-clamp-1">
                           {prod.nombre}
                         </h4>
                         {prod.descripcion && (
-                          <p style={{ color: '#64748b' }} className="force-subdark text-[10px] mt-0.5 line-clamp-2 font-normal leading-normal">
+                          <p style={{ color: '#64748b' }} className="prod-desc-dark text-[10px] mt-0.5 line-clamp-2 font-normal leading-normal">
                             {prod.descripcion}
                           </p>
                         )}
@@ -756,7 +784,7 @@ function RestaurantLandingContent({
                             >
                               -
                             </button>
-                            <span style={{ color: '#0f172a' }} className="force-dark text-xs font-extrabold px-0.5">{qtyInCart}</span>
+                            <span style={{ color: '#0f172a' }} className="prod-title-dark text-xs font-extrabold px-0.5">{qtyInCart}</span>
                             <button
                               type="button"
                               onClick={() => addToCart({
@@ -766,7 +794,7 @@ function RestaurantLandingContent({
                                 imagenUrl: prod.imagenUrl
                               })}
                               style={{ backgroundColor: cp, color: '#ffffff' }}
-                              className="force-white w-5 h-5 rounded-lg font-bold text-xs flex items-center justify-center shadow-xs"
+                              className="hdr-txt-white w-5 h-5 rounded-lg font-bold text-xs flex items-center justify-center shadow-xs"
                             >
                               +
                             </button>
@@ -781,7 +809,7 @@ function RestaurantLandingContent({
                               imagenUrl: prod.imagenUrl
                             })}
                             style={{ backgroundColor: cp, color: '#ffffff' }}
-                            className="force-white w-6 h-6 sm:w-7 sm:h-7 rounded-xl flex items-center justify-center font-extrabold shadow-md hover:opacity-90 active:scale-95 transition-all"
+                            className="hdr-txt-white w-6 h-6 sm:w-7 sm:h-7 rounded-xl flex items-center justify-center font-extrabold shadow-md hover:opacity-90 active:scale-95 transition-all"
                           >
                             <Plus className="w-3.5 h-3.5" style={{ color: '#ffffff' }} />
                           </button>
@@ -803,13 +831,13 @@ function RestaurantLandingContent({
           <div className="flex items-center gap-2.5 relative z-10">
             <div
               style={{ backgroundColor: cp, color: '#ffffff' }}
-              className="force-white w-10 h-10 rounded-xl flex flex-col items-center justify-center text-white font-black text-center shadow-lg rotate-[-4deg] shrink-0"
+              className="hdr-txt-white w-10 h-10 rounded-xl flex flex-col items-center justify-center text-white font-black text-center shadow-lg rotate-[-4deg] shrink-0"
             >
               <span className="text-[8px] leading-tight">GRATIS</span>
               <Truck className="w-4 h-4 mt-0.5" style={{ color: '#ffffff' }} />
             </div>
             <div>
-              <h4 style={{ color: '#ffffff' }} className="force-white font-extrabold text-xs sm:text-sm tracking-wide uppercase leading-tight">
+              <h4 style={{ color: '#ffffff' }} className="hdr-txt-white font-extrabold text-xs sm:text-sm tracking-wide uppercase leading-tight">
                 ¡ENVÍO GRATIS!
               </h4>
               <p style={{ color: cp }} className="text-[11px] font-bold mt-0.5">
@@ -837,7 +865,7 @@ function RestaurantLandingContent({
             type="button"
             onClick={() => setShowCartDrawer(true)}
             style={{ backgroundColor: cp, color: '#ffffff' }}
-            className="force-white pointer-events-auto w-full py-3 px-4 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-between shadow-2xl hover:opacity-95 active:scale-95 transition-all"
+            className="hdr-txt-white pointer-events-auto w-full py-3 px-4 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-between shadow-2xl hover:opacity-95 active:scale-95 transition-all"
           >
             <div className="flex items-center gap-2">
               <ShoppingBag className="w-4 h-4" style={{ color: '#ffffff' }} />
@@ -849,7 +877,7 @@ function RestaurantLandingContent({
       )}
 
       {/* ── 9. NAVEGACIÓN INFERIOR FIJA DE 5 OPCIONES ── */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 py-2 px-3 flex justify-around items-center z-50 shadow-lg w-full max-w-4xl mx-auto">
+      <nav style={{ backgroundColor: '#ffffff' }} className="fixed bottom-0 left-0 right-0 border-t border-slate-200 py-2 px-3 flex justify-around items-center z-50 shadow-lg w-full max-w-4xl mx-auto">
         <button
           type="button"
           onClick={() => setActiveNavTab('inicio')}
@@ -904,12 +932,12 @@ function RestaurantLandingContent({
         </Link>
       </nav>
 
-      {/* ── MODAL CANAL DE ATENCIÓN DE PEDIDO (DOMICILIO / MESA / RETIRO) ── */}
+      {/* ── MODAL CANAL DE ATENCIÓN DE PEDIDO ── */}
       {showChannelModal && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-5 max-w-sm w-full space-y-3.5 shadow-2xl text-slate-900 border border-slate-100">
+          <div style={{ backgroundColor: '#ffffff' }} className="rounded-3xl p-5 max-w-sm w-full space-y-3.5 shadow-2xl text-slate-900 border border-slate-100">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <h4 style={{ color: '#0f172a' }} className="force-dark font-extrabold text-sm">¿Cómo deseas tu pedido?</h4>
+              <h4 style={{ color: '#0f172a' }} className="benefit-title-dark font-extrabold text-sm">¿Cómo deseas tu pedido?</h4>
               <button
                 type="button"
                 onClick={() => setShowChannelModal(false)}
@@ -932,12 +960,12 @@ function RestaurantLandingContent({
                     : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                <div style={{ backgroundColor: cp, color: '#ffffff' }} className="force-white w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
+                <div style={{ backgroundColor: cp, color: '#ffffff' }} className="hdr-txt-white w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
                   <Truck className="w-4 h-4" style={{ color: '#ffffff' }} />
                 </div>
                 <div className="text-left flex-1">
-                  <span style={{ color: '#0f172a' }} className="force-dark block font-extrabold text-xs">Delivery a Domicilio</span>
-                  <span style={{ color: '#64748b' }} className="force-subdark text-[10px] font-normal">Entregas rápidas a tu ubicación</span>
+                  <span style={{ color: '#0f172a' }} className="benefit-title-dark block font-extrabold text-xs">Delivery a Domicilio</span>
+                  <span style={{ color: '#64748b' }} className="benefit-sub-dark text-[10px] font-normal">Entregas rápidas a tu ubicación</span>
                 </div>
               </button>
 
@@ -953,12 +981,12 @@ function RestaurantLandingContent({
                     : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                <div style={{ backgroundColor: cp, color: '#ffffff' }} className="force-white w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
+                <div style={{ backgroundColor: cp, color: '#ffffff' }} className="hdr-txt-white w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
                   <Utensils className="w-4 h-4" style={{ color: '#ffffff' }} />
                 </div>
                 <div className="text-left flex-1">
-                  <span style={{ color: '#0f172a' }} className="force-dark block font-extrabold text-xs">Pedir a la Mesa</span>
-                  <span style={{ color: '#64748b' }} className="force-subdark text-[10px] font-normal">Consumo directo en el local</span>
+                  <span style={{ color: '#0f172a' }} className="benefit-title-dark block font-extrabold text-xs">Pedir a la Mesa</span>
+                  <span style={{ color: '#64748b' }} className="benefit-sub-dark text-[10px] font-normal">Consumo directo en el local</span>
                 </div>
               </button>
 
@@ -974,12 +1002,12 @@ function RestaurantLandingContent({
                     : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                <div style={{ backgroundColor: cp, color: '#ffffff' }} className="force-white w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
+                <div style={{ backgroundColor: cp, color: '#ffffff' }} className="hdr-txt-white w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
                   <ShoppingBag className="w-4 h-4" style={{ color: '#ffffff' }} />
                 </div>
                 <div className="text-left flex-1">
-                  <span style={{ color: '#0f172a' }} className="force-dark block font-extrabold text-xs">Para Llevar / Retiro</span>
-                  <span style={{ color: '#64748b' }} className="force-subdark text-[10px] font-normal">Pasa a retirar por el local</span>
+                  <span style={{ color: '#0f172a' }} className="benefit-title-dark block font-extrabold text-xs">Para Llevar / Retiro</span>
+                  <span style={{ color: '#64748b' }} className="benefit-sub-dark text-[10px] font-normal">Pasa a retirar por el local</span>
                 </div>
               </button>
             </div>
