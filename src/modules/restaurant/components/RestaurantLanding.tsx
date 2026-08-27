@@ -474,10 +474,10 @@ function RestaurantLandingContent({
               key={activeSlide.id}
               src={activeSlide.image}
               alt={activeSlide.titleText || 'Banner Hero'}
-              className="w-full h-full object-cover object-center animate-in fade-in duration-500"
+              className="w-full h-full object-cover object-center brightness-105 contrast-105 saturate-105 animate-in fade-in duration-500"
             />
-            {/* Degradado oscuro para integrar el texto suavemente sobre la imagen */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#121214] via-[#121214]/85 to-transparent" />
+            {/* Degradado suave solo en el borde de transición izquierdo para mantener legibilidad sin oscurecer la imagen */}
+            <div className="absolute inset-y-0 left-0 w-28 sm:w-40 bg-gradient-to-r from-[#121214] via-[#121214]/50 to-transparent" />
           </div>
 
           {/* Insignia Circular Flotante en Naranja si el precio es > 0 */}
@@ -504,13 +504,13 @@ function RestaurantLandingContent({
             )}
 
             {activeSlide.titleText && (
-              <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight text-white uppercase pt-1">
+              <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight text-white uppercase pt-1 drop-shadow-md">
                 {activeSlide.titleText}
               </h2>
             )}
 
             {activeSlide.descText && (
-              <p className="text-xs text-slate-300 font-normal leading-relaxed line-clamp-3 max-w-[240px]">
+              <p className="text-xs text-slate-200 font-normal leading-relaxed line-clamp-3 max-w-[240px] drop-shadow-sm">
                 {activeSlide.descText}
               </p>
             )}
