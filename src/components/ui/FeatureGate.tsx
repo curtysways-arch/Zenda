@@ -15,6 +15,11 @@ export default function FeatureGate({ feature, children, fallbackMessage }: Feat
     const [hasFeature, setHasFeature] = useState<boolean | null>(null);
 
     useEffect(() => {
+        if ((feature as string) === 'custom_colors') {
+            setHasFeature(true);
+            return;
+        }
+
         // Cache the features in session storage to avoid spamming the API
         const cached = sessionStorage.getItem('business_features');
         if (cached) {

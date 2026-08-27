@@ -218,69 +218,67 @@ export default function NegocioConfigPage() {
                         </p>
                     </div>
 
-                    <FeatureGate feature="custom_colors" fallbackMessage="Tu plan actual no permite personalizar la paleta de colores.">
-                        {(() => {
-                            const configObj = negocio.configuracion 
-                                ? (typeof negocio.configuracion === 'string' ? JSON.parse(negocio.configuracion) : negocio.configuracion) 
-                                : {};
-                            return (
-                                <ColorPaletteEditor
-                                    colors={{
-                                        colorPrimario: negocio.colorPrimario,
-                                        colorSecundario: negocio.colorSecundario,
-                                        colorTexto: negocio.colorTexto,
-                                        colorTerciario: negocio.colorTerciario,
-                                        colorNeutral: negocio.colorNeutral,
-                                        colorSubTexto: negocio.colorSubTexto,
-                                        colorHeader: configObj?.colorHeader || '',
-                                        modoAvanzadoColores: configObj?.modoAvanzadoColores,
-                                    }}
-                                    onChange={(updatedColors) => {
-                                        const newConfig = { 
-                                            ...configObj, 
-                                            colorHeader: updatedColors.colorHeader,
-                                            modoAvanzadoColores: updatedColors.modoAvanzadoColores
-                                        };
-                                        setNegocio({ 
-                                            ...negocio, 
-                                            ...updatedColors,
-                                            configuracion: newConfig
+                    {(() => {
+                        const configObj = negocio.configuracion 
+                            ? (typeof negocio.configuracion === 'string' ? JSON.parse(negocio.configuracion) : negocio.configuracion) 
+                            : {};
+                        return (
+                            <ColorPaletteEditor
+                                colors={{
+                                    colorPrimario: negocio.colorPrimario,
+                                    colorSecundario: negocio.colorSecundario,
+                                    colorTexto: negocio.colorTexto,
+                                    colorTerciario: negocio.colorTerciario,
+                                    colorNeutral: negocio.colorNeutral,
+                                    colorSubTexto: negocio.colorSubTexto,
+                                    colorHeader: configObj?.colorHeader || '',
+                                    modoAvanzadoColores: configObj?.modoAvanzadoColores,
+                                }}
+                                onChange={(updatedColors) => {
+                                    const newConfig = { 
+                                        ...configObj, 
+                                        colorHeader: updatedColors.colorHeader,
+                                        modoAvanzadoColores: updatedColors.modoAvanzadoColores
+                                    };
+                                    setNegocio({ 
+                                        ...negocio, 
+                                        ...updatedColors,
+                                        configuracion: newConfig
+                                    });
+                                }}
+                                onSave={async (colorData) => {
+                                    setSaving(true);
+                                    setMessage(null);
+                                    try {
+                                        const { colorHeader, modoAvanzadoColores, ...restColors } = colorData;
+                                        const newConfig = { ...configObj, colorHeader, modoAvanzadoColores };
+                                        const res = await fetch('/api/negocio', {
+                                            method: 'PATCH',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                ...restColors,
+                                                configuracion: newConfig
+                                            }),
                                         });
-                                    }}
-                                    onSave={async (colorData) => {
-                                        setSaving(true);
-                                        setMessage(null);
-                                        try {
-                                            const { colorHeader, modoAvanzadoColores, ...restColors } = colorData;
-                                            const newConfig = { ...configObj, colorHeader, modoAvanzadoColores };
-                                            const res = await fetch('/api/negocio', {
-                                                method: 'PATCH',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({
-                                                    ...restColors,
-                                                    configuracion: newConfig
-                                                }),
-                                            });
-                                            if (res.ok) {
-                                                const updated = await res.json();
-                                                setNegocio((prev: any) => ({ ...prev, ...updated }));
-                                                setMessage({ type: 'success', text: 'Paleta de colores guardada correctamente' });
-                                            } else {
-                                                setMessage({ type: 'error', text: 'Error al guardar los colores' });
-                                            }
-                                        } catch {
-                                            setMessage({ type: 'error', text: 'Error de conexión' });
-                                        } finally {
-                                            setSaving(false);
-                                            setTimeout(() => setMessage(null), 3000);
+                                        if (res.ok) {
+                                            const updated = await res.json();
+                                            setNegocio((prev: any) => ({ ...prev, ...updated }));
+                                            setMessage({ type: 'success', text: 'Paleta de colores guardada correctamente' });
+                                        } else {
+                                            setMessage({ type: 'error', text: 'Error al guardar los colores' });
                                         }
-                                    }}
-                                    isSaving={saving}
-                                    showHeader={false}
-                                />
-                            );
-                        })()}
-                    </FeatureGate>
+                                    } catch {
+                                        setMessage({ type: 'error', text: 'Error de conexión' });
+                                    } finally {
+                                        setSaving(false);
+                                        setTimeout(() => setMessage(null), 3000);
+                                    }
+                                }}
+                                isSaving={saving}
+                                showHeader={false}
+                            />
+                        );
+                    })()}
                 </div>
 
                 {/* Datos de Contacto y Cobertura */}
