@@ -2,16 +2,18 @@
 /**
  * @file RestaurantLanding.tsx
  * @module modules/restaurant/components
- * @description Landing Page Pública de Restaurante (FASE 5D) adaptada con el diseño exacto de la captura enviada,
- * con la imagen del banner Hero gigante (borde a borde), carrusel dinámico de Hero Items (Destacados/Promos)
- * y sección de Destacados de la casa.
+ * @description Landing Page Pública de Restaurante (FASE 5D) adaptada con la lógica oficial del Hero Banner:
+ * - Si no se configura un título en el HeroItem, utiliza el título y descripción del perfil del negocio.
+ * - Si el botón está desactivado o no tiene texto, no se renderiza.
+ * - Si tiene botón activado, ejecuta la acción o redirección configurada en actionType/actionValue.
+ * - La insignia circular de precio solo se muestra si el precio es mayor a 0.
  */
 
 import React, { useState, useEffect } from 'react';
 import {
   Menu, Search, SlidersHorizontal, MapPin, ChevronDown, Bell, ShoppingBag,
   Heart, Plus, Minus, Truck, Percent, ShieldCheck, Home, Grid, Tag,
-  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X, Flame, Star, Sparkles
+  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X, Flame, Sparkles
 } from 'lucide-react';
 import { CartProvider, useCart } from '@/core/context/CartContext';
 import CustomerCartDrawer from '@/components/public/CustomerCartDrawer';
@@ -170,14 +172,13 @@ function RestaurantLandingContent({
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
   const [activeNavTab, setActiveNavTab] = useState<'inicio' | 'categorias' | 'ofertas' | 'pedidos' | 'cuenta'>('inicio');
 
-  // Carrusel automático para el Hero Banner de Destacados
+  // Carrusel automático para el Hero Banner
   const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
 
   // Carga dinámica si no viene desde server-side props
   useEffect(() => {
     if (!negocio?.slug) return;
 
-    // Productos y Categorías
     if (initialProducts.length === 0) {
       fetch(`/api/public/${negocio.slug}/products`)
         .then(res => res.json())
@@ -188,7 +189,6 @@ function RestaurantLandingContent({
         .catch(() => {});
     }
 
-    // Hero Content & Highlights dinámicos
     if (!initialHeroContent?.hero || initialHeroContent.hero.length === 0) {
       fetch(`/api/${negocio.slug}/landing-content`)
         .then(res => res.json())
@@ -233,50 +233,124 @@ function RestaurantLandingContent({
     return true;
   });
 
-  // Construir las diapositivas del Hero (usando HeroItems dinámicos del Admin o fallbacks de productos)
-  const displayHeroSlides: Array<{
-    id: string;
-    badgeText: string;
-    titleFirst: string;
-    titleSecond: string;
-    description: string;
-    price: number;
-    image: string;
-    buttonText: string;
-    rawProduct?: Product;
-  }> = (heroSlides.length > 0)
+  // ── LÓGICA OFICIAL DE CONSTRUCCIÓN DEL HERO BANNER ──
+  // Rule:
+  // 1. Si no tiene título en el HeroItem, usa el título y la descripción del perfil del negocio.
+  // 2. Si el botón está desactivado o no tiene texto, no se renderiza botón.
+  // 3. Si tiene botón activado, asigna la acción/enlace configurado en button.actionType / actionValue.
+  const displayHeroSlides = (heroSlides.length > 0)
     ? heroSlides.map(slide => {
-        const fullTitle = slide.title || 'BURGER CLÁSICA';
-        const parts = fullTitle.trim().split(' ');
-        const first = parts[0] || 'BURGER';
-        const second = parts.slice(1).join(' ') || 'CLÁSICA';
+        const titleText = (slide.title && slide.title.trim())
+          ? slide.title.trim()
+          : (negocio?.heroTitulo || negocio?.nombre || '');
+
+        const descText = (slide.description && slide.description.trim())
+          ? slide.description.trim()
+          : (negocio?.heroSubtitulo || negocio?.descripcion || '');
+
+        const isButtonEnabled = slide.button?.enabled !== false && !!(slide.button?.text && slide.button.text.trim());
+        const buttonText = slide.button?.text?.trim() || '';
+        const actionType = slide.button?.actionType || 'NONE';
+        const actionValue = slide.button?.actionValue || '';
+
         return {
           id: slide.id,
-          badgeText: slide.type === 'PROMOTION' ? 'OFERTA EXCLUSIVA' : 'ESPECIAL DEL DÍA',
-          titleFirst: first,
-          titleSecond: second,
-          description: slide.description || 'Carne jugosa, queso cheddar, lechuga, tomate y nuestra salsa especial.',
-          price: Number(slide.price) || 6.99,
-          image: slide.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=1200',
-          buttonText: slide.button?.text || 'Pedir ahora →',
+          titleText,
+          descText,
+          price: Number(slide.price) || 0,
+          image: slide.image || negocio?.bannerUrl || negocio?.logoUrl || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=1200',
+          badgeText: slide.type === 'PROMOTION' ? 'OFERTA EXCLUSIVA' : (slide.type === 'IMAGE' ? '' : 'ESPECIAL'),
+          isButtonEnabled,
+          buttonText,
+          actionType,
+          actionValue,
+          rawSlide: slide,
+          rawProduct: null as Product | null
         };
       })
-    : products.slice(0, 3).map((prod, idx) => {
-        const parts = prod.nombre.trim().split(' ');
-        return {
-          id: prod.id,
-          badgeText: idx === 0 ? 'ESPECIAL DEL DÍA' : idx === 1 ? 'MÁS VENDIDO' : 'RECOMENDADO',
-          titleFirst: parts[0] || 'PLATO',
-          titleSecond: parts.slice(1).join(' ') || 'ESPECIAL',
-          description: prod.descripcion || 'Selección de ingredientes frescos y preparación gourmet al instante.',
-          price: prod.precio,
-          image: prod.imagenUrl || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=1200',
-          buttonText: 'Pedir ahora →',
-          rawProduct: prod
-        };
-      });
+    : (products.length > 0
+        ? products.slice(0, 3).map((prod, idx) => ({
+            id: prod.id,
+            titleText: prod.nombre,
+            descText: prod.descripcion || '',
+            price: Number(prod.precio) || 0,
+            image: prod.imagenUrl || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=1200',
+            badgeText: idx === 0 ? 'ESPECIAL DEL DÍA' : 'DESTACADO',
+            isButtonEnabled: true,
+            buttonText: 'Pedir ahora →',
+            actionType: 'PRODUCT',
+            actionValue: prod.id,
+            rawProduct: prod
+          }))
+        : [{
+            id: 'default-profile-hero',
+            titleText: negocio?.heroTitulo || negocio?.nombre || 'Bienvenido',
+            descText: negocio?.heroSubtitulo || negocio?.descripcion || 'Disfruta de nuestra gastronomía y servicio de calidad.',
+            price: 0,
+            image: negocio?.bannerUrl || negocio?.logoUrl || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=1200',
+            badgeText: '',
+            isButtonEnabled: false,
+            buttonText: '',
+            actionType: 'NONE',
+            actionValue: '',
+            rawProduct: null as Product | null
+          }]
+      );
 
   const activeSlide = displayHeroSlides[currentSlideIndex % displayHeroSlides.length] || displayHeroSlides[0];
+
+  // Manejador del clic en el botón del Hero Banner según actionType / actionValue
+  const handleHeroButtonClick = (slide: typeof activeSlide) => {
+    if (!slide.isButtonEnabled) return;
+
+    if (slide.rawProduct) {
+      addToCart(slide.rawProduct);
+      return;
+    }
+
+    const { actionType, actionValue } = slide;
+
+    if (actionType === 'URL' || actionType === 'LINK') {
+      if (actionValue) {
+        if (actionValue.startsWith('http://') || actionValue.startsWith('https://')) {
+          window.open(actionValue, '_blank');
+        } else {
+          window.location.href = actionValue;
+        }
+      }
+      return;
+    }
+
+    if (actionType === 'PRODUCT') {
+      if (actionValue) {
+        const prod = products.find(p => p.id === actionValue);
+        if (prod) {
+          addToCart(prod);
+          return;
+        }
+      }
+      setShowCartDrawer(true);
+      return;
+    }
+
+    if (actionType === 'CATEGORY') {
+      if (actionValue) {
+        setSelectedCategory(actionValue);
+      }
+      return;
+    }
+
+    // Por defecto si no tiene actionType específico pero sí enlace en actionValue
+    if (actionValue) {
+      if (actionValue.startsWith('http://') || actionValue.startsWith('https://') || actionValue.startsWith('/')) {
+        window.location.href = actionValue;
+        return;
+      }
+    }
+
+    // Fallback estándar
+    setShowCartDrawer(true);
+  };
 
   return (
     <div style={{ backgroundColor: cn }} className="min-h-screen font-sans pb-28 select-none text-slate-900">
@@ -389,7 +463,7 @@ function RestaurantLandingContent({
       </header>
 
       <main className="max-w-4xl mx-auto px-4 pt-5 space-y-6">
-        {/* ── 2. HERO BANNER DE DESTACADOS (CARRUSEL DINÁMICO & IMAGEN GIGANTE EDGE-TO-EDGE) ── */}
+        {/* ── 2. HERO BANNER DINÁMICO RESPETANDO LA LÓGICA DE HEROS (IMAGEN GIGANTE EDGE-TO-EDGE) ── */}
         <div
           style={{ backgroundColor: '#121214' }}
           className="relative rounded-3xl overflow-hidden text-white shadow-2xl border border-zinc-800/80 min-h-[250px] sm:min-h-[290px] flex items-center transition-all duration-500"
@@ -399,61 +473,62 @@ function RestaurantLandingContent({
             <img
               key={activeSlide.id}
               src={activeSlide.image}
-              alt={activeSlide.titleFirst}
+              alt={activeSlide.titleText || 'Banner Hero'}
               className="w-full h-full object-cover object-center animate-in fade-in duration-500"
             />
             {/* Degradado oscuro para integrar el texto suavemente sobre la imagen */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#121214] via-[#121214]/80 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#121214] via-[#121214]/85 to-transparent" />
           </div>
 
-          {/* Insignia Circular Flotante en Naranja con Precio */}
-          <div
-            style={{ backgroundColor: cp }}
-            className="absolute top-4 left-[48%] sm:left-[45%] z-20 w-16 h-16 rounded-full flex flex-col items-center justify-center text-white shadow-2xl border-2 border-[#121214] text-center font-extrabold rotate-3"
-          >
-            <span className="text-[8px] tracking-wider leading-none uppercase text-amber-100 font-black">DESDE</span>
-            <span className="text-xs font-black leading-tight">${activeSlide.price.toFixed(2)}</span>
-          </div>
-
-          {/* Contenido de Texto a la Izquierda */}
-          <div className="relative z-10 w-[60%] sm:w-[52%] p-5 sm:p-7 space-y-2">
-            <span
+          {/* Insignia Circular Flotante en Naranja si el precio es > 0 */}
+          {activeSlide.price > 0 && (
+            <div
               style={{ backgroundColor: cp }}
-              className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase text-white shadow-md"
+              className="absolute top-4 left-[48%] sm:left-[45%] z-20 w-16 h-16 rounded-full flex flex-col items-center justify-center text-white shadow-2xl border-2 border-[#121214] text-center font-extrabold rotate-3"
             >
-              <Flame className="w-3 h-3 fill-current" />
-              <span>{activeSlide.badgeText}</span>
-            </span>
-
-            <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-none text-white uppercase pt-1">
-              {activeSlide.titleFirst} <br />
-              <span style={{ color: '#ffffff' }} className="text-white">
-                {activeSlide.titleSecond}
-              </span>
-            </h2>
-
-            <p className="text-xs text-slate-300 font-normal leading-relaxed line-clamp-3 max-w-[240px]">
-              {activeSlide.description}
-            </p>
-
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  if (activeSlide.rawProduct) {
-                    addToCart(activeSlide.rawProduct);
-                  } else {
-                    const foundProd = products.find(p => p.nombre.toLowerCase().includes(activeSlide.titleFirst.toLowerCase())) || products[0];
-                    if (foundProd) addToCart(foundProd);
-                  }
-                }}
-                style={{ backgroundColor: cp }}
-                className="px-6 py-2.5 rounded-full text-xs font-black text-white shadow-xl flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all"
-              >
-                <span>{activeSlide.buttonText}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              <span className="text-[8px] tracking-wider leading-none uppercase text-amber-100 font-black">DESDE</span>
+              <span className="text-xs font-black leading-tight">${activeSlide.price.toFixed(2)}</span>
             </div>
+          )}
+
+          {/* Contenido de Texto a la Izquierda (Título y Descripción configurados o del perfil) */}
+          <div className="relative z-10 w-[60%] sm:w-[52%] p-5 sm:p-7 space-y-2">
+            {activeSlide.badgeText && (
+              <span
+                style={{ backgroundColor: cp }}
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase text-white shadow-md mb-1"
+              >
+                <Flame className="w-3 h-3 fill-current" />
+                <span>{activeSlide.badgeText}</span>
+              </span>
+            )}
+
+            {activeSlide.titleText && (
+              <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight text-white uppercase pt-1">
+                {activeSlide.titleText}
+              </h2>
+            )}
+
+            {activeSlide.descText && (
+              <p className="text-xs text-slate-300 font-normal leading-relaxed line-clamp-3 max-w-[240px]">
+                {activeSlide.descText}
+              </p>
+            )}
+
+            {/* Renderizado condicional del botón de acción según configuración */}
+            {activeSlide.isButtonEnabled && (
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => handleHeroButtonClick(activeSlide)}
+                  style={{ backgroundColor: cp }}
+                  className="px-6 py-2.5 rounded-full text-xs font-black text-white shadow-xl flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all"
+                >
+                  <span>{activeSlide.buttonText}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Dots del Carrusel Interactivo */}
