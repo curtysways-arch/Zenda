@@ -66,15 +66,17 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const secondaryColor = negocio.colorSecundario || '#112117';
     const config: any = negocio.configuracion || {};
 
-    // Obtener todas las imágenes de portada/banner del negocio para el slider desde todas las fuentes (config.bannerUrls, config.bannerUrl, imagenes, etc.)
+    // Obtener todas las imágenes de portada/banner del negocio para el slider desde todas las fuentes (heroItems, config.bannerUrls, config.bannerUrl, imagenes, etc.)
+    const heroItemsList = ((negocio as any).heroItems || []).filter((h: any) => h.isActive && h.image).map((h: any) => h.image);
     const configBannerUrlsList = (Array.isArray(config.bannerUrls) ? config.bannerUrls : []).filter(Boolean);
     const imagenesBannerList = (negocio as any).imagenes?.filter((i: any) => (i.tipo === 'BANNER' || i.esBanner) && i.url)?.map((i: any) => i.url) || [];
     const configBannersList = (config.banners || []).map((b: any) => typeof b === 'string' ? b : b?.url).filter(Boolean);
     const singleBanner = config.bannerUrl || config.banner_url || (negocio as any).bannerUrl;
 
-    // Si el usuario configuró los banners en /admin/config (config.bannerUrls), esa lista es prioritaria y autoritativa.
     let rawBannerList: string[] = [];
-    if (configBannerUrlsList.length > 0) {
+    if (heroItemsList.length > 0) {
+        rawBannerList = heroItemsList;
+    } else if (configBannerUrlsList.length > 0) {
         rawBannerList = configBannerUrlsList;
     } else if (imagenesBannerList.length > 0) {
         rawBannerList = imagenesBannerList;

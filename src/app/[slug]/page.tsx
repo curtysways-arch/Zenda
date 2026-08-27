@@ -20,6 +20,8 @@ import { NotificationService } from '@/lib/notifications/notificationService';
 import HomeServicesClient from './HomeServicesClient';
 import ProductsStoreClient from '@/components/public/ProductsStoreClient';
 import { ModuleResolver } from '@/lib/modules/ModuleResolver';
+import { resolveLandingContent } from '@/lib/landingContentResolver';
+import UniversalHeroCarousel from '@/components/public/UniversalHeroCarousel';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -447,24 +449,15 @@ export default async function PublicNegocioPage({
     const canchasConDisponibilidad = (negocio.canchas || []);
     const filteredCanchas = query ? canchasConDisponibilidad.filter((c: any) => c.nombre.toLowerCase().includes(query)) : canchasConDisponibilidad;
     
-    // Filtrado robusto de imágenes para evitar pantallas blancas
-    // Acepta esBanner:true O tipo:'BANNER' (nuevo sistema BannerGalleryAdmin)
-    let bannerImages = (negocio.imagenes || [])
-        .filter((img: any) => (img.esBanner || img.tipo === 'BANNER') && img.url && img.url.trim() !== '')
-        .map((img: any) => img.url);
+    // Resolver contenido dinámico mediante el Constructor Universal de Hero y Destacados
+    const resolvedLandingContent = await resolveLandingContent(negocio.id);
+    let bannerImages = resolvedLandingContent.hero.map((h: any) => h.image).filter((u: string) => u && u.trim() !== '');
 
-    // Fetch directo de imágenes tipo BANNER para asegurar datos frescos
-    try {
-        const bannerRows = await prisma.imagen.findMany({
-            where: { negocioId: negocio.id, tipo: 'BANNER' },
-            orderBy: { createdAt: 'asc' },
-            select: { url: true }
-        });
-        if (bannerRows.length > 0) {
-            bannerImages = bannerRows.map((r: any) => r.url).filter((u: string) => u && u.trim() !== '');
-        }
-    } catch (e) {
-        console.error('[slug/page] Error fetching banner images:', e);
+    // Fallback defensivo si no hay imágenes en HeroItem
+    if (bannerImages.length === 0) {
+        bannerImages = (negocio.imagenes || [])
+            .filter((img: any) => (img.esBanner || img.tipo === 'BANNER') && img.url && img.url.trim() !== '')
+            .map((img: any) => img.url);
     }
 
     // Fallback 1: Buscar bannerUrls y bannerUrl guardados en configuracion del negocio
@@ -796,67 +789,14 @@ export default async function PublicNegocioPage({
                 </div>
             )}
 
-            {/* 2. HERO IMAGE CON SUBTÍTULO INTEGRADO */}
+            {/* 2. HERO IMAGE CON CONTENIDO DINÁMICO */}
             <section className="px-6 mb-6">
-                <div className="relative w-full aspect-[16/13] xs:aspect-[16/11] sm:aspect-[16/10] max-h-[380px] rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-100/50">
-                    <HeroCarousel images={displayImages} baseClass="absolute inset-0 w-full h-full object-cover" opacityActive="opacity-100" />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/35 to-black/70 z-10 pointer-events-none" />
-                    
-                    {/* Contenido integrado en la imagen */}
-                    <div className="absolute inset-0 p-4 z-20 flex flex-col justify-between items-center text-center">
-                        
-                        {/* Bloque Medio: Centrado verticalmente */}
-                        <div className="flex-1 flex flex-col items-center justify-center space-y-2.5">
-                            <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md border border-white/10 rounded-full mx-auto">
-                                <span className="text-[7.5px] xs:text-[8px] font-black text-white uppercase tracking-[0.2em] text-center">
-                                    BIENVENIDO A {negocio.nombre.split(' - ')[0].toUpperCase()}
-                                </span>
-                            </div>
-
-                            <h2 className="text-2xl xs:text-3xl font-black text-white uppercase italic tracking-tighter drop-shadow-md leading-none text-center mx-auto max-w-[280px] xs:max-w-[340px]">
-                                {negocio.heroTitulo || `BIENVENIDO A ${negocio.nombre.split(' - ')[0].toUpperCase()}`}
-                            </h2>
-                            <p className="text-[9px] xs:text-[10px] font-black text-white/80 uppercase tracking-[0.15em] leading-relaxed drop-shadow-md max-w-[300px] mx-auto text-center">
-                                {negocio.heroSubtitulo || 'RESERVA TU CITA DE FORMA ONLINE EN SENCILLOS PASOS.'}
-                            </p>
-                        </div>
-
-                        {/* Bloque Inferior: Al borde de la imagen */}
-                        <div className="w-full flex flex-col items-center space-y-2 pb-2">
-                            <div className="inline-flex items-center justify-center gap-2 px-3.5 py-1 bg-black/45 backdrop-blur-md border border-white/5 rounded-full mx-auto text-center">
-                                <div className={cn(
-                                    "w-1.5 h-1.5 rounded-full animate-pulse shrink-0",
-                                    isCurrentlyOpen ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.5)]"
-                                )} />
-                                <span className="text-[7.5px] font-black text-white uppercase tracking-[0.2em] flex items-center justify-center gap-1 text-center">
-                                    <span className={cn(isCurrentlyOpen ? "text-emerald-400" : "text-rose-400")}>
-                                        {isCurrentlyOpen ? 'ABIERTO' : 'CERRADO'}
-                                    </span>
-                                    <span className="text-white/30 font-normal">|</span>
-                                    <span>{negocio.horarioApertura || '08:00'} - {negocio.horarioCierre || '20:00'}</span>
-                                </span>
-                            </div>
-
-                            <div className="flex flex-col items-center w-full">
-                                <Link
-                                    href={`/${slug}/servicios`}
-                                    className="inline-flex items-center justify-center gap-2 px-7 py-2.5 text-white rounded-full font-black text-[9px] xs:text-[10px] uppercase tracking-widest shadow-lg hover:brightness-110 active:scale-95 transition-all mx-auto"
-                                    style={{ 
-                                        backgroundColor: primaryColor,
-                                        boxShadow: `0 10px 20px ${primaryColor}30`
-                                    }}
-                                >
-                                    {(negocio as any).tipoNegocio === 'SPORTS_COURTS' ? 'Elegir cancha' : 'Elegir servicio'}
-                                    <ChevronRight size={12} strokeWidth={3} />
-                                </Link>
-                                <p className="text-[7.5px] font-bold text-white/40 flex items-center justify-center gap-1 mt-1.5 tracking-wide text-center mx-auto">
-                                    <Clock size={9} />
-                                    Reserva en menos de un minuto.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <UniversalHeroCarousel 
+                    heroItems={resolvedLandingContent.hero}
+                    negocio={negocio}
+                    isOpenNow={isCurrentlyOpen}
+                    defaultImages={displayImages}
+                />
             </section>
 
             {/* 3. TARJETAS DE CONFIANZA (INTERACTIVAS) */}

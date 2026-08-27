@@ -202,6 +202,7 @@ export default function AdminSidebar({
     }
 
     // Marketing Capabilities (Universal)
+    items.push({ name: 'Hero y Destacados', href: '/admin/hero-destacados', icon: Sparkles, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     if (capabilities.promotions) {
       items.push({ name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     }

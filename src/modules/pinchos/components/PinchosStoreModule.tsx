@@ -484,6 +484,8 @@ export default function PinchosStoreModule({ negocio, initialProducts = [], init
                     {/* Banner Carousel with Delivery Time */}
                     <PinchoBannerCarousel
                         banners={(() => {
+                            const heroImgs = ((negocio as any).heroItems || []).filter((h: any) => h.isActive && h.image).map((h: any) => h.image);
+                            if (heroImgs.length > 0) return heroImgs;
                             const pConfig = (negocio.configuracion as any) || {};
                             const pBannerUrls = (Array.isArray(pConfig.bannerUrls) ? pConfig.bannerUrls : []).filter((u: string) => typeof u === 'string' && u.trim() !== '');
                             if (pBannerUrls.length > 0) return pBannerUrls;
