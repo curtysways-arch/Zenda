@@ -3,14 +3,14 @@
  * @file RestaurantLanding.tsx
  * @module modules/restaurant/components
  * @description Landing Page Pública de Restaurante (FASE 5D) adaptada con el diseño exacto de la captura enviada,
- * respetando la paleta de colores configurada por el administrador en Citiox.
+ * con la imagen del banner Hero grande, de borde a borde en la derecha, y tarjetas de categorías sin recortes.
  */
 
 import React, { useState, useEffect } from 'react';
 import {
   Menu, Search, SlidersHorizontal, MapPin, ChevronDown, Bell, ShoppingBag,
   Heart, Plus, Minus, Truck, Percent, ShieldCheck, Home, Grid, Tag,
-  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X
+  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X, Flame
 } from 'lucide-react';
 import { CartProvider, useCart } from '@/core/context/CartContext';
 import CustomerCartDrawer from '@/components/public/CustomerCartDrawer';
@@ -55,12 +55,12 @@ export default function RestaurantLanding({
   );
 }
 
-// Fallback de demostración con productos típicos de comida gourmet / parrillada
+// Fallback de demostración si el negocio aún no registra productos
 const FALLBACK_PRODUCTS: Product[] = [
   {
     id: 'demo-1',
     nombre: 'Hamburguesa Clásica',
-    descripcion: 'Carne 150g, lechuga, tomate, queso cheddar y salsa especial.',
+    descripcion: 'Carne jugosa, queso cheddar, lechuga, tomate y nuestra salsa especial.',
     precio: 6.99,
     imagenUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=800',
     activo: true,
@@ -78,7 +78,7 @@ const FALLBACK_PRODUCTS: Product[] = [
   {
     id: 'demo-3',
     nombre: 'Ensalada César',
-    descripcion: 'Pollo a la parrilla, lechuga fresca, parmesano y aderezo césar.',
+    descripcion: 'Pollo a la parrilla, lechuga, parmesano y aderezo césar.',
     precio: 5.75,
     imagenUrl: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?auto=format&fit=crop&q=80&w=800',
     activo: true,
@@ -176,13 +176,13 @@ function RestaurantLandingContent({
 
   return (
     <div style={{ backgroundColor: cn }} className="min-h-screen font-sans pb-28 select-none text-slate-900">
-      {/* ── 1. ENCABEZADO SUPERIOR OSCURO (Fiel al diseño exacto) ── */}
+      {/* ── 1. ENCABEZADO SUPERIOR OSCURO (`#121214`) ── */}
       <header
         style={{ backgroundColor: '#121214', color: '#ffffff' }}
         className="px-4 pt-4 pb-5 rounded-b-3xl shadow-2xl sticky top-0 z-30 transition-colors border-b border-zinc-800/80"
       >
         <div className="max-w-4xl mx-auto space-y-3.5">
-          {/* Fila Saludo + Iconos (Hamburguesa, Nombre, Notificación, Carrito) */}
+          {/* Fila Saludo + Iconos (Menú, Nombre, Notificación, Carrito) */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
@@ -285,87 +285,87 @@ function RestaurantLandingContent({
       </header>
 
       <main className="max-w-4xl mx-auto px-4 pt-5 space-y-6">
-        {/* ── 2. HERO BANNER ("BURGER Clásica" Tarjeta Oscura) ── */}
+        {/* ── 2. HERO BANNER DE IMPACTO (IMAGEN GRANDE EDGE-TO-EDGE) ── */}
         <div
           style={{ backgroundColor: '#121214' }}
-          className="relative rounded-3xl p-5 sm:p-6 overflow-hidden text-white shadow-2xl border border-zinc-800/80"
+          className="relative rounded-3xl overflow-hidden text-white shadow-2xl border border-zinc-800/80 min-h-[250px] sm:min-h-[290px] flex items-center"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center relative z-10">
-            {/* Información del plato Hero */}
-            <div className="sm:col-span-7 space-y-2.5">
-              <span
-                style={{ color: cp }}
-                className="text-[10px] font-black tracking-widest uppercase block"
-              >
-                ESPECIAL DE LA CASA
+          {/* Imagen de fondo gigante alineada a la derecha de borde a borde */}
+          <div className="absolute right-0 top-0 bottom-0 w-[55%] sm:w-[60%] h-full z-0 overflow-hidden">
+            <img
+              src={heroProduct.imagenUrl || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=1200'}
+              alt={heroProduct.nombre}
+              className="w-full h-full object-cover object-center"
+            />
+            {/* Degradado oscuro para integrar el texto suavemente sobre la imagen */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#121214] via-[#121214]/80 to-transparent" />
+          </div>
+
+          {/* Insignia Circular Flotante en Naranja con Precio */}
+          <div
+            style={{ backgroundColor: cp }}
+            className="absolute top-4 left-[48%] sm:left-[45%] z-20 w-16 h-16 rounded-full flex flex-col items-center justify-center text-white shadow-2xl border-2 border-[#121214] text-center font-extrabold rotate-3"
+          >
+            <span className="text-[8px] tracking-wider leading-none uppercase text-amber-100 font-black">DESDE</span>
+            <span className="text-xs font-black leading-tight">${(Number(heroProduct.precio) || 6.99).toFixed(2)}</span>
+          </div>
+
+          {/* Contenido de Texto a la Izquierda */}
+          <div className="relative z-10 w-[60%] sm:w-[52%] p-5 sm:p-7 space-y-2">
+            <span
+              style={{ backgroundColor: cp }}
+              className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase text-white shadow-md"
+            >
+              <Flame className="w-3 h-3 fill-current" />
+              <span>ESPECIAL DEL DÍA</span>
+            </span>
+
+            <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-none text-white uppercase pt-1">
+              BURGER <br />
+              <span style={{ color: '#ffffff' }} className="text-white">
+                CLÁSICA
               </span>
+            </h2>
 
-              <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-none text-white uppercase">
-                {heroProduct.nombre.split(' ')[0] || 'BURGER'}
-                <span style={{ color: cp }} className="font-serif italic font-normal normal-case ml-2 text-3xl sm:text-4xl">
-                  {heroProduct.nombre.split(' ').slice(1).join(' ') || 'Clásica'}
-                </span>
-              </h2>
+            <p className="text-xs text-slate-300 font-normal leading-relaxed line-clamp-3 max-w-[240px]">
+              {heroProduct.descripcion || 'Carne jugosa, queso cheddar, lechuga, tomate y nuestra salsa especial.'}
+            </p>
 
-              <p className="text-xs text-slate-300 line-clamp-2 font-normal leading-relaxed max-w-xs pt-1">
-                {heroProduct.descripcion || 'Carne jugosa, queso cheddar, lechuga, tomate y nuestra salsa especial.'}
-              </p>
-
-              <div className="pt-2 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => addToCart({
-                    id: heroProduct.id,
-                    nombre: heroProduct.nombre,
-                    precio: heroProduct.precio,
-                    imagenUrl: heroProduct.imagenUrl,
-                    descripcion: heroProduct.descripcion
-                  })}
-                  style={{ backgroundColor: cp }}
-                  className="px-5 py-2.5 rounded-full text-xs font-black text-white shadow-lg flex items-center gap-1.5 hover:opacity-90 active:scale-95 transition-all"
-                >
-                  <span>Pedir ahora</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Imagen Hero & Badge Circular Flotante de Precio */}
-            <div className="sm:col-span-5 relative flex justify-center sm:justify-end mt-2 sm:mt-0">
-              <div className="relative w-44 h-44 sm:w-48 sm:h-48 rounded-2xl overflow-hidden shadow-2xl border border-zinc-700/50">
-                <img
-                  src={heroProduct.imagenUrl || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=800'}
-                  alt={heroProduct.nombre}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              {/* Insignia Circular Flotante en Naranja */}
-              <div
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => addToCart({
+                  id: heroProduct.id,
+                  nombre: heroProduct.nombre,
+                  precio: heroProduct.precio,
+                  imagenUrl: heroProduct.imagenUrl,
+                  descripcion: heroProduct.descripcion
+                })}
                 style={{ backgroundColor: cp }}
-                className="absolute -top-2 -left-2 sm:left-2 w-16 h-16 rounded-full flex flex-col items-center justify-center text-white shadow-2xl border-2 border-[#121214] text-center font-extrabold rotate-3"
+                className="px-6 py-2.5 rounded-full text-xs font-black text-white shadow-xl flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all"
               >
-                <span className="text-[8px] tracking-wider leading-none uppercase text-amber-100 font-black">DESDE</span>
-                <span className="text-xs font-black leading-tight">${(Number(heroProduct.precio) || 6.99).toFixed(2)}</span>
-              </div>
+                <span>Pedir ahora</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
-          {/* Carrusel Dots */}
-          <div className="flex justify-center items-center gap-1.5 mt-4 pt-1">
-            <span style={{ backgroundColor: cp }} className="w-6 h-2 rounded-full" />
-            <span className="w-2 h-2 rounded-full bg-zinc-700" />
-            <span className="w-2 h-2 rounded-full bg-zinc-700" />
+          {/* Dots del Carrusel */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
+            <span style={{ backgroundColor: cp }} className="w-6 h-2 rounded-full shadow-sm" />
+            <span className="w-2 h-2 rounded-full bg-white/40" />
+            <span className="w-2 h-2 rounded-full bg-white/40" />
+            <span className="w-2 h-2 rounded-full bg-white/40" />
           </div>
         </div>
 
-        {/* ── 3. BARRA DE CATEGORÍAS (TARJETAS BLANCAS CON ICONOS) ── */}
+        {/* ── 3. BARRA DE CATEGORÍAS (TARJETAS BLANCAS AMPLIAS SIN RECORTE) ── */}
         <div>
           <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
             <button
               type="button"
               onClick={() => setSelectedCategory('TODOS')}
-              className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border flex flex-col items-center justify-center p-2 shrink-0 transition-all shadow-xs ${
+              className={`px-4 py-3.5 rounded-2xl border flex flex-col items-center justify-center min-w-[90px] shrink-0 transition-all shadow-xs ${
                 selectedCategory === 'TODOS'
                   ? 'bg-white shadow-md border-2'
                   : 'bg-white border-slate-100 text-slate-700 hover:bg-slate-50'
@@ -376,7 +376,7 @@ function RestaurantLandingContent({
               }}
             >
               <span className="text-2xl mb-1">🍔</span>
-              <span className="text-xs font-bold truncate max-w-full">Hamburguesas</span>
+              <span className="text-xs font-extrabold whitespace-nowrap">Hamburguesas</span>
             </button>
 
             {categories.map((cat) => {
@@ -386,7 +386,7 @@ function RestaurantLandingContent({
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border flex flex-col items-center justify-center p-2 shrink-0 transition-all shadow-xs ${
+                  className={`px-4 py-3.5 rounded-2xl border flex flex-col items-center justify-center min-w-[90px] shrink-0 transition-all shadow-xs ${
                     isActive
                       ? 'bg-white shadow-md border-2'
                       : 'bg-white border-slate-100 text-slate-700 hover:bg-slate-50'
@@ -397,7 +397,7 @@ function RestaurantLandingContent({
                   }}
                 >
                   <span className="text-2xl mb-1">{cat.icono || '🍲'}</span>
-                  <span className="text-xs font-bold truncate max-w-full">{cat.nombre}</span>
+                  <span className="text-xs font-extrabold whitespace-nowrap">{cat.nombre}</span>
                 </button>
               );
             })}
@@ -449,7 +449,7 @@ function RestaurantLandingContent({
           </div>
         </div>
 
-        {/* ── 5. SECCIÓN RECOMENDADOS PARA TI (GRILLA 3 COLUMNAS EXACTA) ── */}
+        {/* ── 5. SECCIÓN RECOMENDADOS PARA TI (GRILLA CON IMÁGENES 4:3 Y BOTÓN N ARANJA) ── */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
