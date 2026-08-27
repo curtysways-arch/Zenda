@@ -39,6 +39,7 @@ interface MenuItem {
   badge?: number;
   roles?: string[];
 }
+
 export default function AdminSidebar({ 
   primaryColor = '#0ea5e9',
   initialBusinessName
@@ -54,7 +55,9 @@ export default function AdminSidebar({
   const [isOpen, setIsOpen] = useState(false);
   const [pendingOrders, setPendingOrders] = useState(0);
   const [pendingAppointments, setPendingAppointments] = useState(0);
-  const [capabilities, setCapabilities] = useState<Record<string, boolean>>({});
+  const [capabilities, setCapabilities] = useState<Record<string, boolean>>({
+    promotions: true // Por defecto activo para evitar parpadeos o deshabilitación indebida
+  });
   const [businessName, setBusinessName] = useState<string>(initialBusinessName || '');
 
   // Cargar capacidades activas del negocio dinámicamente mediante EntitlementsService
@@ -116,7 +119,7 @@ export default function AdminSidebar({
             nameUpper.includes('BARBERIA')
           );
           const isStore = !isRestaurant && !isPinchos && !isCanchas && !isServiceBiz;
-          
+
           // Entitlements efectivos estrictos por vertical
           const normalizedCaps: Record<string, boolean> = {
             orders: Boolean((effectiveCaps.ORDERS ?? effectiveCaps.orders) ?? (isServiceBiz ? caps.orders === true : (isRestaurant || isPinchos || isStore))),
@@ -128,7 +131,7 @@ export default function AdminSidebar({
             appointments: Boolean(effectiveCaps.APPOINTMENTS ?? effectiveCaps.appointments ?? (isServiceBiz || isCanchas || tipoUpper === 'RESERVA')),
             courts: Boolean(effectiveCaps.COURTS ?? effectiveCaps.courts ?? caps.courts ?? isCanchas),
             services: Boolean(effectiveCaps.SERVICES ?? effectiveCaps.services ?? (isServiceBiz || Boolean(caps.services))),
-            promotions: Boolean(effectiveCaps.PROMOTIONS ?? effectiveCaps.promotions ?? (caps.promotions !== false)),
+            promotions: Boolean((effectiveCaps.PROMOTIONS ?? effectiveCaps.promotions) ?? (caps.promotions !== false)),
             courses: Boolean(effectiveCaps.COURSES ?? effectiveCaps.courses ?? caps.courses ?? isCanchas ?? true),
             loyalty: Boolean(effectiveCaps.LOYALTY ?? effectiveCaps.loyalty ?? caps.loyalty ?? isPinchos),
             inventory: Boolean(effectiveCaps.INVENTORY ?? effectiveCaps.inventory ?? caps.inventory),
@@ -203,7 +206,7 @@ export default function AdminSidebar({
 
     // Marketing Capabilities (Universal)
     items.push({ name: 'Hero y Destacados', href: '/admin/hero-destacados', icon: Sparkles, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
-    if (capabilities.promotions) {
+    if (capabilities.promotions !== false) {
       items.push({ name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     }
     if (capabilities.courses) {
@@ -248,76 +251,168 @@ export default function AdminSidebar({
 
   const menuItems = buildDynamicMenu();
 
-  // Group by section
-  const sections = Array.from(new Set(menuItems.map(i => i.section)));
+  const grouped = menuItems.reduce((acc, item) => {
+    if (!acc[item.section]) acc[item.section] = [];
+    acc[item.section].push(item);
+    return acc;
+  }, {} as Record<string, MenuItem[]>);
+
+  const sectionsOrder = ['GESTIÓN OPERATIVA', 'CATÁLOGO', 'MARKETING', 'ADMINISTRACIÓN', 'CONFIGURACIÓN'];
 
   const handleLogout = async () => {
-    const isOk = await confirm('¿Seguro quieres cerrar sesión del panel de administrador?', {
-      title: 'Cerrar Sesión',
+    const isConfirmed = await confirm('¿Estás seguro de que deseas salir del panel de administración?', {
+      title: '¿Cerrar sesión?',
       confirmText: 'Cerrar Sesión',
-      type: 'danger'
+      cancelText: 'Cancelar',
+      type: 'danger',
     });
-    if (!isOk) return;
-    await signOut({ callbackUrl: '/login' });
+    if (isConfirmed) {
+      signOut({ callbackUrl: '/login' });
+    }
   };
 
   return (
     <>
-      {isOpen && <div className="md:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setIsOpen(false)} />}
-      <aside className={cn(
-        "fixed md:sticky top-0 left-0 z-[100] h-[100dvh] w-72 bg-white border-r border-slate-200 flex flex-col transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]",
-        isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"
-      )}>
-        <div className="p-6 border-b border-slate-100 hidden md:block relative overflow-hidden group">
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="size-10 rounded-xl flex items-center justify-center text-white shadow-md transition-all shrink-0" style={{ backgroundColor: primaryColor }}>
+      {/* Botón flotante móvil para abrir el menú */}
+      <div className="md:hidden fixed top-3 left-3 z-50">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="p-2.5 rounded-xl bg-slate-900 text-white shadow-lg focus:outline-none flex items-center justify-center border border-slate-800"
+          aria-label="Abrir Menú"
+        >
+          {isOpen ? (
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {/* Backdrop en móvil */}
+      {isOpen && (
+        <div 
+          onClick={() => setIsOpen(false)} 
+          className="md:hidden fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40"
+        />
+      )}
+
+      {/* Sidebar Principal */}
+      <aside 
+        className={cn(
+          "fixed top-0 left-0 bottom-0 w-64 bg-slate-900 border-r border-slate-800/80 z-40 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0",
+          isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+        )}
+      >
+        {/* Cabecera del Panel */}
+        <div className="h-16 px-5 border-b border-slate-800 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div 
+              style={{ backgroundColor: primaryColor }} 
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-md font-bold text-sm shrink-0"
+            >
               <ZendaLogo size={20} />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="font-black text-slate-900 tracking-tight leading-snug text-base truncate" title={businessName || 'CitiOx'}>
-                {businessName || <>Citi<span style={{ color: primaryColor }}>Ox</span></>}
+              <h2 className="text-sm font-bold text-slate-100 truncate tracking-tight">
+                {businessName || 'Cargando...'}
               </h2>
-              <p className="text-[11px] font-semibold text-slate-400 mt-0.5 truncate">Panel de Administración</p>
+              <p className="text-[10px] text-slate-400 font-medium truncate">
+                Panel de Administración
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Dynamic Navigation Links */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-6">
-          {sections.map(section => (
-            <div key={section}>
-              <p className="px-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">{section}</p>
-              <div className="space-y-1">
-                {menuItems.filter(i => i.section === section).map(item => {
+        {/* Links de Navegación por Secciones */}
+        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin scrollbar-thumb-slate-800">
+          {sectionsOrder.map((secKey) => {
+            const secItems = grouped[secKey];
+            if (!secItems || secItems.length === 0) return null;
+
+            return (
+              <div key={secKey} className="space-y-1">
+                <h3 className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                  {secKey}
+                </h3>
+                {secItems.map((item) => {
                   const Icon = item.icon;
-                  const isActive = pathname === item.href;
+                  const isActive = pathname === item.href || (item.href !== '/admin' && pathname?.startsWith(item.href));
+
                   return (
-                    <Link key={item.href} href={item.href} onClick={() => setIsOpen(false)}
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsOpen(false)}
                       className={cn(
-                        "flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all group",
-                        isActive ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                      )}>
-                      <div className="flex items-center gap-3">
-                        <Icon className={cn("size-4 transition-transform group-hover:scale-110", isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600")} />
-                        <span>{item.name}</span>
+                        "flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group relative",
+                        isActive
+                          ? "bg-slate-800 text-white shadow-xs"
+                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                      )}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Icon 
+                          className={cn(
+                            "w-4 h-4 shrink-0 transition-colors",
+                            isActive ? "text-white" : "text-slate-400 group-hover:text-slate-200"
+                          )} 
+                          style={{ color: isActive ? primaryColor : undefined }}
+                        />
+                        <span className="truncate">{item.name}</span>
                       </div>
-                      {item.badge !== undefined && (
-                        <span className="bg-amber-500 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full">{item.badge}</span>
+
+                      {item.badge !== undefined && item.badge > 0 && (
+                        <span 
+                          style={{ backgroundColor: primaryColor }}
+                          className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-xs"
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+
+                      {isActive && (
+                        <div 
+                          style={{ backgroundColor: primaryColor }}
+                          className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full"
+                        />
                       )}
                     </Link>
                   );
                 })}
               </div>
-            </div>
-          ))}
-        </nav>
+            );
+          })}
+        </div>
 
-        {/* Footer Logout */}
-        <div className="p-4 border-t border-slate-100">
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition-all">
-            <LogOut className="size-4" />
-            <span>Cerrar Sesión</span>
-          </button>
+        {/* Pie de Sidebar: Usuario + Logout */}
+        <div className="p-3 border-t border-slate-800 shrink-0 bg-slate-900/50">
+          <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-850 border border-slate-800/60">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-bold text-xs shrink-0 border border-slate-700">
+                {(session?.user?.name || 'A')[0].toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-200 truncate">
+                  {session?.user?.name || 'Administrador'}
+                </p>
+                <p className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">
+                  {role}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleLogout}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors"
+              title="Cerrar sesión"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </aside>
     </>
