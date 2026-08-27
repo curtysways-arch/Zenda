@@ -3,14 +3,15 @@
  * @file RestaurantLanding.tsx
  * @module modules/restaurant/components
  * @description Landing Page Pública de Restaurante (FASE 5D) adaptada con el diseño exacto de la captura enviada,
- * con la imagen del banner Hero grande, de borde a borde en la derecha, y tarjetas de categorías sin recortes.
+ * con la imagen del banner Hero gigante (borde a borde), carrusel dinámico de Hero Items (Destacados/Promos)
+ * y sección de Destacados de la casa.
  */
 
 import React, { useState, useEffect } from 'react';
 import {
   Menu, Search, SlidersHorizontal, MapPin, ChevronDown, Bell, ShoppingBag,
   Heart, Plus, Minus, Truck, Percent, ShieldCheck, Home, Grid, Tag,
-  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X, Flame
+  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X, Flame, Star, Sparkles
 } from 'lucide-react';
 import { CartProvider, useCart } from '@/core/context/CartContext';
 import CustomerCartDrawer from '@/components/public/CustomerCartDrawer';
@@ -33,14 +34,40 @@ interface Category {
   icono?: string;
 }
 
+interface HeroSlide {
+  id: string;
+  title?: string | null;
+  description?: string | null;
+  image: string;
+  price?: number | null;
+  originalPrice?: number | null;
+  type?: string | null;
+  button?: {
+    enabled?: boolean;
+    text?: string | null;
+    actionType?: string | null;
+    actionValue?: string | null;
+  };
+}
+
+interface HighlightItem {
+  id: string;
+  title?: string | null;
+  description?: string | null;
+  image: string;
+  price?: number | null;
+}
+
 export default function RestaurantLanding({
   negocio,
   initialProducts = [],
   initialCategories = [],
+  initialHeroContent = { hero: [], highlights: [] },
 }: {
   negocio: any;
   initialProducts?: Product[];
   initialCategories?: Category[];
+  initialHeroContent?: { hero: HeroSlide[]; highlights: HighlightItem[] };
 }) {
   const defaultDeliveryCost = Number((negocio?.configuracion as any)?.costoEnvio) || 2.50;
 
@@ -50,6 +77,7 @@ export default function RestaurantLanding({
         negocio={negocio}
         initialProducts={initialProducts}
         initialCategories={initialCategories}
+        initialHeroContent={initialHeroContent}
       />
     </CartProvider>
   );
@@ -108,10 +136,12 @@ function RestaurantLandingContent({
   negocio,
   initialProducts = [],
   initialCategories = [],
+  initialHeroContent = { hero: [], highlights: [] },
 }: {
   negocio: any;
   initialProducts?: Product[];
   initialCategories?: Category[];
+  initialHeroContent?: { hero: HeroSlide[]; highlights: HighlightItem[] };
 }) {
   const {
     totalItemsCount,
@@ -130,6 +160,9 @@ function RestaurantLandingContent({
 
   const [products, setProducts] = useState<Product[]>(initialProducts.length > 0 ? initialProducts : FALLBACK_PRODUCTS);
   const [categories, setCategories] = useState<Category[]>(initialCategories.length > 0 ? initialCategories : DEFAULT_CATEGORIES);
+  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(initialHeroContent?.hero || []);
+  const [highlights, setHighlights] = useState<HighlightItem[]>(initialHeroContent?.highlights || []);
+
   const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showCartDrawer, setShowCartDrawer] = useState<boolean>(false);
@@ -137,16 +170,45 @@ function RestaurantLandingContent({
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
   const [activeNavTab, setActiveNavTab] = useState<'inicio' | 'categorias' | 'ofertas' | 'pedidos' | 'cuenta'>('inicio');
 
+  // Carrusel automático para el Hero Banner de Destacados
+  const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
+
+  // Carga dinámica si no viene desde server-side props
   useEffect(() => {
     if (!negocio?.slug) return;
-    fetch(`/api/public/${negocio.slug}/products`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.products && data.products.length > 0) setProducts(data.products);
-        if (data.categories && data.categories.length > 0) setCategories(data.categories);
-      })
-      .catch(() => {});
-  }, [negocio?.slug]);
+
+    // Productos y Categorías
+    if (initialProducts.length === 0) {
+      fetch(`/api/public/${negocio.slug}/products`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.products && data.products.length > 0) setProducts(data.products);
+          if (data.categories && data.categories.length > 0) setCategories(data.categories);
+        })
+        .catch(() => {});
+    }
+
+    // Hero Content & Highlights dinámicos
+    if (!initialHeroContent?.hero || initialHeroContent.hero.length === 0) {
+      fetch(`/api/${negocio.slug}/landing-content`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.hero && data.hero.length > 0) setHeroSlides(data.hero);
+          if (data.highlights && data.highlights.length > 0) setHighlights(data.highlights);
+        })
+        .catch(() => {});
+    }
+  }, [negocio?.slug, initialProducts.length, initialHeroContent?.hero]);
+
+  // Rotación automática del Carrusel Hero cada 4.5 segundos
+  useEffect(() => {
+    const totalSlides = heroSlides.length > 0 ? heroSlides.length : Math.min(products.length, 3);
+    if (totalSlides <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlideIndex(prev => (prev + 1) % totalSlides);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [heroSlides.length, products.length]);
 
   const toggleFavorite = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -171,8 +233,50 @@ function RestaurantLandingContent({
     return true;
   });
 
-  // Hero product highlight
-  const heroProduct = products[0] || FALLBACK_PRODUCTS[0];
+  // Construir las diapositivas del Hero (usando HeroItems dinámicos del Admin o fallbacks de productos)
+  const displayHeroSlides: Array<{
+    id: string;
+    badgeText: string;
+    titleFirst: string;
+    titleSecond: string;
+    description: string;
+    price: number;
+    image: string;
+    buttonText: string;
+    rawProduct?: Product;
+  }> = (heroSlides.length > 0)
+    ? heroSlides.map(slide => {
+        const fullTitle = slide.title || 'BURGER CLÁSICA';
+        const parts = fullTitle.trim().split(' ');
+        const first = parts[0] || 'BURGER';
+        const second = parts.slice(1).join(' ') || 'CLÁSICA';
+        return {
+          id: slide.id,
+          badgeText: slide.type === 'PROMOTION' ? 'OFERTA EXCLUSIVA' : 'ESPECIAL DEL DÍA',
+          titleFirst: first,
+          titleSecond: second,
+          description: slide.description || 'Carne jugosa, queso cheddar, lechuga, tomate y nuestra salsa especial.',
+          price: Number(slide.price) || 6.99,
+          image: slide.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=1200',
+          buttonText: slide.button?.text || 'Pedir ahora →',
+        };
+      })
+    : products.slice(0, 3).map((prod, idx) => {
+        const parts = prod.nombre.trim().split(' ');
+        return {
+          id: prod.id,
+          badgeText: idx === 0 ? 'ESPECIAL DEL DÍA' : idx === 1 ? 'MÁS VENDIDO' : 'RECOMENDADO',
+          titleFirst: parts[0] || 'PLATO',
+          titleSecond: parts.slice(1).join(' ') || 'ESPECIAL',
+          description: prod.descripcion || 'Selección de ingredientes frescos y preparación gourmet al instante.',
+          price: prod.precio,
+          image: prod.imagenUrl || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=1200',
+          buttonText: 'Pedir ahora →',
+          rawProduct: prod
+        };
+      });
+
+  const activeSlide = displayHeroSlides[currentSlideIndex % displayHeroSlides.length] || displayHeroSlides[0];
 
   return (
     <div style={{ backgroundColor: cn }} className="min-h-screen font-sans pb-28 select-none text-slate-900">
@@ -285,17 +389,18 @@ function RestaurantLandingContent({
       </header>
 
       <main className="max-w-4xl mx-auto px-4 pt-5 space-y-6">
-        {/* ── 2. HERO BANNER DE IMPACTO (IMAGEN GRANDE EDGE-TO-EDGE) ── */}
+        {/* ── 2. HERO BANNER DE DESTACADOS (CARRUSEL DINÁMICO & IMAGEN GIGANTE EDGE-TO-EDGE) ── */}
         <div
           style={{ backgroundColor: '#121214' }}
-          className="relative rounded-3xl overflow-hidden text-white shadow-2xl border border-zinc-800/80 min-h-[250px] sm:min-h-[290px] flex items-center"
+          className="relative rounded-3xl overflow-hidden text-white shadow-2xl border border-zinc-800/80 min-h-[250px] sm:min-h-[290px] flex items-center transition-all duration-500"
         >
           {/* Imagen de fondo gigante alineada a la derecha de borde a borde */}
           <div className="absolute right-0 top-0 bottom-0 w-[55%] sm:w-[60%] h-full z-0 overflow-hidden">
             <img
-              src={heroProduct.imagenUrl || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=1200'}
-              alt={heroProduct.nombre}
-              className="w-full h-full object-cover object-center"
+              key={activeSlide.id}
+              src={activeSlide.image}
+              alt={activeSlide.titleFirst}
+              className="w-full h-full object-cover object-center animate-in fade-in duration-500"
             />
             {/* Degradado oscuro para integrar el texto suavemente sobre la imagen */}
             <div className="absolute inset-0 bg-gradient-to-r from-[#121214] via-[#121214]/80 to-transparent" />
@@ -307,7 +412,7 @@ function RestaurantLandingContent({
             className="absolute top-4 left-[48%] sm:left-[45%] z-20 w-16 h-16 rounded-full flex flex-col items-center justify-center text-white shadow-2xl border-2 border-[#121214] text-center font-extrabold rotate-3"
           >
             <span className="text-[8px] tracking-wider leading-none uppercase text-amber-100 font-black">DESDE</span>
-            <span className="text-xs font-black leading-tight">${(Number(heroProduct.precio) || 6.99).toFixed(2)}</span>
+            <span className="text-xs font-black leading-tight">${activeSlide.price.toFixed(2)}</span>
           </div>
 
           {/* Contenido de Texto a la Izquierda */}
@@ -317,49 +422,100 @@ function RestaurantLandingContent({
               className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase text-white shadow-md"
             >
               <Flame className="w-3 h-3 fill-current" />
-              <span>ESPECIAL DEL DÍA</span>
+              <span>{activeSlide.badgeText}</span>
             </span>
 
             <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-none text-white uppercase pt-1">
-              BURGER <br />
+              {activeSlide.titleFirst} <br />
               <span style={{ color: '#ffffff' }} className="text-white">
-                CLÁSICA
+                {activeSlide.titleSecond}
               </span>
             </h2>
 
             <p className="text-xs text-slate-300 font-normal leading-relaxed line-clamp-3 max-w-[240px]">
-              {heroProduct.descripcion || 'Carne jugosa, queso cheddar, lechuga, tomate y nuestra salsa especial.'}
+              {activeSlide.description}
             </p>
 
             <div className="pt-2">
               <button
                 type="button"
-                onClick={() => addToCart({
-                  id: heroProduct.id,
-                  nombre: heroProduct.nombre,
-                  precio: heroProduct.precio,
-                  imagenUrl: heroProduct.imagenUrl,
-                  descripcion: heroProduct.descripcion
-                })}
+                onClick={() => {
+                  if (activeSlide.rawProduct) {
+                    addToCart(activeSlide.rawProduct);
+                  } else {
+                    const foundProd = products.find(p => p.nombre.toLowerCase().includes(activeSlide.titleFirst.toLowerCase())) || products[0];
+                    if (foundProd) addToCart(foundProd);
+                  }
+                }}
                 style={{ backgroundColor: cp }}
                 className="px-6 py-2.5 rounded-full text-xs font-black text-white shadow-xl flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all"
               >
-                <span>Pedir ahora</span>
+                <span>{activeSlide.buttonText}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* Dots del Carrusel */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
-            <span style={{ backgroundColor: cp }} className="w-6 h-2 rounded-full shadow-sm" />
-            <span className="w-2 h-2 rounded-full bg-white/40" />
-            <span className="w-2 h-2 rounded-full bg-white/40" />
-            <span className="w-2 h-2 rounded-full bg-white/40" />
-          </div>
+          {/* Dots del Carrusel Interactivo */}
+          {displayHeroSlides.length > 1 && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
+              {displayHeroSlides.map((s, idx) => {
+                const isActive = idx === currentSlideIndex % displayHeroSlides.length;
+                return (
+                  <button
+                    key={s.id || idx}
+                    type="button"
+                    onClick={() => setCurrentSlideIndex(idx)}
+                    style={{ backgroundColor: isActive ? cp : undefined }}
+                    className={`transition-all duration-300 ${
+                      isActive ? 'w-6 h-2 rounded-full shadow-sm' : 'w-2 h-2 rounded-full bg-white/40 hover:bg-white/70'
+                    }`}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* ── 3. BARRA DE CATEGORÍAS (TARJETAS BLANCAS AMPLIAS SIN RECORTE) ── */}
+        {/* ── 3. SECCIÓN DESTACADOS / HIGHLIGHTS SI EXISTEN CONFIGURADOS ── */}
+        {highlights.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4" style={{ color: cp }} />
+                <span>Platos Estrellas Destacados</span>
+              </h3>
+            </div>
+            <div className="flex gap-3.5 overflow-x-auto pb-2 scrollbar-none">
+              {highlights.map((hl) => (
+                <div
+                  key={hl.id}
+                  className="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden min-w-[200px] max-w-[240px] shrink-0 flex flex-col justify-between"
+                >
+                  <div className="relative h-32 w-full bg-slate-100 overflow-hidden">
+                    <img src={hl.image} alt={hl.title || 'Destacado'} className="w-full h-full object-cover" />
+                    {hl.price && (
+                      <span
+                        style={{ backgroundColor: cp }}
+                        className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-black text-white shadow-md"
+                      >
+                        ${hl.price.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-3 space-y-1">
+                    <h4 className="font-extrabold text-xs text-slate-900 line-clamp-1">{hl.title}</h4>
+                    {hl.description && (
+                      <p className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed">{hl.description}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── 4. BARRA DE CATEGORÍAS (TARJETAS BLANCAS AMPLIAS SIN RECORTE) ── */}
         <div>
           <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
             <button
@@ -404,7 +560,7 @@ function RestaurantLandingContent({
           </div>
         </div>
 
-        {/* ── 4. BARRA DE PROPUESTA DE VALOR (3 DESTACADOS DIVIDIDOS) ── */}
+        {/* ── 5. BARRA DE PROPUESTA DE VALOR (3 DESTACADOS DIVIDIDOS) ── */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-xs p-4 grid grid-cols-3 divide-x divide-slate-100 text-center text-xs">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 px-1">
             <div style={{ color: cp }} className="p-1.5 rounded-full bg-orange-50">
@@ -449,7 +605,7 @@ function RestaurantLandingContent({
           </div>
         </div>
 
-        {/* ── 5. SECCIÓN RECOMENDADOS PARA TI (GRILLA CON IMÁGENES 4:3 Y BOTÓN N ARANJA) ── */}
+        {/* ── 6. SECCIÓN RECOMENDADOS PARA TI (GRILLA CON IMÁGENES 4:3 Y BOTÓN NARANJA) ── */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
@@ -576,7 +732,7 @@ function RestaurantLandingContent({
           )}
         </div>
 
-        {/* ── 6. BANNER PROMO "¡ENVÍO GRATIS!" ── */}
+        {/* ── 7. BANNER PROMO "¡ENVÍO GRATIS!" ── */}
         <div
           style={{ backgroundColor: '#121214' }}
           className="rounded-2xl p-4 text-white shadow-xl flex items-center justify-between relative overflow-hidden border border-zinc-800"
@@ -611,7 +767,7 @@ function RestaurantLandingContent({
         </div>
       </main>
 
-      {/* ── 7. BARRA FLOTANTE DE CARRITO SI HAY ITEMS ── */}
+      {/* ── 8. BARRA FLOTANTE DE CARRITO SI HAY ITEMS ── */}
       {totalItemsCount > 0 && (
         <div className="fixed bottom-16 left-0 right-0 z-40 px-4 max-w-md mx-auto pointer-events-none">
           <button
@@ -629,7 +785,7 @@ function RestaurantLandingContent({
         </div>
       )}
 
-      {/* ── 8. NAVEGACIÓN INFERIOR FIJA (BOTTOM NAV BAR DE 5 PESTAÑAS) ── */}
+      {/* ── 9. NAVEGACIÓN INFERIOR FIJA (BOTTOM NAV BAR DE 5 PESTAÑAS) ── */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 py-2.5 px-4 flex justify-around items-center z-50 shadow-lg">
         <button
           type="button"
@@ -685,7 +841,7 @@ function RestaurantLandingContent({
         </Link>
       </nav>
 
-      {/* ── 9. MODAL SELECTOR DE CANAL DE ATENCIÓN ── */}
+      {/* ── 10. MODAL SELECTOR DE CANAL DE ATENCIÓN ── */}
       {showChannelModal && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-slate-900 border border-slate-100">
@@ -768,7 +924,7 @@ function RestaurantLandingContent({
         </div>
       )}
 
-      {/* ── 10. DRAWER LATERAL DE CHECKOUT Y CARRITO CITIOX ── */}
+      {/* ── 11. DRAWER LATERAL DE CHECKOUT Y CARRITO CITIOX ── */}
       <CustomerCartDrawer
         slug={negocio?.slug || ''}
         businessName={negocio?.nombre || 'Restaurante'}

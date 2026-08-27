@@ -62,17 +62,28 @@ export default async function PublicNegocioPage({
     if (isRestaurantModule) {
         let initialProducts: any[] = [];
         let initialCategories: any[] = [];
+        let initialHeroContent: any = { hero: [], highlights: [] };
         try {
-            const [prods, cats] = await Promise.all([
+            const { resolveLandingContent } = await import('@/lib/landingContentResolver');
+            const [prods, cats, landingContent] = await Promise.all([
                 (prisma as any).producto.findMany({ where: { negocioId: negocio.id }, orderBy: { orden: 'asc' }, include: { categoria: true } }),
-                (prisma as any).categoriaProducto.findMany({ where: { negocioId: negocio.id, activo: true }, orderBy: { orden: 'asc' } })
+                (prisma as any).categoriaProducto.findMany({ where: { negocioId: negocio.id, activo: true }, orderBy: { orden: 'asc' } }),
+                resolveLandingContent(negocio.id)
             ]);
             initialProducts = prods;
             initialCategories = cats;
+            initialHeroContent = landingContent;
         } catch (_) {}
 
         const { default: RestaurantLanding } = await import('@/modules/restaurant/components/RestaurantLanding');
-        return <RestaurantLanding negocio={negocio} initialProducts={initialProducts} initialCategories={initialCategories} />;
+        return (
+            <RestaurantLanding
+                negocio={negocio}
+                initialProducts={initialProducts}
+                initialCategories={initialCategories}
+                initialHeroContent={initialHeroContent}
+            />
+        );
     }
 
     if (negocio.tipoNegocio === 'PRODUCTOS') {
