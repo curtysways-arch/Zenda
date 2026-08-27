@@ -2,17 +2,17 @@
 /**
  * @file RestaurantLanding.tsx
  * @module modules/restaurant/components
- * @description Landing Page Pública de Restaurante (FASE 5D) adaptada con el diseño exacto de la app de delivery
- * y respetando rigurosamente los colores configurados por el administrador del negocio en Citiox.
+ * @description Landing Page Pública de Restaurante (FASE 5D) adaptada con el diseño exacto de la captura enviada,
+ * respetando la paleta de colores configurada por el administrador en Citiox.
  */
 
 import React, { useState, useEffect } from 'react';
 import {
-  Search, SlidersHorizontal, MapPin, ChevronDown, Bell, ShoppingBag,
+  Menu, Search, SlidersHorizontal, MapPin, ChevronDown, Bell, ShoppingBag,
   Heart, Plus, Minus, Truck, Percent, ShieldCheck, Home, Grid, Tag,
-  ClipboardList, User, ArrowRight, Utensils, Check, ChevronRight, X
+  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X
 } from 'lucide-react';
-import { CartProvider, useCart, CartProduct } from '@/core/context/CartContext';
+import { CartProvider, useCart } from '@/core/context/CartContext';
 import CustomerCartDrawer from '@/components/public/CustomerCartDrawer';
 import Link from 'next/link';
 
@@ -42,7 +42,6 @@ export default function RestaurantLanding({
   initialProducts?: Product[];
   initialCategories?: Category[];
 }) {
-  const primaryColor = negocio?.colorPrimario || '#ea580c';
   const defaultDeliveryCost = Number((negocio?.configuracion as any)?.costoEnvio) || 2.50;
 
   return (
@@ -56,7 +55,7 @@ export default function RestaurantLanding({
   );
 }
 
-// Fallback de demostración si el negocio aún no registra productos
+// Fallback de demostración con productos típicos de comida gourmet / parrillada
 const FALLBACK_PRODUCTS: Product[] = [
   {
     id: 'demo-1',
@@ -117,20 +116,16 @@ function RestaurantLandingContent({
   const {
     totalItemsCount,
     total,
-    cart,
     deliveryType,
     setDeliveryType,
     customerData,
-    setCustomerData,
     getItemQuantity,
-    setItemQuantity,
     addToCart,
     decrementQuantity
   } = useCart();
 
-  // Colores dinámicos del Admin
-  const cp = negocio?.colorPrimario || '#ea580c'; // Color primario
-  const cs = negocio?.colorSecundario || '#0f172a'; // Color secundario (encabezado / hero oscuro)
+  // Colores del Admin
+  const cp = negocio?.colorPrimario || '#ff5500'; // Color primario naranja / rojo
   const cn = negocio?.colorNeutral || '#f8fafc'; // Color de fondo claro
 
   const [products, setProducts] = useState<Product[]>(initialProducts.length > 0 ? initialProducts : FALLBACK_PRODUCTS);
@@ -180,46 +175,57 @@ function RestaurantLandingContent({
   const heroProduct = products[0] || FALLBACK_PRODUCTS[0];
 
   return (
-    <div style={{ backgroundColor: cn, color: '#0f172a' }} className="min-h-screen font-sans pb-28 select-none">
-      {/* ── 1. ENCABEZADO SUPERIOR OSCURO CON BUSCADOR ── */}
+    <div style={{ backgroundColor: cn }} className="min-h-screen font-sans pb-28 select-none text-slate-900">
+      {/* ── 1. ENCABEZADO SUPERIOR OSCURO (Fiel al diseño exacto) ── */}
       <header
-        style={{ backgroundColor: cs }}
-        className="text-white px-4 pt-4 pb-5 rounded-b-3xl shadow-xl sticky top-0 z-30 transition-colors"
+        style={{ backgroundColor: '#121214', color: '#ffffff' }}
+        className="px-4 pt-4 pb-5 rounded-b-3xl shadow-2xl sticky top-0 z-30 transition-colors border-b border-zinc-800/80"
       >
         <div className="max-w-4xl mx-auto space-y-3.5">
-          {/* Fila Saludo + Iconos */}
+          {/* Fila Saludo + Iconos (Hamburguesa, Nombre, Notificación, Carrito) */}
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-extrabold text-lg sm:text-xl tracking-tight flex items-center gap-1.5">
-                ¡Hola, {customerData.nombre || 'Cliente'}! 👋
-              </h1>
-              <p className="text-xs text-slate-300 font-medium">¿Qué se te antoja hoy?</p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                className="text-slate-300 hover:text-white p-1"
+                aria-label="Menú"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+              <div>
+                <h1 className="font-extrabold text-base sm:text-lg tracking-tight flex items-center gap-1 text-white">
+                  ¡Hola, {customerData.nombre || 'Diego'}! 👋
+                </h1>
+                <p className="text-[11px] text-slate-400 font-medium">¿Qué se te antoja hoy?</p>
+              </div>
             </div>
 
             <div className="flex items-center gap-2.5">
               {/* Notificaciones */}
               <button
                 type="button"
-                className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700/60 flex items-center justify-center relative text-slate-200 hover:text-white transition-colors"
+                className="w-10 h-10 rounded-full bg-[#222226] border border-zinc-700/60 flex items-center justify-center relative text-slate-200 hover:text-white transition-colors"
               >
                 <Bell className="w-5 h-5" />
                 <span
                   style={{ backgroundColor: cp }}
-                  className="absolute top-2 right-2 w-2 h-2 rounded-full ring-2 ring-slate-900"
-                />
+                  className="absolute top-2 right-2 min-w-[14px] h-[14px] px-0.5 rounded-full text-[9px] font-black text-white flex items-center justify-center ring-2 ring-[#121214]"
+                >
+                  2
+                </span>
               </button>
 
               {/* Carrito con Contador */}
               <button
                 type="button"
                 onClick={() => setShowCartDrawer(true)}
-                className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700/60 flex items-center justify-center relative text-slate-200 hover:text-white transition-colors"
+                className="w-10 h-10 rounded-full bg-[#222226] border border-zinc-700/60 flex items-center justify-center relative text-slate-200 hover:text-white transition-colors"
               >
                 <ShoppingBag className="w-5 h-5" />
                 {totalItemsCount > 0 && (
                   <span
                     style={{ backgroundColor: cp }}
-                    className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full text-[10px] font-black text-white flex items-center justify-center shadow-lg"
+                    className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black text-white flex items-center justify-center shadow-lg"
                   >
                     {totalItemsCount}
                   </span>
@@ -228,26 +234,26 @@ function RestaurantLandingContent({
             </div>
           </div>
 
-          {/* Pill Selector de Modalidad / Ubicación / Mesa */}
+          {/* Pill Selector de Ubicación / Mesa */}
           <button
             type="button"
             onClick={() => setShowChannelModal(true)}
-            className="w-full bg-slate-900/90 hover:bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 flex items-center justify-between text-xs text-slate-200 transition-all group"
+            className="w-full bg-[#1c1c20] hover:bg-[#242429] border border-zinc-800/90 rounded-2xl px-3.5 py-2.5 flex items-center justify-between text-xs text-slate-200 transition-all group"
           >
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
               <div
-                style={{ backgroundColor: `${cp}25`, color: cp }}
-                className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                style={{ backgroundColor: cp }}
+                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-white shadow-md"
               >
                 <MapPin className="w-4 h-4" />
               </div>
               <div className="text-left min-w-0">
-                <span className="text-[10px] text-slate-400 font-semibold block uppercase tracking-wider leading-tight">
+                <span className="text-[9px] text-slate-400 font-semibold block uppercase tracking-wider leading-tight">
                   {deliveryType === 'DOMICILIO' ? 'Enviar a' : deliveryType === 'MESA' ? 'Consumo en' : 'Retiro en'}
                 </span>
-                <span className="font-bold text-white text-xs truncate block">
+                <span className="font-bold text-white text-xs truncate block leading-tight">
                   {deliveryType === 'DOMICILIO'
-                    ? (customerData.direccion || negocio?.direccion || 'Seleccionar dirección...')
+                    ? (customerData.direccion || negocio?.direccion || 'Av. Amazonas N34-451 y Japón')
                     : deliveryType === 'MESA'
                     ? (customerData.tableName ? `Mesa ${customerData.tableName}` : 'Mesa Principal')
                     : (negocio?.nombre || 'Retiro en Local')}
@@ -257,7 +263,7 @@ function RestaurantLandingContent({
             <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors shrink-0" />
           </button>
 
-          {/* Barra de Búsqueda Blanca */}
+          {/* Barra de Búsqueda Blanca Redondeada */}
           <div className="relative flex items-center">
             <Search className="w-4 h-4 absolute left-3.5 text-slate-400" />
             <input
@@ -265,12 +271,11 @@ function RestaurantLandingContent({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar platos, combos, bebidas..."
-              className="w-full bg-white text-slate-900 pl-10 pr-10 py-2.5 rounded-2xl text-xs font-semibold placeholder-slate-400 shadow-sm focus:outline-none focus:ring-2"
-              style={{ '--tw-ring-color': cp } as any}
+              className="w-full bg-white text-slate-900 pl-10 pr-10 py-3 rounded-xl text-xs font-semibold placeholder-slate-400 shadow-sm focus:outline-none"
             />
             <button
               type="button"
-              className="absolute right-3 text-slate-400 hover:text-slate-700"
+              className="absolute right-3.5 text-slate-400 hover:text-slate-700"
               onClick={() => setSearchQuery('')}
             >
               <SlidersHorizontal className="w-4 h-4" style={{ color: searchQuery ? cp : undefined }} />
@@ -280,33 +285,33 @@ function RestaurantLandingContent({
       </header>
 
       <main className="max-w-4xl mx-auto px-4 pt-5 space-y-6">
-        {/* ── 2. HERO BANNER ("ESPECIAL DE LA CASA") ── */}
+        {/* ── 2. HERO BANNER ("BURGER Clásica" Tarjeta Oscura) ── */}
         <div
-          style={{ backgroundColor: cs }}
-          className="relative rounded-3xl p-5 sm:p-6 overflow-hidden text-white shadow-xl border border-slate-800"
+          style={{ backgroundColor: '#121214' }}
+          className="relative rounded-3xl p-5 sm:p-6 overflow-hidden text-white shadow-2xl border border-zinc-800/80"
         >
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center relative z-10">
-            {/* Texto e Información Hero */}
+            {/* Información del plato Hero */}
             <div className="sm:col-span-7 space-y-2.5">
               <span
                 style={{ color: cp }}
-                className="text-[11px] font-black tracking-widest uppercase block"
+                className="text-[10px] font-black tracking-widest uppercase block"
               >
                 ESPECIAL DE LA CASA
               </span>
 
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
+              <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-none text-white uppercase">
                 {heroProduct.nombre.split(' ')[0] || 'BURGER'}
-                <span style={{ color: cp }} className="font-serif italic font-normal ml-1.5">
+                <span style={{ color: cp }} className="font-serif italic font-normal normal-case ml-2 text-3xl sm:text-4xl">
                   {heroProduct.nombre.split(' ').slice(1).join(' ') || 'Clásica'}
                 </span>
               </h2>
 
-              <p className="text-xs text-slate-300 line-clamp-2 font-normal leading-relaxed max-w-sm">
+              <p className="text-xs text-slate-300 line-clamp-2 font-normal leading-relaxed max-w-xs pt-1">
                 {heroProduct.descripcion || 'Carne jugosa, queso cheddar, lechuga, tomate y nuestra salsa especial.'}
               </p>
 
-              <div className="pt-1 flex items-center gap-3">
+              <div className="pt-2 flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => addToCart({
@@ -325,9 +330,9 @@ function RestaurantLandingContent({
               </div>
             </div>
 
-            {/* Imagen Hero + Tag de Precio Circular */}
+            {/* Imagen Hero & Badge Circular Flotante de Precio */}
             <div className="sm:col-span-5 relative flex justify-center sm:justify-end mt-2 sm:mt-0">
-              <div className="relative w-44 h-44 sm:w-48 sm:h-48 rounded-2xl overflow-hidden shadow-2xl border border-slate-700/50">
+              <div className="relative w-44 h-44 sm:w-48 sm:h-48 rounded-2xl overflow-hidden shadow-2xl border border-zinc-700/50">
                 <img
                   src={heroProduct.imagenUrl || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=800'}
                   alt={heroProduct.nombre}
@@ -335,10 +340,10 @@ function RestaurantLandingContent({
                 />
               </div>
 
-              {/* Insignia Circular Flotante de Precio */}
+              {/* Insignia Circular Flotante en Naranja */}
               <div
                 style={{ backgroundColor: cp }}
-                className="absolute -top-2 -left-2 sm:left-4 w-16 h-16 rounded-full flex flex-col items-center justify-center text-white shadow-xl border-2 border-slate-900 text-center font-extrabold rotate-3"
+                className="absolute -top-2 -left-2 sm:left-2 w-16 h-16 rounded-full flex flex-col items-center justify-center text-white shadow-2xl border-2 border-[#121214] text-center font-extrabold rotate-3"
               >
                 <span className="text-[8px] tracking-wider leading-none uppercase text-amber-100 font-black">DESDE</span>
                 <span className="text-xs font-black leading-tight">${(Number(heroProduct.precio) || 6.99).toFixed(2)}</span>
@@ -346,32 +351,32 @@ function RestaurantLandingContent({
             </div>
           </div>
 
-          {/* Dots del Carrusel */}
+          {/* Carrusel Dots */}
           <div className="flex justify-center items-center gap-1.5 mt-4 pt-1">
             <span style={{ backgroundColor: cp }} className="w-6 h-2 rounded-full" />
-            <span className="w-2 h-2 rounded-full bg-slate-700" />
-            <span className="w-2 h-2 rounded-full bg-slate-700" />
+            <span className="w-2 h-2 rounded-full bg-zinc-700" />
+            <span className="w-2 h-2 rounded-full bg-zinc-700" />
           </div>
         </div>
 
-        {/* ── 3. BARRA DE CATEGORÍAS (ICONOS SCROLL HORIZONTAL) ── */}
+        {/* ── 3. BARRA DE CATEGORÍAS (TARJETAS BLANCAS CON ICONOS) ── */}
         <div>
           <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
             <button
               type="button"
               onClick={() => setSelectedCategory('TODOS')}
-              className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border flex flex-col items-center justify-center p-2 shrink-0 transition-all shadow-sm ${
+              className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border flex flex-col items-center justify-center p-2 shrink-0 transition-all shadow-xs ${
                 selectedCategory === 'TODOS'
-                  ? 'bg-white shadow-md font-bold'
-                  : 'bg-white/80 border-slate-200/80 text-slate-600 hover:bg-white'
+                  ? 'bg-white shadow-md border-2'
+                  : 'bg-white border-slate-100 text-slate-700 hover:bg-slate-50'
               }`}
               style={{
                 borderColor: selectedCategory === 'TODOS' ? cp : undefined,
                 color: selectedCategory === 'TODOS' ? cp : undefined
               }}
             >
-              <span className="text-2xl mb-1">🍽️</span>
-              <span className="text-xs font-bold truncate max-w-full">Todos</span>
+              <span className="text-2xl mb-1">🍔</span>
+              <span className="text-xs font-bold truncate max-w-full">Hamburguesas</span>
             </button>
 
             {categories.map((cat) => {
@@ -381,10 +386,10 @@ function RestaurantLandingContent({
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border flex flex-col items-center justify-center p-2 shrink-0 transition-all shadow-sm ${
+                  className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border flex flex-col items-center justify-center p-2 shrink-0 transition-all shadow-xs ${
                     isActive
-                      ? 'bg-white shadow-md font-bold'
-                      : 'bg-white/80 border-slate-200/80 text-slate-600 hover:bg-white'
+                      ? 'bg-white shadow-md border-2'
+                      : 'bg-white border-slate-100 text-slate-700 hover:bg-slate-50'
                   }`}
                   style={{
                     borderColor: isActive ? cp : undefined,
@@ -399,10 +404,10 @@ function RestaurantLandingContent({
           </div>
         </div>
 
-        {/* ── 4. BARRA DE PROPUESTA DE VALOR (3 DESTACADOS) ── */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-3.5 grid grid-cols-3 divide-x divide-slate-100 text-center text-xs">
+        {/* ── 4. BARRA DE PROPUESTA DE VALOR (3 DESTACADOS DIVIDIDOS) ── */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-xs p-4 grid grid-cols-3 divide-x divide-slate-100 text-center text-xs">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 px-1">
-            <div style={{ color: cp }} className="p-1.5 rounded-full bg-slate-50">
+            <div style={{ color: cp }} className="p-1.5 rounded-full bg-orange-50">
               <Truck className="w-5 h-5" />
             </div>
             <div className="text-left hidden sm:block">
@@ -416,7 +421,7 @@ function RestaurantLandingContent({
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 px-1">
-            <div style={{ color: cp }} className="p-1.5 rounded-full bg-slate-50">
+            <div style={{ color: cp }} className="p-1.5 rounded-full bg-orange-50">
               <Percent className="w-5 h-5" />
             </div>
             <div className="text-left hidden sm:block">
@@ -430,7 +435,7 @@ function RestaurantLandingContent({
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 px-1">
-            <div style={{ color: cp }} className="p-1.5 rounded-full bg-slate-50">
+            <div style={{ color: cp }} className="p-1.5 rounded-full bg-orange-50">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div className="text-left hidden sm:block">
@@ -444,7 +449,7 @@ function RestaurantLandingContent({
           </div>
         </div>
 
-        {/* ── 5. SECCIÓN RECOMENDADOS PARA TI (GRILLA DE PLATOS) ── */}
+        {/* ── 5. SECCIÓN RECOMENDADOS PARA TI (GRILLA 3 COLUMNAS EXACTA) ── */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
@@ -462,7 +467,7 @@ function RestaurantLandingContent({
           </div>
 
           {filteredProducts.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-2xl border border-slate-200/80 p-6 space-y-2">
+            <div className="text-center py-12 bg-white rounded-2xl border border-slate-100 p-6 space-y-2">
               <Utensils className="w-10 h-10 text-slate-300 mx-auto" />
               <h4 className="font-bold text-slate-700 text-sm">No encontramos platillos disponibles</h4>
               <p className="text-xs text-slate-400">Intenta buscar otro término o seleccionar otra categoría.</p>
@@ -476,9 +481,9 @@ function RestaurantLandingContent({
                 return (
                   <div
                     key={prod.id}
-                    className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all"
+                    className="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all"
                   >
-                    {/* Imagen del Producto + Botón Me Gusta */}
+                    {/* Imagen del Producto + Botón Me Gusta (Corazón) */}
                     <div className="relative w-full h-36 sm:h-44 bg-slate-100 overflow-hidden">
                       {prod.imagenUrl ? (
                         <img
@@ -517,7 +522,7 @@ function RestaurantLandingContent({
                         )}
                       </div>
 
-                      {/* Pie de tarjeta: Precio & Botón [+] */}
+                      {/* Pie de tarjeta: Precio & Botón [+] Naranja */}
                       <div className="pt-2 flex items-center justify-between border-t border-slate-100 mt-2">
                         <span style={{ color: cp }} className="font-extrabold text-sm sm:text-base">
                           ${(Number(prod.precio) || 0).toFixed(2)}
@@ -573,8 +578,8 @@ function RestaurantLandingContent({
 
         {/* ── 6. BANNER PROMO "¡ENVÍO GRATIS!" ── */}
         <div
-          style={{ backgroundColor: cs }}
-          className="rounded-2xl p-4 text-white shadow-xl flex items-center justify-between relative overflow-hidden border border-slate-800"
+          style={{ backgroundColor: '#121214' }}
+          className="rounded-2xl p-4 text-white shadow-xl flex items-center justify-between relative overflow-hidden border border-zinc-800"
         >
           <div className="flex items-center gap-3 relative z-10">
             <div
@@ -585,7 +590,7 @@ function RestaurantLandingContent({
               <Truck className="w-5 h-5 mt-0.5" />
             </div>
             <div>
-              <h4 className="font-extrabold text-sm sm:text-base tracking-wide uppercase leading-tight">
+              <h4 className="font-extrabold text-sm sm:text-base tracking-wide uppercase leading-tight text-white">
                 ¡ENVÍO GRATIS!
               </h4>
               <p style={{ color: cp }} className="text-xs font-bold mt-0.5">
@@ -624,8 +629,8 @@ function RestaurantLandingContent({
         </div>
       )}
 
-      {/* ── 8. NAVEGACIÓN INFERIOR FIJA (BOTTOM NAV BAR - 5 PESTAÑAS) ── */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 py-2 px-3 flex justify-around items-center z-50 shadow-lg">
+      {/* ── 8. NAVEGACIÓN INFERIOR FIJA (BOTTOM NAV BAR DE 5 PESTAÑAS) ── */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 py-2.5 px-4 flex justify-around items-center z-50 shadow-lg">
         <button
           type="button"
           onClick={() => setActiveNavTab('inicio')}
@@ -680,7 +685,7 @@ function RestaurantLandingContent({
         </Link>
       </nav>
 
-      {/* ── 9. MODAL DE SELECCIÓN DE CANAL DE PEDIDO ── */}
+      {/* ── 9. MODAL SELECTOR DE CANAL DE ATENCIÓN ── */}
       {showChannelModal && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-slate-900 border border-slate-100">

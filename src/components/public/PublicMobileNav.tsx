@@ -61,7 +61,18 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
 
     const isEnrolmentDetail = pathname.includes('/cursos/inscripcion/');
 
-    if (!isVisible || isEnrolmentDetail || pathname.includes('/admin') || pathname.includes('/superadmin')) {
+    const isRestaurant = 
+        tipoNegocio === 'RESTAURANTE' ||
+        tipoNegocio === 'GASTRONOMIA' ||
+        tipoNegocio === 'RESTAURANT' ||
+        slug.includes('parrilla') ||
+        slug.includes('restaurant') ||
+        slug.includes('gastro') ||
+        slug.includes('burger') ||
+        slug.includes('pizza') ||
+        slug.includes('taco');
+
+    if (!isVisible || isEnrolmentDetail || isRestaurant || pathname.includes('/admin') || pathname.includes('/superadmin')) {
         return null;
     }
 
