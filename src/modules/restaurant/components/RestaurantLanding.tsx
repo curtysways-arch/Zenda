@@ -366,6 +366,11 @@ function RestaurantLandingContent({
   };
 
   const displayPromotions = highlights.length > 0 ? highlights : FALLBACK_PROMOTIONS;
+  const activeTopPromo = displayPromotions.length > 0 ? displayPromotions[0] : null;
+
+  const promoBannerTitle = config?.bannerPromoTitulo || activeTopPromo?.title || '¡ENVÍO GRATIS Y PROMOCIONES DEL DÍA!';
+  const promoBannerDesc = config?.bannerPromoSubtitulo || activeTopPromo?.description || 'Aplica automático en combos y pedidos de la casa';
+  const promoBannerBadge = config?.bannerPromoBadge || activeTopPromo?.badge || 'Automático';
 
   const handleHeroButtonClick = (slide: typeof activeSlide) => {
     if (slide.buttonAction === 'PRODUCT' && slide.buttonValue) {
@@ -674,10 +679,10 @@ function RestaurantLandingContent({
                   </div>
                   <div>
                     <h4 className="font-extrabold text-xs sm:text-sm tracking-wide uppercase leading-tight text-white">
-                      ¡ENVÍO GRATIS Y HASTA 30% OFF!
+                      {promoBannerTitle}
                     </h4>
                     <p style={{ color: cp }} className="text-[11px] font-bold mt-0.5">
-                      Aplica automático en combos y pedidos sobre $15
+                      {promoBannerDesc}
                     </p>
                   </div>
                 </div>
@@ -688,7 +693,7 @@ function RestaurantLandingContent({
                     className="px-2.5 py-1 rounded-xl text-[10px] font-black border flex items-center gap-1"
                   >
                     <Tag className="w-3 h-3" />
-                    <span>Automático</span>
+                    <span>{promoBannerBadge}</span>
                   </span>
                 </div>
               </div>
@@ -903,10 +908,10 @@ function RestaurantLandingContent({
                   PROMOCIÓN DEL DÍA
                 </span>
                 <h3 className="text-base sm:text-lg font-black text-white leading-tight">
-                  ¡ENVÍO GRATIS Y HASTA 30% OFF!
+                  {promoBannerTitle}
                 </h3>
                 <p className="text-xs text-slate-300 font-medium">
-                  Aplica automático en tus pedidos de combos y parrilladas sobre $15.
+                  {promoBannerDesc}
                 </p>
               </div>
 
