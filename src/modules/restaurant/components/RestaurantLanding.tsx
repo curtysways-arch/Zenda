@@ -9,7 +9,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Menu, Search, SlidersHorizontal, MapPin, ChevronDown, Bell, ShoppingBag,
   Heart, Plus, Minus, Truck, Percent, ShieldCheck, Home, Grid, Tag,
-  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X, Sparkles, Flame
+  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X, Sparkles, Flame, Store
 } from 'lucide-react';
 import { CartProvider, useCart } from '@/core/context/CartContext';
 import CustomerCartDrawer from '@/components/public/CustomerCartDrawer';
@@ -183,6 +183,7 @@ function RestaurantLandingContent({
     deliveryType,
     setDeliveryType,
     customerData,
+    setCustomerData,
     getItemQuantity,
     addToCart,
     decrementQuantity
@@ -418,36 +419,38 @@ function RestaurantLandingContent({
 
       {/* ── CONTENEDOR PRINCIPAL FULL ANCHO ── */}
       <main className="w-full max-w-4xl mx-auto px-3 sm:px-5 pt-3 space-y-4">
-        {/* ── 2. SECTOR SELECCIÓN DE DIRECCIÓN Y CANAL DE ENTREGA ── */}
-        <div 
+        {/* ── 2. SECTOR SELECCIÓN DE DIRECCIÓN Y CANAL DE ENTREGA (BOTÓN COMPLETO CLICKEABLE CON TEXTO NÍTIDO) ── */}
+        <button 
+          type="button"
+          onClick={() => setShowChannelModal(true)}
           style={{ backgroundColor: '#ffffff' }}
-          className="rounded-2xl p-2.5 border border-slate-200/80 flex items-center justify-between text-xs shadow-xs"
+          className="w-full rounded-2xl p-3 border border-slate-200 flex items-center justify-between text-xs shadow-xs hover:border-slate-300 active:scale-[0.99] transition-all cursor-pointer text-left"
         >
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <div
               style={{ backgroundColor: cp, color: '#ffffff' }}
-              className="p-2 rounded-xl text-white font-bold shrink-0 shadow-xs"
+              className="p-2.5 rounded-xl text-white font-bold shrink-0 shadow-xs flex items-center justify-center"
             >
               <MapPin className="w-4 h-4 text-white" />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <span className="text-[9px] font-black tracking-widest text-slate-400 uppercase block leading-none">
-                ENVIAR A
+                {deliveryType === 'RETIRO' ? 'MÉTODO DE ENTREGA' : 'ENVIAR A'}
               </span>
-              <span className="font-black text-xs text-slate-900 truncate block mt-0.5">
-                {customerData?.direccion || 'hfgh'}
+              <span style={{ color: '#0f172a' }} className="font-extrabold text-xs text-slate-900 truncate block mt-1">
+                {deliveryType === 'RETIRO'
+                  ? 'Retiro en local / Para llevar'
+                  : (customerData?.direccion && customerData.direccion.trim().length > 0
+                      ? customerData.direccion
+                      : 'Seleccionar ubicación de entrega...')}
               </span>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setShowChannelModal(true)}
-            className="text-slate-400 hover:text-slate-700 p-1"
-          >
+          <div className="text-slate-500 p-1 shrink-0 ml-2">
             <ChevronDown className="w-4 h-4" />
-          </button>
-        </div>
+          </div>
+        </button>
 
         {/* ── 3. BARRA DE BÚSQUEDA ── */}
         <div className="relative w-full">
@@ -971,6 +974,88 @@ function RestaurantLandingContent({
           isOpen={showCartDrawer}
           onClose={() => setShowCartDrawer(false)}
         />
+      )}
+
+      {/* ── MODAL CANAL Y DIRECCIÓN DE ENTREGA ── */}
+      {showChannelModal && (
+        <div className="fixed inset-0 z-[999] bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                <MapPin style={{ color: cp }} className="w-5 h-5" />
+                Dirección de Entrega
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowChannelModal(false)}
+                className="p-1 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Selector de Tipo de Entrega */}
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl">
+              <button
+                type="button"
+                onClick={() => setDeliveryType('DOMICILIO')}
+                className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                  deliveryType === 'DOMICILIO' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
+                }`}
+              >
+                <Truck className="w-4 h-4" style={{ color: deliveryType === 'DOMICILIO' ? cp : undefined }} />
+                <span>A Domicilio</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeliveryType('RETIRO')}
+                className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                  deliveryType === 'RETIRO' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
+                }`}
+              >
+                <Store className="w-4 h-4" style={{ color: deliveryType === 'RETIRO' ? cp : undefined }} />
+                <span>Para Llevar</span>
+              </button>
+            </div>
+
+            {deliveryType === 'DOMICILIO' && (
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-slate-400">Calle / Dirección Exacta *</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Av. Principal #123 y Calle 4"
+                    value={customerData?.direccion || ''}
+                    onChange={(e) => setCustomerData({ direccion: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-slate-400">Referencia de Ubicación</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Casa blanca de 2 pisos junto a la farmacia"
+                    value={customerData?.referencia || ''}
+                    onChange={(e) => setCustomerData({ referencia: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setShowChannelModal(false)}
+                style={{ backgroundColor: cp, color: '#ffffff' }}
+                className="w-full py-3 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg hover:opacity-90 active:scale-95 transition-all text-white"
+              >
+                Guardar y Continuar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
