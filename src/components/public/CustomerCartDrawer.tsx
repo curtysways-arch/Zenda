@@ -656,7 +656,13 @@ export default function CustomerCartDrawer({
                 <div className="flex justify-between font-medium text-slate-600">
                   <span>Costo de Envío</span>
                   <span className="text-slate-900 font-black">
-                    {deliveryCost === 0 ? '$0.00' : `$${deliveryCost.toFixed(2)}`}
+                    {deliveryCost === 0 ? (
+                      <span className="text-emerald-600 font-black flex items-center gap-1">
+                        <Truck className="w-3.5 h-3.5 text-emerald-600" /> GRATIS
+                      </span>
+                    ) : (
+                      `$${deliveryCost.toFixed(2)}`
+                    )}
                   </span>
                 </div>
               )}
