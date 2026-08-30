@@ -3,9 +3,9 @@
 /**
  * @file CustomerCartDrawer.tsx
  * @module components/public
- * @description Modal de Checkout y Datos de Entrega (FASE 5D - Copia Fiel de Diseño).
+ * @description Modal de Checkout y Datos de Entrega (FASE 5D - Ubicación Actual por Defecto).
  * @responsibility Renderizar desglose de pedido ("Mi Pedido"), selección de entrega (A Domicilio vs Para Retirar),
- *   card con miniatura de mapa real Leaflet con ubicación verificada y margen impecable de texto en los inputs.
+ *   card con miniatura de mapa real Leaflet, auto-detección de ubicación actual y recálculo dinámico de envío.
  * @dependencies lucide-react, CartContext, MapSelectionModal
  */
 
@@ -13,7 +13,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   ShoppingBag, X, Plus, Minus, MapPin, Truck, Store,
   ArrowRight, Loader2, CheckCircle2, Navigation, Trash2, ArrowLeft,
-  User, Phone, Tag, Edit2
+  User, Phone, Tag, Edit2, RefreshCw
 } from 'lucide-react';
 import { useCart } from '@/core/context/CartContext';
 import MapSelectionModal from './MapSelectionModal';
@@ -156,6 +156,7 @@ export default function CustomerCartDrawer({
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [createdOrder, setCreatedOrder] = useState<any | null>(null);
+  const [isLocatingCurrent, setIsLocatingCurrent] = useState<boolean>(false);
 
   // Modal de Mapa GPS
   const [showMapModal, setShowMapModal] = useState(false);
@@ -178,6 +179,8 @@ export default function CustomerCartDrawer({
 
   if (!isOpen) return null;
 
+  const hasLocationSelected = !!(customerData.lat && customerData.lng && customerData.direccion && customerData.direccion.trim());
+
   const handleNextToCheckout = () => {
     if (cart.length === 0) return;
     setStep('checkout');
@@ -194,6 +197,47 @@ export default function CustomerCartDrawer({
       referencia: ref || customerData.referencia
     });
     setShowMapModal(false);
+  };
+
+  const handleAutoDetectCurrentLocation = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      setIsLocatingCurrent(true);
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const uLat = pos.coords.latitude;
+          const uLng = pos.coords.longitude;
+          let addrName = 'Mi Ubicación Actual';
+
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${uLat}&lon=${uLng}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.display_name) {
+                const parts = data.display_name.split(',');
+                addrName = parts.slice(0, 3).join(',').trim();
+              }
+            }
+          } catch (err) {}
+
+          const newFee = calculateDeliveryCostFromCoords(uLat, uLng, -0.180653, -78.467838, 1.50);
+          setDeliveryCost(newFee);
+          setCustomerData({
+            lat: uLat,
+            lng: uLng,
+            direccion: addrName
+          });
+          setIsLocatingCurrent(false);
+        },
+        () => {
+          setIsLocatingCurrent(false);
+          setShowMapModal(true);
+        },
+        { timeout: 8000, maximumAge: 30000 }
+      );
+    } else {
+      setShowMapModal(true);
+    }
   };
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
@@ -423,7 +467,7 @@ export default function CustomerCartDrawer({
           </div>
         )}
 
-        {/* ── PASO 2: CHECKOUT CON MARGENES Y ICONOS PERFECTOS ── */}
+        {/* ── PASO 2: CHECKOUT CON SELECCIONAR UBICACIÓN ACTUAL ── */}
         {step === 'checkout' && (
           <form onSubmit={handleSubmitOrder} className="space-y-4">
             {/* 1. SELECCIÓN DE MÉTODO DE ENTREGA */}
@@ -504,7 +548,7 @@ export default function CustomerCartDrawer({
                 </div>
               </div>
 
-              {/* DIRECCIÓN DE ENTREGA CON MINIATURA DE MAPA LEAFLET REAL */}
+              {/* DIRECCIÓN DE ENTREGA CON SELECCIONAR UBICACIÓN ACTUAL */}
               {deliveryType === 'DOMICILIO' && (
                 <div className="space-y-1 pt-1">
                   <label className="text-[11px] font-black text-slate-800">Dirección de Entrega *</label>
@@ -513,18 +557,18 @@ export default function CustomerCartDrawer({
                     onClick={() => setShowMapModal(true)}
                     className="rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
                   >
-                    {/* Miniatura de Mapa Leaflet Centrado en Coordenadas Reales */}
+                    {/* Miniatura de Mapa Leaflet Centrado */}
                     <MiniMapPreview lat={customerData.lat} lng={customerData.lng} />
 
-                    {/* Tarjeta Inferior Blanca con Nombre de Calle + Coordenadas Verificadas */}
+                    {/* Tarjeta Inferior Blanca con Dirección o Seleccionar Ubicación Actual */}
                     <div className="p-3.5 bg-white space-y-2">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-start gap-2 min-w-0">
                           <MapPin className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
                           <span className="text-xs font-black text-slate-900 leading-tight">
-                            {customerData.direccion && customerData.direccion.trim()
+                            {hasLocationSelected
                               ? customerData.direccion
-                              : 'Toca aquí para seleccionar tu ubicación en el mapa'}
+                              : 'Seleccionar ubicación actual'}
                           </span>
                         </div>
                         <div className="p-1 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-lg shrink-0">
@@ -532,21 +576,45 @@ export default function CustomerCartDrawer({
                         </div>
                       </div>
 
-                      {/* Estado Verificado en Verde */}
+                      {/* Estado Verificado o Botón de Autodetectar Ubicación Actual */}
                       <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-100">
-                        <div className="flex items-center gap-1.5 text-emerald-600 font-bold">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 fill-emerald-100 shrink-0" />
-                          <span>Ubicación verificada</span>
-                          {customerData.lat && customerData.lng && (
-                            <span className="font-mono text-slate-400 font-normal">
-                              Lat: {customerData.lat.toFixed(4)}, Lng: {customerData.lng.toFixed(4)}
-                            </span>
-                          )}
-                        </div>
+                        {hasLocationSelected ? (
+                          <>
+                            <div className="flex items-center gap-1.5 text-emerald-600 font-bold">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 fill-emerald-100 shrink-0" />
+                              <span>Ubicación verificada</span>
+                              {customerData.lat && customerData.lng && (
+                                <span className="font-mono text-slate-400 font-normal">
+                                  Lat: {customerData.lat.toFixed(4)}, Lng: {customerData.lng.toFixed(4)}
+                                </span>
+                              )}
+                            </div>
 
-                        <span style={{ color: primaryColor }} className="font-extrabold hover:underline">
-                          Cambiar ubicación
-                        </span>
+                            <span style={{ color: primaryColor }} className="font-extrabold hover:underline">
+                              Cambiar ubicación
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={handleAutoDetectCurrentLocation}
+                              disabled={isLocatingCurrent}
+                              className="flex items-center gap-1.5 text-emerald-600 font-extrabold hover:underline"
+                            >
+                              {isLocatingCurrent ? (
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-600" />
+                              ) : (
+                                <Navigation className="w-3.5 h-3.5 text-emerald-600" />
+                              )}
+                              <span>Usar mi ubicación GPS actual</span>
+                            </button>
+
+                            <span style={{ color: primaryColor }} className="font-extrabold hover:underline">
+                              Seleccionar en mapa
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
