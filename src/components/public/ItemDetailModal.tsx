@@ -75,13 +75,21 @@ export default function ItemDetailModal({
   // Generar lista de productos incluidos en el combo a partir de la descripción si no se proveyó
   const displayIncludedItems = item.includedItems && item.includedItems.length > 0
     ? item.includedItems.map(s => cleanDescriptionText(s)).filter(Boolean)
-    : (rawCleanDesc && rawCleanDesc.includes('+')
+    : (rawCleanDesc && (rawCleanDesc.includes('+') || rawCleanDesc.toLowerCase().startsWith('incluye:'))
         ? rawCleanDesc
             .replace(/^Incluye:\s*/i, '')
             .split('+')
             .map(s => cleanDescriptionText(s))
             .filter(Boolean)
         : null);
+
+  const isDescOnlyIncludedItems = !!(
+    displayIncludedItems &&
+    displayIncludedItems.length > 0 &&
+    (rawCleanDesc.toLowerCase().startsWith('incluye:') || rawCleanDesc.includes('+'))
+  );
+
+  const shouldShowDescription = rawCleanDesc && !isDescOnlyIncludedItems;
 
   const handleAdd = () => {
     onAddToCart(item, quantity, notes);
@@ -176,7 +184,7 @@ export default function ItemDetailModal({
           </div>
 
           {/* Descripción Completa */}
-          {rawCleanDesc && (
+          {shouldShowDescription && (
             <div className="space-y-1">
               <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider">
                 Descripción
