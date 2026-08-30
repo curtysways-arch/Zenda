@@ -35,12 +35,10 @@ export default async function AdminLayout({
         redirect('/superadmin');
     }
 
-    // Si no tiene negocioId (y no es super admin), redirigir
     if (!negocioId && !isSuperAdmin) {
         redirect('/login');
     }
 
-    // Leer la ruta actual con fallbacks para evitar bucles de redirección
     const headersList = await headers();
     const currentPath = 
         headersList.get('x-current-path') || 
@@ -71,7 +69,6 @@ export default async function AdminLayout({
             config = negocio?.configuracion || {};
         }
 
-        // Solo redirigir si explícitamente es false (para permitir que negocios existentes ingresen directamente)
         if (config.wizardCompleted === false) {
             redirect('/admin/onboarding');
         }
@@ -83,10 +80,7 @@ export default async function AdminLayout({
     const isNoPlan = status.reason === 'NO_PLAN';
     const isSuspended = status.reason === 'SUSPENDED';
     const isDemo = (session.user as any).isDemo === true;
-    const isCustomBackoffice = negocio?.tipoNegocio === 'SHOE_CARE' || negocio?.tipoNegocio === 'ordenes-servicio';
 
-    // Solo bloquear si el negocio realmente no existe o tiene ID inválido
-    // Para NO_PLAN, SUSPENDED y EXPIRED: permitir acceso con banner visible
     if (!status.active && !isExpired && !isNoPlan && !isSuspended && !isDemo && !isSuperAdmin) {
         redirect('/admin/vencido');
     }
@@ -101,8 +95,8 @@ export default async function AdminLayout({
                 {/* Sidebar Unificado para todos los negocios de Citiox */}
                 <AdminSidebar primaryColor={primaryColor} initialBusinessName={negocio?.nombre} />
 
-                {/* ── ÁREA PRINCIPAL ── */}
-                <div className="flex-1 flex justify-center md:justify-start overflow-hidden relative">
+                {/* ── ÁREA PRINCIPAL CON DESPLAZAMIENTO PARA SIDEBAR Y BANNERS ── */}
+                <div className="flex-1 flex justify-center md:justify-start overflow-hidden relative md:pl-64">
                     <div className="w-full flex flex-col bg-white md:shadow-none relative h-full overflow-hidden md:border-x-0">
                         
                         {/* TopBar: solo en móvil */}
