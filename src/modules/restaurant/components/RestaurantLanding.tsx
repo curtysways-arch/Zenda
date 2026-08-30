@@ -2,14 +2,15 @@
 /**
  * @file RestaurantLanding.tsx
  * @module modules/restaurant/components
- * @description Rediseño optimizado del Home de Restaurante con sincronización dinámica de colores y modal de detalles de promociones/productos.
+ * @description Home de Restaurante con navegación completa multitab (Inicio, Categorías, Ofertas, Mis Pedidos, Mi Cuenta).
  */
 
 import React, { useState, useEffect } from 'react';
 import {
   Menu, Search, SlidersHorizontal, MapPin, ChevronDown, Bell, ShoppingBag,
   Heart, Plus, Minus, Truck, Percent, ShieldCheck, Home, Grid, Tag,
-  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X, Sparkles, Flame, Store, Navigation, Eye
+  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X, Sparkles, Flame, Store, Navigation, Eye,
+  Clock, PackageCheck, UserCheck, Phone, CheckCircle2, RotateCcw
 } from 'lucide-react';
 import { CartProvider, useCart } from '@/core/context/CartContext';
 import CustomerCartDrawer from '@/components/public/CustomerCartDrawer';
@@ -455,9 +456,9 @@ function RestaurantLandingContent({
         </div>
       </div>
 
-      {/* ── CONTENEDOR PRINCIPAL FULL ANCHO ── */}
+      {/* ── CONTENEDOR PRINCIPAL MULTI-PESTAÑA ── */}
       <main className="w-full max-w-4xl mx-auto px-3 sm:px-5 pt-3 space-y-4">
-        {/* ── 2. SECTOR SELECCIÓN DE DIRECCIÓN Y CANAL DE ENTREGA ── */}
+        {/* ── 2. SECTOR SELECCIÓN DE DIRECCIÓN Y CANAL DE ENTREGA (COMÚN) ── */}
         <button 
           type="button"
           onClick={() => setShowMapModal(true)}
@@ -490,277 +491,614 @@ function RestaurantLandingContent({
           </div>
         </button>
 
-        {/* ── 3. BARRA DE BÚSQUEDA ── */}
-        <div className="relative w-full">
-          <input
-            type="text"
-            placeholder="Buscar platos, combos, bebidas..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-3 bg-white rounded-2xl font-bold text-xs text-slate-900 placeholder:text-slate-400 shadow-xs border border-slate-200 focus:border-slate-400 outline-none transition-all"
-          />
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <button
-            type="button"
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* ── 4. BANNER HERO RECTANGULAR WIDESCREEN CON FOTO DE COMIDA A ANCHO COMPLETO ── */}
-        <div className="relative w-full rounded-3xl overflow-hidden shadow-xl border border-slate-800/80 min-h-[165px] sm:min-h-[195px] max-h-[210px] flex items-center bg-slate-950">
-          <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
-            <img
-              src={activeSlide.image}
-              alt={activeSlide.titleText}
-              className="w-full h-full object-cover object-center scale-105 transition-all duration-700"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/75 to-transparent" />
-          </div>
-
-          <div
-            style={{ backgroundColor: cp, color: '#ffffff' }}
-            className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 w-12 h-12 rounded-full flex flex-col items-center justify-center text-white font-black shadow-xl border-2 border-white/20 rotate-[6deg] scale-95"
-          >
-            <span className="text-[8px] uppercase tracking-tighter leading-tight opacity-90">DESDE</span>
-            <span className="text-xs font-black leading-none">{activeSlide.priceText}</span>
-          </div>
-
-          <div className="relative z-10 w-3/4 sm:w-2/3 p-4 sm:p-6 space-y-1.5 flex flex-col justify-center">
-            <span style={{ color: cp }} className="text-[9px] font-black uppercase tracking-widest block">
-              {activeSlide.tagText}
-            </span>
-
-            <h2 className="text-white text-lg sm:text-xl font-black tracking-tight leading-tight">
-              {activeSlide.titleText}
-            </h2>
-
-            {activeSlide.descText && (
-              <p className="text-slate-300 text-[10px] font-normal leading-relaxed line-clamp-2 max-w-[260px]">
-                {activeSlide.descText}
-              </p>
-            )}
-
-            {activeSlide.isButtonEnabled && (
-              <div className="pt-1">
-                <button
-                  type="button"
-                  onClick={() => handleHeroButtonClick(activeSlide)}
-                  style={{ backgroundColor: cp, color: '#ffffff' }}
-                  className="px-4 py-1.5 rounded-full text-[11px] font-black text-white shadow-lg flex items-center gap-1 hover:opacity-90 active:scale-95 transition-all cursor-pointer"
-                >
-                  <span>{activeSlide.buttonText}</span>
-                  <ArrowRight className="w-3 h-3" />
-                </button>
-              </div>
-            )}
-          </div>
-
-          {displayHeroSlides.length > 1 && (
-            <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
-              {displayHeroSlides.map((s, idx) => {
-                const isActive = idx === currentSlideIndex % displayHeroSlides.length;
-                return (
-                  <button
-                    key={s.id || idx}
-                    type="button"
-                    onClick={() => setCurrentSlideIndex(idx)}
-                    style={{ backgroundColor: isActive ? cp : undefined }}
-                    className={`transition-all duration-300 ${
-                      isActive ? 'w-5 h-1.5 rounded-full shadow-sm' : 'w-1.5 h-1.5 rounded-full bg-white/40 hover:bg-white/70'
-                    }`}
-                  />
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* ── 5. CATEGORÍAS HORIZONTALES CON BORDES Y SELECCIÓN SEGÚN COLOR DE MARCA ── */}
-        <div>
-          <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none">
-            <button
-              type="button"
-              onClick={() => setSelectedCategory('TODOS')}
-              style={{
-                borderColor: selectedCategory === 'TODOS' ? cp : '#e2e8f0',
-                color: selectedCategory === 'TODOS' ? cp : '#334155',
-                backgroundColor: '#ffffff'
-              }}
-              className={`px-3 py-2 rounded-2xl border flex flex-col items-center justify-center min-w-[76px] shrink-0 transition-all shadow-xs cursor-pointer ${
-                selectedCategory === 'TODOS' ? 'shadow-md border-2' : ''
-              }`}
-            >
-              <span className="text-xl mb-0.5">🍔</span>
-              <span
-                style={{ color: selectedCategory === 'TODOS' ? cp : '#334155' }}
-                className="text-[10px] font-extrabold whitespace-nowrap"
+        {/* ── PESTAÑA 1: INICIO ── */}
+        {activeNavTab === 'inicio' && (
+          <>
+            {/* BARRA DE BÚSQUEDA */}
+            <div className="relative w-full">
+              <input
+                type="text"
+                placeholder="Buscar platos, combos, bebidas..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-10 py-3 bg-white rounded-2xl font-bold text-xs text-slate-900 placeholder:text-slate-400 shadow-xs border border-slate-200 focus:border-slate-400 outline-none transition-all"
+              />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <button
+                type="button"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
-                Hamburguesas
-              </span>
-            </button>
+                <SlidersHorizontal className="w-4 h-4" />
+              </button>
+            </div>
 
-            {categories.map((cat) => {
-              const isActive = selectedCategory === cat.id || selectedCategory === cat.nombre;
-              return (
+            {/* BANNER HERO */}
+            <div className="relative w-full rounded-3xl overflow-hidden shadow-xl border border-slate-800/80 min-h-[165px] sm:min-h-[195px] max-h-[210px] flex items-center bg-slate-950">
+              <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
+                <img
+                  src={activeSlide.image}
+                  alt={activeSlide.titleText}
+                  className="w-full h-full object-cover object-center scale-105 transition-all duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/75 to-transparent" />
+              </div>
+
+              <div
+                style={{ backgroundColor: cp, color: '#ffffff' }}
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 w-12 h-12 rounded-full flex flex-col items-center justify-center text-white font-black shadow-xl border-2 border-white/20 rotate-[6deg] scale-95"
+              >
+                <span className="text-[8px] uppercase tracking-tighter leading-tight opacity-90">DESDE</span>
+                <span className="text-xs font-black leading-none">{activeSlide.priceText}</span>
+              </div>
+
+              <div className="relative z-10 w-3/4 sm:w-2/3 p-4 sm:p-6 space-y-1.5 flex flex-col justify-center">
+                <span style={{ color: cp }} className="text-[9px] font-black uppercase tracking-widest block">
+                  {activeSlide.tagText}
+                </span>
+
+                <h2 className="text-white text-lg sm:text-xl font-black tracking-tight leading-tight">
+                  {activeSlide.titleText}
+                </h2>
+
+                {activeSlide.descText && (
+                  <p className="text-slate-300 text-[10px] font-normal leading-relaxed line-clamp-2 max-w-[260px]">
+                    {activeSlide.descText}
+                  </p>
+                )}
+
+                {activeSlide.isButtonEnabled && (
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => handleHeroButtonClick(activeSlide)}
+                      style={{ backgroundColor: cp, color: '#ffffff' }}
+                      className="px-4 py-1.5 rounded-full text-[11px] font-black text-white shadow-lg flex items-center gap-1 hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+                    >
+                      <span>{activeSlide.buttonText}</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {displayHeroSlides.length > 1 && (
+                <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
+                  {displayHeroSlides.map((s, idx) => {
+                    const isActive = idx === currentSlideIndex % displayHeroSlides.length;
+                    return (
+                      <button
+                        key={s.id || idx}
+                        type="button"
+                        onClick={() => setCurrentSlideIndex(idx)}
+                        style={{ backgroundColor: isActive ? cp : undefined }}
+                        className={`transition-all duration-300 ${
+                          isActive ? 'w-5 h-1.5 rounded-full shadow-sm' : 'w-1.5 h-1.5 rounded-full bg-white/40 hover:bg-white/70'
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* CATEGORÍAS HORIZONTALES */}
+            <div>
+              <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none">
                 <button
-                  key={cat.id}
                   type="button"
-                  onClick={() => setSelectedCategory(cat.id)}
+                  onClick={() => setSelectedCategory('TODOS')}
                   style={{
-                    borderColor: isActive ? cp : '#e2e8f0',
-                    color: isActive ? cp : '#334155',
+                    borderColor: selectedCategory === 'TODOS' ? cp : '#e2e8f0',
+                    color: selectedCategory === 'TODOS' ? cp : '#334155',
                     backgroundColor: '#ffffff'
                   }}
                   className={`px-3 py-2 rounded-2xl border flex flex-col items-center justify-center min-w-[76px] shrink-0 transition-all shadow-xs cursor-pointer ${
-                    isActive ? 'shadow-md border-2' : ''
+                    selectedCategory === 'TODOS' ? 'shadow-md border-2' : ''
                   }`}
                 >
-                  <span className="text-xl mb-0.5">{cat.icono || '🍲'}</span>
+                  <span className="text-xl mb-0.5">🍔</span>
                   <span
-                    style={{ color: isActive ? cp : '#334155' }}
+                    style={{ color: selectedCategory === 'TODOS' ? cp : '#334155' }}
                     className="text-[10px] font-extrabold whitespace-nowrap"
                   >
-                    {cat.nombre}
+                    Hamburguesas
                   </span>
                 </button>
-              );
-            })}
-          </div>
-        </div>
 
-        {/* ── 6. MÓDULO DE ENVÍO Y BENEFICIOS COMPACTO CON ICONOS EN COLOR PRIMARIO ── */}
-        <div
-          style={{ backgroundColor: '#fff8f5', borderColor: 'rgba(254, 215, 170, 0.7)' }}
-          className="rounded-2xl border p-2.5 flex items-center justify-between shadow-2xs text-xs"
-        >
-          <div className="flex items-center gap-2 flex-1 justify-center px-1">
-            <div style={{ color: cp }} className="shrink-0">
-              <Truck className="w-5 h-5" />
-            </div>
-            <div className="text-left">
-              <span style={{ color: '#0f172a' }} className="font-extrabold block leading-tight text-[11px]">
-                Envío rápido
-              </span>
-              <span style={{ color: '#475569' }} className="text-[9px] block leading-none mt-0.5">
-                30–45 min
-              </span>
-            </div>
-          </div>
-
-          <div className="h-7 w-[1px] bg-orange-200/60 shrink-0" />
-
-          <div className="flex items-center gap-2 flex-1 justify-center px-1">
-            <div style={{ color: cp }} className="shrink-0">
-              <Percent className="w-5 h-5" />
-            </div>
-            <div className="text-left">
-              <span style={{ color: '#0f172a' }} className="font-extrabold block leading-tight text-[11px]">
-                Promociones
-              </span>
-              <span style={{ color: '#475569' }} className="text-[9px] block leading-none mt-0.5">
-                Todos los días
-              </span>
-            </div>
-          </div>
-
-          <div className="h-7 w-[1px] bg-orange-200/60 shrink-0" />
-
-          <div className="flex items-center gap-2 flex-1 justify-center px-1">
-            <div style={{ color: cp }} className="shrink-0">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div className="text-left">
-              <span style={{ color: '#0f172a' }} className="font-extrabold block leading-tight text-[11px]">
-                Pago seguro
-              </span>
-              <span style={{ color: '#475569' }} className="text-[9px] block leading-none mt-0.5">
-                100% protegido
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* ── 6.5. SECCIÓN PROMOCIONES Y OFERTAS (CON CLIC PARA VER DETALLES COMPLETOS) ── */}
-        <div className="space-y-3 pt-2 pb-1">
-          <div className="flex items-center justify-between">
-            <h3 style={{ color: '#0f172a' }} className="text-base sm:text-lg font-black tracking-tight flex items-center gap-2">
-              <Flame style={{ color: cp }} className="w-5 h-5" />
-              Promociones Especiales
-            </h3>
-            <span style={{ backgroundColor: `${cp}15`, color: cp, borderColor: `${cp}30` }} className="text-[10px] font-black px-2.5 py-0.5 rounded-full border uppercase tracking-wider">
-              Ofertas Activas
-            </span>
-          </div>
-
-          {/* Banner de Promociones de Envío / Descuento */}
-          <div
-            style={{ backgroundColor: cs || '#1e293b' }}
-            className="rounded-2xl p-3.5 text-white shadow-md flex items-center justify-between relative overflow-hidden border border-slate-800"
-          >
-            <div className="flex items-center gap-3 relative z-10">
-              <div
-                style={{ backgroundColor: cp, color: '#ffffff' }}
-                className="w-10 h-10 rounded-xl flex flex-col items-center justify-center text-white font-black text-center shadow-lg rotate-[-4deg] shrink-0"
-              >
-                <span className="text-[8px] leading-tight">OFERTA</span>
-                <Percent className="w-4 h-4 mt-0.5 text-white" />
-              </div>
-              <div>
-                <h4 className="font-extrabold text-xs sm:text-sm tracking-wide uppercase leading-tight text-white">
-                  ¡ENVÍO GRATIS Y HASTA 30% OFF!
-                </h4>
-                <p style={{ color: cp }} className="text-[11px] font-bold mt-0.5">
-                  Aplica automático en combos y pedidos sobre $15
-                </p>
+                {categories.map((cat) => {
+                  const isActive = selectedCategory === cat.id || selectedCategory === cat.nombre;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setSelectedCategory(cat.id)}
+                      style={{
+                        borderColor: isActive ? cp : '#e2e8f0',
+                        color: isActive ? cp : '#334155',
+                        backgroundColor: '#ffffff'
+                      }}
+                      className={`px-3 py-2 rounded-2xl border flex flex-col items-center justify-center min-w-[76px] shrink-0 transition-all shadow-xs cursor-pointer ${
+                        isActive ? 'shadow-md border-2' : ''
+                      }`}
+                    >
+                      <span className="text-xl mb-0.5">{cat.icono || '🍲'}</span>
+                      <span
+                        style={{ color: isActive ? cp : '#334155' }}
+                        className="text-[10px] font-extrabold whitespace-nowrap"
+                      >
+                        {cat.nombre}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            <div className="relative z-10 shrink-0">
-              <span
-                style={{ backgroundColor: `${cp}20`, color: cp, borderColor: `${cp}40` }}
-                className="px-2.5 py-1 rounded-xl text-[10px] font-black border flex items-center gap-1"
-              >
-                <Tag className="w-3 h-3" />
-                <span>Automático</span>
-              </span>
-            </div>
-          </div>
+            {/* MÓDULO DE BENEFICIOS */}
+            <div
+              style={{ backgroundColor: '#fff8f5', borderColor: 'rgba(254, 215, 170, 0.7)' }}
+              className="rounded-2xl border p-2.5 flex items-center justify-between shadow-2xs text-xs"
+            >
+              <div className="flex items-center gap-2 flex-1 justify-center px-1">
+                <div style={{ color: cp }} className="shrink-0">
+                  <Truck className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <span style={{ color: '#0f172a' }} className="font-extrabold block leading-tight text-[11px]">
+                    Envío rápido
+                  </span>
+                  <span style={{ color: '#475569' }} className="text-[9px] block leading-none mt-0.5">
+                    30–45 min
+                  </span>
+                </div>
+              </div>
 
-          {/* Carrusel Horizontal de Tarjetas Promocionales con Click para Detalle Completo */}
-          <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
-            {displayPromotions.map((promo) => (
+              <div className="h-7 w-[1px] bg-orange-200/60 shrink-0" />
+
+              <div className="flex items-center gap-2 flex-1 justify-center px-1">
+                <div style={{ color: cp }} className="shrink-0">
+                  <Percent className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <span style={{ color: '#0f172a' }} className="font-extrabold block leading-tight text-[11px]">
+                    Promociones
+                  </span>
+                  <span style={{ color: '#475569' }} className="text-[9px] block leading-none mt-0.5">
+                    Todos los días
+                  </span>
+                </div>
+              </div>
+
+              <div className="h-7 w-[1px] bg-orange-200/60 shrink-0" />
+
+              <div className="flex items-center gap-2 flex-1 justify-center px-1">
+                <div style={{ color: cp }} className="shrink-0">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <span style={{ color: '#0f172a' }} className="font-extrabold block leading-tight text-[11px]">
+                    Pago seguro
+                  </span>
+                  <span style={{ color: '#475569' }} className="text-[9px] block leading-none mt-0.5">
+                    100% protegido
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* SECCIÓN PROMOCIONES Y OFERTAS */}
+            <div className="space-y-3 pt-2 pb-1">
+              <div className="flex items-center justify-between">
+                <h3 style={{ color: '#0f172a' }} className="text-base sm:text-lg font-black tracking-tight flex items-center gap-2">
+                  <Flame style={{ color: cp }} className="w-5 h-5" />
+                  Promociones Especiales
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setActiveNavTab('ofertas')}
+                  style={{ color: cp }}
+                  className="text-xs font-extrabold hover:underline flex items-center gap-0.5 cursor-pointer"
+                >
+                  <span>Ver todas</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Banner de Promociones de Envío / Descuento */}
               <div
-                key={promo.id}
-                onClick={() => handleOpenPromoDetail(promo)}
-                style={{ backgroundColor: '#ffffff' }}
-                className="rounded-2xl border border-slate-100 shadow-sm p-3 flex items-center gap-3 min-w-[260px] max-w-[290px] shrink-0 hover:shadow-md transition-all relative overflow-hidden cursor-pointer group"
+                style={{ backgroundColor: cs || '#1e293b' }}
+                className="rounded-2xl p-3.5 text-white shadow-md flex items-center justify-between relative overflow-hidden border border-slate-800"
               >
-                <div className="w-16 h-16 rounded-xl bg-slate-100 overflow-hidden shrink-0 relative">
-                  <img src={promo.image} alt={promo.title || 'Promoción'} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                  <div style={{ backgroundColor: cp }} className="absolute top-1 left-1 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-xs">
-                    {promo.badge || 'PROMO'}
+                <div className="flex items-center gap-3 relative z-10">
+                  <div
+                    style={{ backgroundColor: cp, color: '#ffffff' }}
+                    className="w-10 h-10 rounded-xl flex flex-col items-center justify-center text-white font-black text-center shadow-lg rotate-[-4deg] shrink-0"
+                  >
+                    <span className="text-[8px] leading-tight">OFERTA</span>
+                    <Percent className="w-4 h-4 mt-0.5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs sm:text-sm tracking-wide uppercase leading-tight text-white">
+                      ¡ENVÍO GRATIS Y HASTA 30% OFF!
+                    </h4>
+                    <p style={{ color: cp }} className="text-[11px] font-bold mt-0.5">
+                      Aplica automático en combos y pedidos sobre $15
+                    </p>
                   </div>
                 </div>
 
-                <div className="min-w-0 flex-1 space-y-1">
-                  <h5 style={{ color: '#0f172a' }} className="text-xs font-black truncate group-hover:text-orange-600 transition-colors">
-                    {promo.title}
-                  </h5>
-                  <p style={{ color: '#64748b' }} className="text-[10px] font-medium line-clamp-1">
-                    {promo.description}
-                  </p>
+                <div className="relative z-10 shrink-0">
+                  <span
+                    style={{ backgroundColor: `${cp}20`, color: cp, borderColor: `${cp}40` }}
+                    className="px-2.5 py-1 rounded-xl text-[10px] font-black border flex items-center gap-1"
+                  >
+                    <Tag className="w-3 h-3" />
+                    <span>Automático</span>
+                  </span>
+                </div>
+              </div>
 
-                  <div className="flex items-center justify-between pt-0.5">
-                    <div className="flex items-center gap-1.5">
+              {/* Carrusel Horizontal de Promociones */}
+              <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
+                {displayPromotions.map((promo) => (
+                  <div
+                    key={promo.id}
+                    onClick={() => handleOpenPromoDetail(promo)}
+                    style={{ backgroundColor: '#ffffff' }}
+                    className="rounded-2xl border border-slate-100 shadow-sm p-3 flex items-center gap-3 min-w-[260px] max-w-[290px] shrink-0 hover:shadow-md transition-all relative overflow-hidden cursor-pointer group"
+                  >
+                    <div className="w-16 h-16 rounded-xl bg-slate-100 overflow-hidden shrink-0 relative">
+                      <img src={promo.image} alt={promo.title || 'Promoción'} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      <div style={{ backgroundColor: cp }} className="absolute top-1 left-1 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-xs">
+                        {promo.badge || 'PROMO'}
+                      </div>
+                    </div>
+
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <h5 style={{ color: '#0f172a' }} className="text-xs font-black truncate group-hover:text-orange-600 transition-colors">
+                        {promo.title}
+                      </h5>
+                      <p style={{ color: '#64748b' }} className="text-[10px] font-medium line-clamp-1">
+                        {promo.description}
+                      </p>
+
+                      <div className="flex items-center justify-between pt-0.5">
+                        <div className="flex items-center gap-1.5">
+                          {promo.price && (
+                            <span style={{ color: cp }} className="text-xs font-black">
+                              ${promo.price.toFixed(2)}
+                            </span>
+                          )}
+                          {promo.originalPrice && (
+                            <span style={{ color: '#94a3b8' }} className="text-[10px] font-bold line-through">
+                              ${promo.originalPrice.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenPromoDetail(promo);
+                          }}
+                          style={{ backgroundColor: cp, color: '#ffffff' }}
+                          className="px-2.5 py-1 rounded-lg font-black text-[10px] flex items-center gap-1 shadow-xs hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
+                        >
+                          <Eye className="w-3 h-3 text-white" />
+                          <span>Ver Detalle</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* SECCIÓN RECOMENDADOS PARA TI */}
+            <div id="seccion-menu-productos" className="space-y-3 pt-1">
+              <div className="flex items-center justify-between">
+                <h3 style={{ color: '#0f172a' }} className="text-base sm:text-lg font-black tracking-tight">
+                  Recomendados para ti
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory('TODOS')}
+                  style={{ color: cp }}
+                  className="text-xs font-extrabold flex items-center gap-0.5 hover:underline cursor-pointer"
+                >
+                  <span>Ver todo</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {filteredProducts.length === 0 ? (
+                <div style={{ backgroundColor: '#ffffff' }} className="text-center py-8 rounded-2xl border border-slate-100 p-6 space-y-2">
+                  <Utensils className="w-8 h-8 text-slate-300 mx-auto" />
+                  <h4 style={{ color: '#334155' }} className="font-bold text-xs">No encontramos platillos disponibles</h4>
+                  <p style={{ color: '#64748b' }} className="text-[11px]">Intenta buscar otro término o seleccionar otra categoría.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {filteredProducts.map((prod) => {
+                    const qtyInCart = getItemQuantity(prod.id);
+                    const isFav = !!favorites[prod.id];
+
+                    return (
+                      <div
+                        key={prod.id}
+                        onClick={() => handleOpenProductDetail(prod)}
+                        style={{ backgroundColor: '#ffffff' }}
+                        className="rounded-2xl border border-slate-100 shadow-xs overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all cursor-pointer"
+                      >
+                        <div className="relative w-full h-32 sm:h-36 bg-slate-100 overflow-hidden">
+                          {prod.imagenUrl ? (
+                            <img
+                              src={prod.imagenUrl}
+                              alt={prod.nombre}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-2xl">🍲</div>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={(e) => toggleFavorite(prod.id, e)}
+                            className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/40 backdrop-blur-xs text-white hover:bg-slate-900/60 transition-all cursor-pointer"
+                          >
+                            <Heart
+                              className={`w-3.5 h-3.5 transition-colors ${
+                                isFav ? 'fill-red-500 text-red-500' : 'text-white'
+                              }`}
+                            />
+                          </button>
+                        </div>
+
+                        <div className="p-3 flex flex-col flex-1 justify-between space-y-2">
+                          <div>
+                            <h4 style={{ color: '#0f172a' }} className="font-extrabold text-xs line-clamp-1 group-hover:text-orange-600 transition-colors">
+                              {prod.nombre}
+                            </h4>
+                            {prod.descripcion && (
+                              <p style={{ color: '#64748b' }} className="text-[10px] font-medium line-clamp-2 mt-0.5">
+                                {prod.descripcion}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                            <span style={{ color: cp }} className="font-black text-xs sm:text-sm">
+                              ${prod.precio.toFixed(2)}
+                            </span>
+
+                            {qtyInCart > 0 ? (
+                              <div
+                                onClick={(e) => e.stopPropagation()}
+                                className="flex items-center gap-1 bg-slate-100 rounded-xl p-0.5"
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => decrementQuantity(prod.id)}
+                                  className="w-5 h-5 bg-white text-slate-700 rounded-lg font-bold text-xs flex items-center justify-center shadow-xs hover:bg-slate-200 cursor-pointer"
+                                >
+                                  -
+                                </button>
+                                <span style={{ color: '#0f172a' }} className="text-[11px] font-black px-1">
+                                  {qtyInCart}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => addToCart({
+                                    id: prod.id,
+                                    nombre: prod.nombre,
+                                    precio: prod.precio,
+                                    imagenUrl: prod.imagenUrl
+                                  })}
+                                  style={{ backgroundColor: cp, color: '#ffffff' }}
+                                  className="w-5 h-5 rounded-lg font-bold text-xs flex items-center justify-center shadow-xs text-white cursor-pointer"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenProductDetail(prod);
+                                }}
+                                style={{ backgroundColor: cp, color: '#ffffff' }}
+                                className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl flex items-center justify-center font-extrabold shadow-md hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
+                              >
+                                <Plus className="w-3.5 h-3.5 text-white" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* ── PESTAÑA 2: CATEGORÍAS ── */}
+        {activeNavTab === 'categorias' && (
+          <div className="space-y-4 pb-6">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div>
+                <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                  <Grid style={{ color: cp }} className="w-5 h-5" />
+                  Categorías del Menú
+                </h2>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  Explora nuestros platillos clasificados por especialidad
+                </p>
+              </div>
+
+              {selectedCategory !== 'TODOS' && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory('TODOS')}
+                  style={{ color: cp }}
+                  className="text-xs font-black hover:underline cursor-pointer"
+                >
+                  Ver Todas ({categories.length})
+                </button>
+              )}
+            </div>
+
+            {/* PARRILLA DE CATEGORÍAS */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {categories.map((cat) => {
+                const isSelected = selectedCategory === cat.id || selectedCategory === cat.nombre;
+                const countInCat = products.filter(p => p.categoriaId === cat.id || p.categoria?.nombre === cat.nombre || p.categoria?.id === cat.id).length;
+
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCategory(cat.id);
+                      setActiveNavTab('inicio');
+                      const menuEl = document.getElementById('seccion-menu-productos');
+                      if (menuEl) menuEl.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    style={{
+                      borderColor: isSelected ? cp : '#e2e8f0',
+                      backgroundColor: isSelected ? '#fff8f5' : '#ffffff'
+                    }}
+                    className={`p-4 rounded-3xl border flex flex-col items-center justify-center text-center space-y-2 shadow-2xs hover:shadow-md transition-all cursor-pointer group ${
+                      isSelected ? 'border-2 shadow-md' : ''
+                    }`}
+                  >
+                    <span className="text-4xl group-hover:scale-110 transition-transform">{cat.icono || '🍲'}</span>
+                    <div>
+                      <h4 style={{ color: isSelected ? cp : '#0f172a' }} className="font-extrabold text-sm">
+                        {cat.nombre}
+                      </h4>
+                      <span className="text-[10px] font-bold text-slate-400">
+                        {countInCat > 0 ? `${countInCat} platillos` : 'Especialidad'}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* SECCIÓN DE PRODUCTOS COMPLETA DE LA CATEGORÍA */}
+            <div className="pt-4 space-y-3">
+              <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                Platillos de {categories.find(c => c.id === selectedCategory || c.nombre === selectedCategory)?.nombre || 'Todas las Categorías'}
+              </h3>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {filteredProducts.map((prod) => (
+                  <div
+                    key={prod.id}
+                    onClick={() => handleOpenProductDetail(prod)}
+                    style={{ backgroundColor: '#ffffff' }}
+                    className="rounded-2xl border border-slate-100 shadow-xs overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all cursor-pointer p-3 space-y-2"
+                  >
+                    <div className="w-full h-28 rounded-xl bg-slate-100 overflow-hidden relative">
+                      {prod.imagenUrl ? (
+                        <img src={prod.imagenUrl} alt={prod.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xl">🍲</div>
+                      )}
+                    </div>
+                    <div>
+                      <h5 className="font-extrabold text-xs text-slate-900 truncate">{prod.nombre}</h5>
+                      <span style={{ color: cp }} className="font-black text-xs block mt-0.5">${prod.precio.toFixed(2)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── PESTAÑA 3: OFERTAS (PANTALLA DE OFERTAS Y PROMOCIONES COMPLETA) ── */}
+        {activeNavTab === 'ofertas' && (
+          <div className="space-y-4 pb-6">
+            <div className="border-b border-slate-200 pb-3">
+              <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                <Flame style={{ color: cp }} className="w-5 h-5" />
+                Ofertas y Promociones Especiales
+              </h2>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Aprovecha los combos exclusivos y descuentos especiales del día
+              </p>
+            </div>
+
+            {/* BANNER DESTACADO DE PROMOCIONES */}
+            <div
+              style={{ backgroundColor: cs || '#1e293b' }}
+              className="rounded-3xl p-5 text-white shadow-lg flex items-center justify-between relative overflow-hidden border border-slate-800"
+            >
+              <div className="space-y-1 relative z-10 max-w-xs">
+                <span style={{ backgroundColor: cp }} className="text-[9px] font-black text-white px-2 py-0.5 rounded-md uppercase tracking-widest inline-block">
+                  PROMOCIÓN DEL DÍA
+                </span>
+                <h3 className="text-base sm:text-lg font-black text-white leading-tight">
+                  ¡ENVÍO GRATIS Y HASTA 30% OFF!
+                </h3>
+                <p className="text-xs text-slate-300 font-medium">
+                  Aplica automático en tus pedidos de combos y parrilladas sobre $15.
+                </p>
+              </div>
+
+              <div
+                style={{ backgroundColor: cp, color: '#ffffff' }}
+                className="w-16 h-16 rounded-2xl flex flex-col items-center justify-center font-black text-center shadow-xl rotate-[6deg] shrink-0 border-2 border-white/20"
+              >
+                <span className="text-[9px] leading-tight">HASTA</span>
+                <span className="text-base font-black leading-none">30%</span>
+                <span className="text-[8px] leading-tight">OFF</span>
+              </div>
+            </div>
+
+            {/* REJILLA COMPLETA DE PROMOCIONES */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              {displayPromotions.map((promo) => (
+                <div
+                  key={promo.id}
+                  onClick={() => handleOpenPromoDetail(promo)}
+                  style={{ backgroundColor: '#ffffff' }}
+                  className="rounded-3xl border border-slate-200/80 p-4 shadow-2xs hover:shadow-md transition-all cursor-pointer space-y-3 flex flex-col justify-between group"
+                >
+                  <div className="flex gap-3">
+                    <div className="w-20 h-20 rounded-2xl bg-slate-100 overflow-hidden shrink-0 relative">
+                      <img src={promo.image} alt={promo.title || 'Promoción'} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      {promo.badge && (
+                        <div style={{ backgroundColor: cp }} className="absolute top-1 left-1 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-xs">
+                          {promo.badge}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <h4 className="font-extrabold text-sm text-slate-900 group-hover:text-orange-600 transition-colors">
+                        {promo.title}
+                      </h4>
+                      <p className="text-xs text-slate-500 font-medium line-clamp-2">
+                        {promo.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <div className="flex items-center gap-2">
                       {promo.price && (
-                        <span style={{ color: cp }} className="text-xs font-black">
+                        <span style={{ color: cp }} className="text-base font-black">
                           ${promo.price.toFixed(2)}
                         </span>
                       )}
                       {promo.originalPrice && (
-                        <span style={{ color: '#94a3b8' }} className="text-[10px] font-bold line-through">
+                        <span className="text-xs font-bold text-slate-400 line-through">
                           ${promo.originalPrice.toFixed(2)}
                         </span>
                       )}
@@ -773,148 +1111,103 @@ function RestaurantLandingContent({
                         handleOpenPromoDetail(promo);
                       }}
                       style={{ backgroundColor: cp, color: '#ffffff' }}
-                      className="px-2.5 py-1 rounded-lg font-black text-[10px] flex items-center gap-1 shadow-xs hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
+                      className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-md hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
                     >
-                      <Eye className="w-3 h-3 text-white" />
-                      <span>Ver Detalle</span>
+                      <Eye className="w-3.5 h-3.5 text-white" />
+                      <span>Ver Oferta</span>
                     </button>
                   </div>
                 </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── PESTAÑA 4: MIS PEDIDOS ── */}
+        {activeNavTab === 'pedidos' && (
+          <div className="space-y-4 pb-6">
+            <div className="border-b border-slate-200 pb-3">
+              <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                <ClipboardList style={{ color: cp }} className="w-5 h-5" />
+                Mis Pedidos
+              </h2>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Consulta el estado de tus órdenes activas e historial de compras
+              </p>
+            </div>
+
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-4 text-center">
+              <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                <PackageCheck className="w-8 h-8" />
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── 7. SECCIÓN RECOMENDADOS PARA TI CON CLICK PARA DETALLE DE PRODUCTO ── */}
-        <div id="seccion-menu-productos" className="space-y-3 pt-1">
-          <div className="flex items-center justify-between">
-            <h3 style={{ color: '#0f172a' }} className="text-base sm:text-lg font-black tracking-tight">
-              Recomendados para ti
-            </h3>
-            <button
-              type="button"
-              onClick={() => setSelectedCategory('TODOS')}
-              style={{ color: cp }}
-              className="text-xs font-extrabold flex items-center gap-0.5 hover:underline cursor-pointer"
-            >
-              <span>Ver todo</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          {filteredProducts.length === 0 ? (
-            <div style={{ backgroundColor: '#ffffff' }} className="text-center py-8 rounded-2xl border border-slate-100 p-6 space-y-2">
-              <Utensils className="w-8 h-8 text-slate-300 mx-auto" />
-              <h4 style={{ color: '#334155' }} className="font-bold text-xs">No encontramos platillos disponibles</h4>
-              <p style={{ color: '#64748b' }} className="text-[11px]">Intenta buscar otro término o seleccionar otra categoría.</p>
+              <div className="space-y-1">
+                <h3 className="text-base font-black text-slate-800">¡Tu historial está actualizado!</h3>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
+                  Tus pedidos confirmados aparecerán en esta sección con su estado en tiempo real.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveNavTab('inicio')}
+                style={{ backgroundColor: cp, color: '#ffffff' }}
+                className="px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white shadow-md active:scale-95 transition-all cursor-pointer"
+              >
+                Realizar un Pedido
+              </button>
             </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {filteredProducts.map((prod) => {
-                const qtyInCart = getItemQuantity(prod.id);
-                const isFav = !!favorites[prod.id];
+          </div>
+        )}
 
-                return (
-                  <div
-                    key={prod.id}
-                    onClick={() => handleOpenProductDetail(prod)}
-                    style={{ backgroundColor: '#ffffff' }}
-                    className="rounded-2xl border border-slate-100 shadow-xs overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all cursor-pointer"
-                  >
-                    {/* Imagen del Producto + Corazón Favorito */}
-                    <div className="relative w-full h-32 sm:h-36 bg-slate-100 overflow-hidden">
-                      {prod.imagenUrl ? (
-                        <img
-                          src={prod.imagenUrl}
-                          alt={prod.nombre}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-2xl">🍲</div>
-                      )}
+        {/* ── PESTAÑA 5: MI CUENTA ── */}
+        {activeNavTab === 'cuenta' && (
+          <div className="space-y-4 pb-6">
+            <div className="border-b border-slate-200 pb-3">
+              <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                <User style={{ color: cp }} className="w-5 h-5" />
+                Mi Cuenta
+              </h2>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Administra tus datos personales y dirección de entrega
+              </p>
+            </div>
 
-                      <button
-                        type="button"
-                        onClick={(e) => toggleFavorite(prod.id, e)}
-                        className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/40 backdrop-blur-xs text-white hover:bg-slate-900/60 transition-all cursor-pointer"
-                      >
-                        <Heart
-                          className={`w-3.5 h-3.5 transition-colors ${
-                            isFav ? 'fill-red-500 text-red-500' : 'text-white'
-                          }`}
-                        />
-                      </button>
-                    </div>
+            <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-2xs space-y-4">
+              <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                <div style={{ backgroundColor: cp }} className="w-12 h-12 rounded-2xl text-white font-black flex items-center justify-center text-lg shadow-md">
+                  {customerData?.nombre ? customerData.nombre.charAt(0).toUpperCase() : 'C'}
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900">
+                    {customerData?.nombre || 'Carlos Caicedo'}
+                  </h3>
+                  <span className="text-xs font-bold text-slate-400">
+                    {customerData?.telefono || '0991234567'}
+                  </span>
+                </div>
+              </div>
 
-                    {/* Detalle del Producto */}
-                    <div className="p-3 flex flex-col flex-1 justify-between space-y-2">
-                      <div>
-                        <h4 style={{ color: '#0f172a' }} className="font-extrabold text-xs line-clamp-1 group-hover:text-orange-600 transition-colors">
-                          {prod.nombre}
-                        </h4>
-                        {prod.descripcion && (
-                          <p style={{ color: '#64748b' }} className="text-[10px] font-medium line-clamp-2 mt-0.5">
-                            {prod.descripcion}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Precio y Botón Agregar al Carrito */}
-                      <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-                        <span style={{ color: cp }} className="font-black text-xs sm:text-sm">
-                          ${prod.precio.toFixed(2)}
-                        </span>
-
-                        {qtyInCart > 0 ? (
-                          <div
-                            onClick={(e) => e.stopPropagation()}
-                            className="flex items-center gap-1 bg-slate-100 rounded-xl p-0.5"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => decrementQuantity(prod.id)}
-                              className="w-5 h-5 bg-white text-slate-700 rounded-lg font-bold text-xs flex items-center justify-center shadow-xs hover:bg-slate-200 cursor-pointer"
-                            >
-                              -
-                            </button>
-                            <span style={{ color: '#0f172a' }} className="text-[11px] font-black px-1">
-                              {qtyInCart}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => addToCart({
-                                id: prod.id,
-                                nombre: prod.nombre,
-                                precio: prod.precio,
-                                imagenUrl: prod.imagenUrl
-                              })}
-                              style={{ backgroundColor: cp, color: '#ffffff' }}
-                              className="w-5 h-5 rounded-lg font-bold text-xs flex items-center justify-center shadow-xs text-white cursor-pointer"
-                            >
-                              +
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenProductDetail(prod);
-                            }}
-                            style={{ backgroundColor: cp, color: '#ffffff' }}
-                            className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl flex items-center justify-center font-extrabold shadow-md hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
-                          >
-                            <Plus className="w-3.5 h-3.5 text-white" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
+              <div className="space-y-2 text-xs font-bold text-slate-700">
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-slate-400" />
+                    <span>Dirección Registrada:</span>
                   </div>
-                );
-              })}
+                  <span className="text-slate-900 font-black truncate max-w-[180px]">
+                    {customerData?.direccion || 'No registrada'}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowMapModal(true)}
+                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+              >
+                Actualizar Ubicación en Mapa
+              </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </main>
 
       {/* ── BARRA FLOTANTE DEL CARRITO SI HAY PRODUCTOS AGREGADOS ── */}
@@ -935,7 +1228,7 @@ function RestaurantLandingContent({
         </div>
       )}
 
-      {/* ── NAVEGACIÓN INFERIOR FIJA DE 5 OPCIONES (APLICANDO COLOR DE BOTTOM NAV DEL ADMIN) ── */}
+      {/* ── NAVEGACIÓN INFERIOR FIJA DE 5 OPCIONES ── */}
       <nav 
         style={{ 
           backgroundColor: navBg,
