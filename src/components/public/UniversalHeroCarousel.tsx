@@ -204,14 +204,14 @@ export default function UniversalHeroCarousel({
             </p>
           )}
 
-          {/* Etiqueta de Precio (Si es promoción o producto destacado) */}
-          {activeItem.price !== null && activeItem.price !== undefined && (
+          {/* Etiqueta de Precio Dinámica */}
+          {(activeItem.priceLabel || (activeItem.price !== null && activeItem.price !== undefined)) && (
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-400/90 text-slate-950 font-black rounded-full text-xs shadow-md mt-1 animate-bounce">
               <Tag size={12} className="shrink-0" />
-              <span>${Number(activeItem.price).toFixed(2)}</span>
-              {activeItem.originalPrice && (
+              <span>{activeItem.priceLabel || `$${Number(activeItem.price).toFixed(2)}`}</span>
+              {(activeItem.previousPrice || activeItem.originalPrice) && (
                 <span className="line-through text-slate-700 text-[10px] font-semibold">
-                  ${Number(activeItem.originalPrice).toFixed(2)}
+                  ${Number(activeItem.previousPrice || activeItem.originalPrice).toFixed(2)}
                 </span>
               )}
             </div>

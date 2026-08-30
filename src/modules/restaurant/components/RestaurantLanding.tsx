@@ -41,6 +41,9 @@ interface HeroSlide {
   image: string;
   price?: number | null;
   originalPrice?: number | null;
+  previousPrice?: number | null;
+  hasVariants?: boolean;
+  priceLabel?: string | null;
   type?: string | null;
   button?: {
     enabled?: boolean;
@@ -332,14 +335,17 @@ function RestaurantLandingContent({
     return true;
   });
 
-  // Datos para Hero Banner
+  // Datos para Hero Banner resolutivo
   const displayHeroSlides = heroSlides.length > 0 ? heroSlides : products.slice(0, 3).map(p => ({
     id: p.id,
     title: p.nombre,
     description: p.descripcion,
     image: p.imagenUrl || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=800',
     price: p.precio,
-    originalPrice: p.precio ? Number((p.precio * 1.25).toFixed(2)) : undefined,
+    originalPrice: p.precioAnterior,
+    previousPrice: p.precioAnterior,
+    priceLabel: p.precio ? `$${Number(p.precio).toFixed(2)}` : null,
+    hasVariants: false,
     button: { enabled: true, text: 'Pedir Ahora', actionType: 'PRODUCT', actionValue: p.id }
   }));
 
@@ -349,9 +355,10 @@ function RestaurantLandingContent({
   const activeSlide = {
     image: rawSlide?.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=800',
     tagText: rawSlide?.title ? 'ESPECIAL DE LA CASA' : negocio?.nombre || 'RESTAURANTE',
-    titleText: rawSlide?.title || negocio?.nombre || 'Hamburguesa Clásica',
-    descText: rawSlide?.description || 'Parrillas artesanales, cortes premium y la mejor experiencia gastronómica.',
-    priceText: rawSlide?.price ? `$${Number(rawSlide.price).toFixed(2)}` : '$6.99',
+    titleText: rawSlide?.title || negocio?.nombre || '',
+    descText: rawSlide?.description || '',
+    priceLabel: rawSlide?.priceLabel || (rawSlide?.price ? `$${Number(rawSlide.price).toFixed(2)}` : null),
+    hasVariants: !!rawSlide?.hasVariants,
     isButtonEnabled: rawSlide?.button?.enabled ?? true,
     buttonText: rawSlide?.button?.text || 'Ver Menú',
     buttonAction: rawSlide?.button?.actionType,
@@ -464,13 +471,20 @@ function RestaurantLandingContent({
                 <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/75 to-transparent" />
               </div>
 
-              <div
-                style={{ backgroundColor: cp, color: '#ffffff' }}
-                className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 w-12 h-12 rounded-full flex flex-col items-center justify-center text-white font-black shadow-xl border-2 border-white/20 rotate-[6deg] scale-95"
-              >
-                <span className="text-[8px] uppercase tracking-tighter leading-tight opacity-90">DESDE</span>
-                <span className="text-xs font-black leading-none">{activeSlide.priceText}</span>
-              </div>
+              {/* Etiqueta Flotante Circular con Precio Dinámico */}
+              {activeSlide.priceLabel && (
+                <div
+                  style={{ backgroundColor: cp, color: '#ffffff' }}
+                  className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 w-12 h-12 rounded-full flex flex-col items-center justify-center text-white font-black shadow-xl border-2 border-white/20 rotate-[6deg] scale-95"
+                >
+                  {activeSlide.hasVariants && (
+                    <span className="text-[8px] uppercase tracking-tighter leading-tight opacity-90">DESDE</span>
+                  )}
+                  <span className="text-xs font-black leading-none">
+                    {activeSlide.priceLabel.replace(/^Desde\s+/i, '')}
+                  </span>
+                </div>
+              )}
 
               <div className="relative z-10 w-3/4 sm:w-2/3 p-4 sm:p-6 space-y-1.5 flex flex-col justify-center">
                 <span style={{ color: cp }} className="text-[9px] font-black uppercase tracking-widest block">

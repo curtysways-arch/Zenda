@@ -18,7 +18,10 @@ export interface ResolvedHeroItem {
   title?: string | null;
   description?: string | null;
   price?: number | null;
+  previousPrice?: number | null;
   originalPrice?: number | null;
+  hasVariants?: boolean;
+  priceLabel?: string | null;
   button: ResolvedButton;
   position: number;
   priority: number;
@@ -35,6 +38,10 @@ export interface ResolvedHighlightItem {
   title?: string | null;
   description?: string | null;
   price?: number | null;
+  previousPrice?: number | null;
+  originalPrice?: number | null;
+  hasVariants?: boolean;
+  priceLabel?: string | null;
   position: number;
   priority: number;
 }
@@ -42,6 +49,78 @@ export interface ResolvedHighlightItem {
 export interface LandingContentResponse {
   hero: ResolvedHeroItem[];
   highlights: ResolvedHighlightItem[];
+}
+
+/**
+ * Función centralizada para resolver el precio, precio anterior, variantes y priceLabel de una entidad.
+ */
+export function resolveHeroPrice(entity: any, type: string): {
+  price: number | null;
+  previousPrice: number | null;
+  hasVariants: boolean;
+  priceLabel: string | null;
+} {
+  if (!entity) {
+    return { price: null, previousPrice: null, hasVariants: false, priceLabel: null };
+  }
+
+  let price: number | null = null;
+  let previousPrice: number | null = null;
+  let hasVariants = false;
+
+  if (type === 'PRODUCT') {
+    // Extraer variantes desde extraInfo o campo de variantes si existe
+    const extra = typeof entity.extraInfo === 'string'
+      ? (() => { try { return JSON.parse(entity.extraInfo); } catch { return {}; } })()
+      : (entity.extraInfo || {});
+
+    const variantList = extra?.variantes || extra?.variants || entity.variantes || entity.variants;
+
+    if (Array.isArray(variantList) && variantList.length > 0) {
+      const validPrices = variantList
+        .map((v: any) => Number(v?.precio ?? v?.price))
+        .filter((p: number) => !isNaN(p) && p > 0);
+
+      if (validPrices.length > 0) {
+        const minPrice = Math.min(...validPrices);
+        const maxPrice = Math.max(...validPrices);
+        price = minPrice;
+        hasVariants = maxPrice > minPrice || variantList.length > 1;
+      } else {
+        price = Number(entity.precio ?? entity.price) || null;
+      }
+    } else {
+      price = Number(entity.precio ?? entity.price) || null;
+    }
+
+    if (entity.precioAnterior || entity.previousPrice || extra?.precioAnterior) {
+      previousPrice = Number(entity.precioAnterior || entity.previousPrice || extra?.precioAnterior) || null;
+    }
+  } else if (type === 'SERVICE') {
+    price = Number(entity.precio ?? entity.price) || null;
+    if (entity.precioAnterior || entity.previousPrice) {
+      previousPrice = Number(entity.precioAnterior || entity.previousPrice) || null;
+    }
+  } else if (type === 'PROMOTION') {
+    price = Number(entity.precioPromo ?? entity.precio ?? entity.price) || null;
+    previousPrice = Number(entity.precioAnterior ?? entity.previousPrice) || null;
+  } else if (type === 'COMBO') {
+    price = Number(entity.precio ?? entity.price) || null;
+    previousPrice = Number(entity.precioAnterior ?? entity.previousPrice) || null;
+  }
+
+  let priceLabel: string | null = null;
+  if (price !== null && !isNaN(price) && price > 0) {
+    const formatted = `$${price.toFixed(2)}`;
+    priceLabel = hasVariants ? `Desde ${formatted}` : formatted;
+  }
+
+  return {
+    price,
+    previousPrice,
+    hasVariants,
+    priceLabel
+  };
 }
 
 /**
@@ -55,7 +134,7 @@ function isWithinSchedule(startAt?: Date | null, endAt?: Date | null, now: Date 
 
 /**
  * Resolver universal para el contenido de Landing de un negocio.
- * Garantiza aislamiento multi-tenant, filtrado por fechas/estado y resolución de entidades asociadas.
+ * Garantiza aislamiento multi-tenant, filtrado por fechas/estado y resolución dinámica de precios.
  */
 export async function resolveLandingContent(businessId: string): Promise<LandingContentResponse> {
   if (!businessId) {
@@ -113,6 +192,7 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
       if (activePromo) {
         const promoImg = activePromo.imageMedia?.url || activePromo.imagenUrl;
         if (promoImg) {
+          const priceInfo = resolveHeroPrice(activePromo, 'PROMOTION');
           resolvedHero.push({
             id: item.id,
             businessId,
@@ -123,8 +203,11 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
             mobileImage: item.mobileImage || item.image || promoImg,
             title: item.title || activePromo.titulo,
             description: item.description || activePromo.descripcion,
-            price: activePromo.precioPromo,
-            originalPrice: activePromo.precioAnterior,
+            price: priceInfo.price,
+            previousPrice: priceInfo.previousPrice,
+            originalPrice: priceInfo.previousPrice,
+            hasVariants: priceInfo.hasVariants,
+            priceLabel: priceInfo.priceLabel,
             button: {
               enabled: item.buttonEnabled,
               text: item.buttonEnabled ? (item.buttonText || 'Ver Promoción') : null,
@@ -150,6 +233,7 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
       });
 
       if (activeProduct && activeProduct.imagenUrl) {
+        const priceInfo = resolveHeroPrice(activeProduct, 'PRODUCT');
         resolvedHero.push({
           id: item.id,
           businessId,
@@ -160,7 +244,11 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
           mobileImage: item.mobileImage || item.image || activeProduct.imagenUrl,
           title: item.title || activeProduct.nombre,
           description: item.description || activeProduct.descripcion,
-          price: activeProduct.precio,
+          price: priceInfo.price,
+          previousPrice: priceInfo.previousPrice,
+          originalPrice: priceInfo.previousPrice,
+          hasVariants: priceInfo.hasVariants,
+          priceLabel: priceInfo.priceLabel,
           button: {
             enabled: item.buttonEnabled,
             text: item.buttonEnabled ? (item.buttonText || 'Ver Producto') : null,
@@ -187,6 +275,7 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
       if (activeService) {
         const srvImg = activeService.imageMedia?.url || (activeService.Imagen && activeService.Imagen[0]?.url);
         if (srvImg) {
+          const priceInfo = resolveHeroPrice(activeService, 'SERVICE');
           resolvedHero.push({
             id: item.id,
             businessId,
@@ -197,7 +286,11 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
             mobileImage: item.mobileImage || item.image || srvImg,
             title: item.title || activeService.nombre,
             description: item.description,
-            price: activeService.precio,
+            price: priceInfo.price,
+            previousPrice: priceInfo.previousPrice,
+            originalPrice: priceInfo.previousPrice,
+            hasVariants: priceInfo.hasVariants,
+            priceLabel: priceInfo.priceLabel,
             button: {
               enabled: item.buttonEnabled,
               text: item.buttonEnabled ? (item.buttonText || 'Reservar Servicio') : null,
@@ -224,6 +317,11 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
           mobileImage: item.mobileImage || item.image,
           title: item.title,
           description: item.description,
+          price: null,
+          previousPrice: null,
+          originalPrice: null,
+          hasVariants: false,
+          priceLabel: null,
           button: {
             enabled: item.buttonEnabled,
             text: item.buttonEnabled ? item.buttonText : null,
@@ -243,51 +341,85 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
     let finalDesc = item.description;
     let finalImage = item.image;
     let finalPrice: number | null = null;
-    let finalOriginalPrice: number | null = null;
+    let finalPreviousPrice: number | null = null;
+    let finalHasVariants = false;
+    let finalPriceLabel: string | null = null;
     let isValidSource = true;
 
-    if (item.sourceType === 'PROMOTION' && item.sourceId) {
+    const sourceType = item.sourceType || item.type;
+
+    if (sourceType === 'PROMOTION' && item.sourceId) {
       const promo = await (prisma as any).promotion.findFirst({
         where: { id: item.sourceId, businessId, estado: { notIn: ['eliminado', 'eliminada'] } },
         include: { imageMedia: true }
       });
       if (!promo) {
-        isValidSource = false; // Entidad inactiva o eliminada
+        isValidSource = false; // Entidad inactiva, eliminada o de otro negocio
       } else {
+        const priceInfo = resolveHeroPrice(promo, 'PROMOTION');
         finalTitle = finalTitle || promo.titulo;
         finalDesc = finalDesc || promo.descripcion;
         finalImage = finalImage || promo.imageMedia?.url || promo.imagenUrl;
-        finalPrice = promo.precioPromo;
-        finalOriginalPrice = promo.precioAnterior;
+        finalPrice = priceInfo.price;
+        finalPreviousPrice = priceInfo.previousPrice;
+        finalHasVariants = priceInfo.hasVariants;
+        finalPriceLabel = priceInfo.priceLabel;
       }
-    } else if (item.sourceType === 'PRODUCT' && item.sourceId) {
+    } else if (sourceType === 'PRODUCT' && item.sourceId) {
       const prod = await (prisma as any).producto.findFirst({
         where: { id: item.sourceId, negocioId: businessId, activo: true }
       });
       if (!prod) {
-        isValidSource = false;
+        isValidSource = false; // Entidad inactiva, eliminada o de otro negocio
       } else {
+        const priceInfo = resolveHeroPrice(prod, 'PRODUCT');
         finalTitle = finalTitle || prod.nombre;
         finalDesc = finalDesc || prod.descripcion;
         finalImage = finalImage || prod.imagenUrl;
-        finalPrice = prod.precio;
+        finalPrice = priceInfo.price;
+        finalPreviousPrice = priceInfo.previousPrice;
+        finalHasVariants = priceInfo.hasVariants;
+        finalPriceLabel = priceInfo.priceLabel;
       }
-    } else if (item.sourceType === 'SERVICE' && item.sourceId) {
+    } else if (sourceType === 'SERVICE' && item.sourceId) {
       const srv = await (prisma as any).service.findFirst({
         where: { id: item.sourceId, negocioId: businessId, estaActivo: true },
         include: { imageMedia: true, Imagen: true }
       });
       if (!srv) {
-        isValidSource = false;
+        isValidSource = false; // Entidad inactiva, eliminada o de otro negocio
       } else {
+        const priceInfo = resolveHeroPrice(srv, 'SERVICE');
         finalTitle = finalTitle || srv.nombre;
         finalImage = finalImage || srv.imageMedia?.url || (srv.Imagen && srv.Imagen[0]?.url);
-        finalPrice = srv.precio;
+        finalPrice = priceInfo.price;
+        finalPreviousPrice = priceInfo.previousPrice;
+        finalHasVariants = priceInfo.hasVariants;
+        finalPriceLabel = priceInfo.priceLabel;
+      }
+    } else if (sourceType === 'COMBO' && item.sourceId) {
+      let combo: any = null;
+      try {
+        combo = await (prisma as any).combo.findFirst({
+          where: { id: item.sourceId, negocioId: businessId }
+        });
+      } catch (_) {}
+      if (!combo) {
+        isValidSource = false;
+      } else {
+        const priceInfo = resolveHeroPrice(combo, 'COMBO');
+        finalTitle = finalTitle || combo.nombre;
+        finalDesc = finalDesc || combo.descripcion;
+        finalImage = finalImage || combo.imagenUrl;
+        finalPrice = priceInfo.price;
+        finalPreviousPrice = priceInfo.previousPrice;
+        finalHasVariants = priceInfo.hasVariants;
+        finalPriceLabel = priceInfo.priceLabel;
       }
     }
 
     if (!isValidSource || !finalImage) {
-      continue; // Descartar ítems cuya entidad fuente ya no exista o no tenga imagen
+      continue; // Descartar si la entidad fuente fue eliminada o no pertenece al negocio
     }
 
     resolvedHero.push({
@@ -301,7 +433,10 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
       title: finalTitle,
       description: finalDesc,
       price: finalPrice,
-      originalPrice: finalOriginalPrice,
+      previousPrice: finalPreviousPrice,
+      originalPrice: finalPreviousPrice,
+      hasVariants: finalHasVariants,
+      priceLabel: finalPriceLabel,
       button: {
         enabled: item.buttonEnabled,
         text: item.buttonEnabled ? item.buttonText : null,
@@ -325,6 +460,9 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
     let finalDesc = item.description;
     let finalImage = item.image;
     let finalPrice: number | null = null;
+    let finalPreviousPrice: number | null = null;
+    let finalHasVariants = false;
+    let finalPriceLabel: string | null = null;
     let isValidSource = true;
 
     if (item.sourceType === 'PROMOTION' && item.sourceId) {
@@ -335,10 +473,14 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
       if (!promo) {
         isValidSource = false;
       } else {
+        const priceInfo = resolveHeroPrice(promo, 'PROMOTION');
         finalTitle = finalTitle || promo.titulo;
         finalDesc = finalDesc || promo.descripcion;
         finalImage = finalImage || promo.imageMedia?.url || promo.imagenUrl;
-        finalPrice = promo.precioPromo;
+        finalPrice = priceInfo.price;
+        finalPreviousPrice = priceInfo.previousPrice;
+        finalHasVariants = priceInfo.hasVariants;
+        finalPriceLabel = priceInfo.priceLabel;
       }
     } else if (item.sourceType === 'PRODUCT' && item.sourceId) {
       const prod = await (prisma as any).producto.findFirst({
@@ -347,10 +489,14 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
       if (!prod) {
         isValidSource = false;
       } else {
+        const priceInfo = resolveHeroPrice(prod, 'PRODUCT');
         finalTitle = finalTitle || prod.nombre;
         finalDesc = finalDesc || prod.descripcion;
         finalImage = finalImage || prod.imagenUrl;
-        finalPrice = prod.precio;
+        finalPrice = priceInfo.price;
+        finalPreviousPrice = priceInfo.previousPrice;
+        finalHasVariants = priceInfo.hasVariants;
+        finalPriceLabel = priceInfo.priceLabel;
       }
     } else if (item.sourceType === 'SERVICE' && item.sourceId) {
       const srv = await (prisma as any).service.findFirst({
@@ -360,9 +506,13 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
       if (!srv) {
         isValidSource = false;
       } else {
+        const priceInfo = resolveHeroPrice(srv, 'SERVICE');
         finalTitle = finalTitle || srv.nombre;
         finalImage = finalImage || srv.imageMedia?.url || (srv.Imagen && srv.Imagen[0]?.url);
-        finalPrice = srv.precio;
+        finalPrice = priceInfo.price;
+        finalPreviousPrice = priceInfo.previousPrice;
+        finalHasVariants = priceInfo.hasVariants;
+        finalPriceLabel = priceInfo.priceLabel;
       }
     }
 
@@ -380,6 +530,10 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
       title: finalTitle,
       description: finalDesc,
       price: finalPrice,
+      previousPrice: finalPreviousPrice,
+      originalPrice: finalPreviousPrice,
+      hasVariants: finalHasVariants,
+      priceLabel: finalPriceLabel,
       position: item.position,
       priority: item.priority
     });
