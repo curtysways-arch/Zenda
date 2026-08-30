@@ -42,6 +42,7 @@ export interface ResolvedHighlightItem {
   originalPrice?: number | null;
   hasVariants?: boolean;
   priceLabel?: string | null;
+  badge?: string | null;
   position: number;
   priority: number;
 }
@@ -448,7 +449,7 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
     });
   }
 
-  // ── RESOLUCIÓN DE HIGHLIGHT ITEMS ────────────────────────────────────────
+  // ── RESOLUCIÓN DE HIGHLIGHT ITEMS (DESTACADOS Y PROMOCIONES DE LA BD) ──────
   const resolvedHighlights: ResolvedHighlightItem[] = [];
 
   for (const item of rawHighlightItems) {
@@ -537,6 +538,57 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
       position: item.position,
       priority: item.priority
     });
+  }
+
+  // ── SI NO HAY HIGHLIGHTITEMS MANUALES, CONSULTAR DIRECTAMENTE LAS PROMOCIONES ACTIVAS EN DB DE ESTE NEGOCIO ──
+  if (resolvedHighlights.length === 0) {
+    const activeDbPromotions = await (prisma as any).promotion.findMany({
+      where: {
+        businessId,
+        estado: { in: ['activa', 'activo', 'ACTIVA', 'ACTIVO', 'publicado', 'publicada', 'PUBLICADO', 'PUBLICADA'] }
+      },
+      include: { imageMedia: true },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    for (let idx = 0; idx < activeDbPromotions.length; idx++) {
+      const promo = activeDbPromotions[idx];
+      if (!isWithinSchedule(promo.fechaInicio, promo.fechaFin, now)) {
+        continue;
+      }
+
+      const promoImg = promo.imageMedia?.url || promo.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=800';
+      const priceInfo = resolveHeroPrice(promo, 'PROMOTION');
+
+      let badge = 'OFERTA';
+      if (promo.tipoPromo === '2x1') badge = '2x1 OFERTA';
+      else if (promo.tipoPromo === 'paquete') badge = 'PAQUETE';
+      else if (promo.tipoPromo === 'cupon') badge = 'CUPÓN';
+      else if (promo.tipoPromo === 'envio_gratis') badge = 'ENVÍO GRATIS';
+      else if (promo.precioAnterior && promo.precioAnterior > promo.precioPromo) {
+        const pct = Math.round(((promo.precioAnterior - promo.precioPromo) / promo.precioAnterior) * 100);
+        badge = `${pct}% OFF`;
+      }
+
+      resolvedHighlights.push({
+        id: promo.id,
+        businessId,
+        type: 'PROMOTION',
+        sourceType: 'PROMOTION',
+        sourceId: promo.id,
+        image: promoImg,
+        title: promo.titulo,
+        description: promo.descripcion,
+        price: priceInfo.price,
+        previousPrice: priceInfo.previousPrice,
+        originalPrice: priceInfo.previousPrice,
+        hasVariants: priceInfo.hasVariants,
+        priceLabel: priceInfo.priceLabel,
+        badge,
+        position: idx,
+        priority: 10
+      });
+    }
   }
 
   return {
