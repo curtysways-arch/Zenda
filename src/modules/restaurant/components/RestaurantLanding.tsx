@@ -2,7 +2,7 @@
 /**
  * @file RestaurantLanding.tsx
  * @module modules/restaurant/components
- * @description Rediseño optimizado del Home de Restaurante con colores dinámicos configurados desde el Admin.
+ * @description Rediseño optimizado del Home de Restaurante con sincronización dinámica de colores configurados desde el Admin (Header, Fondo, Botones, etc.).
  */
 
 import React, { useState, useEffect } from 'react';
@@ -188,10 +188,41 @@ function RestaurantLandingContent({
     decrementQuantity
   } = useCart();
 
-  // Colores dinámicos configurados en Admin
+  // Configuración de Paleta de Colores Dinámicos del Admin
+  const config = negocio?.configuracion 
+    ? (typeof negocio.configuracion === 'string' 
+        ? JSON.parse(negocio.configuracion) 
+        : negocio.configuracion) 
+    : {};
+
   const cp = negocio?.colorPrimario || '#ff5500';
   const cn = negocio?.colorFondo || negocio?.colorNeutral || '#ffffff';
   const cs = negocio?.colorSecundario || '#0f172a';
+
+  // 🎨 COLOR DE BARRA SUPERIOR (COLOR DE HEADER CONFIGURADO EN EL ADMIN)
+  const headerBg = config?.colorHeader || negocio?.colorHeader || '#ffffff';
+
+  // Helper de Luminancia para calculo de contraste automatico
+  const getHexLuma = (hex: string) => {
+    if (!hex) return 1;
+    const c = hex.replace('#', '');
+    if (c.length !== 6) return 1;
+    const r = parseInt(c.substring(0, 2), 16);
+    const g = parseInt(c.substring(2, 4), 16);
+    const b = parseInt(c.substring(4, 6), 16);
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  };
+
+  const headerLuma = getHexLuma(headerBg);
+  const headerText = headerLuma < 0.5 ? '#ffffff' : '#0f172a';
+  const headerSubText = headerLuma < 0.5 ? '#cbd5e1' : '#475569';
+  const headerBtnBg = headerLuma < 0.5 ? 'rgba(255, 255, 255, 0.15)' : '#f1f5f9';
+  const headerBorder = headerLuma < 0.5 ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0';
+
+  // 🎨 COLOR DE BARRA INFERIOR (BOTTOM NAV CONFIGURADO EN EL ADMIN)
+  const navBg = config?.colorBottomNav || (negocio?.colorSecundario && negocio.colorSecundario !== '#0f172a' ? negocio.colorSecundario : '#ffffff');
+  const navLuma = getHexLuma(navBg);
+  const navUnselectedText = navLuma < 0.5 ? '#94a3b8' : '#64748b';
 
   const [products, setProducts] = useState<Product[]>(initialProducts.length > 0 ? initialProducts : FALLBACK_PRODUCTS);
   const [categories, setCategories] = useState<Category[]>(initialCategories.length > 0 ? initialCategories : DEFAULT_CATEGORIES);
@@ -316,10 +347,13 @@ function RestaurantLandingContent({
       style={{ backgroundColor: cn, color: '#0f172a' }}
       className="min-h-screen w-full font-sans antialiased pb-28 select-none"
     >
-      {/* ── 1. CABECERA CON NAVEGACIÓN SUPERIOR (RESPETANDO TEMA CLARO DEL NEGOCIO) ── */}
+      {/* ── 1. BARRA SUPERIOR (HEADER APLICANDO EXACTAMENTE EL "COLOR DE BARRA SUPERIOR" CONFIGURADO EN EL ADMIN) ── */}
       <div 
-        style={{ backgroundColor: '#ffffff' }}
-        className="sticky top-0 z-30 px-3 sm:px-5 py-3 border-b border-slate-200/80 shadow-xs w-full max-w-4xl mx-auto"
+        style={{ 
+          backgroundColor: headerBg, 
+          borderColor: headerBorder 
+        }}
+        className="sticky top-0 z-30 px-3 sm:px-5 py-3 border-b shadow-xs w-full max-w-4xl mx-auto transition-colors duration-200"
       >
         <div className="flex items-center justify-between gap-2">
           {/* Lado Izquierdo: Menú Hamburguesa + Saludo de Usuario */}
@@ -327,19 +361,20 @@ function RestaurantLandingContent({
             <button
               type="button"
               onClick={() => setShowChannelModal(true)}
-              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-all border border-slate-200/60"
+              style={{ backgroundColor: headerBtnBg, color: headerText }}
+              className="p-2 rounded-xl transition-all border border-transparent"
             >
-              <Menu className="w-5 h-5 text-slate-800" />
+              <Menu className="w-5 h-5" style={{ color: headerText }} />
             </button>
 
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-sm tracking-tight text-slate-900">
+                <span style={{ color: headerText }} className="font-extrabold text-sm tracking-tight">
                   ¡Hola, {customerData?.nombre || 'Carlos Caicedo'}!
                 </span>
                 <span className="text-sm">👋</span>
               </div>
-              <p className="text-[11px] font-medium text-slate-500 leading-none mt-0.5">
+              <p style={{ color: headerSubText }} className="text-[11px] font-medium leading-none mt-0.5">
                 ¿Qué se te antoja hoy?
               </p>
             </div>
@@ -349,9 +384,10 @@ function RestaurantLandingContent({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="relative p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-all border border-slate-200/60"
+              style={{ backgroundColor: headerBtnBg, color: headerText }}
+              className="relative p-2 rounded-xl transition-all border border-transparent"
             >
-              <Bell className="w-4 h-4 text-slate-700" />
+              <Bell className="w-4 h-4" style={{ color: headerText }} />
               <span
                 style={{ backgroundColor: cp, color: '#ffffff' }}
                 className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-black flex items-center justify-center shadow-xs"
@@ -363,9 +399,10 @@ function RestaurantLandingContent({
             <button
               type="button"
               onClick={() => setShowCartDrawer(true)}
-              className="relative p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-all border border-slate-200/60"
+              style={{ backgroundColor: headerBtnBg, color: headerText }}
+              className="relative p-2 rounded-xl transition-all border border-transparent"
             >
-              <ShoppingBag className="w-4 h-4 text-slate-700" />
+              <ShoppingBag className="w-4 h-4" style={{ color: headerText }} />
               {totalItemsCount > 0 && (
                 <span
                   style={{ backgroundColor: cp, color: '#ffffff' }}
@@ -706,7 +743,7 @@ function RestaurantLandingContent({
                         imagenUrl: promo.image
                       })}
                       style={{ backgroundColor: cp, color: '#ffffff' }}
-                      className="px-2 py-1 rounded-lg font-black text-[10px] flex items-center gap-1 shadow-xs hover:opacity-90 active:scale-95 transition-all"
+                      className="px-2 py-1 rounded-lg font-black text-[10px] flex items-center gap-1 shadow-xs hover:opacity-90 active:scale-95 transition-all text-white"
                     >
                       <Plus className="w-3 h-3 text-white" />
                       <span>Pedir</span>
@@ -866,13 +903,19 @@ function RestaurantLandingContent({
         </div>
       )}
 
-      {/* ── NAVEGACIÓN INFERIOR FIJA DE 5 OPCIONES ── */}
-      <nav style={{ backgroundColor: '#ffffff' }} className="fixed bottom-0 left-0 right-0 border-t border-slate-200 py-2 px-3 flex justify-around items-center z-50 shadow-lg w-full max-w-4xl mx-auto">
+      {/* ── NAVEGACIÓN INFERIOR FIJA DE 5 OPCIONES (APLICANDO COLOR DE BOTTOM NAV DEL ADMIN) ── */}
+      <nav 
+        style={{ 
+          backgroundColor: navBg,
+          borderColor: navLuma < 0.5 ? 'rgba(255,255,255,0.1)' : '#e2e8f0' 
+        }} 
+        className="fixed bottom-0 left-0 right-0 border-t py-2 px-3 flex justify-around items-center z-50 shadow-lg w-full max-w-4xl mx-auto transition-colors duration-200"
+      >
         <button
           type="button"
           onClick={() => setActiveNavTab('inicio')}
           className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors"
-          style={{ color: activeNavTab === 'inicio' ? cp : '#64748b' }}
+          style={{ color: activeNavTab === 'inicio' ? cp : navUnselectedText }}
         >
           <Home className="w-4 h-4" />
           <span>Inicio</span>
@@ -882,7 +925,7 @@ function RestaurantLandingContent({
           type="button"
           onClick={() => setActiveNavTab('categorias')}
           className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors"
-          style={{ color: activeNavTab === 'categorias' ? cp : '#64748b' }}
+          style={{ color: activeNavTab === 'categorias' ? cp : navUnselectedText }}
         >
           <Grid className="w-4 h-4" />
           <span>Categorías</span>
@@ -892,7 +935,7 @@ function RestaurantLandingContent({
           type="button"
           onClick={() => setActiveNavTab('ofertas')}
           className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors"
-          style={{ color: activeNavTab === 'ofertas' ? cp : '#64748b' }}
+          style={{ color: activeNavTab === 'ofertas' ? cp : navUnselectedText }}
         >
           <Tag className="w-4 h-4" />
           <span>Ofertas</span>
@@ -902,7 +945,7 @@ function RestaurantLandingContent({
           type="button"
           onClick={() => setActiveNavTab('pedidos')}
           className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors"
-          style={{ color: activeNavTab === 'pedidos' ? cp : '#64748b' }}
+          style={{ color: activeNavTab === 'pedidos' ? cp : navUnselectedText }}
         >
           <ClipboardList className="w-4 h-4" />
           <span>Mis pedidos</span>
@@ -912,7 +955,7 @@ function RestaurantLandingContent({
           type="button"
           onClick={() => setActiveNavTab('cuenta')}
           className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors"
-          style={{ color: activeNavTab === 'cuenta' ? cp : '#64748b' }}
+          style={{ color: activeNavTab === 'cuenta' ? cp : navUnselectedText }}
         >
           <User className="w-4 h-4" />
           <span>Mi cuenta</span>
