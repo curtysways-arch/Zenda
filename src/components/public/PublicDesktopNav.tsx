@@ -139,6 +139,19 @@ export default function PublicDesktopNav({
         }
     };
 
+    const handleNavClick = (item: typeof navItems[0], e: React.MouseEvent) => {
+        if (canOrders && pathname === `/${slug}`) {
+            e.preventDefault();
+            const tabKey = item.label.toLowerCase().includes('oferta') ? 'ofertas'
+                : item.label.toLowerCase().includes('pedido') || item.label.toLowerCase().includes('órdene') ? 'pedidos'
+                : item.label.toLowerCase().includes('cuenta') || item.label.toLowerCase().includes('perfil') ? 'cuenta'
+                : 'inicio';
+
+            window.history.pushState(null, '', `/${slug}#${tabKey}`);
+            window.dispatchEvent(new CustomEvent('citiox_change_tab', { detail: tabKey }));
+        }
+    };
+
     return (
         <nav 
             className={`hidden md:block fixed top-0 left-0 right-0 z-[200] transition-all duration-500 ${
@@ -184,6 +197,7 @@ export default function PublicDesktopNav({
                         <Link
                             key={item.label}
                             href={item.href}
+                            onClick={(e) => handleNavClick(item, e)}
                             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-[0.12em] transition-all duration-200 ${
                                 item.active 
                                     ? 'text-white shadow-md' 

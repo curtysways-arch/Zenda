@@ -189,6 +189,42 @@ function RestaurantLandingContent({
     }
   }, [negocio?.slug, initialProducts.length, initialHeroContent?.hero]);
 
+  useEffect(() => {
+    const handleHashAndTab = () => {
+      const hash = window.location.hash.replace('#', '').toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+
+      if (hash === 'ofertas' || tabParam === 'ofertas') {
+        setActiveNavTab('ofertas');
+      } else if (hash === 'pedidos' || tabParam === 'pedidos') {
+        setActiveNavTab('pedidos');
+      } else if (hash === 'cuenta' || hash === 'perfil' || tabParam === 'cuenta' || tabParam === 'perfil') {
+        setActiveNavTab('cuenta');
+      } else if (hash === 'inicio' || tabParam === 'inicio') {
+        setActiveNavTab('inicio');
+      }
+    };
+
+    handleHashAndTab();
+
+    const handleCustomTab = (e: any) => {
+      if (e.detail) {
+        if (e.detail === 'ofertas') setActiveNavTab('ofertas');
+        else if (e.detail === 'pedidos') setActiveNavTab('pedidos');
+        else if (e.detail === 'cuenta' || e.detail === 'perfil') setActiveNavTab('cuenta');
+        else if (e.detail === 'inicio') setActiveNavTab('inicio');
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashAndTab);
+    window.addEventListener('citiox_change_tab', handleCustomTab);
+    return () => {
+      window.removeEventListener('hashchange', handleHashAndTab);
+      window.removeEventListener('citiox_change_tab', handleCustomTab);
+    };
+  }, []);
+
   // Rotación del Carrusel Hero cada 4.5s
   useEffect(() => {
     const totalSlides = heroSlides.length > 0 ? heroSlides.length : Math.min(products.length, 3);
@@ -1083,13 +1119,13 @@ function RestaurantLandingContent({
         </div>
       )}
 
-      {/* ── NAVEGACIÓN INFERIOR FIJA DE 4 OPCIONES (INICIO, OFERTAS, MIS PEDIDOS, MI CUENTA) ── */}
+      {/* ── NAVEGACIÓN INFERIOR FIJA DE 4 OPCIONES (INICIO, OFERTAS, MIS PEDIDOS, MI CUENTA) — SOLO EN MÓVIL ── */}
       <nav 
         style={{ 
           backgroundColor: navBg,
           borderColor: navLuma < 0.5 ? 'rgba(255,255,255,0.1)' : '#e2e8f0' 
         }} 
-        className="fixed bottom-0 left-0 right-0 border-t py-2 px-3 flex justify-around items-center z-50 shadow-lg w-full max-w-4xl mx-auto transition-colors duration-200"
+        className="md:hidden fixed bottom-0 left-0 right-0 border-t py-2 px-3 flex justify-around items-center z-50 shadow-lg w-full max-w-4xl mx-auto transition-colors duration-200"
       >
         <button
           type="button"
