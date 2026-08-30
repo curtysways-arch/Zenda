@@ -31,6 +31,15 @@ interface ItemDetailModalProps {
   onAddToCart: (item: DetailItem, quantity: number, notes?: string) => void;
 }
 
+export function cleanDescriptionText(text?: string | null): string {
+  if (!text) return '';
+  return text
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/CITIOX_META:\s*\{[\s\S]*?\}/gi, '')
+    .replace(/CITIOX_META:[\s\S]*/gi, '')
+    .trim();
+}
+
 export default function ItemDetailModal({
   isOpen,
   onClose,
@@ -61,11 +70,17 @@ export default function ItemDetailModal({
 
   const totalPrice = Number((item.price * quantity).toFixed(2));
 
+  const rawCleanDesc = cleanDescriptionText(item.description);
+
   // Generar lista de productos incluidos en el combo a partir de la descripción si no se proveyó
   const displayIncludedItems = item.includedItems && item.includedItems.length > 0
-    ? item.includedItems
-    : (item.description && item.description.includes('+')
-        ? item.description.split('+').map(s => s.trim())
+    ? item.includedItems.map(s => cleanDescriptionText(s)).filter(Boolean)
+    : (rawCleanDesc && rawCleanDesc.includes('+')
+        ? rawCleanDesc
+            .replace(/^Incluye:\s*/i, '')
+            .split('+')
+            .map(s => cleanDescriptionText(s))
+            .filter(Boolean)
         : null);
 
   const handleAdd = () => {
@@ -161,13 +176,13 @@ export default function ItemDetailModal({
           </div>
 
           {/* Descripción Completa */}
-          {item.description && (
+          {rawCleanDesc && (
             <div className="space-y-1">
               <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider">
                 Descripción
               </span>
               <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                {item.description}
+                {rawCleanDesc}
               </p>
             </div>
           )}

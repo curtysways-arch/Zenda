@@ -14,7 +14,7 @@ import {
 import { CartProvider, useCart } from '@/core/context/CartContext';
 import CustomerCartDrawer from '@/components/public/CustomerCartDrawer';
 import MapSelectionModal from '@/components/public/MapSelectionModal';
-import ItemDetailModal, { DetailItem } from '@/components/public/ItemDetailModal';
+import ItemDetailModal, { DetailItem, cleanDescriptionText } from '@/components/public/ItemDetailModal';
 
 interface Product {
   id: string;
@@ -208,7 +208,7 @@ function RestaurantLandingContent({
     setSelectedDetailItem({
       id: promo.id,
       title: promo.title || 'Promoción Especial',
-      description: promo.description || 'Disfruta de esta increíble promoción gastronómica por tiempo limitado.',
+      description: cleanDescriptionText(promo.description) || 'Disfruta de esta increíble promoción gastronómica por tiempo limitado.',
       price: promo.price || 9.99,
       originalPrice: promo.originalPrice || undefined,
       badge: promo.badge || 'OFERTA',
@@ -222,7 +222,7 @@ function RestaurantLandingContent({
     setSelectedDetailItem({
       id: prod.id,
       title: prod.nombre,
-      description: prod.descripcion || 'Elaborado con los mejores ingredientes y la sazón de la casa.',
+      description: cleanDescriptionText(prod.descripcion) || 'Elaborado con los mejores ingredientes y la sazón de la casa.',
       price: prod.precio,
       originalPrice: prod.precioAnterior || undefined,
       badge: prod.precioAnterior && prod.precioAnterior > prod.precio ? 'OFERTA' : undefined,

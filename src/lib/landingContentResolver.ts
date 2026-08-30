@@ -52,6 +52,15 @@ export interface LandingContentResponse {
   highlights: ResolvedHighlightItem[];
 }
 
+export function cleanDescriptionText(text?: string | null): string {
+  if (!text) return '';
+  return text
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/CITIOX_META:\s*\{[\s\S]*?\}/gi, '')
+    .replace(/CITIOX_META:[\s\S]*/gi, '')
+    .trim();
+}
+
 /**
  * Función centralizada para resolver el precio, precio anterior, variantes y priceLabel de una entidad.
  */
@@ -578,7 +587,7 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
         sourceId: promo.id,
         image: promoImg,
         title: promo.titulo,
-        description: promo.descripcion,
+        description: cleanDescriptionText(promo.descripcion),
         price: priceInfo.price,
         previousPrice: priceInfo.previousPrice,
         originalPrice: priceInfo.previousPrice,
