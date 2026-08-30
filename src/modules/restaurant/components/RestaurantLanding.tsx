@@ -347,15 +347,15 @@ function RestaurantLandingContent({
   return (
     <div
       style={{ backgroundColor: cn, color: '#0f172a' }}
-      className="min-h-screen w-full font-sans antialiased pb-28 select-none"
+      className="min-h-screen w-full font-sans antialiased pb-28 select-none md:pt-[84px]"
     >
-      {/* ── 1. BARRA SUPERIOR (HEADER APLICANDO COLOR DE HEADER CONFIGURADO EN EL ADMIN) ── */}
+      {/* ── 1. BARRA SUPERIOR MÓVIL (HEADER APLICANDO COLOR CONFIGURADO EN EL ADMIN) ── */}
       <div 
         style={{ 
           backgroundColor: headerBg, 
           borderColor: headerBorder 
         }}
-        className="sticky top-0 z-30 px-3 sm:px-5 py-3 border-b shadow-xs w-full max-w-4xl mx-auto transition-colors duration-200"
+        className="block md:hidden sticky top-0 z-30 px-3 sm:px-5 py-3 border-b shadow-xs w-full max-w-4xl mx-auto transition-colors duration-200"
       >
         <div className="flex items-center justify-between gap-2">
           {/* Lado Izquierdo: Menú Hamburguesa + Saludo de Usuario */}

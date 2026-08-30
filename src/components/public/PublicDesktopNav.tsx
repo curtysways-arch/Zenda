@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Calendar, User, FileText, Scissors, Gift, Tag, PackageCheck } from 'lucide-react';
+import { Home, Calendar, User, FileText, Scissors, Gift, Tag, PackageCheck, Flame } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
@@ -50,11 +50,36 @@ export default function PublicDesktopNav({
     }
 
     const canAppointments = hasModule(tipoNegocio, 'APPOINTMENTS') || hasModule(tipoNegocio, 'RESERVATIONS');
-    const canOrders = hasModule(tipoNegocio, 'ORDERS');
+    const canOrders = hasModule(tipoNegocio, 'ORDERS') || tipoNegocio === 'RESTAURANT';
     const canServices = hasModule(tipoNegocio, 'SERVICES');
     const isShoeCare = tipoNegocio === 'SHOE_CARE' || slug.includes('lavado') || slug.includes('sneaker');
 
-    const navItems = [
+    const navItems = canOrders ? [
+        {
+            label: 'Inicio',
+            href: `/${slug}`,
+            icon: Home,
+            active: pathname === `/${slug}` && !pathname.includes('pedidos') && !pathname.includes('perfil')
+        },
+        {
+            label: 'Ofertas',
+            href: `/${slug}#ofertas`,
+            icon: Flame,
+            active: pathname.includes('/ofertas') || pathname.includes('#ofertas')
+        },
+        {
+            label: isShoeCare ? 'Mis Órdenes' : 'Mis Pedidos',
+            href: `/${slug}/pedidos`,
+            icon: PackageCheck,
+            active: pathname.includes('/pedidos')
+        },
+        {
+            label: 'Mi Cuenta',
+            href: `/${slug}/perfil`,
+            icon: User,
+            active: pathname.includes('/perfil')
+        }
+    ] : [
         {
             label: 'Inicio',
             href: `/${slug}`,
@@ -73,12 +98,6 @@ export default function PublicDesktopNav({
             icon: Calendar,
             active: pathname.includes('/mis-reservas')
         }] : []),
-        ...(canOrders ? [{
-            label: isShoeCare ? 'Mis Órdenes' : 'Mis Pedidos',
-            href: `/${slug}/pedidos`,
-            icon: PackageCheck,
-            active: pathname.includes('/pedidos')
-        }] : []),
         ...(pagesCount > 0 ? [{
             label: 'Páginas',
             href: `/${slug}#paginas`,
@@ -90,12 +109,6 @@ export default function PublicDesktopNav({
             href: `/${slug}/referidos`,
             icon: Gift,
             active: pathname.includes('/referidos') || pathname.includes('/misiones')
-        }] : []),
-        ...(hasSession ? [{
-            label: 'Mis Cupones',
-            href: `/${slug}/mis-cupones`,
-            icon: Tag,
-            active: pathname.includes('/mis-cupones')
         }] : []),
         {
             label: 'Perfil',
