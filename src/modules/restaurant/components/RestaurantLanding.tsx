@@ -315,6 +315,21 @@ function RestaurantLandingContent({
     activeFoodPromo?.badge ||
     'Automático';
 
+  const handlePromoBannerClick = () => {
+    if (activeFoodPromo) {
+      handleOpenPromoDetail(activeFoodPromo);
+      return;
+    }
+    if (freeShippingPromo) {
+      handleOpenPromoDetail(freeShippingPromo);
+      return;
+    }
+    const menuEl = document.getElementById('seccion-menu-productos');
+    if (menuEl) {
+      menuEl.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const handleHeroButtonClick = (slide: typeof activeSlide) => {
     if (slide.buttonAction === 'PRODUCT' && slide.buttonValue) {
       const prod = products.find(p => p.id === slide.buttonValue);
@@ -612,20 +627,21 @@ function RestaurantLandingContent({
                   {/* Banner de Promociones de Envío / Descuento */}
                   {promoBannerTitle && (
                     <div
+                      onClick={handlePromoBannerClick}
                       style={{ backgroundColor: cs || '#1e293b' }}
-                      className="rounded-2xl p-3.5 text-white shadow-md flex items-center justify-between relative overflow-hidden border border-slate-800"
+                      className="rounded-2xl p-3.5 text-white shadow-md flex items-center justify-between relative overflow-hidden border border-slate-800 cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all group"
                     >
                       <div className="flex items-center gap-3 relative z-10">
                         <div
                           style={{ backgroundColor: cp, color: '#ffffff' }}
-                          className="w-10 h-10 rounded-xl flex flex-col items-center justify-center text-white font-black text-center shadow-lg rotate-[-4deg] shrink-0"
+                          className="w-10 h-10 rounded-xl flex flex-col items-center justify-center text-white font-black text-center shadow-lg rotate-[-4deg] shrink-0 group-hover:scale-105 transition-transform"
                         >
                           <span className="text-[8px] leading-tight">OFERTA</span>
                           <Percent className="w-4 h-4 mt-0.5 text-white" />
                         </div>
                         <div>
-                          <h4 className="font-extrabold text-xs sm:text-sm tracking-wide uppercase leading-tight text-white">
-                            {promoBannerTitle}
+                          <h4 className="font-extrabold text-xs sm:text-sm tracking-wide uppercase leading-tight text-white group-hover:text-amber-300 transition-colors flex items-center gap-1.5">
+                            <span>{promoBannerTitle}</span>
                           </h4>
                           {promoBannerDesc && (
                             <p style={{ color: cp }} className="text-[11px] font-bold mt-0.5">
@@ -635,7 +651,7 @@ function RestaurantLandingContent({
                         </div>
                       </div>
 
-                      <div className="relative z-10 shrink-0">
+                      <div className="relative z-10 shrink-0 flex items-center gap-1.5">
                         <span
                           style={{ backgroundColor: `${cp}20`, color: cp, borderColor: `${cp}40` }}
                           className="px-2.5 py-1 rounded-xl text-[10px] font-black border flex items-center gap-1"
@@ -643,6 +659,7 @@ function RestaurantLandingContent({
                           <Tag className="w-3 h-3" />
                           <span>{promoBannerBadge}</span>
                         </span>
+                        <ChevronRight className="w-4 h-4 text-white/70 group-hover:translate-x-1 group-hover:text-white transition-all" />
                       </div>
                     </div>
                   )}
@@ -860,15 +877,17 @@ function RestaurantLandingContent({
                 {/* BANNER DESTACADO DE PROMOCIONES */}
                 {promoBannerTitle && (
                   <div
+                    onClick={handlePromoBannerClick}
                     style={{ backgroundColor: cs || '#1e293b' }}
-                    className="rounded-3xl p-5 text-white shadow-lg flex items-center justify-between relative overflow-hidden border border-slate-800"
+                    className="rounded-3xl p-5 text-white shadow-lg flex items-center justify-between relative overflow-hidden border border-slate-800 cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all group"
                   >
                     <div className="space-y-1 relative z-10 max-w-xs">
                       <span style={{ backgroundColor: cp }} className="text-[9px] font-black text-white px-2 py-0.5 rounded-md uppercase tracking-widest inline-block">
                         PROMOCIÓN DEL DÍA
                       </span>
-                      <h3 className="text-base sm:text-lg font-black text-white leading-tight">
-                        {promoBannerTitle}
+                      <h3 className="text-base sm:text-lg font-black text-white leading-tight group-hover:text-amber-300 transition-colors flex items-center gap-2">
+                        <span>{promoBannerTitle}</span>
+                        <ChevronRight className="w-5 h-5 text-white/70 group-hover:translate-x-1 group-hover:text-white transition-all" />
                       </h3>
                       {promoBannerDesc && (
                         <p className="text-xs text-slate-300 font-medium">
@@ -879,7 +898,7 @@ function RestaurantLandingContent({
 
                     <div
                       style={{ backgroundColor: cp, color: '#ffffff' }}
-                      className="w-16 h-16 rounded-2xl flex flex-col items-center justify-center font-black text-center shadow-xl rotate-[6deg] shrink-0 border-2 border-white/20"
+                      className="w-16 h-16 rounded-2xl flex flex-col items-center justify-center font-black text-center shadow-xl rotate-[6deg] shrink-0 border-2 border-white/20 group-hover:scale-105 transition-transform"
                     >
                       <span className="text-[9px] leading-tight">OFERTA</span>
                       <Percent className="w-5 h-5" />
