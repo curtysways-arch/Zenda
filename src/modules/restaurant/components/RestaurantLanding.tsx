@@ -2,15 +2,14 @@
 /**
  * @file RestaurantLanding.tsx
  * @module modules/restaurant/components
- * @description Home de Restaurante con navegación completa multitab (Inicio, Categorías, Ofertas, Mis Pedidos, Mi Cuenta).
+ * @description Home de Restaurante optimizado (sin botón Enviar A, sin barra de búsqueda y navegación limpia de 4 opciones).
  */
 
 import React, { useState, useEffect } from 'react';
 import {
-  Menu, Search, SlidersHorizontal, MapPin, ChevronDown, Bell, ShoppingBag,
-  Heart, Plus, Minus, Truck, Percent, ShieldCheck, Home, Grid, Tag,
-  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X, Sparkles, Flame, Store, Navigation, Eye,
-  Clock, PackageCheck, UserCheck, Phone, CheckCircle2, RotateCcw
+  Menu, Bell, ShoppingBag, Heart, Plus, Minus, Truck, Percent, ShieldCheck,
+  Home, Tag, ClipboardList, User, ArrowRight, Utensils, ChevronRight, X,
+  Flame, Store, Navigation, Eye, PackageCheck, MapPin
 } from 'lucide-react';
 import { CartProvider, useCart } from '@/core/context/CartContext';
 import CustomerCartDrawer from '@/components/public/CustomerCartDrawer';
@@ -234,7 +233,6 @@ function RestaurantLandingContent({
   const [highlights, setHighlights] = useState<HighlightItem[]>(initialHeroContent?.highlights || []);
 
   const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');
-  const [searchQuery, setSearchQuery] = useState<string>('');
   const [showCartDrawer, setShowCartDrawer] = useState<boolean>(false);
   const [showChannelModal, setShowChannelModal] = useState<boolean>(false);
   const [showMapModal, setShowMapModal] = useState<boolean>(false);
@@ -244,7 +242,7 @@ function RestaurantLandingContent({
   const [showDetailModal, setShowDetailModal] = useState<boolean>(false);
 
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
-  const [activeNavTab, setActiveNavTab] = useState<'inicio' | 'categorias' | 'ofertas' | 'pedidos' | 'cuenta'>('inicio');
+  const [activeNavTab, setActiveNavTab] = useState<'inicio' | 'ofertas' | 'pedidos' | 'cuenta'>('inicio');
   const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
 
   useEffect(() => {
@@ -331,12 +329,6 @@ function RestaurantLandingContent({
       const matchCatObjId = p.categoria?.id === selectedCategory;
       if (!matchCatId && !matchCatName && !matchCatObjId) return false;
     }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchName = p.nombre.toLowerCase().includes(q);
-      const matchDesc = p.descripcion?.toLowerCase().includes(q);
-      if (!matchName && !matchDesc) return false;
-    }
     return true;
   });
 
@@ -387,7 +379,7 @@ function RestaurantLandingContent({
       style={{ backgroundColor: cn, color: '#0f172a' }}
       className="min-h-screen w-full font-sans antialiased pb-28 select-none"
     >
-      {/* ── 1. BARRA SUPERIOR (HEADER APLICANDO EXACTAMENTE EL "COLOR DE BARRA SUPERIOR" CONFIGURADO EN EL ADMIN) ── */}
+      {/* ── 1. BARRA SUPERIOR (HEADER APLICANDO COLOR DE HEADER CONFIGURADO EN EL ADMIN) ── */}
       <div 
         style={{ 
           backgroundColor: headerBg, 
@@ -456,62 +448,11 @@ function RestaurantLandingContent({
         </div>
       </div>
 
-      {/* ── CONTENEDOR PRINCIPAL MULTI-PESTAÑA ── */}
+      {/* ── CONTENEDOR PRINCIPAL ── */}
       <main className="w-full max-w-4xl mx-auto px-3 sm:px-5 pt-3 space-y-4">
-        {/* ── 2. SECTOR SELECCIÓN DE DIRECCIÓN Y CANAL DE ENTREGA (COMÚN) ── */}
-        <button 
-          type="button"
-          onClick={() => setShowMapModal(true)}
-          style={{ backgroundColor: '#ffffff' }}
-          className="w-full rounded-2xl p-3 border border-slate-200 flex items-center justify-between text-xs shadow-xs hover:border-slate-300 active:scale-[0.99] transition-all cursor-pointer text-left"
-        >
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div
-              style={{ backgroundColor: cp, color: '#ffffff' }}
-              className="p-2.5 rounded-xl text-white font-bold shrink-0 shadow-xs flex items-center justify-center"
-            >
-              <MapPin className="w-4 h-4 text-white" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <span className="text-[9px] font-black tracking-widest text-slate-400 uppercase block leading-none">
-                {deliveryType === 'RETIRO' ? 'MÉTODO DE ENTREGA' : 'ENVIAR A'}
-              </span>
-              <span style={{ color: '#0f172a' }} className="font-extrabold text-xs text-slate-900 truncate block mt-1">
-                {deliveryType === 'RETIRO'
-                  ? 'Retiro en local / Para llevar'
-                  : (customerData?.direccion && customerData.direccion.trim().length > 0
-                      ? customerData.direccion
-                      : 'Seleccionar ubicación actual...')}
-              </span>
-            </div>
-          </div>
-
-          <div className="text-slate-500 p-1 shrink-0 ml-2">
-            <ChevronDown className="w-4 h-4" />
-          </div>
-        </button>
-
         {/* ── PESTAÑA 1: INICIO ── */}
         {activeNavTab === 'inicio' && (
           <>
-            {/* BARRA DE BÚSQUEDA */}
-            <div className="relative w-full">
-              <input
-                type="text"
-                placeholder="Buscar platos, combos, bebidas..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-10 py-3 bg-white rounded-2xl font-bold text-xs text-slate-900 placeholder:text-slate-400 shadow-xs border border-slate-200 focus:border-slate-400 outline-none transition-all"
-              />
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <button
-                type="button"
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-              </button>
-            </div>
-
             {/* BANNER HERO */}
             <div className="relative w-full rounded-3xl overflow-hidden shadow-xl border border-slate-800/80 min-h-[165px] sm:min-h-[195px] max-h-[210px] flex items-center bg-slate-950">
               <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
@@ -816,7 +757,7 @@ function RestaurantLandingContent({
                 <div style={{ backgroundColor: '#ffffff' }} className="text-center py-8 rounded-2xl border border-slate-100 p-6 space-y-2">
                   <Utensils className="w-8 h-8 text-slate-300 mx-auto" />
                   <h4 style={{ color: '#334155' }} className="font-bold text-xs">No encontramos platillos disponibles</h4>
-                  <p style={{ color: '#64748b' }} className="text-[11px]">Intenta buscar otro término o seleccionar otra categoría.</p>
+                  <p style={{ color: '#64748b' }} className="text-[11px]">Intenta seleccionar otra categoría.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -925,103 +866,7 @@ function RestaurantLandingContent({
           </>
         )}
 
-        {/* ── PESTAÑA 2: CATEGORÍAS ── */}
-        {activeNavTab === 'categorias' && (
-          <div className="space-y-4 pb-6">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-              <div>
-                <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                  <Grid style={{ color: cp }} className="w-5 h-5" />
-                  Categorías del Menú
-                </h2>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">
-                  Explora nuestros platillos clasificados por especialidad
-                </p>
-              </div>
-
-              {selectedCategory !== 'TODOS' && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedCategory('TODOS')}
-                  style={{ color: cp }}
-                  className="text-xs font-black hover:underline cursor-pointer"
-                >
-                  Ver Todas ({categories.length})
-                </button>
-              )}
-            </div>
-
-            {/* PARRILLA DE CATEGORÍAS */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {categories.map((cat) => {
-                const isSelected = selectedCategory === cat.id || selectedCategory === cat.nombre;
-                const countInCat = products.filter(p => p.categoriaId === cat.id || p.categoria?.nombre === cat.nombre || p.categoria?.id === cat.id).length;
-
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedCategory(cat.id);
-                      setActiveNavTab('inicio');
-                      const menuEl = document.getElementById('seccion-menu-productos');
-                      if (menuEl) menuEl.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    style={{
-                      borderColor: isSelected ? cp : '#e2e8f0',
-                      backgroundColor: isSelected ? '#fff8f5' : '#ffffff'
-                    }}
-                    className={`p-4 rounded-3xl border flex flex-col items-center justify-center text-center space-y-2 shadow-2xs hover:shadow-md transition-all cursor-pointer group ${
-                      isSelected ? 'border-2 shadow-md' : ''
-                    }`}
-                  >
-                    <span className="text-4xl group-hover:scale-110 transition-transform">{cat.icono || '🍲'}</span>
-                    <div>
-                      <h4 style={{ color: isSelected ? cp : '#0f172a' }} className="font-extrabold text-sm">
-                        {cat.nombre}
-                      </h4>
-                      <span className="text-[10px] font-bold text-slate-400">
-                        {countInCat > 0 ? `${countInCat} platillos` : 'Especialidad'}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* SECCIÓN DE PRODUCTOS COMPLETA DE LA CATEGORÍA */}
-            <div className="pt-4 space-y-3">
-              <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">
-                Platillos de {categories.find(c => c.id === selectedCategory || c.nombre === selectedCategory)?.nombre || 'Todas las Categorías'}
-              </h3>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {filteredProducts.map((prod) => (
-                  <div
-                    key={prod.id}
-                    onClick={() => handleOpenProductDetail(prod)}
-                    style={{ backgroundColor: '#ffffff' }}
-                    className="rounded-2xl border border-slate-100 shadow-xs overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all cursor-pointer p-3 space-y-2"
-                  >
-                    <div className="w-full h-28 rounded-xl bg-slate-100 overflow-hidden relative">
-                      {prod.imagenUrl ? (
-                        <img src={prod.imagenUrl} alt={prod.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xl">🍲</div>
-                      )}
-                    </div>
-                    <div>
-                      <h5 className="font-extrabold text-xs text-slate-900 truncate">{prod.nombre}</h5>
-                      <span style={{ color: cp }} className="font-black text-xs block mt-0.5">${prod.precio.toFixed(2)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── PESTAÑA 3: OFERTAS (PANTALLA DE OFERTAS Y PROMOCIONES COMPLETA) ── */}
+        {/* ── PESTAÑA 2: OFERTAS (PANTALLA DE OFERTAS Y PROMOCIONES COMPLETA) ── */}
         {activeNavTab === 'ofertas' && (
           <div className="space-y-4 pb-6">
             <div className="border-b border-slate-200 pb-3">
@@ -1123,7 +968,7 @@ function RestaurantLandingContent({
           </div>
         )}
 
-        {/* ── PESTAÑA 4: MIS PEDIDOS ── */}
+        {/* ── PESTAÑA 3: MIS PEDIDOS ── */}
         {activeNavTab === 'pedidos' && (
           <div className="space-y-4 pb-6">
             <div className="border-b border-slate-200 pb-3">
@@ -1158,7 +1003,7 @@ function RestaurantLandingContent({
           </div>
         )}
 
-        {/* ── PESTAÑA 5: MI CUENTA ── */}
+        {/* ── PESTAÑA 4: MI CUENTA ── */}
         {activeNavTab === 'cuenta' && (
           <div className="space-y-4 pb-6">
             <div className="border-b border-slate-200 pb-3">
@@ -1228,7 +1073,7 @@ function RestaurantLandingContent({
         </div>
       )}
 
-      {/* ── NAVEGACIÓN INFERIOR FIJA DE 5 OPCIONES ── */}
+      {/* ── NAVEGACIÓN INFERIOR FIJA DE 4 OPCIONES (INICIO, OFERTAS, MIS PEDIDOS, MI CUENTA) ── */}
       <nav 
         style={{ 
           backgroundColor: navBg,
@@ -1244,16 +1089,6 @@ function RestaurantLandingContent({
         >
           <Home className="w-4 h-4" />
           <span>Inicio</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveNavTab('categorias')}
-          className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors cursor-pointer"
-          style={{ color: activeNavTab === 'categorias' ? cp : navUnselectedText }}
-        >
-          <Grid className="w-4 h-4" />
-          <span>Categorías</span>
         </button>
 
         <button
