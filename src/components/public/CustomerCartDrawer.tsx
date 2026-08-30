@@ -1,19 +1,18 @@
+'use client';
+
 /**
  * @file CustomerCartDrawer.tsx
  * @module components/public
- * @description Drawer lateral y modal de checkout para pedidos del cliente (FASE 5D).
+ * @description Modal de Carrito y Checkout en Pantalla Completa (FASE 5D Rediseño Intuítivo).
  * @responsibility Renderizar desglose de pedido ("Mi Pedido"), selección de entrega, formulario de checkout
- *   con GPS, y enviar la orden a /api/public/[slug]/orders con compatibilidad total de parámetros y UI 100% visible en PC/Móvil.
+ *   con mapa GPS fullscreen, y enviar la orden a /api/public/[slug]/orders con UI super intuitiva en PC y Móvil.
  * @dependencies lucide-react, CartContext, MapSelectionModal
- * @status Stable (FASE 5D - Customer Ordering Experience)
  */
-
-'use client';
 
 import React, { useState } from 'react';
 import {
   ShoppingBag, X, Plus, Minus, MapPin, Truck, Store, Utensils,
-  ArrowRight, Loader2, CheckCircle2, ChevronRight, Navigation
+  ArrowRight, Loader2, CheckCircle2, ChevronRight, Navigation, Trash2, ArrowLeft
 } from 'lucide-react';
 import { useCart } from '@/core/context/CartContext';
 import MapSelectionModal from './MapSelectionModal';
@@ -30,7 +29,7 @@ interface CustomerCartDrawerProps {
 export default function CustomerCartDrawer({
   slug,
   businessName,
-  primaryColor = '#ff6b2b',
+  primaryColor = '#ff5500',
   isOpen,
   onClose,
   onOrderSuccess,
@@ -47,6 +46,7 @@ export default function CustomerCartDrawer({
     setCustomerData,
     setItemQuantity,
     decrementQuantity,
+    removeFromCart,
     clearCart,
   } = useCart();
 
@@ -65,8 +65,13 @@ export default function CustomerCartDrawer({
     setStep('checkout');
   };
 
-  const handleMapSelect = (lat: number, lng: number) => {
-    setCustomerData({ lat, lng });
+  const handleMapSelect = (lat: number, lng: number, addressName?: string, ref?: string) => {
+    setCustomerData({
+      lat,
+      lng,
+      direccion: addressName || customerData.direccion || 'Ubicación fijada en mapa',
+      referencia: ref || customerData.referencia
+    });
     setShowMapModal(false);
   };
 
@@ -75,12 +80,12 @@ export default function CustomerCartDrawer({
     if (cart.length === 0) return;
 
     if (!customerData.nombre.trim() || !customerData.telefono.trim()) {
-      setErrorMessage('Por favor ingresa tu Nombre y Teléfono de contacto.');
+      setErrorMessage('Por favor ingresa tu Nombre Completo y Teléfono de contacto.');
       return;
     }
 
     if (deliveryType === 'DOMICILIO' && !customerData.direccion.trim()) {
-      setErrorMessage('Por favor ingresa tu Dirección de entrega.');
+      setErrorMessage('Por favor ingresa o selecciona tu Dirección de Entrega en el mapa.');
       return;
     }
 
@@ -92,7 +97,6 @@ export default function CustomerCartDrawer({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          // Parámetros en español y en inglés para máxima compatibilidad
           deliveryType,
           tipoEntrega: deliveryType,
           clientName: customerData.nombre,
@@ -147,46 +151,63 @@ export default function CustomerCartDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex justify-end h-[100dvh] overflow-hidden animate-in fade-in duration-200">
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
-      />
+    <div className="fixed inset-0 z-[100000] bg-white flex flex-col w-full h-full animate-in fade-in duration-200 select-none">
+      {/* ── BARRA SUPERIOR FIJA ── */}
+      <div className="px-4 sm:px-6 py-3.5 border-b border-slate-200 bg-white flex items-center justify-between shrink-0 shadow-2xs">
+        <div className="flex items-center gap-3">
+          {step === 'checkout' && (
+            <button
+              type="button"
+              onClick={() => setStep('cart')}
+              className="p-2 text-slate-500 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer mr-1"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
 
-      {/* Drawer Container (Flexbox estricto de altura completa) */}
-      <div className="relative w-full max-w-md bg-white h-[100dvh] max-h-[100dvh] shadow-2xl flex flex-col z-10 text-slate-900 overflow-hidden">
-        {/* Header (Fijo arriba) */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/90 backdrop-blur-md shrink-0">
-          <div className="flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5" style={{ color: primaryColor }} />
-            <h2 className="font-black text-lg text-slate-900 tracking-tight">
+          <div
+            style={{ backgroundColor: primaryColor }}
+            className="p-2 rounded-xl text-white font-black shadow-xs flex items-center justify-center"
+          >
+            <ShoppingBag className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="font-black text-base sm:text-lg text-slate-900 tracking-tight">
               {step === 'cart' ? 'Mi Pedido' : step === 'checkout' ? 'Datos de Entrega' : '¡Pedido Confirmado!'}
             </h2>
+            <p className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">
+              {businessName}
+            </p>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-200/70 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
         </div>
 
-        {/* ── PASO 1: CARRO ("Mi Pedido") ── */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+        >
+          <X className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* ── CONTENIDO PRINCIPAL EN PANTALLA COMPLETA ── */}
+      <div className="flex-1 overflow-y-auto max-w-4xl mx-auto w-full p-4 sm:p-6 space-y-6">
+        {/* ── PASO 1: RESUMEN DEL CARRITO DE PRODUCTOS ── */}
         {step === 'cart' && (
-          <div className="flex-1 flex flex-col justify-between overflow-hidden min-h-0">
+          <div className="space-y-5">
             {cart.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400 space-y-4">
-                <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-300">
+              <div className="py-16 text-center text-slate-400 space-y-4 max-w-sm mx-auto">
+                <div className="w-20 h-20 rounded-3xl bg-slate-100 flex items-center justify-center text-slate-300 mx-auto">
                   <ShoppingBag className="w-10 h-10" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-700 text-base">Tu carrito está vacío</h3>
-                  <p className="text-xs text-slate-400 mt-1">Agrega deliciosos productos desde el menú</p>
+                  <h3 className="font-black text-slate-800 text-lg">Tu carrito está vacío</h3>
+                  <p className="text-xs text-slate-500 mt-1 font-medium">Agrega tus platillos y combos favoritos del menú</p>
                 </div>
                 <button
+                  type="button"
                   onClick={onClose}
-                  className="px-6 py-2.5 rounded-xl font-bold text-xs text-white shadow-md active:scale-95 transition-all cursor-pointer"
+                  className="px-8 py-3 rounded-2xl font-black text-xs text-white shadow-lg active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
                   style={{ backgroundColor: primaryColor }}
                 >
                   Explorar Menú
@@ -194,69 +215,88 @@ export default function CustomerCartDrawer({
               </div>
             ) : (
               <>
-                {/* Lista de Items con Scroll Interno */}
-                <div className="flex-1 overflow-y-auto min-h-0 p-6 space-y-4 divide-y divide-slate-100">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <span className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                    PLATILLOS SELECCIONADOS ({totalItemsCount})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearCart}
+                    className="text-[11px] font-bold text-rose-500 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Vaciar Carrito
+                  </button>
+                </div>
+
+                {/* LISTA DE PLATILLOS */}
+                <div className="space-y-3">
                   {cart.map((item) => (
-                    <div key={item.product.id} className="pt-3 first:pt-0 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        {item.product.imagenUrl && (
-                          // eslint-disable-next-line @next/next/no-img-element
+                    <div
+                      key={item.product.id}
+                      className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-2xs flex items-center justify-between gap-3 hover:shadow-xs transition-all"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {item.product.imagenUrl ? (
                           <img
                             src={item.product.imagenUrl}
                             alt={item.product.nombre}
-                            className="w-14 h-14 rounded-xl object-cover border border-slate-100 shrink-0"
+                            className="w-16 h-16 rounded-xl object-cover border border-slate-100 shrink-0"
                           />
+                        ) : (
+                          <div className="w-16 h-16 rounded-xl bg-slate-100 flex items-center justify-center text-2xl shrink-0">
+                            🍲
+                          </div>
                         )}
+
                         <div className="min-w-0 flex-1">
-                          <h4 className="font-bold text-slate-900 text-sm truncate">{item.product.nombre}</h4>
-                          <span className="text-xs font-black text-slate-500">
+                          <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm truncate">
+                            {item.product.nombre}
+                          </h4>
+                          <span style={{ color: primaryColor }} className="text-xs font-black block mt-0.5">
                             ${((Number(item.product.precio) || 0) * item.quantity).toFixed(2)}
                           </span>
                         </div>
                       </div>
 
-                      {/* Controles [-] N [+] */}
-                      <div className="flex items-center bg-slate-100 rounded-xl p-1 shrink-0">
+                      {/* CONTROLES CANTIDAD [- N +] */}
+                      <div className="flex items-center gap-1.5 bg-slate-100 rounded-xl p-1 shrink-0">
                         <button
                           type="button"
                           onClick={() => decrementQuantity(item.product.id)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:bg-white transition-colors cursor-pointer"
+                          className="w-7 h-7 bg-white text-slate-800 rounded-lg font-black text-xs flex items-center justify-center shadow-2xs hover:bg-slate-200 cursor-pointer active:scale-95"
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="w-6 text-center text-xs font-black text-slate-900">{item.quantity}</span>
+                        <span className="w-6 text-center text-xs font-black text-slate-900">
+                          {item.quantity}
+                        </span>
                         <button
                           type="button"
                           onClick={() => setItemQuantity(item.product, item.quantity + 1)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-700 hover:bg-white transition-colors cursor-pointer"
+                          style={{ backgroundColor: primaryColor, color: '#ffffff' }}
+                          className="w-7 h-7 text-white rounded-lg font-black text-xs flex items-center justify-center shadow-2xs cursor-pointer active:scale-95"
                         >
-                          <Plus className="w-3.5 h-3.5" />
+                          <Plus className="w-3.5 h-3.5 text-white" />
                         </button>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {/* Resumen Financiero + Botón Continuar (Fijo al fondo - Sin calcular envío aún) */}
-                <div className="shrink-0 p-5 pb-16 sm:pb-6 bg-slate-50 border-t border-slate-100 space-y-3 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-                  <div className="space-y-1.5 text-xs text-slate-600 font-medium">
-                    <div className="flex justify-between">
-                      <span>Subtotal</span>
-                      <span className="font-bold text-slate-900">${subtotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-base font-black text-slate-900 pt-1.5 border-t border-slate-200">
-                      <span>Total</span>
-                      <span style={{ color: primaryColor }}>${subtotal.toFixed(2)}</span>
-                    </div>
-                  </div>
-
+                {/* BOTÓN CONTINUAR A CHECKOUT */}
+                <div className="pt-4 border-t border-slate-200">
                   <button
+                    type="button"
                     onClick={handleNextToCheckout}
-                    className="w-full py-3.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
-                    style={{ backgroundColor: primaryColor }}
+                    style={{ backgroundColor: primaryColor, color: '#ffffff' }}
+                    className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-xl flex items-center justify-between px-6 hover:opacity-95 active:scale-95 transition-all cursor-pointer"
                   >
-                    <span>Continuar Pedido ({totalItemsCount} items - ${subtotal.toFixed(2)})</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <span>Continuar a Datos de Entrega</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-black">${subtotal.toFixed(2)}</span>
+                      <ArrowRight className="w-4 h-4 text-white" />
+                    </div>
                   </button>
                 </div>
               </>
@@ -264,237 +304,236 @@ export default function CustomerCartDrawer({
           </div>
         )}
 
-        {/* ── PASO 2: CHECKOUT (Formulario de Datos) ── */}
+        {/* ── PASO 2: CHECKOUT SUPER INTUITIVO (SIN CAMPO REFERENCIA EN ESTE FORMULARIO) ── */}
         {step === 'checkout' && (
-          <form onSubmit={handleSubmitOrder} className="flex-1 flex flex-col justify-between overflow-hidden min-h-0">
-            {/* Cuerpo del Formulario con Scroll Interno */}
-            <div className="flex-1 overflow-y-auto min-h-0 p-6 space-y-4">
-              {/* Selección Método de Entrega */}
-              <div>
-                <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-2">
-                  Método de Entrega
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setDeliveryType('DOMICILIO')}
-                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
-                      deliveryType === 'DOMICILIO'
-                        ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Truck className="w-4 h-4" />
-                    <span>Domicilio</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeliveryType('RETIRO')}
-                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
-                      deliveryType === 'RETIRO'
-                        ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Store className="w-4 h-4" />
-                    <span>Para Retirar</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeliveryType('MESA')}
-                    className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all cursor-pointer ${
-                      deliveryType === 'MESA'
-                        ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Utensils className="w-4 h-4" />
-                    <span>En Mesa</span>
-                  </button>
-                </div>
+          <form onSubmit={handleSubmitOrder} className="space-y-5">
+            {/* SELECTOR MÉTODO DE ENTREGA */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                1. Selección de Método de Entrega
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDeliveryType('DOMICILIO')}
+                  className={`py-3 px-2 rounded-2xl border text-xs font-black flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                    deliveryType === 'DOMICILIO'
+                      ? 'border-orange-500 bg-orange-50 text-slate-900 shadow-xs'
+                      : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+                  }`}
+                >
+                  <Truck className="w-5 h-5" style={{ color: deliveryType === 'DOMICILIO' ? primaryColor : undefined }} />
+                  <span>A Domicilio</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDeliveryType('RETIRO')}
+                  className={`py-3 px-2 rounded-2xl border text-xs font-black flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                    deliveryType === 'RETIRO'
+                      ? 'border-orange-500 bg-orange-50 text-slate-900 shadow-xs'
+                      : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+                  }`}
+                >
+                  <Store className="w-5 h-5" style={{ color: deliveryType === 'RETIRO' ? primaryColor : undefined }} />
+                  <span>Para Retirar</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDeliveryType('MESA')}
+                  className={`py-3 px-2 rounded-2xl border text-xs font-black flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                    deliveryType === 'MESA'
+                      ? 'border-orange-500 bg-orange-50 text-slate-900 shadow-xs'
+                      : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+                  }`}
+                >
+                  <Utensils className="w-5 h-5" style={{ color: deliveryType === 'MESA' ? primaryColor : undefined }} />
+                  <span>En Mesa</span>
+                </button>
+              </div>
+            </div>
+
+            {/* DATOS DEL CLIENTE */}
+            <div className="space-y-3 bg-slate-50 rounded-2xl p-4 border border-slate-200/80">
+              <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">
+                2. Datos del Cliente
+              </span>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-extrabold text-slate-700">Nombre Completo *</label>
+                <input
+                  type="text"
+                  required
+                  value={customerData.nombre}
+                  onChange={(e) => setCustomerData({ nombre: e.target.value })}
+                  placeholder="Ej: Carlos Caicedo"
+                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
+                />
               </div>
 
-              {/* Campos de Nombre & Celular */}
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Nombre Completo *</label>
-                  <input
-                    type="text"
-                    required
-                    value={customerData.nombre}
-                    onChange={(e) => setCustomerData({ nombre: e.target.value })}
-                    placeholder="Ej: Carlos Caicedo"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">WhatsApp / Teléfono *</label>
-                  <input
-                    type="tel"
-                    required
-                    value={customerData.telefono}
-                    onChange={(e) => setCustomerData({ telefono: e.target.value })}
-                    placeholder="Ej: 0991234567"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white transition-colors"
-                  />
-                </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-extrabold text-slate-700">WhatsApp / Teléfono *</label>
+                <input
+                  type="tel"
+                  required
+                  value={customerData.telefono}
+                  onChange={(e) => setCustomerData({ telefono: e.target.value })}
+                  placeholder="Ej: 0991234567"
+                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
+                />
               </div>
 
-              {/* Campos condicionales según tipo de entrega */}
+              {/* DOMICILIO: DIRECCIÓN + BOTÓN MAPA GPS (SIN CAMPO REFERENCIA EN EL FORMULARIO) */}
               {deliveryType === 'DOMICILIO' && (
-                <div className="space-y-3 pt-2 border-t border-slate-100">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Dirección Exacta de Entrega *</label>
+                <div className="space-y-3 pt-2 border-t border-slate-200/60">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-extrabold text-slate-700">Dirección Exacta de Entrega *</label>
                     <input
                       type="text"
                       required
                       value={customerData.direccion}
                       onChange={(e) => setCustomerData({ direccion: e.target.value })}
-                      placeholder="Calle Principal N24-15 y Secundaria"
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white transition-colors"
+                      placeholder="Ej: Av. Principal N24-15 y Calle Secundaria"
+                      className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Referencia (Opcional)</label>
-                    <input
-                      type="text"
-                      value={customerData.referencia || ''}
-                      onChange={(e) => setCustomerData({ referencia: e.target.value })}
-                      placeholder="Frente a la farmacia, casa blanca"
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white transition-colors"
-                    />
-                  </div>
-
-                  {/* Selector de Mapa GPS */}
+                  {/* BOTÓN MAPA SELECCIÓN DE UBICACIÓN GPS Y REFERENCIA */}
                   <div>
                     <button
                       type="button"
                       onClick={() => setShowMapModal(true)}
-                      className="w-full py-2.5 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                      className="w-full py-3 px-3.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300/80 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
                     >
-                      <Navigation className="w-4 h-4" />
-                      {customerData.lat && customerData.lng
-                        ? '📍 Ubicación GPS Seleccionada (Cambiar)'
-                        : '📍 Seleccionar Ubicación Exacta en Mapa GPS'}
+                      <Navigation className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>
+                        {customerData.lat && customerData.lng
+                          ? '📍 Ubicación GPS Seleccionada (Cambiar en Mapa)'
+                          : '📍 Abrir Mapa para Fijar Ubicación y Referencia'}
+                      </span>
                     </button>
                   </div>
+
+                  {customerData.referencia && (
+                    <div className="bg-white rounded-xl p-2.5 border border-slate-200 text-xs">
+                      <span className="text-[9px] font-black uppercase text-slate-400 block">Referencia Registrada:</span>
+                      <span className="font-bold text-slate-800">{customerData.referencia}</span>
+                    </div>
+                  )}
                 </div>
               )}
 
               {deliveryType === 'MESA' && (
-                <div className="pt-2 border-t border-slate-100">
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Número de Mesa</label>
+                <div className="space-y-1 pt-2 border-t border-slate-200/60">
+                  <label className="text-[11px] font-extrabold text-slate-700">Número de Mesa *</label>
                   <input
                     type="text"
+                    required
                     value={customerData.tableName || ''}
                     onChange={(e) => setCustomerData({ tableName: e.target.value })}
-                    placeholder="Mesa 01"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-orange-500 focus:bg-white transition-colors"
+                    placeholder="Ej: Mesa 05"
+                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
                   />
-                </div>
-              )}
-
-              {errorMessage && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-bold animate-pulse">
-                  ⚠️ {errorMessage}
                 </div>
               )}
             </div>
 
-            {/* Total + Botón Confirmar (Fijo al fondo) */}
-            <div className="shrink-0 p-5 pb-16 sm:pb-6 bg-slate-50 border-t border-slate-100 space-y-3 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
-              <div className="flex justify-between text-base font-black text-slate-900">
+            {errorMessage && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-bold animate-pulse">
+                ⚠️ {errorMessage}
+              </div>
+            )}
+
+            {/* CHECKOUT RESUMEN FINANCIERO */}
+            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-2 text-xs">
+              <div className="flex justify-between font-bold text-slate-600">
+                <span>Subtotal de Platillos</span>
+                <span className="text-slate-900 font-extrabold">${subtotal.toFixed(2)}</span>
+              </div>
+
+              {deliveryType === 'DOMICILIO' && (
+                <div className="flex justify-between font-bold text-slate-600">
+                  <span>Costo de Envío</span>
+                  <span className="text-slate-900 font-extrabold">
+                    {deliveryCost === 0 ? '¡GRATIS!' : `$${deliveryCost.toFixed(2)}`}
+                  </span>
+                </div>
+              )}
+
+              <div className="flex justify-between text-sm sm:text-base font-black text-slate-900 pt-2 border-t border-slate-200">
                 <span>Total A Pagar</span>
                 <span style={{ color: primaryColor }}>${total.toFixed(2)}</span>
               </div>
+            </div>
 
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setStep('cart')}
-                  className="py-3 px-4 rounded-xl font-bold text-xs bg-slate-200 text-slate-700 hover:bg-slate-300 transition-colors cursor-pointer"
-                >
-                  Atrás
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 py-3.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  {submitting ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <span>Confirmar Pedido</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-              </div>
+            {/* BOTÓN ENVIAR PEDIDO */}
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={submitting}
+                style={{ backgroundColor: primaryColor, color: '#ffffff' }}
+                className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-xl flex items-center justify-center gap-2 hover:opacity-95 active:scale-95 transition-all cursor-pointer"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Enviando Pedido...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>CONFIRMAR PEDIDO (${total.toFixed(2)})</span>
+                    <ArrowRight className="w-4 h-4 text-white" />
+                  </>
+                )}
+              </button>
             </div>
           </form>
         )}
 
-        {/* ── PASO 3: EXITO DE PEDIDO ── */}
+        {/* ── PASO 3: CONFIRMACIÓN EXITOSA ── */}
         {step === 'success' && (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-5 animate-in zoom-in-95 duration-200 overflow-y-auto">
-            <div className="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-lg">
-              <CheckCircle2 className="w-10 h-10" />
+          <div className="py-12 text-center space-y-5 max-w-md mx-auto">
+            <div className="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-lg">
+              <CheckCircle2 className="w-12 h-12" />
             </div>
 
             <div>
-              <h3 className="text-xl font-black text-slate-900 tracking-tight">¡Pedido Recibido con Éxito!</h3>
-              <p className="text-xs text-slate-500 mt-1 font-medium">
-                Tu pedido #{createdOrder?.numeroPedido || ''} ha sido enviado a la cocina de <strong>{businessName}</strong>.
+              <h3 className="text-xl font-black text-slate-900">¡Pedido Enviado con Éxito!</h3>
+              <p className="text-xs text-slate-600 font-medium mt-1">
+                Hemos recibido tu orden para <strong>{businessName}</strong>. Te contactaremos por WhatsApp.
               </p>
             </div>
 
-            <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left text-xs space-y-2">
-              <div className="flex justify-between font-bold text-slate-800 border-b border-slate-200 pb-2">
-                <span>Estado:</span>
-                <span className="text-amber-600 uppercase">⌛ Esperando Aceptación</span>
+            {createdOrder && (
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-left text-xs space-y-1 font-bold text-slate-700">
+                <div>Código de Pedido: <span className="font-mono text-slate-900 font-black">#{createdOrder.id?.substring(0, 8)}</span></div>
+                <div>Cliente: <span className="text-slate-900 font-black">{customerData.nombre}</span></div>
+                <div>Total: <span style={{ color: primaryColor }} className="font-black">${total.toFixed(2)}</span></div>
               </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Cliente:</span>
-                <span className="font-semibold text-slate-900">{customerData.nombre}</span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Total:</span>
-                <span className="font-bold text-emerald-600">${(Number(total) || 0).toFixed(2)}</span>
-              </div>
-            </div>
-
-            {/* Botón de seguimiento — navega a la página de tracking */}
-            {createdOrder?.id && (
-              <a
-                href={`/${slug}/pedidos/${createdOrder.id}`}
-                className="w-full py-3.5 rounded-xl font-black text-sm uppercase tracking-wider text-white shadow-md active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 no-underline"
-                style={{ backgroundColor: primaryColor }}
-              >
-                🛵 Seguir mi pedido en vivo
-              </a>
             )}
 
             <button
+              type="button"
               onClick={onClose}
-              className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-500 border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 transition-all cursor-pointer"
+              style={{ backgroundColor: primaryColor, color: '#ffffff' }}
+              className="w-full py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-lg cursor-pointer"
             >
-              Volver al menú
+              Volver al Inicio
             </button>
           </div>
         )}
       </div>
 
-      {/* Modal de Mapa GPS */}
+      {/* MODAL SELECCIÓN MAPA PANTALLA COMPLETA */}
       {showMapModal && (
         <MapSelectionModal
           isOpen={showMapModal}
           onClose={() => setShowMapModal(false)}
+          initialLat={customerData.lat}
+          initialLng={customerData.lng}
+          initialReference={customerData.referencia}
           onConfirmLocation={handleMapSelect}
-          initialLat={customerData.lat || -0.180653}
-          initialLng={customerData.lng || -78.467838}
         />
       )}
     </div>

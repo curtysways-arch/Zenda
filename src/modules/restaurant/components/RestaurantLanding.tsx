@@ -1028,10 +1028,10 @@ function RestaurantLandingContent({
                     setShowChannelModal(false);
                     setShowMapModal(true);
                   }}
-                  className="w-full py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  className="w-full py-3 px-3.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
                 >
-                  <Navigation className="w-4 h-4 text-emerald-600" />
-                  <span>📍 Seleccionar o mover ubicación en mapa GPS</span>
+                  <Navigation className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>📍 Abrir Mapa para Fijar Ubicación y Referencia</span>
                 </button>
 
                 <div className="space-y-1">
@@ -1041,17 +1041,6 @@ function RestaurantLandingContent({
                     placeholder="Ej: Av. Principal #123 y Calle 4"
                     value={customerData?.direccion || ''}
                     onChange={(e) => setCustomerData({ direccion: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase text-slate-400">Referencia de Ubicación</label>
-                  <input
-                    type="text"
-                    placeholder="Ej: Casa blanca de 2 pisos junto a la farmacia"
-                    value={customerData?.referencia || ''}
-                    onChange={(e) => setCustomerData({ referencia: e.target.value })}
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
                   />
                 </div>

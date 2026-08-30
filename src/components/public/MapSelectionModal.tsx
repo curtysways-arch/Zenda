@@ -35,6 +35,7 @@ export default function MapSelectionModal({
     const [currentLng, setCurrentLng] = useState<number>(initLngRef.current);
     const [resolvedAddress, setResolvedAddress] = useState<string>('');
     const [reference, setReference] = useState<string>(initialReference || '');
+    const [refError, setRefError] = useState<boolean>(false);
     const [isLocating, setIsLocating] = useState<boolean>(false);
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [isSearching, setIsSearching] = useState<boolean>(false);
@@ -71,6 +72,7 @@ export default function MapSelectionModal({
             setCurrentLat(startLat);
             setCurrentLng(startLng);
             setReference(initialReference || '');
+            setRefError(false);
             setSearchQuery('');
 
             // Auto-detectar GPS si no había ubicación guardada previa
@@ -242,6 +244,16 @@ export default function MapSelectionModal({
         }
     };
 
+    const handleConfirm = () => {
+        if (!reference || !reference.trim()) {
+            setRefError(true);
+            return;
+        }
+        setRefError(false);
+        onConfirmLocation(currentLat, currentLng, resolvedAddress, reference.trim());
+        onClose();
+    };
+
     return (
       <div className="fixed inset-0 z-[100000] bg-white flex flex-col w-full h-full animate-in fade-in duration-200">
         {/* Cabecera Principal */}
@@ -289,7 +301,7 @@ export default function MapSelectionModal({
         </div>
 
         {/* MAPA GRANDE PANTALLA COMPLETA (Flex-1) */}
-        <div className="relative w-full flex-1 min-h-[300px] bg-slate-100 overflow-hidden">
+        <div className="relative w-full flex-1 min-h-[280px] bg-slate-100 overflow-hidden">
           {mapLoading && (
             <div className="absolute inset-0 z-20 bg-slate-100 flex items-center justify-center gap-2 text-xs font-bold text-slate-500">
               <RefreshCw className="w-5 h-5 animate-spin text-emerald-600" />
@@ -320,14 +332,14 @@ export default function MapSelectionModal({
           </button>
         </div>
 
-        {/* Panel Inferior: Dirección Resuelta + Campo de Referencia + Botones de Confirmación */}
+        {/* Panel Inferior: Dirección Resuelta + Campo de Referencia OBLIGATORIO + Botones */}
         <div className="p-4 border-t border-slate-200 bg-white shrink-0 space-y-3 max-w-4xl mx-auto w-full shadow-[0_-4px_16px_rgba(0,0,0,0.05)]">
           {/* Dirección Detectada */}
           <div className="bg-slate-50 rounded-2xl p-3 border border-slate-200/80 flex items-center justify-between text-xs">
             <div className="min-w-0 flex-1 pr-2">
-              <span className="text-[9px] font-black uppercase text-slate-400 block leading-none mb-0.5">Dirección en el mapa</span>
+              <span className="text-[9px] font-black uppercase text-slate-400 block leading-none mb-0.5">Dirección detectada</span>
               <span className="font-extrabold text-slate-900 truncate block text-xs">
-                {resolvedAddress ? `📍 ${resolvedAddress}` : 'Mueve el mapa para calcular la dirección...'}
+                {resolvedAddress ? `📍 ${resolvedAddress}` : 'Mueve el mapa para fijar la dirección...'}
               </span>
             </div>
             <span className="font-mono text-slate-400 text-[10px] shrink-0 font-bold bg-white px-2 py-1 rounded-lg border border-slate-200">
@@ -335,18 +347,30 @@ export default function MapSelectionModal({
             </span>
           </div>
 
-          {/* CAMPO DE REFERENCIA */}
+          {/* CAMPO DE REFERENCIA OBLIGATORIO */}
           <div className="space-y-1">
-            <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
-              Referencia de Ubicación (Casa, Depto, Color de fachada, Piso) *
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-black uppercase text-slate-600 tracking-wider">
+                Referencia de Ubicación <span className="text-rose-500 font-bold">* (Obligatorio)</span>
+              </label>
+            </div>
             <input
               type="text"
               placeholder="Ej: Casa blanca de 2 pisos, portón negro junto a la farmacia..."
               value={reference}
-              onChange={(e) => setReference(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 focus:bg-white focus:border-slate-400 outline-none transition-all"
+              onChange={(e) => {
+                setReference(e.target.value);
+                if (e.target.value.trim()) setRefError(false);
+              }}
+              className={`w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-900 outline-none transition-all ${
+                refError ? 'border-rose-500 bg-rose-50/50 focus:border-rose-600' : 'border-slate-200 focus:bg-white focus:border-slate-400'
+              }`}
             />
+            {refError && (
+              <p className="text-[11px] font-bold text-rose-600 mt-1 flex items-center gap-1 animate-pulse">
+                <span>⚠️ Por favor escribe una referencia de tu entrega para poder confirmar.</span>
+              </p>
+            )}
           </div>
 
           {/* Botones de Acción */}
@@ -360,10 +384,7 @@ export default function MapSelectionModal({
             </button>
             <button
               type="button"
-              onClick={() => {
-                onConfirmLocation(currentLat, currentLng, resolvedAddress, reference);
-                onClose();
-              }}
+              onClick={handleConfirm}
               className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
             >
               <Check className="w-4 h-4 stroke-[3]" />
