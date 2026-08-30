@@ -61,6 +61,9 @@ export default function HeroDestacadosPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  // Color primario dinámico de marca
+  const cp = options.negocio?.colorPrimario || '#ff5500';
+
   // Modales
   const [showHeroModal, setShowHeroModal] = useState(false);
   const [editingHero, setEditingHero] = useState<Partial<HeroItemData> | null>(null);
@@ -215,7 +218,6 @@ export default function HeroDestacadosPage() {
     newItems[index] = newItems[targetIndex];
     newItems[targetIndex] = temp;
 
-    // Actualizar posiciones
     const updated = newItems.map((item, idx) => ({ ...item, position: idx }));
     setHeroItems(updated);
 
@@ -276,7 +278,7 @@ export default function HeroDestacadosPage() {
         const err = await res.json();
         toast('error', err.error || 'Error al guardar');
       }
-    } catch {
+    } catch (err) {
       toast('error', 'Error de conexión');
     } finally {
       setSaving(false);
@@ -349,7 +351,7 @@ export default function HeroDestacadosPage() {
       case 'PROMOTION':
         return <span className="px-3 py-1 bg-amber-50 text-amber-700 font-black text-[10px] uppercase rounded-xl flex items-center gap-1"><Tag size={12} /> Promoción</span>;
       case 'PRODUCT':
-        return <span className="px-3 py-1 bg-emerald-50 text-emerald-700 font-black text-[10px] uppercase rounded-xl flex items-center gap-1"><ShoppingBag size={12} /> Producto</span>;
+        return <span style={{ backgroundColor: `${cp}15`, color: cp }} className="px-3 py-1 font-black text-[10px] uppercase rounded-xl flex items-center gap-1"><ShoppingBag size={12} /> Producto</span>;
       case 'SERVICE':
         return <span className="px-3 py-1 bg-blue-50 text-blue-700 font-black text-[10px] uppercase rounded-xl flex items-center gap-1"><Scissors size={12} /> Servicio</span>;
       case 'COMBO':
@@ -362,7 +364,7 @@ export default function HeroDestacadosPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="animate-spin text-emerald-600 mb-4" size={32} />
+        <Loader2 className="animate-spin mb-4" style={{ color: cp }} size={32} />
         <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Cargando Constructor Universal...</p>
       </div>
     );
@@ -374,8 +376,9 @@ export default function HeroDestacadosPage() {
       {message && (
         <div
           className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border ${
-            message.type === 'success' ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-red-600 text-white border-red-500'
+            message.type === 'success' ? 'text-white border-transparent' : 'bg-red-600 text-white border-red-500'
           }`}
+          style={{ backgroundColor: message.type === 'success' ? cp : undefined }}
         >
           {message.type === 'success' ? <CheckCircle2 size={22} /> : <AlertCircle size={22} />}
           <span className="text-sm font-black tracking-wide">{message.text}</span>
@@ -387,7 +390,7 @@ export default function HeroDestacadosPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-            <Sparkles className="text-emerald-500" size={32} />
+            <Sparkles style={{ color: cp }} size={32} />
             Hero y Destacados
           </h1>
           <p className="text-gray-500 text-sm font-medium mt-1">
@@ -399,7 +402,8 @@ export default function HeroDestacadosPage() {
           <button
             type="button"
             onClick={handleOpenNewHero}
-            className="flex items-center gap-2 bg-emerald-600 text-white px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-emerald-700 transition shadow-lg shadow-emerald-100"
+            style={{ backgroundColor: cp }}
+            className="flex items-center gap-2 text-white px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider hover:opacity-90 transition shadow-lg"
           >
             <Plus size={16} />
             Agregar Hero
@@ -420,8 +424,12 @@ export default function HeroDestacadosPage() {
         <button
           type="button"
           onClick={() => setActiveTab('hero')}
+          style={{
+            borderColor: activeTab === 'hero' ? cp : 'transparent',
+            color: activeTab === 'hero' ? cp : undefined
+          }}
           className={`pb-4 px-2 font-black text-xs uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
-            activeTab === 'hero' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-400 hover:text-gray-600'
+            activeTab === 'hero' ? '' : 'text-gray-400 hover:text-gray-600'
           }`}
         >
           <Sparkles size={16} />
@@ -430,8 +438,12 @@ export default function HeroDestacadosPage() {
         <button
           type="button"
           onClick={() => setActiveTab('destacados')}
+          style={{
+            borderColor: activeTab === 'destacados' ? cp : 'transparent',
+            color: activeTab === 'destacados' ? cp : undefined
+          }}
           className={`pb-4 px-2 font-black text-xs uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
-            activeTab === 'destacados' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-400 hover:text-gray-600'
+            activeTab === 'destacados' ? '' : 'text-gray-400 hover:text-gray-600'
           }`}
         >
           <Layers size={16} />
@@ -440,8 +452,12 @@ export default function HeroDestacadosPage() {
         <button
           type="button"
           onClick={() => setActiveTab('preview')}
+          style={{
+            borderColor: activeTab === 'preview' ? cp : 'transparent',
+            color: activeTab === 'preview' ? cp : undefined
+          }}
           className={`pb-4 px-2 font-black text-xs uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
-            activeTab === 'preview' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-400 hover:text-gray-600'
+            activeTab === 'preview' ? '' : 'text-gray-400 hover:text-gray-600'
           }`}
         >
           <Eye size={16} />
@@ -462,7 +478,8 @@ export default function HeroDestacadosPage() {
               <button
                 type="button"
                 onClick={handleOpenNewHero}
-                className="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-emerald-700 transition"
+                style={{ backgroundColor: cp }}
+                className="text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider hover:opacity-90 transition"
               >
                 + Crear primer Hero
               </button>
@@ -501,8 +518,12 @@ export default function HeroDestacadosPage() {
                       <button
                         type="button"
                         onClick={() => handleToggleHeroActive(item)}
+                        style={{
+                          backgroundColor: item.isActive ? `${cp}20` : undefined,
+                          color: item.isActive ? cp : undefined
+                        }}
                         className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition ${
-                          item.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-500'
+                          item.isActive ? '' : 'bg-gray-200 text-gray-500'
                         }`}
                       >
                         <Power size={12} />
@@ -518,7 +539,10 @@ export default function HeroDestacadosPage() {
                       <span>Posición: #{idx + 1}</span>
                       <span>Prioridad: {item.priority}</span>
                       {item.buttonEnabled && (
-                        <span className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100">
+                        <span
+                          style={{ color: cp, backgroundColor: `${cp}15`, borderColor: `${cp}30` }}
+                          className="px-2 py-0.5 rounded-lg border font-extrabold"
+                        >
                           Botón: "{item.buttonText}" ({item.actionType})
                         </span>
                       )}
@@ -630,8 +654,12 @@ export default function HeroDestacadosPage() {
                       <button
                         type="button"
                         onClick={() => handleToggleHighlightActive(item)}
+                        style={{
+                          backgroundColor: item.isActive ? `${cp}20` : undefined,
+                          color: item.isActive ? cp : undefined
+                        }}
                         className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition ${
-                          item.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-500'
+                          item.isActive ? '' : 'bg-gray-200 text-gray-500'
                         }`}
                       >
                         <Power size={12} />
@@ -727,7 +755,7 @@ export default function HeroDestacadosPage() {
           <div className={`mx-auto transition-all ${previewDevice === 'mobile' ? 'max-w-sm' : 'w-full'}`}>
             <div className="bg-slate-900 text-white rounded-[2.5rem] p-8 space-y-6 shadow-2xl border border-slate-800">
               <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Previsualización de Contenido Configurado</span>
+                <span style={{ color: cp }} className="text-[10px] font-black uppercase tracking-widest">Previsualización de Contenido Configurado</span>
                 <span className="text-[10px] text-slate-500 font-bold">{previewDevice === 'mobile' ? 'Mobile View' : 'Desktop View'}</span>
               </div>
 
@@ -756,7 +784,7 @@ export default function HeroDestacadosPage() {
                           {h.description && <p className="text-xs text-slate-300 font-medium line-clamp-2">{h.description}</p>}
                           {h.buttonEnabled && h.buttonText && (
                             <div className="pt-2">
-                              <span className="inline-block bg-emerald-500 text-black px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider">
+                              <span style={{ backgroundColor: cp }} className="inline-block text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider shadow-md">
                                 {h.buttonText} →
                               </span>
                             </div>
@@ -803,7 +831,7 @@ export default function HeroDestacadosPage() {
           <div className="bg-white rounded-[2.5rem] max-w-2xl w-full p-8 space-y-6 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <h3 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
-                <Sparkles className="text-emerald-500" size={20} />
+                <Sparkles style={{ color: cp }} size={20} />
                 {editingHero.id ? 'Editar Elemento Hero' : 'Nuevo Elemento Hero'}
               </h3>
               <button type="button" onClick={() => setShowHeroModal(false)} className="text-gray-400 hover:text-gray-600">
@@ -816,7 +844,7 @@ export default function HeroDestacadosPage() {
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Tipo de Hero</label>
                 <select
-                  className="w-full px-4 py-3.5 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 focus:bg-white focus:border-emerald-500 outline-none"
+                  className="w-full px-4 py-3.5 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 focus:bg-white outline-none"
                   value={editingHero.type || 'IMAGE'}
                   onChange={(e) => {
                     const newType = e.target.value;
@@ -862,7 +890,7 @@ export default function HeroDestacadosPage() {
                     Seleccionar {editingHero.type === 'PROMOTION' ? 'Promoción' : editingHero.type === 'PRODUCT' ? 'Producto' : 'Servicio'} específica del negocio
                   </label>
                   <select
-                    className="w-full px-4 py-3.5 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 focus:bg-white focus:border-emerald-500 outline-none"
+                    className="w-full px-4 py-3.5 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 focus:bg-white outline-none"
                     value={editingHero.sourceId || ''}
                     onChange={(e) => {
                       const selectedId = e.target.value;
@@ -951,7 +979,7 @@ export default function HeroDestacadosPage() {
                   <input
                     type="text"
                     placeholder="Ej: Oferta Especial de Verano"
-                    className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 focus:bg-white focus:border-emerald-500 outline-none"
+                    className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 focus:bg-white outline-none"
                     value={editingHero.title || ''}
                     onChange={(e) => setEditingHero({ ...editingHero, title: e.target.value })}
                   />
@@ -961,7 +989,7 @@ export default function HeroDestacadosPage() {
                   <textarea
                     placeholder="Ej: Descuento exclusivo del 20% reservando online"
                     rows={2}
-                    className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 focus:bg-white focus:border-emerald-500 outline-none resize-none"
+                    className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 focus:bg-white outline-none resize-none"
                     value={editingHero.description || ''}
                     onChange={(e) => setEditingHero({ ...editingHero, description: e.target.value })}
                   />
@@ -978,9 +1006,8 @@ export default function HeroDestacadosPage() {
                   <button
                     type="button"
                     onClick={() => setEditingHero({ ...editingHero, buttonEnabled: !editingHero.buttonEnabled })}
-                    className={`w-12 h-6 rounded-full transition-all relative ${
-                      editingHero.buttonEnabled ? 'bg-emerald-500' : 'bg-gray-300'
-                    }`}
+                    style={{ backgroundColor: editingHero.buttonEnabled ? cp : '#cbd5e1' }}
+                    className="w-12 h-6 rounded-full transition-all relative"
                   >
                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
                       editingHero.buttonEnabled ? 'left-[26px]' : 'left-1'
@@ -995,7 +1022,7 @@ export default function HeroDestacadosPage() {
                       <input
                         type="text"
                         placeholder="Ej: Comprar ahora, Ver servicio, Reservar"
-                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 focus:border-emerald-500 outline-none"
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 outline-none"
                         value={editingHero.buttonText || ''}
                         onChange={(e) => setEditingHero({ ...editingHero, buttonText: e.target.value })}
                         required={editingHero.buttonEnabled}
@@ -1006,7 +1033,7 @@ export default function HeroDestacadosPage() {
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Acción del Botón</label>
                         <select
-                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 focus:border-emerald-500 outline-none"
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 outline-none"
                           value={editingHero.actionType || 'NONE'}
                           onChange={(e) => {
                             const newAct = e.target.value;
@@ -1035,7 +1062,7 @@ export default function HeroDestacadosPage() {
                         <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Destino Específico de la Acción</label>
                         {editingHero.actionType === 'PROMOTION' ? (
                           <select
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 focus:border-emerald-500 outline-none"
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 outline-none"
                             value={editingHero.actionValue || ''}
                             onChange={(e) => setEditingHero({ ...editingHero, actionValue: e.target.value })}
                           >
@@ -1046,7 +1073,7 @@ export default function HeroDestacadosPage() {
                           </select>
                         ) : editingHero.actionType === 'PRODUCT' ? (
                           <select
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 focus:border-emerald-500 outline-none"
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 outline-none"
                             value={editingHero.actionValue || ''}
                             onChange={(e) => setEditingHero({ ...editingHero, actionValue: e.target.value })}
                           >
@@ -1057,7 +1084,7 @@ export default function HeroDestacadosPage() {
                           </select>
                         ) : editingHero.actionType === 'SERVICE' ? (
                           <select
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 focus:border-emerald-500 outline-none"
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 outline-none"
                             value={editingHero.actionValue || ''}
                             onChange={(e) => setEditingHero({ ...editingHero, actionValue: e.target.value })}
                           >
@@ -1068,7 +1095,7 @@ export default function HeroDestacadosPage() {
                           </select>
                         ) : editingHero.actionType === 'CATEGORY' ? (
                           <select
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 focus:border-emerald-500 outline-none"
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 outline-none"
                             value={editingHero.actionValue || ''}
                             onChange={(e) => setEditingHero({ ...editingHero, actionValue: e.target.value })}
                           >
@@ -1087,7 +1114,7 @@ export default function HeroDestacadosPage() {
                                 ? "Ej: /servicios o /contacto"
                                 : "ID, slug o URL de destino"
                             }
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 focus:border-emerald-500 outline-none"
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-sm text-gray-900 outline-none"
                             value={editingHero.actionValue || ''}
                             onChange={(e) => setEditingHero({ ...editingHero, actionValue: e.target.value })}
                           />
@@ -1126,9 +1153,8 @@ export default function HeroDestacadosPage() {
                 <button
                   type="button"
                   onClick={() => setEditingHero({ ...editingHero, isActive: !editingHero.isActive })}
-                  className={`w-12 h-6 rounded-full transition-all relative ${
-                    editingHero.isActive ? 'bg-emerald-500' : 'bg-gray-300'
-                  }`}
+                  style={{ backgroundColor: editingHero.isActive ? cp : '#cbd5e1' }}
+                  className="w-12 h-6 rounded-full transition-all relative"
                 >
                   <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
                     editingHero.isActive ? 'left-[26px]' : 'left-1'
@@ -1147,7 +1173,8 @@ export default function HeroDestacadosPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-8 py-3 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-emerald-700 transition disabled:opacity-50 flex items-center gap-2"
+                  style={{ backgroundColor: cp }}
+                  className="px-8 py-3 text-white rounded-2xl font-black text-xs uppercase tracking-wider hover:opacity-90 transition disabled:opacity-50 flex items-center gap-2 shadow-lg"
                 >
                   {saving ? <Loader2 className="animate-spin" size={16} /> : 'Guardar Hero'}
                 </button>
@@ -1175,7 +1202,7 @@ export default function HeroDestacadosPage() {
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Tipo de Destacado</label>
                 <select
-                  className="w-full px-4 py-3.5 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 focus:bg-white focus:border-emerald-500 outline-none"
+                  className="w-full px-4 py-3.5 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 outline-none"
                   value={editingHighlight.type || 'IMAGE'}
                   onChange={(e) => {
                     const newType = e.target.value;
@@ -1205,7 +1232,7 @@ export default function HeroDestacadosPage() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Seleccionar recurso</label>
                   <select
-                    className="w-full px-4 py-3.5 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 focus:bg-white focus:border-emerald-500 outline-none"
+                    className="w-full px-4 py-3.5 bg-gray-50 border border-transparent rounded-2xl font-bold text-sm text-gray-900 outline-none"
                     value={editingHighlight.sourceId || ''}
                     onChange={(e) => {
                       const selectedId = e.target.value;
@@ -1300,9 +1327,8 @@ export default function HeroDestacadosPage() {
                 <button
                   type="button"
                   onClick={() => setEditingHighlight({ ...editingHighlight, isActive: !editingHighlight.isActive })}
-                  className={`w-12 h-6 rounded-full transition-all relative ${
-                    editingHighlight.isActive ? 'bg-emerald-500' : 'bg-gray-300'
-                  }`}
+                  style={{ backgroundColor: editingHighlight.isActive ? cp : '#cbd5e1' }}
+                  className="w-12 h-6 rounded-full transition-all relative"
                 >
                   <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
                     editingHighlight.isActive ? 'left-[26px]' : 'left-1'

@@ -56,7 +56,7 @@ export default function AdminSidebar({
   const [pendingOrders, setPendingOrders] = useState(0);
   const [pendingAppointments, setPendingAppointments] = useState(0);
   const [capabilities, setCapabilities] = useState<Record<string, boolean>>({
-    promotions: true // Por defecto activo para evitar parpadeos o deshabilitación indebida
+    promotions: true
   });
   const [businessName, setBusinessName] = useState<string>(initialBusinessName || '');
 
@@ -131,7 +131,7 @@ export default function AdminSidebar({
             appointments: Boolean(effectiveCaps.APPOINTMENTS ?? effectiveCaps.appointments ?? (isServiceBiz || isCanchas || tipoUpper === 'RESERVA')),
             courts: Boolean(effectiveCaps.COURTS ?? effectiveCaps.courts ?? caps.courts ?? isCanchas),
             services: Boolean(effectiveCaps.SERVICES ?? effectiveCaps.services ?? (isServiceBiz || Boolean(caps.services))),
-            promotions: Boolean((effectiveCaps.PROMOTIONS ?? effectiveCaps.promotions) ?? (caps.promotions !== false)),
+            promotions: true,
             courses: Boolean(effectiveCaps.COURSES ?? effectiveCaps.courses ?? caps.courses ?? isCanchas ?? true),
             loyalty: Boolean(effectiveCaps.LOYALTY ?? effectiveCaps.loyalty ?? caps.loyalty ?? isPinchos),
             inventory: Boolean(effectiveCaps.INVENTORY ?? effectiveCaps.inventory ?? caps.inventory),
@@ -204,11 +204,9 @@ export default function AdminSidebar({
       items.push({ name: 'Categorías', href: '/admin/categorias', icon: Tags, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     }
 
-    // Marketing Capabilities (Universal)
+    // Marketing Capabilities (Universal para todos los negocios)
     items.push({ name: 'Hero y Destacados', href: '/admin/hero-destacados', icon: Sparkles, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
-    if (capabilities.promotions !== false) {
-      items.push({ name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
-    }
+    items.push({ name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     if (capabilities.courses) {
       items.push({ name: 'Cursos & Academia', href: '/admin/cursos', icon: GraduationCap, section: 'MARKETING' });
     }
@@ -300,10 +298,10 @@ export default function AdminSidebar({
         />
       )}
 
-      {/* Sidebar Principal */}
+      {/* Sidebar Principal: md:static para fluir de forma natural con la maquetación desktop */}
       <aside 
         className={cn(
-          "fixed top-0 left-0 bottom-0 w-64 bg-slate-900 border-r border-slate-800/80 z-40 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0",
+          "fixed md:static inset-y-0 left-0 w-64 bg-slate-900 border-r border-slate-800/80 z-30 flex flex-col shrink-0 transition-transform duration-300 ease-in-out md:translate-x-0 h-screen md:h-auto",
           isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
         )}
       >
