@@ -472,23 +472,20 @@ function RestaurantLandingContent({
           </button>
         </div>
 
-        {/* ── 4. BANNER HERO RECTANGULAR WIDESCREEN CON FOTO DE COMIDA Y COLOR DE MARCA ── */}
-        <div
-          style={{ backgroundColor: cs || '#1e293b' }}
-          className="relative w-full rounded-3xl overflow-hidden shadow-xl border border-slate-800 min-h-[165px] sm:min-h-[195px] max-h-[210px] flex items-center"
-        >
-          {/* Lado Derecho: Imagen de Comida Real Bright 50% de Ancho */}
-          <div className="absolute top-0 right-0 bottom-0 w-1/2 h-full z-0 overflow-hidden">
+        {/* ── 4. BANNER HERO RECTANGULAR WIDESCREEN CON FOTO DE COMIDA A ANCHO COMPLETO Y GRADIENTE SUAVE ── */}
+        <div className="relative w-full rounded-3xl overflow-hidden shadow-xl border border-slate-800/80 min-h-[165px] sm:min-h-[195px] max-h-[210px] flex items-center bg-slate-950">
+          {/* Imagen de Fondo a Ancho Completo */}
+          <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
             <img
               src={activeSlide.image}
               alt={activeSlide.titleText}
               className="w-full h-full object-cover object-center scale-105 transition-all duration-700"
             />
-            {/* Gradiente sutil para integrar la foto */}
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/50 to-transparent" />
+            {/* Gradiente Suave Continuo de Izquierda a Derecha */}
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/75 to-transparent" />
           </div>
 
-          {/* Etiqueta Flotante Circular "DESDE $6.99" en la esquina de la imagen */}
+          {/* Etiqueta Flotante Circular "DESDE $6.99" en la esquina superior derecha */}
           <div
             style={{ backgroundColor: cp, color: '#ffffff' }}
             className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 w-12 h-12 rounded-full flex flex-col items-center justify-center text-white font-black shadow-xl border-2 border-white/20 rotate-[6deg] scale-95"
@@ -497,8 +494,8 @@ function RestaurantLandingContent({
             <span className="text-xs font-black leading-none">{activeSlide.priceText}</span>
           </div>
 
-          {/* Lado Izquierdo: Textos Nítidos e Informativos */}
-          <div className="relative z-10 w-1/2 p-4 sm:p-6 space-y-1.5 flex flex-col justify-center">
+          {/* Textos Nítidos e Informativos Sobre el Gradiente */}
+          <div className="relative z-10 w-3/4 sm:w-2/3 p-4 sm:p-6 space-y-1.5 flex flex-col justify-center">
             <span style={{ color: cp }} className="text-[9px] font-black uppercase tracking-widest block">
               {activeSlide.tagText}
             </span>
@@ -508,7 +505,7 @@ function RestaurantLandingContent({
             </h2>
 
             {activeSlide.descText && (
-              <p className="text-slate-300 text-[10px] font-normal leading-relaxed line-clamp-2 max-w-[210px]">
+              <p className="text-slate-300 text-[10px] font-normal leading-relaxed line-clamp-2 max-w-[260px]">
                 {activeSlide.descText}
               </p>
             )}
