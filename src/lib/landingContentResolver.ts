@@ -566,6 +566,18 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
         continue;
       }
 
+      // Omitir promociones puras de Envío Gratis de la rejilla de tarjetas con foto
+      const isFreeShipping = promo.tipoPromo === 'envio_gratis' ||
+        promo.tipoPromo === 'envio gratis' ||
+        promo.titulo?.toLowerCase().includes('envio gratis') ||
+        promo.titulo?.toLowerCase().includes('envío gratis');
+
+      const hasCustomImage = !!(promo.imageMedia?.url || (promo.imagenUrl && !promo.imagenUrl.includes('unsplash')));
+
+      if (isFreeShipping && !hasCustomImage) {
+        continue;
+      }
+
       const promoImg = promo.imageMedia?.url || promo.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=800';
       const priceInfo = resolveHeroPrice(promo, 'PROMOTION');
 

@@ -282,7 +282,13 @@ function RestaurantLandingContent({
     buttonValue: rawSlide?.button?.actionValue
   };
 
-  const displayPromotions = highlights;
+  const displayPromotions = highlights.filter(promo => {
+    const titleLower = (promo.title || '').toLowerCase();
+    const isFreeDelivery = titleLower.includes('envio gratis') || titleLower.includes('envío gratis');
+    const hasCustomPhoto = promo.image && !promo.image.includes('photo-1544025162-d76694265947');
+    if (isFreeDelivery && !hasCustomPhoto) return false;
+    return true;
+  });
   const activeTopPromo = displayPromotions.length > 0 ? displayPromotions[0] : null;
 
   const promoBannerTitle = config?.bannerPromoTitulo || activeTopPromo?.title || (displayPromotions.length > 0 ? '¡ENVÍO GRATIS Y PROMOCIONES DEL DÍA!' : null);
