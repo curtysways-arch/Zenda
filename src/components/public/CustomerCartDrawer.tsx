@@ -5,12 +5,11 @@
  * @module components/public
  * @description Modal de Checkout y Datos de Entrega (FASE 5D - Copia Fiel de Diseño).
  * @responsibility Renderizar desglose de pedido ("Mi Pedido"), selección de entrega (A Domicilio vs Para Retirar),
- *   card de mapa interactivo con dirección verificada, cálculo de costo de envío según distancia GPS,
- *   y envío de pedido por WhatsApp / API.
+ *   card con miniatura de mapa real Leaflet con ubicación verificada y margen impecable de texto en los inputs.
  * @dependencies lucide-react, CartContext, MapSelectionModal
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ShoppingBag, X, Plus, Minus, MapPin, Truck, Store,
   ArrowRight, Loader2, CheckCircle2, Navigation, Trash2, ArrowLeft,
@@ -26,6 +25,81 @@ interface CustomerCartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onOrderSuccess?: (order: any) => void;
+}
+
+// Componente Miniatura de Mapa Real Centrado en las Coordenadas del Cliente
+function MiniMapPreview({ lat, lng }: { lat?: number | null; lng?: number | null }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<any>(null);
+
+  const targetLat = lat || -0.180653;
+  const targetLng = lng || -78.467838;
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const L = (window as any).L;
+
+    const initMiniMap = () => {
+      if (!L || !containerRef.current) return;
+
+      if (mapRef.current) {
+        try { mapRef.current.remove(); } catch (e) {}
+        mapRef.current = null;
+      }
+
+      try {
+        const miniMap = L.map(containerRef.current, {
+          zoomControl: false,
+          dragging: false,
+          touchZoom: false,
+          doubleClickZoom: false,
+          scrollWheelZoom: false,
+          boxZoom: false,
+          keyboard: false,
+          attributionControl: false
+        }).setView([targetLat, targetLng], 16);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19
+        }).addTo(miniMap);
+
+        mapRef.current = miniMap;
+
+        [100, 300].forEach(delay => {
+          setTimeout(() => {
+            if (mapRef.current) mapRef.current.invalidateSize();
+          }, delay);
+        });
+      } catch (e) {
+        console.warn('Error mini map:', e);
+      }
+    };
+
+    if (L) {
+      initMiniMap();
+    } else {
+      const timer = setTimeout(initMiniMap, 250);
+      return () => clearTimeout(timer);
+    }
+
+    return () => {
+      if (mapRef.current) {
+        try { mapRef.current.remove(); } catch (e) {}
+        mapRef.current = null;
+      }
+    };
+  }, [targetLat, targetLng]);
+
+  return (
+    <div className="relative w-full h-32 bg-slate-100 overflow-hidden border-b border-slate-100">
+      <div ref={containerRef} className="w-full h-full z-0 pointer-events-none" />
+      {/* Pin Rojo Central Ilustrativo */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full z-10 pointer-events-none flex flex-col items-center drop-shadow-md pb-0.5">
+        <MapPin className="w-8 h-8 text-red-500 fill-red-500 stroke-white stroke-2" />
+        <div className="w-3 h-1 bg-slate-900/30 rounded-full blur-[1px] -mt-1" />
+      </div>
+    </div>
+  );
 }
 
 // Haversine Distance Helper para cálculo dinámico de costo de envío
@@ -349,10 +423,10 @@ export default function CustomerCartDrawer({
           </div>
         )}
 
-        {/* ── PASO 2: CHECKOUT CON DISEÑO EXACTO A LA CAPTURA ── */}
+        {/* ── PASO 2: CHECKOUT CON MARGENES Y ICONOS PERFECTOS ── */}
         {step === 'checkout' && (
           <form onSubmit={handleSubmitOrder} className="space-y-4">
-            {/* 1. SELECCIÓN DE MÉTODO DE ENTREGA (SOLO A DOMICILIO Y PARA RETIRAR, SIN EN MESA) */}
+            {/* 1. SELECCIÓN DE MÉTODO DE ENTREGA */}
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
                 1. SELECCIÓN DE MÉTODO DE ENTREGA
@@ -398,60 +472,49 @@ export default function CustomerCartDrawer({
                 2. DATOS DEL CLIENTE
               </span>
 
-              {/* Nombre Completo */}
+              {/* Nombre Completo con padding seguro pl-11 */}
               <div className="space-y-1">
                 <label className="text-[11px] font-black text-slate-800">Nombre Completo *</label>
-                <div className="relative">
-                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <div className="relative flex items-center">
+                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none z-10" />
                   <input
                     type="text"
                     required
                     value={customerData.nombre}
                     onChange={(e) => setCustomerData({ nombre: e.target.value })}
                     placeholder="Carlos Caicedo"
-                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-slate-400 transition-all"
+                    className="w-full pl-11 pr-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-slate-400 transition-all"
                   />
                 </div>
               </div>
 
-              {/* WhatsApp / Teléfono */}
+              {/* WhatsApp / Teléfono con padding seguro pl-11 */}
               <div className="space-y-1">
                 <label className="text-[11px] font-black text-slate-800">WhatsApp / Teléfono *</label>
-                <div className="relative">
-                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <div className="relative flex items-center">
+                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none z-10" />
                   <input
                     type="tel"
                     required
                     value={customerData.telefono}
                     onChange={(e) => setCustomerData({ telefono: e.target.value })}
                     placeholder="593959997521"
-                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-slate-400 transition-all"
+                    className="w-full pl-11 pr-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-slate-400 transition-all"
                   />
                 </div>
               </div>
 
-              {/* DIRECCIÓN DE ENTREGA (SOLO MODAL DE MAPA - SIN CAMPO TEXTO INPUT REDUNDANTE) */}
+              {/* DIRECCIÓN DE ENTREGA CON MINIATURA DE MAPA LEAFLET REAL */}
               {deliveryType === 'DOMICILIO' && (
                 <div className="space-y-1 pt-1">
                   <label className="text-[11px] font-black text-slate-800">Dirección de Entrega *</label>
 
-                  {/* Card Ilustrativo Copiado Fielmente de la Captura 2 */}
                   <div
                     onClick={() => setShowMapModal(true)}
                     className="rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
                   >
-                    {/* Banner Superior Ilustrativo de Mapa con Pin Rojo Central */}
-                    <div className="relative w-full h-28 bg-blue-50/80 overflow-hidden flex items-center justify-center border-b border-slate-100">
-                      {/* Fondo abstracto de mapa */}
-                      <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:12px_12px]" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-100 via-transparent to-transparent" />
-                      
-                      {/* Pin Rojo Ilustrativo con Sombra */}
-                      <div className="relative z-10 flex flex-col items-center group-hover:scale-110 transition-transform">
-                        <MapPin className="w-9 h-9 text-red-500 fill-red-500 stroke-white stroke-2 drop-shadow-md" />
-                        <div className="w-4 h-1.5 bg-slate-900/20 rounded-full blur-[1px] -mt-1" />
-                      </div>
-                    </div>
+                    {/* Miniatura de Mapa Leaflet Centrado en Coordenadas Reales */}
+                    <MiniMapPreview lat={customerData.lat} lng={customerData.lng} />
 
                     {/* Tarjeta Inferior Blanca con Nombre de Calle + Coordenadas Verificadas */}
                     <div className="p-3.5 bg-white space-y-2">
@@ -490,18 +553,18 @@ export default function CustomerCartDrawer({
                 </div>
               )}
 
-              {/* Referencia (Opcional) con Icono Tag */}
+              {/* Referencia (Opcional) con padding seguro pl-11 */}
               {deliveryType === 'DOMICILIO' && (
                 <div className="space-y-1 pt-1">
                   <label className="text-[11px] font-black text-slate-800">Referencia (Opcional)</label>
-                  <div className="relative">
-                    <Tag className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <div className="relative flex items-center">
+                    <Tag className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none z-10" />
                     <input
                       type="text"
                       value={customerData.referencia || ''}
                       onChange={(e) => setCustomerData({ referencia: e.target.value })}
                       placeholder="ZV00ZXW"
-                      className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-slate-400 transition-all"
+                      className="w-full pl-11 pr-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-slate-400 transition-all"
                     />
                   </div>
                 </div>
@@ -514,7 +577,7 @@ export default function CustomerCartDrawer({
               </div>
             )}
 
-            {/* RESUMEN FINANCIERO CON BORDES Y TEXTO IGUAL A LA CAPTURA 2 */}
+            {/* RESUMEN FINANCIERO */}
             <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-2 text-xs">
               <div className="flex justify-between font-medium text-slate-600">
                 <span>Subtotal de Platillos</span>
