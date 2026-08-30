@@ -54,22 +54,28 @@ export default async function PromocionesPage() {
   const nameUpper = (rawNegocio.nombre || '').toUpperCase();
   const slugUpper = (rawNegocio.slug || '').toUpperCase();
 
-  const isRestaurant = 
-    tipoUpper === 'RESTAURANTE' || 
-    tipoUpper === 'GASTRONOMIA' || 
-    tipoUpper === 'RESTAURANT' ||
-    tipoUpper === 'FOOD' ||
-    nameUpper.includes('PARRILLA') || 
-    nameUpper.includes('RESTAURANTE') || 
-    nameUpper.includes('GASTRONOMIA') || 
-    nameUpper.includes('BURGER') || 
-    nameUpper.includes('PIZZA') || 
-    nameUpper.includes('TACO') || 
-    slugUpper.includes('PARRILLA') ||
-    slugUpper.includes('RESTAURANTE');
+  // Detección estricta de negocios de servicios (Spa, Estética, Peluquería, Barbería)
+  const isServiceBiz = 
+    tipoUpper === 'SPA' || 
+    tipoUpper === 'BEAUTY_SPA' || 
+    tipoUpper === 'PELUQUERIA' || 
+    tipoUpper === 'BARBERIA' || 
+    tipoUpper === 'CENTRO_ESTETICA' ||
+    tipoUpper === 'ORDENES-SERVICIO' ||
+    tipoUpper === 'LAVANDERIA' ||
+    tipoUpper === 'SHOE_CARE' ||
+    slugUpper.includes('SPA') ||
+    slugUpper.includes('BARBER') ||
+    nameUpper.includes('SPA') ||
+    nameUpper.includes('ESTETICA') ||
+    nameUpper.includes('PELUQUERIA') ||
+    nameUpper.includes('BARBERIA');
 
-  // 1. VISTA DE RESTAURANTES (Módulo exclusivo gastronómico: Combos, Productos, Cupones)
-  if (isRestaurant) {
+  // Si NO es un negocio de servicios (es decir, es Restaurante, Parrilla, Gastronomía, Tienda), usa PromotionDashboard
+  const isRestaurantOrStore = !isServiceBiz;
+
+  // 1. VISTA DE RESTAURANTES Y GASTRONOMÍA (Combos, Platillos, Cupones, Promociones de Delivery)
+  if (isRestaurantOrStore) {
     const [rawPromotions, products, categories, orders] = await Promise.all([
       (prisma as any).promotion.findMany({
         where: { businessId: negocioId },
@@ -129,7 +135,7 @@ export default async function PromocionesPage() {
       }
     });
 
-    const activeCount = rawPromotions.filter((p: any) => p.status === 'ACTIVE').length;
+    const activeCount = rawPromotions.filter((p: any) => p.status === 'ACTIVE' || p.status === 'activa').length;
     const avgTicketPromo = totalOrdersWithPromo > 0 ? totalSalesWithPromo / totalOrdersWithPromo : 0;
 
     const formattedPromotions = rawPromotions.map((p: any) => {
@@ -161,7 +167,7 @@ export default async function PromocionesPage() {
     );
   }
 
-  // 2. VISTA DE SERVICIOS / SPAS / BEAUTY (Sin afectar su módulo existente)
+  // 2. VISTA EXCLUSIVA DE SERVICIOS / SPAS / BEAUTY (Intacta para su vertical)
   const promotionsData = await getPromotions();
 
   const formattedPromotionsForService = promotionsData.map((promo) => ({
