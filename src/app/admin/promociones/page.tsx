@@ -51,9 +51,24 @@ export default async function PromocionesPage() {
   }
 
   const tipoUpper = (rawNegocio.tipoNegocio || '').toUpperCase();
-  const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA';
+  const nameUpper = (rawNegocio.nombre || '').toUpperCase();
+  const slugUpper = (rawNegocio.slug || '').toUpperCase();
 
-  // 1. VISTA DE RESTAURANTES (Módulo exclusivo gastronómico)
+  const isRestaurant = 
+    tipoUpper === 'RESTAURANTE' || 
+    tipoUpper === 'GASTRONOMIA' || 
+    tipoUpper === 'RESTAURANT' ||
+    tipoUpper === 'FOOD' ||
+    nameUpper.includes('PARRILLA') || 
+    nameUpper.includes('RESTAURANTE') || 
+    nameUpper.includes('GASTRONOMIA') || 
+    nameUpper.includes('BURGER') || 
+    nameUpper.includes('PIZZA') || 
+    nameUpper.includes('TACO') || 
+    slugUpper.includes('PARRILLA') ||
+    slugUpper.includes('RESTAURANTE');
+
+  // 1. VISTA DE RESTAURANTES (Módulo exclusivo gastronómico: Combos, Productos, Cupones)
   if (isRestaurant) {
     const [rawPromotions, products, categories, orders] = await Promise.all([
       (prisma as any).promotion.findMany({
@@ -99,9 +114,8 @@ export default async function PromocionesPage() {
       const discount = Number(extra?.discountAmount || extra?.descuento || 0);
 
       if (pId || discount > 0) {
-        const orderTotal = Number(o.total || 0);
-        totalSalesWithPromo += orderTotal;
         totalOrdersWithPromo += 1;
+        totalSalesWithPromo += Number(o.total) || 0;
         totalDiscountsGiven += discount;
 
         if (pId) {
@@ -109,60 +123,67 @@ export default async function PromocionesPage() {
             promoStatsMap[pId] = { ordersCount: 0, salesTotal: 0, discountTotal: 0 };
           }
           promoStatsMap[pId].ordersCount += 1;
-          promoStatsMap[pId].salesTotal += orderTotal;
+          promoStatsMap[pId].salesTotal += Number(o.total) || 0;
           promoStatsMap[pId].discountTotal += discount;
         }
       }
     });
 
-    const enrichedPromotions = rawPromotions.map((p: any) => {
-      const stats = promoStatsMap[p.id] || { ordersCount: 0, salesTotal: 0, discountTotal: 0 };
+    const activeCount = rawPromotions.filter((p: any) => p.status === 'ACTIVE').length;
+    const avgTicketPromo = totalOrdersWithPromo > 0 ? totalSalesWithPromo / totalOrdersWithPromo : 0;
+
+    const formattedPromotions = rawPromotions.map((p: any) => {
+      const st = promoStatsMap[p.id] || { ordersCount: 0, salesTotal: 0, discountTotal: 0 };
       return {
         ...p,
-        ordersGenerated: stats.ordersCount,
-        salesGenerated: stats.salesTotal,
-        discountGiven: stats.discountTotal
+        stats: {
+          ordersCount: st.ordersCount,
+          salesTotal: st.salesTotal,
+          discountTotal: st.discountTotal
+        }
       };
     });
 
-    const activeCount = enrichedPromotions.filter((p: any) => p.estado === 'ACTIVA' || p.estado === 'activa').length;
-    const avgTicketPromo = totalOrdersWithPromo > 0 ? totalSalesWithPromo / totalOrdersWithPromo : 0;
-
-    const initialMetrics = {
-      totalSalesWithPromo,
-      totalOrdersWithPromo,
-      totalDiscountsGiven,
-      avgTicketPromo,
-      activeCount
-    };
-
     return (
-      <div className="p-4 sm:p-6 bg-slate-50 min-h-screen">
-        <PromotionDashboard
-          initialPromotions={enrichedPromotions}
-          products={products}
-          categories={categories}
-          initialMetrics={initialMetrics}
-          negocio={rawNegocio}
-        />
-      </div>
+      <PromotionDashboard
+        initialPromotions={formattedPromotions}
+        products={products}
+        categories={categories}
+        initialMetrics={{
+          totalSalesWithPromo,
+          totalOrdersWithPromo,
+          totalDiscountsGiven,
+          avgTicketPromo,
+          activeCount
+        }}
+        negocio={rawNegocio}
+      />
     );
   }
 
-  // 2. VISTA ORIGINAL PARA SERVICIOS (SPA, Lavandería, Zapatería, Peluquería, Canchas, etc.)
-  const negocioServices = {
-    ...rawNegocio,
-    services: rawNegocio.Service || []
-  };
+  // 2. VISTA DE SERVICIOS / SPAS / BEAUTY (Sin afectar su módulo existente)
+  const promotionsData = await getPromotions();
 
-  const isPromotionsEnabled = !!(rawNegocio.isDemo || rawNegocio.Suscripcion?.Plan?.automatic_discounts_enabled);
-  const promociones = await getPromotions();
+  const formattedPromotionsForService = promotionsData.map((promo) => ({
+    id: promo.id,
+    title: promo.titulo,
+    description: promo.descripcion || '',
+    serviceId: promo.servicioId,
+    serviceName: promo.Servicio?.nombre || 'Servicio General',
+    discountType: promo.tipoDescuento === 'PORCENTAJE' ? ('PERCENTAGE' as const) : ('FIXED' as const),
+    discountValue: promo.valorDescuento,
+    promoPrice: promo.precioPromo || undefined,
+    startDate: promo.fechaInicio.toISOString(),
+    endDate: promo.fechaFin ? promo.fechaFin.toISOString() : undefined,
+    isActive: promo.estaActivo,
+    usageCount: promo._count?.Reserva || 0,
+    imageUrl: promo.imagenUrl || undefined
+  }));
 
   return (
     <PromotionClient
-      initialPromotions={promociones}
-      negocio={negocioServices}
-      isPromotionsEnabled={isPromotionsEnabled}
+      initialPromotions={formattedPromotionsForService}
+      negocio={rawNegocio}
     />
   );
 }
