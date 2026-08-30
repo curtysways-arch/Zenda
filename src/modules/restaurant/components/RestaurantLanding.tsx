@@ -10,7 +10,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Menu, Search, SlidersHorizontal, MapPin, ChevronDown, Bell, ShoppingBag,
   Heart, Plus, Minus, Truck, Percent, ShieldCheck, Home, Grid, Tag,
-  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X, Sparkles
+  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X, Sparkles, Flame
 } from 'lucide-react';
 import { CartProvider, useCart } from '@/core/context/CartContext';
 import CustomerCartDrawer from '@/components/public/CustomerCartDrawer';
@@ -21,6 +21,7 @@ interface Product {
   nombre: string;
   descripcion?: string;
   precio: number;
+  precioAnterior?: number;
   imagenUrl?: string;
   activo?: boolean;
   categoriaId?: string;
@@ -55,6 +56,8 @@ interface HighlightItem {
   description?: string | null;
   image: string;
   price?: number | null;
+  originalPrice?: number | null;
+  badge?: string | null;
 }
 
 export default function RestaurantLanding({
@@ -89,6 +92,7 @@ const FALLBACK_PRODUCTS: Product[] = [
     nombre: 'Hamburguesa Clásica',
     descripcion: 'Carne 150g, lechuga, tomate, queso cheddar y salsa especial.',
     precio: 6.99,
+    precioAnterior: 8.99,
     imagenUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=800',
     activo: true,
     categoria: { id: 'cat-burgers', nombre: 'Hamburguesas' }
@@ -98,6 +102,7 @@ const FALLBACK_PRODUCTS: Product[] = [
     nombre: 'Pizza Pepperoni',
     descripcion: 'Pepperoni, mozzarella y salsa de tomate.',
     precio: 8.50,
+    precioAnterior: 10.50,
     imagenUrl: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&q=80&w=800',
     activo: true,
     categoria: { id: 'cat-pizzas', nombre: 'Pizzas' }
@@ -107,6 +112,7 @@ const FALLBACK_PRODUCTS: Product[] = [
     nombre: 'Ensalada César',
     descripcion: 'Pollo a la parrilla, lechuga, parmesano y aderezo césar.',
     precio: 5.75,
+    precioAnterior: 7.00,
     imagenUrl: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?auto=format&fit=crop&q=80&w=800',
     activo: true,
     categoria: { id: 'cat-salads', nombre: 'Ensaladas' }
@@ -116,6 +122,7 @@ const FALLBACK_PRODUCTS: Product[] = [
     nombre: 'Combo Familiar Burger',
     descripcion: '2 Hamburguesas dobles + 2 Papas grandes + 2 Gaseosas.',
     precio: 14.99,
+    precioAnterior: 19.99,
     imagenUrl: 'https://images.unsplash.com/photo-1610614819513-58e34989848b?auto=format&fit=crop&q=80&w=800',
     activo: true,
     categoria: { id: 'cat-combos', nombre: 'Combos' }
@@ -131,20 +138,33 @@ const DEFAULT_CATEGORIES: Category[] = [
   { id: 'cat-combos', nombre: 'Combos', icono: '📦' },
 ];
 
-const FALLBACK_HIGHLIGHTS: HighlightItem[] = [
+const FALLBACK_PROMOTIONS: HighlightItem[] = [
   {
-    id: 'hl-1',
+    id: 'promo-1',
     title: 'Combo 2x1 Hamburguesas',
-    description: '2 Hamburguesas Clásicas + Papas + Bebida',
+    description: '2 Hamburguesas Clásicas + Papas Fritas + Gaseosa 1L',
     image: 'https://images.unsplash.com/photo-1610614819513-58e34989848b?auto=format&fit=crop&q=80&w=800',
-    price: 11.99
+    price: 11.99,
+    originalPrice: 16.99,
+    badge: '2x1 OFERTA'
   },
   {
-    id: 'hl-2',
-    title: 'Parrillada Mixta Especial',
-    description: 'Cortes premium para compartir',
+    id: 'promo-2',
+    title: 'Parrillada Familiar Premium',
+    description: 'Cortes premium, chorizos artesanas, yuca y chimichurri',
     image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=800',
-    price: 18.50
+    price: 18.50,
+    originalPrice: 24.99,
+    badge: '25% OFF'
+  },
+  {
+    id: 'promo-3',
+    title: 'Pizza Familiar + Alitas',
+    description: '1 Pizza Gigante Pepperoni + 8 Alitas BBQ + Gaseosa',
+    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&q=80&w=800',
+    price: 15.99,
+    originalPrice: 21.00,
+    badge: 'SUPER COMBO'
   }
 ];
 
@@ -270,7 +290,7 @@ function RestaurantLandingContent({
     buttonValue: rawSlide?.button?.actionValue
   };
 
-  const displayHighlights = highlights.length > 0 ? highlights : FALLBACK_HIGHLIGHTS;
+  const displayPromotions = highlights.length > 0 ? highlights : FALLBACK_PROMOTIONS;
 
   const handleHeroButtonClick = (slide: typeof activeSlide) => {
     if (slide.buttonAction === 'PRODUCT' && slide.buttonValue) {
@@ -320,7 +340,7 @@ function RestaurantLandingContent({
         }
       `}</style>
 
-      {/* ── 1. CABECERA CON NAVEGACIÓN SUPERIOR (DIV EN LUGAR DE HEADER PARA BYPASS DE REGLES GLOBALES) ── */}
+      {/* ── 1. CABECERA CON NAVEGACIÓN SUPERIOR ── */}
       <div className="rest-top-nav-bar sticky top-0 z-30 px-3 sm:px-5 py-3 border-b border-zinc-800/80 shadow-md w-full max-w-4xl mx-auto">
         <div className="flex items-center justify-between gap-2">
           {/* Lado Izquierdo: Menú Hamburguesa + Saludo de Usuario */}
@@ -560,7 +580,7 @@ function RestaurantLandingContent({
           </div>
         </div>
 
-        {/* ── 6. MÓDULO DE ENVÍO Y BENEFICIOS COMPACTO CON TEXTO OSCURO (#0f172a / #475569) ── */}
+        {/* ── 6. MÓDULO DE ENVÍO Y BENEFICIOS COMPACTO ── */}
         <div
           style={{ backgroundColor: '#fff8f5', borderColor: 'rgba(254, 215, 170, 0.7)' }}
           className="rounded-2xl border p-2.5 flex items-center justify-between shadow-2xs text-xs"
@@ -617,24 +637,24 @@ function RestaurantLandingContent({
           </div>
         </div>
 
-        {/* ── 6.5. SECCIÓN PROMOCIONES / OFERTAS DESTACADAS (ANTES DE RECOMENDADOS PARA TI) ── */}
-        <div className="space-y-3 pt-1">
+        {/* ── 6.5. SECCIÓN PROMOCIONES Y OFERTAS (UBICADA OBLIGATORIAMENTE ANTES DE RECOMENDADOS PARA TI) ── */}
+        <div className="space-y-3 pt-2 pb-1">
           <div className="flex items-center justify-between">
             <h3 style={{ color: '#ffffff' }} className="txt-title-white text-base sm:text-lg font-black tracking-tight flex items-center gap-2">
-              <Sparkles style={{ color: cp }} className="w-5 h-5" />
-              Promociones y Ofertas
+              <Flame style={{ color: cp }} className="w-5 h-5 animate-bounce" />
+              Promociones Especiales
             </h3>
-            <span style={{ backgroundColor: `${cp}20`, color: cp, borderColor: `${cp}40` }} className="text-[10px] font-black px-2.5 py-0.5 rounded-full border uppercase tracking-wider">
-              Destacados
+            <span style={{ backgroundColor: `${cp}25`, color: cp, borderColor: `${cp}50` }} className="text-[10px] font-black px-2.5 py-0.5 rounded-full border uppercase tracking-wider">
+              Ofertas Activas
             </span>
           </div>
 
-          {/* Banner Promocional Envíos / Descuento */}
+          {/* Banner de Promociones de Envío / Descuento */}
           <div
             style={{ backgroundColor: '#18181b' }}
-            className="rounded-2xl p-3.5 text-white shadow-md flex items-center justify-between relative overflow-hidden border border-zinc-800"
+            className="rounded-2xl p-3.5 text-white shadow-lg flex items-center justify-between relative overflow-hidden border border-zinc-800"
           >
-            <div className="flex items-center gap-2.5 relative z-10">
+            <div className="flex items-center gap-3 relative z-10">
               <div
                 style={{ backgroundColor: cp, color: '#ffffff' }}
                 className="txt-title-white w-10 h-10 rounded-xl flex flex-col items-center justify-center text-white font-black text-center shadow-lg rotate-[-4deg] shrink-0"
@@ -647,7 +667,7 @@ function RestaurantLandingContent({
                   ¡ENVÍO GRATIS Y HASTA 30% OFF!
                 </h4>
                 <p style={{ color: cp }} className="text-[11px] font-bold mt-0.5">
-                  Aplica en combos y pedidos superiores a $15
+                  Aplica automático en combos y pedidos sobre $15
                 </p>
               </div>
             </div>
@@ -658,31 +678,63 @@ function RestaurantLandingContent({
                 className="px-2.5 py-1 rounded-xl text-[10px] font-black border flex items-center gap-1"
               >
                 <Tag className="w-3 h-3" />
-                <span>Aplica automático</span>
+                <span>Automático</span>
               </span>
             </div>
           </div>
 
-          {/* Tarjetas horizontales de Promociones / Combos */}
-          <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-none">
-            {displayHighlights.map((hl) => (
+          {/* Carrusel Horizontal de Tarjetas Promocionales */}
+          <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
+            {displayPromotions.map((promo) => (
               <div
-                key={hl.id}
+                key={promo.id}
                 style={{ backgroundColor: '#ffffff' }}
-                className="rounded-2xl border border-slate-100 shadow-xs p-2.5 flex items-center gap-3 min-w-[240px] shrink-0 hover:shadow-md transition-all relative overflow-hidden"
+                className="rounded-2xl border border-slate-100 shadow-sm p-3 flex items-center gap-3 min-w-[260px] max-w-[290px] shrink-0 hover:shadow-md transition-all relative overflow-hidden"
               >
                 <div className="w-16 h-16 rounded-xl bg-slate-100 overflow-hidden shrink-0 relative">
-                  <img src={hl.image} alt={hl.title || 'Promoción'} className="w-full h-full object-cover" />
-                  <div style={{ backgroundColor: cp }} className="absolute top-1 left-1 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md">
-                    PROMO
+                  <img src={promo.image} alt={promo.title || 'Promoción'} className="w-full h-full object-cover" />
+                  <div style={{ backgroundColor: cp }} className="absolute top-1 left-1 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-xs">
+                    {promo.badge || 'PROMO'}
                   </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h5 style={{ color: '#0f172a' }} className="benefit-title-dark text-xs font-black truncate">{hl.title}</h5>
-                  <p style={{ color: '#64748b' }} className="text-[10px] line-clamp-1">{hl.description}</p>
-                  {hl.price && (
-                    <p style={{ color: cp }} className="text-xs font-black mt-1">${hl.price.toFixed(2)}</p>
-                  )}
+
+                <div className="min-w-0 flex-1 space-y-1">
+                  <h5 style={{ color: '#0f172a' }} className="benefit-title-dark text-xs font-black truncate">
+                    {promo.title}
+                  </h5>
+                  <p style={{ color: '#64748b' }} className="text-[10px] font-medium line-clamp-1">
+                    {promo.description}
+                  </p>
+
+                  <div className="flex items-center justify-between pt-0.5">
+                    <div className="flex items-center gap-1.5">
+                      {promo.price && (
+                        <span style={{ color: cp }} className="text-xs font-black">
+                          ${promo.price.toFixed(2)}
+                        </span>
+                      )}
+                      {promo.originalPrice && (
+                        <span style={{ color: '#94a3b8' }} className="text-[10px] font-bold line-through">
+                          ${promo.originalPrice.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => addToCart({
+                        id: promo.id,
+                        nombre: promo.title || 'Promoción',
+                        precio: promo.price || 9.99,
+                        imagenUrl: promo.image
+                      })}
+                      style={{ backgroundColor: cp, color: '#ffffff' }}
+                      className="txt-title-white px-2 py-1 rounded-lg font-black text-[10px] flex items-center gap-1 shadow-xs hover:opacity-90 active:scale-95 transition-all"
+                    >
+                      <Plus className="w-3 h-3" style={{ color: '#ffffff' }} />
+                      <span>Pedir</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
