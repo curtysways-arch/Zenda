@@ -282,18 +282,38 @@ function RestaurantLandingContent({
     buttonValue: rawSlide?.button?.actionValue
   };
 
-  const displayPromotions = highlights.filter(promo => {
+  // 1. Detectar si existe una promoción activa de Envío Gratis
+  const freeShippingPromo = highlights.find(promo => {
     const titleLower = (promo.title || '').toLowerCase();
-    const isFreeDelivery = titleLower.includes('envio gratis') || titleLower.includes('envío gratis');
-    const hasCustomPhoto = promo.image && !promo.image.includes('photo-1544025162-d76694265947');
-    if (isFreeDelivery && !hasCustomPhoto) return false;
+    return promo.badge === 'ENVÍO GRATIS' || titleLower.includes('envio gratis') || titleLower.includes('envío gratis');
+  });
+
+  // 2. Tarjetas de promociones gastronómicas para el carrusel horizontal (excluye tarjetas puras de envío gratis sin foto real)
+  const displayPromotions = highlights.filter(promo => {
+    if (freeShippingPromo && promo.id === freeShippingPromo.id) {
+      const hasCustomPhoto = promo.image && !promo.image.includes('photo-1544025162-d76694265947');
+      return hasCustomPhoto;
+    }
     return true;
   });
-  const activeTopPromo = displayPromotions.length > 0 ? displayPromotions[0] : null;
 
-  const promoBannerTitle = config?.bannerPromoTitulo || activeTopPromo?.title || (displayPromotions.length > 0 ? '¡ENVÍO GRATIS Y PROMOCIONES DEL DÍA!' : null);
-  const promoBannerDesc = config?.bannerPromoSubtitulo || activeTopPromo?.description || (displayPromotions.length > 0 ? 'Aplica automático en combos y pedidos de la casa' : null);
-  const promoBannerBadge = config?.bannerPromoBadge || activeTopPromo?.badge || 'Automático';
+  const activeFoodPromo = displayPromotions.length > 0 ? displayPromotions[0] : null;
+
+  // 3. Variables para el Banner Superior Destacado (Prioriza Envío Gratis si existe)
+  const promoBannerTitle = config?.bannerPromoTitulo ||
+    (freeShippingPromo ? (freeShippingPromo.title ? `¡${freeShippingPromo.title.toUpperCase()}!` : '¡ENVÍO GRATIS EN TU PEDIDO!') : null) ||
+    activeFoodPromo?.title ||
+    (highlights.length > 0 ? '¡ENVÍO GRATIS Y PROMOCIONES DEL DÍA!' : null);
+
+  const promoBannerDesc = config?.bannerPromoSubtitulo ||
+    (freeShippingPromo ? (freeShippingPromo.description || 'Aplica automático en tus compras sobre el monto mínimo') : null) ||
+    activeFoodPromo?.description ||
+    (highlights.length > 0 ? 'Aplica automático en combos y pedidos de la casa' : null);
+
+  const promoBannerBadge = config?.bannerPromoBadge ||
+    (freeShippingPromo ? 'ENVÍO GRATIS' : null) ||
+    activeFoodPromo?.badge ||
+    'Automático';
 
   const handleHeroButtonClick = (slide: typeof activeSlide) => {
     if (slide.buttonAction === 'PRODUCT' && slide.buttonValue) {

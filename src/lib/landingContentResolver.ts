@@ -566,18 +566,6 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
         continue;
       }
 
-      // Omitir promociones puras de Envío Gratis de la rejilla de tarjetas con foto
-      const isFreeShipping = promo.tipoPromo === 'envio_gratis' ||
-        promo.tipoPromo === 'envio gratis' ||
-        promo.titulo?.toLowerCase().includes('envio gratis') ||
-        promo.titulo?.toLowerCase().includes('envío gratis');
-
-      const hasCustomImage = !!(promo.imageMedia?.url || (promo.imagenUrl && !promo.imagenUrl.includes('unsplash')));
-
-      if (isFreeShipping && !hasCustomImage) {
-        continue;
-      }
-
       const promoImg = promo.imageMedia?.url || promo.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=800';
       const priceInfo = resolveHeroPrice(promo, 'PROMOTION');
 
@@ -585,7 +573,7 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
       if (promo.tipoPromo === '2x1') badge = '2x1 OFERTA';
       else if (promo.tipoPromo === 'paquete') badge = 'PAQUETE';
       else if (promo.tipoPromo === 'cupon') badge = 'CUPÓN';
-      else if (promo.tipoPromo === 'envio_gratis') badge = 'ENVÍO GRATIS';
+      else if (promo.tipoPromo === 'envio_gratis' || promo.titulo?.toLowerCase().includes('envio gratis') || promo.titulo?.toLowerCase().includes('envío gratis')) badge = 'ENVÍO GRATIS';
       else if (promo.precioAnterior && promo.precioAnterior > promo.precioPromo) {
         const pct = Math.round(((promo.precioAnterior - promo.precioPromo) / promo.precioAnterior) * 100);
         badge = `${pct}% OFF`;
