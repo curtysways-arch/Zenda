@@ -10,7 +10,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Menu, Search, SlidersHorizontal, MapPin, ChevronDown, Bell, ShoppingBag,
   Heart, Plus, Minus, Truck, Percent, ShieldCheck, Home, Grid, Tag,
-  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X
+  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X, Sparkles
 } from 'lucide-react';
 import { CartProvider, useCart } from '@/core/context/CartContext';
 import CustomerCartDrawer from '@/components/public/CustomerCartDrawer';
@@ -131,6 +131,23 @@ const DEFAULT_CATEGORIES: Category[] = [
   { id: 'cat-combos', nombre: 'Combos', icono: '📦' },
 ];
 
+const FALLBACK_HIGHLIGHTS: HighlightItem[] = [
+  {
+    id: 'hl-1',
+    title: 'Combo 2x1 Hamburguesas',
+    description: '2 Hamburguesas Clásicas + Papas + Bebida',
+    image: 'https://images.unsplash.com/photo-1610614819513-58e34989848b?auto=format&fit=crop&q=80&w=800',
+    price: 11.99
+  },
+  {
+    id: 'hl-2',
+    title: 'Parrillada Mixta Especial',
+    description: 'Cortes premium para compartir',
+    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=800',
+    price: 18.50
+  }
+];
+
 function RestaurantLandingContent({
   negocio,
   initialProducts = [],
@@ -160,6 +177,7 @@ function RestaurantLandingContent({
   const [products, setProducts] = useState<Product[]>(initialProducts.length > 0 ? initialProducts : FALLBACK_PRODUCTS);
   const [categories, setCategories] = useState<Category[]>(initialCategories.length > 0 ? initialCategories : DEFAULT_CATEGORIES);
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(initialHeroContent?.hero || []);
+  const [highlights, setHighlights] = useState<HighlightItem[]>(initialHeroContent?.highlights || []);
 
   const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -188,6 +206,7 @@ function RestaurantLandingContent({
         .then(res => res.json())
         .then(data => {
           if (data.hero && data.hero.length > 0) setHeroSlides(data.hero);
+          if (data.highlights && data.highlights.length > 0) setHighlights(data.highlights);
         })
         .catch(() => {});
     }
@@ -219,334 +238,230 @@ function RestaurantLandingContent({
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const matchName = p.nombre.toLowerCase().includes(q);
-      const matchDesc = (p.descripcion || '').toLowerCase().includes(q);
+      const matchDesc = p.descripcion?.toLowerCase().includes(q);
       if (!matchName && !matchDesc) return false;
     }
     return true;
   });
 
-  const displayHeroSlides = (heroSlides.length > 0)
-    ? heroSlides.map(slide => {
-        const titleText = (slide.title && slide.title.trim())
-          ? slide.title.trim()
-          : (negocio?.heroTitulo || negocio?.nombre || 'BURGER Clásica');
+  // Datos para Hero Banner
+  const displayHeroSlides = heroSlides.length > 0 ? heroSlides : products.slice(0, 3).map(p => ({
+    id: p.id,
+    title: p.nombre,
+    description: p.descripcion,
+    image: p.imagenUrl || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=800',
+    price: p.precio,
+    originalPrice: p.precio ? Number((p.precio * 1.25).toFixed(2)) : undefined,
+    button: { enabled: true, text: 'Pedir Ahora', actionType: 'PRODUCT', actionValue: p.id }
+  }));
 
-        const descText = (slide.description && slide.description.trim())
-          ? slide.description.trim()
-          : (negocio?.heroSubtitulo || negocio?.descripcion || 'Carne jugosa, queso cheddar, lechuga, tomate y nuestra salsa especial.');
+  const activeSlideIndex = displayHeroSlides.length > 0 ? currentSlideIndex % displayHeroSlides.length : 0;
+  const rawSlide = displayHeroSlides[activeSlideIndex] || displayHeroSlides[0];
 
-        const isButtonEnabled = slide.button?.enabled !== false && !!(slide.button?.text && slide.button.text.trim());
-        const buttonText = slide.button?.text?.trim() || 'Pedir ahora →';
-        const actionType = slide.button?.actionType || 'NONE';
-        const actionValue = slide.button?.actionValue || '';
+  const activeSlide = {
+    image: rawSlide?.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=800',
+    tagText: rawSlide?.title ? 'ESPECIAL DE LA CASA' : negocio?.nombre || 'RESTAURANTE',
+    titleText: rawSlide?.title || negocio?.nombre || 'Hamburguesa Clásica',
+    descText: rawSlide?.description || 'Parrillas artesanales, cortes premium y la mejor experiencia gastronómica.',
+    priceText: rawSlide?.price ? `$${Number(rawSlide.price).toFixed(2)}` : '$6.99',
+    isButtonEnabled: rawSlide?.button?.enabled ?? true,
+    buttonText: rawSlide?.button?.text || 'Ver Menú',
+    buttonAction: rawSlide?.button?.actionType,
+    buttonValue: rawSlide?.button?.actionValue
+  };
 
-        return {
-          id: slide.id,
-          titleText,
-          descText,
-          price: Number(slide.price) || 6.99,
-          image: slide.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=1200',
-          badgeText: slide.type === 'PROMOTION' ? 'OFERTA EXCLUSIVA' : 'ESPECIAL DE LA CASA',
-          isButtonEnabled,
-          buttonText,
-          actionType,
-          actionValue,
-          rawSlide: slide,
-          rawProduct: null as Product | null
-        };
-      })
-    : (products.length > 0
-        ? products.slice(0, 3).map((prod, idx) => ({
-            id: prod.id,
-            titleText: prod.nombre,
-            descText: prod.descripcion || 'Carne jugosa, queso cheddar, lechuga, tomate y nuestra salsa especial.',
-            price: Number(prod.precio) || 6.99,
-            image: prod.imagenUrl || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=1200',
-            badgeText: idx === 0 ? 'ESPECIAL DE LA CASA' : 'DESTACADO',
-            isButtonEnabled: true,
-            buttonText: 'Pedir ahora →',
-            actionType: 'PRODUCT',
-            actionValue: prod.id,
-            rawProduct: prod
-          }))
-        : [{
-            id: 'default-profile-hero',
-            titleText: negocio?.heroTitulo || negocio?.nombre || 'BURGER Clásica',
-            descText: negocio?.heroSubtitulo || negocio?.descripcion || 'Carne jugosa, queso cheddar, lechuga, tomate y nuestra salsa especial.',
-            price: 6.99,
-            image: negocio?.bannerUrl || negocio?.logoUrl || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=1200',
-            badgeText: 'ESPECIAL DE LA CASA',
-            isButtonEnabled: true,
-            buttonText: 'Pedir ahora →',
-            actionType: 'NONE',
-            actionValue: '',
-            rawProduct: null as Product | null
-          }]
-      );
-
-  const activeSlide = displayHeroSlides[currentSlideIndex % displayHeroSlides.length] || displayHeroSlides[0];
+  const displayHighlights = highlights.length > 0 ? highlights : FALLBACK_HIGHLIGHTS;
 
   const handleHeroButtonClick = (slide: typeof activeSlide) => {
-    if (!slide.isButtonEnabled) return;
-
-    if (slide.rawProduct) {
-      addToCart(slide.rawProduct);
-      return;
-    }
-
-    const { actionType, actionValue } = slide;
-
-    if (actionType === 'URL' || actionType === 'LINK') {
-      if (actionValue) {
-        if (actionValue.startsWith('http://') || actionValue.startsWith('https://')) {
-          window.open(actionValue, '_blank');
-        } else {
-          window.location.href = actionValue;
-        }
+    if (slide.buttonAction === 'PRODUCT' && slide.buttonValue) {
+      const prod = products.find(p => p.id === slide.buttonValue);
+      if (prod) {
+        addToCart({
+          id: prod.id,
+          nombre: prod.nombre,
+          precio: prod.precio,
+          imagenUrl: prod.imagenUrl
+        });
+        setShowCartDrawer(true);
+        return;
       }
-      return;
     }
-
-    if (actionType === 'PRODUCT') {
-      if (actionValue) {
-        const prod = products.find(p => p.id === actionValue);
-        if (prod) {
-          addToCart(prod);
-          return;
-        }
-      }
-      setShowCartDrawer(true);
-      return;
+    const menuEl = document.getElementById('seccion-menu-productos');
+    if (menuEl) {
+      menuEl.scrollIntoView({ behavior: 'smooth' });
     }
-
-    if (actionType === 'CATEGORY') {
-      if (actionValue) {
-        setSelectedCategory(actionValue);
-      }
-      return;
-    }
-
-    if (actionValue && (actionValue.startsWith('http://') || actionValue.startsWith('https://') || actionValue.startsWith('/'))) {
-      window.location.href = actionValue;
-      return;
-    }
-
-    setShowCartDrawer(true);
   };
 
   return (
-    <div style={{ backgroundColor: cn }} className="rest-root-scope min-h-screen font-sans pb-28 select-none text-slate-900 w-full">
-      {/* Estilos Scoped de alta especificidad para anular totalmente layout.tsx */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          .rest-top-nav-bar {
-            background-color: #121214 !important;
-            color: #ffffff !important;
-          }
-          .rest-top-nav-bar h1,
-          .rest-top-nav-bar .txt-title-white {
-            color: #ffffff !important;
-          }
-          .rest-top-nav-bar p,
-          .rest-top-nav-bar .txt-sub-slate {
-            color: #94a3b8 !important;
-          }
-          .rest-root-scope .cat-btn-unselected {
-            color: #334155 !important;
-            background-color: #ffffff !important;
-            border-color: #e2e8f0 !important;
-          }
-          .rest-root-scope .benefit-title-dark {
-            color: #0f172a !important;
-          }
-          .rest-root-scope .benefit-sub-dark {
-            color: #475569 !important;
-          }
-          .rest-root-scope .prod-title-dark {
-            color: #0f172a !important;
-          }
-          .rest-root-scope .prod-desc-dark {
-            color: #64748b !important;
-          }
-        `
-      }} />
+    <div
+      style={{ backgroundColor: '#121214', color: '#ffffff' }}
+      className="min-h-screen w-full font-sans antialiased pb-28 select-none"
+    >
+      {/* ── CSS ISOLADO PARA EVITAR QUE STYLES GLOBALES SOBREESCRIBAN TEXTOS ── */}
+      <style jsx global>{`
+        .rest-top-nav-bar {
+          background-color: #121214 !important;
+          color: #ffffff !important;
+        }
+        .txt-title-white {
+          color: #ffffff !important;
+        }
+        .txt-sub-slate {
+          color: #cbd5e1 !important;
+        }
+        .cat-btn-unselected {
+          color: #334155 !important;
+        }
+        .benefit-title-dark {
+          color: #0f172a !important;
+        }
+        .benefit-sub-dark {
+          color: #475569 !important;
+        }
+      `}</style>
 
-      {/* ── 1. HEADER SUPERIOR OSCURO (USANDO DIV PARA EVITAR REGLA LAYOUT.TSX HEADER) ── */}
-      <div
-        style={{ backgroundColor: '#121214', color: '#ffffff' }}
-        className="rest-top-nav-bar px-3 sm:px-5 pt-3.5 pb-4 rounded-b-3xl shadow-2xl sticky top-0 z-30 transition-colors border-b border-zinc-800/80 w-full"
-      >
-        <div className="w-full max-w-4xl mx-auto space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                className="text-slate-200 hover:text-white p-1 transition-colors"
-                aria-label="Menú"
-              >
-                <Menu className="w-6 h-6" style={{ color: '#ffffff' }} />
-              </button>
-              <div>
-                <h1
-                  style={{ color: '#ffffff' }}
-                  className="txt-title-white font-black text-base sm:text-lg tracking-tight flex items-center gap-1 leading-none"
-                >
-                  ¡Hola, {customerData.nombre || 'Diego'}! 👋
-                </h1>
-                <p
-                  style={{ color: '#94a3b8' }}
-                  className="txt-sub-slate text-[11px] font-medium leading-tight mt-0.5"
-                >
-                  ¿Qué se te antoja hoy?
-                </p>
-              </div>
-            </div>
+      {/* ── 1. CABECERA CON NAVEGACIÓN SUPERIOR (DIV EN LUGAR DE HEADER PARA BYPASS DE REGLES GLOBALES) ── */}
+      <div className="rest-top-nav-bar sticky top-0 z-30 px-3 sm:px-5 py-3 border-b border-zinc-800/80 shadow-md w-full max-w-4xl mx-auto">
+        <div className="flex items-center justify-between gap-2">
+          {/* Lado Izquierdo: Menú Hamburguesa + Saludo de Usuario */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowChannelModal(true)}
+              className="p-2 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-white transition-all border border-zinc-700/50"
+            >
+              <Menu className="w-5 h-5" style={{ color: '#ffffff' }} />
+            </button>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="w-9 h-9 rounded-full border flex items-center justify-center relative transition-colors"
-                style={{ backgroundColor: '#222226', borderColor: 'rgba(63, 63, 70, 0.6)' }}
-              >
-                <Bell className="w-4 h-4" style={{ color: '#ffffff' }} />
-                <span
-                  style={{ backgroundColor: cp, color: '#ffffff' }}
-                  className="txt-title-white absolute top-1.5 right-1.5 min-w-[14px] h-[14px] px-0.5 rounded-full text-[9px] font-black flex items-center justify-center ring-2 ring-[#121214]"
-                >
-                  2
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span style={{ color: '#ffffff' }} className="txt-title-white font-extrabold text-sm tracking-tight">
+                  ¡Hola, {customerData?.nombre || 'Carlos Caicedo'}!
                 </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowCartDrawer(true)}
-                className="w-9 h-9 rounded-full border flex items-center justify-center relative transition-colors"
-                style={{ backgroundColor: '#222226', borderColor: 'rgba(63, 63, 70, 0.6)' }}
-              >
-                <ShoppingBag className="w-4 h-4" style={{ color: '#ffffff' }} />
-                {totalItemsCount > 0 && (
-                  <span
-                    style={{ backgroundColor: cp, color: '#ffffff' }}
-                    className="txt-title-white absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black flex items-center justify-center shadow-lg"
-                  >
-                    {totalItemsCount}
-                  </span>
-                )}
-              </button>
+                <span className="text-sm">👋</span>
+              </div>
+              <p style={{ color: '#cbd5e1' }} className="txt-sub-slate text-[11px] font-normal leading-none mt-0.5">
+                ¿Qué se te antoja hoy?
+              </p>
             </div>
           </div>
 
-          {/* ── 2. SELECTOR DE DIRECCIÓN OSCURO CON TEXTO BLANCO INMUNIZADO ── */}
-          <button
-            type="button"
-            onClick={() => setShowChannelModal(true)}
-            style={{ backgroundColor: '#1c1c20', borderColor: 'rgba(39, 39, 42, 0.9)' }}
-            className="w-full border rounded-2xl px-3.5 py-2.5 flex items-center justify-between text-xs transition-all group"
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div
-                style={{ backgroundColor: cp }}
-                className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0 text-white shadow-md"
-              >
-                <MapPin className="w-3.5 h-3.5" style={{ color: '#ffffff' }} />
-              </div>
-              <div className="text-left min-w-0">
-                <span
-                  style={{ color: '#94a3b8' }}
-                  className="txt-sub-slate text-[9px] font-bold block uppercase tracking-wider leading-tight"
-                >
-                  {deliveryType === 'DOMICILIO' ? 'Enviar a' : deliveryType === 'MESA' ? 'Consumo en' : 'Retiro en'}
-                </span>
-                <span
-                  style={{ color: '#ffffff' }}
-                  className="txt-title-white font-extrabold text-xs truncate block leading-tight mt-0.5"
-                >
-                  {deliveryType === 'DOMICILIO'
-                    ? (customerData.direccion || negocio?.direccion || 'Av. Amazonas N34-451 y Japón')
-                    : deliveryType === 'MESA'
-                    ? (customerData.tableName ? `Mesa ${customerData.tableName}` : 'Mesa Principal')
-                    : (negocio?.nombre || 'Retiro en Local')}
-                </span>
-              </div>
-            </div>
-            <ChevronDown className="w-4 h-4 txt-sub-slate shrink-0" style={{ color: '#94a3b8' }} />
-          </button>
-
-          {/* ── 3. BUSCADOR BLANCO COMPACTO ── */}
-          <div className="relative flex items-center">
-            <Search className="w-4 h-4 absolute left-3.5 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar platos, combos, bebidas..."
-              style={{ backgroundColor: '#ffffff', color: '#0f172a' }}
-              className="w-full pl-10 pr-10 py-2.5 rounded-xl text-xs font-semibold placeholder-slate-400 shadow-sm focus:outline-none border border-slate-200"
-            />
+          {/* Lado Derecho: Notificaciones + Carrito Flotante */}
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              className="absolute right-3.5 text-slate-400 hover:text-slate-700"
-              onClick={() => setSearchQuery('')}
+              className="relative p-2 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-white transition-all border border-zinc-700/50"
             >
-              <SlidersHorizontal className="w-4 h-4" style={{ color: searchQuery ? cp : undefined }} />
+              <Bell className="w-4 h-4 text-zinc-300" />
+              <span
+                style={{ backgroundColor: cp, color: '#ffffff' }}
+                className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-black flex items-center justify-center border border-zinc-900"
+              >
+                2
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowCartDrawer(true)}
+              className="relative p-2 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-white transition-all border border-zinc-700/50"
+            >
+              <ShoppingBag className="w-4 h-4 text-zinc-300" />
+              {totalItemsCount > 0 && (
+                <span
+                  style={{ backgroundColor: cp, color: '#ffffff' }}
+                  className="absolute -top-1 -right-1 w-4.5 h-4.5 rounded-full text-[10px] font-black flex items-center justify-center border border-zinc-900 shadow-md"
+                >
+                  {totalItemsCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
       </div>
 
-      <main className="w-full max-w-4xl mx-auto px-3 sm:px-5 pt-4 space-y-4">
-        {/* ── 4. BANNER PRINCIPAL / HERO PANORÁMICO RECTANGULAR ── */}
-        <div
-          style={{ backgroundColor: '#121214' }}
-          className="relative rounded-3xl overflow-hidden text-white shadow-2xl border border-zinc-800/80 min-h-[165px] sm:min-h-[195px] max-h-[210px] flex items-center transition-all duration-500"
-        >
-          <div className="absolute right-0 top-0 bottom-0 w-[55%] sm:w-[58%] h-full z-0 overflow-hidden">
-            <img
-              key={activeSlide.id}
-              src={activeSlide.image}
-              alt={activeSlide.titleText || 'Hero Banner'}
-              className="w-full h-full object-cover object-center brightness-105 contrast-105 saturate-105 animate-in fade-in duration-500"
-            />
-            <div className="absolute inset-y-0 left-0 w-24 sm:w-36 bg-gradient-to-r from-[#121214] via-[#121214]/40 to-transparent" />
-          </div>
-
-          {activeSlide.price > 0 && (
+      {/* ── CONTENEDOR PRINCIPAL FULL ANCHO ── */}
+      <main className="w-full max-w-4xl mx-auto px-3 sm:px-5 pt-3 space-y-4">
+        {/* ── 2. SECTOR SELECCIÓN DE DIRECCIÓN Y CANAL DE ENTREGA ── */}
+        <div className="bg-zinc-900/90 rounded-2xl p-2.5 border border-zinc-800 flex items-center justify-between text-xs shadow-sm">
+          <div className="flex items-center gap-2.5 min-w-0">
             <div
               style={{ backgroundColor: cp, color: '#ffffff' }}
-              className="txt-title-white absolute top-3 left-[46%] sm:left-[44%] z-20 w-14 h-14 rounded-full flex flex-col items-center justify-center text-white shadow-2xl border-2 border-[#121214] text-center font-extrabold rotate-3 shrink-0"
+              className="txt-title-white p-2 rounded-xl text-white font-bold shrink-0 shadow-md"
             >
-              <span className="text-[7px] tracking-wider leading-none uppercase text-amber-100 font-black">DESDE</span>
-              <span className="text-[11px] font-black leading-tight">${activeSlide.price.toFixed(2)}</span>
+              <MapPin className="w-4 h-4" style={{ color: '#ffffff' }} />
             </div>
-          )}
-
-          <div className="relative z-10 w-[60%] sm:w-[52%] p-4 sm:p-5 space-y-1.5">
-            {activeSlide.badgeText && (
-              <span
-                style={{ color: cp }}
-                className="text-[9px] font-black tracking-widest uppercase block"
-              >
-                {activeSlide.badgeText}
+            <div className="min-w-0">
+              <span className="text-[9px] font-black tracking-widest text-zinc-400 uppercase block leading-none">
+                ENVIAR A
               </span>
-            )}
+              <span style={{ color: '#ffffff' }} className="txt-title-white font-black text-xs truncate block mt-0.5">
+                {customerData?.direccion || 'hfgh'}
+              </span>
+            </div>
+          </div>
 
-            {activeSlide.titleText && (
-              <h2
-                style={{ color: '#ffffff' }}
-                className="txt-title-white text-lg sm:text-2xl font-black tracking-tight leading-tight uppercase drop-shadow-md"
-              >
-                {activeSlide.titleText.includes(' ') ? (
-                  <>
-                    {activeSlide.titleText.split(' ')[0]} <br />
-                    <span style={{ color: cp }} className="font-serif italic font-normal normal-case text-lg sm:text-2xl">
-                      {activeSlide.titleText.split(' ').slice(1).join(' ')}
-                    </span>
-                  </>
-                ) : (
-                  activeSlide.titleText
-                )}
-              </h2>
-            )}
+          <button
+            type="button"
+            onClick={() => setShowChannelModal(true)}
+            className="text-zinc-400 hover:text-white p-1"
+          >
+            <ChevronDown className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* ── 3. BARRA DE BÚSQUEDA ── */}
+        <div className="relative w-full">
+          <input
+            type="text"
+            placeholder="Buscar platos, combos, bebidas..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-10 py-3 bg-white rounded-2xl font-bold text-xs text-slate-900 placeholder:text-slate-400 shadow-sm border border-transparent focus:border-orange-500 outline-none transition-all"
+          />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <button
+            type="button"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* ── 4. BANNER HERO RECTANGULAR WIDESCREEN CON FOTO DE COMIDA AL 50% DERECHA Y ETIQUETA FLOTANTE ── */}
+        <div
+          style={{ backgroundColor: '#1a1a1e' }}
+          className="relative w-full rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 min-h-[165px] sm:min-h-[195px] max-h-[210px] flex items-center"
+        >
+          {/* Lado Derecho: Imagen de Comida Real Bright 50% de Ancho */}
+          <div className="absolute top-0 right-0 bottom-0 w-1/2 h-full z-0 overflow-hidden">
+            <img
+              src={activeSlide.image}
+              alt={activeSlide.titleText}
+              className="w-full h-full object-cover object-center scale-105 transition-all duration-700"
+            />
+            {/* Gradiente sutil para integrar el corte con el fondo oscuro */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#1a1a1e] via-[#1a1a1e]/40 to-transparent" />
+          </div>
+
+          {/* Etiqueta Flotante Circular "DESDE $6.99" en la esquina de la imagen */}
+          <div
+            style={{ backgroundColor: cp, color: '#ffffff' }}
+            className="txt-title-white absolute top-3 right-3 sm:top-4 sm:right-4 z-20 w-12 h-12 rounded-full flex flex-col items-center justify-center text-white font-black shadow-xl border-2 border-white/20 rotate-[6deg] scale-95"
+          >
+            <span className="text-[8px] uppercase tracking-tighter leading-tight opacity-90">DESDE</span>
+            <span className="text-xs font-black leading-none">{activeSlide.priceText}</span>
+          </div>
+
+          {/* Lado Izquierdo: Textos Nítidos e Informativos */}
+          <div className="relative z-10 w-1/2 p-4 sm:p-6 space-y-1.5 flex flex-col justify-center">
+            <span style={{ color: cp }} className="text-[9px] font-black uppercase tracking-widest block">
+              {activeSlide.tagText}
+            </span>
+
+            <h2 style={{ color: '#ffffff' }} className="txt-title-white text-lg sm:text-xl font-black tracking-tight leading-tight">
+              {activeSlide.titleText}
+            </h2>
 
             {activeSlide.descText && (
               <p
@@ -592,7 +507,7 @@ function RestaurantLandingContent({
           )}
         </div>
 
-        {/* ── 5. CATEGORÍAS HORIZONTALES (TEXTOS OSCURO #334155 VISIBLES Y NÍTI DOS) ── */}
+        {/* ── 5. CATEGORÍAS HORIZONTALES (TEXTOS OSCURO #334155 VISIBLES Y NÍTIDOS) ── */}
         <div>
           <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none">
             <button
@@ -702,10 +617,82 @@ function RestaurantLandingContent({
           </div>
         </div>
 
-        {/* ── 7. SECCIÓN RECOMENDADOS PARA TI ── */}
+        {/* ── 6.5. SECCIÓN PROMOCIONES / OFERTAS DESTACADAS (ANTES DE RECOMENDADOS PARA TI) ── */}
         <div className="space-y-3 pt-1">
           <div className="flex items-center justify-between">
-            <h3 style={{ color: '#0f172a' }} className="benefit-title-dark text-base sm:text-lg font-black tracking-tight">
+            <h3 style={{ color: '#ffffff' }} className="txt-title-white text-base sm:text-lg font-black tracking-tight flex items-center gap-2">
+              <Sparkles style={{ color: cp }} className="w-5 h-5" />
+              Promociones y Ofertas
+            </h3>
+            <span style={{ backgroundColor: `${cp}20`, color: cp, borderColor: `${cp}40` }} className="text-[10px] font-black px-2.5 py-0.5 rounded-full border uppercase tracking-wider">
+              Destacados
+            </span>
+          </div>
+
+          {/* Banner Promocional Envíos / Descuento */}
+          <div
+            style={{ backgroundColor: '#18181b' }}
+            className="rounded-2xl p-3.5 text-white shadow-md flex items-center justify-between relative overflow-hidden border border-zinc-800"
+          >
+            <div className="flex items-center gap-2.5 relative z-10">
+              <div
+                style={{ backgroundColor: cp, color: '#ffffff' }}
+                className="txt-title-white w-10 h-10 rounded-xl flex flex-col items-center justify-center text-white font-black text-center shadow-lg rotate-[-4deg] shrink-0"
+              >
+                <span className="text-[8px] leading-tight">OFERTA</span>
+                <Percent className="w-4 h-4 mt-0.5" style={{ color: '#ffffff' }} />
+              </div>
+              <div>
+                <h4 style={{ color: '#ffffff' }} className="txt-title-white font-extrabold text-xs sm:text-sm tracking-wide uppercase leading-tight">
+                  ¡ENVÍO GRATIS Y HASTA 30% OFF!
+                </h4>
+                <p style={{ color: cp }} className="text-[11px] font-bold mt-0.5">
+                  Aplica en combos y pedidos superiores a $15
+                </p>
+              </div>
+            </div>
+
+            <div className="relative z-10 shrink-0">
+              <span
+                style={{ backgroundColor: `${cp}20`, color: cp, borderColor: `${cp}40` }}
+                className="px-2.5 py-1 rounded-xl text-[10px] font-black border flex items-center gap-1"
+              >
+                <Tag className="w-3 h-3" />
+                <span>Aplica automático</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Tarjetas horizontales de Promociones / Combos */}
+          <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-none">
+            {displayHighlights.map((hl) => (
+              <div
+                key={hl.id}
+                style={{ backgroundColor: '#ffffff' }}
+                className="rounded-2xl border border-slate-100 shadow-xs p-2.5 flex items-center gap-3 min-w-[240px] shrink-0 hover:shadow-md transition-all relative overflow-hidden"
+              >
+                <div className="w-16 h-16 rounded-xl bg-slate-100 overflow-hidden shrink-0 relative">
+                  <img src={hl.image} alt={hl.title || 'Promoción'} className="w-full h-full object-cover" />
+                  <div style={{ backgroundColor: cp }} className="absolute top-1 left-1 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md">
+                    PROMO
+                  </div>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h5 style={{ color: '#0f172a' }} className="benefit-title-dark text-xs font-black truncate">{hl.title}</h5>
+                  <p style={{ color: '#64748b' }} className="text-[10px] line-clamp-1">{hl.description}</p>
+                  {hl.price && (
+                    <p style={{ color: cp }} className="text-xs font-black mt-1">${hl.price.toFixed(2)}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── 7. SECCIÓN RECOMENDADOS PARA TI ── */}
+        <div id="seccion-menu-productos" className="space-y-3 pt-1">
+          <div className="flex items-center justify-between">
+            <h3 style={{ color: '#ffffff' }} className="txt-title-white text-base sm:text-lg font-black tracking-tight">
               Recomendados para ti
             </h3>
             <button
@@ -752,32 +739,33 @@ function RestaurantLandingContent({
                       <button
                         type="button"
                         onClick={(e) => toggleFavorite(prod.id, e)}
-                        className="absolute top-2 right-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-950/40 backdrop-blur-md flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-all"
+                        className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/40 backdrop-blur-xs text-white hover:bg-slate-900/60 transition-all"
                       >
                         <Heart
-                          className="w-3.5 h-3.5"
-                          fill={isFav ? '#ef4444' : 'transparent'}
-                          color={isFav ? '#ef4444' : '#ffffff'}
+                          className={`w-3.5 h-3.5 transition-colors ${
+                            isFav ? 'fill-red-500 text-red-500' : 'text-white'
+                          }`}
                         />
                       </button>
                     </div>
 
-                    {/* Nombre, Descripción, Precio y Botón + */}
-                    <div className="p-2.5 flex-1 flex flex-col justify-between space-y-1.5">
+                    {/* Detalle del Producto */}
+                    <div className="p-3 flex flex-col flex-1 justify-between space-y-2">
                       <div>
-                        <h4 style={{ color: '#0f172a' }} className="prod-title-dark font-extrabold text-xs leading-snug line-clamp-1">
+                        <h4 style={{ color: '#0f172a' }} className="benefit-title-dark font-extrabold text-xs line-clamp-1">
                           {prod.nombre}
                         </h4>
                         {prod.descripcion && (
-                          <p style={{ color: '#64748b' }} className="prod-desc-dark text-[10px] mt-0.5 line-clamp-2 font-normal leading-normal">
+                          <p style={{ color: '#64748b' }} className="text-[10px] font-medium line-clamp-2 mt-0.5">
                             {prod.descripcion}
                           </p>
                         )}
                       </div>
 
-                      <div className="pt-1 flex items-center justify-between border-t border-slate-100 mt-1">
-                        <span style={{ color: cp }} className="font-extrabold text-xs sm:text-sm">
-                          ${(Number(prod.precio) || 0).toFixed(2)}
+                      {/* Precio y Botón Agregar al Carrito */}
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                        <span style={{ color: cp }} className="font-black text-xs sm:text-sm">
+                          ${prod.precio.toFixed(2)}
                         </span>
 
                         {qtyInCart > 0 ? (
@@ -785,11 +773,13 @@ function RestaurantLandingContent({
                             <button
                               type="button"
                               onClick={() => decrementQuantity(prod.id)}
-                              className="w-5 h-5 rounded-lg bg-white text-slate-700 font-bold text-xs flex items-center justify-center shadow-xs"
+                              className="w-5 h-5 bg-white text-slate-700 rounded-lg font-bold text-xs flex items-center justify-center shadow-xs hover:bg-slate-200"
                             >
                               -
                             </button>
-                            <span style={{ color: '#0f172a' }} className="prod-title-dark text-xs font-extrabold px-0.5">{qtyInCart}</span>
+                            <span style={{ color: '#0f172a' }} className="text-[11px] font-black px-1">
+                              {qtyInCart}
+                            </span>
                             <button
                               type="button"
                               onClick={() => addToCart({
@@ -827,40 +817,6 @@ function RestaurantLandingContent({
             </div>
           )}
         </div>
-
-        {/* ── 8. BANNER PROMOCIONAL OSCURO ── */}
-        <div
-          style={{ backgroundColor: '#121214' }}
-          className="rounded-2xl p-3.5 text-white shadow-xl flex items-center justify-between relative overflow-hidden border border-zinc-800"
-        >
-          <div className="flex items-center gap-2.5 relative z-10">
-            <div
-              style={{ backgroundColor: cp, color: '#ffffff' }}
-              className="txt-title-white w-10 h-10 rounded-xl flex flex-col items-center justify-center text-white font-black text-center shadow-lg rotate-[-4deg] shrink-0"
-            >
-              <span className="text-[8px] leading-tight">GRATIS</span>
-              <Truck className="w-4 h-4 mt-0.5" style={{ color: '#ffffff' }} />
-            </div>
-            <div>
-              <h4 style={{ color: '#ffffff' }} className="txt-title-white font-extrabold text-xs sm:text-sm tracking-wide uppercase leading-tight">
-                ¡ENVÍO GRATIS!
-              </h4>
-              <p style={{ color: cp }} className="text-[11px] font-bold mt-0.5">
-                Por compras desde $15
-              </p>
-            </div>
-          </div>
-
-          <div className="relative z-10 shrink-0">
-            <div
-              style={{ backgroundColor: `${cp}20`, color: cp, borderColor: `${cp}40` }}
-              className="px-2.5 py-1 rounded-xl text-[10px] font-black border flex items-center gap-1"
-            >
-              <Truck className="w-3 h-3" />
-              <span>Aplica automático</span>
-            </div>
-          </div>
-        </div>
       </main>
 
       {/* ── BARRA FLOTANTE DEL CARRITO SI HAY PRODUCTOS AGREGADOS ── */}
@@ -881,7 +837,7 @@ function RestaurantLandingContent({
         </div>
       )}
 
-      {/* ── 9. NAVEGACIÓN INFERIOR FIJA DE 5 OPCIONES ── */}
+      {/* ── NAVEGACIÓN INFERIOR FIJA DE 5 OPCIONES ── */}
       <nav style={{ backgroundColor: '#ffffff' }} className="fixed bottom-0 left-0 right-0 border-t border-slate-200 py-2 px-3 flex justify-around items-center z-50 shadow-lg w-full max-w-4xl mx-auto">
         <button
           type="button"
@@ -915,10 +871,7 @@ function RestaurantLandingContent({
 
         <button
           type="button"
-          onClick={() => {
-            setActiveNavTab('pedidos');
-            setShowCartDrawer(true);
-          }}
+          onClick={() => setActiveNavTab('pedidos')}
           className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors"
           style={{ color: activeNavTab === 'pedidos' ? cp : '#64748b' }}
         >
@@ -926,108 +879,27 @@ function RestaurantLandingContent({
           <span>Mis pedidos</span>
         </button>
 
-        <Link
-          href={`/${negocio?.slug || ''}/perfil`}
+        <button
+          type="button"
           onClick={() => setActiveNavTab('cuenta')}
-          className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors no-underline"
+          className="flex flex-col items-center gap-0.5 text-[10px] font-bold transition-colors"
           style={{ color: activeNavTab === 'cuenta' ? cp : '#64748b' }}
         >
           <User className="w-4 h-4" />
           <span>Mi cuenta</span>
-        </Link>
+        </button>
       </nav>
 
-      {/* ── MODAL CANAL DE ATENCIÓN DE PEDIDO ── */}
-      {showChannelModal && (
-        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div style={{ backgroundColor: '#ffffff' }} className="rounded-3xl p-5 max-w-sm w-full space-y-3.5 shadow-2xl text-slate-900 border border-slate-100">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <h4 style={{ color: '#0f172a' }} className="benefit-title-dark font-extrabold text-sm">¿Cómo deseas tu pedido?</h4>
-              <button
-                type="button"
-                onClick={() => setShowChannelModal(false)}
-                className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setDeliveryType('DOMICILIO');
-                  setShowChannelModal(false);
-                }}
-                className={`w-full p-3 rounded-2xl border text-xs font-bold flex items-center gap-3 transition-all ${
-                  deliveryType === 'DOMICILIO'
-                    ? 'border-orange-500 bg-orange-50 text-slate-900 shadow-sm'
-                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                <div style={{ backgroundColor: cp, color: '#ffffff' }} className="txt-title-white w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
-                  <Truck className="w-4 h-4" style={{ color: '#ffffff' }} />
-                </div>
-                <div className="text-left flex-1">
-                  <span style={{ color: '#0f172a' }} className="benefit-title-dark block font-extrabold text-xs">Delivery a Domicilio</span>
-                  <span style={{ color: '#64748b' }} className="benefit-sub-dark text-[10px] font-normal">Entregas rápidas a tu ubicación</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setDeliveryType('MESA');
-                  setShowChannelModal(false);
-                }}
-                className={`w-full p-3 rounded-2xl border text-xs font-bold flex items-center gap-3 transition-all ${
-                  deliveryType === 'MESA'
-                    ? 'border-orange-500 bg-orange-50 text-slate-900 shadow-sm'
-                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                <div style={{ backgroundColor: cp, color: '#ffffff' }} className="txt-title-white w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
-                  <Utensils className="w-4 h-4" style={{ color: '#ffffff' }} />
-                </div>
-                <div className="text-left flex-1">
-                  <span style={{ color: '#0f172a' }} className="benefit-title-dark block font-extrabold text-xs">Pedir a la Mesa</span>
-                  <span style={{ color: '#64748b' }} className="benefit-sub-dark text-[10px] font-normal">Consumo directo en el local</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setDeliveryType('RETIRO');
-                  setShowChannelModal(false);
-                }}
-                className={`w-full p-3 rounded-2xl border text-xs font-bold flex items-center gap-3 transition-all ${
-                  deliveryType === 'RETIRO'
-                    ? 'border-orange-500 bg-orange-50 text-slate-900 shadow-sm'
-                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                <div style={{ backgroundColor: cp, color: '#ffffff' }} className="txt-title-white w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
-                  <ShoppingBag className="w-4 h-4" style={{ color: '#ffffff' }} />
-                </div>
-                <div className="text-left flex-1">
-                  <span style={{ color: '#0f172a' }} className="benefit-title-dark block font-extrabold text-xs">Para Llevar / Retiro</span>
-                  <span style={{ color: '#64748b' }} className="benefit-sub-dark text-[10px] font-normal">Pasa a retirar por el local</span>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Drawer Carrito */}
+      {showCartDrawer && (
+        <CustomerCartDrawer
+          slug={negocio?.slug || 'demo'}
+          businessName={negocio?.nombre || 'Restaurante'}
+          primaryColor={cp}
+          isOpen={showCartDrawer}
+          onClose={() => setShowCartDrawer(false)}
+        />
       )}
-
-      {/* ── DRAWER LATERAL DE CHECKOUT CITIOX ── */}
-      <CustomerCartDrawer
-        slug={negocio?.slug || ''}
-        businessName={negocio?.nombre || 'Restaurante'}
-        primaryColor={cp}
-        isOpen={showCartDrawer}
-        onClose={() => setShowCartDrawer(false)}
-      />
     </div>
   );
 }
