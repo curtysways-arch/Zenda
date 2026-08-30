@@ -2,18 +2,19 @@
 /**
  * @file RestaurantLanding.tsx
  * @module modules/restaurant/components
- * @description Rediseño optimizado del Home de Restaurante con sincronización dinámica de colores configurados desde el Admin (Header, Fondo, Botones, etc.).
+ * @description Rediseño optimizado del Home de Restaurante con sincronización dinámica de colores y modal de detalles de promociones/productos.
  */
 
 import React, { useState, useEffect } from 'react';
 import {
   Menu, Search, SlidersHorizontal, MapPin, ChevronDown, Bell, ShoppingBag,
   Heart, Plus, Minus, Truck, Percent, ShieldCheck, Home, Grid, Tag,
-  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X, Sparkles, Flame, Store, Navigation
+  ClipboardList, User, ArrowRight, Utensils, ChevronRight, X, Sparkles, Flame, Store, Navigation, Eye
 } from 'lucide-react';
 import { CartProvider, useCart } from '@/core/context/CartContext';
 import CustomerCartDrawer from '@/components/public/CustomerCartDrawer';
 import MapSelectionModal from '@/components/public/MapSelectionModal';
+import ItemDetailModal, { DetailItem } from '@/components/public/ItemDetailModal';
 
 interface Product {
   id: string;
@@ -236,9 +237,13 @@ function RestaurantLandingContent({
   const [showCartDrawer, setShowCartDrawer] = useState<boolean>(false);
   const [showChannelModal, setShowChannelModal] = useState<boolean>(false);
   const [showMapModal, setShowMapModal] = useState<boolean>(false);
+  
+  // MODAL DE DETALLES DE PRODUCTO / PROMOCIÓN
+  const [selectedDetailItem, setSelectedDetailItem] = useState<DetailItem | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState<boolean>(false);
+
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
   const [activeNavTab, setActiveNavTab] = useState<'inicio' | 'categorias' | 'ofertas' | 'pedidos' | 'cuenta'>('inicio');
-
   const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
 
   useEffect(() => {
@@ -278,6 +283,43 @@ function RestaurantLandingContent({
   const toggleFavorite = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setFavorites(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleOpenPromoDetail = (promo: HighlightItem) => {
+    setSelectedDetailItem({
+      id: promo.id,
+      title: promo.title || 'Promoción Especial',
+      description: promo.description || 'Disfruta de esta increíble promoción gastronómica por tiempo limitado.',
+      price: promo.price || 9.99,
+      originalPrice: promo.originalPrice || undefined,
+      badge: promo.badge || 'OFERTA',
+      image: promo.image,
+      category: 'Promoción Especial',
+    });
+    setShowDetailModal(true);
+  };
+
+  const handleOpenProductDetail = (prod: Product) => {
+    setSelectedDetailItem({
+      id: prod.id,
+      title: prod.nombre,
+      description: prod.descripcion || 'Elaborado con los mejores ingredientes y la sazón de la casa.',
+      price: prod.precio,
+      originalPrice: prod.precioAnterior || undefined,
+      badge: prod.precioAnterior && prod.precioAnterior > prod.precio ? 'OFERTA' : undefined,
+      image: prod.imagenUrl,
+      category: prod.categoria?.nombre || 'Menú Principal',
+    });
+    setShowDetailModal(true);
+  };
+
+  const handleAddToCartFromDetail = (item: DetailItem, qty: number) => {
+    addToCart({
+      id: item.id,
+      nombre: item.title,
+      precio: item.price,
+      imagenUrl: item.image
+    }, qty);
   };
 
   const filteredProducts = products.filter(p => {
@@ -329,13 +371,7 @@ function RestaurantLandingContent({
     if (slide.buttonAction === 'PRODUCT' && slide.buttonValue) {
       const prod = products.find(p => p.id === slide.buttonValue);
       if (prod) {
-        addToCart({
-          id: prod.id,
-          nombre: prod.nombre,
-          precio: prod.precio,
-          imagenUrl: prod.imagenUrl
-        });
-        setShowCartDrawer(true);
+        handleOpenProductDetail(prod);
         return;
       }
     }
@@ -421,7 +457,7 @@ function RestaurantLandingContent({
 
       {/* ── CONTENEDOR PRINCIPAL FULL ANCHO ── */}
       <main className="w-full max-w-4xl mx-auto px-3 sm:px-5 pt-3 space-y-4">
-        {/* ── 2. SECTOR SELECCIÓN DE DIRECCIÓN Y CANAL DE ENTREGA (ABRE DIRECTAMENTE EL MAPA O EL MODAL) ── */}
+        {/* ── 2. SECTOR SELECCIÓN DE DIRECCIÓN Y CANAL DE ENTREGA ── */}
         <button 
           type="button"
           onClick={() => setShowMapModal(true)}
@@ -444,7 +480,7 @@ function RestaurantLandingContent({
                   ? 'Retiro en local / Para llevar'
                   : (customerData?.direccion && customerData.direccion.trim().length > 0
                       ? customerData.direccion
-                      : 'Seleccionar ubicación de entrega en mapa...')}
+                      : 'Seleccionar ubicación actual...')}
               </span>
             </div>
           </div>
@@ -472,20 +508,17 @@ function RestaurantLandingContent({
           </button>
         </div>
 
-        {/* ── 4. BANNER HERO RECTANGULAR WIDESCREEN CON FOTO DE COMIDA A ANCHO COMPLETO Y GRADIENTE SUAVE ── */}
+        {/* ── 4. BANNER HERO RECTANGULAR WIDESCREEN CON FOTO DE COMIDA A ANCHO COMPLETO ── */}
         <div className="relative w-full rounded-3xl overflow-hidden shadow-xl border border-slate-800/80 min-h-[165px] sm:min-h-[195px] max-h-[210px] flex items-center bg-slate-950">
-          {/* Imagen de Fondo a Ancho Completo */}
           <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
             <img
               src={activeSlide.image}
               alt={activeSlide.titleText}
               className="w-full h-full object-cover object-center scale-105 transition-all duration-700"
             />
-            {/* Gradiente Suave Continuo de Izquierda a Derecha */}
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/75 to-transparent" />
           </div>
 
-          {/* Etiqueta Flotante Circular "DESDE $6.99" en la esquina superior derecha */}
           <div
             style={{ backgroundColor: cp, color: '#ffffff' }}
             className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 w-12 h-12 rounded-full flex flex-col items-center justify-center text-white font-black shadow-xl border-2 border-white/20 rotate-[6deg] scale-95"
@@ -494,7 +527,6 @@ function RestaurantLandingContent({
             <span className="text-xs font-black leading-none">{activeSlide.priceText}</span>
           </div>
 
-          {/* Textos Nítidos e Informativos Sobre el Gradiente */}
           <div className="relative z-10 w-3/4 sm:w-2/3 p-4 sm:p-6 space-y-1.5 flex flex-col justify-center">
             <span style={{ color: cp }} className="text-[9px] font-black uppercase tracking-widest block">
               {activeSlide.tagText}
@@ -603,7 +635,6 @@ function RestaurantLandingContent({
           style={{ backgroundColor: '#fff8f5', borderColor: 'rgba(254, 215, 170, 0.7)' }}
           className="rounded-2xl border p-2.5 flex items-center justify-between shadow-2xs text-xs"
         >
-          {/* Beneficio 1: Envío Rápido */}
           <div className="flex items-center gap-2 flex-1 justify-center px-1">
             <div style={{ color: cp }} className="shrink-0">
               <Truck className="w-5 h-5" />
@@ -620,7 +651,6 @@ function RestaurantLandingContent({
 
           <div className="h-7 w-[1px] bg-orange-200/60 shrink-0" />
 
-          {/* Beneficio 2: Promociones */}
           <div className="flex items-center gap-2 flex-1 justify-center px-1">
             <div style={{ color: cp }} className="shrink-0">
               <Percent className="w-5 h-5" />
@@ -637,7 +667,6 @@ function RestaurantLandingContent({
 
           <div className="h-7 w-[1px] bg-orange-200/60 shrink-0" />
 
-          {/* Beneficio 3: Pago Seguro */}
           <div className="flex items-center gap-2 flex-1 justify-center px-1">
             <div style={{ color: cp }} className="shrink-0">
               <ShieldCheck className="w-5 h-5" />
@@ -653,7 +682,7 @@ function RestaurantLandingContent({
           </div>
         </div>
 
-        {/* ── 6.5. SECCIÓN PROMOCIONES Y OFERTAS (UBICADA ANTES DE RECOMENDADOS PARA TI) ── */}
+        {/* ── 6.5. SECCIÓN PROMOCIONES Y OFERTAS (CON CLIC PARA VER DETALLES COMPLETOS) ── */}
         <div className="space-y-3 pt-2 pb-1">
           <div className="flex items-center justify-between">
             <h3 style={{ color: '#0f172a' }} className="text-base sm:text-lg font-black tracking-tight flex items-center gap-2">
@@ -699,23 +728,24 @@ function RestaurantLandingContent({
             </div>
           </div>
 
-          {/* Carrusel Horizontal de Tarjetas Promocionales */}
+          {/* Carrusel Horizontal de Tarjetas Promocionales con Click para Detalle Completo */}
           <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
             {displayPromotions.map((promo) => (
               <div
                 key={promo.id}
+                onClick={() => handleOpenPromoDetail(promo)}
                 style={{ backgroundColor: '#ffffff' }}
-                className="rounded-2xl border border-slate-100 shadow-sm p-3 flex items-center gap-3 min-w-[260px] max-w-[290px] shrink-0 hover:shadow-md transition-all relative overflow-hidden"
+                className="rounded-2xl border border-slate-100 shadow-sm p-3 flex items-center gap-3 min-w-[260px] max-w-[290px] shrink-0 hover:shadow-md transition-all relative overflow-hidden cursor-pointer group"
               >
                 <div className="w-16 h-16 rounded-xl bg-slate-100 overflow-hidden shrink-0 relative">
-                  <img src={promo.image} alt={promo.title || 'Promoción'} className="w-full h-full object-cover" />
+                  <img src={promo.image} alt={promo.title || 'Promoción'} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                   <div style={{ backgroundColor: cp }} className="absolute top-1 left-1 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-xs">
                     {promo.badge || 'PROMO'}
                   </div>
                 </div>
 
                 <div className="min-w-0 flex-1 space-y-1">
-                  <h5 style={{ color: '#0f172a' }} className="text-xs font-black truncate">
+                  <h5 style={{ color: '#0f172a' }} className="text-xs font-black truncate group-hover:text-orange-600 transition-colors">
                     {promo.title}
                   </h5>
                   <p style={{ color: '#64748b' }} className="text-[10px] font-medium line-clamp-1">
@@ -738,17 +768,15 @@ function RestaurantLandingContent({
 
                     <button
                       type="button"
-                      onClick={() => addToCart({
-                        id: promo.id,
-                        nombre: promo.title || 'Promoción',
-                        precio: promo.price || 9.99,
-                        imagenUrl: promo.image
-                      })}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenPromoDetail(promo);
+                      }}
                       style={{ backgroundColor: cp, color: '#ffffff' }}
-                      className="px-2 py-1 rounded-lg font-black text-[10px] flex items-center gap-1 shadow-xs hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
+                      className="px-2.5 py-1 rounded-lg font-black text-[10px] flex items-center gap-1 shadow-xs hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
                     >
-                      <Plus className="w-3 h-3 text-white" />
-                      <span>Pedir</span>
+                      <Eye className="w-3 h-3 text-white" />
+                      <span>Ver Detalle</span>
                     </button>
                   </div>
                 </div>
@@ -757,7 +785,7 @@ function RestaurantLandingContent({
           </div>
         </div>
 
-        {/* ── 7. SECCIÓN RECOMENDADOS PARA TI ── */}
+        {/* ── 7. SECCIÓN RECOMENDADOS PARA TI CON CLICK PARA DETALLE DE PRODUCTO ── */}
         <div id="seccion-menu-productos" className="space-y-3 pt-1">
           <div className="flex items-center justify-between">
             <h3 style={{ color: '#0f172a' }} className="text-base sm:text-lg font-black tracking-tight">
@@ -789,8 +817,9 @@ function RestaurantLandingContent({
                 return (
                   <div
                     key={prod.id}
+                    onClick={() => handleOpenProductDetail(prod)}
                     style={{ backgroundColor: '#ffffff' }}
-                    className="rounded-2xl border border-slate-100 shadow-xs overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all"
+                    className="rounded-2xl border border-slate-100 shadow-xs overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all cursor-pointer"
                   >
                     {/* Imagen del Producto + Corazón Favorito */}
                     <div className="relative w-full h-32 sm:h-36 bg-slate-100 overflow-hidden">
@@ -820,7 +849,7 @@ function RestaurantLandingContent({
                     {/* Detalle del Producto */}
                     <div className="p-3 flex flex-col flex-1 justify-between space-y-2">
                       <div>
-                        <h4 style={{ color: '#0f172a' }} className="font-extrabold text-xs line-clamp-1">
+                        <h4 style={{ color: '#0f172a' }} className="font-extrabold text-xs line-clamp-1 group-hover:text-orange-600 transition-colors">
                           {prod.nombre}
                         </h4>
                         {prod.descripcion && (
@@ -837,7 +866,10 @@ function RestaurantLandingContent({
                         </span>
 
                         {qtyInCart > 0 ? (
-                          <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-0.5">
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center gap-1 bg-slate-100 rounded-xl p-0.5"
+                          >
                             <button
                               type="button"
                               onClick={() => decrementQuantity(prod.id)}
@@ -865,12 +897,10 @@ function RestaurantLandingContent({
                         ) : (
                           <button
                             type="button"
-                            onClick={() => addToCart({
-                              id: prod.id,
-                              nombre: prod.nombre,
-                              precio: prod.precio,
-                              imagenUrl: prod.imagenUrl
-                            })}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenProductDetail(prod);
+                            }}
                             style={{ backgroundColor: cp, color: '#ffffff' }}
                             className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl flex items-center justify-center font-extrabold shadow-md hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
                           >
@@ -1075,6 +1105,17 @@ function RestaurantLandingContent({
             });
             setShowMapModal(false);
           }}
+        />
+      )}
+
+      {/* ── MODAL DETALLES COMPLETOS DE PROMOCIÓN / PRODUCTO ── */}
+      {showDetailModal && (
+        <ItemDetailModal
+          isOpen={showDetailModal}
+          onClose={() => setShowDetailModal(false)}
+          item={selectedDetailItem}
+          primaryColor={cp}
+          onAddToCart={handleAddToCartFromDetail}
         />
       )}
     </div>
