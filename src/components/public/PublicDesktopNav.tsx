@@ -41,6 +41,40 @@ export default function PublicDesktopNav({
         setHasSession(document.cookie.includes('cs=1'));
     }, [pathname]);
 
+    const [activeTab, setActiveTab] = useState<string>('inicio');
+
+    useEffect(() => {
+        const updateActiveTab = () => {
+            if (typeof window === 'undefined') return;
+            const hash = window.location.hash.replace('#', '').toLowerCase();
+            const params = new URLSearchParams(window.location.search);
+            const tabParam = params.get('tab');
+
+            if (hash === 'ofertas' || tabParam === 'ofertas') setActiveTab('ofertas');
+            else if (hash === 'pedidos' || tabParam === 'pedidos' || pathname.includes('/pedidos')) setActiveTab('pedidos');
+            else if (hash === 'cuenta' || hash === 'perfil' || tabParam === 'cuenta' || tabParam === 'perfil' || pathname.includes('/perfil')) setActiveTab('cuenta');
+            else setActiveTab('inicio');
+        };
+
+        updateActiveTab();
+
+        const handleCustomTab = (e: any) => {
+            if (e.detail) {
+                if (e.detail === 'ofertas') setActiveTab('ofertas');
+                else if (e.detail === 'pedidos') setActiveTab('pedidos');
+                else if (e.detail === 'cuenta' || e.detail === 'perfil') setActiveTab('cuenta');
+                else if (e.detail === 'inicio') setActiveTab('inicio');
+            }
+        };
+
+        window.addEventListener('hashchange', updateActiveTab);
+        window.addEventListener('citiox_change_tab', handleCustomTab);
+        return () => {
+            window.removeEventListener('hashchange', updateActiveTab);
+            window.removeEventListener('citiox_change_tab', handleCustomTab);
+        };
+    }, [pathname]);
+
     // Mostrar solo en rutas públicas del negocio
     const isNegocioRoute = pathname.startsWith(`/${slug}`);
     const isAdminRoute = pathname.includes('/admin') || pathname.includes('/superadmin');
@@ -59,25 +93,25 @@ export default function PublicDesktopNav({
             label: 'Inicio',
             href: `/${slug}`,
             icon: Home,
-            active: pathname === `/${slug}` && !pathname.includes('pedidos') && !pathname.includes('perfil')
+            active: activeTab === 'inicio'
         },
         {
             label: 'Ofertas',
             href: `/${slug}#ofertas`,
             icon: Flame,
-            active: pathname.includes('/ofertas') || pathname.includes('#ofertas')
+            active: activeTab === 'ofertas'
         },
         {
             label: isShoeCare ? 'Mis Órdenes' : 'Mis Pedidos',
             href: `/${slug}/pedidos`,
             icon: PackageCheck,
-            active: pathname.includes('/pedidos')
+            active: activeTab === 'pedidos'
         },
         {
             label: 'Mi Cuenta',
             href: `/${slug}/perfil`,
             icon: User,
-            active: pathname.includes('/perfil')
+            active: activeTab === 'cuenta'
         }
     ] : [
         {
