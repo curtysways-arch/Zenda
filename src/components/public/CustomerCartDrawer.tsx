@@ -13,7 +13,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   ShoppingBag, X, Plus, Minus, MapPin, Truck, Store,
   ArrowRight, Loader2, CheckCircle2, Navigation, Trash2, ArrowLeft,
-  User, Phone, Tag, Edit2, RefreshCw, ShieldCheck, Clock, Lock, Info
+  User, Phone, Tag, Edit2, RefreshCw, ShieldCheck, Clock, Lock, Info, AlertTriangle, AlertCircle
 } from 'lucide-react';
 import { useCart } from '@/core/context/CartContext';
 import MapSelectionModal from './MapSelectionModal';
@@ -179,7 +179,14 @@ export default function CustomerCartDrawer({
 
   if (!isOpen) return null;
 
-  const hasLocationSelected = !!(customerData.lat && customerData.lng && customerData.direccion && customerData.direccion.trim());
+  const hasLocationSelected = !!(
+    customerData.lat &&
+    customerData.lng &&
+    customerData.direccion &&
+    customerData.direccion.trim() &&
+    customerData.direccion !== 'Seleccionar ubicación actual' &&
+    customerData.direccion !== 'Ubicación no seleccionada'
+  );
 
   const handleNextToCheckout = () => {
     if (cart.length === 0) return;
@@ -249,8 +256,9 @@ export default function CustomerCartDrawer({
       return;
     }
 
-    if (deliveryType === 'DOMICILIO' && !customerData.direccion.trim()) {
-      setErrorMessage('Por favor selecciona tu Ubicación de Entrega en el mapa.');
+    if (deliveryType === 'DOMICILIO' && !hasLocationSelected) {
+      setErrorMessage('⚠️ Ubicación de Entrega Requerida: Por favor selecciona tu ubicación en el mapa para continuar.');
+      setShowMapModal(true);
       return;
     }
 
@@ -758,7 +766,9 @@ export default function CustomerCartDrawer({
               {/* Dirección de Entrega y Mapa */}
               {deliveryType === 'DOMICILIO' && (
                 <div className="space-y-3 pt-1">
-                  <div className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-2xs flex items-center justify-between gap-3">
+                  <div className={`bg-white rounded-2xl p-3.5 border shadow-2xs flex items-center justify-between gap-3 transition-all ${
+                    !hasLocationSelected ? 'border-amber-300 bg-amber-50/30' : 'border-slate-100'
+                  }`}>
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div className="w-9 h-9 rounded-full bg-rose-50/80 flex items-center justify-center shrink-0" style={{ color: primaryColor }}>
                         <MapPin className="w-4 h-4" />
@@ -777,13 +787,20 @@ export default function CustomerCartDrawer({
                         />
                       </div>
                     </div>
-                    {hasLocationSelected && (
+                    {hasLocationSelected ? (
                       <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                    ) : (
+                      <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-100/80 border border-amber-300 text-amber-800 font-black text-[10px] shrink-0 animate-pulse">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        <span>Obligatorio</span>
+                      </div>
                     )}
                   </div>
 
-                  {/* VISTA PREVIA MAPA CON BOTÓN EDITAR FLOTANTE */}
-                  <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-2xs bg-white relative">
+                  {/* VISTA PREVIA MAPA CON AVISO DE UBICACIÓN Y BOTÓN EDITAR */}
+                  <div className={`rounded-2xl border overflow-hidden shadow-2xs bg-white relative transition-all ${
+                    !hasLocationSelected ? 'border-amber-300 ring-2 ring-amber-200/50' : 'border-slate-200'
+                  }`}>
                     <MiniMapPreview lat={customerData.lat} lng={customerData.lng} />
 
                     {/* Botón Editar sobre el mapa */}
@@ -796,44 +813,66 @@ export default function CustomerCartDrawer({
                       <span>Editar</span>
                     </button>
 
-                    {/* Fila Inferior: Estado de Ubicación y Opción de Cambiar */}
-                    <div className="p-3.5 bg-white grid grid-cols-2 gap-3 border-t border-slate-100">
-                      {/* Izquierda: Ubicación verificada */}
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    {/* AVISO INTUITIVO SI FALTA SELECCIONAR UBICACIÓN */}
+                    {!hasLocationSelected ? (
+                      <div className="p-4 bg-amber-50 border-t border-amber-200 text-center space-y-2.5">
+                        <div className="flex items-center justify-center gap-1.5 text-amber-900 font-black text-xs">
+                          <AlertTriangle className="w-4.5 h-4.5 text-amber-600 shrink-0 animate-bounce" />
+                          <span>¡Debes confirmar tu ubicación en el mapa!</span>
                         </div>
-                        <div className="min-w-0">
-                          <span className="text-xs font-bold text-emerald-600 block leading-tight">
-                            Ubicación verificada
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-mono block leading-tight truncate">
-                            {customerData.lat && customerData.lng
-                              ? `Lat: ${customerData.lat.toFixed(4)}, Lng: ${customerData.lng.toFixed(4)}`
-                              : 'Coordenadas GPS'}
-                          </span>
-                        </div>
+                        <p className="text-[11px] text-amber-800 font-medium max-w-xs mx-auto leading-relaxed">
+                          Para entregas a domicilio es <strong>obligatorio</strong> fijar tu pin en el mapa para calcular el envío y despachar tu orden.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setShowMapModal(true)}
+                          style={{ backgroundColor: primaryColor }}
+                          className="w-full py-3 px-4 rounded-xl text-white font-black text-xs uppercase tracking-wider shadow-lg hover:opacity-95 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                        >
+                          <Navigation className="w-4 h-4 text-white" />
+                          <span>Seleccionar Ubicación en Mapa</span>
+                        </button>
                       </div>
+                    ) : (
+                      /* Fila Inferior: Estado de Ubicación y Opción de Cambiar */
+                      <div className="p-3.5 bg-white grid grid-cols-2 gap-3 border-t border-slate-100">
+                        {/* Izquierda: Ubicación verificada */}
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-xs font-bold text-emerald-600 block leading-tight">
+                              Ubicación verificada
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono block leading-tight truncate">
+                              {customerData.lat && customerData.lng
+                                ? `Lat: ${customerData.lat.toFixed(4)}, Lng: ${customerData.lng.toFixed(4)}`
+                                : 'Coordenadas GPS'}
+                            </span>
+                          </div>
+                        </div>
 
-                      {/* Derecha: Cambiar ubicación */}
-                      <button
-                        type="button"
-                        onClick={() => setShowMapModal(true)}
-                        className="flex items-center gap-2.5 text-left min-w-0 hover:opacity-80 transition-opacity cursor-pointer"
-                      >
-                        <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center shrink-0" style={{ color: primaryColor }}>
-                          <Navigation className="w-4 h-4 rotate-45" />
-                        </div>
-                        <div className="min-w-0">
-                          <span style={{ color: primaryColor }} className="text-xs font-extrabold block leading-tight">
-                            Cambiar ubicación
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-medium block leading-tight">
-                            Selecciona en el mapa
-                          </span>
-                        </div>
-                      </button>
-                    </div>
+                        {/* Derecha: Cambiar ubicación */}
+                        <button
+                          type="button"
+                          onClick={() => setShowMapModal(true)}
+                          className="flex items-center gap-2.5 text-left min-w-0 hover:opacity-80 transition-opacity cursor-pointer"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center shrink-0" style={{ color: primaryColor }}>
+                            <Navigation className="w-4 h-4 rotate-45" />
+                          </div>
+                          <div className="min-w-0">
+                            <span style={{ color: primaryColor }} className="text-xs font-extrabold block leading-tight">
+                              Cambiar ubicación
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium block leading-tight">
+                              Selecciona en el mapa
+                            </span>
+                          </div>
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Referencia (Opcional) */}
