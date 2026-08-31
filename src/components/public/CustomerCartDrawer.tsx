@@ -603,171 +603,258 @@ export default function CustomerCartDrawer({
 
         {/* ── PASO 2: CHECKOUT CON SELECCIONAR UBICACIÓN ACTUAL ── */}
         {step === 'checkout' && (
-          <form onSubmit={handleSubmitOrder} className="space-y-4">
+          <form onSubmit={handleSubmitOrder} className="space-y-5">
             {/* 1. SELECCIÓN DE MÉTODO DE ENTREGA */}
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
-                1. SELECCIÓN DE MÉTODO DE ENTREGA
-              </label>
+              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                1. Método de entrega
+              </h3>
+
               <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
+                {/* A Domicilio */}
+                <div
                   onClick={() => setDeliveryType('DOMICILIO')}
                   style={{
-                    borderColor: deliveryType === 'DOMICILIO' ? primaryColor : '#e2e8f0',
-                    backgroundColor: deliveryType === 'DOMICILIO' ? '#fff5f2' : '#ffffff',
-                    color: deliveryType === 'DOMICILIO' ? primaryColor : '#475569'
+                    borderColor: deliveryType === 'DOMICILIO' ? primaryColor : '#f1f5f9',
+                    backgroundColor: deliveryType === 'DOMICILIO' ? `${primaryColor}08` : '#ffffff',
                   }}
-                  className={`py-3 px-3 rounded-2xl border text-xs font-black flex flex-col items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs ${
-                    deliveryType === 'DOMICILIO' ? 'border-2' : ''
+                  className={`p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all shadow-2xs ${
+                    deliveryType === 'DOMICILIO' ? 'border-2 shadow-xs' : 'hover:border-slate-200'
                   }`}
                 >
-                  <Truck className="w-5 h-5" style={{ color: deliveryType === 'DOMICILIO' ? primaryColor : '#64748b' }} />
-                  <span>A Domicilio</span>
-                </button>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      style={{
+                        backgroundColor: deliveryType === 'DOMICILIO' ? `${primaryColor}20` : '#f8fafc',
+                        color: deliveryType === 'DOMICILIO' ? primaryColor : '#64748b'
+                      }}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                    >
+                      <Truck className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <span
+                        style={{ color: deliveryType === 'DOMICILIO' ? primaryColor : '#0f172a' }}
+                        className="font-extrabold text-xs sm:text-sm block leading-tight"
+                      >
+                        A domicilio
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-medium block leading-tight mt-0.5">
+                        Te llevamos tu pedido hasta tu puerta
+                      </span>
+                    </div>
+                  </div>
 
-                <button
-                  type="button"
+                  <div className="shrink-0 ml-2">
+                    {deliveryType === 'DOMICILIO' ? (
+                      <CheckCircle2 className="w-5 h-5" style={{ color: primaryColor, fill: primaryColor }} />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-slate-200" />
+                    )}
+                  </div>
+                </div>
+
+                {/* Para Retirar */}
+                <div
                   onClick={() => setDeliveryType('RETIRO')}
                   style={{
-                    borderColor: deliveryType === 'RETIRO' ? primaryColor : '#e2e8f0',
-                    backgroundColor: deliveryType === 'RETIRO' ? '#fff5f2' : '#ffffff',
-                    color: deliveryType === 'RETIRO' ? primaryColor : '#475569'
+                    borderColor: deliveryType === 'RETIRO' ? primaryColor : '#f1f5f9',
+                    backgroundColor: deliveryType === 'RETIRO' ? `${primaryColor}08` : '#ffffff',
                   }}
-                  className={`py-3 px-3 rounded-2xl border text-xs font-black flex flex-col items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs ${
-                    deliveryType === 'RETIRO' ? 'border-2' : ''
+                  className={`p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all shadow-2xs ${
+                    deliveryType === 'RETIRO' ? 'border-2 shadow-xs' : 'hover:border-slate-200'
                   }`}
                 >
-                  <Store className="w-5 h-5" style={{ color: deliveryType === 'RETIRO' ? primaryColor : '#64748b' }} />
-                  <span>Para Retirar</span>
-                </button>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      style={{
+                        backgroundColor: deliveryType === 'RETIRO' ? `${primaryColor}20` : '#f8fafc',
+                        color: deliveryType === 'RETIRO' ? primaryColor : '#64748b'
+                      }}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                    >
+                      <Store className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <span
+                        style={{ color: deliveryType === 'RETIRO' ? primaryColor : '#0f172a' }}
+                        className="font-extrabold text-xs sm:text-sm block leading-tight"
+                      >
+                        Para retirar
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-medium block leading-tight mt-0.5">
+                        Retira tu pedido en nuestro local
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 ml-2">
+                    {deliveryType === 'RETIRO' ? (
+                      <CheckCircle2 className="w-5 h-5" style={{ color: primaryColor, fill: primaryColor }} />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-slate-200" />
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* 2. DATOS DEL CLIENTE */}
-            <div className="space-y-3.5 bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-2xs">
-              <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">
-                2. DATOS DEL CLIENTE
-              </span>
+            <div className="space-y-3">
+              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                2. Datos del cliente
+              </h3>
 
-              {/* Nombre Completo con padding seguro pl-11 */}
-              <div className="space-y-1">
-                <label className="text-[11px] font-black text-slate-800">Nombre Completo *</label>
-                <div className="relative flex items-center">
-                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none z-10" />
-                  <input
-                    type="text"
-                    required
-                    value={customerData.nombre}
-                    onChange={(e) => setCustomerData({ nombre: e.target.value })}
-                    placeholder="Carlos Caicedo"
-                    className="w-full pl-11 pr-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-slate-400 transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* WhatsApp / Teléfono con padding seguro pl-11 */}
-              <div className="space-y-1">
-                <label className="text-[11px] font-black text-slate-800">WhatsApp / Teléfono *</label>
-                <div className="relative flex items-center">
-                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none z-10" />
-                  <input
-                    type="tel"
-                    required
-                    value={customerData.telefono}
-                    onChange={(e) => setCustomerData({ telefono: e.target.value })}
-                    placeholder="593959997521"
-                    className="w-full pl-11 pr-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-slate-400 transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* DIRECCIÓN DE ENTREGA CON SELECCIONAR UBICACIÓN ACTUAL */}
-              {deliveryType === 'DOMICILIO' && (
-                <div className="space-y-1 pt-1">
-                  <label className="text-[11px] font-black text-slate-800">Dirección de Entrega *</label>
-
-                  <div
-                    onClick={() => setShowMapModal(true)}
-                    className="rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden shadow-xs hover:border-slate-300 transition-all cursor-pointer group"
-                  >
-                    {/* Miniatura de Mapa Leaflet Centrado */}
-                    <MiniMapPreview lat={customerData.lat} lng={customerData.lng} />
-
-                    {/* Tarjeta Inferior Blanca con Dirección o Seleccionar Ubicación Actual */}
-                    <div className="p-3.5 bg-white space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-start gap-2 min-w-0">
-                          <MapPin className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-                          <span className="text-xs font-black text-slate-900 leading-tight">
-                            {hasLocationSelected
-                              ? customerData.direccion
-                              : 'Seleccionar ubicación actual'}
-                          </span>
-                        </div>
-                        <div className="p-1 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-lg shrink-0">
-                          <Edit2 className="w-3.5 h-3.5 text-slate-600" />
-                        </div>
-                      </div>
-
-                      {/* Estado Verificado o Botón de Autodetectar Ubicación Actual */}
-                      <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-100">
-                        {hasLocationSelected ? (
-                          <>
-                            <div className="flex items-center gap-1.5 text-emerald-600 font-bold">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 fill-emerald-100 shrink-0" />
-                              <span>Ubicación verificada</span>
-                              {customerData.lat && customerData.lng && (
-                                <span className="font-mono text-slate-400 font-normal">
-                                  Lat: {customerData.lat.toFixed(4)}, Lng: {customerData.lng.toFixed(4)}
-                                </span>
-                              )}
-                            </div>
-
-                            <span style={{ color: primaryColor }} className="font-extrabold hover:underline">
-                              Cambiar ubicación
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              onClick={handleAutoDetectCurrentLocation}
-                              disabled={isLocatingCurrent}
-                              className="flex items-center gap-1.5 text-emerald-600 font-extrabold hover:underline"
-                            >
-                              {isLocatingCurrent ? (
-                                <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-600" />
-                              ) : (
-                                <Navigation className="w-3.5 h-3.5 text-emerald-600" />
-                              )}
-                              <span>Usar mi ubicación GPS actual</span>
-                            </button>
-
-                            <span style={{ color: primaryColor }} className="font-extrabold hover:underline">
-                              Seleccionar en mapa
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
+              {/* Nombre Completo */}
+              <div className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-2xs flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-9 h-9 rounded-full bg-rose-50/80 flex items-center justify-center shrink-0" style={{ color: primaryColor }}>
+                    <User className="w-4 h-4" />
                   </div>
-                </div>
-              )}
-
-              {/* Referencia (Opcional) con padding seguro pl-11 */}
-              {deliveryType === 'DOMICILIO' && (
-                <div className="space-y-1 pt-1">
-                  <label className="text-[11px] font-black text-slate-800">Referencia (Opcional)</label>
-                  <div className="relative flex items-center">
-                    <Tag className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none z-10" />
+                  <div className="min-w-0 flex-1">
+                    <label className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">
+                      Nombre completo *
+                    </label>
                     <input
                       type="text"
-                      value={customerData.referencia || ''}
-                      onChange={(e) => setCustomerData({ referencia: e.target.value })}
-                      placeholder="ZV00ZXW"
-                      className="w-full pl-11 pr-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-slate-400 transition-all"
+                      required
+                      value={customerData.nombre}
+                      onChange={(e) => setCustomerData({ nombre: e.target.value })}
+                      placeholder="Carlos Caicedo"
+                      className="w-full bg-transparent font-extrabold text-xs text-slate-900 outline-none p-0 border-none leading-snug"
                     />
+                  </div>
+                </div>
+                {customerData.nombre.trim().length > 2 && (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                )}
+              </div>
+
+              {/* WhatsApp / Teléfono */}
+              <div className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-2xs flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-9 h-9 rounded-full bg-rose-50/80 flex items-center justify-center shrink-0" style={{ color: primaryColor }}>
+                    <Phone className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <label className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">
+                      WhatsApp / Teléfono *
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={customerData.telefono}
+                      onChange={(e) => setCustomerData({ telefono: e.target.value })}
+                      placeholder="593959997521"
+                      className="w-full bg-transparent font-extrabold text-xs text-slate-900 outline-none p-0 border-none leading-snug"
+                    />
+                  </div>
+                </div>
+                {customerData.telefono.trim().length >= 7 && (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                )}
+              </div>
+
+              {/* Dirección de Entrega y Mapa */}
+              {deliveryType === 'DOMICILIO' && (
+                <div className="space-y-3 pt-1">
+                  <div className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-2xs flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-9 h-9 rounded-full bg-rose-50/80 flex items-center justify-center shrink-0" style={{ color: primaryColor }}>
+                        <MapPin className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <label className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">
+                          Dirección de entrega *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={customerData.direccion}
+                          onChange={(e) => setCustomerData({ direccion: e.target.value })}
+                          placeholder="Ingresa tu dirección o selecciona en el mapa"
+                          className="w-full bg-transparent font-extrabold text-xs text-slate-900 outline-none p-0 border-none leading-snug truncate"
+                        />
+                      </div>
+                    </div>
+                    {hasLocationSelected && (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                    )}
+                  </div>
+
+                  {/* VISTA PREVIA MAPA CON BOTÓN EDITAR FLOTANTE */}
+                  <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-2xs bg-white relative">
+                    <MiniMapPreview lat={customerData.lat} lng={customerData.lng} />
+
+                    {/* Botón Editar sobre el mapa */}
+                    <button
+                      type="button"
+                      onClick={() => setShowMapModal(true)}
+                      className="absolute top-3 right-3 z-20 bg-white/95 backdrop-blur-xs text-slate-800 text-xs font-extrabold px-3 py-1.5 rounded-xl shadow-md border border-slate-200 flex items-center gap-1.5 hover:bg-slate-50 transition-all cursor-pointer"
+                    >
+                      <Navigation className="w-3.5 h-3.5 text-primary" />
+                      <span>Editar</span>
+                    </button>
+
+                    {/* Fila Inferior: Estado de Ubicación y Opción de Cambiar */}
+                    <div className="p-3.5 bg-white grid grid-cols-2 gap-3 border-t border-slate-100">
+                      {/* Izquierda: Ubicación verificada */}
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-xs font-bold text-emerald-600 block leading-tight">
+                            Ubicación verificada
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-mono block leading-tight truncate">
+                            {customerData.lat && customerData.lng
+                              ? `Lat: ${customerData.lat.toFixed(4)}, Lng: ${customerData.lng.toFixed(4)}`
+                              : 'Coordenadas GPS'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Derecha: Cambiar ubicación */}
+                      <button
+                        type="button"
+                        onClick={() => setShowMapModal(true)}
+                        className="flex items-center gap-2.5 text-left min-w-0 hover:opacity-80 transition-opacity cursor-pointer"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center shrink-0" style={{ color: primaryColor }}>
+                          <Navigation className="w-4 h-4 rotate-45" />
+                        </div>
+                        <div className="min-w-0">
+                          <span style={{ color: primaryColor }} className="text-xs font-extrabold block leading-tight">
+                            Cambiar ubicación
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-medium block leading-tight">
+                            Selecciona en el mapa
+                          </span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Referencia (Opcional) */}
+                  <div className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-2xs flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-9 h-9 rounded-full bg-rose-50/80 flex items-center justify-center shrink-0" style={{ color: primaryColor }}>
+                        <Tag className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <label className="text-[10px] font-extrabold text-slate-400 block uppercase tracking-wider">
+                          Referencia (opcional)
+                        </label>
+                        <input
+                          type="text"
+                          value={customerData.referencia || ''}
+                          onChange={(e) => setCustomerData({ referencia: e.target.value })}
+                          placeholder="ej. Frente a la farmacia o conjunto residencial"
+                          className="w-full bg-transparent font-extrabold text-xs text-slate-900 outline-none p-0 border-none leading-snug"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -780,20 +867,21 @@ export default function CustomerCartDrawer({
             )}
 
             {/* RESUMEN FINANCIERO */}
-            <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-2 text-xs">
-              <div className="flex justify-between font-medium text-slate-600">
+            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-2xs space-y-2.5 text-xs">
+              <div className="flex justify-between items-center text-slate-600 font-medium">
                 <span>Subtotal de Platillos</span>
                 <span className="text-slate-900 font-black">${subtotal.toFixed(2)}</span>
               </div>
 
               {deliveryType === 'DOMICILIO' && (
-                <div className="flex justify-between font-medium text-slate-600">
-                  <span>Costo de Envío</span>
+                <div className="flex justify-between items-center text-slate-600 font-medium">
+                  <span className="flex items-center gap-1">
+                    <span>Costo de Envío</span>
+                    <Info className="w-3.5 h-3.5 text-slate-400" />
+                  </span>
                   <span className="text-slate-900 font-black">
                     {deliveryCost === 0 ? (
-                      <span className="text-emerald-600 font-black flex items-center gap-1">
-                        <Truck className="w-3.5 h-3.5 text-emerald-600" /> GRATIS
-                      </span>
+                      <span className="text-emerald-600 font-bold">$0.00</span>
                     ) : (
                       `$${deliveryCost.toFixed(2)}`
                     )}
@@ -801,32 +889,40 @@ export default function CustomerCartDrawer({
                 </div>
               )}
 
-              <div className="flex justify-between text-sm sm:text-base font-black text-slate-900 pt-2 border-t border-slate-200">
-                <span>Total a Pagar</span>
-                <span style={{ color: primaryColor }} className="font-black text-base">${total.toFixed(2)}</span>
+              <div className="flex justify-between items-center text-sm font-black text-slate-900 pt-2.5 border-t border-slate-100">
+                <span className="text-base font-extrabold">Total a pagar</span>
+                <span style={{ color: primaryColor }} className="text-2xl font-black">${total.toFixed(2)}</span>
               </div>
             </div>
 
             {/* BOTÓN SUBMIT CONFIRMAR PEDIDO */}
-            <div className="pt-1">
+            <div className="space-y-2 pt-1">
               <button
                 type="submit"
                 disabled={submitting}
                 style={{ backgroundColor: primaryColor, color: '#ffffff' }}
-                className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-xl flex items-center justify-center gap-2 hover:opacity-95 active:scale-95 transition-all cursor-pointer"
+                className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-xl flex items-center justify-between px-6 hover:opacity-95 active:scale-[0.99] transition-all cursor-pointer"
               >
                 {submitting ? (
-                  <>
+                  <div className="flex items-center gap-2 mx-auto">
                     <Loader2 className="w-4 h-4 animate-spin text-white" />
                     <span>ENVIANDO PEDIDO...</span>
-                  </>
+                  </div>
                 ) : (
                   <>
-                    <span>CONFIRMAR PEDIDO (${total.toFixed(2)})</span>
-                    <ArrowRight className="w-4 h-4 text-white" />
+                    <span>CONFIRMAR PEDIDO</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-black">${total.toFixed(2)}</span>
+                      <ArrowRight className="w-4 h-4 text-white" />
+                    </div>
                   </>
                 )}
               </button>
+
+              <div className="flex items-center justify-center gap-1.5 text-[10px] font-bold text-slate-400">
+                <Lock className="w-3 h-3 text-slate-400" />
+                <span>Pago seguro y datos protegidos</span>
+              </div>
             </div>
           </form>
         )}
