@@ -13,7 +13,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   ShoppingBag, X, Plus, Minus, MapPin, Truck, Store,
   ArrowRight, Loader2, CheckCircle2, Navigation, Trash2, ArrowLeft,
-  User, Phone, Tag, Edit2, RefreshCw
+  User, Phone, Tag, Edit2, RefreshCw, ShieldCheck, Clock, Lock, Info
 } from 'lucide-react';
 import { useCart } from '@/core/context/CartContext';
 import MapSelectionModal from './MapSelectionModal';
@@ -378,89 +378,223 @@ export default function CustomerCartDrawer({
               </div>
             ) : (
               <>
+                {/* CABECERA PLATILLOS SELECCIONADOS */}
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                  <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
                     PLATILLOS SELECCIONADOS ({totalItemsCount})
                   </span>
                   <button
                     type="button"
                     onClick={clearCart}
-                    className="text-[11px] font-bold text-rose-500 hover:underline flex items-center gap-1 cursor-pointer"
+                    className="text-xs font-bold text-rose-600 hover:underline flex items-center gap-1.5 cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    Vaciar Carrito
+                    <span>Vaciar Carrito</span>
                   </button>
                 </div>
 
-                {/* LISTA DE PLATILLOS */}
+                {/* LISTA DE TARJETAS DE PLATILLOS */}
                 <div className="space-y-3">
                   {cart.map((item) => (
                     <div
                       key={item.product.id}
-                      className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-2xs flex items-center justify-between gap-3 hover:shadow-xs transition-all"
+                      className="bg-white rounded-2xl p-4 border border-slate-100 shadow-2xs flex items-center justify-between gap-4 hover:shadow-xs transition-all"
                     >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                      {/* Imagen + Info */}
+                      <div className="flex items-center gap-3.5 min-w-0 flex-1">
                         {item.product.imagenUrl ? (
                           <img
                             src={item.product.imagenUrl}
                             alt={item.product.nombre}
-                            className="w-14 h-14 rounded-xl object-cover border border-slate-100 shrink-0"
+                            className="w-20 h-20 rounded-2xl object-cover border border-slate-100 shrink-0 shadow-2xs"
                           />
                         ) : (
-                          <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center text-xl shrink-0">
+                          <div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center text-3xl shrink-0">
                             🍲
                           </div>
                         )}
 
-                        <div className="min-w-0 flex-1">
-                          <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm truncate">
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm leading-snug line-clamp-2">
                             {item.product.nombre}
                           </h4>
-                          <span style={{ color: primaryColor }} className="text-xs font-black block mt-0.5">
+                          {item.product.descripcion && (
+                            <p className="text-[11px] text-slate-500 font-medium line-clamp-2 leading-normal">
+                              {item.product.descripcion.replace(/<!--[\s\S]*?-->/g, '')}
+                            </p>
+                          )}
+                          <span style={{ color: primaryColor }} className="text-sm font-black block pt-0.5">
                             ${((Number(item.product.precio) || 0) * item.quantity).toFixed(2)}
                           </span>
                         </div>
                       </div>
 
-                      {/* CONTROLES CANTIDAD [- N +] */}
-                      <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 shrink-0">
+                      {/* Controles de Cantidad [- N +] y Eliminar */}
+                      <div className="shrink-0 flex flex-col items-end gap-2">
+                        <div className="flex items-center gap-1 bg-slate-100 rounded-2xl p-1 shadow-2xs">
+                          <button
+                            type="button"
+                            onClick={() => decrementQuantity(item.product.id)}
+                            className="w-8 h-8 bg-white text-slate-800 rounded-xl font-black text-xs flex items-center justify-center hover:bg-slate-200 cursor-pointer active:scale-95 transition-all"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+                          <span className="w-6 text-center text-xs font-black text-slate-900">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setItemQuantity(item.product, item.quantity + 1)}
+                            style={{ backgroundColor: primaryColor, color: '#ffffff' }}
+                            className="w-8 h-8 text-white rounded-xl font-black text-xs flex items-center justify-center shadow-2xs cursor-pointer active:scale-95 transition-all"
+                          >
+                            <Plus className="w-3.5 h-3.5 text-white" />
+                          </button>
+                        </div>
+
                         <button
                           type="button"
-                          onClick={() => decrementQuantity(item.product.id)}
-                          className="w-7 h-7 bg-white text-slate-800 rounded-lg font-black text-xs flex items-center justify-center shadow-2xs hover:bg-slate-200 cursor-pointer active:scale-95"
+                          onClick={() => removeFromCart(item.product.id)}
+                          className="text-[11px] font-bold text-slate-400 hover:text-rose-600 flex items-center gap-1 cursor-pointer transition-colors"
                         >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <span className="w-6 text-center text-xs font-black text-slate-900">
-                          {item.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setItemQuantity(item.product, item.quantity + 1)}
-                          style={{ backgroundColor: primaryColor, color: '#ffffff' }}
-                          className="w-7 h-7 text-white rounded-lg font-black text-xs flex items-center justify-center shadow-2xs cursor-pointer active:scale-95"
-                        >
-                          <Plus className="w-3.5 h-3.5 text-white" />
+                          <Trash2 className="w-3 h-3" />
+                          <span>Eliminar</span>
                         </button>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {/* BOTÓN CONTINUAR A CHECKOUT */}
-                <div className="pt-4 border-t border-slate-200">
+                {/* BOTÓN AGREGAR MÁS PRODUCTOS */}
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-full py-3.5 px-4 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl border border-dashed border-slate-200 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs active:scale-[0.99]"
+                >
+                  <Plus className="w-4 h-4" style={{ color: primaryColor }} />
+                  <span>Agregar más productos</span>
+                </button>
+
+                {/* TARJETA CÓDIGO DE DESCUENTO */}
+                <div className="bg-amber-50/60 border border-amber-100/80 rounded-2xl p-4 flex items-center justify-between gap-3 shadow-2xs">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-2xs shrink-0" style={{ color: primaryColor }}>
+                      <Tag className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 leading-tight">
+                        ¿Tienes un código de descuento?
+                      </h4>
+                      <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                        Ingresa tu código y obtén beneficios
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    style={{ color: primaryColor, borderColor: `${primaryColor}30` }}
+                    className="bg-white border px-3.5 py-2 rounded-xl font-extrabold text-xs shadow-2xs hover:bg-amber-50/50 transition-all shrink-0 cursor-pointer"
+                  >
+                    Agregar código
+                  </button>
+                </div>
+
+                {/* RESUMEN DEL PEDIDO */}
+                <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-2xs space-y-3">
+                  <h3 className="font-extrabold text-sm text-slate-900">
+                    Resumen del pedido
+                  </h3>
+
+                  <div className="space-y-2 text-xs font-medium text-slate-600">
+                    <div className="flex justify-between items-center">
+                      <span>Subtotal ({totalItemsCount} productos)</span>
+                      <span className="font-black text-slate-900">${subtotal.toFixed(2)}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span>Descuento</span>
+                      <span className="font-bold text-emerald-600">-$0.00</span>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="flex items-center gap-1">
+                        <span>Costo de envío</span>
+                        <Info className="w-3.5 h-3.5 text-slate-400" />
+                      </span>
+                      <span className="font-black text-slate-900">
+                        {deliveryCost === 0 ? (
+                          <span className="text-emerald-600 font-bold">$0.00</span>
+                        ) : (
+                          `$${deliveryCost.toFixed(2)}`
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* CAJA TOTAL DESTACADA DEBAJO DEL RESUMEN */}
+                  <div className="bg-amber-50/80 border border-amber-100 rounded-xl p-4 flex items-center justify-between mt-2">
+                    <div>
+                      <span className="font-extrabold text-sm text-slate-900 block leading-tight">
+                        Total a pagar
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-400 block mt-0.5">
+                        IVA incluido
+                      </span>
+                    </div>
+
+                    <span style={{ color: primaryColor }} className="text-2xl font-black">
+                      ${subtotal.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* FILA DE GARANTÍAS / BENEFICIOS (TRUST BADGES) */}
+                <div className="bg-slate-50/70 border border-slate-100 rounded-2xl p-3.5 grid grid-cols-3 gap-2 text-center">
+                  <div className="flex flex-col items-center space-y-1">
+                    <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-2xs" style={{ color: primaryColor }}>
+                      <ShieldCheck className="w-4.5 h-4.5" />
+                    </div>
+                    <span className="text-[11px] font-extrabold text-slate-900 block leading-tight">Pago seguro</span>
+                    <span className="text-[9px] font-medium text-slate-500 block leading-tight">Tus datos protegidos</span>
+                  </div>
+
+                  <div className="flex flex-col items-center space-y-1">
+                    <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-2xs" style={{ color: primaryColor }}>
+                      <Clock className="w-4.5 h-4.5" />
+                    </div>
+                    <span className="text-[11px] font-extrabold text-slate-900 block leading-tight">Preparación rápida</span>
+                    <span className="text-[9px] font-medium text-slate-500 block leading-tight">Listo en 25–35 min</span>
+                  </div>
+
+                  <div className="flex flex-col items-center space-y-1">
+                    <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-2xs" style={{ color: primaryColor }}>
+                      <Truck className="w-4.5 h-4.5" />
+                    </div>
+                    <span className="text-[11px] font-extrabold text-slate-900 block leading-tight">Entrega a domicilio</span>
+                    <span className="text-[9px] font-medium text-slate-500 block leading-tight">Rápido y seguro</span>
+                  </div>
+                </div>
+
+                {/* BOTÓN PRINCIPAL DE CONTINUAR PEDIDO Y SEGURIDAD SSL */}
+                <div className="space-y-2 pt-1">
                   <button
                     type="button"
                     onClick={handleNextToCheckout}
                     style={{ backgroundColor: primaryColor, color: '#ffffff' }}
-                    className="w-full py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-xl flex items-center justify-between px-6 hover:opacity-95 active:scale-95 transition-all cursor-pointer"
+                    className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-xl flex items-center justify-between px-6 hover:opacity-95 active:scale-[0.99] transition-all cursor-pointer"
                   >
-                    <span>Continuar Pedido</span>
+                    <span>CONTINUAR PEDIDO</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-black">${subtotal.toFixed(2)}</span>
+                      <span className="text-sm font-black">${subtotal.toFixed(2)}</span>
                       <ArrowRight className="w-4 h-4 text-white" />
                     </div>
                   </button>
+
+                  <div className="flex items-center justify-center gap-1.5 text-[10px] font-bold text-slate-400">
+                    <Lock className="w-3 h-3 text-slate-400" />
+                    <span>Tus datos están protegidos con cifrado SSL</span>
+                  </div>
                 </div>
               </>
             )}
