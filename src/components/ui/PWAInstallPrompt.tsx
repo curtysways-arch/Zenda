@@ -118,10 +118,10 @@ export default function PWAInstallPrompt() {
                             <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest italic">App Premium</span>
                         </div>
                         <h4 className="text-base font-black text-white tracking-tight uppercase italic truncate leading-none">{businessName}</h4>
-                        <p className="text-xs text-slate-400 font-medium mt-1 leading-tight">
+                        <p className="text-xs text-slate-300 font-medium mt-1 leading-tight">
                             {isIOS 
-                              ? "Instala para recibir notificaciones" 
-                              : "Reserva un 50% más rápido que en web"}
+                              ? "Instala para seguir tu pedido en tiempo real" 
+                              : "Pide tu comida en 1-clic y sigue tu pedido en vivo"}
                         </p>
                     </div>
  

@@ -47,7 +47,9 @@ import {
   Compass,
   Lock,
   ExternalLink,
-  MessageSquare
+  MessageSquare,
+  Smartphone,
+  Download
 } from "lucide-react";
 import Link from "next/link";
 import PhoneInput from "@/components/ui/PhoneInput";
@@ -55,6 +57,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import MapSelectionModal from "@/components/public/MapSelectionModal";
 import { useCart } from "@/core/context/CartContext";
+import { isPWAInstalled, installPWA, addInstallationListener, removeInstallationListener } from "@/lib/pwa-install";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -94,6 +97,33 @@ export default function MiPerfilPage() {
   const [savedCards, setSavedCards] = useState<any[]>([]);
   const [favoriteItems, setFavoriteItems] = useState<any[]>([]);
   const [cuponesCount, setCuponesCount] = useState<number>(3);
+
+  // Estado e instalador de App (PWA)
+  const [isPWAInstalledState, setIsPWAInstalledState] = useState<boolean>(false);
+  const [canInstallPWA, setCanInstallPWA] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsPWAInstalledState(isPWAInstalled());
+
+    const handlePWAChange = (available: boolean) => {
+      setCanInstallPWA(available);
+      setIsPWAInstalledState(isPWAInstalled());
+    };
+
+    addInstallationListener(handlePWAChange);
+    return () => {
+      removeInstallationListener(handlePWAChange);
+    };
+  }, []);
+
+  const handleInstallPWA = async () => {
+    if (canInstallPWA) {
+      const res = await installPWA();
+      if (res) setIsPWAInstalledState(true);
+    } else {
+      alert(`Para instalar la App de ${negocio?.nombre || 'Restaurante'} en tu celular:\n\n📱 En Android: Abre el menú de tu navegador (...) y presiona "Instalar aplicación" o "Agregar a la pantalla principal".\n\n📱 En iPhone: Toca el icono de Compartir y selecciona "Agregar a inicio".`);
+    }
+  };
 
   // Modales interactivos
   const [activeModal, setActiveModal] = useState<string | null>(null); // 'personal_info' | 'addresses' | 'payments' | 'favorites' | 'settings' | 'support'
@@ -708,6 +738,44 @@ export default function MiPerfilPage() {
               </button>
             </div>
 
+          </div>
+
+          {/* BANNER / AVISO INTELIGENTE DE DESCARGA DE LA APP DE RESTAURANTE */}
+          <div className="bg-gradient-to-r from-red-600 via-orange-600 to-amber-600 rounded-3xl p-4.5 text-white shadow-lg space-y-3 relative overflow-hidden">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-2xl shrink-0 shadow-inner">
+                  📱
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-200 block">App del Restaurante</span>
+                  <h4 className="text-sm font-black text-white leading-tight">
+                    {isPWAInstalledState ? '¡Ya tienes la App instalada!' : `Descarga la App de ${negocio?.nombre || 'nuestro restaurante'}`}
+                  </h4>
+                  <p className="text-[11px] text-white/90 font-medium leading-tight mt-0.5">
+                    {isPWAInstalledState 
+                      ? 'Disfruta de la máxima velocidad al pedir tu comida y notificaciones en tiempo real.' 
+                      : 'Instala nuestra aplicación oficial para pedir en 1-clic, seguir el estado de tu pedido en vivo y obtener ofertas exclusivas.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {!isPWAInstalledState ? (
+              <button
+                type="button"
+                onClick={handleInstallPWA}
+                className="w-full py-3 bg-white hover:bg-slate-50 text-red-600 font-black text-xs uppercase tracking-wider rounded-2xl shadow-md cursor-pointer transition-all flex items-center justify-center gap-2 active:scale-95 border border-white"
+              >
+                <Smartphone size={16} />
+                <span>Instalar App Gratis en mi Celular</span>
+              </button>
+            ) : (
+              <div className="py-2 px-3 bg-white/15 rounded-xl border border-white/20 flex items-center justify-center gap-2 text-[11px] font-bold text-emerald-200">
+                <CheckCircle2 size={15} />
+                <span>App lista y activa en tu dispositivo</span>
+              </div>
+            )}
           </div>
 
           {/* ── 4. LISTADO DE OPCIONES "MI CUENTA" ── */}
