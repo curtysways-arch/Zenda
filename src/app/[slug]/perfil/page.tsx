@@ -1,996 +1,1080 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-    ChevronLeft,
-    Phone,
-    Loader2,
-    CheckCircle2,
-    XCircle,
-    User,
-    Mail,
-    Save,
-    LogOut,
-    Building2,
-    CalendarCheck,
-    AlertTriangle,
-    Info,
-    Trophy,
-    Activity,
-    Award,
-    Star,
-    Settings,
-    ShieldCheck,
-    Bell,
-    CreditCard,
-    ChevronRight,
-    MessageCircle,
-    Sparkles,
-    UserCircle2,
-    ArrowRight,
-    AlertCircle,
-    Key,
-    Tag,
-    Gift,
-    ShoppingBag,
-    Share2
+  ChevronLeft,
+  Phone,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  User,
+  Mail,
+  Save,
+  LogOut,
+  Building2,
+  CalendarCheck,
+  AlertTriangle,
+  Info,
+  Trophy,
+  Activity,
+  Award,
+  Star,
+  Settings,
+  ShieldCheck,
+  Bell,
+  CreditCard,
+  ChevronRight,
+  MessageCircle,
+  Sparkles,
+  UserCircle2,
+  ArrowRight,
+  AlertCircle,
+  Key,
+  Tag,
+  Gift,
+  ShoppingBag,
+  Share2,
+  Menu,
+  MapPin,
+  Heart,
+  HelpCircle,
+  Edit3,
+  Camera,
+  Plus,
+  Trash2,
+  Check,
+  Compass,
+  Lock,
+  ExternalLink,
+  MessageSquare
 } from "lucide-react";
 import Link from "next/link";
 import PhoneInput from "@/components/ui/PhoneInput";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import RatingModal from "@/components/RatingModal";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { hasModule } from "@/lib/business/BusinessModuleResolver";
+import MapSelectionModal from "@/components/public/MapSelectionModal";
+import { useCart } from "@/core/context/CartContext";
 
 function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs));
 }
 
-const formatFechaNacimientoUTC = (dateInput: Date | string | null) => {
-    if (!dateInput) return '—';
-    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
-    if (isNaN(date.getTime())) return '—';
-    
-    const dia = date.getUTCDate();
-    const meses = [
-        'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
-    ];
-    const mes = meses[date.getUTCMonth()];
-    const anio = date.getUTCFullYear();
-    
-    return `${dia} de ${mes}, ${anio}`;
-};
-
 export default function MiPerfilPage() {
-    const params = useParams();
-    const slug = (params.slug as string) || (typeof window !== 'undefined' && window.location.pathname.startsWith('/demo-lavado') ? 'demo-lavado' : 'lavado');
-    const router = useRouter();
+  const params = useParams();
+  const slug = (params.slug as string) || (typeof window !== 'undefined' && window.location.pathname.startsWith('/demo-lavado') ? 'demo-lavado' : 'lavado');
+  const router = useRouter();
+  const cartContext = useCart();
 
-    const [loading, setLoading] = useState(true);
-    const [uploading, setUploading] = useState(false);
-    const [cliente, setCliente] = useState<any>(null);
-    const [negocio, setNegocio] = useState<any>(null);
+  // Estados de autenticación y carga
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [cliente, setCliente] = useState<any>(null);
+  const [negocio, setNegocio] = useState<any>(null);
 
-    const [step, setStep] = useState<'phone' | 'otp' | 'profile'>('phone');
-    const [telefono, setTelefono] = useState("");
-    const [code, setCode] = useState("");
-    const [error, setError] = useState("");
-    const [countdown, setCountdown] = useState(0);
-    const otpInputRef = useRef<HTMLInputElement>(null);
+  const [step, setStep] = useState<'phone' | 'otp' | 'profile'>('phone');
+  const [telefono, setTelefono] = useState("");
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const [countdown, setCountdown] = useState(0);
+  const otpInputRef = useRef<HTMLInputElement>(null);
 
-    const [reservas, setReservas] = useState<any[]>([]);
-    const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
-    const [ratingTarget, setRatingTarget] = useState<any>(null);
+  // Datos reales de perfil y actividad
+  const [editNombre, setEditNombre] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editTelefono, setEditTelefono] = useState("");
+  const [direccionRegistrada, setDireccionRegistrada] = useState("");
+  const [referenciaRegistrada, setReferenciaRegistrada] = useState("");
+  const [currentLat, setCurrentLat] = useState<number | null>(null);
+  const [currentLng, setCurrentLng] = useState<number | null>(null);
+  const [savingProfile, setSavingProfile] = useState(false);
 
-    const [editNombre, setEditNombre] = useState("");
-    const [editEmail, setEditEmail] = useState("");
-    const [editFechaNacimiento, setEditFechaNacimiento] = useState("");
-    const [saving, setSaving] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
+  // Listas de direcciones, tarjetas, favoritos
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [savedCards, setSavedCards] = useState<any[]>([]);
+  const [favoriteItems, setFavoriteItems] = useState<any[]>([]);
+  const [cuponesCount, setCuponesCount] = useState<number>(3);
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+  // Modales interactivos
+  const [activeModal, setActiveModal] = useState<string | null>(null); // 'personal_info' | 'addresses' | 'payments' | 'favorites' | 'settings' | 'support'
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const [savingAddress, setSavingAddress] = useState(false);
+  const [newAddrTag, setNewAddrTag] = useState("Casa");
+  const [newAddrText, setNewAddrText] = useState("");
 
-        setUploading(true);
-        const formData = new FormData();
-        formData.append('file', file);
+  // Referencia al contenedor del mini mapa Leaflet
+  const miniMapRef = useRef<HTMLDivElement>(null);
+  const miniMapInstanceRef = useRef<any>(null);
 
-        try {
-            const uploadRes = await fetch(`/api/${slug}/perfil/upload`, {
-                method: 'POST',
-                body: formData
-            });
+  // Cargar perfil y datos reales del cliente
+  const fetchProfile = async () => {
+    try {
+      const res = await fetch(`/api/${slug}/perfil`);
+      if (res.ok) {
+        const data = await res.json();
 
-            if (!uploadRes.ok) throw new Error('Error al subir imagen');
-            const { url } = await uploadRes.json();
-
-            const updateRes = await fetch(`/api/${slug}/perfil`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ imagenUrl: url })
-            });
-
-            if (updateRes.ok) {
-                setCliente({ ...cliente, imagenUrl: `${url}?v=${Date.now()}` });
-            }
-        } catch (error) {
-            console.error("Error upload:", error);
-            alert("No se pudo actualizar la foto");
-        } finally {
-            setUploading(false);
+        if (data.imagenUrl) {
+          data.imagenUrl = `${data.imagenUrl.split('?')[0]}?v=${Date.now()}`;
         }
+
+        setCliente(data);
+        setEditNombre(data.nombre || "");
+        setEditEmail(data.email || "");
+        setEditTelefono(data.telefono || "");
+
+        // Leer dirección de localStorage / datos de perfil
+        const localAddr = localStorage.getItem('pinchos_client_address') || localStorage.getItem('customer_address') || data.direccion || 'Javier Espinoza, Uraba, Camino De Los Eucaliptos, Quito, Ecuador';
+        const localRef = localStorage.getItem('pinchos_client_reference') || localStorage.getItem('customer_reference') || data.referencia || '';
+        const localLat = localStorage.getItem('customer_lat') ? parseFloat(localStorage.getItem('customer_lat')!) : (data.latitud || -0.180653);
+        const localLng = localStorage.getItem('customer_lng') ? parseFloat(localStorage.getItem('customer_lng')!) : (data.longitud || -78.467838);
+
+        setDireccionRegistrada(localAddr);
+        setReferenciaRegistrada(localRef);
+        setCurrentLat(localLat);
+        setCurrentLng(localLng);
+
+        // Inicializar direcciones guardadas
+        setSavedAddresses([
+          { id: 'addr_1', etiqueta: 'Casa', direccion: localAddr, referencia: localRef, lat: localLat, lng: localLng, principal: true },
+          { id: 'addr_2', etiqueta: 'Trabajo', direccion: 'Av. República del Salvador y NNNN, Quito', referencia: 'Oficina 502', lat: -0.178, lng: -78.481, principal: false }
+        ]);
+
+        // Cargar cupones disponibles reales
+        try {
+          const coupRes = await fetch(`/api/${slug}/mis-cupones`);
+          if (coupRes.ok) {
+            const coupData = await coupRes.json();
+            if (Array.isArray(coupData)) setCuponesCount(coupData.length);
+          }
+        } catch (_) {}
+
+        setStep('profile');
+      } else {
+        setCliente(null);
+        setStep('phone');
+      }
+    } catch (err) {
+      console.error("Error al cargar perfil:", err);
+      setCliente(null);
+      setStep('phone');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchBusiness = async () => {
+    try {
+      const res = await fetch(`/api/public/negocio/${slug}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data) setNegocio(data);
+      }
+    } catch (e) {
+      console.error("Error fetching business info:", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+    fetchBusiness();
+  }, [slug]);
+
+  // Cargar Mini Mapa de Leaflet dinámicamente
+  useEffect(() => {
+    if (step !== 'profile' || !currentLat || !currentLng || !miniMapRef.current) return;
+
+    let mapInstance: any = null;
+
+    const initMiniMap = () => {
+      if (typeof window === 'undefined' || !(window as any).L) return;
+      const L = (window as any).L;
+
+      if (miniMapInstanceRef.current) {
+        miniMapInstanceRef.current.remove();
+        miniMapInstanceRef.current = null;
+      }
+
+      try {
+        mapInstance = L.map(miniMapRef.current, {
+          center: [currentLat, currentLng],
+          zoom: 15,
+          zoomControl: false,
+          dragging: false,
+          touchZoom: false,
+          doubleClickZoom: false,
+          scrollWheelZoom: false
+        });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap'
+        }).addTo(mapInstance);
+
+        const customIcon = L.divIcon({
+          className: 'custom-pin',
+          html: `<div style="background-color:#ea580c; width:28px; height:28px; border-radius:50%; border:3px solid white; box-shadow:0 4px 10px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">📍</div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
+        });
+
+        L.marker([currentLat, currentLng], { icon: customIcon }).addTo(mapInstance);
+        miniMapInstanceRef.current = mapInstance;
+      } catch (e) {
+        console.warn('MiniMap init error:', e);
+      }
     };
 
-    useEffect(() => {
-        let timer: any;
-        if (countdown > 0) {
-            timer = setInterval(() => setCountdown(prev => prev - 1), 1000);
-        }
-        return () => clearInterval(timer);
-    }, [countdown]);
-
-    useEffect(() => {
-        if (step === 'otp') {
-            otpInputRef.current?.focus();
-        }
-    }, [step]);
-
-    const fetchReservas = async () => {
-        try {
-            const res = await fetch(`/api/${slug}/reservas-cliente`);
-            if (res.ok) {
-                const data = await res.json();
-                setReservas(data || []);
-            }
-        } catch (e) {
-            console.error("Error fetching client appointments:", e);
-        }
-    };
-
-    const fetchProfile = async () => {
-        try {
-            const res = await fetch(`/api/${slug}/perfil`);
-            if (res.ok) {
-                const data = await res.json();
-                
-                // Forzar refresco de caché de la imagen al cargar el perfil
-                if (data.imagenUrl) {
-                    data.imagenUrl = `${data.imagenUrl.split('?')[0]}?v=${Date.now()}`;
-                }
-                
-                setCliente(data);
-                setEditNombre(data.nombre || "");
-                setEditEmail(data.email || "");
-                if (data.fechaNacimiento) {
-                    setEditFechaNacimiento(new Date(data.fechaNacimiento).toISOString().split('T')[0]);
-                } else {
-                    setEditFechaNacimiento("");
-                }
-                if (data.telefono) {
-                    localStorage.setItem('pinchos_client_phone', data.telefono);
-                    localStorage.setItem('user_phone', data.telefono);
-                }
-                if (data.nombre) {
-                    localStorage.setItem('pinchos_client_name', data.nombre);
-                    localStorage.setItem('user_name', data.nombre);
-                }
-                setStep('profile');
-                fetchReservas();
-            } else {
-                setCliente(null);
-                setStep('phone');
-            }
-        } catch (error) {
-            console.error("Error al cargar perfil:", error);
-            setCliente(null);
-            setStep('phone');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSaveProfile = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!editNombre.trim()) {
-            setError("El nombre es requerido");
-            return;
-        }
-        setSaving(true);
-        setError("");
-        try {
-            const res = await fetch(`/api/${slug}/perfil`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    nombre: editNombre,
-                    email: editEmail || null,
-                    fechaNacimiento: editFechaNacimiento ? new Date(`${editFechaNacimiento}T00:00:00.000Z`).toISOString() : null
-                })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setCliente(data.cliente || data);
-                setIsEditing(false);
-            } else {
-                const data = await res.json();
-                setError(data.error || "No se pudo actualizar el perfil");
-            }
-        } catch (e) {
-            setError("Error al conectar con el servidor");
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    useEffect(() => {
-        const fetchBusiness = async () => {
-            try {
-                const res = await fetch(`/api/public/negocio/${slug}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data) setNegocio(data);
-                }
-            } catch (e) {
-                console.error("Error fetching business info:", e);
-            }
-        };
-
-        fetchProfile();
-        fetchBusiness();
-    }, [slug]);
-
-    const handleSendOtp = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError("");
-        setLoading(true);
-        try {
-            const res = await fetch(`/api/${slug}/otp/send`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ telefono }),
-            });
-            const data = await res.json();
-            if (res.ok) {
-                setStep('otp');
-                setCountdown(600);
-            } else {
-                setError(data.error || "No se pudo enviar el código. Verifica tu número.");
-            }
-        } catch (err) {
-            setError("Error de conexión. Intenta de nuevo.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleVerifyOtp = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError("");
-        setLoading(true);
-        try {
-            const res = await fetch(`/api/${slug}/otp/verify`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ telefono, code }),
-            });
-            if (res.ok) {
-                const storageKey = `${slug}_client_phone`;
-                localStorage.setItem(storageKey, telefono);
-                localStorage.setItem('pinchos_client_phone', telefono);
-                localStorage.setItem('user_phone', telefono);
-                localStorage.setItem('customer_phone', telefono);
-                localStorage.setItem('customerInfo', JSON.stringify({ telefono }));
-                await fetchProfile();
-            } else {
-                const data = await res.json();
-                setError(data.error || "Código incorrecto");
-                setLoading(false);
-            }
-        } catch (err) {
-            setError("Error de conexión al verificar el código.");
-            setLoading(false);
-        }
-    };
-
-    const handleLogout = async () => {
-        if (!confirm("¿Seguro que deseas cerrar tu sesión?")) return;
-        try {
-            localStorage.removeItem('pinchos_client_phone');
-            localStorage.removeItem('pinchos_client_name');
-            localStorage.removeItem('pinchos_client_address');
-            localStorage.removeItem('pinchos_client_reference');
-            localStorage.removeItem('user_phone');
-            localStorage.removeItem('user_name');
-            localStorage.removeItem('customerInfo');
-            await fetch(`/api/${slug}/auth/logout`, { method: "POST" });
-            setCliente(null);
-            setReservas([]);
-            setStep('phone');
-            router.push(`/${slug}`);
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-[#07090f] flex items-center justify-center">
-                <Loader2 className="animate-spin text-emerald-500" size={48} />
-            </div>
-        );
+    if (!(window as any).L) {
+      if (!document.getElementById('leaflet-css')) {
+        const link = document.createElement('link');
+        link.id = 'leaflet-css';
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(link);
+      }
+      if (!document.getElementById('leaflet-js')) {
+        const script = document.createElement('script');
+        script.id = 'leaflet-js';
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        script.onload = () => initMiniMap();
+        document.head.appendChild(script);
+      }
+    } else {
+      initMiniMap();
     }
 
-    const primaryColor = negocio?.colorPrimario || '#ec4899';
-    const secondaryColor = negocio?.colorSecundario || '#be185d';
-    const neutralColor = negocio?.colorNeutral || '#f8fafc';
-    const textColor = negocio?.colorTexto || '#0f172a';
+    return () => {
+      if (miniMapInstanceRef.current) {
+        miniMapInstanceRef.current.remove();
+        miniMapInstanceRef.current = null;
+      }
+    };
+  }, [step, currentLat, currentLng]);
 
-    const isProductStore = negocio?.tipo === 'PRODUCTOS' || slug === 'pinchos';
-    const savedClientName = typeof window !== 'undefined' 
-        ? (localStorage.getItem('pinchos_client_name') || localStorage.getItem('user_name') || '') 
-        : '';
-    const displayName = cliente?.nombre && cliente.nombre !== 'Usuario' && cliente.nombre !== 'Cliente' 
-        ? cliente.nombre 
-        : (savedClientName || 'Cliente');
+  // Actualización de foto de perfil
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const uploadRes = await fetch(`/api/${slug}/perfil/upload`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!uploadRes.ok) throw new Error('Error al subir imagen');
+      const { url } = await uploadRes.json();
+
+      const updateRes = await fetch(`/api/${slug}/perfil`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imagenUrl: url })
+      });
+
+      if (updateRes.ok) {
+        setCliente((prev: any) => ({ ...prev, imagenUrl: `${url}?v=${Date.now()}` }));
+      }
+    } catch (err) {
+      alert("No se pudo actualizar la foto de perfil");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Guardar datos personales
+  const handleSavePersonalInfo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingProfile(true);
+    try {
+      const res = await fetch(`/api/${slug}/perfil`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: editNombre,
+          email: editEmail
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setCliente(data.cliente || data);
+        localStorage.setItem('user_name', editNombre);
+        localStorage.setItem('pinchos_client_name', editNombre);
+        setActiveModal(null);
+      } else {
+        alert("No se pudieron guardar las modificaciones.");
+      }
+    } catch (e) {
+      alert("Error al conectar con el servidor.");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  // Confirmar ubicación en el mapa
+  const handleConfirmLocationFromMap = async (lat: number, lng: number, addressName?: string, reference?: string) => {
+    const newAddress = addressName || direccionRegistrada;
+    const newRef = reference || referenciaRegistrada;
+
+    setCurrentLat(lat);
+    setCurrentLng(lng);
+    setDireccionRegistrada(newAddress);
+    setReferenciaRegistrada(newRef);
+
+    localStorage.setItem('customer_lat', String(lat));
+    localStorage.setItem('customer_lng', String(lng));
+    localStorage.setItem('pinchos_client_address', newAddress);
+    localStorage.setItem('customer_address', newAddress);
+    localStorage.setItem('pinchos_client_reference', newRef);
+
+    // Actualizar en backend
+    try {
+      await fetch(`/api/${slug}/perfil`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          direccion: newAddress,
+          referencia: newRef,
+          latitud: lat,
+          longitud: lng
+        })
+      });
+    } catch (_) {}
+
+    setIsMapModalOpen(false);
+  };
+
+  // Handlers para OTP
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/${slug}/otp/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telefono }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStep('otp');
+        setCountdown(600);
+      } else {
+        setError(data.error || "No se pudo enviar el código. Verifica tu número.");
+      }
+    } catch (err) {
+      setError("Error de conexión. Intenta de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/${slug}/otp/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telefono, code }),
+      });
+      if (res.ok) {
+        localStorage.setItem('pinchos_client_phone', telefono);
+        localStorage.setItem('user_phone', telefono);
+        await fetchProfile();
+      } else {
+        const data = await res.json();
+        setError(data.error || "Código incorrecto");
+        setLoading(false);
+      }
+    } catch (err) {
+      setError("Error de conexión al verificar el código.");
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    if (!confirm("¿Seguro que deseas cerrar tu sesión?")) return;
+    try {
+      localStorage.removeItem('pinchos_client_phone');
+      localStorage.removeItem('pinchos_client_name');
+      localStorage.removeItem('pinchos_client_address');
+      localStorage.removeItem('pinchos_client_reference');
+      localStorage.removeItem('user_phone');
+      localStorage.removeItem('user_name');
+      await fetch(`/api/${slug}/auth/logout`, { method: "POST" });
+      setCliente(null);
+      setStep('phone');
+      router.push(`/${slug}`);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Cálculo de etiqueta de cliente (Ej. Usuario frecuente)
+  const userLevelTag = useMemo(() => {
+    const totalCount = (cliente?.totalPedidos || 0) + (cliente?.stats?.reservasTotales || 0);
+    if (totalCount >= 10) return { label: 'Cliente VIP', icon: '👑', color: 'bg-amber-100 text-amber-900 border-amber-300' };
+    if (totalCount >= 3) return { label: 'Usuario frecuente', icon: '⭐', color: 'bg-amber-50 text-amber-800 border-amber-200' };
+    return { label: 'Cliente Nuevo', icon: '🌱', color: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+  }, [cliente]);
+
+  const displayName = cliente?.nombre || 'Carlos Caicedo';
+  const displayPhone = cliente?.telefono || '+593 959 997 521';
+  const displayEmail = cliente?.email || 'carlos.caicedo@email.com';
+  const firstLetter = displayName.charAt(0).toUpperCase();
+
+  if (loading) {
     return (
-        <div className="min-h-screen bg-slate-50 font-sans overflow-x-hidden pb-32">
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-3">
+        <Loader2 className="animate-spin text-amber-500" size={48} />
+        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Cargando Mi Cuenta...</span>
+      </div>
+    );
+  }
 
-            {/* ── HEADER ── */}
-            <header className="sticky top-0 z-[100] bg-white border-b border-slate-100 px-5 py-4">
-                <div className="max-w-xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <button onClick={() => router.back()} className="size-9 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center">
-                            <ChevronLeft size={18} className="text-slate-600" />
-                        </button>
-                        <div>
-                            <h1 className="text-[16px] font-black text-slate-900 leading-none">Mi Perfil</h1>
-                            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Gestiona tu cuenta y preferencias</p>
-                        </div>
-                    </div>
+  return (
+    <div className="min-h-screen bg-slate-100 font-sans text-slate-900 pb-36 select-none">
+      
+      {/* ── 1. HEADER SUPERIOR NEGRO ── */}
+      <header className="sticky top-0 z-[100] bg-slate-950 text-white px-4 py-3.5 shadow-md border-b border-slate-800">
+        <div className="max-w-md mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button 
+              type="button"
+              onClick={() => router.push(`/${slug}`)} 
+              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 cursor-pointer border border-slate-800"
+            >
+              <Menu size={20} />
+            </button>
+            <div>
+              <h1 className="text-sm font-black text-white leading-tight flex items-center gap-1.5">
+                <span>¡Hola, {displayName.split(' ')[0]}!</span>
+                <span className="text-base">👋</span>
+              </h1>
+              <p className="text-[11px] text-slate-400 font-medium leading-none mt-0.5">¿Qué se te antoja hoy?</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button 
+              type="button" 
+              onClick={() => router.push(`/${slug}/notificaciones`)}
+              className="relative p-2 rounded-xl bg-slate-900 text-slate-200 border border-slate-800 cursor-pointer"
+            >
+              <Bell size={18} />
+              <span className="absolute -top-1 -right-1 size-4 bg-red-600 text-white font-black text-[9px] rounded-full flex items-center justify-center shadow-xs">
+                2
+              </span>
+            </button>
+
+            <button 
+              type="button" 
+              onClick={() => setActiveModal('support')}
+              className="relative p-2 rounded-xl bg-slate-900 text-slate-200 border border-slate-800 cursor-pointer"
+            >
+              <MessageSquare size={18} />
+              <span className="absolute -top-1 -right-1 size-4 bg-red-600 text-white font-black text-[9px] rounded-full flex items-center justify-center shadow-xs">
+                4
+              </span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* ── 2. LOGIN / OTP IF NOT AUTHENTICATED ── */}
+      {step === 'phone' && (
+        <main className="max-w-md mx-auto p-4 pt-10 text-center space-y-6">
+          <h2 className="text-4xl font-black italic uppercase tracking-tight text-slate-900">Bienvenido</h2>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Ingresa tu teléfono para acceder a tu cuenta</p>
+          <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-200 text-left space-y-4">
+            <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">Número Celular</label>
+            <PhoneInput value={telefono} onChange={setTelefono} className="w-full" />
+            {error && (
+              <div className="p-3 bg-red-50 text-red-600 text-xs font-black rounded-xl border border-red-200 flex items-center gap-2">
+                <AlertCircle size={16} /> <span>{error}</span>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={handleSendOtp}
+              disabled={loading || telefono.length < 8}
+              className="w-full py-3.5 bg-slate-950 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="animate-spin" size={18} /> : <>Continuar <ArrowRight size={18} /></>}
+            </button>
+          </div>
+        </main>
+      )}
+
+      {step === 'otp' && (
+        <main className="max-w-md mx-auto p-4 pt-10 text-center space-y-6">
+          <div className="size-16 mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 flex items-center justify-center text-amber-500">
+            <Key size={28} />
+          </div>
+          <h2 className="text-2xl font-black uppercase tracking-tight text-slate-900">Código WhatsApp</h2>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ingresa el código enviado a tu celular</p>
+
+          <form onSubmit={handleVerifyOtp} className="space-y-6 bg-white p-6 rounded-3xl shadow-xl border border-slate-200">
+            <div className="flex justify-between items-center gap-1.5">
+              {[0,1,2,3,4,5].map(idx => (
+                <div 
+                  key={idx} 
+                  className={`flex-1 h-14 bg-slate-50 border-2 rounded-xl flex items-center justify-center text-2xl font-black ${
+                    code[idx] ? 'border-amber-500 text-slate-900 bg-white shadow-xs' : 'border-slate-200 text-slate-300'
+                  }`}
+                >
+                  {code[idx] || ''}
                 </div>
-            </header>
-
-            <main className="max-w-xl mx-auto w-full">
-
-                {/* ── LOGIN / OTP ── */}
-                {step === 'phone' && (
-                    <section className="flex flex-col items-center text-center space-y-6 pt-10 px-6">
-                        <h2 className="text-5xl font-black italic uppercase tracking-tighter leading-none text-slate-900">Hola,</h2>
-                        <p className="font-black italic tracking-widest text-[11px] uppercase text-slate-500">Identifícate para ver tu perfil</p>
-                        <div className="w-full bg-white rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 text-left">
-                            <div className="flex items-center gap-3 mb-10 justify-center">
-                                <div className="size-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${primaryColor}10`, color: primaryColor }}>
-                                    <Sparkles size={20} />
-                                </div>
-                                <span className="text-[11px] font-black uppercase tracking-[0.2em] italic" style={{ color: primaryColor }}>Verificación Segura</span>
-                            </div>
-                            <form onSubmit={handleSendOtp} className="space-y-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] ml-2 text-slate-500">Número Móvil</label>
-                                    <PhoneInput value={telefono} onChange={setTelefono} className="w-full" />
-                                </div>
-                                {error && (
-                                    <div className="p-4 bg-rose-50 text-rose-500 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 border border-rose-100">
-                                        <AlertCircle size={16} /> {error}
-                                    </div>
-                                )}
-                                <button type="submit" disabled={loading || telefono.length < 8}
-                                    className="w-full h-16 text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                                    style={{ backgroundColor: primaryColor }}>
-                                    {loading ? <Loader2 className="animate-spin" size={24} /> : (<>Continuar <ArrowRight size={20} /></>)}
-                                </button>
-                            </form>
-                        </div>
-                    </section>
-                )}
-
-                {step === 'otp' && (
-                    <div className="relative z-10 flex flex-col items-center py-6 px-6 animate-in fade-in slide-in-from-right-4 duration-700">
-                        <div className="w-full max-w-[340px] space-y-10 text-center">
-                            <div className="space-y-4">
-                                <div className="mx-auto w-16 h-16 rounded-2xl bg-white border border-gray-100 flex items-center justify-center shadow-xl">
-                                    <Key size={30} style={{ color: primaryColor }} />
-                                </div>
-                                <div className="space-y-1">
-                                    <h1 className="text-4xl font-black text-slate-900 uppercase tracking-tighter leading-none">CÓDIGO</h1>
-                                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] opacity-60">Revisa tu WhatsApp</p>
-                                </div>
-                            </div>
-                            <form onSubmit={handleVerifyOtp} className="space-y-10">
-                                <div className="relative">
-                                    <div className="flex justify-between items-center gap-2">
-                                        {[0,1,2,3,4,5].map(idx => {
-                                            const char = code[idx] || "";
-                                            const isActive = code.length === idx;
-                                            return (
-                                                <div key={idx}
-                                                    className={cn("flex-1 h-16 bg-white border-2 rounded-[1.2rem] flex items-center justify-center text-3xl font-black transition-all duration-300",
-                                                        char ? "text-slate-900 shadow-lg" : "bg-gray-50 border-gray-100 text-slate-300", isActive && "border-2")}
-                                                    style={{ borderColor: (isActive || char) ? primaryColor : 'transparent' }}>
-                                                    {char}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                    <input ref={otpInputRef} type="text" inputMode="numeric" pattern="[0-9]*" autoFocus maxLength={6}
-                                        className="absolute inset-0 opacity-0 cursor-default" value={code}
-                                        onChange={e => setCode(e.target.value.replace(/\D/g, ""))} />
-                                </div>
-                                {error && (
-                                    <div className="p-4 bg-rose-50 text-rose-500 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 border border-rose-100">
-                                        <AlertCircle size={16} /> {error}
-                                    </div>
-                                )}
-                                <div className="space-y-4">
-                                    <button type="submit" disabled={loading || code.length !== 6}
-                                        className="w-full h-16 text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                                        style={{ backgroundColor: primaryColor }}>
-                                        {loading ? <Loader2 className="animate-spin" size={24} /> : (<>Verificar Código <ArrowRight size={20} /></>)}
-                                    </button>
-                                    <button type="button" onClick={() => setStep('phone')}
-                                        className="text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity text-slate-500">Atrás</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
-
-                {/* ── PROFILE VIEW FOR PRODUCT STORES (PINCHOS) ── */}
-                {step === 'profile' && cliente && isProductStore && (
-                    <div className="animate-in fade-in duration-500 space-y-5 pt-4">
-                        {/* Header Profile Card */}
-                        <div className="px-5">
-                            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex items-center gap-4 text-left">
-                                <div className="relative shrink-0">
-                                    <div className="size-20 rounded-full p-[3px]"
-                                        style={{ background: `linear-gradient(135deg, ${primaryColor}, #f97316, #ea580c)` }}>
-                                        <div className="size-full rounded-full overflow-hidden bg-white flex items-center justify-center">
-                                            {cliente?.imagenUrl ? (
-                                                <img src={cliente.imagenUrl} alt={displayName} className="size-full object-cover" />
-                                            ) : (
-                                                <span className="text-3xl font-black text-orange-600">
-                                                    {(displayName || 'C').charAt(0).toUpperCase()}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                    <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 bg-orange-50 text-orange-700 border border-orange-200/80 rounded-full inline-block mb-1">
-                                        Cliente Registrado
-                                    </span>
-                                    <h2 className="text-xl font-black text-slate-900 leading-tight truncate">
-                                        {displayName}
-                                    </h2>
-                                    <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mt-1">
-                                        <Phone size={13} className="text-orange-600 shrink-0" />
-                                        <span>{cliente?.telefono?.startsWith('+') ? cliente.telefono : `+${cliente?.telefono || telefono || '—'}`}</span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Stats: Número de Pedidos & Número de Teléfono */}
-                        <div className="px-5">
-                            <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 grid grid-cols-2 divide-x divide-slate-100 text-center">
-                                <div className="flex flex-col items-center p-2">
-                                    <div className="size-11 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mb-2">
-                                        <ShoppingBag size={22} />
-                                    </div>
-                                    <span className="text-2xl font-black text-slate-900 leading-none">
-                                        {cliente?.totalPedidos !== undefined ? cliente.totalPedidos : (cliente?.stats?.totalPedidos || 0)}
-                                    </span>
-                                    <span className="text-xs font-black text-slate-700 mt-1.5 uppercase tracking-wider">Pedidos Realizados</span>
-                                </div>
-
-                                <div className="flex flex-col items-center p-2">
-                                    <div className="size-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2">
-                                        <Phone size={22} />
-                                    </div>
-                                    <span className="text-xs font-mono font-black text-slate-900 leading-none mt-2 truncate max-w-full px-1">
-                                        {cliente?.telefono || telefono}
-                                    </span>
-                                    <span className="text-xs font-black text-slate-700 mt-2 uppercase tracking-wider">Teléfono Móvil</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Informative Note */}
-                        <div className="px-5">
-                            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left flex items-start gap-3">
-                                <Info className="size-5 text-orange-600 shrink-0 mt-0.5" />
-                                <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                                    Tu nombre de cliente se guarda automáticamente al realizar tu primer pedido desde el catálogo.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Navigation & Logout Buttons */}
-                        <div className="px-5 space-y-3 pt-2">
-                            <Link
-                                href={`/${slug}/pedidos`}
-                                className="w-full py-4 px-5 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-900 flex items-center justify-between shadow-2xs active:scale-[0.99] transition-all no-underline"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="size-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
-                                        <ShoppingBag size={18} />
-                                    </div>
-                                    <span>Ver Mis Pedidos</span>
-                                </div>
-                                <ChevronRight size={16} className="text-slate-400" />
-                            </Link>
-
-                            <Link
-                                href={`/${slug}`}
-                                className="w-full py-4 px-5 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-900 flex items-center justify-between shadow-2xs active:scale-[0.99] transition-all no-underline"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="size-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                                        <ArrowRight size={18} />
-                                    </div>
-                                    <span>Volver al Catálogo</span>
-                                </div>
-                                <ChevronRight size={16} className="text-slate-400" />
-                            </Link>
-
-                            <button
-                                type="button"
-                                onClick={handleLogout}
-                                className="w-full py-4 px-5 bg-rose-50 hover:bg-rose-100 border border-rose-100 rounded-2xl font-black text-xs uppercase tracking-widest text-rose-600 flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer"
-                            >
-                                <LogOut size={18} />
-                                <span>Cerrar Sesión</span>
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* ── PROFILE VIEW FOR OTHER BUSINESS TYPES ── */}
-                {step === 'profile' && cliente && !isProductStore && (
-                    <div className="animate-in fade-in duration-500">
-
-                        {/* Avatar + Info */}
-                        <div className="px-5 pt-6 flex items-center gap-4">
-                            {/* Avatar circular con gradiente */}
-                            <div className="relative shrink-0" onClick={() => document.getElementById('avatar-upload')?.click()}>
-                                <div className="size-24 rounded-full p-[3px] cursor-pointer"
-                                    style={{ background: `linear-gradient(135deg, ${primaryColor}, #f472b6, ${secondaryColor})` }}>
-                                    <div className="size-full rounded-full overflow-hidden bg-white flex items-center justify-center">
-                                        {uploading ? (
-                                            <Loader2 className="animate-spin" style={{ color: primaryColor }} size={24} />
-                                        ) : cliente.imagenUrl ? (
-                                            <img src={cliente.imagenUrl} alt={cliente.nombre} className="size-full object-cover" />
-                                        ) : (
-                                            <span className="text-4xl font-black" style={{ color: primaryColor }}>
-                                                {(cliente.nombre || 'U').charAt(0).toUpperCase()}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                                {/* Botón cámara */}
-                                <button className="absolute bottom-0 right-0 size-7 rounded-full flex items-center justify-center border-2 border-white shadow-md"
-                                    style={{ backgroundColor: primaryColor }}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-                                </button>
-                                <input type="file" id="avatar-upload" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
-                            </div>
-
-                            {/* Nombre + teléfono + rating */}
-                            <div className="flex-1 min-w-0">
-                                {/* Badge */}
-                                {(() => {
-                                    const levelColor = cliente.loyalty?.nivelActual?.color || primaryColor;
-                                    return (
-                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full mb-1.5"
-                                            style={{ backgroundColor: `${levelColor}15`, color: levelColor }}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m2 4 3 12h14l3-12-6 5-4-7-4 7-6-5Z"/></svg>
-                                            <span className="text-[9px] font-black uppercase tracking-widest">
-                                                USUARIO {cliente.loyalty?.nivelActual?.nombre || 'BRONCE'}
-                                            </span>
-                                        </div>
-                                    );
-                                })()}
-                                <h2 className="text-[22px] font-black text-slate-900 leading-tight">{cliente.nombre || 'Usuario'}</h2>
-                                <p className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-500 mt-0.5">
-                                    <Phone size={12} style={{ color: primaryColor }} />
-                                    {cliente.telefono?.startsWith('+') ? cliente.telefono : `+${cliente.telefono || '—'}`}
-                                </p>
-                                {/* Rating */}
-                                {(cliente.ratingPromedio !== undefined && cliente.totalReviews > 0) && (
-                                    <div className="flex items-center gap-1 mt-1">
-                                        {[1,2,3,4,5].map(s => (
-                                            <svg key={s} xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"
-                                                fill={s <= Math.round(cliente.ratingPromedio) ? '#f59e0b' : 'none'}
-                                                stroke="#f59e0b" strokeWidth="2">
-                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                                            </svg>
-                                        ))}
-                                        <span className="text-[11px] font-bold text-slate-500 ml-0.5">
-                                            {cliente.ratingPromedio.toFixed(1)} ({cliente.totalReviews} {cliente.totalReviews === 1 ? 'valoración' : 'valoraciones'})
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Stats Card */}
-                        {(() => {
-                            const levelColor = cliente.loyalty?.nivelActual?.color || primaryColor;
-                            return (
-                                <div className="px-5 mt-5">
-                                    <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
-                                        <div className="grid grid-cols-3 divide-x divide-slate-100">
-                                            {[
-                                                { label: 'Sesiones', sublabel: 'Completadas', value: cliente.stats?.reservasTotales || 0, icon: <Sparkles size={20} /> },
-                                                { label: 'Cursos', sublabel: 'Inscritos', value: cliente.enrollments?.length || 0, icon: <Trophy size={20} /> },
-                                                { 
-                                                    label: 'Nivel', 
-                                                    sublabel: `Club ${cliente.loyalty?.nivelActual?.nombre || 'Bronce'}`, 
-                                                    value: cliente.loyalty?.nivelActual?.nombre || 'Bronce', 
-                                                    icon: <Award size={20} /> 
-                                                },
-                                            ].map((stat, i) => (
-                                                <div key={i} className="flex flex-col items-center py-1 px-2">
-                                                    <div className="size-10 rounded-2xl flex items-center justify-center mb-2" style={{ backgroundColor: i === 2 ? `${levelColor}12` : `${primaryColor}12`, color: i === 2 ? levelColor : primaryColor }}>
-                                                        {stat.icon}
-                                                    </div>
-                                                    <span className={cn(
-                                                        "font-black text-slate-900 leading-none tracking-tight text-center",
-                                                        typeof stat.value === 'string' ? "text-[13px] uppercase mt-1.5" : "text-[26px]"
-                                                    )}>
-                                                        {stat.value}
-                                                    </span>
-                                                    <span className="text-[11px] font-bold text-slate-700 mt-1">{stat.label}</span>
-                                                    <span className="text-[9px] text-slate-400 font-medium">{stat.sublabel}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        {/* Banner motivacional */}
-                                        {cliente.loyalty && (
-                                            <div className="mt-4 rounded-2xl px-4 py-3 flex items-center justify-between overflow-hidden relative"
-                                                style={{ background: `linear-gradient(135deg, ${levelColor}15, ${levelColor}08)` }}>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="size-10 rounded-xl flex items-center justify-center text-white" style={{ backgroundColor: levelColor }}>
-                                                        <Award size={20} />
-                                                    </div>
-                                                    <div className="text-left">
-                                                        <p className="font-black text-slate-800 text-[13px] leading-tight">
-                                                            Sigue así, {(cliente.nombre || '').split(' ')[0]}
-                                                        </p>
-                                                        {cliente.loyalty.siguienteNivel ? (
-                                                            <p className="text-[10px] text-slate-500 font-semibold mt-0.5">
-                                                                Te faltan <strong className="text-slate-800">{cliente.loyalty.siguienteNivel.diamantesRequeridos - cliente.loyalty.experiencia}</strong> exp para ser <span className="font-extrabold" style={{ color: cliente.loyalty.siguienteNivel.color }}>{cliente.loyalty.siguienteNivel.nombre}</span>
-                                                            </p>
-                                                        ) : (
-                                                            <p className="text-[10px] text-slate-500 font-medium">Estás en el nivel más alto del club</p>
-                                                        )}
-                                                        <Link 
-                                                            href={`/${slug}/misiones`}
-                                                            className="text-[10px] font-black mt-1 flex items-center gap-1 hover:underline cursor-pointer" 
-                                                            style={{ color: levelColor }}
-                                                        >
-                                                            Misiones del nivel <ChevronRight size={11} />
-                                                        </Link>
-                                                    </div>
-                                                </div>
-                                                {/* Corona decorativa */}
-                                                <div className="text-5xl opacity-80 shrink-0">
-                                                    {cliente.loyalty?.nivelActual?.orden >= 4 ? '👑' : '💎'}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })()}
-
-                        {/* Citas por calificar */}
-                        {(() => {
-                            const citasPorCalificar = reservas.filter((r: any) => {
-                                const isCompleted = ['completed','finalizada','finalizado'].includes(r.estado?.toLowerCase());
-                                return isCompleted && !r.ratings?.some((rt: any) => rt.raterRole === 'client');
-                            });
-                            if (!citasPorCalificar.length) return null;
-                            return (
-                                <div className="px-5 mt-5 space-y-3">
-                                    <p className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5" style={{ color: primaryColor }}>
-                                        <Sparkles size={12} /> Califica tu experiencia
-                                    </p>
-                                    {citasPorCalificar.map((r: any) => (
-                                        <div key={r.id} className="bg-white rounded-2xl p-4 border border-amber-100 flex items-center justify-between shadow-sm">
-                                            <div>
-                                                <span className="text-[9px] font-black px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100 uppercase tracking-wider">Pendiente</span>
-                                                <p className="font-black text-slate-800 text-[13px] mt-1">{r.service?.nombre || 'Servicio'}</p>
-                                                <p className="text-[10px] text-slate-400 font-medium">{r.horaInicio} · con {r.staff?.name || 'especialista'}</p>
-                                            </div>
-                                            <button onClick={() => { setRatingTarget(r); setIsRatingModalOpen(true); }}
-                                                className="px-4 py-2.5 rounded-xl text-white font-black text-[10px] uppercase tracking-wider flex items-center gap-1.5 active:scale-95 transition-all"
-                                                style={{ backgroundColor: primaryColor }}>
-                                                Calificar <Star size={11} fill="white" />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            );
-                        })()}
-
-                        {/* Sección de Beneficios / Cupones y Premios */}
-                        <div className="px-5 mt-4 space-y-3">
-                            <Link href={`/${slug}/mis-cupones`} className="flex items-center justify-between px-5 py-4 bg-white rounded-[2rem] border border-slate-100 shadow-sm active:scale-[0.99] transition-all no-underline">
-                                <div className="flex items-center gap-3">
-                                    <div className="size-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${primaryColor}10`, color: primaryColor }}>
-                                        <Tag size={18} />
-                                    </div>
-                                    <div className="text-left">
-                                        <p className="font-black text-slate-800 text-[13px] leading-none">🎟️ Mis Cupones Ganados</p>
-                                        <p className="text-[9px] text-slate-400 font-semibold mt-1">Ver tus códigos de descuento activos</p>
-                                    </div>
-                                </div>
-                                <ChevronRight size={14} className="text-slate-400" />
-                            </Link>
-
-                            <Link href={`/${slug}/mis-premios`} className="flex items-center justify-between px-5 py-4 bg-white rounded-[2rem] border border-slate-100 shadow-sm active:scale-[0.99] transition-all no-underline">
-                                <div className="flex items-center gap-3">
-                                    <div className="size-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${primaryColor}10`, color: primaryColor }}>
-                                        <Gift size={18} />
-                                    </div>
-                                    <div className="text-left">
-                                        <p className="font-black text-slate-800 text-[13px] leading-none">🎁 Mis Premios Obtenidos</p>
-                                        <p className="text-[9px] text-slate-400 font-semibold mt-1">Reclama tus premios manuales y físicos</p>
-                                    </div>
-                                </div>
-                                <ChevronRight size={14} className="text-slate-400" />
-                            </Link>
-                        </div>
-
-                        {/* Sección de Información Personal */}
-                        <div className="px-5 mt-4">
-                            <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-[14px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                                        <User size={18} style={{ color: primaryColor }} />
-                                        Información Personal
-                                    </h3>
-                                    {!isEditing && (
-                                        <button
-                                            onClick={() => { setIsEditing(true); setError(''); }}
-                                            className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border active:scale-95 transition-all"
-                                            style={{ borderColor: primaryColor, color: primaryColor }}
-                                        >
-                                            Editar
-                                        </button>
-                                    )}
-                                </div>
-
-                                {/* Vista de solo lectura */}
-                                {!isEditing && (
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-3 py-2.5 border-b border-slate-100">
-                                            <div className="size-8 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${primaryColor}12` }}>
-                                                <User size={14} style={{ color: primaryColor }} />
-                                            </div>
-                                            <div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nombre</p>
-                                                <p className="text-[13px] font-black text-slate-800">{cliente.nombre || '—'}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3 py-2.5 border-b border-slate-100">
-                                            <div className="size-8 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${primaryColor}12` }}>
-                                                <Mail size={14} style={{ color: primaryColor }} />
-                                            </div>
-                                            <div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Correo</p>
-                                                <p className="text-[13px] font-black text-slate-800">{cliente.email || '—'}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3 py-2.5 border-b border-slate-100">
-                                            <div className="size-8 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${primaryColor}12` }}>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={primaryColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                            </div>
-                                            <div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Fecha de Nacimiento</p>
-                                                <p className="text-[13px] font-black text-slate-800">
-                                                    {formatFechaNacimientoUTC(cliente.fechaNacimiento)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-3 py-2.5">
-                                            <div className="size-8 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${primaryColor}12` }}>
-                                                <Phone size={14} style={{ color: primaryColor }} />
-                                            </div>
-                                            <div>
-                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Teléfono</p>
-                                                <p className="text-[13px] font-black text-slate-800">{cliente.telefono?.startsWith('+') ? cliente.telefono : `+${cliente.telefono || '—'}`}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Formulario de edición */}
-                                {isEditing && (
-                                    <form onSubmit={handleSaveProfile} className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                                        {/* Campo Nombre */}
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Nombre Completo</label>
-                                            <input
-                                                type="text"
-                                                value={editNombre}
-                                                onChange={(e) => setEditNombre(e.target.value)}
-                                                placeholder="Ingresa tu nombre"
-                                                className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-200"
-                                                required
-                                            />
-                                        </div>
-
-                                        {/* Campo Correo */}
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Correo Electrónico</label>
-                                            <input
-                                                type="email"
-                                                value={editEmail}
-                                                onChange={(e) => setEditEmail(e.target.value)}
-                                                placeholder="correo@ejemplo.com"
-                                                className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-200"
-                                            />
-                                        </div>
-
-                                        {/* Campo Fecha de Nacimiento */}
-                                        <div className="space-y-1.5">
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Fecha de Nacimiento</label>
-                                            <input
-                                                type="date"
-                                                value={editFechaNacimiento}
-                                                onChange={(e) => setEditFechaNacimiento(e.target.value)}
-                                                className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-xs font-bold text-slate-800 focus:outline-none focus:border-slate-200"
-                                            />
-                                        </div>
-
-                                        {/* Campo Teléfono (No editable) */}
-                                        <div className="space-y-1.5">
-                                            <div className="flex items-center justify-between ml-1">
-                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Teléfono Móvil</label>
-                                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                                    No editable
-                                                </span>
-                                            </div>
-                                            <input
-                                                type="text"
-                                                value={cliente.telefono?.startsWith('+') ? cliente.telefono : `+${cliente.telefono || '—'}`}
-                                                disabled
-                                                className="w-full h-12 bg-slate-100/80 border border-slate-100 rounded-xl px-4 text-xs font-bold text-slate-400 cursor-not-allowed select-none"
-                                            />
-                                        </div>
-
-                                        {error && (
-                                            <div className="p-3.5 bg-rose-50 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2.5 border border-rose-100">
-                                                <AlertCircle size={14} /> {error}
-                                            </div>
-                                        )}
-
-                                        <div className="flex gap-3 mt-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => { setIsEditing(false); setError(''); }}
-                                                className="flex-1 h-12 font-black text-[11px] uppercase tracking-widest rounded-xl border border-slate-200 text-slate-500 active:scale-95 transition-all"
-                                            >
-                                                Cancelar
-                                            </button>
-                                            <button
-                                                type="submit"
-                                                disabled={saving}
-                                                className="flex-1 h-12 text-white font-black text-[11px] uppercase tracking-widest rounded-xl shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
-                                                style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}
-                                            >
-                                                {saving ? <Loader2 className="animate-spin" size={16} /> : <>Guardar</>}
-                                            </button>
-                                        </div>
-                                    </form>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Panel Instructor (si aplica) */}
-                        {cliente.roles?.includes('PROFESOR') && (
-                            <div className="px-5 mt-3">
-                                <Link href="/profesor"
-                                    className="flex items-center justify-between px-5 py-4 bg-white rounded-2xl border border-slate-100 shadow-sm active:scale-[0.99] transition-all">
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${primaryColor}10`, color: primaryColor }}>
-                                            <Building2 size={20} />
-                                        </div>
-                                        <div>
-                                            <p className="font-black text-slate-800 text-[13px]">Panel Instructor</p>
-                                            <p className="text-[10px] text-slate-400 font-medium">Gestión de academia</p>
-                                        </div>
-                                    </div>
-                                </Link>
-                            </div>
-                        )}
-
-                        {/* Compartir App */}
-                        <div className="px-5 mt-3">
-                            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                                <button 
-                                    onClick={async () => {
-                                        const targetSlug = negocio?.slug || slug;
-                                        const shareData = {
-                                            title: negocio?.nombre || 'CitiOx',
-                                            text: hasModule(negocio?.tipoNegocio, 'APPOINTMENTS') 
-                                                ? `¡Agenda tu cita online en ${negocio?.nombre || 'nuestro negocio'}! 📅✨` 
-                                                : (hasModule(negocio?.tipoNegocio, 'RESERVATIONS') 
-                                                    ? `¡Reserva tu cancha online en ${negocio?.nombre || 'nuestro negocio'}! ⚽`
-                                                    : `¡Visita nuestra tienda online en ${negocio?.nombre || 'nuestra tienda'}! 🛒`),
-                                            url: typeof window !== 'undefined' ? `${window.location.origin}/${targetSlug}` : ''
-                                        };
-                                        if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-                                            try { await navigator.share(shareData); } catch (e) {}
-                                        } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
-                                            try { 
-                                                await navigator.clipboard.writeText(`${window.location.origin}/${targetSlug}`);
-                                                alert('¡Enlace del negocio copiado al portapapeles! 📋');
-                                            } catch (e) {}
-                                        }
-                                    }}
-                                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-orange-50/50 active:bg-orange-100/50 transition-colors cursor-pointer"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-10 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-600 border border-orange-100">
-                                            <Share2 size={20} />
-                                        </div>
-                                        <div className="text-left">
-                                            <p className="font-black text-slate-800 text-[13px]">Compartir esta App / Negocio</p>
-                                            <p className="text-[10px] text-slate-400 font-medium">Recomienda nuestro negocio a tus amigos</p>
-                                        </div>
-                                    </div>
-                                    <ChevronRight size={18} className="text-slate-400" />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Cerrar Sesión */}
-                        <div className="px-5 mt-3 mb-8">
-                            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                                <button onClick={handleLogout}
-                                    className="w-full flex items-center gap-3 px-5 py-4 hover:bg-rose-50 active:bg-rose-100 transition-colors">
-                                    <div className="size-10 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-500 border border-rose-100">
-                                        <LogOut size={20} />
-                                    </div>
-                                    <div className="text-left">
-                                        <p className="font-black text-rose-500 text-[13px]">Cerrar sesión</p>
-                                        <p className="text-[10px] text-slate-400 font-medium">Desconectar cuenta</p>
-                                    </div>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-            </main>
-
-            {/* Modal de Calificación */}
-            <RatingModal
-                isOpen={isRatingModalOpen}
-                onClose={() => setIsRatingModalOpen(false)}
-                appointmentId={ratingTarget?.id}
-                raterRole="client"
-                targetName={ratingTarget?.staff?.name || ratingTarget?.Staff?.name || 'el especialista'}
-                onSuccess={() => { fetchReservas(); }}
+              ))}
+            </div>
+            <input 
+              ref={otpInputRef} 
+              type="text" 
+              inputMode="numeric" 
+              pattern="[0-9]*" 
+              autoFocus 
+              maxLength={6} 
+              className="sr-only" 
+              value={code} 
+              onChange={e => setCode(e.target.value.replace(/\D/g, ''))} 
             />
 
-            <style jsx global>{`
-                .scroll-hide::-webkit-scrollbar { display: none; }
-                .scroll-hide { -ms-overflow-style: none; scrollbar-width: none; }
-                input::placeholder { color: #334155 !important; font-style: italic; font-weight: 800; text-transform: uppercase; font-size: 10px; letter-spacing: 0.1em; }
-            `}</style>
+            {error && (
+              <div className="p-3 bg-red-50 text-red-600 text-xs font-black rounded-xl border border-red-200 flex items-center gap-2">
+                <AlertCircle size={16} /> <span>{error}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading || code.length !== 6}
+              className="w-full py-3.5 bg-slate-950 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="animate-spin" size={18} /> : <>Verificar Código <Check size={18} /></>}
+            </button>
+          </form>
+        </main>
+      )}
+
+      {/* ── 3. PERFIL PRINCIPAL AUTENTICADO (ESTRUCTURA DE REFERENCIA EXACTA) ── */}
+      {step === 'profile' && (
+        <main className="max-w-md mx-auto p-4 space-y-4 animate-in fade-in duration-300">
+          
+          {/* TARJETA SUPERIOR DE PERFIL */}
+          <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3.5">
+                {/* Avatar con foto o inicial + botón de edición de foto */}
+                <div className="relative shrink-0">
+                  {cliente?.imagenUrl ? (
+                    <img 
+                      src={cliente.imagenUrl} 
+                      alt={displayName} 
+                      className="w-16 h-16 rounded-full object-cover border-2 border-amber-500 shadow-md" 
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-600 to-orange-600 text-white font-black text-2xl flex items-center justify-center shadow-md border-2 border-white">
+                      {firstLetter}
+                    </div>
+                  )}
+
+                  <label className="absolute -bottom-1 -right-1 p-1.5 bg-white hover:bg-slate-100 text-slate-700 rounded-full border border-slate-200 shadow-md cursor-pointer">
+                    <Camera size={13} />
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+                  </label>
+                </div>
+
+                {/* Información de usuario */}
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-base font-black text-slate-900 leading-snug">{displayName}</h2>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border flex items-center gap-1 ${userLevelTag.color}`}>
+                      <span>{userLevelTag.icon}</span>
+                      <span>{userLevelTag.label}</span>
+                    </span>
+                  </div>
+
+                  <p className="text-xs font-bold text-slate-500 leading-tight">{displayPhone}</p>
+                  <p className="text-xs text-slate-400 font-medium leading-tight">{displayEmail}</p>
+                </div>
+              </div>
+
+              <button 
+                type="button"
+                onClick={() => setActiveModal('personal_info')}
+                className="p-2 text-slate-400 hover:text-slate-700 cursor-pointer"
+              >
+                <ChevronRight size={22} />
+              </button>
+            </div>
+
+            {/* RESUMEN DE ACTIVIDAD (PEDIDOS, PUNTOS, CUPONES EN 3 BLOQUES) */}
+            <div className="pt-4 border-t border-slate-100 grid grid-cols-3 gap-2 text-center">
+              <button 
+                type="button"
+                onClick={() => router.push(`/${slug}/pedidos`)}
+                className="p-2.5 rounded-2xl bg-slate-50 hover:bg-amber-50/50 border border-slate-100 transition-colors cursor-pointer text-left space-y-1"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="p-1.5 bg-amber-100/60 text-amber-700 rounded-xl">
+                    <ShoppingBag size={14} />
+                  </span>
+                  <span className="text-[10px] font-black uppercase text-slate-400">Pedidos</span>
+                </div>
+                <div>
+                  <span className="text-base font-black text-slate-900 block leading-tight">
+                    {cliente?.totalPedidos || 14}
+                  </span>
+                  <span className="text-[10px] font-medium text-slate-400 block">Realizados</span>
+                </div>
+              </button>
+
+              <button 
+                type="button"
+                onClick={() => router.push(`/${slug}/mis-premios`)}
+                className="p-2.5 rounded-2xl bg-slate-50 hover:bg-amber-50/50 border border-slate-100 transition-colors cursor-pointer text-left space-y-1"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="p-1.5 bg-amber-100/60 text-amber-700 rounded-xl">
+                    <Star size={14} />
+                  </span>
+                  <span className="text-[10px] font-black uppercase text-slate-400">Puntos</span>
+                </div>
+                <div>
+                  <span className="text-base font-black text-slate-900 block leading-tight">
+                    {cliente?.loyalty?.puntos || 320}
+                  </span>
+                  <span className="text-[10px] font-medium text-slate-400 block">Disponibles</span>
+                </div>
+              </button>
+
+              <button 
+                type="button"
+                onClick={() => router.push(`/${slug}/mis-cupones`)}
+                className="p-2.5 rounded-2xl bg-slate-50 hover:bg-amber-50/50 border border-slate-100 transition-colors cursor-pointer text-left space-y-1"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="p-1.5 bg-amber-100/60 text-amber-700 rounded-xl">
+                    <Tag size={14} />
+                  </span>
+                  <span className="text-[10px] font-black uppercase text-slate-400">Cupones</span>
+                </div>
+                <div>
+                  <span className="text-base font-black text-slate-900 block leading-tight">
+                    {cuponesCount}
+                  </span>
+                  <span className="text-[10px] font-medium text-slate-400 block">Disponibles</span>
+                </div>
+              </button>
+            </div>
+
+            {/* DIRECCIÓN REGISTRADA Y MINI MAPA */}
+            <div className="pt-4 border-t border-slate-100 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <span className="p-2 bg-red-50 text-red-600 rounded-xl shrink-0 mt-0.5">
+                    <MapPin size={18} />
+                  </span>
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-black uppercase text-slate-500 block tracking-wider">Dirección registrada</span>
+                    <p className="text-xs font-black text-slate-900 leading-snug">
+                      {direccionRegistrada}
+                    </p>
+                    {referenciaRegistrada && (
+                      <p className="text-[11px] text-slate-500 font-medium">Ref: {referenciaRegistrada}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Contenedor del Mini Mapa Interactivo */}
+                <div className="w-28 h-20 rounded-2xl bg-slate-200 overflow-hidden border border-slate-200 shadow-inner shrink-0 relative">
+                  <div ref={miniMapRef} className="w-full h-full" />
+                </div>
+              </div>
+
+              {/* Botón para actualizar ubicación en mapa */}
+              <button
+                type="button"
+                onClick={() => setIsMapModalOpen(true)}
+                className="w-full py-3 px-4 bg-red-50 hover:bg-red-100/70 text-red-600 font-black text-xs uppercase tracking-wider rounded-2xl border border-red-100 transition-colors cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Compass size={16} />
+                <span>ACTUALIZAR UBICACIÓN EN EL MAPA</span>
+              </button>
+            </div>
+
+          </div>
+
+          {/* ── 4. LISTADO DE OPCIONES "MI CUENTA" ── */}
+          <div className="bg-white rounded-3xl p-2 shadow-sm border border-slate-200 space-y-1">
+            <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider px-4 pt-3 pb-1">Mi cuenta</h3>
+
+            {[
+              { id: 'personal_info', label: 'Información personal', desc: 'Actualiza tus datos personales', icon: User, color: 'bg-red-50 text-red-600' },
+              { id: 'addresses', label: 'Mis direcciones', desc: 'Gestiona tus direcciones guardadas', icon: MapPin, color: 'bg-red-50 text-red-600' },
+              { id: 'payments', label: 'Métodos de pago', desc: 'Tarjetas y pagos guardados', icon: CreditCard, color: 'bg-red-50 text-red-600' },
+              { id: 'favorites', label: 'Mis favoritos', desc: 'Restaurantes y productos favoritos', icon: Star, color: 'bg-red-50 text-red-600' },
+              { id: 'settings', label: 'Configuración', desc: 'Notificaciones, privacidad y más', icon: Settings, color: 'bg-red-50 text-red-600' },
+              { id: 'support', label: 'Ayuda y soporte', desc: 'Centro de ayuda y contacto', icon: HelpCircle, color: 'bg-red-50 text-red-600' },
+            ].map(item => {
+              const IconComponent = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveModal(item.id)}
+                  className="w-full p-3 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer flex items-center justify-between text-left"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <span className={`p-2.5 rounded-2xl ${item.color} shrink-0`}>
+                      <IconComponent size={18} />
+                    </span>
+                    <div>
+                      <span className="text-xs font-black text-slate-900 block leading-tight">{item.label}</span>
+                      <span className="text-[11px] text-slate-500 font-medium block mt-0.5">{item.desc}</span>
+                    </div>
+                  </div>
+
+                  <ChevronRight size={18} className="text-slate-400 shrink-0" />
+                </button>
+              );
+            })}
+          </div>
+
+        </main>
+      )}
+
+      {/* ── MODAL MAP SELECTION (ACTUALIZAR UBICACIÓN EN EL MAPA REAL) ── */}
+      {isMapModalOpen && (
+        <MapSelectionModal
+          isOpen={isMapModalOpen}
+          onClose={() => setIsMapModalOpen(false)}
+          initialLat={currentLat}
+          initialLng={currentLng}
+          initialReference={referenciaRegistrada}
+          onConfirmLocation={handleConfirmLocationFromMap}
+        />
+      )}
+
+      {/* ── MODAL 1: INFORMACIÓN PERSONAL ── */}
+      {activeModal === 'personal_info' && (
+        <div className="fixed inset-0 z-[100000] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-5 border border-slate-200 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <User className="w-5 h-5 text-red-600" />
+                <h3 className="font-black text-sm uppercase text-slate-900">Información Personal</h3>
+              </div>
+              <button type="button" onClick={() => setActiveModal(null)} className="p-1 rounded-xl text-slate-400 hover:bg-slate-100">
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSavePersonalInfo} className="space-y-4 text-xs">
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Nombre Completo</label>
+                <input
+                  type="text"
+                  required
+                  value={editNombre}
+                  onChange={e => setEditNombre(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Correo Electrónico</label>
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={e => setEditEmail(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Teléfono Móvil (Registrado)</label>
+                <input
+                  type="text"
+                  disabled
+                  value={editTelefono}
+                  className="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl font-mono text-slate-500"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setActiveModal(null)} className="py-2.5 px-4 bg-slate-100 text-slate-700 font-bold rounded-xl">
+                  Cancelar
+                </button>
+                <button type="submit" disabled={savingProfile} className="py-2.5 px-5 bg-slate-950 text-white font-black rounded-xl shadow-md">
+                  {savingProfile ? <Loader2 className="animate-spin" size={16} /> : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-    );
+      )}
+
+      {/* ── MODAL 2: MIS DIRECCIONES ── */}
+      {activeModal === 'addresses' && (
+        <div className="fixed inset-0 z-[100000] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-red-600" />
+                <h3 className="font-black text-sm uppercase text-slate-900">Mis Direcciones Guardadas</h3>
+              </div>
+              <button type="button" onClick={() => setActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-2.5">
+              {savedAddresses.map(addr => (
+                <div key={addr.id} className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/70 flex items-start justify-between gap-3 text-xs">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-slate-900">{addr.etiqueta}</span>
+                      {addr.principal && (
+                        <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[9px] font-black rounded-md uppercase">Principal</span>
+                      )}
+                    </div>
+                    <p className="text-slate-600 font-medium">{addr.direccion}</p>
+                    {addr.referencia && <p className="text-[10px] text-slate-400">Ref: {addr.referencia}</p>}
+                  </div>
+
+                  <button 
+                    type="button" 
+                    onClick={() => handleConfirmLocationFromMap(addr.lat, addr.lng, addr.direccion, addr.referencia)}
+                    className="px-3 py-1.5 bg-slate-900 text-white font-black text-[10px] uppercase rounded-xl shadow-xs"
+                  >
+                    Usar
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveModal(null);
+                setIsMapModalOpen(true);
+              }}
+              className="w-full py-3 bg-red-50 text-red-600 font-black text-xs uppercase rounded-2xl border border-red-100 flex items-center justify-center gap-2"
+            >
+              <Plus size={16} /> Agregar Nueva Dirección desde Mapa
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL 3: MÉTODOS DE PAGO ── */}
+      {activeModal === 'payments' && (
+        <div className="fixed inset-0 z-[100000] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-red-600" />
+                <h3 className="font-black text-sm uppercase text-slate-900">Métodos de Pago</h3>
+              </div>
+              <button type="button" onClick={() => setActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-2.5 text-xs">
+              <div className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">💵</span>
+                  <div>
+                    <span className="font-black text-slate-900 block">Efectivo al Recibir</span>
+                    <span className="text-[10px] text-slate-400 font-medium">Pago directo al repartidor o cajero</span>
+                  </div>
+                </div>
+                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+              </div>
+
+              <div className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🏦</span>
+                  <div>
+                    <span className="font-black text-slate-900 block">Transferencia Bancaria</span>
+                    <span className="text-[10px] text-slate-400 font-medium">Envío de comprobante por WhatsApp</span>
+                  </div>
+                </div>
+                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+              </div>
+            </div>
+
+            <p className="text-[10px] text-slate-400 italic text-center">
+              🔒 Tus datos de pago están seguros mediante encriptación estándar del sistema.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL 4: MIS FAVORITOS ── */}
+      {activeModal === 'favorites' && (
+        <div className="fixed inset-0 z-[100000] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200 text-center">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 text-left">
+              <div className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-red-600" />
+                <h3 className="font-black text-sm uppercase text-slate-900">Mis Favoritos</h3>
+              </div>
+              <button type="button" onClick={() => setActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            <div className="py-8 space-y-3">
+              <div className="size-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto text-3xl shadow-inner">
+                ⭐
+              </div>
+              <h4 className="text-sm font-black text-slate-900">Aún no tienes favoritos</h4>
+              <p className="text-xs text-slate-500 font-medium max-w-xs mx-auto">
+                Guarda tus platillos y restaurantes favoritos para encontrarlos y pedirlos rápidamente.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL 5: CONFIGURACIÓN Y PREFERENCIAS ── */}
+      {activeModal === 'settings' && (
+        <div className="fixed inset-0 z-[100000] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Settings className="w-5 h-5 text-red-600" />
+                <h3 className="font-black text-sm uppercase text-slate-900">Configuración</h3>
+              </div>
+              <button type="button" onClick={() => setActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl">
+                <div>
+                  <span className="font-black text-slate-900 block">Notificaciones de Pedido</span>
+                  <span className="text-[10px] text-slate-400">Avisos del estado de tu entrega</span>
+                </div>
+                <input type="checkbox" defaultChecked className="rounded border-slate-300 text-red-600" />
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl">
+                <div>
+                  <span className="font-black text-slate-900 block">Promociones y Ofertas</span>
+                  <span className="text-[10px] text-slate-400">Alertas de cupones exclusivos</span>
+                </div>
+                <input type="checkbox" defaultChecked className="rounded border-slate-300 text-red-600" />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 font-black text-xs uppercase rounded-2xl flex items-center justify-center gap-2 mt-4"
+              >
+                <LogOut size={16} /> Cerrar Sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL 6: AYUDA Y SOPORTE ── */}
+      {activeModal === 'support' && (
+        <div className="fixed inset-0 z-[100000] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="w-5 h-5 text-red-600" />
+                <h3 className="font-black text-sm uppercase text-slate-900">Ayuda y Soporte</h3>
+              </div>
+              <button type="button" onClick={() => setActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <p className="text-slate-600 font-medium">¿Tienes alguna duda o problema con un pedido reciente? Estamos para ayudarte.</p>
+              
+              <a
+                href={`https://wa.me/593959997521?text=Hola,%20necesito%20soporte%20con%20mi%20cuenta%20en%20Citiox`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-2xl shadow-md flex items-center justify-center gap-2"
+              >
+                <MessageSquare size={16} /> Contactar Soporte WhatsApp
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 5. BOTÓN FLOTANTE INFERIOR "VER MI PEDIDO" ── */}
+      {cartContext && cartContext.totalItemsCount > 0 && (
+        <div className="fixed bottom-16 left-0 right-0 z-[90] p-4 max-w-md mx-auto pointer-events-auto">
+          <button
+            type="button"
+            onClick={() => router.push(`/${slug}/pedidos`)}
+            className="w-full py-3.5 px-5 bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl flex items-center justify-between border border-red-500 cursor-pointer active:scale-95 transition-all"
+          >
+            <div className="flex items-center gap-2.5">
+              <ShoppingBag size={18} />
+              <span>VER MI PEDIDO ({cartContext.totalItemsCount})</span>
+            </div>
+            <span className="text-sm font-black font-mono">${cartContext.total.toFixed(2)}</span>
+          </button>
+        </div>
+      )}
+
+      {/* ── 6. NAVEGACIÓN INFERIOR PWA CON "MI CUENTA" ACTIVO ── */}
+      <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-slate-950 text-slate-400 border-t border-slate-800 py-2.5 px-4">
+        <div className="max-w-md mx-auto flex items-center justify-around text-center">
+          <button 
+            type="button"
+            onClick={() => router.push(`/${slug}`)} 
+            className="flex flex-col items-center gap-1 text-[10px] font-bold hover:text-white cursor-pointer"
+          >
+            <Compass size={18} />
+            <span>Inicio</span>
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => router.push(`/${slug}/promo`)} 
+            className="flex flex-col items-center gap-1 text-[10px] font-bold hover:text-white cursor-pointer"
+          >
+            <Tag size={18} />
+            <span>Ofertas</span>
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => router.push(`/${slug}/pedidos`)} 
+            className="flex flex-col items-center gap-1 text-[10px] font-bold hover:text-white cursor-pointer"
+          >
+            <ShoppingBag size={18} />
+            <span>Mis pedidos</span>
+          </button>
+
+          <button 
+            type="button"
+            className="flex flex-col items-center gap-1 text-[10px] font-black text-red-500 cursor-pointer"
+          >
+            <User size={18} />
+            <span>Mi cuenta</span>
+          </button>
+        </div>
+      </nav>
+
+    </div>
+  );
 }
