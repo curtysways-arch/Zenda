@@ -584,26 +584,6 @@ export default function CustomerCartDrawer({
                   </div>
                 </div>
 
-                {/* BOTÓN PRINCIPAL DE CONTINUAR PEDIDO Y SEGURIDAD SSL */}
-                <div className="space-y-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={handleNextToCheckout}
-                    style={{ backgroundColor: primaryColor, color: '#ffffff' }}
-                    className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-xl flex items-center justify-between px-6 hover:opacity-95 active:scale-[0.99] transition-all cursor-pointer"
-                  >
-                    <span>CONTINUAR PEDIDO</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-black">${subtotal.toFixed(2)}</span>
-                      <ArrowRight className="w-4 h-4 text-white" />
-                    </div>
-                  </button>
-
-                  <div className="flex items-center justify-center gap-1.5 text-[10px] font-bold text-slate-400">
-                    <Lock className="w-3 h-3 text-slate-400" />
-                    <span>Tus datos están protegidos con cifrado SSL</span>
-                  </div>
-                </div>
               </>
             )}
           </div>
@@ -933,36 +913,6 @@ export default function CustomerCartDrawer({
                 <span style={{ color: primaryColor }} className="text-2xl font-black">${total.toFixed(2)}</span>
               </div>
             </div>
-
-            {/* BOTÓN SUBMIT CONFIRMAR PEDIDO */}
-            <div className="space-y-2 pt-1">
-              <button
-                type="submit"
-                disabled={submitting}
-                style={{ backgroundColor: primaryColor, color: '#ffffff' }}
-                className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-xl flex items-center justify-between px-6 hover:opacity-95 active:scale-[0.99] transition-all cursor-pointer"
-              >
-                {submitting ? (
-                  <div className="flex items-center gap-2 mx-auto">
-                    <Loader2 className="w-4 h-4 animate-spin text-white" />
-                    <span>ENVIANDO PEDIDO...</span>
-                  </div>
-                ) : (
-                  <>
-                    <span>CONFIRMAR PEDIDO</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-base font-black">${total.toFixed(2)}</span>
-                      <ArrowRight className="w-4 h-4 text-white" />
-                    </div>
-                  </>
-                )}
-              </button>
-
-              <div className="flex items-center justify-center gap-1.5 text-[10px] font-bold text-slate-400">
-                <Lock className="w-3 h-3 text-slate-400" />
-                <span>Pago seguro y datos protegidos</span>
-              </div>
-            </div>
           </form>
         )}
 
@@ -999,6 +949,78 @@ export default function CustomerCartDrawer({
           </div>
         )}
       </div>
+
+      {/* ── BARRA FLOTANTE FIJA INFERIOR PARA ACCIONES (CONTINUAR / CONFIRMAR PEDIDO) ── */}
+      {step === 'cart' && cart.length > 0 && (
+        <div className="shrink-0 bg-white/98 backdrop-blur-md border-t border-slate-100 p-4 max-w-xl mx-auto w-full shadow-[0_-8px_30px_rgba(0,0,0,0.08)] z-30">
+          <button
+            type="button"
+            onClick={handleNextToCheckout}
+            style={{ backgroundColor: primaryColor, color: '#ffffff' }}
+            className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-xl flex items-center justify-between px-6 hover:opacity-95 active:scale-[0.99] transition-all cursor-pointer"
+          >
+            <span>CONTINUAR PEDIDO</span>
+            <div className="flex items-center gap-2">
+              <span className="text-base font-black">${subtotal.toFixed(2)}</span>
+              <ArrowRight className="w-4 h-4 text-white" />
+            </div>
+          </button>
+
+          <div className="flex items-center justify-center gap-1.5 text-[10px] font-bold text-slate-400 mt-2">
+            <Lock className="w-3 h-3 text-slate-400" />
+            <span>Tus datos están protegidos con cifrado SSL</span>
+          </div>
+        </div>
+      )}
+
+      {step === 'checkout' && (
+        <div className="shrink-0 bg-white/98 backdrop-blur-md border-t border-slate-100 p-4 max-w-xl mx-auto w-full shadow-[0_-8px_30px_rgba(0,0,0,0.08)] z-30">
+          {deliveryType === 'DOMICILIO' && !hasLocationSelected ? (
+            <button
+              type="button"
+              onClick={() => {
+                setErrorMessage('⚠️ Ubicación de Entrega Requerida: Por favor selecciona tu ubicación en el mapa para continuar.');
+                setShowMapModal(true);
+              }}
+              className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white bg-amber-600 shadow-xl flex items-center justify-between px-6 hover:bg-amber-700 active:scale-[0.99] transition-all cursor-pointer animate-pulse"
+            >
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-white" />
+                <span>SELECCIONAR UBICACIÓN EN MAPA</span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-white" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSubmitOrder}
+              disabled={submitting}
+              style={{ backgroundColor: primaryColor, color: '#ffffff' }}
+              className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-xl flex items-center justify-between px-6 hover:opacity-95 active:scale-[0.99] transition-all cursor-pointer"
+            >
+              {submitting ? (
+                <div className="flex items-center gap-2 mx-auto">
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  <span>ENVIANDO PEDIDO...</span>
+                </div>
+              ) : (
+                <>
+                  <span>CONFIRMAR PEDIDO</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-base font-black">${total.toFixed(2)}</span>
+                    <ArrowRight className="w-4 h-4 text-white" />
+                  </div>
+                </>
+              )}
+            </button>
+          )}
+
+          <div className="flex items-center justify-center gap-1.5 text-[10px] font-bold text-slate-400 mt-2">
+            <Lock className="w-3 h-3 text-slate-400" />
+            <span>Pago seguro y datos protegidos</span>
+          </div>
+        </div>
+      )}
 
       {/* MODAL SELECCIÓN MAPA PANTALLA COMPLETA */}
       {showMapModal && (
