@@ -43,7 +43,9 @@ export default function PromotionBuilder({
   onCancel,
   negocio,
 }: PromotionBuilderProps) {
-  // ── 0. OBJETIVO COMERCIAL ───────────────────────────────────────────────
+  // ── 0. NAVEGACIÓN Y OBJETIVO COMERCIAL ────────────────────────────────
+  const [activeTab, setActiveTab] = useState<number>(1);
+  const [presetNotice, setPresetNotice] = useState<string | null>(null);
   const [goalPreset, setGoalPreset] = useState<string>(initialData?.goalPreset || 'TODAY');
 
   // ── 1. BENEFICIO ────────────────────────────────────────────────────────
@@ -166,54 +168,111 @@ export default function PromotionBuilder({
     setCanales(prev => prev.includes(chId) ? prev.filter(c => c !== chId) : [...prev, chId]);
   };
 
-  const [activeTab, setActiveTab] = useState<number>(1);
-  const [presetNotice, setPresetNotice] = useState<string | null>(null);
-
-  // Aplicar Preset de Objetivo Comercial
+  // Aplicar Preset de Objetivo Comercial Inteligente (Autoconfigura 100% de los campos)
   const handleSelectGoalPreset = (presetKey: string) => {
     setGoalPreset(presetKey);
 
+    const todayStr = formatDateInput(null, 0);
+    const defaultChannels = availableChannelsList.map(c => c.id);
+
     if (presetKey === 'TODAY') {
-      setTitulo('🔥 Descuento Especial Hoy');
+      setTitulo('🔥 Descuento Especial Hoy 15% OFF');
+      setDescripcion('Aprovecha el 15% de descuento en todo nuestro menú disponible solo por el día de hoy.');
       setTipoPromo('PORCENTAJE');
       setPrecioPromo(15);
-      setFechaFin(formatDateInput(null, 1));
-      setPresetNotice('⚡ Preconfigurado: Oferta de 15% OFF válida para hoy.');
+      setAlcance('PEDIDO_COMPLETO');
+      setMontoMinimo(0);
+      setTipoCliente('ANY');
+      setFechaInicio(todayStr);
+      setFechaFin(todayStr);
+      setDiasValidos(['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']);
+      setHoraInicioValida('');
+      setHoraFinValida('');
+      setCanales(defaultChannels);
+      setPresetNotice('⚡ Estrategia Inteligente: 15% OFF sin compra mínima aplicable a todo el menú solo por el día de hoy.');
     } else if (presetKey === 'NEW_CLIENT') {
-      setTitulo('🎁 15% OFF en Tu Primera Orden');
+      setTitulo('🎁 15% OFF en Tu Primer Pedido');
+      setDescripcion('Úsalo en tu primer pedido con el código BIENVENIDO15.');
       setTipoPromo('CUPON');
       setCuponTipoModalidad('PORCENTAJE');
-      setCuponCodigo('BIENVENIDO');
+      setCuponCodigo('BIENVENIDO15');
       setPrecioPromo(15);
+      setAlcance('PEDIDO_COMPLETO');
+      setMontoMinimo(12);
       setTipoCliente('NEW');
-      setMontoMinimo(15);
-      setPresetNotice('⚡ Preconfigurado: Cupón BIENVENIDO del 15% OFF exclusivo para nuevos clientes.');
+      setFechaInicio(todayStr);
+      setFechaFin(formatDateInput(null, 30));
+      setDiasValidos(['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']);
+      setHoraInicioValida('');
+      setHoraFinValida('');
+      setCanales(defaultChannels);
+      setPresetNotice('⚡ Estrategia Inteligente: Cupón BIENVENIDO15 del 15% OFF exclusivo para nuevos clientes en pedidos desde $12.00.');
     } else if (presetKey === 'RECURRING_CLIENT') {
       setTitulo('🔄 Premio a Tu Fidelidad: $5.00 OFF');
+      setDescripcion('Descuento especial de $5.00 en tu próximo consumo.');
       setTipoPromo('DESCUENTO_FIJO');
       setPrecioPromo(5);
+      setAlcance('PEDIDO_COMPLETO');
+      setMontoMinimo(20);
       setTipoCliente('RECURRING');
-      setPresetNotice('⚡ Preconfigurado: Descuento fijo de $5.00 para clientes frecuentes.');
+      setFechaInicio(todayStr);
+      setFechaFin(formatDateInput(null, 30));
+      setDiasValidos(['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']);
+      setHoraInicioValida('');
+      setHoraFinValida('');
+      setCanales(defaultChannels);
+      setPresetNotice('⚡ Estrategia Inteligente: Descuento fijo de $5.00 OFF para clientes frecuentes con consumo mínimo de $20.00.');
     } else if (presetKey === 'ORDER_BOOST') {
-      setTitulo('📦 $6.00 OFF en Pedidos Mayores a $30');
+      setTitulo('📦 $6.00 OFF en Compras Mayores a $30');
+      setDescripcion('Obtén $6.00 de descuento en tu cuenta al consumir $30.00 o más.');
       setTipoPromo('DESCUENTO_FIJO');
       setPrecioPromo(6);
+      setAlcance('PEDIDO_COMPLETO');
       setMontoMinimo(30);
-      setPresetNotice('⚡ Preconfigurado: Descuento de $6.00 con pedido mínimo de $30.');
+      setTipoCliente('ANY');
+      setFechaInicio(todayStr);
+      setFechaFin(formatDateInput(null, 15));
+      setDiasValidos(['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']);
+      setHoraInicioValida('');
+      setHoraFinValida('');
+      setCanales(defaultChannels);
+      setPresetNotice('⚡ Estrategia Inteligente: Descuento directo de $6.00 con ticket mínimo de $30.00 para elevar el consumo promedio.');
     } else if (presetKey === 'PRODUCT_BOOST') {
       setTitulo('🛍️ 2x1 en Selección Especial');
+      setDescripcion('Lleva 2 por el precio de 1 en nuestra selección especial del menú.');
       setTipoPromo('DOS_POR_UNO');
+      setPrecioPromo(0);
       setAlcance('PRODUCTOS');
-      setPresetNotice('⚡ Preconfigurado: Oferta 2x1 en platillos/productos seleccionados.');
+      if (products && products.length > 0) {
+        setProductoRequeridoId(products[0].id);
+        setServicioRequeridoId(products[0].id);
+      }
+      setMontoMinimo(0);
+      setTipoCliente('ANY');
+      setFechaInicio(todayStr);
+      setFechaFin(formatDateInput(null, 14));
+      setDiasValidos(['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']);
+      setHoraInicioValida('');
+      setHoraFinValida('');
+      setCanales(defaultChannels);
+      setPresetNotice('⚡ Estrategia Inteligente: Oferta 2x1 aplicada a platillos/productos seleccionados para maximizar rotación.');
     } else if (presetKey === 'HAPPY_HOUR') {
       setTitulo('🕐 Happy Hour 20% OFF (14:00 - 17:00)');
+      setDescripcion('20% de descuento en todos tus pedidos realizados entre las 14:00 y las 17:00 hs.');
       setTipoPromo('PORCENTAJE');
       setPrecioPromo(20);
+      setAlcance('PEDIDO_COMPLETO');
+      setMontoMinimo(0);
+      setTipoCliente('ANY');
+      setFechaInicio(todayStr);
+      setFechaFin(formatDateInput(null, 30));
+      setDiasValidos(['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']);
       setHoraInicioValida('14:00');
       setHoraFinValida('17:00');
-      setPresetNotice('⚡ Preconfigurado: 20% OFF de 14:00 a 17:00.');
+      setCanales(defaultChannels);
+      setPresetNotice('⚡ Estrategia Inteligente: 20% OFF de Lunes a Viernes de 14:00 a 17:00 hs para impulsar el horario de baja demanda.');
     } else {
-      setPresetNotice('⚡ Modo libre: Configura manualmente cada campo.');
+      setPresetNotice('⚡ Modo Libre: Configura manualmente cada campo según tus necesidades.');
     }
   };
 
