@@ -109,6 +109,16 @@ export default function PromotionBuilder({
     return products.filter(p => productosRelacionados.includes(p.id));
   }, [products, productosRelacionados]);
 
+  // Imagen para la previsualización viva (del producto o URL personalizada)
+  const displayImage = useMemo(() => {
+    if (imagenUrl) return imagenUrl;
+    if (selectedProduct?.imagenUrl) return selectedProduct.imagenUrl;
+    if (selectedComboProducts.length > 0 && selectedComboProducts[0].imagenUrl) {
+      return selectedComboProducts[0].imagenUrl;
+    }
+    return '';
+  }, [imagenUrl, selectedProduct, selectedComboProducts]);
+
   // Precio base real de referencia
   const basePrice = useMemo(() => {
     if (alcance === 'PRODUCTOS' && selectedProduct) {
@@ -117,9 +127,10 @@ export default function PromotionBuilder({
     if (alcance === 'COMBO' && selectedComboProducts.length > 0) {
       return selectedComboProducts.reduce((sum, p) => sum + (Number(p.precio) || 0), 0);
     }
-    if (precioAnteriorInput) return precioAnteriorInput;
-    return 15.00; // Valor simulado general
-  }, [alcance, selectedProduct, selectedComboProducts, precioAnteriorInput]);
+    if (precioAnteriorInput && precioAnteriorInput > 0) return precioAnteriorInput;
+    if (products.length > 0 && products[0].precio) return Number(products[0].precio);
+    return 12.00;
+  }, [alcance, selectedProduct, selectedComboProducts, precioAnteriorInput, products]);
 
   // Autogenerar título y descripción inteligentes si el usuario no los ha personalizado
   useEffect(() => {
@@ -225,11 +236,13 @@ export default function PromotionBuilder({
       }
     }
 
+    const normType = (tipoPromo || '').toUpperCase();
     return {
       totalNormal,
       totalPromo,
       savings,
-      percentageOff
+      percentageOff,
+      normType
     };
   }, [tipoPromo, basePrice, precioPromo, esCostoCompleto, costoMaximoSubsidiado, cuponTipoModalidad]);
 
@@ -1331,51 +1344,94 @@ export default function PromotionBuilder({
               </span>
             </div>
 
-            {/* TARJETA PÚBLICA SIMULADA */}
-            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="px-2.5 py-1 bg-amber-500 text-slate-950 rounded-full text-[10px] font-black uppercase">
-                  {tipoPromo}
-                </span>
-                <span className="text-[10px] text-emerald-400 font-mono font-bold">
-                  {previewCalculation.percentageOff > 0 ? `${previewCalculation.percentageOff}% OFF` : 'OFERTA'}
-                </span>
+            {/* TARJETA PÚBLICA SIMULADA CON IMAGEN Y ESTÉTICA PREMIUM */}
+            <div className="bg-slate-950 rounded-3xl border border-slate-800 shadow-2xl overflow-hidden space-y-0">
+              
+              {/* IMAGEN DE CABECERA O HERO BANNER GASTRONÓMICO */}
+              <div className="relative h-44 w-full bg-gradient-to-br from-slate-900 via-amber-950 to-slate-950 overflow-hidden group">
+                {displayImage ? (
+                  <img
+                    src={displayImage}
+                    alt={titulo}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center space-y-2 relative">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-500/20 via-transparent to-transparent animate-pulse" />
+                    <span className="text-4xl">🍔</span>
+                    <span className="text-xs font-black text-amber-200 uppercase tracking-widest">Citiox Gastronomía</span>
+                  </div>
+                )}
+
+                {/* OVERLAY CON INSIGNIAS VIBRANTES */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+
+                <div className="absolute top-3 left-3 flex items-center gap-2">
+                  <span className="px-3 py-1 bg-amber-500 text-slate-950 font-black text-[10px] uppercase tracking-wider rounded-full shadow-lg">
+                    {previewCalculation.normType}
+                  </span>
+                </div>
+
+                <div className="absolute top-3 right-3">
+                  <span className="px-3.5 py-1 bg-emerald-500 text-slate-950 font-black text-xs rounded-full shadow-lg font-mono">
+                    {previewCalculation.percentageOff > 0 ? `-${previewCalculation.percentageOff}% OFF` : 'OFERTA'}
+                  </span>
+                </div>
+
+                <div className="absolute bottom-3 left-3 right-3">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-amber-500/30 inline-block truncate max-w-full">
+                    {selectedProduct ? `Platillo: ${selectedProduct.nombre}` : selectedCategory ? `Categoría: ${selectedCategory.nombre}` : 'Menú Completo'}
+                  </span>
+                </div>
               </div>
 
-              <div>
-                <h4 className="text-sm font-black text-white leading-tight">{titulo || 'Título de la Oferta'}</h4>
-                <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">{descripcion || 'Descripción promocional...'}</p>
-              </div>
+              {/* CUERPO DE DETALLES Y PRECIOS */}
+              <div className="p-4 space-y-3.5 bg-slate-950">
+                <div>
+                  <h4 className="text-base font-black text-white leading-snug">{titulo || 'Título de la Oferta'}</h4>
+                  <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">{descripcion || 'Descripción comercial de la oferta...'}</p>
+                </div>
 
-              <div className="bg-slate-900 p-3 rounded-xl flex items-baseline justify-between font-mono">
-                <span className="text-[10px] text-slate-400 uppercase font-sans">
-                  {tipoPromo.includes('3') ? 'Pagas 2 de 3:' : tipoPromo.includes('2') ? 'Pagas 1 de 2:' : 'Precio Final:'}
-                </span>
-                <div className="flex items-baseline gap-2">
-                  {previewCalculation.totalNormal > previewCalculation.totalPromo && (
-                    <span className="text-xs text-slate-500 line-through">${previewCalculation.totalNormal.toFixed(2)}</span>
+                {/* CAJA DE PRECIO Y DESGLOSE EN TIEMPO REAL */}
+                <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between font-mono">
+                    <span className="text-[11px] font-bold text-slate-400">
+                      {previewCalculation.normType.includes('3') 
+                        ? 'Llevas 3, pagas 2:' 
+                        : previewCalculation.normType.includes('2') 
+                        ? 'Llevas 2, pagas 1:' 
+                        : 'Precio Promocional:'}
+                    </span>
+                    <div className="flex items-baseline gap-2">
+                      {previewCalculation.totalNormal > previewCalculation.totalPromo && (
+                        <span className="text-xs text-slate-500 line-through">${previewCalculation.totalNormal.toFixed(2)}</span>
+                      )}
+                      <span className="text-lg font-black text-amber-400">${previewCalculation.totalPromo.toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  {previewCalculation.savings > 0 && (
+                    <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs font-black">
+                      <span className="text-emerald-400">🔥 Ahorro Total Cliente:</span>
+                      <span className="text-emerald-400 font-mono">${previewCalculation.savings.toFixed(2)}</span>
+                    </div>
                   )}
-                  <span className="text-base font-black text-amber-400">${previewCalculation.totalPromo.toFixed(2)}</span>
                 </div>
+
+                {/* ETIQUETAS DE CLIENTE Y FECHA */}
+                <div className="pt-1 flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-900">
+                  <div className="flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{tipoCliente === 'NEW' ? 'Solo Clientes Nuevos' : tipoCliente === 'RECURRING' ? 'Clientes Recurrentes' : 'Todos los Clientes'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{fechaInicio} al {fechaFin}</span>
+                  </div>
+                </div>
+
               </div>
 
-              {previewCalculation.savings > 0 && (
-                <div className="text-[11px] font-extrabold text-emerald-400 text-right">
-                  Ahorro estimado cliente: ${previewCalculation.savings.toFixed(2)}
-                </div>
-              )}
-            </div>
-
-            {/* DETALLES RESUMIDOS */}
-            <div className="space-y-2 text-xs text-slate-300">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-400">Segmento:</span>
-                <span className="font-bold text-white">{tipoCliente === 'NEW' ? 'Nuevos Clientes' : tipoCliente === 'RECURRING' ? 'Recurrentes' : 'Todos los Clientes'}</span>
-              </div>
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-400">Vigencia:</span>
-                <span className="font-bold text-white">{fechaInicio} al {fechaFin}</span>
-              </div>
             </div>
 
             <button
