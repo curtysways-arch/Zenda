@@ -5,7 +5,7 @@ import {
   Sparkles, Check, Clock, Users, Truck, ShoppingBag, Store, Utensils, Globe, 
   Calendar, Percent, DollarSign, Gift, Package, Tag, ChevronRight, Flame, 
   Calculator, ArrowRight, ArrowLeft, Search, X, AlertTriangle, ShieldCheck, 
-  HelpCircle, Settings, Layers, Zap, Info, ChevronDown
+  HelpCircle, Settings, Layers, Zap, Info, ChevronDown, Eye
 } from 'lucide-react';
 
 interface PromotionBuilderProps {
@@ -1331,116 +1331,180 @@ export default function PromotionBuilder({
 
         </div>
 
-        {/* COLUMNA DERECHA (1 COL): PREVISUALIZACIÓN VIVA Y SIMULADOR (DESKTOP & MOBILE STICKY) */}
+        {/* COLUMNA DERECHA (1 COL): PREVISUALIZACIÓN VIVA Y SIMULADOR (RÉPLICA EXACTA DEL DISEÑO) */}
         <div className="space-y-6">
-          <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-xl space-y-5 sticky top-6 border border-slate-800">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <Flame className="w-5 h-5 text-amber-400 animate-pulse" />
-                <h3 className="text-xs font-black uppercase tracking-wider text-white">Previsualización en Vivo</h3>
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-2xl space-y-4 sticky top-6 max-w-md mx-auto">
+            
+            {/* CABECERA VISTA PREVIA */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 bg-gradient-to-tr from-amber-500 to-orange-500 text-white rounded-2xl shadow-xs">
+                  <Flame className="w-5 h-5" />
+                </span>
+                <div>
+                  <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider">Vista Previa de la Promoción</h3>
+                  <p className="text-[10px] text-slate-500 font-medium">Así verán tus clientes esta oferta</p>
+                </div>
               </div>
-              <span className="text-[10px] font-mono text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-md border border-amber-400/20">
-                Live Preview
+              <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-black rounded-full border border-indigo-200 flex items-center gap-1">
+                <Eye className="w-3 h-3" /> Vista en vivo
               </span>
             </div>
 
-            {/* TARJETA PÚBLICA SIMULADA CON IMAGEN Y ESTÉTICA PREMIUM */}
-            <div className="bg-slate-950 rounded-3xl border border-slate-800 shadow-2xl overflow-hidden space-y-0">
-              
-              {/* IMAGEN DE CABECERA O HERO BANNER GASTRONÓMICO */}
-              <div className="relative h-44 w-full bg-gradient-to-br from-slate-900 via-amber-950 to-slate-950 overflow-hidden group">
+            {/* CARD 1: HERO DARK BANNER CON INSIGNIAS Y DIVIDER */}
+            <div className="relative rounded-3xl bg-gradient-to-b from-[#2d1154] via-[#1c0a38] to-[#0d031c] text-white p-5 text-center shadow-xl overflow-hidden space-y-3 border border-purple-900/40">
+              {/* Badges superiores */}
+              <div className="flex items-center justify-between gap-2">
+                <span className="px-3 py-1 bg-amber-400 text-slate-950 font-black text-[10px] uppercase rounded-full shadow-md flex items-center gap-1.5">
+                  <Percent className="w-3 h-3" />
+                  <span>{previewCalculation.normType}</span>
+                </span>
+                <span className="px-3 py-1 bg-emerald-400 text-slate-950 font-black text-[10px] uppercase rounded-full shadow-md">
+                  {previewCalculation.percentageOff > 0 ? `-${previewCalculation.percentageOff}% DESCUENTO` : 'OFERTA ESPECIAL'}
+                </span>
+              </div>
+
+              {/* Imagen principal flotante */}
+              <div className="w-24 h-24 mx-auto relative my-2">
                 {displayImage ? (
                   <img
                     src={displayImage}
                     alt={titulo}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover rounded-2xl shadow-2xl border-2 border-white/20"
                   />
                 ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center space-y-2 relative">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-500/20 via-transparent to-transparent animate-pulse" />
-                    <span className="text-4xl">🍔</span>
-                    <span className="text-xs font-black text-amber-200 uppercase tracking-widest">Citiox Gastronomía</span>
+                  <div className="w-full h-full flex items-center justify-center text-5xl drop-shadow-md">
+                    🍔
                   </div>
                 )}
-
-                {/* OVERLAY CON INSIGNIAS VIBRANTES */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-
-                <div className="absolute top-3 left-3 flex items-center gap-2">
-                  <span className="px-3 py-1 bg-amber-500 text-slate-950 font-black text-[10px] uppercase tracking-wider rounded-full shadow-lg">
-                    {previewCalculation.normType}
-                  </span>
-                </div>
-
-                <div className="absolute top-3 right-3">
-                  <span className="px-3.5 py-1 bg-emerald-500 text-slate-950 font-black text-xs rounded-full shadow-lg font-mono">
-                    {previewCalculation.percentageOff > 0 ? `-${previewCalculation.percentageOff}% OFF` : 'OFERTA'}
-                  </span>
-                </div>
-
-                <div className="absolute bottom-3 left-3 right-3">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-amber-500/30 inline-block truncate max-w-full">
-                    {selectedProduct ? `Platillo: ${selectedProduct.nombre}` : selectedCategory ? `Categoría: ${selectedCategory.nombre}` : 'Menú Completo'}
-                  </span>
-                </div>
               </div>
 
-              {/* CUERPO DE DETALLES Y PRECIOS */}
-              <div className="p-4 space-y-3.5 bg-slate-950">
-                <div>
-                  <h4 className="text-base font-black text-white leading-snug">{titulo || 'Título de la Oferta'}</h4>
-                  <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">{descripcion || 'Descripción comercial de la oferta...'}</p>
+              {/* Título & Divisor de Cubiertos */}
+              <div>
+                <h4 className="text-base font-black tracking-widest text-white uppercase italic">
+                  {selectedProduct ? selectedProduct.nombre : 'CITIOX GASTRONOMÍA'}
+                </h4>
+                <div className="flex items-center justify-center gap-2 my-1">
+                  <span className="h-[1px] w-8 bg-amber-400/50" />
+                  <Utensils className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="h-[1px] w-8 bg-amber-400/50" />
                 </div>
-
-                {/* CAJA DE PRECIO Y DESGLOSE EN TIEMPO REAL */}
-                <div className="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between font-mono">
-                    <span className="text-[11px] font-bold text-slate-400">
-                      {previewCalculation.normType.includes('3') 
-                        ? 'Llevas 3, pagas 2:' 
-                        : previewCalculation.normType.includes('2') 
-                        ? 'Llevas 2, pagas 1:' 
-                        : 'Precio Promocional:'}
-                    </span>
-                    <div className="flex items-baseline gap-2">
-                      {previewCalculation.totalNormal > previewCalculation.totalPromo && (
-                        <span className="text-xs text-slate-500 line-through">${previewCalculation.totalNormal.toFixed(2)}</span>
-                      )}
-                      <span className="text-lg font-black text-amber-400">${previewCalculation.totalPromo.toFixed(2)}</span>
-                    </div>
-                  </div>
-
-                  {previewCalculation.savings > 0 && (
-                    <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs font-black">
-                      <span className="text-emerald-400">🔥 Ahorro Total Cliente:</span>
-                      <span className="text-emerald-400 font-mono">${previewCalculation.savings.toFixed(2)}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* ETIQUETAS DE CLIENTE Y FECHA */}
-                <div className="pt-1 flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-900">
-                  <div className="flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-amber-400" />
-                    <span>{tipoCliente === 'NEW' ? 'Solo Clientes Nuevos' : tipoCliente === 'RECURRING' ? 'Clientes Recurrentes' : 'Todos los Clientes'}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                    <span>{fechaInicio} al {fechaFin}</span>
-                  </div>
-                </div>
-
+                <p className="text-xs text-slate-300 font-medium">
+                  Disfruta de nuestros mejores sabores <span className="text-amber-400 font-black">¡por menos!</span>
+                </p>
               </div>
 
+              {/* Pill inferior de alcance */}
+              <div className="pt-1">
+                <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-white text-purple-950 font-black text-[11px] uppercase rounded-full shadow-md">
+                  <span>🎂</span>
+                  <span>{selectedProduct ? `Platillo: ${selectedProduct.nombre}` : selectedCategory ? `Categoría: ${selectedCategory.nombre}` : 'Menú Completo'}</span>
+                </span>
+              </div>
             </div>
 
+            {/* CARD 2: BENEFICIO PRINCIPAL CON ICONO CIRCULAR Y % */}
+            <div className="p-3.5 bg-slate-50/90 rounded-2xl border border-slate-200 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-black text-lg shrink-0">
+                  <Tag className="w-5 h-5" />
+                </div>
+                <div>
+                  <h5 className="text-xs font-black text-emerald-700 uppercase">
+                    {previewCalculation.percentageOff > 0 ? `${previewCalculation.percentageOff}% DE DESCUENTO` : 'OFERTA ESPECIAL'}
+                  </h5>
+                  <p className="text-[11px] text-slate-600 font-bold leading-tight">
+                    {selectedProduct ? `en ${selectedProduct.nombre}` : selectedCategory ? `en categoría ${selectedCategory.nombre}` : 'en todo el menú'}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">
+                    {descripcion || 'Aprovecha esta promoción especial.'}
+                  </p>
+                </div>
+              </div>
+              <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-black text-xl shrink-0 opacity-70">
+                %
+              </div>
+            </div>
+
+            {/* CARD 3: DESGLOSE DE PRECIO Y CASILLA DE AHORRO */}
+            <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-2">
+              <div className="flex items-center gap-1.5 text-indigo-950 font-black text-[11px] uppercase tracking-wider">
+                <Tag className="w-3.5 h-3.5 text-indigo-600" />
+                <span>
+                  {previewCalculation.normType.includes('3') 
+                    ? 'LLEVAS 3, PAGAS 2' 
+                    : previewCalculation.normType.includes('2') 
+                    ? 'LLEVAS 2, PAGAS 1' 
+                    : 'PRECIO PROMOCIONAL'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <div className="flex items-baseline gap-3">
+                  {previewCalculation.totalNormal > previewCalculation.totalPromo && (
+                    <span className="text-base text-slate-400 font-bold line-through">
+                      ${previewCalculation.totalNormal.toFixed(2)}
+                    </span>
+                  )}
+                  <span className="text-2xl font-black text-indigo-600">
+                    ${previewCalculation.totalPromo.toFixed(2)}
+                  </span>
+                </div>
+
+                {previewCalculation.savings > 0 && (
+                  <div className="px-3.5 py-1.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-center">
+                    <span className="text-[9px] font-black uppercase text-emerald-800 block">AHORRAS</span>
+                    <span className="text-base font-black text-emerald-600">${previewCalculation.savings.toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+
+              <p className="text-[10px] text-slate-400 font-medium italic pt-1.5 border-t border-slate-100">
+                Este descuento se aplicará automáticamente al finalizar tu pedido.
+              </p>
+            </div>
+
+            {/* CARD 4: CONDICIONES (APLICA PARA & VIGENCIA EN 2 COLUMNAS) */}
+            <div className="p-3 bg-white rounded-2xl border border-slate-200 grid grid-cols-2 gap-2 text-xs">
+              <div className="flex items-start gap-2">
+                <Users className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="text-[9px] font-black uppercase text-slate-400 block">APLICA PARA</span>
+                  <span className="font-extrabold text-slate-800 text-[11px]">
+                    {tipoCliente === 'NEW' ? 'Clientes Nuevos' : tipoCliente === 'RECURRING' ? 'Clientes Recurrentes' : 'Todos los clientes'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2 border-l border-slate-100 pl-2">
+                <Calendar className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="text-[9px] font-black uppercase text-slate-400 block">VIGENCIA</span>
+                  <span className="font-bold text-slate-700 text-[10px] block leading-tight">
+                    Del {fechaInicio} al {fechaFin}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* CARD 5: MENSAJE IMPORTANTE */}
+            <div className="p-3 bg-purple-50/80 border border-purple-200 rounded-2xl flex items-center gap-2 text-xs text-purple-900">
+              <Info className="w-4 h-4 text-purple-600 shrink-0" />
+              <span className="text-[10px] font-medium leading-tight">
+                <strong className="font-black uppercase text-purple-950">IMPORTANTE:</strong> Esta promoción será visible para tus clientes una vez que sea publicada.
+              </span>
+            </div>
+
+            {/* BOTÓN PRINCIPAL DE ACCIÓN */}
             <button
               type="submit"
               disabled={!!validationError}
-              className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-md cursor-pointer transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg cursor-pointer transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              <Check size={18} /> Publicar Oferta
+              <Zap className="w-4 h-4 fill-white" />
+              <span>PUBLICAR PROMOCIÓN</span>
             </button>
+
           </div>
         </div>
 
