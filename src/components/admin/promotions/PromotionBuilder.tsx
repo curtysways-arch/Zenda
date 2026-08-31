@@ -166,46 +166,72 @@ export default function PromotionBuilder({
     if (autoDesc) setDescripcion(autoDesc);
   }, [tipoPromo, alcance, selectedProduct, selectedCategory, selectedComboProducts, precioPromo, cuponCodigo, cuponTipoModalidad, esCostoCompleto, costoMaximoSubsidiado, beneficioPersonalizado, userEditedTitle]);
 
-  // CÁLCULOS EN TIEMPO REAL
-  const calculatedSavings = useMemo(() => {
+  // CÁLCULOS MATEMÁTICOS INTELIGENTES EN TIEMPO REAL PARA LA PREVISUALIZACIÓN VIVA
+  const previewCalculation = useMemo(() => {
+    let totalNormal = basePrice;
+    let totalPromo = basePrice;
+    let savings = 0;
+    let percentageOff = 0;
+
     if (tipoPromo === 'PRECIO_ESPECIAL') {
-      return Math.max(0, basePrice - precioPromo);
+      totalNormal = basePrice;
+      totalPromo = Math.max(0, precioPromo);
+      savings = Math.max(0, totalNormal - totalPromo);
+      percentageOff = totalNormal > 0 ? Math.min(100, Math.round((savings / totalNormal) * 100)) : 0;
+    } else if (tipoPromo === 'PORCENTAJE') {
+      totalNormal = basePrice;
+      percentageOff = Math.min(100, Math.max(0, precioPromo));
+      savings = totalNormal * (percentageOff / 100);
+      totalPromo = Math.max(0, totalNormal - savings);
+    } else if (tipoPromo === 'DESCUENTO_FIJO') {
+      totalNormal = basePrice;
+      savings = Math.min(totalNormal, Math.max(0, precioPromo));
+      totalPromo = Math.max(0, totalNormal - savings);
+      percentageOff = totalNormal > 0 ? Math.min(100, Math.round((savings / totalNormal) * 100)) : 0;
+    } else if (tipoPromo === 'DOS_POR_UNO' || tipoPromo === '2X1') {
+      totalNormal = basePrice * 2;
+      totalPromo = basePrice;
+      savings = basePrice;
+      percentageOff = 50;
+    } else if (tipoPromo === 'TRES_POR_DOS' || tipoPromo === '3X2') {
+      totalNormal = basePrice * 3;
+      totalPromo = basePrice * 2;
+      savings = basePrice;
+      percentageOff = 33;
+    } else if (tipoPromo === 'COMBO') {
+      totalNormal = basePrice;
+      totalPromo = Math.max(0, precioPromo);
+      savings = Math.max(0, totalNormal - totalPromo);
+      percentageOff = totalNormal > 0 ? Math.min(100, Math.round((savings / totalNormal) * 100)) : 0;
+    } else if (tipoPromo === 'ENVIO_GRATIS') {
+      totalNormal = 2.50;
+      savings = esCostoCompleto ? 2.50 : Math.min(2.50, costoMaximoSubsidiado || 0);
+      totalPromo = Math.max(0, totalNormal - savings);
+      percentageOff = esCostoCompleto ? 100 : Math.round((savings / 2.50) * 100);
+    } else if (tipoPromo === 'CUPON') {
+      totalNormal = basePrice;
+      if (cuponTipoModalidad === 'PORCENTAJE') {
+        percentageOff = Math.min(100, Math.max(0, precioPromo));
+        savings = totalNormal * (percentageOff / 100);
+        totalPromo = Math.max(0, totalNormal - savings);
+      } else if (cuponTipoModalidad === 'DESCUENTO_FIJO') {
+        savings = Math.min(totalNormal, Math.max(0, precioPromo));
+        totalPromo = Math.max(0, totalNormal - savings);
+        percentageOff = totalNormal > 0 ? Math.min(100, Math.round((savings / totalNormal) * 100)) : 0;
+      } else {
+        totalPromo = Math.max(0, precioPromo);
+        savings = Math.max(0, totalNormal - totalPromo);
+        percentageOff = totalNormal > 0 ? Math.min(100, Math.round((savings / totalNormal) * 100)) : 0;
+      }
     }
-    if (tipoPromo === 'PORCENTAJE') {
-      return basePrice * (precioPromo / 100);
-    }
-    if (tipoPromo === 'DESCUENTO_FIJO') {
-      return Math.min(basePrice, precioPromo);
-    }
-    if (tipoPromo === 'DOS_POR_UNO' || tipoPromo === '2X1') {
-      return basePrice;
-    }
-    if (tipoPromo === 'TRES_POR_DOS' || tipoPromo === '3X2') {
-      return basePrice;
-    }
-    if (tipoPromo === 'COMBO') {
-      return Math.max(0, basePrice - precioPromo);
-    }
-    if (tipoPromo === 'ENVIO_GRATIS') {
-      return esCostoCompleto ? 2.50 : Math.min(2.50, costoMaximoSubsidiado || 0);
-    }
-    if (tipoPromo === 'CUPON') {
-      if (cuponTipoModalidad === 'PORCENTAJE') return basePrice * (precioPromo / 100);
-      if (cuponTipoModalidad === 'DESCUENTO_FIJO') return Math.min(basePrice, precioPromo);
-      return Math.max(0, basePrice - precioPromo);
-    }
-    return 0;
+
+    return {
+      totalNormal,
+      totalPromo,
+      savings,
+      percentageOff
+    };
   }, [tipoPromo, basePrice, precioPromo, esCostoCompleto, costoMaximoSubsidiado, cuponTipoModalidad]);
-
-  const finalCalculatedPrice = useMemo(() => {
-    if (tipoPromo === 'PRECIO_ESPECIAL' || tipoPromo === 'COMBO') return precioPromo;
-    return Math.max(0, basePrice - calculatedSavings);
-  }, [tipoPromo, basePrice, precioPromo, calculatedSavings]);
-
-  const discountPercentageEquivalent = useMemo(() => {
-    if (basePrice <= 0) return 0;
-    return Math.min(100, Math.round((calculatedSavings / basePrice) * 100));
-  }, [basePrice, calculatedSavings]);
 
   // VALIDACIONES EN TIEMPO REAL
   const validationError = useMemo(() => {
@@ -732,7 +758,7 @@ export default function PromotionBuilder({
                       <span className="text-[10px] font-black uppercase text-slate-400 block">Cálculo de Ahorro</span>
                       <div className="flex items-baseline justify-between">
                         <span className="text-xs font-bold text-slate-600">Ahorro Cliente:</span>
-                        <span className="text-sm font-black text-emerald-600">${calculatedSavings.toFixed(2)} ({discountPercentageEquivalent}% OFF)</span>
+                        <span className="text-sm font-black text-emerald-600">${previewCalculation.savings.toFixed(2)} ({previewCalculation.percentageOff}% OFF)</span>
                       </div>
                     </div>
                   </div>
@@ -764,11 +790,11 @@ export default function PromotionBuilder({
                     </div>
                     <div className="flex justify-between text-emerald-600 font-bold">
                       <span>Descuento Calculado ({precioPromo}%):</span>
-                      <span>-${calculatedSavings.toFixed(2)}</span>
+                      <span>-${previewCalculation.savings.toFixed(2)}</span>
                     </div>
                     <div className="border-t border-slate-100 pt-1 flex justify-between font-black text-slate-900">
                       <span>Cliente Paga:</span>
-                      <span className="text-amber-600">${finalCalculatedPrice.toFixed(2)}</span>
+                      <span className="text-amber-600">${previewCalculation.totalPromo.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -802,7 +828,7 @@ export default function PromotionBuilder({
                     </div>
                     <div className="border-t border-slate-100 pt-1 flex justify-between font-black text-slate-900">
                       <span>Cliente Paga:</span>
-                      <span className="text-amber-600">${finalCalculatedPrice.toFixed(2)}</span>
+                      <span className="text-amber-600">${previewCalculation.totalPromo.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -816,8 +842,8 @@ export default function PromotionBuilder({
                   </span>
                   {selectedProduct ? (
                     <div className="p-3 bg-white rounded-xl border border-purple-200 flex justify-between items-center text-xs">
-                      <span className="font-black text-slate-900">{selectedProduct.nombre} (${selectedProduct.precio.toFixed(2)})</span>
-                      <span className="font-bold text-purple-700">Ahorro: ${basePrice.toFixed(2)}</span>
+                      <span className="font-black text-slate-900">{selectedProduct.nombre} (${selectedProduct.precio.toFixed(2)} c/u)</span>
+                      <span className="font-bold text-purple-700">Pagas ${previewCalculation.totalPromo.toFixed(2)} (Ahorras ${previewCalculation.savings.toFixed(2)})</span>
                     </div>
                   ) : (
                     <button
@@ -877,7 +903,7 @@ export default function PromotionBuilder({
                     </div>
                     <div className="p-2.5 bg-white rounded-xl border border-purple-200 flex flex-col justify-between">
                       <span className="text-[10px] font-bold text-slate-400">Valor Normal Sumado:</span>
-                      <span className="font-black text-purple-900 text-sm">${basePrice.toFixed(2)} (Ahorro: ${calculatedSavings.toFixed(2)})</span>
+                      <span className="font-black text-purple-900 text-sm">${basePrice.toFixed(2)} (Ahorro: ${previewCalculation.savings.toFixed(2)})</span>
                     </div>
                   </div>
                 </div>
@@ -1312,7 +1338,7 @@ export default function PromotionBuilder({
                   {tipoPromo}
                 </span>
                 <span className="text-[10px] text-emerald-400 font-mono font-bold">
-                  {discountPercentageEquivalent > 0 ? `${discountPercentageEquivalent}% OFF` : 'OFERTA'}
+                  {previewCalculation.percentageOff > 0 ? `${previewCalculation.percentageOff}% OFF` : 'OFERTA'}
                 </span>
               </div>
 
@@ -1322,18 +1348,20 @@ export default function PromotionBuilder({
               </div>
 
               <div className="bg-slate-900 p-3 rounded-xl flex items-baseline justify-between font-mono">
-                <span className="text-[10px] text-slate-400 uppercase font-sans">Precio Final:</span>
+                <span className="text-[10px] text-slate-400 uppercase font-sans">
+                  {tipoPromo.includes('3') ? 'Pagas 2 de 3:' : tipoPromo.includes('2') ? 'Pagas 1 de 2:' : 'Precio Final:'}
+                </span>
                 <div className="flex items-baseline gap-2">
-                  {basePrice > finalCalculatedPrice && (
-                    <span className="text-xs text-slate-500 line-through">${basePrice.toFixed(2)}</span>
+                  {previewCalculation.totalNormal > previewCalculation.totalPromo && (
+                    <span className="text-xs text-slate-500 line-through">${previewCalculation.totalNormal.toFixed(2)}</span>
                   )}
-                  <span className="text-base font-black text-amber-400">${finalCalculatedPrice.toFixed(2)}</span>
+                  <span className="text-base font-black text-amber-400">${previewCalculation.totalPromo.toFixed(2)}</span>
                 </div>
               </div>
 
-              {calculatedSavings > 0 && (
+              {previewCalculation.savings > 0 && (
                 <div className="text-[11px] font-extrabold text-emerald-400 text-right">
-                  Ahorro estimado cliente: ${calculatedSavings.toFixed(2)}
+                  Ahorro estimado cliente: ${previewCalculation.savings.toFixed(2)}
                 </div>
               )}
             </div>
