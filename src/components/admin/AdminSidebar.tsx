@@ -173,11 +173,11 @@ export default function AdminSidebar({
     // Core Operational Capabilities
     if (capabilities.orders) {
       items.push({ name: 'Ventas', href: '/admin/ventas', icon: Store, section: 'GESTIÓN OPERATIVA' });
-      items.push({ name: 'Delivery', href: '/admin/pedidos-online', icon: Bike, section: 'GESTIÓN OPERATIVA', badge: pendingOrders > 0 ? pendingOrders : undefined });
+      items.push({ name: 'Envíos / Pedidos', href: '/admin/pedidos-online', icon: Bike, section: 'GESTIÓN OPERATIVA', badge: pendingOrders > 0 ? pendingOrders : undefined });
     }
     items.push({ name: 'Caja & Finanzas', href: '/admin/caja', icon: Wallet, section: 'GESTIÓN OPERATIVA' });
     if (capabilities.dispatch) {
-      items.push({ name: 'Órdenes', href: '/admin/despacho', icon: ClipboardList, section: 'GESTIÓN OPERATIVA' });
+      items.push({ name: 'Despachos', href: '/admin/despacho', icon: ClipboardList, section: 'GESTIÓN OPERATIVA' });
     }
     if (capabilities.tables) {
       items.push({ name: 'Mesas', href: '/admin/mesas', icon: Layout, section: 'GESTIÓN OPERATIVA' });

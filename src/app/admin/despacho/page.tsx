@@ -36,7 +36,19 @@ interface Order {
 export default function AdminDespachoPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tipoNegocio, setTipoNegocio] = useState<string>('');
   const [filterChannel, setFilterChannel] = useState<'ALL' | 'DELIVERY' | 'TABLE' | 'PICKUP'>('ALL');
+
+  useEffect(() => {
+    fetch('/api/negocio')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.tipoNegocio) setTipoNegocio((data.tipoNegocio || '').toUpperCase());
+      })
+      .catch(() => {});
+  }, []);
+
+  const isStore = tipoNegocio === 'TIENDA' || tipoNegocio === 'STORE' || tipoNegocio === 'PRODUCTOS' || tipoNegocio === 'E-COMMERCE';
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDate, setFilterDate] = useState<'today' | 'yesterday' | 'all' | 'custom'>('today');
   const [customDate, setCustomDate] = useState<string>('');
@@ -248,9 +260,9 @@ export default function AdminDespachoPage() {
       }
     }
 
-    if (isTable)    return { label: `🍽️ ${cleanMesaName}`, color: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
-    if (isDelivery) return { label: '🛵 Delivery',       color: 'bg-amber-50 text-amber-800 border-amber-200' };
-    return              { label: '🛍️ Para Llevar',      color: 'bg-sky-50 text-sky-800 border-sky-200' };
+    if (isTable)    return { label: isStore ? '🛒 Venta Presencial' : `🍽️ ${cleanMesaName}`, color: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+    if (isDelivery) return { label: isStore ? '📦 Envío a Domicilio' : '🛵 Delivery',       color: 'bg-amber-50 text-amber-800 border-amber-200' };
+    return              { label: isStore ? '🛍️ Retiro en Tienda' : '🛍️ Para Llevar',      color: 'bg-sky-50 text-sky-800 border-sky-200' };
   };
 
   return (
@@ -264,11 +276,17 @@ export default function AdminDespachoPage() {
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-black text-slate-900 tracking-tight">Órdenes del Día</h1>
-              <span className="px-2.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-black rounded-md uppercase tracking-wider">Historial Oficial</span>
+              <h1 className="text-xl font-black text-slate-900 tracking-tight">
+                {isStore ? 'Órdenes de Venta & Despachos' : 'Órdenes del Día'}
+              </h1>
+              <span className="px-2.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-black rounded-md uppercase tracking-wider">
+                {isStore ? 'Tienda Online' : 'Historial Oficial'}
+              </span>
             </div>
             <p className="text-xs text-slate-500 font-semibold mt-0.5">
-              Mesa · Para Llevar · Delivery — todos los estados, forma de pago y detalles completos.
+              {isStore 
+                ? 'Envío a Domicilio · Retiro en Tienda · Despachos e-commerce — estados de entrega y pagos.' 
+                : 'Mesa · Para Llevar · Delivery — todos los estados, forma de pago y detalles completos.'}
             </p>
           </div>
         </div>
@@ -287,9 +305,9 @@ export default function AdminDespachoPage() {
         <div className="flex flex-wrap items-center gap-1.5">
           {[
             { key: 'ALL',      label: `Todos (${orders.length})`, icon: null },
-            { key: 'DELIVERY', label: 'Delivery',   icon: <Bike className="size-3.5 text-amber-500" /> },
-            { key: 'TABLE',    label: 'En Mesa',    icon: <Utensils className="size-3.5 text-emerald-600" /> },
-            { key: 'PICKUP',   label: 'Para Llevar', icon: <ShoppingBag className="size-3.5 text-sky-600" /> },
+            { key: 'DELIVERY', label: isStore ? 'Envío a Domicilio' : 'Delivery', icon: <Truck className="size-3.5 text-amber-500" /> },
+            { key: 'PICKUP',   label: isStore ? 'Retiro en Tienda' : 'Para Llevar', icon: <ShoppingBag className="size-3.5 text-sky-600" /> },
+            { key: 'TABLE',    label: isStore ? 'Venta Presencial' : 'En Mesa', icon: <Utensils className="size-3.5 text-emerald-600" /> },
           ].map(f => (
             <button
               key={f.key}
