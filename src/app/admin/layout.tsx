@@ -13,14 +13,14 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { AlertTriangle, Rocket } from 'lucide-react';
 import Link from 'next/link';
-import { destroyDelegatedSession, logDelegatedAudit } from '@/lib/delegatedAuth';
+import { destroyDelegatedSession, getDelegatedSession, getEffectiveAdminSession, logDelegatedAudit } from '@/lib/delegatedAuth';
 
 export default async function AdminLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const session = await getServerSession(authOptions);
+    const session = await getEffectiveAdminSession();
 
     if (!session?.user) {
         redirect('/login');

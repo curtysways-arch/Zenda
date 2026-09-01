@@ -1,6 +1,8 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 const COOKIE_NAME = 'citiox_delegated_session';
 const DELEGATION_DURATION_MINUTES = 30;
@@ -99,6 +101,67 @@ export async function getDelegatedSession(): Promise<{
     } catch (error) {
         return { isValid: false, payload: null, isExpired: false };
     }
+}
+
+/**
+ * Obtiene la sesión efectiva para el panel Admin (Server Components & Route Handlers).
+ * Resuelve y garantiza el acceso cuando existe un token de delegación activo del SuperAdmin.
+ */
+export async function getEffectiveAdminSession() {
+    const session = await getServerSession(authOptions);
+    const user = session?.user as any;
+    if (user?.negocioId) {
+        return session;
+    }
+
+    const delegated = await getDelegatedSession();
+    if (delegated.isValid && delegated.payload) {
+        let slug = null;
+        let isDemo = false;
+        let tipoNegocio = 'RESERVA';
+
+        try {
+            const targetNegocio: any = await prisma.negocio.findUnique({
+                where: { id: delegated.payload.targetBusinessId },
+                select: { slug: true, isDemo: true, tipoNegocio: true, nombre: true }
+            });
+            if (targetNegocio) {
+                slug = targetNegocio.slug;
+                isDemo = targetNegocio.isDemo || false;
+                tipoNegocio = targetNegocio.tipoNegocio || 'RESERVA';
+            }
+        } catch (e) {}
+
+        return {
+            user: {
+                id: user?.id || delegated.payload.superadminId,
+                name: user?.name || delegated.payload.superadminName || 'SuperAdmin',
+                email: user?.email || 'superadmin@citiox.com',
+                role: 'SUPERADMIN',
+                roles: ['SUPERADMIN'],
+                isAdminUser: true,
+                negocioId: delegated.payload.targetBusinessId,
+                isDelegated: true,
+                targetBusinessName: delegated.payload.targetBusinessName,
+                delegatedExpiresAt: delegated.payload.exp * 1000,
+                delegatedBy: delegated.payload.superadminId,
+                slug,
+                isDemo,
+                tipoNegocio
+            }
+        } as any;
+    }
+
+    if (delegated.isExpired) {
+        return {
+            user: {
+                ...(session?.user || {}),
+                isDelegatedExpired: true
+            }
+        } as any;
+    }
+
+    return session;
 }
 
 /**
