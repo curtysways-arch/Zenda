@@ -57,6 +57,8 @@ export default function DelegatedAdminBanner({ businessName, expiresAt, isDemo }
         }
     };
 
+    const isDemoMode = Boolean(isDemo || (expiresAt && (expiresAt - Date.now() > 2 * 60 * 60 * 1000)));
+
     return (
         <div className="bg-slate-900 border-b border-amber-500/30 text-white px-4 md:px-8 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-xl z-50 sticky top-0 animate-in slide-in-from-top duration-300">
             <div className="flex items-center gap-3">
@@ -74,7 +76,7 @@ export default function DelegatedAdminBanner({ businessName, expiresAt, isDemo }
             </div>
 
             <div className="flex items-center gap-4">
-                {isDemo || !expiresAt ? (
+                {isDemoMode ? (
                     <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-300 bg-emerald-950/80 px-3 py-1 rounded-xl border border-emerald-500/30">
                         <Sparkles size={14} className="text-emerald-400" />
                         <span className="text-[10px] uppercase font-black tracking-widest">Negocio Demo · Sin límite de tiempo</span>
