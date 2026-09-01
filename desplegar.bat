@@ -11,7 +11,7 @@ git push origin main
 
 echo.
 echo 2. Conectando al VPS, compilando y reiniciando app...
-ssh root@citiox.com "cd /opt/Zenda || cd /root/zenda || cd /var/www/zenda ; git fetch origin main && git reset --hard origin/main && npx tsx prisma/seed_demo_canchas.ts && npm run build && pm2 restart all"
+ssh root@citiox.com "cd /opt/Zenda || cd /root/zenda || cd /var/www/zenda ; git fetch origin main && git reset --hard origin/main && npx prisma db push && npx tsx prisma/seed_demo_canchas.ts && npm run build && pm2 restart all"
 
 echo.
 echo ===================================================
