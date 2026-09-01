@@ -14,6 +14,7 @@ import { defineConfig } from "prisma/config";
 const rawUrl = process.env["DATABASE_URL"] || "file:./dev.db";
 
 const isPg = rawUrl.startsWith("postgresql://") || rawUrl.startsWith("postgres://");
+const formattedUrl = isPg ? rawUrl : (rawUrl.startsWith("file:") ? rawUrl : `file:${rawUrl}`);
 
 // Para PostgreSQL usamos @prisma/adapter-pg con el pool de `pg`
 // Para SQLite usamos @prisma/adapter-libsql
@@ -29,16 +30,16 @@ function buildAdapter() {
     // SQLite
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { PrismaLibSql } = require("@prisma/adapter-libsql");
-    const resolvedUrl = rawUrl.startsWith("file://")
-        ? rawUrl
-        : `file://${rawUrl.replace(/^file:(\.\/)?/, "")}`;
+    const resolvedUrl = formattedUrl.startsWith("file://")
+        ? formattedUrl
+        : `file://${formattedUrl.replace(/^file:(\.\/)?/, "")}`;
     return new PrismaLibSql({ url: resolvedUrl });
 }
 
 export default defineConfig({
     schema: "prisma/schema.prisma",
     datasource: {
-        url: rawUrl,
+        url: formattedUrl,
     },
     migrations: {
         seed: "npx tsx prisma/seed.ts",
