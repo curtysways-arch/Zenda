@@ -70,6 +70,58 @@ function StoreLandingContent({
   const [selectedProductForModal, setSelectedProductForModal] = useState<DetailedProduct | null>(null);
   const [isMapModalOpen, setIsMapModalOpen] = useState<boolean>(false);
 
+  // Navegación por Pestañas (Inicio, Ofertas, Mis Pedidos, Mi Cuenta)
+  const [activeTab, setActiveTab] = useState<'inicio' | 'ofertas' | 'pedidos' | 'cuenta'>('inicio');
+  const [clientPhone, setClientPhone] = useState('');
+  const [clientName, setClientName] = useState('');
+  const [clientAddress, setClientAddress] = useState('');
+  const [clientReference, setClientReference] = useState('');
+
+  React.useEffect(() => {
+    try {
+      const phone = localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone') || '';
+      const name = localStorage.getItem('pinchos_client_name') || localStorage.getItem('user_name') || '';
+      const addr = localStorage.getItem('pinchos_client_address') || '';
+      const ref = localStorage.getItem('pinchos_client_reference') || '';
+      if (phone) setClientPhone(phone);
+      if (name) setClientName(name);
+      if (addr) setClientAddress(addr);
+      if (ref) setClientReference(ref);
+    } catch (e) {}
+  }, []);
+
+  React.useEffect(() => {
+    const updateTab = () => {
+      if (typeof window === 'undefined') return;
+      const hash = window.location.hash.replace('#', '').toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+
+      if (hash === 'ofertas' || tabParam === 'ofertas') setActiveTab('ofertas');
+      else if (hash === 'pedidos' || tabParam === 'pedidos') setActiveTab('pedidos');
+      else if (hash === 'cuenta' || hash === 'perfil' || tabParam === 'cuenta' || tabParam === 'perfil') setActiveTab('cuenta');
+      else setActiveTab('inicio');
+    };
+
+    updateTab();
+
+    const handleCustomTab = (e: any) => {
+      if (e.detail) {
+        if (e.detail === 'ofertas') setActiveTab('ofertas');
+        else if (e.detail === 'pedidos') setActiveTab('pedidos');
+        else if (e.detail === 'cuenta' || e.detail === 'perfil') setActiveTab('cuenta');
+        else if (e.detail === 'inicio') setActiveTab('inicio');
+      }
+    };
+
+    window.addEventListener('hashchange', updateTab);
+    window.addEventListener('citiox_change_tab', handleCustomTab);
+    return () => {
+      window.removeEventListener('hashchange', updateTab);
+      window.removeEventListener('citiox_change_tab', handleCustomTab);
+    };
+  }, []);
+
   // Filtrar productos por búsqueda y categoría
   const filteredProducts = useMemo(() => {
     return initialProducts.filter((product) => {
@@ -156,6 +208,180 @@ function StoreLandingContent({
         </div>
       </header>
 
+      {/* ── VISTA 1: OFERTAS ── */}
+      {activeTab === 'ofertas' && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 animate-fadeIn">
+          <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 p-6 sm:p-8 rounded-3xl text-white shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <span className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-100 backdrop-blur-md">
+                🔥 Promociones & Descuentos
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white mt-2">Ofertas Especiales</h2>
+              <p className="text-xs sm:text-sm text-white/90 font-medium">Aprovecha los mejores precios y promociones exclusivas</p>
+            </div>
+            <button
+              onClick={() => { window.location.hash = ''; setActiveTab('inicio'); }}
+              className="px-4 py-2.5 bg-white text-slate-900 font-extrabold text-xs rounded-xl shadow-lg hover:bg-slate-100 transition-all shrink-0 cursor-pointer"
+            >
+              Ver Todo el Catálogo →
+            </button>
+          </div>
+
+          <div className="mt-8 bg-white border-2 border-dashed border-amber-200 p-8 rounded-3xl text-center space-y-3">
+            <div className="size-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center mx-auto shadow-inner">
+              <Flame className="w-7 h-7 animate-bounce" />
+            </div>
+            <h3 className="text-base font-black text-slate-900 uppercase">Ofertas Exclusivas de la Tienda</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
+              ¡Disfruta de nuestros mejores precios directos en todo el catálogo de productos!
+            </p>
+            <button
+              onClick={() => { window.location.hash = ''; setActiveTab('inicio'); }}
+              className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black uppercase shadow-md hover:bg-slate-800 transition-all cursor-pointer"
+            >
+              Ver Productos Destacados
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* ── VISTA 2: MIS PEDIDOS ── */}
+      {activeTab === 'pedidos' && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 animate-fadeIn space-y-6">
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 p-6 sm:p-8 rounded-3xl text-white shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <span className="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-500/30">
+                📦 Mis Pedidos & Rastreo
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white mt-2">Seguimiento de Compras</h2>
+              <p className="text-xs sm:text-sm text-slate-300 font-medium">Consulta el estado de tus pedidos recientes y entregas</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-2xs space-y-4">
+            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">Tus Datos de Cliente</h3>
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <input
+                type="tel"
+                value={clientPhone}
+                onChange={(e) => setClientPhone(e.target.value)}
+                placeholder="Ingresa tu número de WhatsApp o Teléfono"
+                className="w-full sm:flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
+              />
+              <button
+                onClick={() => {
+                  if (clientPhone) {
+                    localStorage.setItem('pinchos_client_phone', clientPhone);
+                    alert(`Buscando pedidos registrados para el número ${clientPhone}...`);
+                  }
+                }}
+                className="w-full sm:w-auto px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-2xl shadow-md cursor-pointer transition-all shrink-0"
+              >
+                Buscar Mis Pedidos
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white border-2 border-dashed border-slate-200 p-8 rounded-3xl text-center space-y-3">
+            <div className="size-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto shadow-inner">
+              <ShoppingBag className="w-7 h-7" />
+            </div>
+            <h3 className="text-base font-black text-slate-800 uppercase">Sin Pedidos Pendientes</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
+              Al realizar una compra en la tienda podrás hacerle seguimiento en tiempo real desde este panel.
+            </p>
+            <button
+              onClick={() => { window.location.hash = ''; setActiveTab('inicio'); }}
+              className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black uppercase shadow-md hover:bg-slate-800 transition-all cursor-pointer"
+            >
+              Realizar una Compra
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* ── VISTA 3: MI CUENTA ── */}
+      {activeTab === 'cuenta' && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 animate-fadeIn space-y-6">
+          <div className="bg-gradient-to-r from-cyan-900 via-slate-900 to-slate-950 p-6 sm:p-8 rounded-3xl text-white shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-[10px] font-black uppercase tracking-widest border border-cyan-500/30">
+                👤 Mi Cuenta & Perfil
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white mt-2">Datos de Envío y Cliente</h2>
+              <p className="text-xs sm:text-sm text-slate-300 font-medium">Guarda tu información para compras 1-clic rápidas</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-4">
+            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-3">Información Personal Guardada</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Nombre Completo</label>
+                <input
+                  type="text"
+                  value={clientName}
+                  onChange={(e) => setClientName(e.target.value)}
+                  placeholder="ej. Carlos Caicedo"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Teléfono / WhatsApp</label>
+                <input
+                  type="tel"
+                  value={clientPhone}
+                  onChange={(e) => setClientPhone(e.target.value)}
+                  placeholder="ej. 0998877665"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Dirección Habitual de Entrega</label>
+                <input
+                  type="text"
+                  value={clientAddress}
+                  onChange={(e) => setClientAddress(e.target.value)}
+                  placeholder="ej. Av. 10 de Agosto N24-12"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Referencia de Domicilio (opcional)</label>
+                <input
+                  type="text"
+                  value={clientReference}
+                  onChange={(e) => setClientReference(e.target.value)}
+                  placeholder="ej. Frente a la farmacia o conjunto residencial"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (clientName) localStorage.setItem('pinchos_client_name', clientName);
+                  if (clientPhone) localStorage.setItem('pinchos_client_phone', clientPhone);
+                  if (clientAddress) localStorage.setItem('pinchos_client_address', clientAddress);
+                  if (clientReference) localStorage.setItem('pinchos_client_reference', clientReference);
+                  alert("¡Tus datos de cuenta han sido guardados con éxito!");
+                }}
+                className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg transition-all cursor-pointer"
+              >
+                💾 Guardar Mis Datos
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── VISTA 0: INICIO ── */}
+      {activeTab === 'inicio' && (
+        <>
       {/* ── 2. HERO CAROUSEL UNIVERSAL ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6">
         <UniversalHeroCarousel
@@ -318,6 +544,8 @@ function StoreLandingContent({
           </a>
         )}
       </footer>
+      </>
+      )}
 
       {/* ── 7. MODALES (VARIANTES, CARRITO & MAPA) ── */}
       <ProductVariantModal
