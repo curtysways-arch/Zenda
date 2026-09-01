@@ -21,3 +21,9 @@ tmp
 
 .DS_Store
 Thumbs.db
+
+# WhatsApp Web Bot Runtime Caches
+.wwebjs_auth
+.wwebjs_cache
+**/wwebjs_auth/**
+**/wwebjs_cache/**
