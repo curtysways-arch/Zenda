@@ -50,7 +50,8 @@ export default function AdminSidebar({
   const { confirm } = useConfirm();
   const pathname = usePathname();
   const { data: session } = useSession();
-  const role = (session?.user as any)?.role || 'STAFF';
+  const userObj = session?.user as any;
+  const role = userObj?.isDelegated ? 'SUPERADMIN' : (userObj?.role || 'STAFF');
 
   const [isOpen, setIsOpen] = useState(false);
   const [pendingOrders, setPendingOrders] = useState(0);
@@ -247,7 +248,7 @@ export default function AdminSidebar({
     items.push({ name: 'Mi Plan', href: '/admin/plan', icon: Sparkles, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     items.push({ name: 'Super Panel', href: '/superadmin', icon: ShieldCheck, section: 'CONFIGURACIÓN', roles: ['SUPERADMIN'] });
 
-    const userIsSuperAdmin = role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || (session?.user as any)?.isAdminUser === true;
+    const userIsSuperAdmin = role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || userObj?.isAdminUser === true || userObj?.isDelegated === true;
     return items.filter(item => {
       if (userIsSuperAdmin) return true;
       if (!item.roles) return true;
