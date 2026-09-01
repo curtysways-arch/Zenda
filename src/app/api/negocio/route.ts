@@ -3,12 +3,13 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { checkDemoRestriction } from '@/lib/demo-protection';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
         const negocioId = (session.user as any).negocioId;

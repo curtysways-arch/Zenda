@@ -52,19 +52,28 @@ export async function POST(
         // Verificar existencia del negocio objetivo
         const negocio = await prisma.negocio.findUnique({
             where: { id: businessId },
-            select: { id: true, nombre: true, isDemo: true }
+            select: { id: true, nombre: true, slug: true, isDemo: true }
         });
 
         if (!negocio) {
             return NextResponse.json({ error: 'El negocio no existe' }, { status: 404 });
         }
 
+        const isDemoBusiness = Boolean(
+            negocio.isDemo ||
+            negocio.slug?.toLowerCase().includes('demo') ||
+            negocio.slug === 'tienda' ||
+            negocio.slug === 'complejo-test' ||
+            negocio.nombre?.toLowerCase().includes('demo') ||
+            negocio.nombre?.toLowerCase().includes('store')
+        );
+
         // Obtener IP para auditoría
         const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
 
         // Crear sesión delegada temporal (30 min para clientes reales, ilimitada para demos)
         const superadminName = user.name || user.email || 'SuperAdmin';
-        await createDelegatedSession(user.id, superadminName, negocio.id, negocio.nombre, Boolean(negocio.isDemo));
+        await createDelegatedSession(user.id, superadminName, negocio.id, negocio.nombre, isDemoBusiness);
 
         // Auditoría obligatoria
         await logDelegatedAudit({
