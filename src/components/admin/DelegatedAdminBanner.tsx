@@ -1,21 +1,22 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { ShieldAlert, LogOut, Clock } from 'lucide-react';
+import { ShieldAlert, LogOut, Clock, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface DelegatedAdminBannerProps {
     businessName: string;
-    expiresAt?: number;
+    expiresAt?: number | null;
+    isDemo?: boolean;
 }
 
-export default function DelegatedAdminBanner({ businessName, expiresAt }: DelegatedAdminBannerProps) {
+export default function DelegatedAdminBanner({ businessName, expiresAt, isDemo }: DelegatedAdminBannerProps) {
     const router = useRouter();
     const [timeLeft, setTimeLeft] = useState<string>('');
     const [isExiting, setIsExiting] = useState(false);
 
     useEffect(() => {
-        if (!expiresAt) return;
+        if (!expiresAt || isDemo) return;
 
         const updateTimer = () => {
             const now = Date.now();
@@ -35,7 +36,7 @@ export default function DelegatedAdminBanner({ businessName, expiresAt }: Delega
         updateTimer();
         const interval = setInterval(updateTimer, 1000);
         return () => clearInterval(interval);
-    }, [expiresAt]);
+    }, [expiresAt, isDemo]);
 
     const handleExit = async (expired = false) => {
         if (isExiting) return;
@@ -73,13 +74,18 @@ export default function DelegatedAdminBanner({ businessName, expiresAt }: Delega
             </div>
 
             <div className="flex items-center gap-4">
-                {timeLeft && (
+                {isDemo || !expiresAt ? (
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-300 bg-emerald-950/80 px-3 py-1 rounded-xl border border-emerald-500/30">
+                        <Sparkles size={14} className="text-emerald-400" />
+                        <span className="text-[10px] uppercase font-black tracking-widest">Negocio Demo · Sin límite de tiempo</span>
+                    </div>
+                ) : timeLeft ? (
                     <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300 bg-slate-800 px-3 py-1 rounded-xl border border-slate-700">
                         <Clock size={14} className="text-amber-400" />
                         <span className="font-mono text-amber-300 font-extrabold">{timeLeft}</span>
                         <span className="text-[10px] text-slate-400 uppercase tracking-tight">restantes</span>
                     </div>
-                )}
+                ) : null}
 
                 <button
                     onClick={() => handleExit(false)}

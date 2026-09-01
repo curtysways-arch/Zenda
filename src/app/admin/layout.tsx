@@ -124,6 +124,7 @@ export default async function AdminLayout({
                                 <DelegatedAdminBanner
                                     businessName={user.targetBusinessName || negocio?.nombre || 'Negocio Objetivo'}
                                     expiresAt={user.delegatedExpiresAt}
+                                    isDemo={isDemo}
                                 />
                             )}
                             {isDemo && !isDelegated && (

@@ -96,7 +96,10 @@ export default function AdminSidebar({
           const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT' ||
             nameUpper.includes('PARRILLA') || nameUpper.includes('RESTAURANTE') || nameUpper.includes('GASTRONOMIA') || nameUpper.includes('BURGER') || nameUpper.includes('PIZZA') || nameUpper.includes('TACO');
           const isPinchos = tipoUpper === 'PINCHOS' || slugUpper === 'PINCHOS';
-          const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || slugUpper === 'CANCHAS';
+          const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || 
+            slugUpper.includes('CANCHA') || slugUpper.includes('CAMPEONES') || 
+            nameUpper.includes('CANCHA') || nameUpper.includes('COMPLEJO') || 
+            nameUpper.includes('CAMPEONES') || nameUpper.includes('PADEL') || nameUpper.includes('SINTETICA');
           const isServiceBiz = !isRestaurant && !isPinchos && !isCanchas && (
             tipoUpper === 'SPA' ||
             tipoUpper === 'CENTRO_ESTETICA' ||
@@ -140,7 +143,7 @@ export default function AdminSidebar({
           setCapabilities(normalizedCaps);
         }
       } catch (err) {
-        console.error("Error cargando entitlements y context del negocio", err);
+        console.error('Error cargando contexto del negocio en sidebar:', err);
       }
     }
     loadBusinessContext();
@@ -244,7 +247,12 @@ export default function AdminSidebar({
     items.push({ name: 'Mi Plan', href: '/admin/plan', icon: Sparkles, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     items.push({ name: 'Super Panel', href: '/superadmin', icon: ShieldCheck, section: 'CONFIGURACIÓN', roles: ['SUPERADMIN'] });
 
-    return items.filter(item => !item.roles || item.roles.some(r => r === role || (role === 'ADMIN_NEGOCIO' && r === 'ADMIN')));
+    const userIsSuperAdmin = role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || (session?.user as any)?.isAdminUser === true;
+    return items.filter(item => {
+      if (userIsSuperAdmin) return true;
+      if (!item.roles) return true;
+      return item.roles.some(r => r === role || (role === 'ADMIN_NEGOCIO' && r === 'ADMIN'));
+    });
   }
 
   const menuItems = buildDynamicMenu();

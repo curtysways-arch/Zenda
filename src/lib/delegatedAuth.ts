@@ -17,27 +17,33 @@ export interface DelegatedTokenPayload {
     superadminName: string;
     targetBusinessId: string;
     targetBusinessName: string;
+    isDemo?: boolean;
     iat: number;
     exp: number;
 }
 
 /**
  * Genera un token JWT firmado de delegación y lo guarda en una cookie HTTP-Only segura.
+ * Para negocios DEMO, la duración es ilimitada (30 días), mientras que para clientes reales es de 30 minutos.
  */
 export async function createDelegatedSession(
     superadminId: string,
     superadminName: string,
     targetBusinessId: string,
-    targetBusinessName: string
+    targetBusinessName: string,
+    isDemo: boolean = false
 ) {
     const now = Math.floor(Date.now() / 1000);
-    const expiresAtSeconds = now + DELEGATION_DURATION_MINUTES * 60;
+    // Negocios demo: 30 días (sin límite de tiempo de 30 min). Negocios reales: 30 minutos.
+    const durationSeconds = isDemo ? 30 * 24 * 60 * 60 : DELEGATION_DURATION_MINUTES * 60;
+    const expiresAtSeconds = now + durationSeconds;
 
     const token = await new SignJWT({
         superadminId,
         superadminName,
         targetBusinessId,
         targetBusinessName,
+        isDemo,
     })
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt(now)
@@ -50,7 +56,7 @@ export async function createDelegatedSession(
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         path: '/',
-        maxAge: DELEGATION_DURATION_MINUTES * 60,
+        maxAge: durationSeconds,
     });
 
     return {
@@ -117,7 +123,7 @@ export async function getEffectiveAdminSession() {
     const delegated = await getDelegatedSession();
     if (delegated.isValid && delegated.payload) {
         let slug = null;
-        let isDemo = false;
+        let isDemo = Boolean(delegated.payload.isDemo);
         let tipoNegocio = 'RESERVA';
 
         try {
@@ -127,7 +133,7 @@ export async function getEffectiveAdminSession() {
             });
             if (targetNegocio) {
                 slug = targetNegocio.slug;
-                isDemo = targetNegocio.isDemo || false;
+                isDemo = targetNegocio.isDemo ?? isDemo;
                 tipoNegocio = targetNegocio.tipoNegocio || 'RESERVA';
             }
         } catch (e) {}
@@ -143,7 +149,7 @@ export async function getEffectiveAdminSession() {
                 negocioId: delegated.payload.targetBusinessId,
                 isDelegated: true,
                 targetBusinessName: delegated.payload.targetBusinessName,
-                delegatedExpiresAt: delegated.payload.exp * 1000,
+                delegatedExpiresAt: isDemo ? null : delegated.payload.exp * 1000,
                 delegatedBy: delegated.payload.superadminId,
                 slug,
                 isDemo,
@@ -155,7 +161,7 @@ export async function getEffectiveAdminSession() {
     if (delegated.isExpired) {
         return {
             user: {
-                ...(session?.user || {}),
+                ...(user || {}),
                 isDelegatedExpired: true
             }
         } as any;
