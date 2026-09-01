@@ -122,16 +122,12 @@ export async function POST(
       return newOrder;
     });
 
-    // 4. Notificar a Cocina / KDS mediante el servicio existente
+    // 4. Notificar al administrador / KDS
     try {
-      await notificationService.notifyNewOrder({
-        id: result.id,
-        negocioId,
-        numeroPedido: result.numeroPedido,
-        total: result.total,
-        clienteNombre: result.nombreCliente,
-        tipoEntrega: 'MESA'
-      } as any);
+      await notificationService.adminAlert(
+        'NUEVO_PEDIDO_MESA_CONFIRMADO',
+        `Pedido #${result.numeroPedido} de Mesa ${orderReq.table?.nombre || ''} por $${result.total.toFixed(2)}`
+      );
     } catch (notifErr) {
       console.error('[CONFIRM_TABLE_ORDER_NOTIF_WARNING]', notifErr);
     }

@@ -7,8 +7,8 @@ import {
   XCircle, ChevronRight, Compass, ShieldCheck, Flame
 } from 'lucide-react';
 import { useCart } from '@/core/context/CartContext';
-import ProductVariantModal from '@/modules/store/components/ProductVariantModal';
-import CustomerCartDrawer from '@/modules/store/components/CustomerCartDrawer';
+import ProductVariantModal from '@/components/public/ProductVariantModal';
+import CustomerCartDrawer from '@/components/public/CustomerCartDrawer';
 
 export default function PublicMesaPage() {
   const params = useParams();
@@ -490,22 +490,18 @@ export default function PublicMesaPage() {
       {selectedProductForModal && (
         <ProductVariantModal
           product={selectedProductForModal}
+          isOpen={Boolean(selectedProductForModal)}
           onClose={() => setSelectedProductForModal(null)}
-          onAddToCart={(item) => {
-            addToCart(item);
-            setSelectedProductForModal(null);
-            setIsCartOpen(true);
-          }}
           primaryColor="#0f172a"
         />
       )}
 
-      {/* DRAWER DEL CARRITO DE COMPRAS CON GEOLOCALIZACIÓN */}
+      {/* DRAWER DEL CARRITO DE COMPRAS */}
       <CustomerCartDrawer
+        slug={slug}
+        businessName={negocio?.nombre || 'Restaurante'}
         isOpen={false}
         onClose={() => setIsCartOpen(false)}
-        businessName={negocio?.nombre || 'Restaurante'}
-        businessSlug={slug}
         primaryColor="#0f172a"
       />
 
