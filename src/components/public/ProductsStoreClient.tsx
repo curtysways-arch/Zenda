@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { 
     ShoppingBag, Plus, Minus, Trash2, MapPin, Calendar, Clock, 
     ChevronRight, Check, Loader2, Search, ArrowLeft, Phone, Info, AlertCircle, User,
-    Copy, Building2, CreditCard, Hash, FileText, UploadCloud, ShieldCheck, Send, Lock, Wallet, X, ZoomIn, Share2
+    Copy, Building2, CreditCard, Hash, FileText, UploadCloud, ShieldCheck, Send, Lock, Wallet, X, ZoomIn, Share2, Flame, PackageCheck
 } from 'lucide-react';
 import Image from 'next/image';
 import MapSelectionModal from './MapSelectionModal';
@@ -298,6 +298,41 @@ export default function ProductsStoreClient({ negocio }: Props) {
     const [copiedCode, setCopiedCode] = useState(false);
     const [zoomProduct, setZoomProduct] = useState<Product | null>(null);
     const [showShareToast, setShowShareToast] = useState(false);
+
+    // Navegación por pestañas (Inicio, Ofertas, Mis Pedidos, Mi Cuenta)
+    const [activeTab, setActiveTab] = useState<'inicio' | 'ofertas' | 'pedidos' | 'cuenta'>('inicio');
+
+    useEffect(() => {
+        const updateTab = () => {
+            if (typeof window === 'undefined') return;
+            const hash = window.location.hash.replace('#', '').toLowerCase();
+            const params = new URLSearchParams(window.location.search);
+            const tabParam = params.get('tab');
+
+            if (hash === 'ofertas' || tabParam === 'ofertas') setActiveTab('ofertas');
+            else if (hash === 'pedidos' || tabParam === 'pedidos') setActiveTab('pedidos');
+            else if (hash === 'cuenta' || hash === 'perfil' || tabParam === 'cuenta' || tabParam === 'perfil') setActiveTab('cuenta');
+            else setActiveTab('inicio');
+        };
+
+        updateTab();
+
+        const handleCustomTab = (e: any) => {
+            if (e.detail) {
+                if (e.detail === 'ofertas') setActiveTab('ofertas');
+                else if (e.detail === 'pedidos') setActiveTab('pedidos');
+                else if (e.detail === 'cuenta' || e.detail === 'perfil') setActiveTab('cuenta');
+                else if (e.detail === 'inicio') setActiveTab('inicio');
+            }
+        };
+
+        window.addEventListener('hashchange', updateTab);
+        window.addEventListener('citiox_change_tab', handleCustomTab);
+        return () => {
+            window.removeEventListener('hashchange', updateTab);
+            window.removeEventListener('citiox_change_tab', handleCustomTab);
+        };
+    }, []);
 
     // Función para Compartir la App / Tienda
     const handleShareApp = async () => {
@@ -1615,6 +1650,246 @@ export default function ProductsStoreClient({ negocio }: Props) {
 
             {step === 'catalog' ? (
                 <>
+                    {/* ── VISTA 1: PESTAÑA DE OFERTAS Y DESCUENTOS ── */}
+                    {activeTab === 'ofertas' && (
+                        <div className="px-4 py-6 space-y-6 max-w-4xl mx-auto animate-fadeIn">
+                            <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 p-6 md:p-8 rounded-3xl text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+                                <div className="space-y-1 text-center md:text-left">
+                                    <span className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-100 backdrop-blur-md">
+                                        🔥 Promociones & Descuentos
+                                    </span>
+                                    <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">Ofertas Especiales</h2>
+                                    <p className="text-xs md:text-sm text-white/90 font-medium">Aprovecha los mejores precios y promociones exclusivas</p>
+                                </div>
+                                <button
+                                    onClick={() => { window.location.hash = ''; setActiveTab('inicio'); }}
+                                    className="px-4 py-2.5 bg-white text-slate-900 font-extrabold text-xs rounded-xl shadow-lg hover:bg-slate-100 transition-all shrink-0 cursor-pointer"
+                                >
+                                    Ver Todo el Catálogo →
+                                </button>
+                            </div>
+
+                            {/* Promociones Activas */}
+                            {activePromotions.length > 0 ? (
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-black uppercase tracking-wider text-slate-900">Promociones Disponibles ({activePromotions.length})</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {activePromotions.map((promo: any) => {
+                                            const linkedProduct = products.find(p => p.id === promo.productoRequeridoId) || products[0];
+                                            const displayImg = promo.imagenUrl || linkedProduct?.imagenUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80';
+                                            return (
+                                                <div key={promo.id} className="bg-white rounded-3xl p-4 border border-amber-200 shadow-md flex items-center gap-4">
+                                                    <img src={displayImg} alt={promo.titulo} className="w-24 h-24 rounded-2xl object-cover shrink-0" />
+                                                    <div className="flex-1 min-w-0 space-y-1">
+                                                        <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-black uppercase">
+                                                            {promo.tipoPromo === 'DOS_POR_UNO' || promo.tipoPromo === '2X1' ? '🎁 2x1' : '🔥 Promo'}
+                                                        </span>
+                                                        <h4 className="font-extrabold text-slate-900 text-sm truncate">{promo.titulo}</h4>
+                                                        <p className="text-slate-500 text-xs line-clamp-2">{promo.descripcion}</p>
+                                                        <div className="flex items-center justify-between pt-1">
+                                                            <span className="text-sm font-black text-amber-600">${(Number(promo.precioPromo) || Number(linkedProduct?.precio) || 0).toFixed(2)}</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleOrderPromotion(promo)}
+                                                                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer"
+                                                            >
+                                                                Pedir Promo
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="bg-white border-2 border-dashed border-amber-200 p-8 rounded-3xl text-center space-y-3">
+                                    <div className="size-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center mx-auto shadow-inner">
+                                        <Flame className="size-7 animate-bounce" />
+                                    </div>
+                                    <h3 className="text-base font-black text-slate-900 uppercase">Sin Promociones Activas en este Momento</h3>
+                                    <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
+                                        Actualmente no hay promociones configuradas hoy. ¡Explora nuestro catálogo completo con entregas inmediatas!
+                                    </p>
+                                    <button
+                                        onClick={() => { window.location.hash = ''; setActiveTab('inicio'); }}
+                                        className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black uppercase shadow-md hover:bg-slate-800 transition-all cursor-pointer"
+                                    >
+                                        Explorar Menú Completo
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ── VISTA 2: PESTAÑA DE MIS PEDIDOS ── */}
+                    {activeTab === 'pedidos' && (
+                        <div className="px-4 py-6 space-y-6 max-w-4xl mx-auto animate-fadeIn">
+                            <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 p-6 md:p-8 rounded-3xl text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+                                <div className="space-y-1 text-center md:text-left">
+                                    <span className="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-500/30">
+                                        📦 Mis Pedidos & Rastreo
+                                    </span>
+                                    <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">Seguimiento de Compras</h2>
+                                    <p className="text-xs md:text-sm text-slate-300 font-medium">Consulta el estado de tus pedidos recientes y entregas</p>
+                                </div>
+                            </div>
+
+                            {/* Buscador / Verificación de Teléfono */}
+                            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">Tus Datos de Cliente</h3>
+                                    <span className="text-[10px] font-bold text-slate-400">Verificado por Teléfono</span>
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row items-center gap-3">
+                                    <input
+                                        type="tel"
+                                        value={clientPhone}
+                                        onChange={(e) => setClientPhone(e.target.value)}
+                                        placeholder="Ingresa tu teléfono o WhatsApp (ej. 0998877665)"
+                                        className="w-full sm:flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            if (clientPhone) fetchActiveOrder(clientPhone);
+                                        }}
+                                        className="w-full sm:w-auto px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-2xl shadow-md cursor-pointer transition-all shrink-0"
+                                    >
+                                        Buscar Mis Pedidos
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Pedido Activo si existe */}
+                            {activeOrder ? (
+                                <div className="bg-white rounded-3xl p-6 border-2 border-emerald-500/30 shadow-lg space-y-4">
+                                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                        <div>
+                                            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block">PEDIDO ACTIVO</span>
+                                            <h4 className="text-lg font-black text-slate-900">Pedido #{activeOrder.id.slice(0, 8).toUpperCase()}</h4>
+                                        </div>
+                                        <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black uppercase">
+                                            {activeOrder.estado}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                                        <div>
+                                            <p className="text-xs text-slate-500 font-medium">Total Abonado / A pagar:</p>
+                                            <p className="text-xl font-black text-slate-900">${(Number(activeOrder.total) || 0).toFixed(2)}</p>
+                                        </div>
+
+                                        <Link
+                                            href={`/${negocio.slug}/pedidos/${activeOrder.id}`}
+                                            className="w-full sm:w-auto px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-md text-center transition-all cursor-pointer"
+                                        >
+                                            Rastrear en Vivo →
+                                        </Link>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="bg-white border-2 border-dashed border-slate-200 p-8 rounded-3xl text-center space-y-3">
+                                    <div className="size-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto shadow-inner">
+                                        <PackageCheck className="size-7" />
+                                    </div>
+                                    <h3 className="text-base font-black text-slate-800 uppercase">Sin Pedidos en Curso</h3>
+                                    <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
+                                        No hay pedidos activos vinculados a este número en este momento.
+                                    </p>
+                                    <button
+                                        onClick={() => { window.location.hash = ''; setActiveTab('inicio'); }}
+                                        className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black uppercase shadow-md hover:bg-slate-800 transition-all cursor-pointer"
+                                    >
+                                        Realizar Nuevo Pedido
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ── VISTA 3: PESTAÑA DE MI CUENTA ── */}
+                    {activeTab === 'cuenta' && (
+                        <div className="px-4 py-6 space-y-6 max-w-4xl mx-auto animate-fadeIn">
+                            <div className="bg-gradient-to-r from-cyan-900 via-slate-900 to-slate-950 p-6 md:p-8 rounded-3xl text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+                                <div className="space-y-1 text-center md:text-left">
+                                    <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-[10px] font-black uppercase tracking-widest border border-cyan-500/30">
+                                        👤 Mi Cuenta & Perfil
+                                    </span>
+                                    <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">Datos de Envío y Cliente</h2>
+                                    <p className="text-xs md:text-sm text-slate-300 font-medium">Guarda tu información para compras 1-clic rápidas</p>
+                                </div>
+                            </div>
+
+                            {/* Formulario de Configuración del Cliente */}
+                            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+                                <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-3">Información Personal Guardada</h3>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Nombre Completo</label>
+                                        <input
+                                            type="text"
+                                            value={clientName}
+                                            onChange={(e) => setClientName(e.target.value)}
+                                            placeholder="ej. Carlos Caicedo"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Teléfono / WhatsApp</label>
+                                        <input
+                                            type="tel"
+                                            value={clientPhone}
+                                            onChange={(e) => setClientPhone(e.target.value)}
+                                            placeholder="ej. 0998877665"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Dirección Habitual de Entrega</label>
+                                        <input
+                                            type="text"
+                                            value={clientAddress}
+                                            onChange={(e) => setClientAddress(e.target.value)}
+                                            placeholder="ej. Av. 10 de Agosto N24-12"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">Referencia de Domicilio (opcional)</label>
+                                        <input
+                                            type="text"
+                                            value={clientReference}
+                                            onChange={(e) => setClientReference(e.target.value)}
+                                            placeholder="ej. Frente a la farmacia o conjunto residencial"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-900 outline-none focus:border-slate-400 transition-all"
+                                        />
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            saveClientDataToLocalStorage(clientName, clientPhone);
+                                            if (clientAddress) localStorage.setItem('pinchos_client_address', clientAddress);
+                                            if (clientReference) localStorage.setItem('pinchos_client_reference', clientReference);
+                                            alert("¡Tus datos de cuenta han sido guardados con éxito!");
+                                        }}
+                                        className="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg transition-all cursor-pointer"
+                                    >
+                                        💾 Guardar Mis Datos
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── VISTA 0: VISTA PRINCIPAL (INICIO) ── */}
+                    {activeTab === 'inicio' && (
+                        <>
                     {/* ── HERO PRINCIPAL LUMINOSO ── */}
                     <div className="relative w-full bg-slate-950 overflow-hidden">
                         {/* Carrusel de imágenes de portada con transición suave */}
@@ -2126,6 +2401,8 @@ export default function ProductsStoreClient({ negocio }: Props) {
                             </div>
                         </div>
                     </footer>
+                    </>
+                    )}
 
                     {/* ── CARRITO FLOTANTE PREMIUM ── */}
                     {cart.length > 0 && (
