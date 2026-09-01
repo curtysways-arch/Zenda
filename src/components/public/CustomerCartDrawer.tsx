@@ -162,9 +162,20 @@ export default function CustomerCartDrawer({
   // Modal de Mapa GPS
   const [showMapModal, setShowMapModal] = useState(false);
 
+  const hasLocationSelected = !!(
+    customerData.lat &&
+    customerData.lng &&
+    customerData.direccion &&
+    customerData.direccion.trim() &&
+    customerData.direccion !== 'Seleccionar ubicación actual' &&
+    customerData.direccion !== 'Ubicación no seleccionada'
+  );
+
   // Recalcular dinámicamente el costo de envío al cambiar coordenadas o tipo de entrega
   useEffect(() => {
     if (deliveryType === 'RETIRO') {
+      setDeliveryCost(0);
+    } else if (!hasLocationSelected) {
       setDeliveryCost(0);
     } else {
       const dynamicFee = calculateDeliveryCostFromCoords(
@@ -176,18 +187,9 @@ export default function CustomerCartDrawer({
       );
       setDeliveryCost(dynamicFee);
     }
-  }, [deliveryType, customerData.lat, customerData.lng, setDeliveryCost]);
+  }, [deliveryType, customerData.lat, customerData.lng, hasLocationSelected, setDeliveryCost]);
 
   if (!isOpen) return null;
-
-  const hasLocationSelected = !!(
-    customerData.lat &&
-    customerData.lng &&
-    customerData.direccion &&
-    customerData.direccion.trim() &&
-    customerData.direccion !== 'Seleccionar ubicación actual' &&
-    customerData.direccion !== 'Ubicación no seleccionada'
-  );
 
   const handleNextToCheckout = () => {
     if (cart.length === 0) return;
@@ -556,7 +558,11 @@ export default function CustomerCartDrawer({
                         <Info className="w-3.5 h-3.5 text-slate-400" />
                       </span>
                       <span className="font-black text-slate-900">
-                        {deliveryCost === 0 ? (
+                        {deliveryType === 'RETIRO' ? (
+                          <span className="text-emerald-600 font-bold">Gratis</span>
+                        ) : !hasLocationSelected ? (
+                          <span className="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md text-[11px]">Por calcular</span>
+                        ) : deliveryCost === 0 ? (
                           <span className="text-emerald-600 font-bold">$0.00</span>
                         ) : (
                           `$${deliveryCost.toFixed(2)}`
