@@ -486,7 +486,11 @@ export default function MiPerfilPage() {
                 <span>¡Hola, {displayName.split(' ')[0]}!</span>
                 <span className="text-base">👋</span>
               </h1>
-              <p className="text-[11px] text-slate-400 font-medium leading-none mt-0.5">¿Qué se te antoja hoy?</p>
+              <p className="text-[11px] text-slate-400 font-medium leading-none mt-0.5">
+                {(negocio?.tipoNegocio === 'RESTAURANTE' || negocio?.tipoNegocio === 'GASTRONOMIA' || negocio?.tipoNegocio === 'RESTAURANT')
+                  ? '¿Qué se te antoja hoy?'
+                  : '¿Qué deseas comprar hoy?'}
+              </p>
             </div>
           </div>
 
@@ -748,14 +752,22 @@ export default function MiPerfilPage() {
                   📱
                 </div>
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-200 block">App del Restaurante</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-200 block">
+                    {(negocio?.tipoNegocio === 'RESTAURANTE' || negocio?.tipoNegocio === 'GASTRONOMIA' || negocio?.tipoNegocio === 'RESTAURANT')
+                      ? 'App del Restaurante'
+                      : 'App de la Tienda'}
+                  </span>
                   <h4 className="text-sm font-black text-white leading-tight">
-                    {isPWAInstalledState ? '¡Ya tienes la App instalada!' : `Descarga la App de ${negocio?.nombre || 'nuestro restaurante'}`}
+                    {isPWAInstalledState 
+                      ? '¡Ya tienes la App instalada!' 
+                      : `Descarga la App de ${negocio?.nombre || 'nuestra tienda'}`}
                   </h4>
                   <p className="text-[11px] text-white/90 font-medium leading-tight mt-0.5">
                     {isPWAInstalledState 
-                      ? 'Disfruta de la máxima velocidad al pedir tu comida y notificaciones en tiempo real.' 
-                      : 'Instala nuestra aplicación oficial para pedir en 1-clic, seguir el estado de tu pedido en vivo y obtener ofertas exclusivas.'}
+                      ? ((negocio?.tipoNegocio === 'RESTAURANTE' || negocio?.tipoNegocio === 'GASTRONOMIA' || negocio?.tipoNegocio === 'RESTAURANT')
+                          ? 'Disfruta de la máxima velocidad al pedir tu comida y notificaciones en tiempo real.'
+                          : 'Disfruta de la máxima velocidad al realizar tus compras y notificaciones en tiempo real.')
+                      : 'Instala nuestra aplicación oficial para comprar en 1-clic, seguir el estado de tu pedido en vivo y obtener ofertas exclusivas.'}
                   </p>
                 </div>
               </div>
