@@ -11,10 +11,20 @@ import { defineConfig } from "prisma/config";
 // El adaptador de driver se configura según el prefijo de DATABASE_URL.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const rawUrl = process.env["DATABASE_URL"] || "file:./dev.db";
+let rawUrl = process.env["DATABASE_URL"] || "file:./dev.db";
 
 const isPg = rawUrl.startsWith("postgresql://") || rawUrl.startsWith("postgres://");
-const formattedUrl = isPg ? rawUrl : (rawUrl.startsWith("file:") ? rawUrl : `file:${rawUrl}`);
+
+if (!isPg && !rawUrl.startsWith("file:")) {
+    if (rawUrl.startsWith("./") || rawUrl.startsWith("/")) {
+        rawUrl = `file:${rawUrl}`;
+    } else {
+        rawUrl = `file:./${rawUrl}`;
+    }
+    process.env["DATABASE_URL"] = rawUrl;
+}
+
+const formattedUrl = rawUrl;
 
 // Para PostgreSQL usamos @prisma/adapter-pg con el pool de `pg`
 // Para SQLite usamos @prisma/adapter-libsql
