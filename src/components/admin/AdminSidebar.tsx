@@ -248,11 +248,15 @@ export default function AdminSidebar({
     items.push({ name: 'Mi Plan', href: '/admin/plan', icon: Sparkles, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     items.push({ name: 'Super Panel', href: '/superadmin', icon: ShieldCheck, section: 'CONFIGURACIÓN', roles: ['SUPERADMIN'] });
 
-    const userIsAdmin = role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'ADMIN_NEGOCIO' || userObj?.isAdminUser === true || userObj?.isDelegated === true || true;
+    const isRealSuperAdmin = role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || userObj?.isAdminUser === true || userObj?.isDelegated === true;
+
     return items.filter(item => {
-      if (userIsAdmin) return true;
+      if (item.href === '/superadmin') {
+        return isRealSuperAdmin;
+      }
       if (!item.roles) return true;
-      return item.roles.some(r => r === role || (role === 'ADMIN_NEGOCIO' && r === 'ADMIN'));
+      if (isRealSuperAdmin) return true;
+      return item.roles.some(r => r === role || r === 'ADMIN' || r === 'ADMIN_NEGOCIO');
     });
   }
 
