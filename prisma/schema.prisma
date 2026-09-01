@@ -363,6 +363,9 @@ model Negocio {
   ReferralEvent          ReferralEvent[]
   ReferralReward         ReferralReward[]
   UserPoints             UserPoints[]
+  RestaurantTable        RestaurantTable[]
+  TableOrderRequest      TableOrderRequest[]
+  WaiterCall             WaiterCall[]
   PointsHistory          PointsHistory[]
   LoyaltyReward          LoyaltyReward[]
   LoyaltyRedemption      LoyaltyRedemption[]
@@ -3446,4 +3449,78 @@ model HighlightItem {
   @@index([businessId])
   @@index([isActive])
 }
+
+// ── 🍽️ MODELOS PARA MESAS, QR Y PEDIDOS EN MESA ──
+
+model RestaurantTable {
+  id              String             @id @default(uuid())
+  negocioId       String
+  nombre          String
+  numero          Int?
+  token           String             @unique @default(uuid())
+  activa          Boolean            @default(true)
+  permitePedidos  Boolean            @default(true)
+  estado          String             @default("DISPONIBLE") // "DISPONIBLE" | "OCUPADA" | "ATENCION_REQUERIDA"
+
+  negocio         Negocio            @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  orderRequests   TableOrderRequest[]
+  waiterCalls     WaiterCall[]
+
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([negocioId])
+  @@index([token])
+}
+
+model TableOrderRequest {
+  id                    String          @id @default(uuid())
+  negocioId             String
+  tableId               String
+  tableSessionId        String
+  nombreCliente         String?
+  telefonoCliente       String?
+  items                 Json
+  subtotal              Float
+  total                 Float
+  notas                 String?
+  estado                String          @default("PENDING_ADMIN_CONFIRMATION") // "PENDING_ADMIN_CONFIRMATION" | "CONFIRMED" | "REJECTED" | "EXPIRED" | "CANCELLED"
+  locationValidated     Boolean         @default(false)
+  distanceFromBusiness  Float?
+  clientLat             Float?
+  clientLng             Float?
+  pedidoId              String?
+
+  table                 RestaurantTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  negocio               Negocio         @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  @@index([negocioId])
+  @@index([tableId])
+  @@index([estado])
+  @@index([tableSessionId])
+}
+
+model WaiterCall {
+  id              String          @id @default(uuid())
+  negocioId       String
+  tableId         String
+  tableSessionId  String
+  estado          String          @default("PENDING") // "PENDING" | "ACKNOWLEDGED" | "RESOLVED" | "CANCELLED"
+  notas           String?
+
+  table           RestaurantTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  negocio         Negocio         @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([negocioId])
+  @@index([tableId])
+  @@index([estado])
+  @@index([tableSessionId])
+}
+
 
