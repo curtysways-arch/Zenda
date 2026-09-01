@@ -33,6 +33,7 @@ export interface CustomerFormData {
   telefono: string;
   direccion: string;
   referencia?: string;
+  email?: string;
   lat?: number | null;
   lng?: number | null;
   tableName?: string;

@@ -5,16 +5,18 @@
  * @description Home de Restaurante optimizado (sin botón Enviar A, sin barra de búsqueda y navegación limpia de 4 opciones).
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Menu, Bell, ShoppingBag, Heart, Plus, Minus, Truck, Percent, ShieldCheck,
   Home, Tag, ClipboardList, User, ArrowRight, Utensils, ChevronRight, X,
-  Flame, Store, Navigation, Eye, PackageCheck, MapPin
+  Flame, Store, Navigation, Eye, PackageCheck, MapPin, Star, CreditCard,
+  Settings, HelpCircle, Smartphone, Camera, CheckCircle2, MessageSquare, Compass, Key, Lock, UserCircle2
 } from 'lucide-react';
 import { CartProvider, useCart } from '@/core/context/CartContext';
 import CustomerCartDrawer from '@/components/public/CustomerCartDrawer';
 import MapSelectionModal from '@/components/public/MapSelectionModal';
 import ItemDetailModal, { DetailItem, cleanDescriptionText } from '@/components/public/ItemDetailModal';
+import { isPWAInstalled, installPWA, addInstallationListener, removeInstallationListener } from '@/lib/pwa-install';
 
 interface Product {
   id: string;
@@ -164,6 +166,96 @@ function RestaurantLandingContent({
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
   const [activeNavTab, setActiveNavTab] = useState<'inicio' | 'ofertas' | 'pedidos' | 'cuenta'>('inicio');
   const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
+
+  // Estados e instalador de PWA y modales de cuenta
+  const [isPWAInstalledState, setIsPWAInstalledState] = useState<boolean>(false);
+  const [canInstallPWA, setCanInstallPWA] = useState<boolean>(false);
+  const [accountActiveModal, setAccountActiveModal] = useState<string | null>(null);
+
+  const miniMapRef = useRef<HTMLDivElement>(null);
+  const miniMapInstanceRef = useRef<any>(null);
+
+  useEffect(() => {
+    setIsPWAInstalledState(isPWAInstalled());
+    const handlePWAChange = (avail: boolean) => {
+      setCanInstallPWA(avail);
+      setIsPWAInstalledState(isPWAInstalled());
+    };
+    addInstallationListener(handlePWAChange);
+    return () => removeInstallationListener(handlePWAChange);
+  }, []);
+
+  const handleInstallPWA = async () => {
+    if (canInstallPWA) {
+      const res = await installPWA();
+      if (res) setIsPWAInstalledState(true);
+    } else {
+      alert(`Para instalar la App de ${negocio?.nombre || 'nuestro restaurante'} en tu celular:\n\n📱 En Android: Abre el menú de tu navegador (...) y presiona "Instalar aplicación" o "Agregar a inicio".\n\n📱 En iPhone: Toca el icono de Compartir y selecciona "Agregar a inicio".`);
+    }
+  };
+
+  // Inicialización de Mini Mapa Leaflet cuando se activa la pestaña 'cuenta'
+  useEffect(() => {
+    if (activeNavTab !== 'cuenta' || !miniMapRef.current) return;
+    const lat = customerData?.lat || -0.180653;
+    const lng = customerData?.lng || -78.467838;
+
+    const initMiniMap = () => {
+      if (typeof window === 'undefined' || !(window as any).L) return;
+      const L = (window as any).L;
+      if (miniMapInstanceRef.current) {
+        miniMapInstanceRef.current.remove();
+        miniMapInstanceRef.current = null;
+      }
+      try {
+        const map = L.map(miniMapRef.current, {
+          center: [lat, lng],
+          zoom: 15,
+          zoomControl: false,
+          dragging: false,
+          touchZoom: false,
+          scrollWheelZoom: false
+        });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+        const icon = L.divIcon({
+          className: 'custom-pin',
+          html: `<div style="background-color:${cp}; width:28px; height:28px; border-radius:50%; border:3px solid white; box-shadow:0 4px 10px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">📍</div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
+        });
+        L.marker([lat, lng], { icon }).addTo(map);
+        miniMapInstanceRef.current = map;
+      } catch (e) {}
+    };
+
+    if (!(window as any).L) {
+      if (!document.getElementById('leaflet-css')) {
+        const link = document.createElement('link');
+        link.id = 'leaflet-css';
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(link);
+      }
+      if (!document.getElementById('leaflet-js')) {
+        const script = document.createElement('script');
+        script.id = 'leaflet-js';
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        script.onload = () => initMiniMap();
+        document.head.appendChild(script);
+      }
+    } else {
+      initMiniMap();
+    }
+
+    return () => {
+      if (miniMapInstanceRef.current) {
+        miniMapInstanceRef.current.remove();
+        miniMapInstanceRef.current = null;
+      }
+    };
+  }, [activeNavTab, customerData?.lat, customerData?.lng, cp]);
 
   useEffect(() => {
     if (!negocio?.slug) return;
@@ -1049,54 +1141,226 @@ function RestaurantLandingContent({
           </div>
         )}
 
-        {/* ── PESTAÑA 4: MI CUENTA ── */}
+        {/* ── PESTAÑA 4: MI CUENTA (REDISEÑADA Y COMPLETA) ── */}
         {activeNavTab === 'cuenta' && (
-          <div className="space-y-4 pb-6">
-            <div className="border-b border-slate-200 pb-3">
-              <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                <User style={{ color: cp }} className="w-5 h-5" />
-                Mi Cuenta
-              </h2>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Administra tus datos personales y dirección de entrega
-              </p>
-            </div>
+          <div className="space-y-4 pb-12 animate-in fade-in duration-300">
+            
+            {/* TARJETA SUPERIOR DE PERFIL */}
+            <div className="bg-white rounded-3xl p-5 shadow-xs border border-slate-200 space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3.5">
+                  {/* Avatar con foto o inicial + botón de edición de foto */}
+                  <div className="relative shrink-0">
+                    <div 
+                      style={{ backgroundColor: cp }} 
+                      className="w-16 h-16 rounded-full text-white font-black flex items-center justify-center text-2xl shadow-md border-2 border-white"
+                    >
+                      {customerData?.nombre ? customerData.nombre.charAt(0).toUpperCase() : 'C'}
+                    </div>
 
-            <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-2xs space-y-4">
-              <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <div style={{ backgroundColor: cp }} className="w-12 h-12 rounded-2xl text-white font-black flex items-center justify-center text-lg shadow-md">
-                  {customerData?.nombre ? customerData.nombre.charAt(0).toUpperCase() : 'C'}
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-sm text-slate-900">
-                    {customerData?.nombre || 'Carlos Caicedo'}
-                  </h3>
-                  <span className="text-xs font-bold text-slate-400">
-                    {customerData?.telefono || '0991234567'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-2 text-xs font-bold text-slate-700">
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-slate-400" />
-                    <span>Dirección Registrada:</span>
+                    <button 
+                      type="button" 
+                      onClick={() => setAccountActiveModal('personal_info')}
+                      className="absolute -bottom-1 -right-1 p-1.5 bg-white text-slate-700 rounded-full border border-slate-200 shadow-md cursor-pointer hover:bg-slate-50"
+                    >
+                      <Camera size={13} />
+                    </button>
                   </div>
-                  <span className="text-slate-900 font-black truncate max-w-[180px]">
-                    {customerData?.direccion || 'No registrada'}
-                  </span>
+
+                  {/* Información de usuario */}
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-base font-black text-slate-900 leading-snug">
+                        {customerData?.nombre || 'Carlos Caicedo'}
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
+                        ⭐ <span>Usuario frecuente</span>
+                      </span>
+                    </div>
+
+                    <p className="text-xs font-bold text-slate-500 leading-tight">
+                      {customerData?.telefono || '+593 959 997 521'}
+                    </p>
+                    <p className="text-xs text-slate-400 font-medium leading-tight">
+                      {customerData?.email || 'carlos.caicedo@email.com'}
+                    </p>
+                  </div>
+                </div>
+
+                <button 
+                  type="button"
+                  onClick={() => setAccountActiveModal('personal_info')}
+                  className="p-2 text-slate-400 hover:text-slate-700 cursor-pointer"
+                >
+                  <ChevronRight size={22} />
+                </button>
+              </div>
+
+              {/* RESUMEN DE ACTIVIDAD (PEDIDOS, PUNTOS, CUPONES EN 3 BLOQUES) */}
+              <div className="pt-4 border-t border-slate-100 grid grid-cols-3 gap-2 text-center">
+                <button 
+                  type="button"
+                  onClick={() => setActiveNavTab('pedidos')}
+                  className="p-2.5 rounded-2xl bg-slate-50 hover:bg-amber-50/50 border border-slate-100 transition-colors cursor-pointer text-left space-y-1"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="p-1.5 bg-amber-100/60 text-amber-700 rounded-xl">
+                      <ShoppingBag size={14} />
+                    </span>
+                    <span className="text-[10px] font-black uppercase text-slate-400">Pedidos</span>
+                  </div>
+                  <div>
+                    <span className="text-base font-black text-slate-900 block leading-tight">14</span>
+                    <span className="text-[10px] font-medium text-slate-400 block">Realizados</span>
+                  </div>
+                </button>
+
+                <button 
+                  type="button"
+                  onClick={() => setAccountActiveModal('points')}
+                  className="p-2.5 rounded-2xl bg-slate-50 hover:bg-amber-50/50 border border-slate-100 transition-colors cursor-pointer text-left space-y-1"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="p-1.5 bg-amber-100/60 text-amber-700 rounded-xl">
+                      <Star size={14} />
+                    </span>
+                    <span className="text-[10px] font-black uppercase text-slate-400">Puntos</span>
+                  </div>
+                  <div>
+                    <span className="text-base font-black text-slate-900 block leading-tight">320</span>
+                    <span className="text-[10px] font-medium text-slate-400 block">Disponibles</span>
+                  </div>
+                </button>
+
+                <button 
+                  type="button"
+                  onClick={() => setActiveNavTab('ofertas')}
+                  className="p-2.5 rounded-2xl bg-slate-50 hover:bg-amber-50/50 border border-slate-100 transition-colors cursor-pointer text-left space-y-1"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="p-1.5 bg-amber-100/60 text-amber-700 rounded-xl">
+                      <Tag size={14} />
+                    </span>
+                    <span className="text-[10px] font-black uppercase text-slate-400">Cupones</span>
+                  </div>
+                  <div>
+                    <span className="text-base font-black text-slate-900 block leading-tight">3</span>
+                    <span className="text-[10px] font-medium text-slate-400 block">Disponibles</span>
+                  </div>
+                </button>
+              </div>
+
+              {/* DIRECCIÓN REGISTRADA Y MINI MAPA */}
+              <div className="pt-4 border-t border-slate-100 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <span className="p-2 bg-red-50 text-red-600 rounded-xl shrink-0 mt-0.5">
+                      <MapPin size={18} />
+                    </span>
+                    <div className="space-y-1">
+                      <span className="text-[11px] font-black uppercase text-slate-500 block tracking-wider">Dirección registrada</span>
+                      <p className="text-xs font-black text-slate-900 leading-snug">
+                        {customerData?.direccion || 'Javier Espinoza, Uraba, Camino De Los Eucaliptos, Quito, Ecuador'}
+                      </p>
+                      {customerData?.referencia && (
+                        <p className="text-[11px] text-slate-500 font-medium">Ref: {customerData.referencia}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Contenedor del Mini Mapa Interactivo */}
+                  <div className="w-28 h-20 rounded-2xl bg-slate-200 overflow-hidden border border-slate-200 shadow-inner shrink-0 relative">
+                    <div ref={miniMapRef} className="w-full h-full" />
+                  </div>
+                </div>
+
+                {/* Botón para actualizar ubicación en mapa */}
+                <button
+                  type="button"
+                  onClick={() => setShowMapModal(true)}
+                  className="w-full py-3 px-4 bg-red-50 hover:bg-red-100/70 text-red-600 font-black text-xs uppercase tracking-wider rounded-2xl border border-red-100 transition-colors cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Compass size={16} />
+                  <span>ACTUALIZAR UBICACIÓN EN EL MAPA</span>
+                </button>
+              </div>
+
+            </div>
+
+            {/* BANNER / AVISO INTELIGENTE DE DESCARGA DE LA APP DE RESTAURANTE */}
+            <div className="bg-gradient-to-r from-red-600 via-orange-600 to-amber-600 rounded-3xl p-4.5 text-white shadow-lg space-y-3 relative overflow-hidden">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-2xl shrink-0 shadow-inner">
+                    📱
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-200 block">App del Restaurante</span>
+                    <h4 className="text-sm font-black text-white leading-tight">
+                      {isPWAInstalledState ? '¡Ya tienes la App instalada!' : `Descarga la App de ${negocio?.nombre || 'nuestro restaurante'}`}
+                    </h4>
+                    <p className="text-[11px] text-white/90 font-medium leading-tight mt-0.5">
+                      {isPWAInstalledState 
+                        ? 'Disfruta de la máxima velocidad al pedir tu comida y notificaciones en tiempo real.' 
+                        : 'Instala nuestra aplicación oficial para pedir en 1-clic, seguir el estado de tu pedido en vivo y obtener ofertas exclusivas.'}
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setShowMapModal(true)}
-                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
-              >
-                Actualizar Ubicación en Mapa
-              </button>
+              {!isPWAInstalledState ? (
+                <button
+                  type="button"
+                  onClick={handleInstallPWA}
+                  className="w-full py-3 bg-white hover:bg-slate-50 text-red-600 font-black text-xs uppercase tracking-wider rounded-2xl shadow-md cursor-pointer transition-all flex items-center justify-center gap-2 active:scale-95 border border-white"
+                >
+                  <Smartphone size={16} />
+                  <span>Instalar App Gratis en mi Celular</span>
+                </button>
+              ) : (
+                <div className="py-2 px-3 bg-white/15 rounded-xl border border-white/20 flex items-center justify-center gap-2 text-[11px] font-bold text-emerald-200">
+                  <CheckCircle2 size={15} />
+                  <span>App lista y activa en tu dispositivo</span>
+                </div>
+              )}
             </div>
+
+            {/* LISTADO DE OPCIONES "MI CUENTA" */}
+            <div className="bg-white rounded-3xl p-2 shadow-xs border border-slate-200 space-y-1">
+              <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider px-4 pt-3 pb-1">Mi cuenta</h3>
+
+              {[
+                { id: 'personal_info', label: 'Información personal', desc: 'Actualiza tus datos personales', icon: User, color: 'bg-red-50 text-red-600' },
+                { id: 'addresses', label: 'Mis direcciones', desc: 'Gestiona tus direcciones guardadas', icon: MapPin, color: 'bg-red-50 text-red-600' },
+                { id: 'payments', label: 'Métodos de pago', desc: 'Tarjetas y pagos guardados', icon: CreditCard, color: 'bg-red-50 text-red-600' },
+                { id: 'favorites', label: 'Mis favoritos', desc: 'Restaurantes y productos favoritos', icon: Star, color: 'bg-red-50 text-red-600' },
+                { id: 'settings', label: 'Configuración', desc: 'Notificaciones, privacidad y más', icon: Settings, color: 'bg-red-50 text-red-600' },
+                { id: 'support', label: 'Ayuda y soporte', desc: 'Centro de ayuda y contacto', icon: HelpCircle, color: 'bg-red-50 text-red-600' },
+              ].map(item => {
+                const IconComponent = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setAccountActiveModal(item.id)}
+                    className="w-full p-3 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer flex items-center justify-between text-left"
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <span className={`p-2.5 rounded-2xl ${item.color} shrink-0`}>
+                        <IconComponent size={18} />
+                      </span>
+                      <div>
+                        <span className="text-xs font-black text-slate-900 block leading-tight">{item.label}</span>
+                        <span className="text-[11px] text-slate-500 font-medium block mt-0.5">{item.desc}</span>
+                      </div>
+                    </div>
+
+                    <ChevronRight size={18} className="text-slate-400 shrink-0" />
+                  </button>
+                );
+              })}
+            </div>
+
           </div>
         )}
       </main>
@@ -1291,6 +1555,138 @@ function RestaurantLandingContent({
           primaryColor={cp}
           onAddToCart={handleAddToCartFromDetail}
         />
+      )}
+
+      {/* ── MODALES INTERACTIVOS DE MI CUENTA ── */}
+      {accountActiveModal === 'personal_info' && (
+        <div className="fixed inset-0 z-[100000] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <User className="w-5 h-5 text-red-600" />
+                <h3 className="font-black text-sm uppercase text-slate-900">Información Personal</h3>
+              </div>
+              <button type="button" onClick={() => setAccountActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={(e) => { e.preventDefault(); setAccountActiveModal(null); }} className="space-y-4 text-xs">
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Nombre Completo</label>
+                <input
+                  type="text"
+                  required
+                  value={customerData?.nombre || ''}
+                  onChange={(e) => setCustomerData({ nombre: e.target.value })}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Correo Electrónico</label>
+                <input
+                  type="email"
+                  value={customerData?.email || ''}
+                  onChange={(e) => setCustomerData({ email: e.target.value })}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Teléfono Móvil</label>
+                <input
+                  type="text"
+                  value={customerData?.telefono || ''}
+                  onChange={(e) => setCustomerData({ telefono: e.target.value })}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-mono text-slate-900"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setAccountActiveModal(null)} className="py-2.5 px-4 bg-slate-100 text-slate-700 font-bold rounded-xl">
+                  Cancelar
+                </button>
+                <button type="submit" style={{ backgroundColor: cp }} className="py-2.5 px-5 text-white font-black rounded-xl shadow-md">
+                  Guardar Cambios
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {accountActiveModal === 'payments' && (
+        <div className="fixed inset-0 z-[100000] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-red-600" />
+                <h3 className="font-black text-sm uppercase text-slate-900">Métodos de Pago</h3>
+              </div>
+              <button type="button" onClick={() => setAccountActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2.5 text-xs">
+              <div className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">💵</span>
+                  <div>
+                    <span className="font-black text-slate-900 block">Efectivo al Recibir</span>
+                    <span className="text-[10px] text-slate-400 font-medium">Pago directo al entregador</span>
+                  </div>
+                </div>
+                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+              </div>
+
+              <div className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🏦</span>
+                  <div>
+                    <span className="font-black text-slate-900 block">Transferencia Bancaria</span>
+                    <span className="text-[10px] text-slate-400 font-medium">Comprobante por WhatsApp</span>
+                  </div>
+                </div>
+                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+              </div>
+            </div>
+
+            <p className="text-[10px] text-slate-400 italic text-center">
+              🔒 Métodos de pago seguros y protegidos por el establecimiento.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {accountActiveModal === 'support' && (
+        <div className="fixed inset-0 z-[100000] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="w-5 h-5 text-red-600" />
+                <h3 className="font-black text-sm uppercase text-slate-900">Ayuda y Soporte</h3>
+              </div>
+              <button type="button" onClick={() => setAccountActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <p className="text-slate-600 font-medium">¿Tienes alguna duda o problema con un pedido reciente? Estamos para ayudarte.</p>
+              
+              <a
+                href={`https://wa.me/593959997521?text=Hola,%20necesito%20soporte%20con%20mi%20pedido%20en%20${encodeURIComponent(negocio?.nombre || 'Restaurante')}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase rounded-2xl shadow-md flex items-center justify-center gap-2"
+              >
+                <MessageSquare size={16} /> Contactar Soporte WhatsApp
+              </a>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
