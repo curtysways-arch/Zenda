@@ -57,6 +57,8 @@ interface WaiterCallItem {
 }
 
 export default function AdminMesasPage() {
+  const [mounted, setMounted] = useState(false);
+  const [originUrl, setOriginUrl] = useState('');
   const [activeTab, setActiveTab] = useState<'mesas' | 'solicitudes' | 'llamadas' | 'configuracion'>('mesas');
   const [loading, setLoading] = useState(true);
   const [mesas, setMesas] = useState<RestaurantTableItem[]>([]);
@@ -129,6 +131,10 @@ export default function AdminMesasPage() {
   };
 
   useEffect(() => {
+    setMounted(true);
+    if (typeof window !== 'undefined') {
+      setOriginUrl(window.location.origin);
+    }
     fetchAllData();
     const interval = setInterval(fetchAllData, 12000); // Polling cada 12s para nuevas solicitudes
     return () => clearInterval(interval);
@@ -454,7 +460,9 @@ export default function AdminMesasPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {mesas.map(table => {
-                const tableUrl = typeof window !== 'undefined' ? `${window.location.origin}/${slug}/mesa/${table.token}` : '';
+                const tokenStr = table?.token || '';
+                const baseHost = originUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://citiox.com');
+                const tableUrl = `${baseHost}/${slug}/mesa/${tokenStr}`;
                 const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(tableUrl)}`;
 
                 return (
@@ -478,7 +486,7 @@ export default function AdminMesasPage() {
                       <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col items-center justify-center text-center">
                         <img src={qrUrl} alt={table.nombre} className="w-28 h-28 object-contain rounded-lg" />
                         <span className="text-[10px] text-slate-400 font-mono mt-1 truncate max-w-full">
-                          {table.token.slice(0, 18)}...
+                          {tokenStr ? `${tokenStr.slice(0, 18)}...` : ''}
                         </span>
                       </div>
 

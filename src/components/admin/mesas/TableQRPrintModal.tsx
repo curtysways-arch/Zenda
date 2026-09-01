@@ -23,19 +23,25 @@ interface TableQRPrintModalProps {
 export default function TableQRPrintModal({
   isOpen,
   onClose,
-  tables,
+  tables = [],
   businessName,
   businessLogo,
   slug,
   selectedTableId
 }: TableQRPrintModalProps) {
+  const safeTables = Array.isArray(tables) ? tables : [];
   const [selectedIds, setSelectedIds] = useState<string[]>(
-    selectedTableId ? [selectedTableId] : tables.map(t => t.id)
+    selectedTableId ? [selectedTableId] : safeTables.map(t => t.id)
   );
+  const [originUrl, setOriginUrl] = useState('');
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setOriginUrl(window.location.origin);
+    }
+  }, []);
 
   if (!isOpen) return null;
-
-  const originUrl = typeof window !== 'undefined' ? window.location.origin : 'https://citiox.com';
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev =>
