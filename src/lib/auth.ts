@@ -210,34 +210,34 @@ export const authOptions: AuthOptions = {
                 session.user.estado = token.estado || null;
 
                 // ── RESOLUCIÓN DE ACCESO DELEGADO SUPERADMIN (INMUTABLE) ──
-                if (token.isAdminUser || token.role === 'SUPERADMIN' || token.role === 'SUPER_ADMIN' || (token.roles || []).includes('SUPERADMIN') || (token.roles || []).includes('SUPER_ADMIN')) {
-                    try {
-                        const { getDelegatedSession } = await import('@/lib/delegatedAuth');
-                        const delegated = await getDelegatedSession();
+                try {
+                    const { getDelegatedSession } = await import('@/lib/delegatedAuth');
+                    const delegated = await getDelegatedSession();
 
-                        if (delegated.isValid && delegated.payload) {
-                            session.user.negocioId = delegated.payload.targetBusinessId;
-                            session.user.isDelegated = true;
-                            session.user.targetBusinessName = delegated.payload.targetBusinessName;
-                            session.user.delegatedExpiresAt = delegated.payload.exp * 1000;
-                            session.user.delegatedBy = delegated.payload.superadminId;
+                    if (delegated.isValid && delegated.payload) {
+                        session.user.negocioId = delegated.payload.targetBusinessId;
+                        session.user.isDelegated = true;
+                        session.user.targetBusinessName = delegated.payload.targetBusinessName;
+                        session.user.delegatedExpiresAt = delegated.payload.exp * 1000;
+                        session.user.delegatedBy = delegated.payload.superadminId;
+                        session.user.role = 'SUPERADMIN';
+                        session.user.isAdminUser = true;
 
-                            // Obtener slug e info del negocio objetivo
-                            const targetNegocio: any = await prisma.negocio.findUnique({
-                                where: { id: delegated.payload.targetBusinessId },
-                                select: { slug: true, isDemo: true, tipoNegocio: true }
-                            });
-                            if (targetNegocio) {
-                                session.user.slug = targetNegocio.slug;
-                                session.user.isDemo = targetNegocio.isDemo;
-                                session.user.tipoNegocio = targetNegocio.tipoNegocio || 'RESERVA';
-                            }
-                        } else if (delegated.isExpired) {
-                            session.user.isDelegatedExpired = true;
+                        // Obtener slug e info del negocio objetivo
+                        const targetNegocio: any = await prisma.negocio.findUnique({
+                            where: { id: delegated.payload.targetBusinessId },
+                            select: { slug: true, isDemo: true, tipoNegocio: true }
+                        });
+                        if (targetNegocio) {
+                            session.user.slug = targetNegocio.slug;
+                            session.user.isDemo = targetNegocio.isDemo;
+                            session.user.tipoNegocio = targetNegocio.tipoNegocio || 'RESERVA';
                         }
-                    } catch (dErr) {
-                        console.error("Delegated session resolve error:", dErr);
+                    } else if (delegated.isExpired) {
+                        session.user.isDelegatedExpired = true;
                     }
+                } catch (dErr) {
+                    console.error("Delegated session resolve error:", dErr);
                 }
 
                 // AUTO-REPARACIÓN: Si la sesión no tiene negocioId (token viejo),
