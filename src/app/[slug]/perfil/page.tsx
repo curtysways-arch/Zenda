@@ -472,7 +472,7 @@ export default function MiPerfilPage() {
       
       {/* ── 1. HEADER SUPERIOR NEGRO ── */}
       <header className="sticky top-0 z-[100] bg-slate-950 text-white px-4 py-3.5 shadow-md border-b border-slate-800">
-        <div className="max-w-md mx-auto flex items-center justify-between">
+        <div className="max-w-4xl w-full mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button 
               type="button"
@@ -522,10 +522,10 @@ export default function MiPerfilPage() {
 
       {/* ── 2. LOGIN / OTP IF NOT AUTHENTICATED ── */}
       {step === 'phone' && (
-        <main className="max-w-md mx-auto p-4 pt-10 text-center space-y-6">
+        <main className="max-w-4xl w-full mx-auto p-4 pt-10 text-center space-y-6">
           <h2 className="text-4xl font-black italic uppercase tracking-tight text-slate-900">Bienvenido</h2>
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Ingresa tu teléfono para acceder a tu cuenta</p>
-          <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-200 text-left space-y-4">
+          <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-200 text-left space-y-4 max-w-lg mx-auto">
             <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider block">Número Celular</label>
             <PhoneInput value={telefono} onChange={setTelefono} className="w-full" />
             {error && (
@@ -546,14 +546,14 @@ export default function MiPerfilPage() {
       )}
 
       {step === 'otp' && (
-        <main className="max-w-md mx-auto p-4 pt-10 text-center space-y-6">
+        <main className="max-w-4xl w-full mx-auto p-4 pt-10 text-center space-y-6">
           <div className="size-16 mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 flex items-center justify-center text-amber-500">
             <Key size={28} />
           </div>
           <h2 className="text-2xl font-black uppercase tracking-tight text-slate-900">Código WhatsApp</h2>
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ingresa el código enviado a tu celular</p>
 
-          <form onSubmit={handleVerifyOtp} className="space-y-6 bg-white p-6 rounded-3xl shadow-xl border border-slate-200">
+          <form onSubmit={handleVerifyOtp} className="space-y-6 bg-white p-6 rounded-3xl shadow-xl border border-slate-200 max-w-lg mx-auto">
             <div className="flex justify-between items-center gap-1.5">
               {[0,1,2,3,4,5].map(idx => (
                 <div 
@@ -595,9 +595,9 @@ export default function MiPerfilPage() {
         </main>
       )}
 
-      {/* ── 3. PERFIL PRINCIPAL AUTENTICADO (ESTRUCTURA DE REFERENCIA EXACTA) ── */}
+      {/* ── 3. PERFIL PRINCIPAL AUTENTICADO ── */}
       {step === 'profile' && (
-        <main className="max-w-md mx-auto p-4 space-y-4 animate-in fade-in duration-300">
+        <main className="max-w-4xl w-full mx-auto px-3 sm:px-6 py-4 space-y-4 animate-in fade-in duration-300">
           
           {/* TARJETA SUPERIOR DE PERFIL */}
           <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200 space-y-4">
