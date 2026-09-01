@@ -2,16 +2,25 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { destroyDelegatedSession, getDelegatedSession, logDelegatedAudit } from '@/lib/delegatedAuth';
+import prisma from '@/lib/prisma';
 
 export async function POST(request: Request) {
     try {
         const session = await getServerSession(authOptions);
         const { payload } = await getDelegatedSession();
 
-        const user = session?.user as any;
+        let user = session?.user as any;
+        if (!user && payload?.superadminId) {
+            const adminUser = await prisma.adminUser.findUnique({
+                where: { id: payload.superadminId }
+            });
+            if (adminUser) {
+                user = { id: adminUser.id, email: adminUser.email };
+            }
+        }
+
         const adminUserId = user?.id || payload?.superadminId || 'SUPERADMIN';
         const targetBusinessId = payload?.targetBusinessId;
-
         const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
 
         // Destruir cookie de delegación
