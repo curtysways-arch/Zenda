@@ -19,6 +19,10 @@ const withPWAConfig = withPWA({
     skipWaiting: true,
     runtimeCaching: [
         {
+            urlPattern: /\/_next\/static\/.*/i,
+            handler: 'NetworkOnly',
+        },
+        {
             urlPattern: /^https:\/\/fonts\.(?:gstatic)\.com\/.*/i,
             handler: 'CacheFirst',
             options: {

@@ -51,6 +51,28 @@ export default function RootLayout({
     return (
         <html lang="es" suppressHydrationWarning>
             <body className={inter.className}>
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `
+                            window.addEventListener('error', function(e) {
+                                if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+                                    var src = e.target.src || e.target.href || '';
+                                    if (src.indexOf('_next/static') !== -1) {
+                                        if (navigator.serviceWorker) {
+                                            navigator.serviceWorker.getRegistrations().then(function(regs) {
+                                                for (var r of regs) r.unregister();
+                                            });
+                                        }
+                                        if (!window.__chunk_reloaded__) {
+                                            window.__chunk_reloaded__ = true;
+                                            window.location.reload(true);
+                                        }
+                                    }
+                                }
+                            }, true);
+                        `
+                    }}
+                />
                 <Providers>
                     <BackButtonHandler />
                     {children}
