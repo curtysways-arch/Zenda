@@ -13,13 +13,8 @@ export async function seedStoreDemo() {
     await prisma.$connect();
 
     const slug = 'tienda';
-    const businessId = 'citiox-store-demo-id';
 
-    // 1. Obtener o crear Plan
-    const plan = await (prisma as any).plan.findFirst();
-    const planId = plan?.id || 'demo-plan-id';
-
-    // 2. Crear o actualizar Negocio Demo "tienda"
+    // 1. Crear o actualizar Negocio Demo "tienda"
     const negocio = await (prisma as any).negocio.upsert({
       where: { slug },
       update: {
@@ -34,6 +29,7 @@ export async function seedStoreDemo() {
         precioHora: 0,
         heroTitulo: 'COLECCIÓN URBANA CITIOX',
         heroSubtitulo: 'Descubre nuestra selección exclusiva de ropa, accesorios y calzado con entrega a domicilio o retiro en tienda.',
+        isDemo: true,
         updatedAt: new Date(),
         configuracion: JSON.stringify({
           blueprintId: 'STORE',
@@ -67,7 +63,7 @@ export async function seedStoreDemo() {
         })
       },
       create: {
-        id: businessId,
+        id: 'citiox-store-demo-id',
         nombre: 'Citiox Urban Store',
         slug,
         tipoNegocio: 'TIENDA',
@@ -80,6 +76,7 @@ export async function seedStoreDemo() {
         precioHora: 0,
         heroTitulo: 'COLECCIÓN URBANA CITIOX',
         heroSubtitulo: 'Descubre nuestra selección exclusiva de ropa, accesorios y calzado con entrega a domicilio o retiro en tienda.',
+        isDemo: true,
         updatedAt: new Date(),
         configuracion: JSON.stringify({
           blueprintId: 'STORE',
@@ -116,14 +113,14 @@ export async function seedStoreDemo() {
 
     console.log('✅ Negocio demo verificado:', negocio.nombre, `(slug: ${negocio.slug})`);
 
-    // 2.1 Crear o actualizar Usuario Admin de la Tienda
+    // 2. Crear o actualizar Usuario Admin de la Tienda
     const hashedPassword = await hasher.hash('admin123', 10);
     const adminUser = await (prisma as any).usuario.upsert({
       where: { email: 'admin@tienda.com' },
       update: {
         nombre: 'Admin Citiox Store',
         password: hashedPassword,
-        role: 'ADMIN',
+        role: 'ADMIN_NEGOCIO',
         negocioId: negocio.id,
         updatedAt: new Date()
       },
@@ -132,7 +129,7 @@ export async function seedStoreDemo() {
         nombre: 'Admin Citiox Store',
         email: 'admin@tienda.com',
         password: hashedPassword,
-        role: 'ADMIN',
+        role: 'ADMIN_NEGOCIO',
         negocioId: negocio.id,
         updatedAt: new Date()
       }
@@ -169,13 +166,10 @@ export async function seedStoreDemo() {
         descripcion: 'Mochila impermeable con compartimento acolchado para laptop de 15.6" y puerto USB externo.',
         precio: 45.00,
         stock: 15,
-        sku: 'MCH-WPF-01',
-        tieneVariantes: false,
         activo: true,
-        llevaEmpaque: false,
-        precioEmpaque: 0,
         negocioId: negocio.id,
-        categoriaId: catTech.id
+        categoriaId: catTech.id,
+        extraInfo: { sku: 'MCH-WPF-01', tieneVariantes: false, llevaEmpaque: false, precioEmpaque: 0 }
       },
       create: {
         id: 'prod-mochila',
@@ -183,13 +177,10 @@ export async function seedStoreDemo() {
         descripcion: 'Mochila impermeable con compartimento acolchado para laptop de 15.6" y puerto USB externo.',
         precio: 45.00,
         stock: 15,
-        sku: 'MCH-WPF-01',
-        tieneVariantes: false,
         activo: true,
-        llevaEmpaque: false,
-        precioEmpaque: 0,
         negocioId: negocio.id,
-        categoriaId: catTech.id
+        categoriaId: catTech.id,
+        extraInfo: { sku: 'MCH-WPF-01', tieneVariantes: false, llevaEmpaque: false, precioEmpaque: 0 }
       }
     });
 
@@ -201,13 +192,10 @@ export async function seedStoreDemo() {
         descripcion: 'Gorra de béisbol con visera curva, bordado frontal de alta densidad y correa ajustable.',
         precio: 20.00,
         stock: 8,
-        sku: 'GOR-URB-01',
-        tieneVariantes: false,
         activo: true,
-        llevaEmpaque: false,
-        precioEmpaque: 0,
         negocioId: negocio.id,
-        categoriaId: catRopa.id
+        categoriaId: catRopa.id,
+        extraInfo: { sku: 'GOR-URB-01', tieneVariantes: false, llevaEmpaque: false, precioEmpaque: 0 }
       },
       create: {
         id: 'prod-gorra',
@@ -215,13 +203,10 @@ export async function seedStoreDemo() {
         descripcion: 'Gorra de béisbol con visera curva, bordado frontal de alta densidad y correa ajustable.',
         precio: 20.00,
         stock: 8,
-        sku: 'GOR-URB-01',
-        tieneVariantes: false,
         activo: true,
-        llevaEmpaque: false,
-        precioEmpaque: 0,
         negocioId: negocio.id,
-        categoriaId: catRopa.id
+        categoriaId: catRopa.id,
+        extraInfo: { sku: 'GOR-URB-01', tieneVariantes: false, llevaEmpaque: false, precioEmpaque: 0 }
       }
     });
 
@@ -234,99 +219,70 @@ export async function seedStoreDemo() {
         nombre: 'Camiseta Oversize Premium',
         descripcion: 'Camiseta confeccionada en 100% algodón pesado de 240g, corte oversize y costuras reforzadas.',
         precio: 25.00,
-        stock: null,
-        sku: 'TSH-OVS-BASE',
-        tieneVariantes: true,
+        stock: 18,
         activo: true,
-        llevaEmpaque: false,
-        precioEmpaque: 0,
         negocioId: negocio.id,
-        categoriaId: catRopa.id
+        categoriaId: catRopa.id,
+        extraInfo: { sku: 'TSH-OVS-BASE', tieneVariantes: true, llevaEmpaque: false, precioEmpaque: 0 }
       },
       create: {
         id: 'prod-camiseta',
         nombre: 'Camiseta Oversize Premium',
         descripcion: 'Camiseta confeccionada en 100% algodón pesado de 240g, corte oversize y costuras reforzadas.',
         precio: 25.00,
-        stock: null,
-        sku: 'TSH-OVS-BASE',
-        tieneVariantes: true,
+        stock: 18,
         activo: true,
-        llevaEmpaque: false,
-        precioEmpaque: 0,
         negocioId: negocio.id,
-        categoriaId: catRopa.id
+        categoriaId: catRopa.id,
+        extraInfo: { sku: 'TSH-OVS-BASE', tieneVariantes: true, llevaEmpaque: false, precioEmpaque: 0 }
       }
     });
 
-    // 7. Crear o actualizar las 4 Variantes para Camiseta Oversize Premium
-    const variantesData = [
-      {
-        id: 'var-tsh-blk-m',
-        nombre: 'Negro / M',
-        sku: 'TSH-BLK-M',
-        atributos: { color: 'Negro', talla: 'M' },
-        precio: 25.00,
-        stock: 10,
-        activo: true
-      },
-      {
-        id: 'var-tsh-blk-l',
-        nombre: 'Negro / L',
-        sku: 'TSH-BLK-L',
-        atributos: { color: 'Negro', talla: 'L' },
-        precio: 25.00,
-        stock: 5,
-        activo: true
-      },
-      {
-        id: 'var-tsh-wht-m',
-        nombre: 'Blanco / M',
-        sku: 'TSH-WHT-M',
-        atributos: { color: 'Blanco', talla: 'M' },
-        precio: 25.00,
-        stock: 3,
-        activo: true
-      },
-      {
-        id: 'var-tsh-wht-l',
-        nombre: 'Blanco / L',
-        sku: 'TSH-WHT-L',
-        atributos: { color: 'Blanco', talla: 'L' },
-        precio: 25.00,
-        stock: 0, // AGOTADO EXPRESAMENTE
-        activo: true
-      }
-    ];
+    // 7. Intentar sembrar las 4 Variantes si el modelo ProductoVariante existe
+    try {
+      const variantesData = [
+        { id: 'var-tsh-blk-m', nombre: 'Negro / M', sku: 'TSH-BLK-M', atributos: { color: 'Negro', talla: 'M' }, precio: 25.00, stock: 10, activo: true },
+        { id: 'var-tsh-blk-l', nombre: 'Negro / L', sku: 'TSH-BLK-L', atributos: { color: 'Negro', talla: 'L' }, precio: 25.00, stock: 5, activo: true },
+        { id: 'var-tsh-wht-m', nombre: 'Blanco / M', sku: 'TSH-WHT-M', atributos: { color: 'Blanco', talla: 'M' }, precio: 25.00, stock: 3, activo: true },
+        { id: 'var-tsh-wht-l', nombre: 'Blanco / L', sku: 'TSH-WHT-L', atributos: { color: 'Blanco', talla: 'L' }, precio: 25.00, stock: 0, activo: true }
+      ];
 
-    for (const vData of variantesData) {
-      await (prisma as any).productoVariante.upsert({
-        where: { id: vData.id },
-        update: {
-          productoId: prodCamiseta.id,
-          nombre: vData.nombre,
-          sku: vData.sku,
-          atributos: vData.atributos,
-          precio: vData.precio,
-          stock: vData.stock,
-          activo: vData.activo
-        },
-        create: {
-          id: vData.id,
-          productoId: prodCamiseta.id,
-          nombre: vData.nombre,
-          sku: vData.sku,
-          atributos: vData.atributos,
-          precio: vData.precio,
-          stock: vData.stock,
-          activo: vData.activo
-        }
-      });
+      for (const vData of variantesData) {
+        await (prisma as any).productoVariante.upsert({
+          where: { id: vData.id },
+          update: {
+            productoId: prodCamiseta.id,
+            nombre: vData.nombre,
+            sku: vData.sku,
+            atributos: vData.atributos,
+            precio: vData.precio,
+            stock: vData.stock,
+            activo: vData.activo
+          },
+          create: {
+            id: vData.id,
+            productoId: prodCamiseta.id,
+            nombre: vData.nombre,
+            sku: vData.sku,
+            atributos: vData.atributos,
+            precio: vData.precio,
+            stock: vData.stock,
+            activo: vData.activo
+          }
+        });
+      }
+      console.log('✅ 4 Variantes verificadas para Camiseta Oversize Premium');
+    } catch (vErr) {
+      console.warn('⚠️ No se pudieron sembrar variantes individuales (se usará producto base):', (vErr as any)?.message || vErr);
     }
 
-    console.log('✅ 4 Variantes verificadas para Camiseta Oversize Premium (Negro/M: 10, Negro/L: 5, Blanco/M: 3, Blanco/L: 0 [Agotado])');
     console.log('🎉 Siembra del demo "Citiox Urban Store" (/tienda) completada con éxito.');
-
+    return {
+      status: 'SEEDED',
+      negocioId: negocio.id,
+      slug: negocio.slug,
+      nombre: negocio.nombre
+    };
   } catch (error) {
     console.error('❌ Error sembrando demo de tienda:', error);
     throw error;
