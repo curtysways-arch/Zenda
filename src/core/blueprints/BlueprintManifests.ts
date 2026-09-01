@@ -83,6 +83,22 @@ export const PINCHO_LISTO_BLUEPRINT_MANIFEST: BlueprintManifest = {
   }
 };
 
+export const STORE_BLUEPRINT_MANIFEST: BlueprintManifest = {
+  id: 'STORE',
+  version: '1.0.0',
+  name: 'Blueprint Tienda & E-Commerce',
+  description: 'Solución integral para retail, tiendas de ropa, tecnología, comercio general y venta directa',
+  capabilities: [
+    { id: 'store', version: '1.0.0', enabled: true, configuration: { trackStock: true, enableVariants: true }, dependencies: [] }
+  ],
+  defaultConfiguration: {
+    allowDelivery: true,
+    allowPickup: true,
+    trackInventory: true,
+    enableVariants: true
+  }
+};
+
 export const ALL_BLUEPRINT_MANIFESTS: Record<string, BlueprintManifest> = {
   // Claves Enterprise (canónicas)
   RESTAURANT: RESTAURANT_BLUEPRINT_MANIFEST,
@@ -90,11 +106,13 @@ export const ALL_BLUEPRINT_MANIFESTS: Record<string, BlueprintManifest> = {
   LAUNDRY: LAUNDRY_BLUEPRINT_MANIFEST,
   SPORTS_COURTS: COURTS_BLUEPRINT_MANIFEST,
   PINCHO_LISTO: PINCHO_LISTO_BLUEPRINT_MANIFEST,
+  STORE: STORE_BLUEPRINT_MANIFEST,
 
   // Alias legacy (tipoNegocio en Prisma) → Blueprint Enterprise
   RESERVA: SPA_BLUEPRINT_MANIFEST,
   PELUQUERIA: SPA_BLUEPRINT_MANIFEST,
-  PRODUCTOS: RESTAURANT_BLUEPRINT_MANIFEST,
+  PRODUCTOS: STORE_BLUEPRINT_MANIFEST,
+  TIENDA: STORE_BLUEPRINT_MANIFEST,
   SHOE_CARE: LAUNDRY_BLUEPRINT_MANIFEST,
   CANCHAS: COURTS_BLUEPRINT_MANIFEST,
   'ordenes-servicio': LAUNDRY_BLUEPRINT_MANIFEST

@@ -76,6 +76,17 @@ function VentasContent() {
   const [selectedOrderForAddition, setSelectedOrderForAddition] = useState<any | null>(null);
   const [pendingConfirmOrder, setPendingConfirmOrder] = useState<any | null>(null);
   const [toastMsg, setToastMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [negocioInfo, setNegocioInfo] = useState<any>(null);
+
+  const tipoUpper = (negocioInfo?.tipoNegocio || '').toUpperCase();
+  const blueprintId = typeof negocioInfo?.configuracion === 'string'
+    ? (() => { try { return JSON.parse(negocioInfo.configuracion).blueprintId; } catch { return undefined; } })()
+    : negocioInfo?.configuracion?.blueprintId;
+  const isStore = tipoUpper === 'TIENDA' || tipoUpper === 'STORE' || blueprintId === 'STORE';
+
+  const defaultProductImage = isStore
+    ? 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500'
+    : 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMsg({ text, type });
@@ -163,6 +174,13 @@ function VentasContent() {
         }
         if (resN.ok) {
           const nData = await resN.json();
+          setNegocioInfo(nData);
+          const tUpper = (nData.tipoNegocio || '').toUpperCase();
+          const bId = (typeof nData.configuracion === 'string' ? (() => { try { return JSON.parse(nData.configuracion).blueprintId; } catch { return undefined; } })() : nData.configuracion?.blueprintId);
+          if (tUpper === 'TIENDA' || tUpper === 'STORE' || bId === 'STORE') {
+            setTipoEntrega('PICKUP_ORDER');
+          }
+
           if (nData.latitud) setBizLat(parseFloat(nData.latitud));
           if (nData.longitud) setBizLng(parseFloat(nData.longitud));
           let cfg: any = {};
@@ -559,7 +577,7 @@ function VentasContent() {
                       {/* Imagen & Badge Popular */}
                       <div className="relative w-full h-20 sm:h-24 rounded-lg overflow-hidden bg-slate-100 mb-1.5">
                         <img
-                          src={product.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500'}
+                          src={product.imagenUrl || defaultProductImage}
                           alt={product.nombre}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
@@ -654,44 +672,71 @@ function VentasContent() {
               </div>
             )}
 
-            {/* Tipo de Entrega Switcher (Para Llevar, Mesa, Domicilio) */}
+            {/* Tipo de Entrega Switcher */}
             <div>
               <label className="block text-[8px] font-black uppercase text-slate-400 tracking-wider mb-0.5">Tipo de Entrega</label>
-              <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg bg-slate-100 border border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => handleSelectTipoEntrega('PICKUP_ORDER')}
-                  className={`py-1 px-0.5 rounded-md text-[10px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                    tipoEntrega === 'PICKUP_ORDER'
-                      ? 'bg-[#ea580c] text-white shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <ShoppingBag className="w-3 h-3" /> Para Llevar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSelectTipoEntrega('TABLE_ORDER')}
-                  className={`py-1 px-0.5 rounded-md text-[10px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                    tipoEntrega === 'TABLE_ORDER'
-                      ? 'bg-[#ea580c] text-white shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <Utensils className="w-3 h-3" /> Mesa
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSelectTipoEntrega('DELIVERY_ORDER')}
-                  className={`py-1 px-0.5 rounded-md text-[10px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                    tipoEntrega === 'DELIVERY_ORDER'
-                      ? 'bg-[#ea580c] text-white shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <Bike className="w-3 h-3" /> Domicilio
-                </button>
-              </div>
+              {isStore ? (
+                <div className="grid grid-cols-2 gap-1 p-0.5 rounded-lg bg-slate-100 border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTipoEntrega('PICKUP_ORDER')}
+                    className={`py-1 px-0.5 rounded-md text-[10px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                      tipoEntrega === 'PICKUP_ORDER'
+                        ? 'bg-[#ea580c] text-white shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Store className="w-3 h-3" /> En Tienda
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTipoEntrega('DELIVERY_ORDER')}
+                    className={`py-1 px-0.5 rounded-md text-[10px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                      tipoEntrega === 'DELIVERY_ORDER'
+                        ? 'bg-[#ea580c] text-white shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Bike className="w-3 h-3" /> Domicilio
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg bg-slate-100 border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTipoEntrega('PICKUP_ORDER')}
+                    className={`py-1 px-0.5 rounded-md text-[10px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                      tipoEntrega === 'PICKUP_ORDER'
+                        ? 'bg-[#ea580c] text-white shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <ShoppingBag className="w-3 h-3" /> Para Llevar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTipoEntrega('TABLE_ORDER')}
+                    className={`py-1 px-0.5 rounded-md text-[10px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                      tipoEntrega === 'TABLE_ORDER'
+                        ? 'bg-[#ea580c] text-white shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Utensils className="w-3 h-3" /> Mesa
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTipoEntrega('DELIVERY_ORDER')}
+                    className={`py-1 px-0.5 rounded-md text-[10px] font-extrabold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                      tipoEntrega === 'DELIVERY_ORDER'
+                        ? 'bg-[#ea580c] text-white shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Bike className="w-3 h-3" /> Domicilio
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Dirección de Entrega & Mapa GPS (Si es a Domicilio) */}
@@ -729,8 +774,8 @@ function VentasContent() {
               </div>
             )}
 
-            {/* Selector Dropdown de Mesas (Si es Mesa) */}
-            {tipoEntrega === 'TABLE_ORDER' && (
+            {/* Selector Dropdown de Mesas (Si es Mesa y no es Tienda) */}
+            {tipoEntrega === 'TABLE_ORDER' && !isStore && (
               <div>
                 <label className="block text-[8px] font-black uppercase text-amber-900 tracking-wider mb-0.5 flex items-center gap-1">
                   <Utensils className="w-3 h-3 text-amber-600" /> Seleccionar Mesa
@@ -776,18 +821,18 @@ function VentasContent() {
               </div>
             </div>
 
-            {/* Recomendación / Nota para Cocina Input */}
+            {/* Recomendación / Observación Input */}
             <div className="space-y-0.5">
-              <label className="block text-[8px] font-black uppercase text-amber-700 tracking-wider flex items-center gap-1">
-                <ChefHat className="w-2.5 h-2.5 text-amber-600" />
-                <span>Recomendación / Nota para Cocina</span>
+              <label className="block text-[8px] font-black uppercase tracking-wider flex items-center gap-1 text-slate-700">
+                {isStore ? <ShoppingBag className="w-2.5 h-2.5 text-cyan-600" /> : <ChefHat className="w-2.5 h-2.5 text-amber-600" />}
+                <span>{isStore ? 'Observación / Nota de Venta' : 'Recomendación / Nota para Cocina'}</span>
               </label>
               <input
                 type="text"
                 value={kitchenNotes}
                 onChange={e => setKitchenNotes(e.target.value)}
-                className="w-full px-2 py-1 rounded-lg text-[11px] font-bold bg-amber-50/60 border border-amber-200/80 text-amber-950 outline-none focus:border-amber-400 placeholder:text-amber-700/40"
-                placeholder="Ej: Sin cebolla, término medio, salsa aparte..."
+                className="w-full px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-50 border border-slate-200 text-slate-900 outline-none focus:border-cyan-500 placeholder:text-slate-400"
+                placeholder={isStore ? "Ej: Empaque especial de regalo, talla confirmada, factura..." : "Ej: Sin cebolla, término medio, salsa aparte..."}
               />
             </div>
 
@@ -796,13 +841,13 @@ function VentasContent() {
             <div className="pt-1">
               <div className="flex justify-between text-[9px] font-black uppercase tracking-wider text-slate-400 px-1 mb-1">
                 <span>Producto</span>
-                <span className="mr-4">Empaque / Cant.</span>
+                <span className="mr-4">{isStore ? 'Cant.' : 'Empaque / Cant.'}</span>
                 <span>Precio</span>
               </div>
 
               {selectedItems.length === 0 ? (
                 <div className="p-3 border border-dashed border-slate-200 rounded-xl text-center text-xs text-slate-400">
-                  Selecciona productos del menú POS.
+                  {isStore ? 'Selecciona productos del catálogo POS.' : 'Selecciona productos del menú POS.'}
                 </div>
               ) : (
                 <div className="space-y-1.5">
@@ -814,7 +859,7 @@ function VentasContent() {
                       {/* Thumbnail & Nombre */}
                       <div className="flex items-center gap-1.5 min-w-0 flex-1">
                         <img
-                          src={item.imagenUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=100'}
+                          src={item.imagenUrl || defaultProductImage}
                           alt={item.nombreProducto}
                           className="w-7 h-7 rounded-md object-cover shrink-0"
                         />
@@ -894,10 +939,12 @@ function VentasContent() {
                 <span>Subtotal productos</span>
                 <span className="font-bold text-slate-900">${subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-[10px] text-slate-500 font-semibold">
-                <span>Empaque ({totalTakeawayUnits} uds)</span>
-                <span className="font-bold text-slate-900">${packagingCost.toFixed(2)}</span>
-              </div>
+              {!isStore && (
+                <div className="flex justify-between text-[10px] text-slate-500 font-semibold">
+                  <span>Empaque ({totalTakeawayUnits} uds)</span>
+                  <span className="font-bold text-slate-900">${packagingCost.toFixed(2)}</span>
+                </div>
+              )}
               {tipoEntrega === 'DELIVERY_ORDER' && (
                 <div className="flex justify-between text-[10px] text-[#ea580c] font-semibold">
                   <span>Envío a domicilio ({distanceKm} km)</span>
@@ -979,8 +1026,10 @@ function VentasContent() {
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
                 <>
-                  <ChefHat className="w-3.5 h-3.5" />
-                  {pagarInmediato ? 'COBRAR Y ENVIAR A COCINA' : 'ENVIAR A COCINA (COBRO EN CAJA)'}
+                  {isStore ? <ShoppingBag className="w-3.5 h-3.5" /> : <ChefHat className="w-3.5 h-3.5" />}
+                  {isStore
+                    ? (pagarInmediato ? 'COBRAR Y REGISTRAR VENTA' : 'REGISTRAR VENTA EN MOSTRADOR')
+                    : (pagarInmediato ? 'COBRAR Y ENVIAR A COCINA' : 'ENVIAR A COCINA (COBRO EN CAJA)')}
                 </>
               )}
             </button>

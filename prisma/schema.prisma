@@ -2589,27 +2589,50 @@ model CategoriaProducto {
 }
 
 model Producto {
-  id          String             @id @default(uuid())
-  nombre      String
-  descripcion String?
-  precio      Float
-  imagenUrl   String?
-  activo      Boolean            @default(true)
-  stock       Int?               // Opcional para control de stock
-  orden       Int                @default(0)
-  llevaEmpaque Boolean           @default(true)
-  precioEmpaque Float            @default(0.25)
-  extraInfo   Json?
-  negocioId   String
-  categoriaId String?
-  negocio     Negocio            @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  categoria   CategoriaProducto? @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
-  items       PedidoItem[]
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  id             String             @id @default(uuid())
+  nombre         String
+  descripcion    String?
+  precio         Float
+  imagenUrl      String?
+  activo         Boolean            @default(true)
+  stock          Int?               // Opcional para control de stock
+  sku            String?            // Código de barra/referencia principal
+  tieneVariantes Boolean            @default(false)
+  orden          Int                @default(0)
+  llevaEmpaque   Boolean            @default(true)
+  precioEmpaque  Float              @default(0.25)
+  extraInfo      Json?
+  negocioId      String
+  categoriaId    String?
+  negocio        Negocio            @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  categoria      CategoriaProducto? @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  items          PedidoItem[]
+  variantes      ProductoVariante[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
   @@index([negocioId])
   @@index([categoriaId])
+}
+
+model ProductoVariante {
+  id             String    @id @default(uuid())
+  productoId     String
+  sku            String?
+  nombre         String    // Ej: "Rojo / Talla M"
+  atributos      Json?     // Ej: { "color": "Rojo", "talla": "M" }
+  precio         Float?    // Opcional: sobreescribe el precio base si > 0
+  precioAnterior Float?
+  stock          Int       @default(0)
+  imagenUrl      String?
+  activo         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  producto       Producto  @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@index([productoId])
+  @@index([sku])
 }
 
 model Pedido {
@@ -2645,6 +2668,9 @@ model PedidoItem {
   id             String    @id @default(uuid())
   pedidoId       String
   productoId     String?
+  varianteId     String?
+  varianteNombre String?
+  sku            String?
   nombreProducto String
   precioUnitario Float
   cantidad       Int

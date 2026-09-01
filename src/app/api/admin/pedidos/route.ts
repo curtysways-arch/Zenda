@@ -345,6 +345,33 @@ export async function PUT(req: Request) {
             newExtraInfo.estadoDisponibilidad = updateData.estadoDisponibilidad;
         }
 
+        // Devolución idempotente de stock al cancelar/rechazar pedido
+        const isCancelation = (estado === 'CANCELADO' || estado === 'RECHAZADO');
+        const alreadyRestored = (currentExtra as any)?.stockRestored === true;
+
+        if (isCancelation && !alreadyRestored && pedido.items && pedido.items.length > 0) {
+            try {
+                await prisma.$transaction(async (tx) => {
+                    for (const item of pedido.items) {
+                        if (item.varianteId) {
+                            await (tx as any).productoVariante.update({
+                                where: { id: item.varianteId },
+                                data: { stock: { increment: item.cantidad } }
+                            }).catch(() => {});
+                        } else if (item.productoId) {
+                            await (tx as any).producto.update({
+                                where: { id: item.productoId },
+                                data: { stock: { increment: item.cantidad } }
+                            }).catch(() => {});
+                        }
+                    }
+                });
+                newExtraInfo.stockRestored = true;
+            } catch (stockErr) {
+                console.error('[STOCK_RESTORE_ON_CANCEL_ERROR]', stockErr);
+            }
+        }
+
         updateData.extraInfo = newExtraInfo;
 
         let pedidoActualizado: any;

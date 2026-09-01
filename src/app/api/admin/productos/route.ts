@@ -17,7 +17,7 @@ export async function GET() {
     try {
         const productos = await (prisma as any).producto.findMany({
             where: { negocioId },
-            include: { categoria: true },
+            include: { categoria: true, variantes: true },
             orderBy: { orden: 'asc' }
         });
         return NextResponse.json(productos);
@@ -32,6 +32,45 @@ function parseNumeric(val: any, fallback = 0): number {
     const str = String(val).replace(',', '.').trim();
     const num = parseFloat(str);
     return isNaN(num) ? fallback : num;
+}
+
+async function checkBusinessSkuUniqueness(
+    negocioId: string,
+    skuToCheck: string | null | undefined,
+    excludeProductId?: string,
+    excludeVariantId?: string
+): Promise<string | null> {
+    if (!skuToCheck || !skuToCheck.trim()) return null;
+    const cleanSku = skuToCheck.trim();
+
+    // Validar en Producto del mismo negocio
+    const existingProduct = await (prisma as any).producto.findFirst({
+        where: {
+            negocioId,
+            sku: cleanSku,
+            ...(excludeProductId ? { id: { not: excludeProductId } } : {})
+        }
+    });
+
+    if (existingProduct) {
+        return `El SKU "${cleanSku}" ya está siendo utilizado por el producto "${existingProduct.nombre}" en este negocio.`;
+    }
+
+    // Validar en ProductoVariante del mismo negocio
+    const existingVariant = await (prisma as any).productoVariante.findFirst({
+        where: {
+            producto: { negocioId },
+            sku: cleanSku,
+            ...(excludeVariantId ? { id: { not: excludeVariantId } } : {})
+        },
+        include: { producto: { select: { nombre: true } } }
+    });
+
+    if (existingVariant) {
+        return `El SKU "${cleanSku}" ya está asignado a la variante "${existingVariant.nombre}" en este negocio.`;
+    }
+
+    return null;
 }
 
 export async function POST(req: Request) {
@@ -51,10 +90,35 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        const { nombre, descripcion, precio, imagenUrl, activo, stock, orden, categoriaId, llevaEmpaque, precioEmpaque } = body;
+        const { nombre, descripcion, precio, imagenUrl, activo, stock, orden, categoriaId, llevaEmpaque, precioEmpaque, sku, tieneVariantes, variantesIniciales } = body;
         
         if (!nombre || precio === undefined) {
             return NextResponse.json({ error: 'El nombre y precio son obligatorios' }, { status: 400 });
+        }
+
+        // Validar SKU del producto base
+        const baseSkuError = await checkBusinessSkuUniqueness(negocioId, sku);
+        if (baseSkuError) {
+            return NextResponse.json({ error: baseSkuError }, { status: 400 });
+        }
+
+        // Validar SKUs de variantes iniciales (si aplica)
+        if (tieneVariantes && Array.isArray(variantesIniciales) && variantesIniciales.length > 0) {
+            const seenSkus = new Set<string>();
+            for (const v of variantesIniciales) {
+                const varSku = v.sku ? v.sku.trim() : (sku ? `${sku.trim()}-${v.nombre.replace(/\s+/g, '-').toUpperCase()}` : null);
+                if (varSku) {
+                    if (seenSkus.has(varSku.toUpperCase())) {
+                        return NextResponse.json({ error: `Existe más de una variante inicial con el mismo SKU "${varSku}".` }, { status: 400 });
+                    }
+                    seenSkus.add(varSku.toUpperCase());
+
+                    const varSkuError = await checkBusinessSkuUniqueness(negocioId, varSku);
+                    if (varSkuError) {
+                        return NextResponse.json({ error: varSkuError }, { status: 400 });
+                    }
+                }
+            }
         }
 
         const nuevoProducto = await (prisma as any).producto.create({
@@ -65,6 +129,8 @@ export async function POST(req: Request) {
                 imagenUrl: imagenUrl || null,
                 activo: activo !== undefined ? Boolean(activo) : true,
                 stock: stock !== undefined && stock !== null && stock !== '' ? parseInt(String(stock)) : null,
+                sku: sku ? sku.trim() : null,
+                tieneVariantes: Boolean(tieneVariantes),
                 orden: parseNumeric(orden, 0),
                 llevaEmpaque: llevaEmpaque !== undefined ? Boolean(llevaEmpaque) : true,
                 precioEmpaque: parseNumeric(precioEmpaque, 0.25),
@@ -73,7 +139,30 @@ export async function POST(req: Request) {
             }
         });
 
-        return NextResponse.json(nuevoProducto);
+        // Crear variantes iniciales si fueron enviadas al crear producto nuevo
+        if (tieneVariantes && Array.isArray(variantesIniciales) && variantesIniciales.length > 0) {
+            for (const v of variantesIniciales) {
+                const varSku = v.sku ? v.sku.trim() : (sku ? `${sku.trim()}-${v.nombre.replace(/\s+/g, '-').toUpperCase()}` : null);
+                await (prisma as any).productoVariante.create({
+                    data: {
+                        productoId: nuevoProducto.id,
+                        nombre: v.nombre,
+                        sku: varSku,
+                        precio: parseNumeric(v.precio, parseNumeric(precio, 0)),
+                        stock: parseNumeric(v.stock, 0),
+                        activo: v.activo !== undefined ? Boolean(v.activo) : true,
+                        atributos: typeof v.atributos === 'string' ? v.atributos : (v.atributos || null)
+                    }
+                });
+            }
+        }
+
+        const prodConVariantes = await (prisma as any).producto.findUnique({
+            where: { id: nuevoProducto.id },
+            include: { categoria: true, variantes: true }
+        });
+
+        return NextResponse.json(prodConVariantes || nuevoProducto);
     } catch (e: any) {
         console.error('[API_PRODUCTOS_POST]', e);
         return NextResponse.json({ error: e?.message || 'Internal Server Error' }, { status: 500 });
@@ -89,7 +178,7 @@ export async function PUT(req: Request) {
 
     try {
         const body = await req.json();
-        const { id, nombre, descripcion, precio, imagenUrl, activo, stock, orden, categoriaId, llevaEmpaque, precioEmpaque } = body;
+        const { id, nombre, descripcion, precio, imagenUrl, activo, stock, orden, categoriaId, llevaEmpaque, precioEmpaque, sku, tieneVariantes } = body;
         
         if (!id || !nombre || precio === undefined) {
             return NextResponse.json({ error: 'El ID, nombre y precio son obligatorios' }, { status: 400 });
@@ -101,6 +190,12 @@ export async function PUT(req: Request) {
             return NextResponse.json({ error: 'No autorizado o producto no encontrado' }, { status: 403 });
         }
 
+        // Validar SKU único en este negocio
+        const skuError = await checkBusinessSkuUniqueness(negocioId, sku, id);
+        if (skuError) {
+            return NextResponse.json({ error: skuError }, { status: 400 });
+        }
+
         const prodActualizado = await (prisma as any).producto.update({
             where: { id },
             data: {
@@ -110,6 +205,8 @@ export async function PUT(req: Request) {
                 imagenUrl: imagenUrl || null,
                 activo: activo !== undefined ? Boolean(activo) : true,
                 stock: stock !== undefined && stock !== null && stock !== '' ? parseInt(String(stock)) : null,
+                sku: sku || null,
+                tieneVariantes: tieneVariantes !== undefined ? Boolean(tieneVariantes) : prod.tieneVariantes,
                 orden: parseNumeric(orden, 0),
                 llevaEmpaque: llevaEmpaque !== undefined ? Boolean(llevaEmpaque) : true,
                 precioEmpaque: parseNumeric(precioEmpaque, 0.25),

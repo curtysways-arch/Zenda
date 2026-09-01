@@ -21,6 +21,14 @@ export default function UniversalHeroCarousel({
 }: UniversalHeroCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  const isSports = (negocio as any)?.tipoNegocio === 'SPORTS_COURTS';
+  const isStore = (negocio as any)?.tipoNegocio === 'TIENDA' || (negocio as any)?.tipoNegocio === 'STORE' || (negocio as any)?.configuracion?.blueprintId === 'STORE';
+
+  // Imagen fallback inteligente por industria
+  const defaultFallbackImage = isStore
+    ? 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=1200'
+    : 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&q=80&w=1200';
+
   // Normalizar items: Si no hay heroItems resolutivos, crear un ítem por defecto usando defaultImages o datos legacy
   const items: ResolvedHeroItem[] = (heroItems && heroItems.length > 0)
     ? heroItems
@@ -52,7 +60,7 @@ export default function UniversalHeroCarousel({
             type: 'IMAGE',
             sourceType: 'CUSTOM_IMAGE',
             sourceId: null,
-            image: 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&q=80&w=1200',
+            image: defaultFallbackImage,
             mobileImage: null,
             title: null,
             description: null,
@@ -81,17 +89,20 @@ export default function UniversalHeroCarousel({
 
   const primaryColor = negocio?.colorPrimario || 'var(--primary)';
   const slug = negocio?.slug || '';
-  const isSports = (negocio as any)?.tipoNegocio === 'SPORTS_COURTS';
 
-  // Resolver texto de título y descripción
+  // Resolver texto de título y descripción por industria
+  const defaultSubtitulo = isStore
+    ? 'DESCUBRE NUESTRA COLECCIÓN Y RECIBE A DOMICILIO O RETIRA EN TIENDA.'
+    : 'RESERVA TU CITA DE FORMA ONLINE EN SENCILLOS PASOS.';
+
   const displayBadge = `BIENVENIDO A ${(negocio?.nombre || '').split(' - ')[0].toUpperCase()}`;
   const displayTitle = activeItem.title || negocio?.heroTitulo || `BIENVENIDO A ${(negocio?.nombre || '').split(' - ')[0].toUpperCase()}`;
-  const displayDescription = activeItem.description || negocio?.heroSubtitulo || 'RESERVA TU CITA DE FORMA ONLINE EN SENCILLOS PASOS.';
+  const displayDescription = activeItem.description || negocio?.heroSubtitulo || defaultSubtitulo;
 
-  // Resolver acción de botón y URL
+  // Resolver acción de botón y URL por industria
   const button = activeItem.button || { enabled: true, actionType: 'BOOK_SERVICE' };
   const buttonEnabled = button.enabled !== false;
-  const defaultBtnText = isSports ? 'Elegir cancha' : 'Elegir servicio';
+  const defaultBtnText = isSports ? 'Elegir cancha' : isStore ? 'Ver Catálogo' : 'Elegir servicio';
   const buttonText = button.text || defaultBtnText;
 
   const getButtonHref = () => {
@@ -120,8 +131,9 @@ export default function UniversalHeroCarousel({
       return `/${slug}#productos`;
     }
 
-    // 5. Ir a Servicio / Servicios
+    // 5. Ir a Servicio / Servicios / Catálogo
     if (action === 'SERVICE' || action === 'BOOK_SERVICE') {
+      if (isStore) return `/${slug}#productos`;
       if (val) return `/${slug}/servicio/${val}`;
       return `/${slug}/servicios`;
     }
@@ -267,7 +279,7 @@ export default function UniversalHeroCarousel({
               )}
               <p className="text-[7.5px] font-bold text-white/50 flex items-center justify-center gap-1 mt-1 tracking-wide text-center mx-auto">
                 <Clock size={9} />
-                Reserva en menos de un minuto.
+                {isStore ? 'Compra en menos de un minuto.' : 'Reserva en menos de un minuto.'}
               </p>
             </div>
           )}

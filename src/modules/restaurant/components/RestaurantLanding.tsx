@@ -110,7 +110,9 @@ function RestaurantLandingContent({
     setCustomerData,
     getItemQuantity,
     addToCart,
-    decrementQuantity
+    decrementQuantity,
+    isCartOpen,
+    setIsCartOpen
   } = useCart();
 
   // Configuración de Paleta de Colores Dinámicos del Admin
@@ -155,7 +157,8 @@ function RestaurantLandingContent({
   const [highlights, setHighlights] = useState<HighlightItem[]>(initialHeroContent?.highlights || []);
 
   const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');
-  const [showCartDrawer, setShowCartDrawer] = useState<boolean>(false);
+  const showCartDrawer = isCartOpen;
+  const setShowCartDrawer = setIsCartOpen;
   const [showChannelModal, setShowChannelModal] = useState<boolean>(false);
   const [showMapModal, setShowMapModal] = useState<boolean>(false);
   
@@ -171,6 +174,52 @@ function RestaurantLandingContent({
   const [isPWAInstalledState, setIsPWAInstalledState] = useState<boolean>(false);
   const [canInstallPWA, setCanInstallPWA] = useState<boolean>(false);
   const [accountActiveModal, setAccountActiveModal] = useState<string | null>(null);
+
+  // Perfil real y cupones desde la base de datos
+  const [profileData, setProfileData] = useState<any>(null);
+  const [realCuponesCount, setRealCuponesCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (!negocio?.slug) return;
+
+    fetch(`/api/${negocio.slug}/perfil`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && !data.error) {
+          setProfileData(data);
+          if (data.nombre && !customerData?.nombre) setCustomerData({ nombre: data.nombre });
+          if (data.telefono && !customerData?.telefono) setCustomerData({ telefono: data.telefono });
+          if (data.email && !customerData?.email) setCustomerData({ email: data.email });
+          if (data.direccion && !customerData?.direccion) setCustomerData({ direccion: data.direccion });
+        }
+      })
+      .catch(() => {});
+
+    fetch(`/api/${negocio.slug}/mis-cupones`)
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        if (Array.isArray(data)) setRealCuponesCount(data.length);
+      })
+      .catch(() => {});
+  }, [negocio?.slug]);
+
+  // Datos 100% reales derivados de la DB / sesión
+  const displayName = profileData?.nombre || customerData?.nombre || (typeof window !== 'undefined' ? (localStorage.getItem('user_name') || localStorage.getItem('pinchos_client_name')) : null) || 'Cliente';
+  const displayPhone = profileData?.telefono || customerData?.telefono || (typeof window !== 'undefined' ? (localStorage.getItem('user_phone') || localStorage.getItem('pinchos_client_phone')) : null) || 'Sin teléfono';
+  const displayEmail = profileData?.email || customerData?.email || 'Sin correo registrado';
+  const displayAddress = customerData?.direccion || profileData?.direccion || (typeof window !== 'undefined' ? (localStorage.getItem('customer_address') || localStorage.getItem('pinchos_client_address')) : null) || 'Sin dirección registrada';
+  const displayReference = customerData?.referencia || profileData?.referencia || (typeof window !== 'undefined' ? localStorage.getItem('customer_reference') : null) || '';
+
+  const realOrdersCount = profileData?.totalPedidos ?? profileData?.stats?.totalPedidos ?? 0;
+  const realPointsCount = profileData?.loyalty?.puntos ?? 0;
+
+  const userLevelTag = React.useMemo(() => {
+    const totalCount = realOrdersCount + (profileData?.stats?.reservasTotales || 0);
+    if (totalCount >= 10) return { label: 'Cliente VIP', icon: '👑', color: 'bg-amber-100 text-amber-900 border-amber-300' };
+    if (totalCount >= 3) return { label: 'Usuario frecuente', icon: '⭐', color: 'bg-amber-50 text-amber-800 border-amber-200' };
+    if (totalCount > 0) return { label: 'Cliente Activo', icon: '🌱', color: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+    return null;
+  }, [realOrdersCount, profileData]);
 
   const miniMapRef = useRef<HTMLDivElement>(null);
   const miniMapInstanceRef = useRef<any>(null);
@@ -1155,7 +1204,7 @@ function RestaurantLandingContent({
                       style={{ backgroundColor: cp }} 
                       className="w-16 h-16 rounded-full text-white font-black flex items-center justify-center text-2xl shadow-md border-2 border-white"
                     >
-                      {customerData?.nombre ? customerData.nombre.charAt(0).toUpperCase() : 'C'}
+                      {displayName ? displayName.charAt(0).toUpperCase() : 'U'}
                     </div>
 
                     <button 
@@ -1171,18 +1220,21 @@ function RestaurantLandingContent({
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-base font-black text-slate-900 leading-snug">
-                        {customerData?.nombre || 'Carlos Caicedo'}
+                        {displayName}
                       </h3>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
-                        ⭐ <span>Usuario frecuente</span>
-                      </span>
+                      {userLevelTag && (
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border flex items-center gap-1 ${userLevelTag.color}`}>
+                          <span>{userLevelTag.icon}</span>
+                          <span>{userLevelTag.label}</span>
+                        </span>
+                      )}
                     </div>
 
                     <p className="text-xs font-bold text-slate-500 leading-tight">
-                      {customerData?.telefono || '+593 959 997 521'}
+                      {displayPhone}
                     </p>
                     <p className="text-xs text-slate-400 font-medium leading-tight">
-                      {customerData?.email || 'carlos.caicedo@email.com'}
+                      {displayEmail}
                     </p>
                   </div>
                 </div>
@@ -1196,7 +1248,7 @@ function RestaurantLandingContent({
                 </button>
               </div>
 
-              {/* RESUMEN DE ACTIVIDAD (PEDIDOS, PUNTOS, CUPONES EN 3 BLOQUES) */}
+              {/* RESUMEN DE ACTIVIDAD (PEDIDOS, PUNTOS, CUPONES EN 3 BLOQUES CON DATOS REALES) */}
               <div className="pt-4 border-t border-slate-100 grid grid-cols-3 gap-2 text-center">
                 <button 
                   type="button"
@@ -1210,7 +1262,7 @@ function RestaurantLandingContent({
                     <span className="text-[10px] font-black uppercase text-slate-400">Pedidos</span>
                   </div>
                   <div>
-                    <span className="text-base font-black text-slate-900 block leading-tight">14</span>
+                    <span className="text-base font-black text-slate-900 block leading-tight">{realOrdersCount}</span>
                     <span className="text-[10px] font-medium text-slate-400 block">Realizados</span>
                   </div>
                 </button>
@@ -1227,7 +1279,7 @@ function RestaurantLandingContent({
                     <span className="text-[10px] font-black uppercase text-slate-400">Puntos</span>
                   </div>
                   <div>
-                    <span className="text-base font-black text-slate-900 block leading-tight">320</span>
+                    <span className="text-base font-black text-slate-900 block leading-tight">{realPointsCount}</span>
                     <span className="text-[10px] font-medium text-slate-400 block">Disponibles</span>
                   </div>
                 </button>
@@ -1244,7 +1296,7 @@ function RestaurantLandingContent({
                     <span className="text-[10px] font-black uppercase text-slate-400">Cupones</span>
                   </div>
                   <div>
-                    <span className="text-base font-black text-slate-900 block leading-tight">3</span>
+                    <span className="text-base font-black text-slate-900 block leading-tight">{realCuponesCount}</span>
                     <span className="text-[10px] font-medium text-slate-400 block">Disponibles</span>
                   </div>
                 </button>
@@ -1260,10 +1312,10 @@ function RestaurantLandingContent({
                     <div className="space-y-1">
                       <span className="text-[11px] font-black uppercase text-slate-500 block tracking-wider">Dirección registrada</span>
                       <p className="text-xs font-black text-slate-900 leading-snug">
-                        {customerData?.direccion || 'Javier Espinoza, Uraba, Camino De Los Eucaliptos, Quito, Ecuador'}
+                        {displayAddress}
                       </p>
-                      {customerData?.referencia && (
-                        <p className="text-[11px] text-slate-500 font-medium">Ref: {customerData.referencia}</p>
+                      {displayReference && (
+                        <p className="text-[11px] text-slate-500 font-medium">Ref: {displayReference}</p>
                       )}
                     </div>
                   </div>

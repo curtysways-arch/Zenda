@@ -44,6 +44,11 @@ export default async function AdminDashboard() {
         return <ShoeCareBackoffice negocio={negocioObj} />;
     }
 
+    if (activeType === 'TIENDA' || activeType === 'STORE') {
+        const { default: StoreDashboard } = await import('@/modules/store/components/StoreDashboard');
+        return <StoreDashboard negocioId={negocioId} role={role} />;
+    }
+
     if (activeType === 'PRODUCTOS' || activeType === 'RESTAURANT') {
         return <ProductsDashboard negocioId={negocioId} role={role} />;
     }

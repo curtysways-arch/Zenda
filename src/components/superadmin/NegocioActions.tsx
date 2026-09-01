@@ -9,7 +9,8 @@ import {
     Eye,
     ExternalLink,
     Pencil,
-    QrCode
+    QrCode,
+    ShieldCheck
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -23,7 +24,30 @@ interface NegocioActionsProps {
 export default function NegocioActions({ negocio, onEdit }: NegocioActionsProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [enteringAdmin, setEnteringAdmin] = useState(false);
     const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+
+    const handleEnterAdmin = async () => {
+        setEnteringAdmin(true);
+        try {
+            const res = await fetch(`/api/superadmin/businesses/${negocio.id}/access`, {
+                method: "POST",
+            });
+            if (res.ok) {
+                const data = await res.json();
+                router.push(data.redirectUrl || "/admin");
+                router.refresh();
+            } else {
+                const data = await res.json().catch(() => ({}));
+                alert(data.error || "Error al acceder al admin del negocio");
+                setEnteringAdmin(false);
+            }
+        } catch (err: any) {
+            console.error(err);
+            alert(err?.message || "Error al conectar con el servidor");
+            setEnteringAdmin(false);
+        }
+    };
 
     const updateStatus = async (nuevoEstado: string) => {
         setLoading(true);
@@ -68,8 +92,18 @@ export default function NegocioActions({ negocio, onEdit }: NegocioActionsProps)
     };
 
     return (
-        <div className="flex items-center justify-end gap-1 px-2">
-            {loading && <Loader2 size={16} className="animate-spin text-slate-400 mr-2" />}
+        <div className="flex items-center justify-end gap-1.5 px-2">
+            {(loading || enteringAdmin) && <Loader2 size={16} className="animate-spin text-slate-400 mr-1" />}
+
+            <button
+                onClick={handleEnterAdmin}
+                disabled={loading || enteringAdmin}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md shadow-emerald-600/20 active:scale-95 disabled:opacity-50 cursor-pointer"
+                title="Entrar al panel Admin de este negocio con Sesión Delegada"
+            >
+                <ShieldCheck size={14} className="text-emerald-200" />
+                <span>{enteringAdmin ? 'Entrando...' : 'Entrar al Admin'}</span>
+            </button>
 
             <button
                 onClick={() => setIsQRModalOpen(true)}

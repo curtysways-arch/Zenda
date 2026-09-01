@@ -86,6 +86,49 @@ export default async function PublicNegocioPage({
         );
     }
 
+    const isStoreModule =
+        blueprintId === 'STORE' ||
+        negocio.tipoNegocio === 'TIENDA' ||
+        negocio.tipoNegocio === 'STORE' ||
+        negocio.tipoNegocio === 'ECOMMERCE' ||
+        restConfig.tipoNegocio === 'TIENDA' ||
+        restConfig.tipoNegocio === 'STORE' ||
+        restConfig.tipoNegocio === 'ECOMMERCE';
+
+    if (isStoreModule && !ModuleResolver.isPinchosModule(slug)) {
+        let initialProducts: any[] = [];
+        let initialCategories: any[] = [];
+        let initialHeroContent: any = { hero: [], highlights: [] };
+        try {
+            const { resolveLandingContent } = await import('@/lib/landingContentResolver');
+            const [prods, cats, landingContent] = await Promise.all([
+                (prisma as any).producto.findMany({
+                    where: { negocioId: negocio.id },
+                    orderBy: { orden: 'asc' },
+                    include: { categoria: true, variantes: true }
+                }),
+                (prisma as any).categoriaProducto.findMany({
+                    where: { negocioId: negocio.id, activo: true },
+                    orderBy: { orden: 'asc' }
+                }),
+                resolveLandingContent(negocio.id)
+            ]);
+            initialProducts = prods;
+            initialCategories = cats;
+            initialHeroContent = landingContent;
+        } catch (_) {}
+
+        const { default: StoreLanding } = await import('@/modules/store/components/StoreLanding');
+        return (
+            <StoreLanding
+                negocio={negocio}
+                initialProducts={initialProducts}
+                initialCategories={initialCategories}
+                initialHeroContent={initialHeroContent}
+            />
+        );
+    }
+
     if (negocio.tipoNegocio === 'PRODUCTOS') {
         // Dispatch via ModuleResolver — never hardcode slug here
         if (ModuleResolver.isPinchosModule(slug)) {

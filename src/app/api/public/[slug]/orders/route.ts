@@ -115,33 +115,81 @@ export async function POST(
             return NextResponse.json({ error: 'MODULE_NOT_AVAILABLE', message: 'El módulo de pedidos no está disponible para este negocio.' }, { status: 403 });
         }
 
-        // Obtener productos de la base de datos para calcular el precio correcto
-        const productIds = items.map(item => item.productId);
-        const dbProducts = await (prisma as any).producto.findMany({
-            where: { id: { in: productIds }, negocioId: negocio.id }
-        });
+        // Protección contra duplicados en checkout (Idempotencia Server-Side)
+        const idempotencyKey = body.idempotencyKey || body.checkoutRequestId || body.requestId || null;
 
-        if (dbProducts.length !== productIds.length) {
-            return NextResponse.json({ error: 'Algunos productos no están disponibles.' }, { status: 400 });
+        if (idempotencyKey) {
+            const recentOrders = await (prisma as any).pedido.findMany({
+                where: {
+                    negocioId: negocio.id,
+                    createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) }
+                },
+                include: { items: true }
+            });
+            const existingOrder = recentOrders.find((o: any) => o.extraInfo && o.extraInfo.idempotencyKey === idempotencyKey);
+            if (existingOrder) {
+                return NextResponse.json(existingOrder, { status: 200 });
+            }
         }
 
-        // Calcular subtotal e items formateados
+        // Obtener productos y variantes de la base de datos para calcular el precio correcto en servidor
+        const productIds = items.map(item => item.productId).filter(Boolean);
+        const variantIds = items.map(item => item.variantId).filter(Boolean);
+
+        const [dbProducts, dbVariants] = await Promise.all([
+            (prisma as any).producto.findMany({
+                where: { id: { in: productIds }, negocioId: negocio.id },
+                include: { variantes: true }
+            }),
+            variantIds.length > 0
+                ? (prisma as any).productoVariante.findMany({
+                    where: { id: { in: variantIds }, activo: true }
+                })
+                : Promise.resolve([])
+        ]);
+
+        if (dbProducts.length !== productIds.length) {
+            return NextResponse.json({ error: 'Algunos productos seleccionados ya no están disponibles.' }, { status: 400 });
+        }
+
+        // Calcular subtotal e items formateados con snapshots y precios server-side
         let subtotal = 0;
         const itemsToCreate = [];
 
         for (const item of items) {
+            const qty = parseInt(String(item.cantidad || 0));
+            if (isNaN(qty) || qty <= 0) {
+                return NextResponse.json({ error: 'Cantidad de producto inválida.' }, { status: 400 });
+            }
+
             const product = dbProducts.find(p => p.id === item.productId);
             if (!product || !product.activo) {
-                return NextResponse.json({ error: `El producto ${product?.nombre || ''} no está activo.` }, { status: 400 });
+                return NextResponse.json({ error: `El producto ${product?.nombre || ''} no está disponible.` }, { status: 400 });
             }
-            const itemSubtotal = product.precio * item.cantidad;
+
+            let variant = null;
+            if (item.variantId) {
+                variant = dbVariants.find(v => v.id === item.variantId && v.productoId === product.id);
+                if (!variant || !variant.activo) {
+                    return NextResponse.json({ error: `La variante seleccionada para ${product.nombre} no está disponible.` }, { status: 400 });
+                }
+            }
+
+            const precioReal = (variant && variant.precio !== null && variant.precio > 0)
+                ? variant.precio
+                : product.precio;
+
+            const itemSubtotal = precioReal * qty;
             subtotal += itemSubtotal;
 
             itemsToCreate.push({
                 productoId: product.id,
+                varianteId: variant ? variant.id : null,
+                varianteNombre: variant ? variant.nombre : null,
+                sku: variant?.sku || product.sku || null,
                 nombreProducto: product.nombre,
-                precioUnitario: product.precio,
-                cantidad: item.cantidad
+                precioUnitario: precioReal,
+                cantidad: qty
             });
         }
 
@@ -211,8 +259,43 @@ export async function POST(
         }
         dateToDeliver.setHours(0, 0, 0, 0);
 
-        // Generar número de pedido secuencial por negocio (transacción segura)
+        // Generar número de pedido secuencial por negocio y descontar stock atómicamente
         const txResult = await prisma.$transaction(async (tx) => {
+            // Descuento atómico de stock por variante o producto
+            for (const item of itemsToCreate) {
+                if (item.varianteId) {
+                    const updatedVar = await (tx as any).productoVariante.updateMany({
+                        where: {
+                            id: item.varianteId,
+                            stock: { gte: item.cantidad }
+                        },
+                        data: {
+                            stock: { decrement: item.cantidad }
+                        }
+                    });
+                    if (updatedVar.count === 0) {
+                        throw new Error(`Stock insuficiente para la variante ${item.varianteNombre || 'seleccionada'}.`);
+                    }
+                } else if (item.productoId) {
+                    const prodDb = dbProducts.find(p => p.id === item.productoId);
+                    if (prodDb && prodDb.stock !== null) {
+                        const updatedProd = await (tx as any).producto.updateMany({
+                            where: {
+                                id: item.productoId,
+                                negocioId: negocio.id,
+                                stock: { gte: item.cantidad }
+                            },
+                            data: {
+                                stock: { decrement: item.cantidad }
+                            }
+                        });
+                        if (updatedProd.count === 0) {
+                            throw new Error(`Stock insuficiente para el producto ${item.nombreProducto}.`);
+                        }
+                    }
+                }
+            }
+
             const lastOrder = await (tx as any).pedido.findFirst({
                 where: { negocioId: negocio.id },
                 orderBy: { numeroPedido: 'desc' },
@@ -241,6 +324,7 @@ export async function POST(
                     estado: 'PENDIENTE',
                     extraInfo: {
                         ...(body.extraInfo || {}),
+                        idempotencyKey: idempotencyKey || null,
                         promotionId: body.promotionId || null,
                         promotionCode: body.promotionCode || null,
                         promotionTitle: body.promotionTitle || null,

@@ -25,6 +25,11 @@ export default function PromotionBuilder({
   onCancel,
   negocio,
 }: PromotionBuilderProps) {
+  const tipoUpper = (negocio?.tipoNegocio || '').toUpperCase();
+  const blueprintId = (negocio?.configuracion as any)?.blueprintId;
+  const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || blueprintId === 'RESTAURANT';
+  const isStore = tipoUpper === 'TIENDA' || tipoUpper === 'STORE' || blueprintId === 'STORE';
+
   // ── ESTADO DE NAVEGACIÓN Y PASOS ──────────────────────────────────────────
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState<boolean>(false);
@@ -394,9 +399,11 @@ export default function PromotionBuilder({
               <Sparkles className="w-5 h-5" />
             </span>
             <div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 block">Asistente de Promociones Gastronómicas</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 block">
+                {isStore ? 'Asistente de Ofertas E-Commerce' : isRestaurant ? 'Asistente de Promociones Gastronómicas' : 'Asistente de Promociones Citiox'}
+              </span>
               <h2 className="text-lg sm:text-xl font-black text-slate-900 italic uppercase">
-                {initialData ? '✏️ Editar Oferta' : '✨ Crear Nueva Oferta para Restaurante'}
+                {initialData ? '✏️ Editar Oferta' : isStore ? '✨ Crear Nueva Oferta de Tienda' : isRestaurant ? '✨ Crear Nueva Oferta para Restaurante' : '✨ Crear Nueva Oferta'}
               </h2>
             </div>
           </div>
@@ -474,11 +481,13 @@ export default function PromotionBuilder({
               <div>
                 <span className="text-[10px] font-black uppercase text-amber-600 tracking-wider block">Paso 1</span>
                 <h3 className="text-lg font-black text-slate-900 uppercase">¿Qué quieres promocionar?</h3>
-                <p className="text-xs text-slate-500 font-medium">Selecciona qué elemento de tu menú o servicio recibirá la oferta.</p>
+                <p className="text-xs text-slate-500 font-medium">
+                  {isStore ? 'Selecciona qué producto o categoría de tu catálogo recibirá la oferta.' : 'Selecciona qué elemento de tu menú o servicio recibirá la oferta.'}
+                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* 🍔 Un Producto / Platillo */}
+                {/* 🛍️ Un Producto / Platillo */}
                 <button
                   type="button"
                   onClick={() => {
@@ -491,11 +500,15 @@ export default function PromotionBuilder({
                       : 'bg-slate-50/70 border-slate-200 hover:border-amber-300'
                   }`}
                 >
-                  <span className="p-3 bg-amber-500 text-slate-950 rounded-xl font-black text-xl shrink-0">🍔</span>
+                  <span className="p-3 bg-amber-500 text-slate-950 rounded-xl font-black text-xl shrink-0">
+                    {isStore ? '🛍️' : '🍔'}
+                  </span>
                   <div>
-                    <span className="text-sm font-black text-slate-900 block">Un Platillo o Bebida</span>
+                    <span className="text-sm font-black text-slate-900 block">
+                      {isStore ? 'Un Producto o Variante' : 'Un Platillo o Bebida'}
+                    </span>
                     <span className="text-xs text-slate-500 font-medium leading-relaxed block mt-0.5">
-                      Promociona un elemento específico de tu catálogo (ej. Hamburguesa Clásica).
+                      {isStore ? 'Promociona un producto específico de tu tienda (ej. Camiseta Oversize).' : 'Promociona un elemento específico de tu catálogo (ej. Hamburguesa Clásica).'}
                     </span>
                     {selectedProduct && alcance === 'PRODUCTOS' && (
                       <span className="inline-flex items-center gap-1 mt-2 text-xs font-black text-amber-900 bg-amber-200/80 px-2.5 py-1 rounded-lg">
@@ -520,9 +533,11 @@ export default function PromotionBuilder({
                 >
                   <span className="p-3 bg-orange-500 text-white rounded-xl font-black text-xl shrink-0">📂</span>
                   <div>
-                    <span className="text-sm font-black text-slate-900 block">Una Categoría del Menú</span>
+                    <span className="text-sm font-black text-slate-900 block">
+                      {isStore ? 'Una Categoría de Tienda' : 'Una Categoría del Menú'}
+                    </span>
                     <span className="text-xs text-slate-500 font-medium leading-relaxed block mt-0.5">
-                      Aplica la oferta a todos los platillos de una categoría (ej. Pizzas o Bebidas).
+                      {isStore ? 'Aplica la oferta a todos los productos de una categoría (ej. Ropa & Moda).' : 'Aplica la oferta a todos los platillos de una categoría (ej. Pizzas o Bebidas).'}
                     </span>
                     {selectedCategory && alcance === 'SERVICIOS' && (
                       <span className="inline-flex items-center gap-1 mt-2 text-xs font-black text-orange-900 bg-orange-200/80 px-2.5 py-1 rounded-lg">
@@ -548,14 +563,14 @@ export default function PromotionBuilder({
                 >
                   <span className="p-3 bg-slate-900 text-amber-400 rounded-xl font-black text-xl shrink-0">🛒</span>
                   <div>
-                    <span className="text-sm font-black text-slate-900 block">Todo el Pedido</span>
+                    <span className="text-sm font-black text-slate-900 block">Todo el Pedido / Carrito</span>
                     <span className="text-xs text-slate-500 font-medium leading-relaxed block mt-0.5">
-                      Aplica el descuento al valor total del consumo de la mesa o pedido online.
+                      {isStore ? 'Aplica el descuento al valor total de la compra en la tienda online.' : 'Aplica el descuento al valor total del consumo de la mesa o pedido online.'}
                     </span>
                   </div>
                 </button>
 
-                {/* 🍔 Crear un Combo */}
+                {/* 🎁 Crear un Pack de Productos / Combo */}
                 <button
                   type="button"
                   onClick={() => {
@@ -570,9 +585,11 @@ export default function PromotionBuilder({
                 >
                   <span className="p-3 bg-purple-600 text-white rounded-xl font-black text-xl shrink-0">🎁</span>
                   <div>
-                    <span className="text-sm font-black text-slate-900 block">Crear un Combo / Paquete</span>
+                    <span className="text-sm font-black text-slate-900 block">
+                      {isStore ? 'Crear un Pack de Productos' : 'Crear un Combo / Paquete'}
+                    </span>
                     <span className="text-xs text-slate-500 font-medium leading-relaxed block mt-0.5">
-                      Agrupa varios platillos (Plato + Acompañante + Bebida) a un precio único.
+                      {isStore ? 'Agrupa varios productos (ej. Camiseta + Gorra + Mochila) a un precio especial.' : 'Agrupa varios platillos (Plato + Acompañante + Bebida) a un precio único.'}
                     </span>
                   </div>
                 </button>
@@ -938,7 +955,9 @@ export default function PromotionBuilder({
                       }`}
                     >
                       <span>🚚 Envío 100% Gratis</span>
-                      <span className="text-[10px] font-normal block mt-0.5 opacity-90">El restaurante cubre el costo total.</span>
+                      <span className="text-[10px] font-normal block mt-0.5 opacity-90">
+                        {isStore ? 'La tienda cubre el costo total.' : isRestaurant ? 'El restaurante cubre el costo total.' : 'El negocio cubre el costo total.'}
+                      </span>
                     </button>
 
                     <button

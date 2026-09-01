@@ -11,6 +11,9 @@ import {
 interface PedidoItem {
   id: string;
   productoId?: string;
+  varianteId?: string;
+  varianteNombre?: string;
+  sku?: string;
   nombreProducto: string;
   cantidad: number;
   precioUnitario: number;
@@ -959,7 +962,19 @@ export default function PedidosOnlinePage() {
                   <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block">Productos</span>
                   {pedido.items?.map(it => (
                     <div key={it.id} className="flex justify-between font-bold text-slate-800">
-                      <span>{it.cantidad || 1}x {it.nombreProducto}</span>
+                      <div>
+                        <span>{it.cantidad || 1}x {it.nombreProducto}</span>
+                        {it.varianteNombre && (
+                          <span className="text-[10px] text-cyan-700 bg-cyan-50 border border-cyan-200 px-1.5 py-0.5 rounded font-semibold ml-1.5">
+                            {it.varianteNombre}
+                          </span>
+                        )}
+                        {it.sku && (
+                          <span className="text-[10px] text-slate-400 font-mono font-normal ml-1">
+                            [{it.sku}]
+                          </span>
+                        )}
+                      </div>
                       <span>${((Number(it.precioUnitario) || 0) * (Number(it.cantidad) || 1)).toFixed(2)}</span>
                     </div>
                   ))}

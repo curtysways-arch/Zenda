@@ -2,6 +2,7 @@ import MobileBottomNav from '@/components/admin/mobile/MobileBottomNav';
 import MobileTopBar from '@/components/admin/mobile/MobileTopBar';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import GlobalOrderNotifier from '@/components/admin/GlobalOrderNotifier';
+import DelegatedAdminBanner from '@/components/admin/DelegatedAdminBanner';
 import { ConfirmProvider } from '@/components/admin/ConfirmContext';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -12,6 +13,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { AlertTriangle, Rocket } from 'lucide-react';
 import Link from 'next/link';
+import { destroyDelegatedSession, logDelegatedAudit } from '@/lib/delegatedAuth';
 
 export default async function AdminLayout({
     children,
@@ -25,13 +27,25 @@ export default async function AdminLayout({
     }
 
     const user = session.user as any;
+
+    // Manejar expiración de acceso delegado
+    if (user.isDelegatedExpired) {
+        await destroyDelegatedSession();
+        await logDelegatedAudit({
+            adminUserId: user.id || 'SUPERADMIN',
+            accion: 'DELEGATED_ADMIN_ACCESS_EXPIRED',
+            descripcion: 'El acceso delegado expiró automáticamente al superar los 30 minutos',
+        });
+        redirect('/superadmin?expired=true');
+    }
+
     const role = user.role;
     const roles = user.roles || [];
+    const negocioId = user.negocioId;
+    const isDelegated = user.isDelegated === true;
 
-    const negocioId = (session.user as any).negocioId;
-
-    const isSuperAdmin = role === 'SUPER_ADMIN' || roles.includes('SUPERADMIN');
-    if (isSuperAdmin && !negocioId) {
+    const isSuperAdmin = role === 'SUPER_ADMIN' || roles.includes('SUPERADMIN') || user.isAdminUser === true;
+    if (isSuperAdmin && !negocioId && !isDelegated) {
         redirect('/superadmin');
     }
 
@@ -69,7 +83,7 @@ export default async function AdminLayout({
             config = negocio?.configuracion || {};
         }
 
-        if (config.wizardCompleted === false) {
+        if (config.wizardCompleted === false && !isDelegated) {
             redirect('/admin/onboarding');
         }
 
@@ -106,7 +120,13 @@ export default async function AdminLayout({
 
                         {/* Banners de estado */}
                         <div className="z-40">
-                            {isDemo && (
+                            {isDelegated && (
+                                <DelegatedAdminBanner
+                                    businessName={user.targetBusinessName || negocio?.nombre || 'Negocio Objetivo'}
+                                    expiresAt={user.delegatedExpiresAt}
+                                />
+                            )}
+                            {isDemo && !isDelegated && (
                                 <div className="bg-amber-500 text-white px-6 py-2 flex items-center justify-between shadow-lg">
                                     <p className="text-[9px] font-black uppercase tracking-widest italic">MODO DEMO</p>
                                     <Link href="/register" className="bg-white text-amber-600 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest">Crear mi Spa</Link>

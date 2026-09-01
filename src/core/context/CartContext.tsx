@@ -3,14 +3,14 @@
  * @module core/context
  * @description Estado unificado del carrito de compras del cliente (FASE 5D).
  * @responsibility Administrar items seleccionados, cantidades, cálculo de subtotal, costo de envío y total,
- *   con persistencia automática en localStorage por negocio.
+ *   estado de apertura de modal/drawer de carrito, con persistencia automática en localStorage por negocio.
  * @dependencies React Context
  * @status Stable (FASE 5D - Customer Ordering Experience)
  */
 
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 export interface CartProduct {
   id: string;
@@ -19,6 +19,11 @@ export interface CartProduct {
   imagenUrl?: string | null;
   descripcion?: string | null;
   categoriaId?: string | null;
+  varianteId?: string | null;
+  varianteNombre?: string | null;
+  sku?: string | null;
+  llevaEmpaque?: boolean;
+  precioEmpaque?: number;
 }
 
 export interface CartItem {
@@ -40,6 +45,10 @@ export interface CustomerFormData {
   horaEntrega?: string;
 }
 
+export function getCartItemKey(product: { id: string; varianteId?: string | null }): string {
+  return product.varianteId ? `${product.id}_${product.varianteId}` : product.id;
+}
+
 export interface CartContextType {
   cart: CartItem[];
   deliveryType: DeliveryType;
@@ -48,14 +57,19 @@ export interface CartContextType {
   subtotal: number;
   total: number;
   totalItemsCount: number;
+  isCartOpen: boolean;
+  setIsCartOpen: (open: boolean) => void;
+  openCart: () => void;
+  closeCart: () => void;
+  toggleCart: () => void;
   setDeliveryType: (type: DeliveryType) => void;
   setCustomerData: (data: Partial<CustomerFormData>) => void;
   setDeliveryCost: (cost: number) => void;
-  getItemQuantity: (productId: string) => number;
+  getItemQuantity: (productId: string, varianteId?: string | null) => number;
   setItemQuantity: (product: CartProduct, quantity: number) => void;
   addToCart: (product: CartProduct, qtyToAdd?: number) => void;
-  removeFromCart: (productId: string) => void;
-  decrementQuantity: (productId: string) => void;
+  removeFromCart: (productId: string, varianteId?: string | null) => void;
+  decrementQuantity: (productId: string, varianteId?: string | null) => void;
   clearCart: () => void;
 }
 
@@ -75,6 +89,8 @@ export function CartProvider({
   const [cart, setCart] = useState<CartItem[]>([]);
   const [deliveryType, setDeliveryTypeState] = useState<DeliveryType>('DOMICILIO');
   const [deliveryCost, setDeliveryCost] = useState<number>(defaultDeliveryCost);
+  const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
+
   const [customerData, setCustomerDataState] = useState<CustomerFormData>({
     nombre: '',
     telefono: '',
@@ -85,113 +101,148 @@ export function CartProvider({
     horaEntrega: 'ASAP',
   });
 
+  const openCart = useCallback(() => setIsCartOpen(true), []);
+  const closeCart = useCallback(() => setIsCartOpen(false), []);
+  const toggleCart = useCallback(() => setIsCartOpen(prev => !prev), []);
+
+  // Escuchar eventos globales de apertura de carrito
+  useEffect(() => {
+    const handleOpenCart = () => setIsCartOpen(true);
+    const handleCloseCart = () => setIsCartOpen(false);
+    const handleToggleCart = () => setIsCartOpen(prev => !prev);
+
+    window.addEventListener('citiox_open_cart', handleOpenCart);
+    window.addEventListener('citiox_close_cart', handleCloseCart);
+    window.addEventListener('citiox_toggle_cart', handleToggleCart);
+
+    return () => {
+      window.removeEventListener('citiox_open_cart', handleOpenCart);
+      window.removeEventListener('citiox_close_cart', handleCloseCart);
+      window.removeEventListener('citiox_toggle_cart', handleToggleCart);
+    };
+  }, []);
+
   // Cargar carrito desde localStorage al montar
   useEffect(() => {
     if (typeof window !== 'undefined' && businessId) {
       try {
-        const saved = localStorage.getItem(storageKey);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) setCart(parsed);
+        const savedCart = localStorage.getItem(storageKey);
+        if (savedCart) {
+          const parsed = JSON.parse(savedCart);
+          if (Array.isArray(parsed)) {
+            setCart(parsed);
+          }
         }
-        const savedPhone = localStorage.getItem('pinchos_client_phone') || localStorage.getItem('user_phone') || '';
-        const savedName = localStorage.getItem('pinchos_client_name') || localStorage.getItem('user_name') || '';
-        const savedAddr = localStorage.getItem('pinchos_client_address') || '';
-
-        if (savedPhone || savedName || savedAddr) {
-          setCustomerDataState(prev => ({
-            ...prev,
-            nombre: prev.nombre || savedName,
-            telefono: prev.telefono || savedPhone,
-            direccion: prev.direccion || savedAddr,
-          }));
-        }
-      } catch (e) {
-        console.error('[CartProvider] Error cargando localStorage:', e);
+      } catch (err) {
+        console.error('[CartProvider] Error cargando carrito desde localStorage:', err);
       }
     }
   }, [businessId, storageKey]);
 
-  // Guardar en localStorage cada vez que cambie el carrito
-  const saveCart = (newCart: CartItem[]) => {
-    setCart(newCart);
+  // Guardar en localStorage al cambiar el carrito
+  useEffect(() => {
     if (typeof window !== 'undefined' && businessId) {
       try {
-        localStorage.setItem(storageKey, JSON.stringify(newCart));
-      } catch (e) {
-        console.error('[CartProvider] Error guardando localStorage:', e);
+        localStorage.setItem(storageKey, JSON.stringify(cart));
+      } catch (err) {
+        console.error('[CartProvider] Error guardando carrito en localStorage:', err);
       }
     }
+  }, [cart, businessId, storageKey]);
+
+  const setDeliveryType = (type: DeliveryType) => {
+    setDeliveryTypeState(type);
   };
 
-  const getItemQuantity = (productId: string): number => {
-    const found = cart.find(i => i.product.id === productId);
+  const setCustomerData = (data: Partial<CustomerFormData>) => {
+    setCustomerDataState((prev) => ({ ...prev, ...data }));
+  };
+
+  const getItemQuantity = (productId: string, varianteId?: string | null): number => {
+    const targetKey = getCartItemKey({ id: productId, varianteId });
+    const found = cart.find((i) => getCartItemKey(i.product) === targetKey);
     return found ? found.quantity : 0;
   };
 
   const setItemQuantity = (product: CartProduct, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(product.id);
+      removeFromCart(product.id, product.varianteId);
       return;
     }
-    const existing = cart.find(i => i.product.id === product.id);
-    if (existing) {
-      saveCart(cart.map(i => i.product.id === product.id ? { ...i, quantity } : i));
-    } else {
-      saveCart([...cart, { product, quantity }]);
-    }
-  };
 
-  const addToCart = (product: CartProduct, qtyToAdd: number = 1) => {
-    const currentQty = getItemQuantity(product.id);
-    setItemQuantity(product, currentQty + qtyToAdd);
-  };
+    const targetKey = getCartItemKey(product);
 
-  const decrementQuantity = (productId: string) => {
-    const currentQty = getItemQuantity(productId);
-    if (currentQty <= 1) {
-      removeFromCart(productId);
-    } else {
-      const found = cart.find(i => i.product.id === productId);
-      if (found) {
-        setItemQuantity(found.product, currentQty - 1);
+    setCart((prev) => {
+      const existingIndex = prev.findIndex((i) => getCartItemKey(i.product) === targetKey);
+      if (existingIndex >= 0) {
+        const updated = [...prev];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          quantity,
+        };
+        return updated;
+      } else {
+        return [...prev, { product, quantity }];
       }
-    }
-  };
-
-  const removeFromCart = (productId: string) => {
-    saveCart(cart.filter(i => i.product.id !== productId));
-  };
-
-  const clearCart = () => {
-    saveCart([]);
-  };
-
-  const setDeliveryType = (type: DeliveryType) => {
-    setDeliveryTypeState(type);
-    if (type === 'RETIRO' || type === 'MESA') {
-      setDeliveryCost(0);
-    } else {
-      setDeliveryCost(defaultDeliveryCost);
-    }
-  };
-
-  const setCustomerData = (data: Partial<CustomerFormData>) => {
-    setCustomerDataState(prev => {
-      const next = { ...prev, ...data };
-      if (typeof window !== 'undefined') {
-        if (next.nombre) localStorage.setItem('pinchos_client_name', next.nombre);
-        if (next.telefono) localStorage.setItem('pinchos_client_phone', next.telefono);
-        if (next.direccion) localStorage.setItem('pinchos_client_address', next.direccion);
-      }
-      return next;
     });
   };
 
-  const subtotal = cart.reduce((sum, item) => sum + (Number(item.product.precio) || 0) * item.quantity, 0);
-  const effectiveDeliveryCost = deliveryType === 'DOMICILIO' ? (Number(deliveryCost) || 0) : 0;
+  const addToCart = (product: CartProduct, qtyToAdd: number = 1) => {
+    const targetKey = getCartItemKey(product);
+    setCart((prev) => {
+      const existingIndex = prev.findIndex((i) => getCartItemKey(i.product) === targetKey);
+      if (existingIndex >= 0) {
+        const updated = [...prev];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          quantity: updated[existingIndex].quantity + qtyToAdd,
+        };
+        return updated;
+      } else {
+        return [...prev, { product, quantity: qtyToAdd }];
+      }
+    });
+  };
+
+  const removeFromCart = (productId: string, varianteId?: string | null) => {
+    const targetKey = getCartItemKey({ id: productId, varianteId });
+    setCart((prev) => prev.filter((i) => getCartItemKey(i.product) !== targetKey));
+  };
+
+  const decrementQuantity = (productId: string, varianteId?: string | null) => {
+    const targetKey = getCartItemKey({ id: productId, varianteId });
+    setCart((prev) => {
+      const existingIndex = prev.findIndex((i) => getCartItemKey(i.product) === targetKey);
+      if (existingIndex >= 0) {
+        const currentQty = prev[existingIndex].quantity;
+        if (currentQty <= 1) {
+          return prev.filter((i) => getCartItemKey(i.product) !== targetKey);
+        }
+        const updated = [...prev];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          quantity: currentQty - 1,
+        };
+        return updated;
+      }
+      return prev;
+    });
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    if (typeof window !== 'undefined' && businessId) {
+      localStorage.removeItem(storageKey);
+    }
+  };
+
+  const subtotal = cart.reduce((acc, item) => {
+    return acc + (Number(item.product.precio) || 0) * item.quantity;
+  }, 0);
+
+  const effectiveDeliveryCost = deliveryType === 'RETIRO' ? 0 : deliveryCost;
   const total = subtotal + effectiveDeliveryCost;
-  const totalItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
     <CartContext.Provider
@@ -203,6 +254,11 @@ export function CartProvider({
         subtotal: Math.round(subtotal * 100) / 100,
         total: Math.round(total * 100) / 100,
         totalItemsCount,
+        isCartOpen,
+        setIsCartOpen,
+        openCart,
+        closeCart,
+        toggleCart,
         setDeliveryType,
         setCustomerData,
         setDeliveryCost,
@@ -219,10 +275,34 @@ export function CartProvider({
   );
 }
 
+const fallbackContext: CartContextType = {
+  cart: [],
+  deliveryType: 'DOMICILIO',
+  customerData: { nombre: '', telefono: '', direccion: '' },
+  deliveryCost: 0,
+  subtotal: 0,
+  total: 0,
+  totalItemsCount: 0,
+  isCartOpen: false,
+  setIsCartOpen: () => {},
+  openCart: () => {},
+  closeCart: () => {},
+  toggleCart: () => {},
+  setDeliveryType: () => {},
+  setCustomerData: () => {},
+  setDeliveryCost: () => {},
+  getItemQuantity: () => 0,
+  setItemQuantity: () => {},
+  addToCart: () => {},
+  removeFromCart: () => {},
+  decrementQuantity: () => {},
+  clearCart: () => {},
+};
+
 export function useCart() {
   const context = useContext(CartContext);
   if (!context) {
-    throw new Error('useCart debe ser utilizado dentro de un CartProvider');
+    return fallbackContext;
   }
   return context;
 }

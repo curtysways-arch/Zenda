@@ -200,6 +200,7 @@ export default function AdminSidebar({
     // Catalog Capabilities
     if (capabilities.catalog) {
       items.push({ name: 'Productos', href: '/admin/productos', icon: Sparkles, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+      items.push({ name: 'Inventario', href: '/admin/inventario', icon: Package, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
       items.push({ name: 'Categorías', href: '/admin/categorias', icon: Tags, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     }
 

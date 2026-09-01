@@ -1,10 +1,11 @@
 'use client';
 
-import { Home, Calendar, User, FileText, Scissors, Gift, Tag, PackageCheck, Flame } from 'lucide-react';
+import { Home, Calendar, User, FileText, Scissors, Gift, Tag, PackageCheck, Flame, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { hasModule } from '@/lib/business/BusinessModuleResolver';
+import { useCart } from '@/core/context/CartContext';
 
 interface PublicDesktopNavProps {
     slug: string;
@@ -28,6 +29,8 @@ export default function PublicDesktopNav({
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
     const [hasSession, setHasSession] = useState(false);
+
+    const { totalItemsCount, subtotal, setIsCartOpen } = useCart();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -84,7 +87,14 @@ export default function PublicDesktopNav({
     }
 
     const canAppointments = hasModule(tipoNegocio, 'APPOINTMENTS') || hasModule(tipoNegocio, 'RESERVATIONS');
-    const canOrders = hasModule(tipoNegocio, 'ORDERS') || tipoNegocio === 'RESTAURANT';
+    const canOrders = hasModule(tipoNegocio, 'ORDERS') ||
+        tipoNegocio === 'RESTAURANT' ||
+        tipoNegocio === 'RESTAURANTE' ||
+        tipoNegocio === 'TIENDA' ||
+        tipoNegocio === 'STORE' ||
+        tipoNegocio === 'ECOMMERCE' ||
+        tipoNegocio === 'PRODUCTOS';
+        
     const canServices = hasModule(tipoNegocio, 'SERVICES');
     const isShoeCare = tipoNegocio === 'SHOE_CARE' || slug.includes('lavado') || slug.includes('sneaker');
 
@@ -186,6 +196,15 @@ export default function PublicDesktopNav({
         }
     };
 
+    const handleOpenCart = () => {
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('citiox_open_cart'));
+        }
+        if (setIsCartOpen) {
+            setIsCartOpen(true);
+        }
+    };
+
     return (
         <nav 
             className={`hidden md:block fixed top-0 left-0 right-0 z-[200] transition-all duration-500 ${
@@ -245,15 +264,37 @@ export default function PublicDesktopNav({
                     ))}
                 </div>
 
-                {/* CTA Button */}
-                <Link
-                    href={buttonHref}
-                    onClick={handleCatalogClick}
-                    className="flex-shrink-0 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
-                    style={{ backgroundColor: 'var(--primary)' }}
-                >
-                    {buttonText}
-                </Link>
+                {/* CTA & Carrito Buttons */}
+                <div className="flex items-center gap-3 flex-shrink-0">
+                    {canOrders && (
+                        <button
+                            type="button"
+                            onClick={handleOpenCart}
+                            className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-extrabold text-xs uppercase tracking-wider text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-200/80 shadow-2xs hover:shadow-xs transition-all relative cursor-pointer group"
+                        >
+                            <div className="relative flex items-center justify-center">
+                                <ShoppingBag className="w-4 h-4 text-cyan-600 group-hover:scale-110 transition-transform" />
+                                {totalItemsCount > 0 && (
+                                    <span className="absolute -top-2.5 -right-2.5 bg-rose-600 text-white px-1.5 py-0.2 rounded-full text-[9px] font-black shadow-xs animate-pulse min-w-[16px] text-center">
+                                        {totalItemsCount}
+                                    </span>
+                                )}
+                            </div>
+                            <span className="font-black text-slate-900">
+                                {totalItemsCount > 0 ? `Carrito ($${subtotal.toFixed(2)})` : 'Ver Carrito'}
+                            </span>
+                        </button>
+                    )}
+
+                    <Link
+                        href={buttonHref}
+                        onClick={handleCatalogClick}
+                        className="flex-shrink-0 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+                        style={{ backgroundColor: 'var(--primary)' }}
+                    >
+                        {buttonText}
+                    </Link>
+                </div>
             </div>
         </nav>
     );

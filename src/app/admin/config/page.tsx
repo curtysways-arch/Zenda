@@ -133,7 +133,19 @@ export default function ConfigMensajesPage() {
         );
     }
 
-    if (tipoNegocio === 'PRODUCTOS') {
+    const activeTipo = (negocio?.tipoNegocio || tipoNegocio || '').toUpperCase();
+    const blueprintId = (typeof negocio?.configuracion === 'string'
+        ? (() => { try { return JSON.parse(negocio.configuracion).blueprintId; } catch { return undefined; } })()
+        : negocio?.configuracion?.blueprintId);
+
+    const isStoreOrProducts =
+        activeTipo === 'PRODUCTOS' ||
+        activeTipo === 'TIENDA' ||
+        activeTipo === 'STORE' ||
+        activeTipo === 'ECOMMERCE' ||
+        blueprintId === 'STORE';
+
+    if (isStoreOrProducts) {
         return (
             <ProductsConfig 
                 negocio={negocio} 

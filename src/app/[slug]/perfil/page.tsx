@@ -658,7 +658,7 @@ export default function MiPerfilPage() {
                 </div>
                 <div>
                   <span className="text-base font-black text-slate-900 block leading-tight">
-                    {cliente?.totalPedidos || 14}
+                    {cliente?.totalPedidos ?? cliente?.stats?.totalPedidos ?? 0}
                   </span>
                   <span className="text-[10px] font-medium text-slate-400 block">Realizados</span>
                 </div>
@@ -677,7 +677,7 @@ export default function MiPerfilPage() {
                 </div>
                 <div>
                   <span className="text-base font-black text-slate-900 block leading-tight">
-                    {cliente?.loyalty?.puntos || 320}
+                    {cliente?.loyalty?.puntos ?? 0}
                   </span>
                   <span className="text-[10px] font-medium text-slate-400 block">Disponibles</span>
                 </div>

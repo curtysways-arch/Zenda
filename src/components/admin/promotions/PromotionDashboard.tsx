@@ -120,14 +120,18 @@ export default function PromotionDashboard({
   const formatCurrency = (val?: number) => `$${(Number(val) || 0).toFixed(2)}`;
 
   const tipoUpper = (negocio?.tipoNegocio || '').toUpperCase();
-  const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA';
+  const blueprintId = (negocio?.configuracion as any)?.blueprintId;
+  const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || blueprintId === 'RESTAURANT';
+  const isStore = tipoUpper === 'TIENDA' || tipoUpper === 'STORE' || blueprintId === 'STORE';
   const isBeautySpa = tipoUpper === 'SPA' || tipoUpper === 'CENTRO_ESTETICA' || tipoUpper === 'PELUQUERIA' || tipoUpper === 'BARBERIA';
   const isLaundry = tipoUpper === 'SHOE_CARE' || tipoUpper === 'LAVANDERIA';
 
-  const comboTabLabel = isRestaurant ? 'Combos' : isBeautySpa ? 'Paquetes de Servicios' : isLaundry ? 'Kits de Servicios' : 'Paquetes & Combos';
+  const comboTabLabel = isRestaurant ? 'Combos' : isStore ? 'Packs de Productos' : isBeautySpa ? 'Paquetes de Servicios' : isLaundry ? 'Kits de Servicios' : 'Paquetes & Combos';
   const comboTabIcon = isRestaurant ? Utensils : Sparkles;
 
-  const headerDescription = isRestaurant
+  const headerDescription = isStore
+    ? 'Aumenta tus ventas e-commerce, impulsa productos estrella y ofrece descuentos exclusivos en tu tienda online.'
+    : isRestaurant
     ? 'Aumenta tus ventas, incrementa el ticket promedio y llena horas de baja demanda reutilizando tu infraestructura actual de Citiox.'
     : isBeautySpa
     ? 'Atrae más clientes a tu agenda, ofrece paquetes de servicios preferenciales y maximiza tus reservas en horas de baja demanda.'
@@ -135,7 +139,9 @@ export default function PromotionDashboard({
     ? 'Genera más solicitudes de servicio, ofrece kits de limpieza y optimiza los retiros a domicilio de tu taller.'
     : 'Aumenta tus ventas, atrae nuevos clientes y ofrece promociones exclusivas en la plataforma Citiox.';
 
-  const emptyText = isRestaurant
+  const emptyText = isStore
+    ? 'Incrementa las ventas de tu tienda creando tu primera oferta, pack de productos o cupón de descuento.'
+    : isRestaurant
     ? 'Incrementa las ventas de tu restaurante creando tu primera oferta, combo o cupón de descuento.'
     : isBeautySpa
     ? 'Incrementa las reservas de tu spa o centro creando tu primer paquete de servicios o cupón promocional.'
