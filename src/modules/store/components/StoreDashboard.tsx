@@ -143,7 +143,9 @@ export default async function StoreDashboard({ negocioId, role }: Props) {
             </span>
             <span className="text-slate-400 text-sm">| Multi-Tenant Isolated</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white" style={{ color: '#ffffff' }}>{negocio?.nombre || 'Mi Tienda'}</h1>
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white !text-white" style={{ color: '#ffffff' }}>
+            <span className="text-white !text-white" style={{ color: '#ffffff' }}>{negocio?.nombre || 'Mi Tienda'}</span>
+          </h1>
           <p className="text-slate-300 text-sm mt-1">Panel de control comercial, inventario y despacho online</p>
         </div>
 
