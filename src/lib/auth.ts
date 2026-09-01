@@ -210,7 +210,7 @@ export const authOptions: AuthOptions = {
                 session.user.estado = token.estado || null;
 
                 // ── RESOLUCIÓN DE ACCESO DELEGADO SUPERADMIN (INMUTABLE) ──
-                if (token.isAdminUser || token.role === 'SUPERADMIN' || (token.roles || []).includes('SUPERADMIN')) {
+                if (token.isAdminUser || token.role === 'SUPERADMIN' || token.role === 'SUPER_ADMIN' || (token.roles || []).includes('SUPERADMIN') || (token.roles || []).includes('SUPER_ADMIN')) {
                     try {
                         const { getDelegatedSession } = await import('@/lib/delegatedAuth');
                         const delegated = await getDelegatedSession();

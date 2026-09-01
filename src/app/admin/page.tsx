@@ -18,9 +18,10 @@ import OnboardingChecklist from '@/components/admin/OnboardingChecklist';
 import { formatUTCDate } from '@/lib/utils';
 import RealtimeDashboardReloader from '@/components/admin/RealtimeDashboardReloader';
 import ProductsDashboard from '@/components/admin/ProductsDashboard';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 
 export default async function AdminDashboard() {
-    const session = await getServerSession(authOptions);
+    const session = await getEffectiveAdminSession();
 
     if (!session) return null;
     const negocioId = (session.user as any).negocioId;
