@@ -163,11 +163,22 @@ export default function MiPerfilPage() {
         setCurrentLat(localLat);
         setCurrentLng(localLng);
 
-        // Inicializar direcciones guardadas
-        setSavedAddresses([
-          { id: 'addr_1', etiqueta: 'Casa', direccion: localAddr, referencia: localRef, lat: localLat, lng: localLng, principal: true },
-          { id: 'addr_2', etiqueta: 'Trabajo', direccion: 'Av. República del Salvador y NNNN, Quito', referencia: 'Oficina 502', lat: -0.178, lng: -78.481, principal: false }
-        ]);
+        // Inicializar direcciones guardadas reales desde localStorage
+        let parsedSavedAddresses: any[] = [];
+        try {
+          const rawAddr = localStorage.getItem('customer_saved_addresses') || localStorage.getItem('pinchos_saved_addresses');
+          if (rawAddr) parsedSavedAddresses = JSON.parse(rawAddr);
+        } catch (e) {}
+
+        if (!Array.isArray(parsedSavedAddresses) || parsedSavedAddresses.length === 0) {
+          if (localAddr) {
+            parsedSavedAddresses = [
+              { id: 'addr_1', etiqueta: 'Principal', direccion: localAddr, referencia: localRef, lat: localLat, lng: localLng, principal: true }
+            ];
+          }
+        }
+
+        setSavedAddresses(parsedSavedAddresses);
 
         // Cargar cupones disponibles reales
         try {
@@ -344,7 +355,7 @@ export default function MiPerfilPage() {
     }
   };
 
-  // Confirmar ubicación en el mapa
+  // Confirmar y guardar ubicación en el mapa
   const handleConfirmLocationFromMap = async (lat: number, lng: number, addressName?: string, reference?: string) => {
     const newAddress = addressName || direccionRegistrada;
     const newRef = reference || referenciaRegistrada;
@@ -359,6 +370,40 @@ export default function MiPerfilPage() {
     localStorage.setItem('pinchos_client_address', newAddress);
     localStorage.setItem('customer_address', newAddress);
     localStorage.setItem('pinchos_client_reference', newRef);
+
+    // Actualizar lista de direcciones guardadas del cliente en el estado y localStorage
+    setSavedAddresses(prev => {
+      let currentSaved = [...prev].map(item => ({ ...item, principal: false }));
+      const existingIdx = currentSaved.findIndex(item => item.direccion.trim().toLowerCase() === newAddress.trim().toLowerCase());
+      
+      if (existingIdx >= 0) {
+        currentSaved[existingIdx] = {
+          ...currentSaved[existingIdx],
+          direccion: newAddress,
+          referencia: newRef,
+          lat,
+          lng,
+          principal: true
+        };
+      } else {
+        currentSaved.push({
+          id: `addr_${Date.now()}`,
+          etiqueta: `Dirección ${currentSaved.length + 1}`,
+          direccion: newAddress,
+          referencia: newRef,
+          lat,
+          lng,
+          principal: true
+        });
+      }
+
+      try {
+        localStorage.setItem('customer_saved_addresses', JSON.stringify(currentSaved));
+        localStorage.setItem('pinchos_saved_addresses', JSON.stringify(currentSaved));
+      } catch (e) {}
+
+      return currentSaved;
+    });
 
     // Actualizar en backend
     try {
@@ -375,6 +420,18 @@ export default function MiPerfilPage() {
     } catch (_) {}
 
     setIsMapModalOpen(false);
+  };
+
+  // Eliminar una dirección guardada
+  const handleDeleteSavedAddress = (id: string) => {
+    setSavedAddresses(prev => {
+      const updated = prev.filter(a => a.id !== id);
+      try {
+        localStorage.setItem('customer_saved_addresses', JSON.stringify(updated));
+        localStorage.setItem('pinchos_saved_addresses', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
   };
 
   // Handlers para OTP
@@ -915,28 +972,51 @@ export default function MiPerfilPage() {
             </div>
 
             <div className="space-y-2.5">
-              {savedAddresses.map(addr => (
-                <div key={addr.id} className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/70 flex items-start justify-between gap-3 text-xs">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-black text-slate-900">{addr.etiqueta}</span>
-                      {addr.principal && (
-                        <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[9px] font-black rounded-md uppercase">Principal</span>
+              {savedAddresses.length > 0 ? (
+                savedAddresses.map(addr => (
+                  <div key={addr.id} className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/70 flex items-start justify-between gap-3 text-xs">
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-slate-900 truncate">{addr.etiqueta || 'Dirección'}</span>
+                        {addr.principal && (
+                          <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[9px] font-black rounded-md uppercase shrink-0">Principal</span>
+                        )}
+                      </div>
+                      <p className="text-slate-600 font-medium leading-snug">{addr.direccion}</p>
+                      {addr.referencia && <p className="text-[10px] text-slate-400">Ref: {addr.referencia}</p>}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          handleConfirmLocationFromMap(addr.lat, addr.lng, addr.direccion, addr.referencia);
+                          setActiveModal(null);
+                        }}
+                        className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] uppercase rounded-xl shadow-xs cursor-pointer"
+                      >
+                        Usar
+                      </button>
+
+                      {savedAddresses.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSavedAddress(addr.id)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                          title="Eliminar dirección"
+                        >
+                          <Trash2 size={15} />
+                        </button>
                       )}
                     </div>
-                    <p className="text-slate-600 font-medium">{addr.direccion}</p>
-                    {addr.referencia && <p className="text-[10px] text-slate-400">Ref: {addr.referencia}</p>}
                   </div>
-
-                  <button 
-                    type="button" 
-                    onClick={() => handleConfirmLocationFromMap(addr.lat, addr.lng, addr.direccion, addr.referencia)}
-                    className="px-3 py-1.5 bg-slate-900 text-white font-black text-[10px] uppercase rounded-xl shadow-xs"
-                  >
-                    Usar
-                  </button>
+                ))
+              ) : (
+                <div className="text-center py-6 space-y-2">
+                  <MapPin className="w-8 h-8 text-slate-300 mx-auto" />
+                  <p className="text-xs text-slate-500 font-medium">Aún no tienes direcciones adicionales guardadas.</p>
                 </div>
-              ))}
+              )}
             </div>
 
             <button
@@ -945,7 +1025,7 @@ export default function MiPerfilPage() {
                 setActiveModal(null);
                 setIsMapModalOpen(true);
               }}
-              className="w-full py-3 bg-red-50 text-red-600 font-black text-xs uppercase rounded-2xl border border-red-100 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-red-50 hover:bg-red-100/80 text-red-600 font-black text-xs uppercase rounded-2xl border border-red-100 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99]"
             >
               <Plus size={16} /> Agregar Nueva Dirección desde Mapa
             </button>
