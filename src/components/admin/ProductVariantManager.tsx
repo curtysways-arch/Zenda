@@ -252,93 +252,95 @@ export default function ProductVariantManager({ productId, productName, basePric
         </button>
       </div>
 
-      {/* Generador de Combinaciones Matrix Multidimensional */}
+      {/* Modal Nuevo: Generador de Combinaciones Matrix Multidimensional */}
       {showGenerator && (
-        <div className="p-4 rounded-xl bg-cyan-950 text-white space-y-3 animate-fadeIn">
-          <div className="flex items-center justify-between border-b border-cyan-800 pb-2">
-            <span className="font-bold text-xs uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4" /> Generador Multidimensional de Variantes
-            </span>
-            <div className="flex items-center gap-2">
+        <div className="fixed inset-0 z-[280] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-3xl p-5 rounded-2xl bg-cyan-950 text-white space-y-4 shadow-2xl border border-cyan-800 text-left">
+            <div className="flex items-center justify-between border-b border-cyan-800 pb-3">
+              <span className="font-black text-xs sm:text-sm uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-300" /> GENERADOR MULTIDIMENSIONAL DE VARIANTES
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setGenDimensions(prev => [...prev, { id: String(Date.now()), name: '', valuesStr: '' }])}
+                  className="px-3 py-1.5 bg-cyan-700 hover:bg-cyan-600 text-white text-[11px] font-extrabold rounded-xl transition-colors cursor-pointer flex items-center gap-1 shadow-sm"
+                >
+                  + Añadir Dimensión
+                </button>
+                <button type="button" onClick={() => setShowGenerator(false)} className="size-8 rounded-full bg-cyan-900/60 hover:bg-cyan-800 text-slate-300 hover:text-white flex items-center justify-center cursor-pointer transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar p-1">
+              {genDimensions.map((dim, index) => (
+                <div key={dim.id} className="grid grid-cols-1 sm:grid-cols-12 gap-3 text-xs items-center bg-cyan-900/40 p-3.5 rounded-xl border border-cyan-800/80">
+                  <div className="sm:col-span-5">
+                    <label className="block text-cyan-200 font-bold mb-1 text-[11px]">Nombre Dimensión {index + 1}</label>
+                    <input
+                      type="text"
+                      value={dim.name}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setGenDimensions(prev => prev.map(d => d.id === dim.id ? { ...d, name: val } : d));
+                      }}
+                      placeholder="Ej. Color, Talla, Memoria"
+                      className="w-full bg-slate-900 border border-cyan-700 rounded-xl px-3 py-2 text-white font-bold text-xs focus:ring-2 focus:ring-cyan-400 outline-none"
+                    />
+                  </div>
+                  <div className="sm:col-span-6">
+                    <label className="block text-cyan-200 font-bold mb-1 text-[11px]">Valores (separados por coma)</label>
+                    <input
+                      type="text"
+                      value={dim.valuesStr}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setGenDimensions(prev => prev.map(d => d.id === dim.id ? { ...d, valuesStr: val } : d));
+                      }}
+                      placeholder="Ej. Negro, Blanco, Azul"
+                      className="w-full bg-slate-900 border border-cyan-700 rounded-xl px-3 py-2 text-white font-bold text-xs focus:ring-2 focus:ring-cyan-400 outline-none"
+                    />
+                  </div>
+                  <div className="sm:col-span-1 flex justify-end pt-1 sm:pt-4">
+                    {genDimensions.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setGenDimensions(prev => prev.filter(d => d.id !== dim.id))}
+                        className="p-1.5 rounded-lg text-cyan-300 hover:text-rose-400 hover:bg-rose-950/40 transition-colors cursor-pointer"
+                        title="Eliminar dimensión"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-cyan-800">
+              <div className="flex items-center gap-2">
+                <label className="text-cyan-200 font-extrabold text-xs uppercase tracking-wider">Precio Inicial ($):</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={genPrice}
+                  onChange={e => setGenPrice(e.target.value)}
+                  className="w-28 bg-slate-900 border border-cyan-700 rounded-xl px-3 py-1.5 text-white font-bold text-xs focus:ring-2 focus:ring-cyan-400 outline-none"
+                />
+              </div>
               <button
                 type="button"
-                onClick={() => setGenDimensions(prev => [...prev, { id: String(Date.now()), name: '', valuesStr: '' }])}
-                className="px-2.5 py-1 bg-cyan-800 hover:bg-cyan-700 text-white text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                onClick={handleGenerateMatrix}
+                disabled={saving}
+                className="px-5 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-95"
               >
-                + Añadir Dimensión
-              </button>
-              <button type="button" onClick={() => setShowGenerator(false)} className="text-slate-400 hover:text-white cursor-pointer">
-                <X className="w-4 h-4" />
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                <span>Generar {genDimensions.reduce((acc, d) => acc * (d.valuesStr.split(',').filter(Boolean).length || 1), 1)} Combinaciones</span>
               </button>
             </div>
-          </div>
-
-          <div className="space-y-3">
-            {genDimensions.map((dim, index) => (
-              <div key={dim.id} className="grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs items-center bg-cyan-900/40 p-2.5 rounded-lg border border-cyan-800/60">
-                <div className="sm:col-span-4">
-                  <label className="block text-slate-300 font-semibold mb-0.5 text-[10px]">Nombre Dimensión {index + 1}</label>
-                  <input
-                    type="text"
-                    value={dim.name}
-                    onChange={e => {
-                      const val = e.target.value;
-                      setGenDimensions(prev => prev.map(d => d.id === dim.id ? { ...d, name: val } : d));
-                    }}
-                    placeholder="Ej. Color, Memoria, RAM"
-                    className="w-full bg-slate-900 border border-cyan-800 rounded-lg px-2.5 py-1.5 text-white font-medium focus:ring-1 focus:ring-cyan-500"
-                  />
-                </div>
-                <div className="sm:col-span-7">
-                  <label className="block text-slate-300 font-semibold mb-0.5 text-[10px]">Valores (separados por coma)</label>
-                  <input
-                    type="text"
-                    value={dim.valuesStr}
-                    onChange={e => {
-                      const val = e.target.value;
-                      setGenDimensions(prev => prev.map(d => d.id === dim.id ? { ...d, valuesStr: val } : d));
-                    }}
-                    placeholder="Ej. Negro, Blanco, Azul"
-                    className="w-full bg-slate-900 border border-cyan-800 rounded-lg px-2.5 py-1.5 text-white font-medium focus:ring-1 focus:ring-cyan-500"
-                  />
-                </div>
-                <div className="sm:col-span-1 flex justify-end pt-3 sm:pt-0">
-                  {genDimensions.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => setGenDimensions(prev => prev.filter(d => d.id !== dim.id))}
-                      className="text-slate-400 hover:text-rose-400 cursor-pointer"
-                      title="Eliminar dimensión"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-cyan-800/80">
-            <div className="flex items-center gap-2">
-              <label className="text-slate-300 font-semibold text-xs">Precio Inicial ($):</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={genPrice}
-                onChange={e => setGenPrice(e.target.value)}
-                className="w-28 bg-slate-900 border border-cyan-800 rounded-lg px-2.5 py-1 text-white font-bold text-xs focus:ring-1 focus:ring-cyan-500 outline-none"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleGenerateMatrix}
-              disabled={saving}
-              className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-              Generar {genDimensions.reduce((acc, d) => acc * (d.valuesStr.split(',').filter(Boolean).length || 1), 1)} Combinaciones
-            </button>
           </div>
         </div>
       )}
