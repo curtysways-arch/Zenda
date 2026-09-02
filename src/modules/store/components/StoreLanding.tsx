@@ -152,6 +152,44 @@ function StoreLandingContent({
     });
   }, [initialProducts, selectedCategoryId, searchQuery]);
 
+  // Promociones y Combos de Alto Impacto
+  const displayPromos = useMemo(() => {
+    const highlights = initialHeroContent?.highlights || [];
+    
+    // Si hay promociones creadas en la base de datos
+    if (highlights.length > 0) {
+      return highlights.map((h: any, idx: number) => ({
+        id: h.id || `promo-hl-${idx}`,
+        titulo: h.titulo || h.nombre || 'Combo Especial',
+        descripcion: h.descripcion || 'Aprovecha esta súper oferta exclusiva por tiempo limitado.',
+        badge: h.badge || (idx % 2 === 0 ? '🎁 2x1 COMBO' : '⚡ 30% OFF'),
+        precioPromo: Number(h.precioPromo || h.precio) || 29.99,
+        precioAnterior: Number(h.precioAnterior || (Number(h.precioPromo || 29.99) * 1.35).toFixed(2)),
+        imagenUrl: h.imagenUrl || initialProducts[idx % initialProducts.length]?.imagenUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
+        productToOpen: initialProducts.find((p) => p.id === h.productoId) || initialProducts[idx % initialProducts.length]
+      }));
+    }
+
+    // Fallback dinámico de combos llamativos con productos de la tienda
+    if (initialProducts.length === 0) return [];
+
+    return initialProducts.slice(0, 4).map((p, idx) => {
+      const badges = ['🔥 2x1 COMBO', '⚡ 35% OFF', '🎁 PACK ESPECIAL', '⭐ MÁS VENDIDO'];
+      const titles = [`Combo ${p.nombre}`, `Super Pack ${p.nombre}`, `Oferta Especial ${p.nombre}`, `Duo Pack Premium`];
+      const discountPrice = (Number(p.precio) * 0.8).toFixed(2);
+      return {
+        id: `dynamic-promo-${p.id}`,
+        titulo: titles[idx % titles.length],
+        descripcion: p.descripcion || `Pack exclusivo con descuento de temporada. ¡Aprovecha antes de que se agote!`,
+        badge: badges[idx % badges.length],
+        precioPromo: Number(discountPrice),
+        precioAnterior: Number(p.precio),
+        imagenUrl: p.imagenUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
+        productToOpen: p
+      };
+    });
+  }, [initialHeroContent, initialProducts]);
+
   return (
     <div className="min-h-screen bg-slate-50/60 text-slate-900 font-sans pb-28 sm:pb-12">
       {/* ── 1. TOP HEADER & NAVIGATION (Pixel Perfect con Captura) ── */}
@@ -399,46 +437,101 @@ function StoreLandingContent({
         />
       </section>
 
-      {/* ── 3. VALOR AGREGADO / BENEFICIOS (4 TARJETAS COMPACTAS) ── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-2.5">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
-          {/* Card 1: Envío a Domicilio */}
-          <div className="bg-white p-2.5 rounded-2xl border border-slate-100 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-center space-y-0.5">
-            <div className="size-8 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-0.5">
-              <Truck className="w-4 h-4" />
+      {/* ── 3. SECCIÓN DE PROMOCIONES & COMBOS (DISEÑO ÚNICO, LLAMATIVO Y DE ALTO IMPACTO) ── */}
+      {displayPromos.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-3.5">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-rose-500 text-white font-black text-[9px] uppercase tracking-wider shadow-sm flex items-center gap-1">
+                <Flame className="w-3 h-3 text-amber-200 animate-pulse" /> OFERTAS IMPERDIBLES
+              </span>
+              <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-tight">
+                Promociones & Combos 🔥
+              </h3>
             </div>
-            <h4 className="font-extrabold text-[11px] text-slate-900 leading-tight">Envío a Domicilio</h4>
-            <p className="text-[9px] font-semibold text-slate-400">En 24–48h</p>
+            <span className="text-[10px] font-extrabold text-amber-600 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <Clock className="w-3 h-3 text-amber-500" /> Tiempo Limitado
+            </span>
           </div>
 
-          {/* Card 2: Retiro en Tienda */}
-          <div className="bg-white p-2.5 rounded-2xl border border-slate-100 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-center space-y-0.5">
-            <div className="size-8 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-0.5">
-              <StoreIcon className="w-4 h-4" />
-            </div>
-            <h4 className="font-extrabold text-[11px] text-slate-900 leading-tight">Retiro en Tienda</h4>
-            <p className="text-[9px] font-semibold text-slate-400">Sin costo</p>
-          </div>
+          {/* Carrusel Horizontal de Promociones */}
+          <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
+            {displayPromos.map((promo: any) => (
+              <div
+                key={promo.id}
+                onClick={() => promo.productToOpen && setSelectedProductForModal(promo.productToOpen)}
+                className="min-w-[260px] max-w-[280px] bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 border border-amber-400/40 rounded-3xl p-3 shadow-md space-y-2.5 shrink-0 flex flex-col justify-between group hover:border-amber-400 hover:shadow-amber-500/20 transition-all cursor-pointer relative overflow-hidden text-left"
+              >
+                {/* Ambient Glow sutil dentro de la card */}
+                <div className="absolute top-0 right-0 size-24 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-          {/* Card 3: Compra Segura */}
-          <div className="bg-white p-2.5 rounded-2xl border border-slate-100 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-center space-y-0.5">
-            <div className="size-8 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-0.5">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-            <h4 className="font-extrabold text-[11px] text-slate-900 leading-tight">Compra Segura</h4>
-            <p className="text-[9px] font-semibold text-slate-400">100% Protegida</p>
-          </div>
+                <div className="space-y-2">
+                  {/* Foto de la Promo con Badge Flotante */}
+                  <div className="relative h-32 w-full rounded-2xl overflow-hidden bg-slate-900">
+                    <img
+                      src={promo.imagenUrl}
+                      alt={promo.titulo}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <span className="absolute top-2 left-2 px-2.5 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-rose-600 text-white font-black text-[9px] uppercase tracking-wider shadow-md border border-white/20">
+                      {promo.badge}
+                    </span>
+                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded-lg bg-slate-950/80 text-amber-300 font-extrabold text-[9px] backdrop-blur-md">
+                      ⏱️ 12h restantes
+                    </span>
+                  </div>
 
-          {/* Card 4: Ofertas Exclusivas */}
-          <div className="bg-white p-2.5 rounded-2xl border border-slate-100 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-center space-y-0.5">
-            <div className="size-8 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-0.5">
-              <Tag className="w-4 h-4" />
-            </div>
-            <h4 className="font-extrabold text-[11px] text-slate-900 leading-tight">Ofertas Exclusivas</h4>
-            <p className="text-[9px] font-semibold text-slate-400">Hasta 50% OFF</p>
+                  <div>
+                    <h4 className="font-extrabold text-white text-xs sm:text-sm leading-tight line-clamp-1 group-hover:text-amber-300 transition-colors">
+                      {promo.titulo}
+                    </h4>
+                    <p className="text-slate-300 text-[10px] font-medium leading-snug line-clamp-2 mt-0.5">
+                      {promo.descripcion}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Micro Barra de Stock / Urgencia */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[9px] font-extrabold">
+                    <span className="text-amber-400 uppercase">⚡ ¡Quedan pocas unidades!</span>
+                    <span className="text-slate-400">85% vendido</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-amber-400 to-rose-500 w-[85%] rounded-full"></div>
+                  </div>
+                </div>
+
+                {/* Precios & Acción */}
+                <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
+                  <div>
+                    <span className="text-sm sm:text-base font-black text-emerald-400 block leading-tight">
+                      ${Number(promo.precioPromo).toFixed(2)}
+                    </span>
+                    {promo.precioAnterior && (
+                      <span className="text-[10px] text-slate-400 line-through font-bold">
+                        ${Number(promo.precioAnterior).toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (promo.productToOpen) setSelectedProductForModal(promo.productToOpen);
+                    }}
+                    className="px-3.5 py-2 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-[10px] uppercase rounded-xl shadow-md cursor-pointer transition-all active:scale-95 flex items-center gap-1 shrink-0"
+                  >
+                    <Sparkles className="w-3 h-3 text-slate-950" />
+                    <span>Pedir Promo</span>
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── 4. BUSCADOR & BOTÓN FILTRAR & CATEGORÍAS (COMPACTO) ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-2.5 space-y-2">
