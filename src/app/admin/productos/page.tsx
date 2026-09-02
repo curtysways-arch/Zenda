@@ -1020,16 +1020,6 @@ export default function AdminProductos() {
                                         Visualiza, edita o elimina las variantes de este producto (precio, SKU, stock y estado).
                                     </p>
                                 </div>
-                                {tieneVariantes && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsVariantModalOpen(true)}
-                                        className="px-4 py-2 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5 shrink-0 self-start"
-                                    >
-                                        <Sparkles className="size-3.5 text-cyan-300" />
-                                        <span>+ Crear / Generar Variantes</span>
-                                    </button>
-                                )}
                             </div>
 
                             {!tieneVariantes ? (
