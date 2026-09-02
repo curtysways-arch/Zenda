@@ -250,7 +250,8 @@ export default function ProductVariantManager({ productId, productName, basePric
         tipo: d.tipo || 'PERSONALIZADO',
         name: d.name.trim(),
         values: d.valuesStr.split(',').map(v => v.trim()).filter(Boolean),
-        hexMap: d.hexMap
+        hexMap: d.hexMap,
+        imgMap: d.imgMap
       }))
       .filter(d => d.name && d.values.length > 0);
 
@@ -337,6 +338,11 @@ export default function ProductVariantManager({ productId, productName, basePric
       setSaving(false);
     }
   };
+
+  const activeDimsVals = genDimensions
+    .map(d => d.valuesStr.split(',').map(v => v.trim()).filter(Boolean))
+    .filter(arr => arr.length > 0);
+  const totalCombinations = activeDimsVals.length > 0 ? activeDimsVals.reduce((acc, curr) => acc * curr.length, 1) : 0;
 
   return (
     <div className="space-y-5 bg-slate-50/80 p-5 rounded-2xl border border-slate-200 text-left">
@@ -580,7 +586,7 @@ export default function ProductVariantManager({ productId, productName, basePric
               <button
                 type="button"
                 disabled={saving}
-                onClick={handleGenerateCombinations}
+                onClick={handleGenerateMatrix}
                 className="px-6 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
@@ -643,7 +649,7 @@ export default function ProductVariantManager({ productId, productName, basePric
           <div className="flex items-end gap-2">
             <button
               type="button"
-              onClick={() => handleSaveVariant()}
+              onClick={(e) => handleSaveManual(e)}
               disabled={saving}
               className="flex-1 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all flex items-center justify-center gap-1 shadow-sm cursor-pointer"
             >
