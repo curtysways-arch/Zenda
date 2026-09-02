@@ -251,275 +251,281 @@ export default function ProductVariantModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/70 backdrop-blur-md p-0 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-3xl rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] border border-slate-100 text-left">
-        
-        {/* Header Modal */}
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-              <Tag className="w-3 h-3 text-cyan-600" />
-              {hasVariants ? 'Producto con Opciones' : 'Detalle de Producto'}
-            </span>
-          </div>
+    <div className="fixed inset-0 z-[100] flex flex-col bg-white overflow-hidden h-full w-full animate-in slide-in-from-bottom duration-300 text-left">
+      
+      {/* ── 1. HEADER SUPERIOR FULL SCREEN CON BOTÓN VOLVER ── */}
+      <div className="px-4 sm:px-6 py-3 border-b border-slate-100 flex items-center justify-between bg-white/95 backdrop-blur-md sticky top-0 z-30 shrink-0 shadow-2xs">
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black transition-colors cursor-pointer"
+        >
+          <ChevronRight className="w-4 h-4 rotate-180 text-slate-600" />
+          <span>Volver</span>
+        </button>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
+        <div className="flex items-center gap-2">
+          <span className="px-3 py-1 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-2xs">
+            <Tag className="w-3 h-3 text-cyan-600" />
+            {hasVariants ? 'Producto con Opciones' : 'Detalle del Producto'}
+          </span>
         </div>
 
-        {/* Content Body (2 columnas en desktop, 1 en mobile) */}
-        <div className="p-5 sm:p-6 overflow-y-auto custom-scrollbar flex-1">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
+          title="Cerrar"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* ── 2. CUERPO DE CONTENIDO SCROLLABLE ── */}
+      <div className="flex-1 overflow-y-auto pb-32 custom-scrollbar">
+        <div className="max-w-4xl mx-auto">
+          
+          {/* Hero Image Container (Full Width Sin Márgenes) */}
+          <div className="relative w-full h-72 sm:h-96 bg-slate-100 overflow-hidden flex items-center justify-center p-0 border-b border-slate-100 group">
+            {selectedVariant?.imagenUrl || product.imagenUrl ? (
+              <>
+                {/* Fondo ambiental suave */}
+                <img
+                  src={selectedVariant?.imagenUrl || product.imagenUrl || ''}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover blur-xl opacity-20 scale-125 select-none pointer-events-none"
+                />
+                {/* Imagen principal borde a borde */}
+                <img
+                  src={selectedVariant?.imagenUrl || product.imagenUrl || ''}
+                  alt={product.nombre}
+                  className="relative z-10 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+              </>
+            ) : (
+              <span className="text-6xl">🛍️</span>
+            )}
+
+            {isOutOfStock && (
+              <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center z-20">
+                <span className="px-5 py-2.5 rounded-2xl bg-rose-600 text-white font-black text-xs uppercase tracking-widest shadow-xl">
+                  Agotado Temporalmente
+                </span>
+              </div>
+            )}
+
+            {/* Badges Flotantes en Foto */}
+            {currentSku && (
+              <span className="absolute bottom-3 left-3 z-20 px-3 py-1 bg-slate-950/80 text-white rounded-xl text-[10px] font-mono font-bold backdrop-blur-md">
+                SKU: {currentSku}
+              </span>
+            )}
+          </div>
+
+          {/* Información del Producto & Selector de Variantes */}
+          <div className="p-4 sm:p-8 space-y-6">
             
-            {/* Columna Izquierda: Imagen Grande */}
-            <div className="md:col-span-5 space-y-3">
-              <div className="relative w-full h-64 sm:h-72 rounded-2xl overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200/80 shadow-2xs group">
-                {selectedVariant?.imagenUrl || product.imagenUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={selectedVariant?.imagenUrl || product.imagenUrl || ''}
-                    alt={product.nombre}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                ) : (
-                  <span className="text-6xl">🛍️</span>
-                )}
-
-                {isOutOfStock && (
-                  <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center">
-                    <span className="px-4 py-2 rounded-2xl bg-rose-600 text-white font-black text-xs uppercase tracking-widest shadow-lg">
-                      Agotado
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* SKU Badge */}
-              {currentSku && (
-                <div className="px-3 py-1.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between text-slate-500 text-[11px] font-mono font-bold">
-                  <span>SKU:</span>
-                  <span className="text-slate-900">{currentSku}</span>
-                </div>
+            {/* Título & Descripción */}
+            <div className="space-y-2">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug tracking-tight">
+                {product.nombre}
+              </h1>
+              {product.descripcion && (
+                <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+                  {product.descripcion.replace(/<!--[\s\S]*?-->/g, '')}
+                </p>
               )}
             </div>
 
-            {/* Columna Derecha: Información, Precios, Opciones y Cantidad */}
-            <div className="md:col-span-7 space-y-5">
-              
-              {/* Título & Descripción */}
+            {/* Precio & Stock Banner */}
+            <div className="p-4 bg-slate-50/90 rounded-3xl border border-slate-200/80 flex items-center justify-between gap-3 shadow-2xs">
               <div>
-                <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-snug">
-                  {product.nombre}
-                </h2>
-                {product.descripcion && (
-                  <p className="text-xs text-slate-500 font-medium leading-relaxed mt-2">
-                    {product.descripcion.replace(/<!--[\s\S]*?-->/g, '')}
-                  </p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-black text-slate-900">
+                    ${(Number(effectivePrice) || 0).toFixed(2)}
+                  </span>
+                  {effectivePreviousPrice !== null && effectivePreviousPrice > effectivePrice && (
+                    <span className="text-xs sm:text-sm font-bold text-slate-400 line-through">
+                      ${(Number(effectivePreviousPrice) || 0).toFixed(2)}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[10px] font-bold text-slate-400 block mt-0.5">
+                  Precio final (Impuestos incluidos)
+                </span>
+              </div>
+
+              <div>
+                {isOutOfStock ? (
+                  <span className="text-xs font-black text-rose-600 bg-rose-50 px-3.5 py-1.5 rounded-xl border border-rose-200 block">
+                    Agotado
+                  </span>
+                ) : effectiveStock <= 3 ? (
+                  <span className="text-xs font-black text-amber-800 bg-amber-50 px-3.5 py-1.5 rounded-xl border border-amber-200 block">
+                    ¡Últimas {effectiveStock} uds!
+                  </span>
+                ) : (
+                  <span className="text-xs font-black text-emerald-800 bg-emerald-50 px-3.5 py-1.5 rounded-xl border border-emerald-200 flex items-center gap-1.5">
+                    <PackageCheck className="w-4 h-4 text-emerald-600" /> {effectiveStock} Disponibles
+                  </span>
                 )}
               </div>
-
-              {/* Precio & Stock Status */}
-              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-3">
-                <div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-black text-slate-900">
-                      ${(Number(effectivePrice) || 0).toFixed(2)}
-                    </span>
-                    {effectivePreviousPrice !== null && effectivePreviousPrice > effectivePrice && (
-                      <span className="text-xs font-semibold text-slate-400 line-through">
-                        ${(Number(effectivePreviousPrice) || 0).toFixed(2)}
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-[10px] font-bold text-slate-400 block mt-0.5">
-                    Precio unitario (Impuestos incl.)
-                  </span>
-                </div>
-
-                <div>
-                  {isOutOfStock ? (
-                    <span className="text-xs font-black text-rose-600 bg-rose-50 px-3 py-1 rounded-xl border border-rose-200 block">
-                      Agotado
-                    </span>
-                  ) : effectiveStock <= 3 ? (
-                    <span className="text-xs font-black text-amber-800 bg-amber-50 px-3 py-1 rounded-xl border border-amber-200 block">
-                      ¡Últimas {effectiveStock} uds!
-                    </span>
-                  ) : (
-                    <span className="text-xs font-black text-emerald-800 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200 flex items-center gap-1.5">
-                      <PackageCheck className="w-4 h-4 text-emerald-600" /> {effectiveStock} Disponibles
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Atributos Dinámicos de Variantes */}
-              {hasVariants && attributeKeys.length > 0 && (
-                <div className="space-y-4 pt-1 border-t border-slate-100">
-                  {attributeKeys.map(attrKey => {
-                    const availableValues = attributeValuesMap[attrKey] || [];
-                    const currentSelectedVal = selectedAttributes[attrKey];
-
-                    return (
-                      <div key={attrKey} className="space-y-2">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="font-extrabold text-slate-800 uppercase tracking-wider">
-                            {attrKey}:
-                          </span>
-                          {currentSelectedVal && (
-                            <span className="font-bold text-cyan-600">
-                              {currentSelectedVal}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          {availableValues.map(val => {
-                            const isSelected = currentSelectedVal === val;
-
-                            // Verificar si esta opción combinada con otras seleccionadas existe y tiene stock
-                            const tempAttr = { ...selectedAttributes, [attrKey]: val };
-                            const matchingVariant = activeVariants.find(v => {
-                              if (v.atributos && typeof v.atributos === 'object' && Object.keys(v.atributos).length > 0) {
-                                return Object.entries(tempAttr).every(([k, vVal]) => String(v.atributos?.[k]) === vVal);
-                              }
-                              if (v.nombre.includes('/')) {
-                                const parts = v.nombre.split('/').map(p => p.trim());
-                                return attributeKeys.every((k, idx) => tempAttr[k] === parts[idx]);
-                              }
-                              if (attributeKeys.length === 1 && attributeKeys[0] === 'Opción') {
-                                return tempAttr['Opción'] === v.nombre;
-                              }
-                              return false;
-                            });
-
-                            const valExists = !!matchingVariant;
-                            const valInStock = matchingVariant && matchingVariant.stock > 0;
-
-                            return (
-                              <button
-                                key={val}
-                                type="button"
-                                disabled={!valExists}
-                                onClick={() => handleSelectAttribute(attrKey, val)}
-                                className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all relative flex items-center gap-1.5 cursor-pointer ${
-                                  isSelected
-                                    ? 'bg-slate-900 text-white shadow-sm ring-2 ring-slate-900/20'
-                                    : !valExists
-                                    ? 'bg-slate-100 text-slate-300 border border-slate-200 line-through cursor-not-allowed opacity-50'
-                                    : !valInStock
-                                    ? 'bg-white text-slate-700 border border-rose-200 hover:border-rose-300'
-                                    : 'bg-white text-slate-800 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                                }`}
-                              >
-                                <span>{val}</span>
-                                {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400" />}
-                                {valExists && !valInStock && (
-                                  <span className="text-[9px] font-black text-rose-500 uppercase ml-1">
-                                    (Agotado)
-                                  </span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {/* Resumen de Variante Elegida */}
-                  {selectedVariant ? (
-                    <div className="p-3 bg-cyan-50/70 border border-cyan-200 rounded-xl text-xs flex items-center justify-between text-cyan-950 font-bold">
-                      <span>Opción elegida: {selectedVariant.nombre}</span>
-                      <span className="text-cyan-700 font-mono">${(Number(effectivePrice) || 0).toFixed(2)}</span>
-                    </div>
-                  ) : (
-                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 font-bold flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                      <span>Selecciona todas las opciones requeridas.</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Selector de Cantidad */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-black text-slate-800 uppercase tracking-wider block">
-                    Cantidad
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-medium">
-                    Máximo {effectiveStock} unidades
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-3 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/60">
-                  <button
-                    type="button"
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={quantity <= 1 || isOutOfStock || isVariantSelectionIncomplete}
-                    className="w-8 h-8 rounded-xl bg-white text-slate-800 font-black flex items-center justify-center hover:bg-slate-200 disabled:opacity-40 transition-colors shadow-2xs cursor-pointer"
-                  >
-                    -
-                  </button>
-                  <span className="w-8 text-center font-extrabold text-sm text-slate-900">
-                    {quantity}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setQuantity(Math.min(effectiveStock, quantity + 1))}
-                    disabled={quantity >= effectiveStock || isOutOfStock || isVariantSelectionIncomplete}
-                    className="w-8 h-8 rounded-xl bg-white text-slate-800 font-black flex items-center justify-center hover:bg-slate-200 disabled:opacity-40 transition-colors shadow-2xs cursor-pointer"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
             </div>
+
+            {/* Atributos Dinámicos de Variantes */}
+            {hasVariants && attributeKeys.length > 0 && (
+              <div className="space-y-5 pt-2 border-t border-slate-100">
+                {attributeKeys.map(attrKey => {
+                  const availableValues = attributeValuesMap[attrKey] || [];
+                  const currentSelectedVal = selectedAttributes[attrKey];
+
+                  return (
+                    <div key={attrKey} className="space-y-2.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-black text-slate-900 uppercase tracking-wider flex items-center gap-1">
+                          <span>{attrKey}</span>
+                        </span>
+                        {currentSelectedVal && (
+                          <span className="font-extrabold text-cyan-600">
+                            {currentSelectedVal}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2.5">
+                        {availableValues.map(val => {
+                          const isSelected = currentSelectedVal === val;
+
+                          const tempAttr = { ...selectedAttributes, [attrKey]: val };
+                          const matchingVariant = activeVariants.find(v => {
+                            if (v.atributos && typeof v.atributos === 'object' && Object.keys(v.atributos).length > 0) {
+                              return Object.entries(tempAttr).every(([k, vVal]) => String(v.atributos?.[k]) === vVal);
+                            }
+                            if (v.nombre.includes('/')) {
+                              const parts = v.nombre.split('/').map(p => p.trim());
+                              return attributeKeys.every((k, idx) => tempAttr[k] === parts[idx]);
+                            }
+                            if (attributeKeys.length === 1 && attributeKeys[0] === 'Opción') {
+                              return tempAttr['Opción'] === v.nombre;
+                            }
+                            return false;
+                          });
+
+                          const valExists = !!matchingVariant;
+                          const valInStock = matchingVariant && matchingVariant.stock > 0;
+
+                          return (
+                            <button
+                              key={val}
+                              type="button"
+                              disabled={!valExists}
+                              onClick={() => handleSelectAttribute(attrKey, val)}
+                              className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all relative flex items-center gap-2 cursor-pointer ${
+                                isSelected
+                                  ? 'bg-slate-900 text-white shadow-md ring-2 ring-slate-900/30 scale-[1.02]'
+                                  : !valExists
+                                  ? 'bg-slate-100 text-slate-300 border border-slate-200 line-through cursor-not-allowed opacity-50'
+                                  : !valInStock
+                                  ? 'bg-white text-slate-700 border border-rose-200 hover:border-rose-300'
+                                  : 'bg-white text-slate-800 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 shadow-2xs'
+                              }`}
+                            >
+                              <span>{val}</span>
+                              {isSelected && <Check className="w-4 h-4 text-cyan-400" />}
+                              {valExists && !valInStock && (
+                                <span className="text-[9px] font-black text-rose-500 uppercase ml-1">
+                                  (Agotado)
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Resumen de Variante Elegida */}
+                {selectedVariant ? (
+                  <div className="p-3.5 bg-cyan-50/80 border border-cyan-200 rounded-2xl text-xs flex items-center justify-between text-cyan-950 font-bold shadow-2xs">
+                    <span>Opción elegida: {selectedVariant.nombre}</span>
+                    <span className="text-cyan-700 font-black">${(Number(effectivePrice) || 0).toFixed(2)}</span>
+                  </div>
+                ) : (
+                  <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900 font-bold flex items-center gap-2 shadow-2xs">
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>Selecciona todas las opciones requeridas para continuar.</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Selector de Cantidad */}
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+              <div>
+                <span className="text-xs font-black text-slate-900 uppercase tracking-wider block">
+                  Cantidad
+                </span>
+                <span className="text-[11px] text-slate-500 font-medium">
+                  Máximo {effectiveStock} unidades por pedido
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/80">
+                <button
+                  type="button"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={quantity <= 1 || isOutOfStock || isVariantSelectionIncomplete}
+                  className="w-9 h-9 rounded-xl bg-white text-slate-800 font-black flex items-center justify-center hover:bg-slate-200 disabled:opacity-40 transition-colors shadow-xs cursor-pointer text-sm"
+                >
+                  -
+                </button>
+                <span className="w-8 text-center font-black text-base text-slate-900">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQuantity(Math.min(effectiveStock, quantity + 1))}
+                  disabled={quantity >= effectiveStock || isOutOfStock || isVariantSelectionIncomplete}
+                  className="w-9 h-9 rounded-xl bg-white text-slate-800 font-black flex items-center justify-center hover:bg-slate-200 disabled:opacity-40 transition-colors shadow-xs cursor-pointer text-sm"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
+      </div>
 
-        {/* Footer Action Bar */}
-        <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50/70 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-          <div className="w-full sm:w-auto text-left">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
-              Subtotal del Producto
-            </span>
-            <span className="text-xl font-black text-slate-900">
-              ${subtotal.toFixed(2)}
-            </span>
-          </div>
-
+      {/* ── 3. BOTÓN STICKY INFERIOR PRINCIPAL (SIN NINGUNA BARRA DE NAVEGACIÓN DEBAJO) ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-150 p-4 shadow-2xl">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
           <button
             type="button"
             disabled={isOutOfStock || isVariantSelectionIncomplete}
             onClick={handleAddToCart}
-            className="w-full sm:w-auto flex-1 py-3.5 px-6 rounded-2xl font-black text-xs sm:text-sm text-white shadow-md active:scale-98 transition-all flex items-center justify-center gap-2 uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="w-full py-4 px-6 rounded-2xl font-black text-xs sm:text-sm text-white shadow-xl active:scale-98 transition-all flex items-center justify-center gap-2 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             style={{ backgroundColor: addedToast ? '#10b981' : primaryColor }}
           >
             {addedToast ? (
               <>
-                <Check className="w-4 h-4 text-white" /> ¡Agregado al Carrito!
+                <Check className="w-5 h-5 text-white" /> ¡AGREGADO AL CARRITO!
               </>
             ) : isOutOfStock ? (
-              'AGOTADO'
+              'PRODUCTO AGOTADO'
             ) : isVariantSelectionIncomplete ? (
-              'SELECCIONA LAS OPCIONES'
+              'SELECCIONA LAS OPCIONES REQUERIDAS'
             ) : (
               <>
-                <ShoppingBag className="w-4 h-4" /> AÑADIR AL CARRITO — ${subtotal.toFixed(2)}
+                <ShoppingBag className="w-5 h-5" /> AGREGAR AL CARRITO — ${subtotal.toFixed(2)}
               </>
             )}
           </button>
         </div>
-
       </div>
+
     </div>
   );
 }

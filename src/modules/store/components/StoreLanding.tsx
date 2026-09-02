@@ -682,66 +682,68 @@ function StoreLandingContent({
       </>
       )}
 
-      {/* ── 7. BARRA NAVEGACIÓN INFERIOR FLOTANTE (IDÉNTICA A LA CAPTURA) ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-150 py-2 px-3 flex items-center justify-around shadow-2xl">
-        <button
-          type="button"
-          onClick={() => setActiveTab('inicio')}
-          className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
-            activeTab === 'inicio' ? 'text-cyan-600 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
-          }`}
-        >
-          <Home className="w-5 h-5" />
-          <span className="text-[10px]">Inicio</span>
-        </button>
+      {/* ── 7. BARRA NAVEGACIÓN INFERIOR FLOTANTE (SE OCULTA CUANDO EL MODAL DE PRODUCTO ESTÁ ABIERTO) ── */}
+      {!selectedProductForModal && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-150 py-2 px-3 flex items-center justify-around shadow-2xl animate-in fade-in duration-200">
+          <button
+            type="button"
+            onClick={() => setActiveTab('inicio')}
+            className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
+              activeTab === 'inicio' ? 'text-cyan-600 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
+            }`}
+          >
+            <Home className="w-5 h-5" />
+            <span className="text-[10px]">Inicio</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('pedidos')}
-          className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
-            activeTab === 'pedidos' ? 'text-cyan-600 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
-          }`}
-        >
-          <Box className="w-5 h-5" />
-          <span className="text-[10px]">Mis pedidos</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('pedidos')}
+            className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
+              activeTab === 'pedidos' ? 'text-cyan-600 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
+            }`}
+          >
+            <Box className="w-5 h-5" />
+            <span className="text-[10px]">Mis pedidos</span>
+          </button>
 
-        {/* Botón Central Destacado Catálogo */}
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('inicio');
-            const el = document.getElementById('productos');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-          }}
-          className="size-13 rounded-full bg-cyan-950 text-cyan-400 border-4 border-white shadow-xl flex items-center justify-center -mt-6 active:scale-95 transition-transform cursor-pointer"
-          title="Ver Catálogo"
-        >
-          <Sparkles className="w-6 h-6 text-cyan-400" />
-        </button>
+          {/* Botón Central Destacado Catálogo */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('inicio');
+              const el = document.getElementById('productos');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="size-13 rounded-full bg-cyan-950 text-cyan-400 border-4 border-white shadow-xl flex items-center justify-center -mt-6 active:scale-95 transition-transform cursor-pointer"
+            title="Ver Catálogo"
+          >
+            <Sparkles className="w-6 h-6 text-cyan-400" />
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('ofertas')}
-          className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
-            activeTab === 'ofertas' ? 'text-cyan-600 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
-          }`}
-        >
-          <Gift className="w-5 h-5" />
-          <span className="text-[10px]">Premios</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('ofertas')}
+            className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
+              activeTab === 'ofertas' ? 'text-cyan-600 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
+            }`}
+          >
+            <Gift className="w-5 h-5" />
+            <span className="text-[10px]">Premios</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('cuenta')}
-          className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
-            activeTab === 'cuenta' ? 'text-cyan-600 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
-          }`}
-        >
-          <User className="w-5 h-5" />
-          <span className="text-[10px]">Perfil</span>
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab('cuenta')}
+            className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
+              activeTab === 'cuenta' ? 'text-cyan-600 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
+            }`}
+          >
+            <User className="w-5 h-5" />
+            <span className="text-[10px]">Perfil</span>
+          </button>
+        </div>
+      )}
 
       {/* ── 7. MODALES (VARIANTES, CARRITO & MAPA) ── */}
       <ProductVariantModal
