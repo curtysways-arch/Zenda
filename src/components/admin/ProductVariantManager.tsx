@@ -38,9 +38,9 @@ export default function ProductVariantManager({ productId, productName, basePric
   // Estados Generator Matrix (N Dimensiones)
   const [showGenerator, setShowGenerator] = useState(false);
   const [genPrice, setGenPrice] = useState(basePrice.toString());
-  const [genDimensions, setGenDimensions] = useState<Array<{ id: string; name: string; valuesStr: string }>>([
-    { id: '1', name: 'Color', valuesStr: 'Negro, Blanco' },
-    { id: '2', name: 'Talla', valuesStr: 'S, M, L' }
+  const [genDimensions, setGenDimensions] = useState<Array<{ id: string; tipo: 'COLOR' | 'TALLA' | 'TAMANO' | 'PESO' | 'SABOR' | 'MATERIAL' | 'PERSONALIZADO'; name: string; valuesStr: string }>>([
+    { id: '1', tipo: 'COLOR', name: 'Color', valuesStr: 'Negro, Blanco' },
+    { id: '2', tipo: 'TALLA', name: 'Talla', valuesStr: 'S, M, L' }
   ]);
 
   useEffect(() => {
@@ -263,7 +263,7 @@ export default function ProductVariantManager({ productId, productName, basePric
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setGenDimensions(prev => [...prev, { id: String(Date.now()), name: '', valuesStr: '' }])}
+                  onClick={() => setGenDimensions(prev => [...prev, { id: String(Date.now()), tipo: 'PERSONALIZADO', name: '', valuesStr: '' }])}
                   className="px-3 py-1.5 bg-cyan-700 hover:bg-cyan-600 text-white text-[11px] font-extrabold rounded-xl transition-colors cursor-pointer flex items-center gap-1 shadow-sm"
                 >
                   + Añadir Dimensión
@@ -277,7 +277,39 @@ export default function ProductVariantManager({ productId, productName, basePric
             <div className="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar p-1">
               {genDimensions.map((dim, index) => (
                 <div key={dim.id} className="grid grid-cols-1 sm:grid-cols-12 gap-3 text-xs items-center bg-cyan-900/40 p-3.5 rounded-xl border border-cyan-800/80">
-                  <div className="sm:col-span-5">
+                  <div className="sm:col-span-3">
+                    <label className="block text-cyan-200 font-bold mb-1 text-[11px]">Tipo de Variante</label>
+                    <select
+                      value={dim.tipo || 'PERSONALIZADO'}
+                      onChange={e => {
+                        const newTipo = e.target.value as any;
+                        const defaultNames: Record<string, string> = {
+                          COLOR: 'Color',
+                          TALLA: 'Talla',
+                          TAMANO: 'Tamaño',
+                          PESO: 'Peso',
+                          SABOR: 'Sabor',
+                          MATERIAL: 'Material',
+                          PERSONALIZADO: dim.name || 'Personalizado'
+                        };
+                        setGenDimensions(prev => prev.map(d => d.id === dim.id ? {
+                          ...d,
+                          tipo: newTipo,
+                          name: (!d.name || Object.values(defaultNames).includes(d.name)) ? (defaultNames[newTipo] || d.name) : d.name
+                        } : d));
+                      }}
+                      className="w-full bg-slate-900 border border-cyan-700 rounded-xl px-2.5 py-2 text-cyan-300 font-bold text-xs focus:ring-2 focus:ring-cyan-400 outline-none cursor-pointer"
+                    >
+                      <option value="COLOR">🎨 Color</option>
+                      <option value="TALLA">📏 Talla</option>
+                      <option value="TAMANO">📐 Tamaño</option>
+                      <option value="PESO">⚖️ Peso</option>
+                      <option value="SABOR">😋 Sabor</option>
+                      <option value="MATERIAL">🧵 Material</option>
+                      <option value="PERSONALIZADO">⚙️ Personalizado</option>
+                    </select>
+                  </div>
+                  <div className="sm:col-span-4">
                     <label className="block text-cyan-200 font-bold mb-1 text-[11px]">Nombre Dimensión {index + 1}</label>
                     <input
                       type="text"
@@ -290,7 +322,7 @@ export default function ProductVariantManager({ productId, productName, basePric
                       className="w-full bg-slate-900 border border-cyan-700 rounded-xl px-3 py-2 text-white font-bold text-xs focus:ring-2 focus:ring-cyan-400 outline-none"
                     />
                   </div>
-                  <div className="sm:col-span-6">
+                  <div className="sm:col-span-4">
                     <label className="block text-cyan-200 font-bold mb-1 text-[11px]">Valores (separados por coma)</label>
                     <input
                       type="text"
