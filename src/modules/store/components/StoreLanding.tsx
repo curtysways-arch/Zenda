@@ -399,65 +399,65 @@ function StoreLandingContent({
         />
       </section>
 
-      {/* ── 3. VALOR AGREGADO / BENEFICIOS (4 TARJETAS PIXEL PERFECT CON CAPTURA) ── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-5">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+      {/* ── 3. VALOR AGREGADO / BENEFICIOS (4 TARJETAS COMPACTAS) ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-2.5">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
           {/* Card 1: Envío a Domicilio */}
-          <div className="bg-white p-3.5 sm:p-4 rounded-3xl border border-slate-100 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-center space-y-1">
-            <div className="size-10 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-1">
-              <Truck className="w-5 h-5" />
+          <div className="bg-white p-2.5 rounded-2xl border border-slate-100 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-center space-y-0.5">
+            <div className="size-8 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-0.5">
+              <Truck className="w-4 h-4" />
             </div>
-            <h4 className="font-extrabold text-xs text-slate-900 leading-tight">Envío a Domicilio</h4>
-            <p className="text-[10px] font-semibold text-slate-400">En 24–48h</p>
+            <h4 className="font-extrabold text-[11px] text-slate-900 leading-tight">Envío a Domicilio</h4>
+            <p className="text-[9px] font-semibold text-slate-400">En 24–48h</p>
           </div>
 
           {/* Card 2: Retiro en Tienda */}
-          <div className="bg-white p-3.5 sm:p-4 rounded-3xl border border-slate-100 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-center space-y-1">
-            <div className="size-10 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-1">
-              <StoreIcon className="w-5 h-5" />
+          <div className="bg-white p-2.5 rounded-2xl border border-slate-100 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-center space-y-0.5">
+            <div className="size-8 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-0.5">
+              <StoreIcon className="w-4 h-4" />
             </div>
-            <h4 className="font-extrabold text-xs text-slate-900 leading-tight">Retiro en Tienda</h4>
-            <p className="text-[10px] font-semibold text-slate-400">Sin costo</p>
+            <h4 className="font-extrabold text-[11px] text-slate-900 leading-tight">Retiro en Tienda</h4>
+            <p className="text-[9px] font-semibold text-slate-400">Sin costo</p>
           </div>
 
           {/* Card 3: Compra Segura */}
-          <div className="bg-white p-3.5 sm:p-4 rounded-3xl border border-slate-100 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-center space-y-1">
-            <div className="size-10 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-1">
-              <ShieldCheck className="w-5 h-5" />
+          <div className="bg-white p-2.5 rounded-2xl border border-slate-100 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-center space-y-0.5">
+            <div className="size-8 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-0.5">
+              <ShieldCheck className="w-4 h-4" />
             </div>
-            <h4 className="font-extrabold text-xs text-slate-900 leading-tight">Compra Segura</h4>
-            <p className="text-[10px] font-semibold text-slate-400">100% Protegida</p>
+            <h4 className="font-extrabold text-[11px] text-slate-900 leading-tight">Compra Segura</h4>
+            <p className="text-[9px] font-semibold text-slate-400">100% Protegida</p>
           </div>
 
           {/* Card 4: Ofertas Exclusivas */}
-          <div className="bg-white p-3.5 sm:p-4 rounded-3xl border border-slate-100 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-center space-y-1">
-            <div className="size-10 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-1">
-              <Tag className="w-5 h-5" />
+          <div className="bg-white p-2.5 rounded-2xl border border-slate-100 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-center space-y-0.5">
+            <div className="size-8 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-0.5">
+              <Tag className="w-4 h-4" />
             </div>
-            <h4 className="font-extrabold text-xs text-slate-900 leading-tight">Ofertas Exclusivas</h4>
-            <p className="text-[10px] font-semibold text-slate-400">Hasta 50% OFF</p>
+            <h4 className="font-extrabold text-[11px] text-slate-900 leading-tight">Ofertas Exclusivas</h4>
+            <p className="text-[9px] font-semibold text-slate-400">Hasta 50% OFF</p>
           </div>
         </div>
       </section>
 
-      {/* ── 4. BUSCADOR & BOTÓN FILTRAR & CATEGORÍAS (IDÉNTICO A LA CAPTURA) ── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-5 space-y-4">
+      {/* ── 4. BUSCADOR & BOTÓN FILTRAR & CATEGORÍAS (COMPACTO) ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-2.5 space-y-2">
         {/* Buscador + Botón Filtrar */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar por producto, descripción o SKU..."
-              className="w-full pl-11 pr-10 py-3 rounded-2xl bg-slate-100/80 border border-transparent text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-cyan-300 shadow-2xs transition-all font-medium"
+              className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-slate-100/80 border border-transparent text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-cyan-300 shadow-2xs transition-all font-medium"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -467,19 +467,19 @@ function StoreLandingContent({
           <button
             type="button"
             onClick={() => setSelectedCategoryId(null)}
-            className="px-4 py-3 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 font-extrabold text-xs rounded-2xl border border-cyan-100 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-2xs"
+            className="px-3.5 py-2.5 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 font-extrabold text-xs rounded-2xl border border-cyan-100 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-2xs"
           >
-            <SlidersHorizontal className="w-4 h-4 text-cyan-600" />
+            <SlidersHorizontal className="w-3.5 h-3.5 text-cyan-600" />
             <span>Filtrar</span>
           </button>
         </div>
 
         {/* Categorías Pills Horizontal Scroll con Iconos y Contadores */}
-        <div className="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-none text-xs">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
           <button
             type="button"
             onClick={() => setSelectedCategoryId(null)}
-            className={`px-4 py-2.5 rounded-2xl font-black shrink-0 transition-all flex items-center gap-2 cursor-pointer ${
+            className={`px-3.5 py-2 rounded-2xl font-black shrink-0 transition-all flex items-center gap-1.5 cursor-pointer text-[11px] ${
               selectedCategoryId === null
                 ? 'bg-cyan-500 text-white shadow-md'
                 : 'bg-white text-slate-700 border border-slate-100 hover:bg-slate-50'
@@ -501,7 +501,7 @@ function StoreLandingContent({
                 key={cat.id}
                 type="button"
                 onClick={() => setSelectedCategoryId(isSelected ? null : cat.id)}
-                className={`px-4 py-2.5 rounded-2xl font-extrabold shrink-0 transition-all flex items-center gap-2 cursor-pointer ${
+                className={`px-3.5 py-2 rounded-2xl font-extrabold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer text-[11px] ${
                   isSelected
                     ? 'bg-cyan-500 text-white shadow-md'
                     : 'bg-white text-slate-700 border border-slate-100 hover:bg-slate-50'
@@ -515,11 +515,11 @@ function StoreLandingContent({
         </div>
       </section>
 
-      {/* ── 5. SECCIÓN PRODUCTOS DESTACADOS (GRILLA PIXEL PERFECT) ── */}
-      <section id="productos" className="max-w-7xl mx-auto px-4 sm:px-6 mt-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2 tracking-tight">
-            <Sparkles className="w-4.5 h-4.5 text-cyan-500" />
+      {/* ── 5. SECCIÓN PRODUCTOS DESTACADOS ── */}
+      <section id="productos" className="max-w-7xl mx-auto px-4 sm:px-6 mt-3">
+        <div className="flex items-center justify-between mb-2.5">
+          <h2 className="text-sm sm:text-base font-black text-slate-900 flex items-center gap-1.5 tracking-tight">
+            <Sparkles className="w-4 h-4 text-cyan-500" />
             <span>
               {selectedCategoryId
                 ? initialCategories.find((c) => c.id === selectedCategoryId)?.nombre
@@ -529,7 +529,7 @@ function StoreLandingContent({
           <button
             type="button"
             onClick={() => setSelectedCategoryId(null)}
-            className="text-xs font-extrabold text-cyan-600 hover:text-cyan-700 cursor-pointer"
+            className="text-[11px] font-extrabold text-cyan-600 hover:text-cyan-700 cursor-pointer"
           >
             Ver todo
           </button>
@@ -707,24 +707,14 @@ function ProductCardItem({
       onClick={onSelectOptions}
       className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden flex flex-col justify-between hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer text-left shadow-2xs"
     >
-      {/* Imagen del Producto (Visualización Completa + Ambient Glow + Badges) */}
-      <div className="relative w-full aspect-[4/5] bg-slate-100/90 overflow-hidden flex items-center justify-center p-3">
+      {/* Imagen del Producto (Sin Margen en Recuadro Completo) */}
+      <div className="relative w-full aspect-[4/5] bg-slate-100 overflow-hidden flex items-center justify-center p-0">
         {product.imagenUrl ? (
-          <>
-            {/* Fondo ambiental sutil */}
-            <img
-              src={product.imagenUrl}
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 w-full h-full object-cover blur-xl opacity-30 scale-125 select-none pointer-events-none"
-            />
-            {/* Imagen principal 100% visible sin recortes */}
-            <img
-              src={product.imagenUrl}
-              alt={product.nombre}
-              className="relative z-10 max-h-full max-w-full object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-500"
-            />
-          </>
+          <img
+            src={product.imagenUrl}
+            alt={product.nombre}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
         ) : (
           <span className="text-4xl">🛍️</span>
         )}
