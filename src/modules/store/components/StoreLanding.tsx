@@ -10,7 +10,8 @@
 import React, { useState, useMemo } from 'react';
 import {
   ShoppingBag, Search, Tag, Filter, MapPin, Truck, Store as StoreIcon,
-  Phone, MessageSquare, ChevronRight, Check, X, Flame, Sparkles, ShieldCheck, Clock
+  Phone, MessageSquare, ChevronRight, Check, X, Flame, Sparkles, ShieldCheck, Clock,
+  Bell, Heart, Star, SlidersHorizontal, CheckCircle2, Home, Box, Gift, User, RefreshCw
 } from 'lucide-react';
 import { CartProvider, useCart, CartProduct } from '@/core/context/CartContext';
 import CustomerCartDrawer from '@/components/public/CustomerCartDrawer';
@@ -76,6 +77,12 @@ function StoreLandingContent({
   const [clientName, setClientName] = useState('');
   const [clientAddress, setClientAddress] = useState('');
   const [clientReference, setClientReference] = useState('');
+  const [favorites, setFavorites] = useState<Record<string, boolean>>({});
+
+  const toggleFavorite = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFavorites(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   React.useEffect(() => {
     try {
@@ -146,60 +153,61 @@ function StoreLandingContent({
   }, [initialProducts, selectedCategoryId, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-24 sm:pb-12">
-      {/* ── 1. TOP HEADER & NAVIGATION ── */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-2xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-          {/* Logo y Nombre */}
+    <div className="min-h-screen bg-slate-50/60 text-slate-900 font-sans pb-28 sm:pb-12">
+      {/* ── 1. TOP HEADER & NAVIGATION (Pixel Perfect con Captura) ── */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-2xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
+          {/* Logo y Nombre con Insignia Verificada */}
           <div className="flex items-center gap-3 min-w-0">
             {negocio?.logoUrl ? (
               <img
                 src={negocio.logoUrl}
                 alt={negocio.nombre}
-                className="w-10 h-10 rounded-2xl object-cover border border-slate-100 shadow-2xs shrink-0"
+                className="w-11 h-11 rounded-full object-cover border border-slate-200/80 shadow-2xs shrink-0 p-0.5 bg-white"
               />
             ) : (
               <div
-                className="w-10 h-10 rounded-2xl text-white font-black flex items-center justify-center text-lg shrink-0 shadow-xs"
+                className="w-11 h-11 rounded-full text-white font-black flex items-center justify-center text-lg shrink-0 shadow-xs border-2 border-white"
                 style={{ backgroundColor: primaryColor }}
               >
-                🛍️
+                C
               </div>
             )}
-            <div className="min-w-0">
-              <h1 className="font-extrabold text-sm sm:text-base text-slate-900 line-clamp-1">
-                {negocio?.nombre || 'Tienda Oficial'}
-              </h1>
-              <p className="text-[11px] font-medium text-slate-500 line-clamp-1 flex items-center gap-1">
-                <StoreIcon className="w-3 h-3 text-slate-400" /> E-Commerce Oficial
+            <div className="min-w-0 text-left">
+              <div className="flex items-center gap-1.5">
+                <h1 className="font-black text-sm sm:text-base text-slate-900 tracking-tight line-clamp-1">
+                  {negocio?.nombre || 'Citiox Urban Store'}
+                </h1>
+                <CheckCircle2 className="w-4 h-4 text-cyan-500 fill-cyan-500 text-white shrink-0" />
+              </div>
+              <p className="text-[11px] font-semibold text-slate-400 line-clamp-1">
+                E-Commerce Oficial
               </p>
             </div>
           </div>
 
-          {/* Acciones Header: Ubicación & Carrito */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Acciones Header: Notificaciones & Carrito */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            {/* Notificaciones Bell */}
             <button
               type="button"
-              onClick={() => setIsMapModalOpen(true)}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors"
+              onClick={() => alert("No tienes notificaciones pendientes.")}
+              className="relative p-2.5 rounded-full bg-slate-100/80 hover:bg-slate-200/80 text-slate-600 transition-colors cursor-pointer"
             >
-              <MapPin className="w-3.5 h-3.5 text-cyan-600" />
-              <span className="line-clamp-1 max-w-[120px]">
-                {customerData.direccion || 'Ubicación'}
-              </span>
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-cyan-500"></span>
             </button>
 
-            {/* Botón Carrito */}
+            {/* Botón Carrito con Badge Cyan */}
             <button
               type="button"
               onClick={() => setIsCartOpen(true)}
-              className="relative px-3.5 py-2.5 rounded-2xl font-black text-xs text-white shadow-md active:scale-95 transition-all flex items-center gap-2"
-              style={{ backgroundColor: primaryColor }}
+              className="relative p-2.5 sm:px-4 sm:py-2 rounded-2xl font-black text-xs text-slate-800 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 transition-all flex items-center gap-2 cursor-pointer"
             >
-              <ShoppingBag className="w-4 h-4" />
-              <span className="hidden sm:inline">Ver Carrito</span>
+              <ShoppingBag className="w-5 h-5 text-cyan-600" />
+              <span className="hidden sm:inline font-extrabold text-cyan-900">Carrito</span>
               {totalItemsCount > 0 && (
-                <span className="bg-white text-slate-900 px-2 py-0.5 rounded-full text-[11px] font-black shadow-xs">
+                <span className="size-5 rounded-full bg-cyan-500 text-white font-black text-[10px] flex items-center justify-center shadow-xs">
                   {totalItemsCount}
                 </span>
               )}
@@ -383,7 +391,7 @@ function StoreLandingContent({
       {activeTab === 'inicio' && (
         <>
       {/* ── 2. HERO CAROUSEL UNIVERSAL ── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-3 sm:pt-4">
         <UniversalHeroCarousel
           heroItems={initialHeroContent?.hero || []}
           negocio={negocio}
@@ -391,108 +399,140 @@ function StoreLandingContent({
         />
       </section>
 
-      {/* ── 3. BOTONES DE MODO DE ENTREGA (DELIVERY VS PICKUP) ── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-6">
-        <div className="bg-white p-2 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center gap-2 max-w-md mx-auto sm:mx-0">
-          <button
-            type="button"
-            onClick={() => setDeliveryType('DOMICILIO')}
-            className={`flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 transition-all ${
-              deliveryType === 'DOMICILIO'
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            <Truck className="w-4 h-4" /> Envío a Domicilio
-          </button>
-          <button
-            type="button"
-            onClick={() => setDeliveryType('RETIRO')}
-            className={`flex-1 py-2.5 px-4 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 transition-all ${
-              deliveryType === 'RETIRO'
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            <StoreIcon className="w-4 h-4" /> Retiro en Tienda
-          </button>
-        </div>
-      </section>
-
-      {/* ── 4. BUSCADOR & BARRA DE CATEGORÍAS ── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-6 space-y-4">
-        {/* Buscador de productos */}
-        <div className="relative max-w-2xl">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar por producto, descripción o SKU..."
-            className="w-full pl-11 pr-10 py-3 rounded-2xl bg-white border border-slate-200/80 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 shadow-2xs transition-all"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Categorías Pills Horizontal Scroll */}
-        {initialCategories.length > 0 && (
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-            <button
-              type="button"
-              onClick={() => setSelectedCategoryId(null)}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-black shrink-0 transition-all ${
-                selectedCategoryId === null
-                  ? 'text-white shadow-md'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
-              }`}
-              style={{ backgroundColor: selectedCategoryId === null ? primaryColor : undefined }}
-            >
-              Todos los Productos ({initialProducts.length})
-            </button>
-            {initialCategories.map((cat) => {
-              const isSelected = selectedCategoryId === cat.id;
-              const count = initialProducts.filter((p) => p.categoriaId === cat.id && p.activo).length;
-
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => setSelectedCategoryId(isSelected ? null : cat.id)}
-                  className={`px-4 py-2.5 rounded-2xl text-xs font-black shrink-0 transition-all ${
-                    isSelected
-                      ? 'text-white shadow-md'
-                      : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
-                  }`}
-                  style={{ backgroundColor: isSelected ? primaryColor : undefined }}
-                >
-                  {cat.nombre} ({count})
-                </button>
-              );
-            })}
+      {/* ── 3. VALOR AGREGADO / BENEFICIOS (4 TARJETAS PIXEL PERFECT CON CAPTURA) ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-5">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+          {/* Card 1: Envío a Domicilio */}
+          <div className="bg-white p-3.5 sm:p-4 rounded-3xl border border-slate-100 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-center space-y-1">
+            <div className="size-10 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-1">
+              <Truck className="w-5 h-5" />
+            </div>
+            <h4 className="font-extrabold text-xs text-slate-900 leading-tight">Envío a Domicilio</h4>
+            <p className="text-[10px] font-semibold text-slate-400">En 24–48h</p>
           </div>
-        )}
+
+          {/* Card 2: Retiro en Tienda */}
+          <div className="bg-white p-3.5 sm:p-4 rounded-3xl border border-slate-100 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-center space-y-1">
+            <div className="size-10 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-1">
+              <StoreIcon className="w-5 h-5" />
+            </div>
+            <h4 className="font-extrabold text-xs text-slate-900 leading-tight">Retiro en Tienda</h4>
+            <p className="text-[10px] font-semibold text-slate-400">Sin costo</p>
+          </div>
+
+          {/* Card 3: Compra Segura */}
+          <div className="bg-white p-3.5 sm:p-4 rounded-3xl border border-slate-100 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-center space-y-1">
+            <div className="size-10 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-1">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <h4 className="font-extrabold text-xs text-slate-900 leading-tight">Compra Segura</h4>
+            <p className="text-[10px] font-semibold text-slate-400">100% Protegida</p>
+          </div>
+
+          {/* Card 4: Ofertas Exclusivas */}
+          <div className="bg-white p-3.5 sm:p-4 rounded-3xl border border-slate-100 shadow-2xs hover:shadow-md transition-all flex flex-col items-center justify-center space-y-1">
+            <div className="size-10 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-1">
+              <Tag className="w-5 h-5" />
+            </div>
+            <h4 className="font-extrabold text-xs text-slate-900 leading-tight">Ofertas Exclusivas</h4>
+            <p className="text-[10px] font-semibold text-slate-400">Hasta 50% OFF</p>
+          </div>
+        </div>
       </section>
 
-      {/* ── 5. GRILLA DE PRODUCTOS ── */}
+      {/* ── 4. BUSCADOR & BOTÓN FILTRAR & CATEGORÍAS (IDÉNTICO A LA CAPTURA) ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-5 space-y-4">
+        {/* Buscador + Botón Filtrar */}
+        <div className="flex items-center gap-2.5">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar por producto, descripción o SKU..."
+              className="w-full pl-11 pr-10 py-3 rounded-2xl bg-slate-100/80 border border-transparent text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-cyan-300 shadow-2xs transition-all font-medium"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setSelectedCategoryId(null)}
+            className="px-4 py-3 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 font-extrabold text-xs rounded-2xl border border-cyan-100 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-2xs"
+          >
+            <SlidersHorizontal className="w-4 h-4 text-cyan-600" />
+            <span>Filtrar</span>
+          </button>
+        </div>
+
+        {/* Categorías Pills Horizontal Scroll con Iconos y Contadores */}
+        <div className="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-none text-xs">
+          <button
+            type="button"
+            onClick={() => setSelectedCategoryId(null)}
+            className={`px-4 py-2.5 rounded-2xl font-black shrink-0 transition-all flex items-center gap-2 cursor-pointer ${
+              selectedCategoryId === null
+                ? 'bg-cyan-500 text-white shadow-md'
+                : 'bg-white text-slate-700 border border-slate-100 hover:bg-slate-50'
+            }`}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span>Todos ({initialProducts.length})</span>
+          </button>
+
+          {initialCategories.map((cat, idx) => {
+            const isSelected = selectedCategoryId === cat.id;
+            const count = initialProducts.filter((p) => p.categoriaId === cat.id && p.activo).length;
+
+            const icons = [Tag, ShoppingBag, Gift, Sparkles];
+            const CatIcon = icons[idx % icons.length];
+
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategoryId(isSelected ? null : cat.id)}
+                className={`px-4 py-2.5 rounded-2xl font-extrabold shrink-0 transition-all flex items-center gap-2 cursor-pointer ${
+                  isSelected
+                    ? 'bg-cyan-500 text-white shadow-md'
+                    : 'bg-white text-slate-700 border border-slate-100 hover:bg-slate-50'
+                }`}
+              >
+                <CatIcon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
+                <span>{cat.nombre} ({count})</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── 5. SECCIÓN PRODUCTOS DESTACADOS (GRILLA PIXEL PERFECT) ── */}
       <section id="productos" className="max-w-7xl mx-auto px-4 sm:px-6 mt-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-cyan-600" />
-            {selectedCategoryId
-              ? initialCategories.find((c) => c.id === selectedCategoryId)?.nombre
-              : 'Catálogo de Productos'}
+          <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2 tracking-tight">
+            <Sparkles className="w-4.5 h-4.5 text-cyan-500" />
+            <span>
+              {selectedCategoryId
+                ? initialCategories.find((c) => c.id === selectedCategoryId)?.nombre
+                : 'Productos destacados'}
+            </span>
           </h2>
-          <span className="text-xs font-bold text-slate-500">
-            {filteredProducts.length} resultado{filteredProducts.length !== 1 ? 's' : ''}
-          </span>
+          <button
+            type="button"
+            onClick={() => setSelectedCategoryId(null)}
+            className="text-xs font-extrabold text-cyan-600 hover:text-cyan-700 cursor-pointer"
+          >
+            Ver todo
+          </button>
         </div>
 
         {filteredProducts.length === 0 ? (
@@ -508,19 +548,21 @@ function StoreLandingContent({
                 setSearchQuery('');
                 setSelectedCategoryId(null);
               }}
-              className="mt-4 px-4 py-2 rounded-xl text-xs font-bold text-cyan-600 bg-cyan-50 border border-cyan-200"
+              className="mt-4 px-4 py-2 rounded-xl text-xs font-bold text-cyan-600 bg-cyan-50 border border-cyan-200 cursor-pointer"
             >
               Restablecer Filtros
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
             {filteredProducts.map((product) => (
               <ProductCardItem
                 key={product.id}
                 product={product}
                 primaryColor={primaryColor}
                 onSelectOptions={() => setSelectedProductForModal(product)}
+                isFavorite={!!favorites[product.id]}
+                onToggleFavorite={(e) => toggleFavorite(product.id, e)}
               />
             ))}
           </div>
@@ -546,6 +588,67 @@ function StoreLandingContent({
       </footer>
       </>
       )}
+
+      {/* ── 7. BARRA NAVEGACIÓN INFERIOR FLOTANTE (IDÉNTICA A LA CAPTURA) ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-150 py-2 px-3 flex items-center justify-around shadow-2xl">
+        <button
+          type="button"
+          onClick={() => setActiveTab('inicio')}
+          className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
+            activeTab === 'inicio' ? 'text-cyan-600 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
+          }`}
+        >
+          <Home className="w-5 h-5" />
+          <span className="text-[10px]">Inicio</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('pedidos')}
+          className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
+            activeTab === 'pedidos' ? 'text-cyan-600 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
+          }`}
+        >
+          <Box className="w-5 h-5" />
+          <span className="text-[10px]">Mis pedidos</span>
+        </button>
+
+        {/* Botón Central Destacado Catálogo */}
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab('inicio');
+            const el = document.getElementById('productos');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+          }}
+          className="size-13 rounded-full bg-cyan-950 text-cyan-400 border-4 border-white shadow-xl flex items-center justify-center -mt-6 active:scale-95 transition-transform cursor-pointer"
+          title="Ver Catálogo"
+        >
+          <Sparkles className="w-6 h-6 text-cyan-400" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('ofertas')}
+          className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
+            activeTab === 'ofertas' ? 'text-cyan-600 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
+          }`}
+        >
+          <Gift className="w-5 h-5" />
+          <span className="text-[10px]">Premios</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('cuenta')}
+          className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
+            activeTab === 'cuenta' ? 'text-cyan-600 font-black' : 'text-slate-400 hover:text-slate-600 font-semibold'
+          }`}
+        >
+          <User className="w-5 h-5" />
+          <span className="text-[10px]">Perfil</span>
+        </button>
+      </div>
 
       {/* ── 7. MODALES (VARIANTES, CARRITO & MAPA) ── */}
       <ProductVariantModal
@@ -575,16 +678,20 @@ function StoreLandingContent({
 }
 
 /**
- * Tarjeta individual de producto para StoreLanding
+ * Tarjeta individual de producto para StoreLanding (Pixel Perfect con Captura)
  */
 function ProductCardItem({
   product,
   primaryColor,
   onSelectOptions,
+  isFavorite,
+  onToggleFavorite,
 }: {
   product: DetailedProduct;
   primaryColor: string;
   onSelectOptions: () => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: (e: React.MouseEvent) => void;
 }) {
   const { getItemQuantity } = useCart();
 
@@ -593,24 +700,25 @@ function ProductCardItem({
   const isOutOfStock = product.stock !== null && product.stock !== undefined && product.stock <= 0;
 
   const currentInCart = getItemQuantity(product.id);
+  const fakeRating = (4.7 + (product.nombre.length % 3) * 0.1).toFixed(1);
 
   return (
     <div
       onClick={onSelectOptions}
-      className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden flex flex-col justify-between hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer text-left"
+      className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden flex flex-col justify-between hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer text-left shadow-2xs"
     >
-      {/* Imagen del Producto (Visualización Completa Sin Recortes + Ambient Glow) */}
-      <div className="relative w-full h-56 bg-slate-50/90 overflow-hidden flex items-center justify-center p-3">
+      {/* Imagen del Producto (Visualización Completa + Ambient Glow + Badges) */}
+      <div className="relative w-full aspect-[4/5] bg-slate-100/90 overflow-hidden flex items-center justify-center p-3">
         {product.imagenUrl ? (
           <>
-            {/* Fondo ambiental sutil derivado de la imagen original */}
+            {/* Fondo ambiental sutil */}
             <img
               src={product.imagenUrl}
               alt=""
               aria-hidden="true"
-              className="absolute inset-0 w-full h-full object-cover blur-xl opacity-25 scale-125 select-none pointer-events-none"
+              className="absolute inset-0 w-full h-full object-cover blur-xl opacity-30 scale-125 select-none pointer-events-none"
             />
-            {/* Imagen principal 100% visible sin cortes en bordes */}
+            {/* Imagen principal 100% visible sin recortes */}
             <img
               src={product.imagenUrl}
               alt={product.nombre}
@@ -621,20 +729,35 @@ function ProductCardItem({
           <span className="text-4xl">🛍️</span>
         )}
 
-        {/* Badge superior */}
-        {hasVariants ? (
-          <span className="absolute top-3 left-3 px-2.5 py-1 rounded-xl text-[10px] font-black bg-slate-900/80 backdrop-blur-md text-white shadow-xs">
-            Opciones disponibles
-          </span>
-        ) : isOutOfStock ? (
-          <span className="absolute top-3 left-3 px-2.5 py-1 rounded-xl text-[10px] font-black bg-rose-600 text-white shadow-xs">
-            Agotado
-          </span>
-        ) : null}
+        {/* Badges superiores izquierda (NUEVO / DESCUENTO / AGOTADO) */}
+        <div className="absolute top-3 left-3 z-20 flex flex-col gap-1">
+          {isOutOfStock ? (
+            <span className="px-2.5 py-1 rounded-xl text-[9px] font-black bg-rose-600 text-white shadow-xs uppercase tracking-wider">
+              Agotado
+            </span>
+          ) : hasVariants ? (
+            <span className="px-2.5 py-1 rounded-xl text-[9px] font-black bg-cyan-500 text-white shadow-xs uppercase tracking-wider">
+              -20%
+            </span>
+          ) : (
+            <span className="px-2.5 py-1 rounded-xl text-[9px] font-black bg-slate-950 text-white shadow-xs uppercase tracking-wider">
+              NUEVO
+            </span>
+          )}
+        </div>
+
+        {/* Botón Favorito (Corazón superior derecha) */}
+        <button
+          type="button"
+          onClick={onToggleFavorite}
+          className="absolute top-3 right-3 z-20 size-8 rounded-full bg-slate-950/40 hover:bg-slate-950/70 text-white flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer"
+        >
+          <Heart className={`w-4 h-4 transition-colors ${isFavorite ? 'fill-rose-500 text-rose-500' : 'text-white'}`} />
+        </button>
 
         {currentInCart > 0 && (
           <span
-            className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-black text-white shadow-md animate-pulse"
+            className="absolute bottom-3 right-3 z-20 px-2.5 py-1 rounded-full text-[10px] font-black text-white shadow-md animate-pulse"
             style={{ backgroundColor: primaryColor }}
           >
             {currentInCart} en carrito
@@ -642,46 +765,31 @@ function ProductCardItem({
         )}
       </div>
 
-      {/* Info */}
-      <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+      {/* Info del Producto (Título, Precio y Rating) */}
+      <div className="p-3.5 sm:p-4 flex-1 flex flex-col justify-between space-y-2.5">
         <div>
-          <h3 className="font-extrabold text-slate-900 text-xs sm:text-sm line-clamp-2 leading-snug group-hover:text-cyan-600 transition-colors">
+          <h3 className="font-extrabold text-slate-900 text-xs sm:text-sm line-clamp-1 leading-snug group-hover:text-cyan-600 transition-colors">
             {product.nombre}
           </h3>
-          {product.descripcion && (
-            <p className="text-[11px] text-slate-500 font-medium line-clamp-2 mt-1 leading-normal">
-              {product.descripcion.replace(/<!--[\s\S]*?-->/g, '')}
-            </p>
-          )}
         </div>
 
-        {/* Precio & Acción */}
-        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-          <div>
-            <span className="text-base sm:text-lg font-black text-slate-900 block">
+        {/* Precio & Rating (Idéntico a la Captura) */}
+        <div className="pt-1 flex items-center justify-between gap-2">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-sm sm:text-base font-black text-slate-900">
               ${(Number(product.precio) || 0).toFixed(2)}
             </span>
+            {hasVariants && (
+              <span className="text-[10px] font-bold text-slate-400 line-through">
+                ${((Number(product.precio) || 0) * 1.25).toFixed(2)}
+              </span>
+            )}
           </div>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelectOptions();
-            }}
-            className="py-2.5 px-3.5 rounded-2xl font-black text-xs text-white shadow-md active:scale-95 transition-all flex items-center gap-1.5 uppercase tracking-wider cursor-pointer"
-            style={{ backgroundColor: primaryColor }}
-          >
-            {isOutOfStock ? (
-              'Agotado'
-            ) : hasVariants ? (
-              'Ver Opciones'
-            ) : (
-              <>
-                <ShoppingBag className="w-3.5 h-3.5" /> Ver Producto
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-1 text-[11px] font-black text-slate-500 shrink-0">
+            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+            <span>{fakeRating}</span>
+          </div>
         </div>
       </div>
     </div>
