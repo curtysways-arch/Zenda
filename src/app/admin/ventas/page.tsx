@@ -192,26 +192,23 @@ function VentasContent() {
           if (cfg.deliveryConfig) setDeliveryConfig(cfg.deliveryConfig);
           if (cfg.packagingConfig?.amount) setPackagingAmount(parseFloat(cfg.packagingConfig.amount));
 
-          // Load tables for current business
-          if (nData.slug) {
-            try {
-              const resT = await fetch(`/api/${nData.slug}/tables`);
-              if (resT.ok) {
-                const dT = await resT.json();
-                if (dT.tables && Array.isArray(dT.tables)) {
-                  setTables(dT.tables);
-                  const urlTable = searchParams.get('tableName');
-                  if (urlTable) {
-                    setTipoEntrega('TABLE_ORDER');
-                    setMesaCode(urlTable);
-                  } else if (dT.tables.length > 0 && (mesaCode === 'POS-Virtual' || !mesaCode)) {
-                    setMesaCode(dT.tables[0].name);
-                  }
-                }
+          // Load tables for current business from admin API
+          try {
+            const resT = await fetch('/api/admin/mesas');
+            if (resT.ok) {
+              const dT = await resT.json();
+              const realTables = dT.mesas || [];
+              setTables(realTables);
+              const urlTable = searchParams.get('tableName');
+              if (urlTable) {
+                setTipoEntrega('TABLE_ORDER');
+                setMesaCode(urlTable);
+              } else if (realTables.length > 0 && (mesaCode === 'POS-Virtual' || !mesaCode)) {
+                setMesaCode(realTables[0].nombre || realTables[0].name);
               }
-            } catch (errT) {
-              console.error('Error loading tables:', errT);
             }
+          } catch (errT) {
+            console.error('Error loading tables:', errT);
           }
         }
       } catch (e) {
@@ -786,15 +783,18 @@ function VentasContent() {
                   className="w-full px-2.5 py-1.5 rounded-lg text-xs font-extrabold bg-amber-50/80 border border-amber-300 text-amber-950 outline-none focus:border-amber-500 cursor-pointer shadow-sm"
                 >
                   {tables.length > 0 ? (
-                    tables.map(tbl => (
-                      <option key={tbl.id} value={tbl.name}>
-                        {tbl.name} {tbl.estado === 'OCUPADA' ? '(Ocupada)' : '(Disponible)'}
-                      </option>
-                    ))
+                    tables.map((tbl: any) => {
+                      const tName = tbl.nombre || tbl.name;
+                      const capStr = tbl.capacidad ? ` (${tbl.capacidad} puestos)` : '';
+                      const statusStr = tbl.estado === 'OCUPADA' ? ' (Ocupada)' : ' (Disponible)';
+                      return (
+                        <option key={tbl.id} value={tName}>
+                          {tName}{capStr}{statusStr}
+                        </option>
+                      );
+                    })
                   ) : (
-                    ['Mesa 01', 'Mesa 02', 'Mesa 03', 'Mesa 04', 'Mesa 05', 'Mesa 06', 'Mesa 07', 'Mesa 08', 'Mesa 09', 'Mesa 10'].map(m => (
-                      <option key={m} value={m}>{m}</option>
-                    ))
+                    <option value="">Sin mesas creadas (Agrega mesas en el módulo Mesas)</option>
                   )}
                 </select>
               </div>
