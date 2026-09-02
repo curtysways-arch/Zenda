@@ -66,9 +66,15 @@ export default function ProductVariantManager({ productId, productName, basePric
     if (productId) fetchVariants();
   }, [productId]);
 
-  const handleSaveVariant = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nombre.trim()) return;
+  const handleSaveVariant = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!nombre.trim()) {
+      alert('Ingresa el nombre de la variante');
+      return;
+    }
 
     try {
       setSaving(true);
@@ -134,14 +140,15 @@ export default function ProductVariantManager({ productId, productName, basePric
   const handleDelete = async (id: string) => {
     if (!confirm('¿Seguro deseas eliminar esta variante?')) return;
     try {
-      const res = await fetch(`/api/admin/productos/${productId}/variantes?id=${id}`, {
+      const res = await fetch(`/api/admin/productos/${productId}/variantes?variantId=${id}`, {
         method: 'DELETE'
       });
       if (res.ok) {
         fetchVariants();
         if (onVariantsChange) onVariantsChange();
       } else {
-        alert('Error al eliminar variante');
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Error al eliminar variante');
       }
     } catch (e) {
       console.error(e);
@@ -337,7 +344,7 @@ export default function ProductVariantManager({ productId, productName, basePric
       )}
 
       {/* Formulario Manual de Variante */}
-      <form onSubmit={handleSaveVariant} className="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+      <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
         <div className="text-xs font-bold text-slate-700 uppercase tracking-wider">
           {editingId ? 'Editar Variante' : 'Agregar Variante Manual'}
         </div>
@@ -387,9 +394,10 @@ export default function ProductVariantManager({ productId, productName, basePric
           </div>
           <div className="flex items-end gap-2">
             <button
-              type="submit"
+              type="button"
+              onClick={() => handleSaveVariant()}
               disabled={saving}
-              className="flex-1 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all flex items-center justify-center gap-1 shadow-sm"
+              className="flex-1 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all flex items-center justify-center gap-1 shadow-sm cursor-pointer"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {editingId ? 'Guardar' : 'Agregar'}
@@ -402,14 +410,14 @@ export default function ProductVariantManager({ productId, productName, basePric
                   setNombre('');
                   setSku('');
                 }}
-                className="p-2 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300"
+                className="p-2 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
         </div>
-      </form>
+      </div>
 
       {/* Tabla Matriz de Variantes */}
       {loading ? (

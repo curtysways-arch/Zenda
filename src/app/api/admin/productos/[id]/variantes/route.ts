@@ -233,7 +233,7 @@ export async function DELETE(
 
   try {
     const { searchParams } = new URL(req.url);
-    const variantId = searchParams.get('variantId');
+    const variantId = searchParams.get('variantId') || searchParams.get('id');
 
     if (!variantId) {
       return NextResponse.json({ error: 'ID de variante requerido' }, { status: 400 });
