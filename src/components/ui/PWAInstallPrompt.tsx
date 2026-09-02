@@ -52,8 +52,20 @@ export default function PWAInstallPrompt() {
         addInstallationListener(handleAvailabilityChange);
  
         if (isAdminPage) {
-            setBusinessName("CitiOx Admin");
-            setBusinessLogo("/logo-citiox.png");
+            fetch('/api/negocio')
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.nombre) {
+                        setBusinessName(data.nombre);
+                    }
+                    if (data && (data.logoUrl || data.logo)) {
+                        setBusinessLogo(data.logoUrl || data.logo);
+                    }
+                })
+                .catch(err => {
+                    setBusinessName("CitiOx Admin");
+                    setBusinessLogo("/logo-citiox.png");
+                });
         } else if (slug) {
             // Cargar información real del negocio
             fetch(`/api/public/negocio/${slug}`)
@@ -62,8 +74,8 @@ export default function PWAInstallPrompt() {
                     if (data && data.nombre) {
                         setBusinessName(data.nombre);
                     }
-                    if (data && data.logoUrl) {
-                        setBusinessLogo(data.logoUrl);
+                    if (data && (data.logoUrl || data.logo)) {
+                        setBusinessLogo(data.logoUrl || data.logo);
                     }
                 })
                 .catch(err => console.error("Error cargando info de negocio para PWA:", err));
@@ -104,9 +116,9 @@ export default function PWAInstallPrompt() {
                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -ml-12 -mb-12" />
                 
                 <div className="flex items-center gap-4 relative z-10">
-                    <div className="size-14 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shrink-0 transform group-hover:rotate-6 transition-transform overflow-hidden">
+                    <div className="size-14 bg-white/10 border border-white/15 rounded-2xl flex items-center justify-center shadow-lg shrink-0 transform group-hover:rotate-3 transition-transform overflow-hidden p-1">
                         {businessLogo ? (
-                            <img src={businessLogo} alt={businessName} className="w-full h-full object-cover" />
+                            <img src={businessLogo} alt={businessName} className="w-full h-full object-contain rounded-xl" />
                         ) : (
                             <Smartphone className="text-white size-7" strokeWidth={2.5} />
                         )}
