@@ -37,10 +37,21 @@ interface Category {
     activo: boolean;
 }
 
+export type VariantType = 'COLOR' | 'TALLA' | 'TAMANO' | 'PESO' | 'SABOR' | 'MATERIAL' | 'PERSONALIZADO';
+
+export interface OptionProperty {
+    val: string;
+    label?: string;
+    hex?: string;
+    imagenUrl?: string;
+}
+
 export interface DynamicDimension {
     id: string;
     name: string;
+    tipo?: VariantType;
     values: string[];
+    opcionesMap?: Record<string, OptionProperty>;
     newValueInput: string;
 }
 
@@ -124,9 +135,45 @@ export default function AdminProductos() {
     const handleRemoveValueFromDimension = (dimId: string, valToRemove: string) => {
         setDimensions(prev => prev.map(d => {
             if (d.id === dimId) {
-                return { ...d, values: d.values.filter(v => v !== valToRemove) };
+                const updatedMap = { ...(d.opcionesMap || {}) };
+                delete updatedMap[valToRemove];
+                return { ...d, values: d.values.filter(v => v !== valToRemove), opcionesMap: updatedMap };
             }
             return d;
+        }));
+    };
+
+    const handleChangeDimensionType = (dimId: string, tipo: VariantType) => {
+        setDimensions(prev => prev.map(d => d.id === dimId ? { ...d, tipo } : d));
+    };
+
+    const handleUpdateOptionHex = (dimId: string, val: string, hex: string) => {
+        setDimensions(prev => prev.map(d => {
+            if (d.id !== dimId) return d;
+            const currentMap = d.opcionesMap || {};
+            const existingOpt = currentMap[val] || { val, label: val };
+            return {
+                ...d,
+                opcionesMap: {
+                    ...currentMap,
+                    [val]: { ...existingOpt, hex }
+                }
+            };
+        }));
+    };
+
+    const handleUpdateOptionImage = (dimId: string, val: string, imagenUrl: string) => {
+        setDimensions(prev => prev.map(d => {
+            if (d.id !== dimId) return d;
+            const currentMap = d.opcionesMap || {};
+            const existingOpt = currentMap[val] || { val, label: val };
+            return {
+                ...d,
+                opcionesMap: {
+                    ...currentMap,
+                    [val]: { ...existingOpt, imagenUrl }
+                }
+            };
         }));
     };
 
@@ -261,8 +308,29 @@ export default function AdminProductos() {
         setPrecioEmpaque('0.25');
         setInitialVariants([]);
         setDimensions([
-            { id: 'd-1', name: 'Color', values: ['Negro', 'Blanco'], newValueInput: '' },
-            { id: 'd-2', name: 'Talla', values: ['S', 'M', 'L'], newValueInput: '' }
+            {
+                id: 'd-1',
+                name: 'Color',
+                tipo: 'COLOR',
+                values: ['Negro', 'Blanco'],
+                opcionesMap: {
+                    'Negro': { val: 'Negro', label: 'Negro', hex: '#000000' },
+                    'Blanco': { val: 'Blanco', label: 'Blanco', hex: '#FFFFFF' }
+                },
+                newValueInput: ''
+            },
+            {
+                id: 'd-2',
+                name: 'Talla',
+                tipo: 'TALLA',
+                values: ['S', 'M', 'L'],
+                opcionesMap: {
+                    'S': { val: 'S', label: 'S' },
+                    'M': { val: 'M', label: 'M' },
+                    'L': { val: 'L', label: 'L' }
+                },
+                newValueInput: ''
+            }
         ]);
         setIsOpen(true);
     };
@@ -286,6 +354,55 @@ export default function AdminProductos() {
         setLlevaEmpaque(p.llevaEmpaque !== undefined ? p.llevaEmpaque : true);
         setPrecioEmpaque(p.precioEmpaque !== undefined && p.precioEmpaque !== null ? p.precioEmpaque.toString() : '0.25');
         setInitialVariants([]);
+
+        if (p.extraInfo && typeof p.extraInfo === 'object' && Array.isArray((p.extraInfo as any).dimensiones)) {
+            setDimensions((p.extraInfo as any).dimensiones);
+        } else if (p.variantes && Array.isArray(p.variantes) && p.variantes.length > 0) {
+            const attrKeysSet = new Set<string>();
+            const attrValuesMap: Record<string, Set<string>> = {};
+            p.variantes.forEach((v: any) => {
+                if (v.atributos && typeof v.atributos === 'object') {
+                    Object.entries(v.atributos).forEach(([k, val]) => {
+                        const keyClean = k.trim();
+                        attrKeysSet.add(keyClean);
+                        if (!attrValuesMap[keyClean]) attrValuesMap[keyClean] = new Set();
+                        if (val) attrValuesMap[keyClean].add(String(val).trim());
+                    });
+                }
+            });
+            const inferred: DynamicDimension[] = Array.from(attrKeysSet).map((k, idx) => {
+                const values = Array.from(attrValuesMap[k] || []);
+                const kLower = k.toLowerCase();
+                let inferredTipo: VariantType = 'PERSONALIZADO';
+                if (kLower.includes('color')) inferredTipo = 'COLOR';
+                else if (kLower.includes('talla') || kLower.includes('size')) inferredTipo = 'TALLA';
+                else if (kLower.includes('tamaño') || kLower.includes('tamano')) inferredTipo = 'TAMANO';
+                else if (kLower.includes('peso') || kLower.includes('weight')) inferredTipo = 'PESO';
+                else if (kLower.includes('sabor') || kLower.includes('flavor')) inferredTipo = 'SABOR';
+                else if (kLower.includes('material')) inferredTipo = 'MATERIAL';
+
+                const map: Record<string, OptionProperty> = {};
+                values.forEach(v => {
+                    map[v] = { val: v, label: v };
+                });
+                return {
+                    id: `d-${idx + 1}`,
+                    name: k.charAt(0).toUpperCase() + k.slice(1),
+                    tipo: inferredTipo,
+                    values,
+                    opcionesMap: map,
+                    newValueInput: ''
+                };
+            });
+            setDimensions(inferred.length > 0 ? inferred : [
+                { id: 'd-1', name: 'Color', tipo: 'COLOR', values: [], newValueInput: '' }
+            ]);
+        } else {
+            setDimensions([
+                { id: 'd-1', name: 'Color', tipo: 'COLOR', values: [], newValueInput: '' }
+            ]);
+        }
+
         setIsOpen(true);
     };
 
@@ -319,6 +436,7 @@ export default function AdminProductos() {
                 precio: parseNum(precio, 0),
                 imagenUrl: imagenesList[0] || imagenUrl || null,
                 imagenes: imagenesList,
+                dimensiones: tieneVariantes ? dimensions : [],
                 activo,
                 stock: stock.trim() !== '' ? parseInt(stock) : null,
                 sku: sku.trim() || null,
@@ -1328,83 +1446,180 @@ export default function AdminProductos() {
 
                                     {/* Grid de Atributos */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        {dimensions.map((dim, index) => (
-                                            <div key={dim.id} className="p-4 bg-slate-50/60 rounded-2xl border border-slate-200 space-y-3 relative">
-                                                <div className="flex items-center justify-between gap-2">
-                                                    <div className="space-y-0.5 flex-1">
-                                                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
-                                                            Atributo {index + 1}
-                                                        </span>
+                                        {dimensions.map((dim, index) => {
+                                            const currentTipo: VariantType = dim.tipo || 'PERSONALIZADO';
+                                            return (
+                                                <div key={dim.id} className="p-4 bg-slate-50/60 rounded-2xl border border-slate-200 space-y-3 relative">
+                                                    <div className="flex flex-col gap-2">
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                                                                Atributo {index + 1}
+                                                            </span>
+                                                            {dimensions.length > 1 && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleRemoveDimension(dim.id)}
+                                                                    className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer"
+                                                                    title="Eliminar atributo"
+                                                                >
+                                                                    <Trash2 className="size-4" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        <div className="flex items-center gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={dim.name}
+                                                                onChange={e => {
+                                                                    const val = e.target.value;
+                                                                    setDimensions(prev => prev.map(d => d.id === dim.id ? { ...d, name: val } : d));
+                                                                }}
+                                                                placeholder="Ej. Color, Talla, Peso"
+                                                                className="text-xs font-black text-slate-900 bg-white border border-slate-200 px-3 py-1.5 rounded-xl outline-none focus:border-teal-500 flex-1"
+                                                            />
+                                                            
+                                                            <select
+                                                                value={currentTipo}
+                                                                onChange={e => handleChangeDimensionType(dim.id, e.target.value as VariantType)}
+                                                                className="text-xs font-bold text-slate-700 bg-white border border-slate-200 px-2 py-1.5 rounded-xl outline-none focus:border-teal-500 cursor-pointer"
+                                                            >
+                                                                <option value="COLOR">🎨 Color</option>
+                                                                <option value="TALLA">📏 Talla</option>
+                                                                <option value="TAMANO">📐 Tamaño</option>
+                                                                <option value="PESO">⚖️ Peso</option>
+                                                                <option value="SABOR">🍓 Sabor</option>
+                                                                <option value="MATERIAL">🧵 Material</option>
+                                                                <option value="PERSONALIZADO">⚙️ Personalizado</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Lista de Valores/Opciones con Color & Imagen Opcional */}
+                                                    <div className="space-y-2 min-h-[32px]">
+                                                        {dim.values.map(val => {
+                                                            const optInfo = dim.opcionesMap?.[val] || { val };
+                                                            return (
+                                                                <div
+                                                                    key={val}
+                                                                    className="p-2 bg-white border border-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center justify-between gap-2 shadow-2xs"
+                                                                >
+                                                                    <div className="flex items-center gap-2 overflow-hidden">
+                                                                        {currentTipo === 'COLOR' && (
+                                                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                                                <input
+                                                                                    type="color"
+                                                                                    value={optInfo.hex || '#000000'}
+                                                                                    onChange={e => handleUpdateOptionHex(dim.id, val, e.target.value)}
+                                                                                    className="size-6 rounded-full border-0 cursor-pointer p-0 bg-transparent"
+                                                                                    title="Seleccionar color HEX"
+                                                                                />
+                                                                                <input
+                                                                                    type="text"
+                                                                                    value={optInfo.hex || '#000000'}
+                                                                                    onChange={e => handleUpdateOptionHex(dim.id, val, e.target.value)}
+                                                                                    className="w-16 text-[10px] font-mono border border-slate-200 rounded px-1 text-slate-600"
+                                                                                />
+                                                                            </div>
+                                                                        )}
+                                                                        <span className="truncate">{val}</span>
+                                                                    </div>
+
+                                                                    <div className="flex items-center gap-2 shrink-0">
+                                                                        {/* Upload/Preview imagen opcional de la opcion */}
+                                                                        {optInfo.imagenUrl ? (
+                                                                            <div className="relative group size-7 rounded-lg overflow-hidden border border-slate-300">
+                                                                                <Image
+                                                                                    src={optInfo.imagenUrl}
+                                                                                    alt={val}
+                                                                                    fill
+                                                                                    className="object-cover"
+                                                                                />
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => handleUpdateOptionImage(dim.id, val, '')}
+                                                                                    className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px]"
+                                                                                    title="Quitar imagen"
+                                                                                >
+                                                                                    <X className="size-3" />
+                                                                                </button>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <label
+                                                                                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[10px] font-extrabold cursor-pointer flex items-center gap-1 transition-colors"
+                                                                                title="Subir imagen opcional para esta opción"
+                                                                            >
+                                                                                <ImageIcon className="size-3 text-slate-400" />
+                                                                                <span>+ Foto</span>
+                                                                                <input
+                                                                                    type="file"
+                                                                                    accept="image/*"
+                                                                                    className="hidden"
+                                                                                    onChange={async (e) => {
+                                                                                        const file = e.target.files?.[0];
+                                                                                        if (!file) return;
+                                                                                        const formData = new FormData();
+                                                                                        formData.append('file', file);
+                                                                                        formData.append('category', 'products');
+                                                                                        try {
+                                                                                            const res = await fetch('/api/upload', {
+                                                                                                method: 'POST',
+                                                                                                body: formData
+                                                                                            });
+                                                                                            if (res.ok) {
+                                                                                                const data = await res.json();
+                                                                                                handleUpdateOptionImage(dim.id, val, data.url);
+                                                                                            }
+                                                                                        } catch (err) {
+                                                                                            console.error('Error subiendo imagen de opción', err);
+                                                                                        }
+                                                                                    }}
+                                                                                />
+                                                                            </label>
+                                                                        )}
+
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleRemoveValueFromDimension(dim.id, val)}
+                                                                            className="text-slate-400 hover:text-rose-600 font-black cursor-pointer text-xs p-0.5"
+                                                                        >
+                                                                            <X className="size-3.5" />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+
+                                                    {/* Input + Botón para agregar valor */}
+                                                    <div className="flex gap-2 pt-1">
                                                         <input
                                                             type="text"
-                                                            value={dim.name}
+                                                            placeholder="Agregar opción (ej. Rojo, M, 500g)"
+                                                            value={dim.newValueInput || ''}
                                                             onChange={e => {
                                                                 const val = e.target.value;
-                                                                setDimensions(prev => prev.map(d => d.id === dim.id ? { ...d, name: val } : d));
+                                                                setDimensions(prev => prev.map(d => d.id === dim.id ? { ...d, newValueInput: val } : d));
                                                             }}
-                                                            placeholder="Ej. Color, Talla, Memoria"
-                                                            className="text-xs font-black text-slate-900 bg-white border border-slate-200 px-3 py-1.5 rounded-xl outline-none focus:border-teal-500 w-full"
+                                                            onKeyDown={e => {
+                                                                if (e.key === 'Enter') {
+                                                                    e.preventDefault();
+                                                                    handleAddValueToDimension(dim.id, dim.newValueInput || '');
+                                                                }
+                                                            }}
+                                                            className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:border-teal-500 flex-1 placeholder:text-slate-400"
                                                         />
-                                                    </div>
-                                                    {dimensions.length > 1 && (
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleRemoveDimension(dim.id)}
-                                                            className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer"
-                                                            title="Eliminar atributo"
+                                                            onClick={() => handleAddValueToDimension(dim.id, dim.newValueInput || '')}
+                                                            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs rounded-xl cursor-pointer transition-colors"
                                                         >
-                                                            <Trash2 className="size-4" />
+                                                            +
                                                         </button>
-                                                    )}
+                                                    </div>
                                                 </div>
-
-                                                {/* Chips de Valores con botón de eliminación × */}
-                                                <div className="flex flex-wrap gap-1.5 min-h-[32px]">
-                                                    {dim.values.map(val => (
-                                                        <span
-                                                            key={val}
-                                                            className="px-2.5 py-1 bg-white border border-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs"
-                                                        >
-                                                            <span>{val}</span>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleRemoveValueFromDimension(dim.id, val)}
-                                                                className="text-slate-400 hover:text-rose-600 font-black cursor-pointer text-xs"
-                                                            >
-                                                                ×
-                                                            </button>
-                                                        </span>
-                                                    ))}
-                                                </div>
-
-                                                {/* Input + Botón para agregar valor */}
-                                                <div className="flex gap-2 pt-1">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Agregar valor"
-                                                        value={dim.newValueInput || ''}
-                                                        onChange={e => {
-                                                            const val = e.target.value;
-                                                            setDimensions(prev => prev.map(d => d.id === dim.id ? { ...d, newValueInput: val } : d));
-                                                        }}
-                                                        onKeyDown={e => {
-                                                            if (e.key === 'Enter') {
-                                                                e.preventDefault();
-                                                                handleAddValueToDimension(dim.id, dim.newValueInput || '');
-                                                            }
-                                                        }}
-                                                        className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:border-teal-500 flex-1 placeholder:text-slate-400"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleAddValueToDimension(dim.id, dim.newValueInput || '')}
-                                                        className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs rounded-xl cursor-pointer transition-colors"
-                                                    >
-                                                        +
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
 
                                     {/* Bloque: VARIANTES A CREAR */}

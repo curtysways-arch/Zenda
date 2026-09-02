@@ -90,7 +90,7 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        const { nombre, descripcion, precio, imagenUrl, imagenes, activo, stock, orden, categoriaId, llevaEmpaque, precioEmpaque, sku, tieneVariantes, variantesIniciales } = body;
+        const { nombre, descripcion, precio, imagenUrl, imagenes, dimensiones, activo, stock, orden, categoriaId, llevaEmpaque, precioEmpaque, sku, tieneVariantes, variantesIniciales } = body;
         
         if (!nombre || precio === undefined) {
             return NextResponse.json({ error: 'El nombre y precio son obligatorios' }, { status: 400 });
@@ -122,6 +122,9 @@ export async function POST(req: Request) {
         }
 
         const imagenesList = Array.isArray(imagenes) ? imagenes.filter(Boolean) : (imagenUrl ? [imagenUrl] : []);
+        const extraData: any = {};
+        if (imagenesList.length > 0) extraData.imagenes = imagenesList;
+        if (Array.isArray(dimensiones) && dimensiones.length > 0) extraData.dimensiones = dimensiones;
 
         const nuevoProducto = await (prisma as any).producto.create({
             data: {
@@ -129,7 +132,7 @@ export async function POST(req: Request) {
                 descripcion,
                 precio: parseNumeric(precio, 0),
                 imagenUrl: imagenesList[0] || imagenUrl || null,
-                extraInfo: imagenesList.length > 0 ? { imagenes: imagenesList } : undefined,
+                extraInfo: Object.keys(extraData).length > 0 ? extraData : undefined,
                 activo: activo !== undefined ? Boolean(activo) : true,
                 stock: stock !== undefined && stock !== null && stock !== '' ? parseInt(String(stock)) : null,
                 sku: sku ? sku.trim() : null,
@@ -181,7 +184,7 @@ export async function PUT(req: Request) {
 
     try {
         const body = await req.json();
-        const { id, nombre, descripcion, precio, imagenUrl, imagenes, activo, stock, orden, categoriaId, llevaEmpaque, precioEmpaque, sku, tieneVariantes } = body;
+        const { id, nombre, descripcion, precio, imagenUrl, imagenes, dimensiones, activo, stock, orden, categoriaId, llevaEmpaque, precioEmpaque, sku, tieneVariantes } = body;
         
         if (!id || !nombre || precio === undefined) {
             return NextResponse.json({ error: 'El ID, nombre y precio son obligatorios' }, { status: 400 });
@@ -201,6 +204,11 @@ export async function PUT(req: Request) {
 
         const imagenesList = Array.isArray(imagenes) ? imagenes.filter(Boolean) : (imagenUrl ? [imagenUrl] : []);
         const currentExtra = (prod.extraInfo && typeof prod.extraInfo === 'object') ? prod.extraInfo : {};
+        const updatedExtra = {
+            ...currentExtra,
+            ...(imagenesList.length > 0 ? { imagenes: imagenesList } : {}),
+            ...(Array.isArray(dimensiones) ? { dimensiones } : {})
+        };
 
         const prodActualizado = await (prisma as any).producto.update({
             where: { id },
@@ -209,7 +217,7 @@ export async function PUT(req: Request) {
                 descripcion,
                 precio: parseNumeric(precio, 0),
                 imagenUrl: imagenesList[0] || imagenUrl || null,
-                extraInfo: imagenesList.length > 0 ? { ...currentExtra, imagenes: imagenesList } : currentExtra,
+                extraInfo: updatedExtra,
                 activo: activo !== undefined ? Boolean(activo) : true,
                 stock: stock !== undefined && stock !== null && stock !== '' ? parseInt(String(stock)) : null,
                 sku: sku || null,

@@ -246,20 +246,69 @@ export default function ProductVariantModal({
     }, 1200);
   };
 
-  // Ayudante de color dot
-  const getColorDot = (colorName: string) => {
+  // Mapa de definición de dimensiones desde extraInfo.dimensiones
+  const dimensionsInfoMap = useMemo(() => {
+    const map: Record<string, { tipo?: string; opcionesMap?: Record<string, { hex?: string; imagenUrl?: string }> }> = {};
+    if (product?.extraInfo && typeof product.extraInfo === 'object' && Array.isArray(product.extraInfo.dimensiones)) {
+      product.extraInfo.dimensiones.forEach((d: any) => {
+        if (d && (d.name || d.id)) {
+          map[d.name || d.id] = {
+            tipo: d.tipo || 'PERSONALIZADO',
+            opcionesMap: d.opcionesMap || {}
+          };
+        }
+      });
+    }
+    return map;
+  }, [product]);
+
+  // Imagen opcional asociada a la opción seleccionada actualmente
+  const selectedOptionImage = useMemo(() => {
+    if (!selectedAttributes || Object.keys(selectedAttributes).length === 0) return null;
+    for (const [attrKey, val] of Object.entries(selectedAttributes)) {
+      const dimInfo = dimensionsInfoMap[attrKey];
+      if (dimInfo?.opcionesMap?.[val]?.imagenUrl) {
+        return dimInfo.opcionesMap[val].imagenUrl;
+      }
+    }
+    return null;
+  }, [selectedAttributes, dimensionsInfoMap]);
+
+  // Ayudante de color dot / HEX
+  const getColorStyle = (attrKey: string, colorName: string) => {
+    const dimInfo = dimensionsInfoMap[attrKey];
+    const hex = dimInfo?.opcionesMap?.[colorName]?.hex;
+    if (hex) return { backgroundColor: hex };
+
     const lower = colorName.toLowerCase();
-    if (lower.includes('negro') || lower.includes('black')) return 'bg-slate-950';
-    if (lower.includes('verde') || lower.includes('green')) return 'bg-emerald-700';
-    if (lower.includes('azul') || lower.includes('blue')) return 'bg-blue-700';
-    if (lower.includes('rojo') || lower.includes('red')) return 'bg-rose-600';
-    if (lower.includes('blanco') || lower.includes('white')) return 'bg-white border border-slate-300';
-    if (lower.includes('amarillo') || lower.includes('yellow')) return 'bg-amber-400';
-    if (lower.includes('gris') || lower.includes('grey')) return 'bg-slate-400';
-    return 'bg-cyan-500';
+    if (lower.includes('negro') || lower.includes('black')) return { backgroundColor: '#09090b' };
+    if (lower.includes('verde') || lower.includes('green')) return { backgroundColor: '#047857' };
+    if (lower.includes('azul') || lower.includes('blue')) return { backgroundColor: '#1d4ed8' };
+    if (lower.includes('rojo') || lower.includes('red')) return { backgroundColor: '#dc2626' };
+    if (lower.includes('blanco') || lower.includes('white')) return { backgroundColor: '#ffffff', border: '1px solid #cbd5e1' };
+    if (lower.includes('amarillo') || lower.includes('yellow')) return { backgroundColor: '#fbbf24' };
+    if (lower.includes('gris') || lower.includes('grey')) return { backgroundColor: '#94a3b8' };
+    return { backgroundColor: primaryColor };
   };
 
-  const currentDisplayImage = productImages[selectedImageIndex] || selectedVariant?.imagenUrl || product.imagenUrl;
+  // Resolución jerárquica determinista de imagen principal:
+  // 1. Imagen manual clickeada en la galería (si selectedImageIndex > 0)
+  // 2. Imagen específica de la variante seleccionada (selectedVariant.imagenUrl)
+  // 3. Imagen de la opción seleccionada (selectedOptionImage)
+  // 4. Imagen principal del producto
+  // 5. Primera foto de la galería extraInfo
+  const currentDisplayImage = useMemo(() => {
+    if (selectedImageIndex > 0 && productImages[selectedImageIndex]) {
+      return productImages[selectedImageIndex];
+    }
+    if (selectedVariant?.imagenUrl) {
+      return selectedVariant.imagenUrl;
+    }
+    if (selectedOptionImage) {
+      return selectedOptionImage;
+    }
+    return productImages[0] || product.imagenUrl || '';
+  }, [selectedImageIndex, productImages, selectedVariant, selectedOptionImage, product]);
 
   return (
     <div className="fixed inset-0 z-[99999] flex flex-col bg-white overflow-hidden h-full w-full animate-in slide-in-from-bottom duration-300 text-left">
@@ -503,8 +552,10 @@ export default function ProductVariantModal({
                   {attributeKeys.map(attrKey => {
                     const availableValues = attributeValuesMap[attrKey] || [];
                     const currentSelectedVal = selectedAttributes[attrKey];
-                    const isColorAttr = attrKey.toLowerCase().includes('color');
-                    const isSizeAttr = attrKey.toLowerCase().includes('talla') || attrKey.toLowerCase().includes('size');
+                    const dimInfo = dimensionsInfoMap[attrKey];
+                    const dimType = dimInfo?.tipo || (attrKey.toLowerCase().includes('color') ? 'COLOR' : 'PERSONALIZADO');
+                    const isColorAttr = dimType === 'COLOR' || attrKey.toLowerCase().includes('color');
+                    const isSizeAttr = dimType === 'TALLA' || attrKey.toLowerCase().includes('talla') || attrKey.toLowerCase().includes('size');
 
                     return (
                       <div key={attrKey} className="space-y-2.5">
@@ -512,7 +563,11 @@ export default function ProductVariantModal({
                           <span className="font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                             {isColorAttr ? '🎨' : isSizeAttr ? '📐' : '🏷️'}
                             <span>{attrKey}</span>
-                            {currentSelectedVal && <Check className="w-3.5 h-3.5 text-cyan-600" />}
+                            {currentSelectedVal && (
+                              <span className="text-cyan-600 font-extrabold text-[11px] normal-case">
+                                : {currentSelectedVal}
+                              </span>
+                            )}
                           </span>
 
                           {isSizeAttr ? (
@@ -524,14 +579,16 @@ export default function ProductVariantModal({
                               <Ruler className="w-3.5 h-3.5" /> Guía de tallas
                             </button>
                           ) : currentSelectedVal ? (
-                            <span className="font-black text-cyan-600">{currentSelectedVal}</span>
+                            <span className="font-black text-cyan-600 text-xs">{currentSelectedVal}</span>
                           ) : null}
                         </div>
 
-                        {/* Pills de Selección */}
+                        {/* Options / Swatches Container */}
                         <div className="flex flex-wrap gap-2.5">
                           {availableValues.map(val => {
                             const isSelected = currentSelectedVal === val;
+                            const optMeta = dimInfo?.opcionesMap?.[val];
+                            const optionImg = optMeta?.imagenUrl;
 
                             const tempAttr = { ...selectedAttributes, [attrKey]: val };
                             const matchingVariant = activeVariants.find(v => {
@@ -551,6 +608,42 @@ export default function ProductVariantModal({
                             const valExists = !!matchingVariant;
                             const valInStock = matchingVariant && matchingVariant.stock > 0;
 
+                            if (isColorAttr) {
+                              const styleObj = getColorStyle(attrKey, val);
+                              return (
+                                <button
+                                  key={val}
+                                  type="button"
+                                  disabled={!valExists}
+                                  onClick={() => handleSelectAttribute(attrKey, val)}
+                                  aria-label={`Color: ${val}`}
+                                  title={`Color: ${val}`}
+                                  className={`group relative flex items-center gap-2.5 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-slate-900 text-white shadow-md ring-2 ring-cyan-500'
+                                      : !valExists
+                                      ? 'bg-slate-100 text-slate-300 border border-slate-200 line-through cursor-not-allowed opacity-50'
+                                      : !valInStock
+                                      ? 'bg-white text-slate-700 border border-rose-200 hover:border-rose-300'
+                                      : 'bg-white text-slate-800 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 shadow-2xs'
+                                  }`}
+                                >
+                                  {/* Swatch color con foto o HEX */}
+                                  <div className="relative size-5 rounded-full overflow-hidden shrink-0 shadow-xs border border-black/10 flex items-center justify-center" style={styleObj}>
+                                    {optionImg && (
+                                      <img src={optionImg} alt={val} className="w-full h-full object-cover" />
+                                    )}
+                                    {isSelected && (
+                                      <Check className={`w-3 h-3 ${styleObj.backgroundColor === '#ffffff' ? 'text-slate-900' : 'text-white'} drop-shadow-xs`} />
+                                    )}
+                                  </div>
+
+                                  <span>{val}</span>
+                                </button>
+                              );
+                            }
+
+                            // Chip estándar para TALLA, TAMANO, PESO, SABOR, MATERIAL, PERSONALIZADO
                             return (
                               <button
                                 key={val}
@@ -561,7 +654,7 @@ export default function ProductVariantModal({
                                   isSelected
                                     ? isSizeAttr
                                       ? 'bg-cyan-500 text-white shadow-md ring-2 ring-cyan-500/30'
-                                      : 'bg-cyan-50/80 text-slate-900 border-2 border-cyan-400 shadow-2xs'
+                                      : 'bg-slate-900 text-white shadow-md ring-2 ring-slate-900/30'
                                     : !valExists
                                     ? 'bg-slate-100 text-slate-300 border border-slate-200 line-through cursor-not-allowed opacity-50'
                                     : !valInStock
@@ -569,11 +662,11 @@ export default function ProductVariantModal({
                                     : 'bg-white text-slate-800 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 shadow-2xs'
                                 }`}
                               >
-                                {isColorAttr && (
-                                  <span className={`size-3.5 rounded-full ${getColorDot(val)}`} />
+                                {optionImg && (
+                                  <img src={optionImg} alt={val} className="size-4 rounded-md object-cover border border-slate-200 shrink-0" />
                                 )}
                                 <span>{val}</span>
-                                {isSelected && <Check className={`w-3.5 h-3.5 ${isSizeAttr ? 'text-white' : 'text-cyan-600'}`} />}
+                                {isSelected && <Check className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-cyan-600'}`} />}
                               </button>
                             );
                           })}
@@ -611,13 +704,13 @@ export default function ProductVariantModal({
             </div>
           )}
 
-          {/* ── SELECTOR DE CANTIDAD ── */}
+          {/* ── SECCIÓN DE CANTIDAD ── */}
           <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
             <div>
               <span className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                 <span>📦 CANTIDAD</span>
               </span>
-              <span className="text-[11px] text-slate-500 font-medium">
+              <span className="text-[11px] text-slate-500 font-medium block">
                 Máximo {effectiveStock} unidades por pedido
               </span>
             </div>
@@ -687,7 +780,6 @@ export default function ProductVariantModal({
           </button>
         </div>
       </div>
-
     </div>
   );
 }
