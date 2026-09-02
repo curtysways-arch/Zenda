@@ -3460,6 +3460,7 @@ model RestaurantTable {
   token           String             @unique @default(uuid())
   activa          Boolean            @default(true)
   permitePedidos  Boolean            @default(true)
+  capacidad       Int?               @default(4)
   estado          String             @default("DISPONIBLE") // "DISPONIBLE" | "OCUPADA" | "ATENCION_REQUERIDA"
 
   negocio         Negocio            @relation(fields: [negocioId], references: [id], onDelete: Cascade)

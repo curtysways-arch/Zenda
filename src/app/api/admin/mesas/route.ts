@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { nombre, numero, permitePedidos, estado } = body;
+    const { nombre, numero, permitePedidos, estado, capacidad } = body;
 
     if (!nombre || typeof nombre !== 'string' || !nombre.trim()) {
       return NextResponse.json({ error: 'El nombre de la mesa es obligatorio' }, { status: 400 });
@@ -58,6 +58,7 @@ export async function POST(request: Request) {
         negocioId,
         nombre: nombre.trim(),
         numero: numero ? parseInt(numero, 10) : null,
+        capacidad: capacidad ? parseInt(capacidad, 10) : 4,
         activa: true,
         permitePedidos: permitePedidos !== undefined ? Boolean(permitePedidos) : true,
         estado: estado || 'DISPONIBLE'

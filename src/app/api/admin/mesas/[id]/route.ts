@@ -37,6 +37,7 @@ export async function PATCH(
     const updateData: any = {};
     if (body.nombre !== undefined) updateData.nombre = String(body.nombre).trim();
     if (body.numero !== undefined) updateData.numero = body.numero ? parseInt(body.numero, 10) : null;
+    if (body.capacidad !== undefined) updateData.capacidad = body.capacidad ? parseInt(body.capacidad, 10) : null;
     if (body.activa !== undefined) updateData.activa = Boolean(body.activa);
     if (body.permitePedidos !== undefined) updateData.permitePedidos = Boolean(body.permitePedidos);
     if (body.estado !== undefined) updateData.estado = String(body.estado);

@@ -11,6 +11,7 @@ interface RestaurantTableItem {
   id: string;
   nombre: string;
   numero: number | null;
+  capacidad?: number | null;
   token: string;
   activa: boolean;
   permitePedidos: boolean;
@@ -84,6 +85,7 @@ export default function AdminMesasPage() {
   const [editingTable, setEditingTable] = useState<RestaurantTableItem | null>(null);
   const [tableNameInput, setTableNameInput] = useState('');
   const [tableNumberInput, setTableNumberInput] = useState('');
+  const [tableSeatsInput, setTableSeatsInput] = useState('4');
   const [tableAllowOrders, setTableAllowOrders] = useState(true);
   const [savingTable, setSavingTable] = useState(false);
 
@@ -154,6 +156,7 @@ export default function AdminMesasPage() {
           body: JSON.stringify({
             nombre: tableNameInput.trim(),
             numero: tableNumberInput ? parseInt(tableNumberInput, 10) : null,
+            capacidad: tableSeatsInput ? parseInt(tableSeatsInput, 10) : 4,
             permitePedidos: tableAllowOrders
           })
         });
@@ -169,6 +172,7 @@ export default function AdminMesasPage() {
           body: JSON.stringify({
             nombre: tableNameInput.trim(),
             numero: tableNumberInput ? parseInt(tableNumberInput, 10) : null,
+            capacidad: tableSeatsInput ? parseInt(tableSeatsInput, 10) : 4,
             permitePedidos: tableAllowOrders
           })
         });
@@ -322,6 +326,7 @@ export default function AdminMesasPage() {
               setEditingTable(null);
               setTableNameInput('');
               setTableNumberInput('');
+              setTableSeatsInput('4');
               setTableAllowOrders(true);
               setIsCreateModalOpen(true);
             }}
@@ -449,6 +454,7 @@ export default function AdminMesasPage() {
                   setEditingTable(null);
                   setTableNameInput('');
                   setTableNumberInput('');
+                  setTableSeatsInput('4');
                   setTableAllowOrders(true);
                   setIsCreateModalOpen(true);
                 }}
@@ -491,11 +497,15 @@ export default function AdminMesasPage() {
                       </div>
 
                       <div className="text-xs space-y-1 text-slate-600 font-medium">
-                        <p className="flex items-center gap-1.5">
+                        <p className="flex items-center justify-between">
                           <span>Pedidos desde mesa:</span>
                           <span className={table.permitePedidos ? 'font-black text-emerald-600' : 'font-black text-slate-400'}>
-                            {table.permitePedidos ? '✓ Habilitados' : '✕ Ver menú solo'}
+                            {table.permitePedidos ? '✓ Habilitados' : '✕ Ver menú'}
                           </span>
+                        </p>
+                        <p className="flex items-center justify-between text-slate-500">
+                          <span>Puestos / Capacidad:</span>
+                          <span className="font-bold text-slate-900">🪑 {table.capacidad || 4} personas</span>
                         </p>
                       </div>
                     </div>
@@ -519,6 +529,7 @@ export default function AdminMesasPage() {
                           setEditingTable(table);
                           setTableNameInput(table.nombre);
                           setTableNumberInput(table.numero ? String(table.numero) : '');
+                          setTableSeatsInput(table.capacidad ? String(table.capacidad) : '4');
                           setTableAllowOrders(table.permitePedidos);
                           setIsCreateModalOpen(true);
                         }}
@@ -855,6 +866,18 @@ export default function AdminMesasPage() {
                   placeholder="ej. 1, 2, 3"
                   value={tableNumberInput}
                   onChange={e => setTableNumberInput(e.target.value)}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-900 outline-none focus:border-slate-400"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Número de Puestos / Capacidad (Personas)</label>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="ej. 2, 4, 6"
+                  value={tableSeatsInput}
+                  onChange={e => setTableSeatsInput(e.target.value)}
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-900 outline-none focus:border-slate-400"
                 />
               </div>

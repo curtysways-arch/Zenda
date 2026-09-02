@@ -10,6 +10,7 @@ interface TableQRPrintModalProps {
     id: string;
     nombre: string;
     numero?: number | null;
+    capacidad?: number | null;
     token: string;
     activa: boolean;
     permitePedidos: boolean;
@@ -168,8 +169,13 @@ export default function TableQRPrintModal({
                   </div>
 
                   {/* Nombre de Mesa */}
-                  <div className="bg-slate-900 text-white w-full py-2.5 px-4 rounded-2xl shadow-sm">
+                  <div className="bg-slate-900 text-white w-full py-2.5 px-4 rounded-2xl shadow-sm flex items-center justify-between">
                     <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight">{table.nombre}</h2>
+                    {table.capacidad && (
+                      <span className="text-xs font-bold bg-slate-800 text-amber-400 px-2.5 py-1 rounded-xl">
+                        🪑 {table.capacidad} Puestos
+                      </span>
+                    )}
                   </div>
 
                   {/* Código QR Físico de Alta Resolución */}
