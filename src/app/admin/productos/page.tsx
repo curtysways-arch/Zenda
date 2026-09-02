@@ -68,6 +68,7 @@ export default function AdminProductos() {
     const [descripcion, setDescripcion] = useState('');
     const [precio, setPrecio] = useState('0');
     const [imagenUrl, setImagenUrl] = useState('');
+    const [imagenesList, setImagenesList] = useState<string[]>([]);
     const [activo, setActivo] = useState(true);
     const [stock, setStock] = useState('');
     const [sku, setSku] = useState('');
@@ -243,12 +244,13 @@ export default function AdminProductos() {
         fetchData();
     }, []);
 
-    const handleOpenCreate = () => {
+    const handleCreateNew = () => {
         setEditingProduct(null);
         setNombre('');
         setDescripcion('');
         setPrecio('0');
         setImagenUrl('');
+        setImagenesList([]);
         setActivo(true);
         setStock('');
         setSku('');
@@ -271,6 +273,10 @@ export default function AdminProductos() {
         setDescripcion(p.descripcion || '');
         setPrecio(p.precio.toString());
         setImagenUrl(p.imagenUrl || '');
+        const existingImgs = (p.extraInfo && typeof p.extraInfo === 'object' && Array.isArray((p.extraInfo as any).imagenes))
+            ? (p.extraInfo as any).imagenes
+            : (p.imagenUrl ? [p.imagenUrl] : []);
+        setImagenesList(existingImgs);
         setActivo(p.activo);
         setStock(p.stock !== null && p.stock !== undefined ? p.stock.toString() : '');
         setSku(p.sku || '');
@@ -311,7 +317,8 @@ export default function AdminProductos() {
                 nombre: nombre.trim(),
                 descripcion: descripcion.trim() || null,
                 precio: parseNum(precio, 0),
-                imagenUrl: imagenUrl || null,
+                imagenUrl: imagenesList[0] || imagenUrl || null,
+                imagenes: imagenesList,
                 activo,
                 stock: stock.trim() !== '' ? parseInt(stock) : null,
                 sku: sku.trim() || null,
@@ -403,7 +410,7 @@ export default function AdminProductos() {
                         Categorías
                     </Link>
                     <button
-                        onClick={handleOpenCreate}
+                        onClick={handleCreateNew}
                         className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-md"
                     >
                         <Plus className="size-4" />
@@ -652,19 +659,61 @@ export default function AdminProductos() {
                                             </div>
 
                                             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                                                {/* Carga Imagen */}
-                                                <div className="lg:col-span-4 space-y-1">
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
-                                                        Imagen del Producto
-                                                    </label>
+                                                {/* Carga Imágenes Múltiples del Producto */}
+                                                <div className="lg:col-span-4 space-y-2">
+                                                    <div className="flex items-center justify-between">
+                                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">
+                                                            Imágenes ({imagenesList.length})
+                                                        </label>
+                                                        <span className="text-[9px] text-teal-600 font-extrabold uppercase tracking-wider">
+                                                            Galería del Producto
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Galería de miniaturas subidas */}
+                                                    {imagenesList.length > 0 && (
+                                                        <div className="grid grid-cols-3 gap-2 mb-2">
+                                                            {imagenesList.map((url, idx) => (
+                                                                <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs">
+                                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                    <img src={url} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
+                                                                    {idx === 0 && (
+                                                                        <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-teal-600 text-white font-black text-[8px] uppercase shadow-xs">
+                                                                            Principal
+                                                                        </span>
+                                                                    )}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const nextList = imagenesList.filter((_, i) => i !== idx);
+                                                                            setImagenesList(nextList);
+                                                                            if (idx === 0) setImagenUrl(nextList[0] || '');
+                                                                        }}
+                                                                        className="absolute top-1 right-1 size-5 rounded-full bg-rose-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-md"
+                                                                        title="Eliminar foto"
+                                                                    >
+                                                                        <X className="w-3 h-3" />
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Subidor de Nueva Foto */}
                                                     <ImageUploader
                                                         category="products"
-                                                        currentUrl={imagenUrl}
-                                                        onUploadSuccess={(media) => setImagenUrl(media.url)}
-                                                        onRemove={() => setImagenUrl('')}
-                                                        label="Subir Foto"
+                                                        currentUrl=""
+                                                        onUploadSuccess={(media) => {
+                                                            const nextList = [...imagenesList, media.url];
+                                                            setImagenesList(nextList);
+                                                            if (!imagenUrl) setImagenUrl(media.url);
+                                                        }}
+                                                        label={imagenesList.length === 0 ? "Subir Foto Principal" : "+ Añadir Otra Foto"}
                                                         aspect="square"
                                                     />
+                                                    <span className="text-[10px] text-slate-400 block font-medium leading-tight">
+                                                        Sube 1 o varias fotos para activar el carrusel de miniaturas en la tienda.
+                                                    </span>
                                                 </div>
 
                                                 {/* Campos Básicos */}
