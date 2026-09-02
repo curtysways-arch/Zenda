@@ -2234,10 +2234,10 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                     
                                     return (
                                         <div key={p.id} className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-all relative flex flex-col group">
-                                            {/* Imagen del Producto (Click para Zoom) - CUADRADA dominante */}
+                                            {/* Imagen del Producto (Visualización Completa Sin Recortes + Ambient Glow) */}
                                             <div 
                                                 onClick={() => setZoomProduct(p)}
-                                                className="relative w-full aspect-square bg-slate-100 overflow-hidden cursor-pointer"
+                                                className="relative w-full aspect-square bg-slate-50/90 overflow-hidden cursor-pointer flex items-center justify-center p-3"
                                                 title="Ver detalle"
                                             >
                                                 {!p.activo && (
@@ -2249,19 +2249,28 @@ export default function ProductsStoreClient({ negocio }: Props) {
                                                     </div>
                                                 )}
                                                 {p.imagenUrl ? (
-                                                    // eslint-disable-next-line @next/next/no-img-element
-                                                    <img 
-                                                        src={p.imagenUrl} 
-                                                        alt={p.nombre} 
-                                                        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${!p.activo ? 'opacity-90' : ''}`} 
-                                                    />
+                                                    <>
+                                                        {/* Fondo ambiental sutil */}
+                                                        <img 
+                                                            src={p.imagenUrl} 
+                                                            alt="" 
+                                                            aria-hidden="true"
+                                                            className="absolute inset-0 w-full h-full object-cover blur-xl opacity-25 scale-125 select-none pointer-events-none" 
+                                                        />
+                                                        {/* Imagen principal 100% visible sin recortes */}
+                                                        <img 
+                                                            src={p.imagenUrl} 
+                                                            alt={p.nombre} 
+                                                            className={`relative z-10 max-h-full max-w-full object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-500 ${!p.activo ? 'opacity-90' : ''}`} 
+                                                        />
+                                                    </>
                                                 ) : (
                                                     <div className="absolute inset-0 flex items-center justify-center font-black text-4xl italic uppercase" style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
                                                         {p.nombre.substring(0, 1)}
                                                     </div>
                                                 )}
                                                 {/* Badge Zoom */}
-                                                <div className="absolute top-2 right-2 size-7 rounded-xl bg-slate-950/60 text-white flex items-center justify-center backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="absolute top-2 right-2 size-7 rounded-xl bg-slate-950/60 text-white flex items-center justify-center backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity z-20">
                                                     <ZoomIn className="size-3.5" />
                                                 </div>
                                             </div>

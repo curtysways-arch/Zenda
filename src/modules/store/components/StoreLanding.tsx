@@ -599,15 +599,24 @@ function ProductCardItem({
       onClick={onSelectOptions}
       className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden flex flex-col justify-between hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer text-left"
     >
-      {/* Imagen */}
-      <div className="relative w-full h-52 bg-slate-100 overflow-hidden flex items-center justify-center">
+      {/* Imagen del Producto (Visualización Completa Sin Recortes + Ambient Glow) */}
+      <div className="relative w-full h-56 bg-slate-50/90 overflow-hidden flex items-center justify-center p-3">
         {product.imagenUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={product.imagenUrl}
-            alt={product.nombre}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+          <>
+            {/* Fondo ambiental sutil derivado de la imagen original */}
+            <img
+              src={product.imagenUrl}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-cover blur-xl opacity-25 scale-125 select-none pointer-events-none"
+            />
+            {/* Imagen principal 100% visible sin cortes en bordes */}
+            <img
+              src={product.imagenUrl}
+              alt={product.nombre}
+              className="relative z-10 max-h-full max-w-full object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-500"
+            />
+          </>
         ) : (
           <span className="text-4xl">🛍️</span>
         )}
