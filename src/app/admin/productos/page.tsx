@@ -27,6 +27,8 @@ interface Product {
     precioEmpaque?: number;
     categoriaId?: string | null;
     categoria?: { id: string; nombre: string } | null;
+    tieneVariantes?: boolean;
+    variantes?: any[];
 }
 
 interface Category {
@@ -70,6 +72,7 @@ export default function AdminProductos() {
     const [stock, setStock] = useState('');
     const [sku, setSku] = useState('');
     const [tieneVariantes, setTieneVariantes] = useState(false);
+    const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
     const [orden, setOrden] = useState(0);
     const [categoriaId, setCategoriaId] = useState('');
     const [llevaEmpaque, setLlevaEmpaque] = useState(true);
@@ -823,280 +826,68 @@ export default function AdminProductos() {
                                                         )}
                                                         <span className="text-[10px] font-bold text-slate-700">
                                                             {activo ? 'Activo (Visible en tienda)' : 'Inactivo (Oculto)'}
-                                                        </span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
-                                    {/* SECCIÓN 3: VARIANTES DEL PRODUCTO */}
-                                    {(modalTab === 'all' || modalTab === 'variants') && tieneVariantes && (
-                                        <div className="space-y-6">
-                                            {/* Producto Existente: Gestor Completo */}
-                                            {editingProduct?.id && (
-                                                <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs">
-                                                    <ProductVariantManager
-                                                        productId={editingProduct.id}
-                                                        productName={nombre}
-                                                        basePrice={parseFloat(precio) || 0}
-                                                        baseSku={sku}
-                                                        onVariantsChange={() => fetchData()}
-                                                    />
-                                                </div>
-                                            )}
+                    {/* SECCIÓN 3: VARIANTES DEL PRODUCTO */}
+                    {(modalTab === 'all' || modalTab === 'variants') && (
+                        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <div className="flex items-center gap-2">
+                                    <Layers className="size-4 text-teal-600" />
+                                    <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-900">
+                                        VARIANTES DEL PRODUCTO
+                                    </h4>
+                                </div>
+                                {tieneVariantes && (
+                                    <span className="px-3 py-1 bg-teal-50 text-teal-700 text-xs font-bold rounded-full border border-teal-200">
+                                        {editingProduct ? `${editingProduct.variantes?.length || 0} Variantes Guardadas` : `${initialVariants.length} Combinaciones`}
+                                    </span>
+                                )}
+                            </div>
 
-                                            {/* Producto Nuevo: Generador Multidimensional Exacto al Diseño */}
-                                            {!editingProduct && (
-                                                <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-6">
-                                                    {/* Card Generador de Variantes Header */}
-                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-                                                        <div className="space-y-1">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="size-7 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center font-black text-xs">
-                                                                    <Box className="size-4 text-teal-600" />
-                                                                </div>
-                                                                <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-900 flex items-center gap-2">
-                                                                    <span>GENERADOR DE VARIANTES</span>
-                                                                    <span className="px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 text-[9px] font-black border border-cyan-200 uppercase">
-                                                                        {dimensions.length} DIMENSIONES
-                                                                    </span>
-                                                                </h4>
-                                                            </div>
-                                                            <p className="text-[11px] text-slate-500 font-medium">
-                                                                Selecciona los atributos (ej. Color, Talla) y genera todas las combinaciones posibles.
-                                                            </p>
-                                                        </div>
-
-                                                        <div className="flex items-center gap-2 shrink-0">
-                                                            <button
-                                                                type="button"
-                                                                onClick={handleAddDimension}
-                                                                className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 font-extrabold text-xs uppercase tracking-wider rounded-xl border border-slate-300 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                                                            >
-                                                                <Plus className="size-3.5" />
-                                                                <span>+ AGREGAR ATRIBUTO</span>
-                                                            </button>
-
-                                                            <button
-                                                                type="button"
-                                                                onClick={handleGenerateInitialCombinations}
-                                                                className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5"
-                                                            >
-                                                                <Sparkles className="size-3.5" />
-                                                                <span>⚡ GENERAR MATRIZ ({dimensions.length} ATRIBUTOS)</span>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Grid de Atributos */}
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                        {dimensions.map((dim, index) => (
-                                                            <div key={dim.id} className="p-4 bg-slate-50/60 rounded-2xl border border-slate-200 space-y-3 relative">
-                                                                <div className="flex items-center justify-between gap-2">
-                                                                    <div className="space-y-0.5 flex-1">
-                                                                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
-                                                                            Atributo {index + 1}
-                                                                        </span>
-                                                                        <input
-                                                                            type="text"
-                                                                            value={dim.name}
-                                                                            onChange={e => {
-                                                                                const val = e.target.value;
-                                                                                setDimensions(prev => prev.map(d => d.id === dim.id ? { ...d, name: val } : d));
-                                                                            }}
-                                                                            placeholder="Ej. Color, Talla, Memoria"
-                                                                            className="text-xs font-black text-slate-900 bg-white border border-slate-200 px-3 py-1.5 rounded-xl outline-none focus:border-teal-500 w-full"
-                                                                        />
-                                                                    </div>
-                                                                    {dimensions.length > 1 && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleRemoveDimension(dim.id)}
-                                                                            className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer"
-                                                                            title="Eliminar atributo"
-                                                                        >
-                                                                            <Trash2 className="size-4" />
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-
-                                                                {/* Chips de Valores con botón de eliminación × */}
-                                                                <div className="flex flex-wrap gap-1.5 min-h-[32px]">
-                                                                    {dim.values.map(val => (
-                                                                        <span
-                                                                            key={val}
-                                                                            className="px-2.5 py-1 bg-white border border-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs"
-                                                                        >
-                                                                            <span>{val}</span>
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => handleRemoveValueFromDimension(dim.id, val)}
-                                                                                className="text-slate-400 hover:text-rose-600 font-black cursor-pointer text-xs"
-                                                                            >
-                                                                                ×
-                                                                            </button>
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-
-                                                                {/* Input + Botón para agregar valor */}
-                                                                <div className="flex gap-2 pt-1">
-                                                                    <input
-                                                                        type="text"
-                                                                        placeholder="Agregar valor"
-                                                                        value={dim.newValueInput || ''}
-                                                                        onChange={e => {
-                                                                            const val = e.target.value;
-                                                                            setDimensions(prev => prev.map(d => d.id === dim.id ? { ...d, newValueInput: val } : d));
-                                                                        }}
-                                                                        onKeyDown={e => {
-                                                                            if (e.key === 'Enter') {
-                                                                                e.preventDefault();
-                                                                                handleAddValueToDimension(dim.id, dim.newValueInput || '');
-                                                                            }
-                                                                        }}
-                                                                        className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:border-teal-500 flex-1 placeholder:text-slate-400"
-                                                                    />
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleAddValueToDimension(dim.id, dim.newValueInput || '')}
-                                                                        className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs rounded-xl cursor-pointer transition-colors"
-                                                                    >
-                                                                        +
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-
-                                                    {/* Bloque: VARIANTES A CREAR (Tabla idéntica a la imagen) */}
-                                                    {initialVariants.length > 0 && (
-                                                        <div className="space-y-3 pt-4 border-t border-slate-200">
-                                                            <div className="flex justify-between items-center">
-                                                                <h5 className="text-xs font-black text-slate-900 uppercase tracking-wider">
-                                                                    VARIANTES A CREAR ({initialVariants.length} COMBINACIONES)
-                                                                </h5>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setInitialVariants([])}
-                                                                    className="text-xs font-black text-rose-600 hover:text-rose-700 hover:underline cursor-pointer flex items-center gap-1"
-                                                                >
-                                                                    <span>Limpiar lista</span>
-                                                                    <Trash2 className="size-3.5" />
-                                                                </button>
-                                                            </div>
-
-                                                            <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
-                                                                <table className="w-full text-left text-xs border-collapse">
-                                                                    <thead>
-                                                                        <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                                                                            <th className="p-3.5">Combinación</th>
-                                                                            <th className="p-3.5">Código (SKU)</th>
-                                                                            <th className="p-3.5">Precio</th>
-                                                                            <th className="p-3.5">Stock</th>
-                                                                            <th className="p-3.5 text-center">Acciones</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody className="divide-y divide-slate-150">
-                                                                        {initialVariants.map((v, idx) => (
-                                                                            <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                                                                                {/* Combinación Badge */}
-                                                                                <td className="p-3">
-                                                                                    <div className="flex flex-wrap items-center gap-1.5">
-                                                                                        {v.nombre.split(' / ').map((part, pIdx) => (
-                                                                                            <React.Fragment key={pIdx}>
-                                                                                                {pIdx > 0 && <span className="text-slate-400 font-bold text-xs">+</span>}
-                                                                                                <span className="px-2.5 py-1 rounded-xl bg-slate-900 text-white font-extrabold text-[11px] shadow-2xs">
-                                                                                                    {part}
-                                                                                                </span>
-                                                                                            </React.Fragment>
-                                                                                        ))}
-                                                                                    </div>
-                                                                                </td>
-
-                                                                                {/* SKU Input */}
-                                                                                <td className="p-3">
-                                                                                    <input
-                                                                                        type="text"
-                                                                                        value={v.sku}
-                                                                                        onChange={e => {
-                                                                                            const val = e.target.value;
-                                                                                            setInitialVariants(prev => prev.map((item, i) => i === idx ? { ...item, sku: val } : item));
-                                                                                        }}
-                                                                                        placeholder="PROD-NEGRO-S"
-                                                                                        className="w-full max-w-[170px] px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 outline-none focus:border-teal-500 focus:bg-white"
-                                                                                    />
-                                                                                </td>
-
-                                                                                {/* Precio Input */}
-                                                                                <td className="p-3">
-                                                                                    <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 w-28">
-                                                                                        <span className="text-xs font-bold text-slate-400">$</span>
-                                                                                        <input
-                                                                                            type="number"
-                                                                                            step="0.01"
-                                                                                            value={v.precio}
-                                                                                            onChange={e => {
-                                                                                                const val = e.target.value;
-                                                                                                setInitialVariants(prev => prev.map((item, i) => i === idx ? { ...item, precio: val } : item));
-                                                                                            }}
-                                                                                            className="w-full bg-transparent font-extrabold text-xs text-slate-900 outline-none"
-                                                                                        />
-                                                                                    </div>
-                                                                                </td>
-
-                                                                                {/* Stock Input */}
-                                                                                <td className="p-3">
-                                                                                    <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 w-24">
-                                                                                        <span className="text-xs text-slate-400">📦</span>
-                                                                                        <input
-                                                                                            type="number"
-                                                                                            value={v.stock}
-                                                                                            onChange={e => {
-                                                                                                const val = e.target.value;
-                                                                                                setInitialVariants(prev => prev.map((item, i) => i === idx ? { ...item, stock: val } : item));
-                                                                                            }}
-                                                                                            className="w-full bg-transparent font-extrabold text-xs text-slate-900 outline-none"
-                                                                                        />
-                                                                                    </div>
-                                                                                </td>
-
-                                                                                {/* Acciones: Duplicar y Eliminar */}
-                                                                                <td className="p-3 text-center">
-                                                                                    <div className="flex items-center justify-center gap-1">
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            onClick={() => {
-                                                                                                const copy = { ...v, nombre: `${v.nombre} (Copia)`, sku: v.sku ? `${v.sku}-COPY` : '' };
-                                                                                                setInitialVariants(prev => [...prev.slice(0, idx + 1), copy, ...prev.slice(idx + 1)]);
-                                                                                            }}
-                                                                                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                                                                                            title="Duplicar fila"
-                                                                                        >
-                                                                                            <Copy className="size-3.5" />
-                                                                                        </button>
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            onClick={() => setInitialVariants(prev => prev.filter((_, i) => i !== idx))}
-                                                                                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                                                                                            title="Eliminar variante"
-                                                                                        >
-                                                                                            <X className="size-4" />
-                                                                                        </button>
-                                                                                    </div>
-                                                                                </td>
-                                                                            </tr>
-                                                                        ))}
-                                                                    </tbody>
-                                                                </table>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
+                            {!tieneVariantes ? (
+                                <div className="text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-3">
+                                    <p className="text-xs text-slate-500 font-medium">Este producto está configurado como producto simple (sin variantes).</p>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setTieneVariantes(true);
+                                            setIsVariantModalOpen(true);
+                                        }}
+                                        className="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer inline-flex items-center gap-2 shadow-sm"
+                                    >
+                                        <Sparkles className="size-4" />
+                                        <span>Activar & Abrir Gestor de Variantes</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl shadow-md">
+                                    <div className="space-y-1">
+                                        <h5 className="font-extrabold text-sm uppercase tracking-wide text-cyan-400 flex items-center gap-2">
+                                            <Sparkles className="size-4" />
+                                            <span>Matriz & Gestor de Variantes</span>
+                                        </h5>
+                                        <p className="text-xs text-slate-300 font-medium">
+                                            Configura cualquier dimensión (Color, Talla, RAM, etc.), genera la matriz combinatoria, y administra precios y stock individual.
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsVariantModalOpen(true)}
+                                        className="px-5 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shrink-0 shadow-lg flex items-center gap-2"
+                                    >
+                                        <Layers className="size-4" />
+                                        <span>Generar & Gestionar Variantes</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                                     {/* SECCIÓN 4: PRECIO Y PUBLICACIÓN (SI NO TIENE VARIANTES O GENERAL) */}
                                     {(modalTab === 'all' || modalTab === 'pricing') && (
@@ -1276,6 +1067,250 @@ export default function AdminProductos() {
                                 )}
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Dedicado de Gestión y Generación de Variantes */}
+            {isVariantModalOpen && (
+                <div className="fixed inset-0 z-[260] flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-fade-in">
+                    <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh] text-left my-auto">
+                        {/* Header Modal Variantes */}
+                        <div className="px-6 py-4.5 border-b border-slate-150 flex items-center justify-between bg-slate-900 text-white shrink-0">
+                            <div className="flex items-center gap-3.5">
+                                <div className="size-11 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-black text-sm border border-cyan-500/30 shrink-0">
+                                    <Layers className="size-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base sm:text-lg font-black uppercase tracking-wide flex items-center gap-2 text-white">
+                                        <span>GESTOR & GENERADOR DE VARIANTES</span>
+                                    </h3>
+                                    <p className="text-xs text-slate-300 font-medium">
+                                        {nombre ? `Producto: ${nombre}` : 'Administra opciones, combinaciones y matriz del producto'}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsVariantModalOpen(false)}
+                                className="size-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                            >
+                                <X className="size-5" />
+                            </button>
+                        </div>
+
+                        {/* Body Modal Variantes */}
+                        <div className="p-5 sm:p-6 overflow-y-auto space-y-6 custom-scrollbar bg-slate-50">
+                            {editingProduct?.id ? (
+                                <ProductVariantManager
+                                    productId={editingProduct.id}
+                                    productName={nombre || 'Producto'}
+                                    basePrice={parseFloat(precio) || 0}
+                                    baseSku={sku}
+                                    onVariantsChange={() => fetchData()}
+                                />
+                            ) : (
+                                <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-6">
+                                    {/* Generador de Variantes para Producto Nuevo */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <div className="size-7 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center font-black text-xs">
+                                                    <Box className="size-4 text-teal-600" />
+                                                </div>
+                                                <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                                                    <span>GENERADOR DE VARIANTES</span>
+                                                    <span className="px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 text-[9px] font-black border border-cyan-200 uppercase">
+                                                        {dimensions.length} DIMENSIONES
+                                                    </span>
+                                                </h4>
+                                            </div>
+                                            <p className="text-[11px] text-slate-500 font-medium">
+                                                Selecciona los atributos (ej. Color, Talla) y genera todas las combinaciones posibles.
+                                            </p>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <button
+                                                type="button"
+                                                onClick={handleAddDimension}
+                                                className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 font-extrabold text-xs uppercase tracking-wider rounded-xl border border-slate-300 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                                            >
+                                                <Plus className="size-3.5" />
+                                                <span>+ AGREGAR ATRIBUTO</span>
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={handleGenerateInitialCombinations}
+                                                className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                                            >
+                                                <Sparkles className="size-3.5" />
+                                                <span>⚡ GENERAR MATRIZ ({dimensions.length} ATRIBUTOS)</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Grid de Atributos */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {dimensions.map((dim, index) => (
+                                            <div key={dim.id} className="p-4 bg-slate-50/60 rounded-2xl border border-slate-200 space-y-3 relative">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="space-y-0.5 flex-1">
+                                                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                                                            Atributo {index + 1}
+                                                        </span>
+                                                        <input
+                                                            type="text"
+                                                            value={dim.name}
+                                                            onChange={e => {
+                                                                const val = e.target.value;
+                                                                setDimensions(prev => prev.map(d => d.id === dim.id ? { ...d, name: val } : d));
+                                                            }}
+                                                            placeholder="Ej. Color, Talla, Memoria"
+                                                            className="text-xs font-black text-slate-900 bg-white border border-slate-200 px-3 py-1.5 rounded-xl outline-none focus:border-teal-500 w-full"
+                                                        />
+                                                    </div>
+                                                    {dimensions.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveDimension(dim.id)}
+                                                            className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer"
+                                                            title="Eliminar atributo"
+                                                        >
+                                                            <Trash2 className="size-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {/* Chips de Valores con botón de eliminación × */}
+                                                <div className="flex flex-wrap gap-1.5 min-h-[32px]">
+                                                    {dim.values.map(val => (
+                                                        <span
+                                                            key={val}
+                                                            className="px-2.5 py-1 bg-white border border-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs"
+                                                        >
+                                                            <span>{val}</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleRemoveValueFromDimension(dim.id, val)}
+                                                                className="text-slate-400 hover:text-rose-600 font-black cursor-pointer text-xs"
+                                                            >
+                                                                ×
+                                                            </button>
+                                                        </span>
+                                                    ))}
+                                                </div>
+
+                                                {/* Input + Botón para agregar valor */}
+                                                <div className="flex gap-2 pt-1">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Agregar valor"
+                                                        value={dim.newValueInput || ''}
+                                                        onChange={e => {
+                                                            const val = e.target.value;
+                                                            setDimensions(prev => prev.map(d => d.id === dim.id ? { ...d, newValueInput: val } : d));
+                                                        }}
+                                                        onKeyDown={e => {
+                                                            if (e.key === 'Enter') {
+                                                                e.preventDefault();
+                                                                handleAddValueToDimension(dim.id, dim.newValueInput || '');
+                                                            }
+                                                        }}
+                                                        className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:border-teal-500 flex-1 placeholder:text-slate-400"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleAddValueToDimension(dim.id, dim.newValueInput || '')}
+                                                        className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs rounded-xl cursor-pointer transition-colors"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Bloque: VARIANTES A CREAR */}
+                                    {initialVariants.length > 0 && (
+                                        <div className="space-y-3 pt-4 border-t border-slate-200">
+                                            <div className="flex justify-between items-center">
+                                                <h5 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                                                    VARIANTES A CREAR ({initialVariants.length} COMBINACIONES)
+                                                </h5>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setInitialVariants([])}
+                                                    className="text-xs font-black text-rose-600 hover:text-rose-700 hover:underline cursor-pointer flex items-center gap-1"
+                                                >
+                                                    <span>Limpiar lista</span>
+                                                    <Trash2 className="size-3.5" />
+                                                </button>
+                                            </div>
+
+                                            <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
+                                                <table className="w-full text-left text-xs border-collapse">
+                                                    <thead>
+                                                        <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                                                            <th className="p-3.5">Combinación</th>
+                                                            <th className="p-3.5">Código (SKU)</th>
+                                                            <th className="p-3.5">Precio</th>
+                                                            <th className="p-3.5">Stock</th>
+                                                            <th className="p-3.5 text-center">Acciones</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-150">
+                                                        {initialVariants.map((v, idx) => (
+                                                            <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                                                                <td className="p-3">
+                                                                    <div className="flex flex-wrap items-center gap-1.5">
+                                                                        {v.nombre.split(' / ').map((part, pIdx) => (
+                                                                            <React.Fragment key={pIdx}>
+                                                                                {pIdx > 0 && <span className="text-slate-400 font-bold text-xs">+</span>}
+                                                                                <span className="px-2.5 py-1 rounded-xl bg-slate-900 text-white font-extrabold text-[11px] shadow-2xs">
+                                                                                    {part}
+                                                                                </span>
+                                                                            </React.Fragment>
+                                                                        ))}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="p-3 font-mono text-[11px] text-slate-600 font-semibold">{v.sku}</td>
+                                                                <td className="p-3 font-bold text-slate-900">${v.precio}</td>
+                                                                <td className="p-3 font-bold text-slate-700">{v.stock}</td>
+                                                                <td className="p-3 text-center">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setInitialVariants(prev => prev.filter((_, i) => i !== idx))}
+                                                                        className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
+                                                                    >
+                                                                        <Trash2 className="size-4" />
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer Modal Variantes */}
+                        <div className="px-6 py-4 border-t border-slate-200 bg-white flex items-center justify-between shrink-0">
+                            <span className="text-xs font-semibold text-slate-500">
+                                {editingProduct ? `${editingProduct.variantes?.length || 0} variantes guardadas` : `${initialVariants.length} combinaciones generadas`}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setIsVariantModalOpen(false)}
+                                className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer transition-all shadow-sm"
+                            >
+                                Guardar y Cerrar
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
