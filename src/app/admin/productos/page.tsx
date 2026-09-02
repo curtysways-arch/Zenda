@@ -835,23 +835,38 @@ export default function AdminProductos() {
 
                     {/* SECCIÓN 3: VARIANTES DEL PRODUCTO */}
                     {(modalTab === 'all' || modalTab === 'variants') && (
-                        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
-                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                                <div className="flex items-center gap-2">
-                                    <Layers className="size-4 text-teal-600" />
-                                    <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-900">
-                                        VARIANTES DEL PRODUCTO
-                                    </h4>
+                        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-5">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <Layers className="size-4 text-teal-600" />
+                                        <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-900">
+                                            MATRIZ DE VARIANTES DEL PRODUCTO
+                                        </h4>
+                                        {tieneVariantes && (
+                                            <span className="px-2.5 py-0.5 bg-teal-50 text-teal-700 text-[10px] font-black rounded-full border border-teal-200 uppercase">
+                                                {editingProduct ? `${editingProduct.variantes?.length || 0} Variantes` : `${initialVariants.length} Combinaciones`}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                                        Visualiza, edita o elimina las variantes de este producto (precio, SKU, stock y estado).
+                                    </p>
                                 </div>
                                 {tieneVariantes && (
-                                    <span className="px-3 py-1 bg-teal-50 text-teal-700 text-xs font-bold rounded-full border border-teal-200">
-                                        {editingProduct ? `${editingProduct.variantes?.length || 0} Variantes Guardadas` : `${initialVariants.length} Combinaciones`}
-                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsVariantModalOpen(true)}
+                                        className="px-4 py-2 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5 shrink-0 self-start"
+                                    >
+                                        <Sparkles className="size-3.5 text-cyan-300" />
+                                        <span>+ Crear / Generar Variantes</span>
+                                    </button>
                                 )}
                             </div>
 
                             {!tieneVariantes ? (
-                                <div className="text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-3">
+                                <div className="text-center py-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-3">
                                     <p className="text-xs text-slate-500 font-medium">Este producto está configurado como producto simple (sin variantes).</p>
                                     <button
                                         type="button"
@@ -862,28 +877,139 @@ export default function AdminProductos() {
                                         className="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer inline-flex items-center gap-2 shadow-sm"
                                     >
                                         <Sparkles className="size-4" />
-                                        <span>Activar & Abrir Gestor de Variantes</span>
+                                        <span>Activar & Crear Variantes</span>
                                     </button>
                                 </div>
                             ) : (
-                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl shadow-md">
-                                    <div className="space-y-1">
-                                        <h5 className="font-extrabold text-sm uppercase tracking-wide text-cyan-400 flex items-center gap-2">
-                                            <Sparkles className="size-4" />
-                                            <span>Matriz & Gestor de Variantes</span>
-                                        </h5>
-                                        <p className="text-xs text-slate-300 font-medium">
-                                            Configura cualquier dimensión (Color, Talla, RAM, etc.), genera la matriz combinatoria, y administra precios y stock individual.
-                                        </p>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsVariantModalOpen(true)}
-                                        className="px-5 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shrink-0 shadow-lg flex items-center gap-2"
-                                    >
-                                        <Layers className="size-4" />
-                                        <span>Generar & Gestionar Variantes</span>
-                                    </button>
+                                <div className="space-y-4">
+                                    {/* Producto Existente: Gestor Completo con Tabla */}
+                                    {editingProduct?.id && (
+                                        <ProductVariantManager
+                                            productId={editingProduct.id}
+                                            productName={nombre}
+                                            basePrice={parseFloat(precio) || 0}
+                                            baseSku={sku}
+                                            onVariantsChange={() => fetchData()}
+                                        />
+                                    )}
+
+                                    {/* Producto Nuevo: Tabla de Variantes Iniciales Generadas */}
+                                    {!editingProduct && (
+                                        <div className="space-y-4">
+                                            {initialVariants.length === 0 ? (
+                                                <div className="text-center py-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-3">
+                                                    <p className="text-xs text-slate-500 font-semibold">Aún no has generado ni agregado variantes para este nuevo producto.</p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsVariantModalOpen(true)}
+                                                        className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl cursor-pointer inline-flex items-center gap-2 shadow-sm"
+                                                    >
+                                                        <Sparkles className="size-4" />
+                                                        <span>Abrir Generador de Variantes</span>
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
+                                                    <div className="p-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                                                        <h5 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                                                            MATRIZ DE VARIANTES A CREAR ({initialVariants.length} COMBINACIONES)
+                                                        </h5>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setInitialVariants([])}
+                                                            className="text-xs font-black text-rose-600 hover:text-rose-700 hover:underline cursor-pointer flex items-center gap-1"
+                                                        >
+                                                            <span>Limpiar todo</span>
+                                                            <Trash2 className="size-3.5" />
+                                                        </button>
+                                                    </div>
+                                                    <table className="w-full text-left text-xs border-collapse">
+                                                        <thead>
+                                                            <tr className="bg-slate-100/70 border-b border-slate-200 text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                                                                <th className="p-3.5">Variante</th>
+                                                                <th className="p-3.5">SKU</th>
+                                                                <th className="p-3.5">Precio ($)</th>
+                                                                <th className="p-3.5">Stock</th>
+                                                                <th className="p-3.5 text-center">Acciones</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-slate-150">
+                                                            {initialVariants.map((v, idx) => (
+                                                                <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                                                                    <td className="p-3">
+                                                                        <div className="font-extrabold text-slate-900 text-xs mb-0.5">{v.nombre}</div>
+                                                                        {v.atributos && (
+                                                                            <div className="text-[10px] text-slate-400 font-medium">
+                                                                                {Object.entries(v.atributos).map(([k, val]) => `${k}: ${val}`).join(' | ')}
+                                                                            </div>
+                                                                        )}
+                                                                    </td>
+                                                                    <td className="p-3">
+                                                                        <input
+                                                                            type="text"
+                                                                            value={v.sku}
+                                                                            onChange={e => {
+                                                                                const val = e.target.value;
+                                                                                setInitialVariants(prev => prev.map((item, i) => i === idx ? { ...item, sku: val } : item));
+                                                                            }}
+                                                                            placeholder="SKU"
+                                                                            className="w-full max-w-[150px] px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono font-bold text-slate-800 outline-none focus:border-teal-500 focus:bg-white"
+                                                                        />
+                                                                    </td>
+                                                                    <td className="p-3">
+                                                                        <input
+                                                                            type="number"
+                                                                            step="0.01"
+                                                                            value={v.precio}
+                                                                            onChange={e => {
+                                                                                const val = e.target.value;
+                                                                                setInitialVariants(prev => prev.map((item, i) => i === idx ? { ...item, precio: val } : item));
+                                                                            }}
+                                                                            className="w-24 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-extrabold text-slate-900 outline-none focus:border-teal-500 focus:bg-white"
+                                                                        />
+                                                                    </td>
+                                                                    <td className="p-3">
+                                                                        <input
+                                                                            type="number"
+                                                                            value={v.stock}
+                                                                            onChange={e => {
+                                                                                const val = e.target.value;
+                                                                                setInitialVariants(prev => prev.map((item, i) => i === idx ? { ...item, stock: val } : item));
+                                                                            }}
+                                                                            className="w-20 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-extrabold text-slate-900 outline-none focus:border-teal-500 focus:bg-white"
+                                                                        />
+                                                                    </td>
+                                                                    <td className="p-3 text-center">
+                                                                        <div className="flex items-center justify-center gap-1">
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    const copy = { ...v, nombre: `${v.nombre} (Copia)`, sku: v.sku ? `${v.sku}-COPY` : '' };
+                                                                                    setInitialVariants(prev => [...prev.slice(0, idx + 1), copy, ...prev.slice(idx + 1)]);
+                                                                                }}
+                                                                                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                                                                                title="Duplicar"
+                                                                            >
+                                                                                <Copy className="size-3.5" />
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => setInitialVariants(prev => prev.filter((_, i) => i !== idx))}
+                                                                                className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
+                                                                                title="Eliminar"
+                                                                            >
+                                                                                <Trash2 className="size-3.5" />
+                                                                            </button>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -1079,14 +1205,14 @@ export default function AdminProductos() {
                         <div className="px-6 py-4.5 border-b border-slate-150 flex items-center justify-between bg-slate-900 text-white shrink-0">
                             <div className="flex items-center gap-3.5">
                                 <div className="size-11 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-black text-sm border border-cyan-500/30 shrink-0">
-                                    <Layers className="size-5" />
+                                    <Sparkles className="size-5" />
                                 </div>
                                 <div>
                                     <h3 className="text-base sm:text-lg font-black uppercase tracking-wide flex items-center gap-2 text-white">
-                                        <span>GESTOR & GENERADOR DE VARIANTES</span>
+                                        <span>CREAR & GENERAR VARIANTES</span>
                                     </h3>
                                     <p className="text-xs text-slate-300 font-medium">
-                                        {nombre ? `Producto: ${nombre}` : 'Administra opciones, combinaciones y matriz del producto'}
+                                        {nombre ? `Producto: ${nombre}` : 'Configura dimensiones (Color, Talla, Memoria) para generar la matriz'}
                                     </p>
                                 </div>
                             </div>
