@@ -251,7 +251,7 @@ export default function ProductVariantModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-white overflow-hidden h-full w-full animate-in slide-in-from-bottom duration-300 text-left">
+    <div className="fixed inset-0 z-[99999] flex flex-col bg-white overflow-hidden h-full w-full animate-in slide-in-from-bottom duration-300 text-left">
       
       {/* ── 1. HEADER SUPERIOR FULL SCREEN CON BOTÓN VOLVER ── */}
       <div className="px-4 sm:px-6 py-3 border-b border-slate-100 flex items-center justify-between bg-white/95 backdrop-blur-md sticky top-0 z-30 shrink-0 shadow-2xs">
@@ -282,7 +282,7 @@ export default function ProductVariantModal({
       </div>
 
       {/* ── 2. CUERPO DE CONTENIDO SCROLLABLE ── */}
-      <div className="flex-1 overflow-y-auto pb-32 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto pb-28 custom-scrollbar">
         <div className="max-w-4xl mx-auto">
           
           {/* Hero Image Container (Full Width Sin Márgenes) */}
@@ -499,8 +499,8 @@ export default function ProductVariantModal({
         </div>
       </div>
 
-      {/* ── 3. BOTÓN STICKY INFERIOR PRINCIPAL (SIN NINGUNA BARRA DE NAVEGACIÓN DEBAJO) ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-150 p-4 shadow-2xl">
+      {/* ── 3. BOTÓN FLOTANTE ABAJO (Z-100000 GARANTIZADO EN BASE DE LA PANTALLA) ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-[100000] bg-white/95 backdrop-blur-md border-t border-slate-200/80 p-4 shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.1)]">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
           <button
             type="button"

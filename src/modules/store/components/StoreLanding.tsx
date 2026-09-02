@@ -682,9 +682,9 @@ function StoreLandingContent({
       </>
       )}
 
-      {/* ── 7. BARRA NAVEGACIÓN INFERIOR FLOTANTE (SE OCULTA CUANDO EL MODAL DE PRODUCTO ESTÁ ABIERTO) ── */}
-      {!selectedProductForModal && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-150 py-2 px-3 flex items-center justify-around shadow-2xl animate-in fade-in duration-200">
+      {/* ── 7. BARRA NAVEGACIÓN INFERIOR FLOTANTE (SE OCULTA TOTALMENTE AL ABRIR UN PRODUCTO O CARRITO) ── */}
+      {!selectedProductForModal && !isCartOpen && (
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-150 py-2 px-3 flex items-center justify-around shadow-2xl animate-in fade-in duration-200">
           <button
             type="button"
             onClick={() => setActiveTab('inicio')}
