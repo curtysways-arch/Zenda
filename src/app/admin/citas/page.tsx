@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -189,6 +189,31 @@ function CitasAdminPageContent() {
         return matchesSearch && matchesFilter;
     });
 
+    const isToday = (fechaStr: string) => {
+        if (!fechaStr) return false;
+        try {
+            const d = new Date(fechaStr);
+            const now = new Date();
+            return d.getFullYear() === now.getFullYear() &&
+                   d.getMonth() === now.getMonth() &&
+                   d.getDate() === now.getDate();
+        } catch (_) {
+            return false;
+        }
+    };
+
+    const citasHoy = useMemo(() => {
+        return citas.filter(r => isToday(r.fecha) && r.estado !== 'cancelled' && r.estado !== 'expired');
+    }, [citas]);
+
+    const ingresosHoy = useMemo(() => {
+        return citasHoy.reduce((acc, r) => acc + (r.total || 0), 0);
+    }, [citasHoy]);
+
+    const totalAgenda = useMemo(() => {
+        return filteredCitas.filter(r => r.estado !== 'cancelled' && r.estado !== 'expired').reduce((acc, r) => acc + (r.total || 0), 0);
+    }, [filteredCitas]);
+
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
     const handleConfirm = async (id: string) => {
@@ -358,8 +383,8 @@ function CitasAdminPageContent() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-                    <StatCard label="Ingresos Hoy" value={`$${filteredCitas.reduce((acc, r) => acc + (r.total || 0), 0)}`} icon={TrendingUp} color="emerald" trend="Venta bruta" />
-                    <StatCard label="Pagado" value={`$${filteredCitas.reduce((acc, r) => acc + (r.pagos?.reduce((pAcc: number, p: any) => pAcc + (p.monto || 0), 0) || 0), 0)}`} icon={Zap} color="blue" trend="Recaudado" />
+                    <StatCard label="Ingresos Hoy" value={`$${ingresosHoy}`} icon={TrendingUp} color="emerald" trend={citasHoy.length > 0 ? `${citasHoy.length} citas hoy` : "Sin citas hoy"} />
+                    <StatCard label="Total en Agenda" value={`$${totalAgenda}`} icon={Zap} color="blue" trend="Venta bruta lista" />
                     <StatCard label="Aprobadas" value={filteredCitas.filter(r => r.estado === 'confirmed' || r.estado === 'approved').length} icon={Check} color="emerald" trend="Agendadas" />
                     <StatCard label="Pendientes" value={filteredCitas.filter(r => r.estado === 'pending').length} icon={Clock} color="amber" trend="Por confirmar" />
                 </div>
