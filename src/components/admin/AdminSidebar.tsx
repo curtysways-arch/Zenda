@@ -11,7 +11,7 @@ import {
   LayoutDashboard, CalendarDays, Dribbble, Sparkles, Settings, Users, LogOut,
   MessageSquare, Building2, BarChart3, Trophy, Tags, Lock, Layout, Package,
   GraduationCap, Contact, Scissors, Store, ShieldCheck, Bell, Briefcase, Utensils,
-  Truck, Wallet, CreditCard, ClipboardList, Bike, LucideIcon
+  Truck, Wallet, CreditCard, ClipboardList, Bike, LucideIcon, X
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -54,6 +54,23 @@ export default function AdminSidebar({
   const role = userObj?.isDelegated ? 'SUPERADMIN' : (userObj?.role || 'STAFF');
 
   const [isOpen, setIsOpen] = useState(false);
+
+  // Escuchar evento móvil para abrir/cerrar sidebar
+  useEffect(() => {
+    const handleToggle = () => setIsOpen(prev => !prev);
+    const handleClose = () => setIsOpen(false);
+    window.addEventListener('toggle-admin-sidebar', handleToggle);
+    window.addEventListener('close-admin-sidebar', handleClose);
+    return () => {
+      window.removeEventListener('toggle-admin-sidebar', handleToggle);
+      window.removeEventListener('close-admin-sidebar', handleClose);
+    };
+  }, []);
+
+  // Cerrar sidebar al cambiar de ruta
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
   const [pendingOrders, setPendingOrders] = useState(0);
   const [capabilities, setCapabilities] = useState<Record<string, boolean>>({
     promotions: true
@@ -284,38 +301,19 @@ export default function AdminSidebar({
 
   return (
     <>
-      {/* Botón flotante móvil para abrir el menú */}
-      <div className="md:hidden fixed top-3 left-3 z-50">
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="p-2.5 rounded-xl bg-slate-900 text-white shadow-lg focus:outline-none flex items-center justify-center border border-slate-800"
-          aria-label="Abrir Menú"
-        >
-          {isOpen ? (
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          ) : (
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          )}
-        </button>
-      </div>
-
       {/* Backdrop en móvil */}
       {isOpen && (
         <div 
           onClick={() => setIsOpen(false)} 
-          className="md:hidden fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40"
+          className="md:hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[190]"
         />
       )}
 
       {/* Sidebar Principal (Tema Blanco Original) */}
       <aside 
         className={cn(
-          "fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-slate-200/80 z-40 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0",
-          isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+          "fixed top-0 left-0 bottom-0 w-72 md:w-64 bg-white border-r border-slate-200/80 z-[200] md:z-40 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 shadow-2xl md:shadow-none",
+          isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Cabecera del Panel */}
@@ -336,6 +334,14 @@ export default function AdminSidebar({
               </p>
             </div>
           </div>
+          <button 
+            type="button"
+            onClick={() => setIsOpen(false)}
+            className="md:hidden size-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 cursor-pointer shrink-0 ml-2"
+            aria-label="Cerrar Menú"
+          >
+            <X size={18} />
+          </button>
         </div>
 
         {/* Links de Navegación por Secciones */}

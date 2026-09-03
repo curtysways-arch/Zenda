@@ -1,6 +1,6 @@
 'use client';
 
-import { Sparkles, Bell, User, LogOut, QrCode, Share2, Copy, Check, ExternalLink, X, CalendarDays, MessageSquare } from 'lucide-react';
+import { Sparkles, Bell, User, LogOut, QrCode, Share2, Copy, Check, ExternalLink, X, CalendarDays, MessageSquare, Menu } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { useConfirm } from '@/components/admin/ConfirmContext';
@@ -122,9 +122,11 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN', negocioNom
                                 window.dispatchEvent(new CustomEvent('toggle-admin-sidebar'));
                             }
                         }}
-                        className="size-10 flex items-center justify-center bg-pink-50 hover:bg-pink-100 rounded-2xl transition-all active:scale-95 border border-pink-100/30 shrink-0"
+                        className="size-10 flex items-center justify-center bg-slate-900 text-white hover:bg-slate-800 rounded-2xl transition-all active:scale-95 shadow-md shadow-slate-900/10 shrink-0 cursor-pointer"
+                        title="Abrir Menú de Opciones"
+                        aria-label="Abrir Menú de Opciones"
                     >
-                        <CalendarDays size={18} className="text-pink-500" />
+                        <Menu size={20} strokeWidth={2.5} />
                     </button>
                     <div className="min-w-0">
                         <h2 className="font-bold text-slate-800 text-xs tracking-widest leading-none uppercase truncate max-w-[110px]">{title}</h2>

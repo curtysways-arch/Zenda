@@ -11,7 +11,8 @@ import {
     Package,
     ShoppingBag,
     Utensils,
-    Dribbble
+    Dribbble,
+    Menu
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
@@ -95,29 +96,29 @@ export default function MobileBottomNav({ primaryColor }: BottomNavProps) {
     );
 
     // Definición de ítems según vertical
-    let navItems = [
+    let navItems: any[] = [
         { name: 'Inicio', href: '/admin', icon: LayoutDashboard },
         { name: 'Agenda', href: '/admin/citas', icon: CalendarDays },
         { name: 'Clientes', href: '/admin/clientes', icon: Users },
         { name: 'Resultados', href: '/admin/resultados', icon: Sparkles },
-        { name: 'Negocio', href: '/admin/config', icon: Settings },
+        { name: 'Más', isAction: true, icon: Menu },
     ];
 
     if (isStore) {
         navItems = [
             { name: 'Inicio', href: '/admin', icon: LayoutDashboard },
-            { name: 'Pedidos', href: '/admin/pedidos', icon: Package },
             { name: 'Ventas POS', href: '/admin/ventas', icon: ShoppingBag },
+            { name: 'Pedidos', href: '/admin/pedidos', icon: Package },
             { name: 'Productos', href: '/admin/productos', icon: Sparkles },
-            { name: 'Negocio', href: '/admin/config', icon: Settings },
+            { name: 'Más', isAction: true, icon: Menu },
         ];
     } else if (isRestaurant || isPinchos) {
         navItems = [
             { name: 'Inicio', href: '/admin', icon: LayoutDashboard },
-            { name: 'Pedidos', href: '/admin/pedidos', icon: Package },
             { name: 'Ventas POS', href: '/admin/ventas', icon: ShoppingBag },
             { name: 'Mesas', href: '/admin/mesas', icon: Utensils },
-            { name: 'Negocio', href: '/admin/config', icon: Settings },
+            { name: 'Pedidos', href: '/admin/pedidos', icon: Package },
+            { name: 'Más', isAction: true, icon: Menu },
         ];
     } else if (isCanchas) {
         navItems = [
@@ -125,7 +126,7 @@ export default function MobileBottomNav({ primaryColor }: BottomNavProps) {
             { name: 'Canchas', href: '/admin/canchas', icon: Dribbble },
             { name: 'Reservas', href: '/admin/reservas', icon: CalendarDays },
             { name: 'Clientes', href: '/admin/clientes', icon: Users },
-            { name: 'Negocio', href: '/admin/config', icon: Settings },
+            { name: 'Más', isAction: true, icon: Menu },
         ];
     }
 
@@ -152,6 +153,30 @@ export default function MobileBottomNav({ primaryColor }: BottomNavProps) {
         <div className="fixed bottom-0 left-0 right-0 z-[100] bg-white/80 backdrop-blur-2xl border-t border-slate-100 pb-safe-area-inset-bottom">
             <nav className="flex items-center justify-around h-20 px-2 max-w-lg mx-auto">
                 {navItems.map((item) => {
+                    if (item.isAction) {
+                        return (
+                            <button
+                                key={item.name}
+                                type="button"
+                                onClick={() => {
+                                    if (typeof window !== 'undefined') {
+                                        window.dispatchEvent(new CustomEvent('toggle-admin-sidebar'));
+                                    }
+                                }}
+                                className="relative flex flex-col items-center justify-center w-full h-full gap-1 transition-all duration-300 active:scale-90 text-slate-500 hover:text-slate-900 cursor-pointer"
+                                title="Abrir todas las opciones"
+                                aria-label="Abrir todas las opciones"
+                            >
+                                <div className="p-1.5 rounded-xl transition-all duration-300 hover:bg-slate-100">
+                                    <item.icon size={22} strokeWidth={2} />
+                                </div>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-center truncate max-w-[64px] opacity-70">
+                                    {item.name}
+                                </span>
+                            </button>
+                        );
+                    }
+
                     const isActive = pathname === item.href;
                     return (
                         <Link 

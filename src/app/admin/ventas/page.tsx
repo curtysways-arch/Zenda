@@ -44,6 +44,7 @@ function VentasContent() {
   const [mesaCode, setMesaCode] = useState('POS-Virtual');
   const [kitchenNotes, setKitchenNotes] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [mobileTab, setMobileTab] = useState<'catalog' | 'order'>('catalog');
   const [pagarInmediato, setPagarInmediato] = useState(false);
   const [montoRecibido, setMontoRecibido] = useState<string>('');
 
@@ -449,6 +450,7 @@ function VentasContent() {
         if (res.ok) {
           showToast(pagarInmediato ? `¡Venta POS Cobrada! (Cambio: $${numVuelto.toFixed(2)})` : '¡Orden POS enviada a cocina! Pendiente de cobro en Caja.');
           clearCart();
+          setMobileTab('catalog');
         } else {
           const errData = await res.json();
           showToast(errData.error || 'Error al enviar orden', 'error');
@@ -463,7 +465,7 @@ function VentasContent() {
   };
 
   return (
-    <div className="-m-5 md:-m-8 -mb-40 md:-mb-10 bg-[#faf8f5] text-slate-900 flex flex-col font-sans p-2.5 sm:p-3 h-[calc(100vh-42px)] overflow-hidden">
+    <div className="-m-5 md:-m-8 pb-20 md:pb-0 bg-[#faf8f5] text-slate-900 flex flex-col font-sans p-2 sm:p-3 h-[calc(100dvh-135px)] md:h-[calc(100vh-42px)] overflow-hidden">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         * { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -471,11 +473,44 @@ function VentasContent() {
         .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
+      {/* ─── PESTAÑAS MÓVIL (CATÁLOGO vs COMANDA) ─── */}
+      <div className="lg:hidden flex items-center bg-slate-200/80 p-1 rounded-2xl gap-1 shrink-0 mb-2 shadow-inner">
+        <button
+          type="button"
+          onClick={() => setMobileTab('catalog')}
+          className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            mobileTab === 'catalog'
+              ? 'bg-white text-slate-900 shadow-md'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Utensils className="w-3.5 h-3.5 text-[#ea580c]" /> Catálogo Menú
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab('order')}
+          className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer relative ${
+            mobileTab === 'order'
+              ? 'bg-white text-slate-900 shadow-md'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <ShoppingBag className="w-3.5 h-3.5 text-[#ea580c]" /> Comanda
+          {totalItemsCount > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-[#ea580c] text-white shadow-sm ml-1">
+              {totalItemsCount}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* ─── MAIN POS CONTENT GRID ─── */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-3 items-stretch h-full overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row gap-3 items-stretch h-full overflow-hidden relative">
 
         {/* ─── CATÁLOGO DE PRODUCTOS ─── */}
-        <div className="flex-1 w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-3 flex flex-col justify-between h-full overflow-hidden">
+        <div className={`flex-1 w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-3 flex flex-col justify-between h-full overflow-hidden ${
+          mobileTab !== 'catalog' ? 'hidden lg:flex' : 'flex'
+        }`}>
           
           {/* Header & Categories */}
           <div className="shrink-0 space-y-2.5 border-b border-slate-100 pb-2.5">
@@ -619,17 +654,34 @@ function VentasContent() {
         </div>
 
         {/* ─── VENTA POS ACTUAL & CHECKOUT ─── */}
-        <div className="w-full lg:w-[360px] xl:w-[410px] bg-white rounded-2xl border border-slate-200 shadow-sm p-3 flex flex-col justify-between h-full overflow-hidden shrink-0">
+        <div className={`w-full lg:w-[360px] xl:w-[410px] bg-white rounded-2xl border border-slate-200 shadow-sm p-3 flex flex-col justify-between h-full overflow-hidden shrink-0 ${
+          mobileTab !== 'order' ? 'hidden lg:flex' : 'flex'
+        }`}>
           
           {/* Header Venta POS (Shrink-0) */}
-          <div className="shrink-0 pb-1.5 border-b border-slate-100 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <ShoppingBag className="w-3.5 h-3.5 text-[#ea580c]" />
-              <h2 className="font-extrabold text-xs text-slate-900 uppercase tracking-wider">Orden POS Activa</h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ea580c]/10 text-[#ea580c]">
-                {totalItemsCount}
+          <div className="shrink-0 pb-1.5 border-b border-slate-100 flex flex-col gap-1.5">
+            {/* Botón Volver a Catálogo en móvil */}
+            <div className="lg:hidden flex items-center justify-between pb-1 border-b border-slate-100">
+              <button
+                type="button"
+                onClick={() => setMobileTab('catalog')}
+                className="text-[11px] font-black text-[#ea580c] hover:underline flex items-center gap-1 cursor-pointer py-0.5"
+              >
+                <span>←</span> Volver a elegir productos
+              </button>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                {totalItemsCount} productos
               </span>
             </div>
+
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <ShoppingBag className="w-3.5 h-3.5 text-[#ea580c]" />
+                <h2 className="font-extrabold text-xs text-slate-900 uppercase tracking-wider">Orden POS Activa</h2>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#ea580c]/10 text-[#ea580c]">
+                  {totalItemsCount}
+                </span>
+              </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -649,6 +701,7 @@ function VentasContent() {
               </button>
             </div>
           </div>
+        </div>
 
           {/* Cuerpo Desplazable (Formulario + Productos en Carrito) */}
           <div className="flex-1 overflow-y-auto space-y-2 py-2 pr-1 custom-scrollbar">
@@ -1036,6 +1089,28 @@ function VentasContent() {
           </div>
         </div>
       </div>
+
+      {/* ─── BOTÓN FLOTANTE MÓVIL: VER COMANDA / COBRAR ─── */}
+      {mobileTab === 'catalog' && totalItemsCount > 0 && (
+        <div className="lg:hidden fixed bottom-24 left-3 right-3 z-30 animate-in slide-in-from-bottom-3 duration-200">
+          <button
+            type="button"
+            onClick={() => setMobileTab('order')}
+            className="w-full py-3 px-4 bg-gradient-to-r from-[#ea580c] to-[#c2410c] text-white rounded-2xl shadow-xl shadow-[#ea580c]/40 flex items-center justify-between font-black text-xs active:scale-95 transition-all cursor-pointer border border-white/20"
+          >
+            <div className="flex items-center gap-2">
+              <span className="size-6 rounded-lg bg-white/20 flex items-center justify-center text-[10px] font-black">
+                {totalItemsCount}
+              </span>
+              <span className="uppercase tracking-wider">Ver Comanda Activa</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-black">${grandTotal.toFixed(2)}</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* Map Selection Modal */}
       <MapSelectionModal
