@@ -129,7 +129,7 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN', negocioNom
                     <div className="min-w-0">
                         <h2 className="font-bold text-slate-800 text-xs tracking-widest leading-none uppercase truncate max-w-[110px]">{title}</h2>
                         <span className="text-[9px] font-black uppercase tracking-wider leading-none text-slate-400 mt-1 block truncate max-w-[110px]">
-                            {negocioNombre || "Spa Premium"}
+                            {negocioNombre || "CITIOX"}
                         </span>
                     </div>
                 </div>

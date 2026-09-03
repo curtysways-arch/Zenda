@@ -8,8 +8,10 @@ import {
     Users, 
     Sparkles, 
     Settings,
-    PlusCircle,
-    Package
+    Package,
+    ShoppingBag,
+    Utensils,
+    Dribbble
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
@@ -22,16 +24,78 @@ interface BottomNavProps {
 export default function MobileBottomNav({ primaryColor }: BottomNavProps) {
     const pathname = usePathname();
     const { data: session } = useSession();
-    const tipoNegocio = (session?.user as any)?.tipoNegocio || 'RESERVA';
-    const [pendingCitas, setPendingCitas] = useState(0);
+    const userObj = session?.user as any;
 
-    const navItems = tipoNegocio === 'PRODUCTOS' ? [
-        { name: 'Inicio', href: '/admin', icon: LayoutDashboard },
-        { name: 'Pedidos', href: '/admin/pedidos', icon: Package },
-        { name: 'Productos', href: '/admin/productos', icon: Sparkles },
-        { name: 'Clientes', href: '/admin/clientes', icon: Users },
-        { name: 'Negocio', href: '/admin/config', icon: Settings },
-    ] : [
+    const [bizData, setBizData] = useState<any>(null);
+    const [pendingCount, setPendingCount] = useState(0);
+
+    // Cargar información real del negocio actual (soporta acceso delegado)
+    useEffect(() => {
+        const fetchBiz = async () => {
+            try {
+                const res = await fetch('/api/negocio');
+                if (res.ok) {
+                    const data = await res.json();
+                    setBizData(data);
+                }
+            } catch (_) {}
+        };
+        fetchBiz();
+    }, [pathname]);
+
+    // Detección de vertical según tipoNegocio, slug, nombre y blueprintId
+    const tipoUpper = (bizData?.tipoNegocio || userObj?.tipoNegocio || '').toUpperCase();
+    const slugUpper = (bizData?.slug || '').toUpperCase();
+    const nameUpper = (bizData?.nombre || '').toUpperCase();
+    let cfg: any = {};
+    if (typeof bizData?.configuracion === 'string') {
+        try { cfg = JSON.parse(bizData.configuracion); } catch { cfg = {}; }
+    } else {
+        cfg = bizData?.configuracion || {};
+    }
+    const blueprintId = (cfg.blueprintId || '').toUpperCase();
+
+    const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT' ||
+        nameUpper.includes('PARRILLA') || nameUpper.includes('RESTAURANTE') || nameUpper.includes('GASTRONOMIA') || nameUpper.includes('BURGER') || nameUpper.includes('PIZZA') || nameUpper.includes('TACO');
+    const isPinchos = tipoUpper === 'PINCHOS' || slugUpper === 'PINCHOS';
+    const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || 
+        slugUpper.includes('CANCHA') || slugUpper.includes('CAMPEONES') || 
+        nameUpper.includes('CANCHA') || nameUpper.includes('COMPLEJO') || 
+        nameUpper.includes('CAMPEONES') || nameUpper.includes('PADEL') || nameUpper.includes('SINTETICA');
+    const isServiceBiz = !isRestaurant && !isPinchos && !isCanchas && (
+        tipoUpper === 'SPA' ||
+        tipoUpper === 'CENTRO_ESTETICA' ||
+        tipoUpper === 'PELUQUERIA' ||
+        tipoUpper === 'BARBERIA' ||
+        tipoUpper === 'SHOE_CARE' ||
+        tipoUpper === 'LAVANDERIA' ||
+        tipoUpper === 'ORDENES-SERVICIO' ||
+        tipoUpper === 'BEAUTY_SPA' ||
+        tipoUpper === 'RESERVA' ||
+        slugUpper.includes('SPA') ||
+        slugUpper.includes('BARBER') ||
+        slugUpper.includes('NAILS') ||
+        slugUpper.includes('DENTAL') ||
+        slugUpper.includes('CITAS') ||
+        nameUpper.includes('SPA') ||
+        nameUpper.includes('ESTETICA') ||
+        nameUpper.includes('PELUQUERIA') ||
+        nameUpper.includes('BARBERIA')
+    );
+
+    const isStore = (
+        tipoUpper === 'PRODUCTOS' ||
+        tipoUpper === 'TIENDA' ||
+        tipoUpper === 'STORE' ||
+        tipoUpper === 'E_COMMERCE' ||
+        tipoUpper === 'TIENDA_ONLINE' ||
+        tipoUpper === 'PRODUCTO' ||
+        blueprintId === 'STORE' ||
+        (!isRestaurant && !isPinchos && !isCanchas && !isServiceBiz)
+    );
+
+    // Definición de ítems según vertical
+    let navItems = [
         { name: 'Inicio', href: '/admin', icon: LayoutDashboard },
         { name: 'Agenda', href: '/admin/citas', icon: CalendarDays },
         { name: 'Clientes', href: '/admin/clientes', icon: Users },
@@ -39,23 +103,50 @@ export default function MobileBottomNav({ primaryColor }: BottomNavProps) {
         { name: 'Negocio', href: '/admin/config', icon: Settings },
     ];
 
+    if (isStore) {
+        navItems = [
+            { name: 'Inicio', href: '/admin', icon: LayoutDashboard },
+            { name: 'Pedidos', href: '/admin/pedidos', icon: Package },
+            { name: 'Ventas POS', href: '/admin/ventas', icon: ShoppingBag },
+            { name: 'Productos', href: '/admin/productos', icon: Sparkles },
+            { name: 'Negocio', href: '/admin/config', icon: Settings },
+        ];
+    } else if (isRestaurant || isPinchos) {
+        navItems = [
+            { name: 'Inicio', href: '/admin', icon: LayoutDashboard },
+            { name: 'Pedidos', href: '/admin/pedidos', icon: Package },
+            { name: 'Ventas POS', href: '/admin/ventas', icon: ShoppingBag },
+            { name: 'Mesas', href: '/admin/mesas', icon: Utensils },
+            { name: 'Negocio', href: '/admin/config', icon: Settings },
+        ];
+    } else if (isCanchas) {
+        navItems = [
+            { name: 'Inicio', href: '/admin', icon: LayoutDashboard },
+            { name: 'Canchas', href: '/admin/canchas', icon: Dribbble },
+            { name: 'Reservas', href: '/admin/reservas', icon: CalendarDays },
+            { name: 'Clientes', href: '/admin/clientes', icon: Users },
+            { name: 'Negocio', href: '/admin/config', icon: Settings },
+        ];
+    }
+
+    // Notificaciones de ítems pendientes
     useEffect(() => {
         const fetchPending = async () => {
             try {
-                const url = tipoNegocio === 'PRODUCTOS' 
+                const url = (isStore || isRestaurant || isPinchos) 
                     ? '/api/admin/pedidos/pending-count' 
                     : '/api/appointments/pending-count';
                 const res = await fetch(url);
                 if (res.ok) {
                     const data = await res.json();
-                    setPendingCitas(data.count || 0);
+                    setPendingCount(data.count || 0);
                 }
-            } catch (e) {}
+            } catch (_) {}
         };
         fetchPending();
         const interval = setInterval(fetchPending, 30000);
         return () => clearInterval(interval);
-    }, [tipoNegocio]);
+    }, [isStore, isRestaurant, isPinchos]);
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-[100] bg-white/80 backdrop-blur-2xl border-t border-slate-100 pb-safe-area-inset-bottom">
@@ -82,21 +173,15 @@ export default function MobileBottomNav({ primaryColor }: BottomNavProps) {
                                 />
                             </div>
                             <span className={cn(
-                                "text-[9px] font-black uppercase tracking-widest",
+                                "text-[9px] font-black uppercase tracking-widest text-center truncate max-w-[64px]",
                                 isActive ? "opacity-100" : "opacity-60"
                             )}>
                                 {item.name}
                             </span>
                             
-                            {item.name === 'Agenda' && pendingCitas > 0 && (
+                            {(item.name === 'Agenda' || item.name === 'Pedidos' || item.name === 'Reservas') && pendingCount > 0 && (
                                 <span className="absolute top-3 right-1/4 size-4 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-white animate-pulse">
-                                    {pendingCitas}
-                                </span>
-                            )}
-
-                            {item.name === 'Pedidos' && pendingCitas > 0 && (
-                                <span className="absolute top-3 right-1/4 size-4 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-white animate-pulse">
-                                    {pendingCitas}
+                                    {pendingCount}
                                 </span>
                             )}
 
