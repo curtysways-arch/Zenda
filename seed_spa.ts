@@ -34,7 +34,8 @@ async function seedSpaData() {
                 tieneCafeteria: true,
                 tieneWifi: true,
                 precioHora: 50,
-                isDemo: true
+                isDemo: true,
+                updatedAt: new Date()
             }
         });
 
