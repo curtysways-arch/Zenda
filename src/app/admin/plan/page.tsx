@@ -1,11 +1,10 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getEffectiveAdminSession } from "@/lib/delegatedAuth";
 import { subscriptionService } from "@/lib/services/subscriptionService";
 import prisma from "@/lib/prisma";
 import PlanDashboardClient from "./PlanDashboardClient";
 
 export default async function AdminPlanPage() {
-    const session = await getServerSession(authOptions);
+    const session = await getEffectiveAdminSession();
     const negocioId = (session?.user as any)?.negocioId;
 
     if (!negocioId) return <div className="p-8 font-black uppercase text-center text-slate-500">No autorizado</div>;

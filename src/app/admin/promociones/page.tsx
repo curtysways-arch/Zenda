@@ -1,5 +1,4 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import { redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import PromotionDashboard from '@/components/admin/promotions/PromotionDashboard';
@@ -9,7 +8,7 @@ import { getPromotions } from '@/app/actions/promotionActions';
 export const dynamic = 'force-dynamic';
 
 export default async function PromocionesPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getEffectiveAdminSession();
 
   if (!session?.user) {
     redirect('/login');

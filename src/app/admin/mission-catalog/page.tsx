@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import prisma from '@/lib/prisma';
 import { BusinessMissionService } from '@/lib/growth/businessMissionService';
 import BusinessMissionCatalog from '@/components/admin/BusinessMissionCatalog';
@@ -8,7 +7,7 @@ import BusinessMissionCatalog from '@/components/admin/BusinessMissionCatalog';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminMissionCatalogPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getEffectiveAdminSession();
   const user = session?.user as any;
   if (!user?.negocioId) {
     redirect('/login');
