@@ -13,7 +13,8 @@ export async function POST(req: Request) {
             password,       // Contraseña
             negocioNombre,  // Nombre del negocio
             ciudad,         // Ciudad
-            telefono        // Teléfono (opcional)
+            telefono,       // Teléfono (opcional)
+            tipoNegocio     // Tipo / Blueprint del negocio (opcional)
         } = body;
 
         // Validaciones básicas
@@ -52,6 +53,13 @@ export async function POST(req: Request) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        const normalizedTipo = (tipoNegocio || 'GENERAL').toUpperCase();
+        const primaryColor = 
+            normalizedTipo === 'RESTAURANTE' ? '#ea580c' :
+            normalizedTipo === 'TIENDA' ? '#4f46e5' :
+            normalizedTipo === 'SPORTS_COURTS' ? '#10b981' :
+            normalizedTipo === 'SHOE_CARE' ? '#9333ea' : '#1dc95c';
+
         // Crear Negocio y Usuario Admin en una transacción
         const result = await prisma.$transaction(async (tx) => {
             // 1. Crear el Negocio
@@ -61,12 +69,17 @@ export async function POST(req: Request) {
                     nombre: negocioNombre,
                     slug: slug,
                     ciudad: ciudad,
+                    tipoNegocio: normalizedTipo,
+                    configuracion: JSON.stringify({
+                        blueprintId: normalizedTipo,
+                        tipoNegocio: normalizedTipo
+                    }),
                     whatsapp: telefono || null,
                     horarioApertura: "08:00",
                     horarioCierre: "22:00",
                     precioHora: 0,
                     estado: 'ACTIVO',
-                    colorPrimario: '#1dc95c',
+                    colorPrimario: primaryColor,
                     colorSecundario: '#112117',
                     updatedAt: new Date()
                 }

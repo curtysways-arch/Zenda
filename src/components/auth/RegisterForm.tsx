@@ -34,6 +34,20 @@ export default function RegisterForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const selectedPlanId = searchParams.get("plan");
+    const rawTipo = searchParams.get("tipo") || searchParams.get("businessType");
+    const tipoParam = rawTipo ? rawTipo.toUpperCase() : null;
+
+    const tipoLabels: Record<string, { label: string; icon: string }> = {
+        RESTAURANTE: { label: "Restaurante & Gastronomía", icon: "🍔" },
+        TIENDA: { label: "Tienda & Comercio", icon: "🛍️" },
+        SHOE_CARE: { label: "Lavandería & Cuidado de Calzado", icon: "🧺" },
+        LAVANDERIA: { label: "Lavandería & Cuidado de Calzado", icon: "🧺" },
+        SPORTS_COURTS: { label: "Canchas & Clubes Deportivos", icon: "⚽" },
+        CANCHAS: { label: "Canchas & Clubes Deportivos", icon: "⚽" },
+        SPA: { label: "Citas & Servicios Profesionales", icon: "💇" },
+        SERVICIOS: { label: "Citas & Servicios Profesionales", icon: "💇" },
+    };
+    const currentTipoInfo = tipoParam ? tipoLabels[tipoParam] || { label: tipoParam, icon: "✨" } : null;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({
@@ -53,7 +67,8 @@ export default function RegisterForm() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     ...formData,
-                    planId: selectedPlanId
+                    planId: selectedPlanId,
+                    tipoNegocio: tipoParam || undefined
                 })
             });
 
@@ -106,15 +121,23 @@ export default function RegisterForm() {
     return (
         <div className="w-full max-w-xl mx-auto">
             <div className="bg-white p-10 md:p-12 rounded-[2.5rem] shadow-2xl shadow-cyan-900/5 border border-gray-100">
-                <div className="flex flex-col items-center mb-10">
-                    <div className="w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-md p-1 flex items-center justify-center shadow-cyan-100 mb-6">
+                <div className="flex flex-col items-center mb-8">
+                    <div className="w-16 h-16 bg-white rounded-2xl border border-slate-100 shadow-md p-1 flex items-center justify-center shadow-cyan-100 mb-5">
                         <img src="/logo-citiox.png" alt="CitiOx" className="w-full h-full object-contain" />
                     </div>
+
+                    {currentTipoInfo && (
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-indigo-50 border border-indigo-200/80 rounded-full text-indigo-700 font-extrabold text-xs uppercase tracking-wider mb-3 shadow-2xs animate-in fade-in">
+                            <span>{currentTipoInfo.icon}</span>
+                            <span>Solución: {currentTipoInfo.label}</span>
+                        </div>
+                    )}
+
                     <h2 className="text-3xl font-black text-gray-900 tracking-tight text-center">
-                        Crea tu cuenta gratis
+                        {currentTipoInfo ? `Crea tu ${currentTipoInfo.label.split('&')[0].trim()}` : 'Crea tu negocio en línea'}
                     </h2>
-                    <p className="mt-2 text-sm text-gray-400 font-medium">
-                        Comienza tu prueba de 15 días hoy mismo
+                    <p className="mt-2 text-sm text-gray-400 font-medium text-center">
+                        Comienza tu app y presencia digital en pocos minutos
                     </p>
                 </div>
 
