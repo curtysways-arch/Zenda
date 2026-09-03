@@ -18,6 +18,7 @@ async function seedSpaData() {
                 precioHora: 50
             },
             create: {
+                id: 'demo-spa-id-001',
                 nombre: 'Aura Wellness Spa',
                 slug: 'demo-spa',
                 tipoNegocio: 'SPA',
