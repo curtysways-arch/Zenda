@@ -2,27 +2,34 @@ import prisma from './src/lib/prisma';
 
 async function seedSpaData() {
     try {
-        console.log("Fetching demo-spa business...");
-        const negocio = await prisma.negocio.findUnique({ where: { slug: 'demo-spa' } });
-        
-        if (!negocio) {
-            console.log("demo-spa not found.");
-            return;
-        }
-
-        console.log("Updating Negocio branding settings...");
-        await prisma.negocio.update({
-            where: { id: negocio.id },
-            data: {
+        console.log("Fetching / upserting demo-spa business...");
+        const negocio = await prisma.negocio.upsert({
+            where: { slug: 'demo-spa' },
+            update: {
                 nombre: 'Aura Wellness Spa',
-                colorPrimario: '#0d9488', // Teal 600 - Premium Spa color
-                colorSecundario: '#042f2e', // Teal 950 - Dark contrast
+                tipoNegocio: 'SPA',
+                colorPrimario: '#0d9488',
+                colorSecundario: '#042f2e',
                 heroTitulo: 'Tu Refugio de Bienestar y Belleza',
                 heroSubtitulo: 'Reserva tu cita online con nuestros especialistas y vive una experiencia de relajación total.',
                 tieneVestidores: true,
                 tieneCafeteria: true,
                 tieneWifi: true,
-                precioHora: 50 // Base fallback price
+                precioHora: 50
+            },
+            create: {
+                nombre: 'Aura Wellness Spa',
+                slug: 'demo-spa',
+                tipoNegocio: 'SPA',
+                colorPrimario: '#0d9488',
+                colorSecundario: '#042f2e',
+                heroTitulo: 'Tu Refugio de Bienestar y Belleza',
+                heroSubtitulo: 'Reserva tu cita online con nuestros especialistas y vive una experiencia de relajación total.',
+                tieneVestidores: true,
+                tieneCafeteria: true,
+                tieneWifi: true,
+                precioHora: 50,
+                isDemo: true
             }
         });
 
