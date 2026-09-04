@@ -11,13 +11,30 @@ import {
     Camera
 } from 'lucide-react';
 import type { Metadata } from 'next';
+import prisma from '@/lib/prisma';
+import FamilyPricingSection from '@/components/pricing/FamilyPricingSection';
 
 export const metadata: Metadata = {
     title: "Citiox para Lavanderías & Calzado | Tu app de recepción y entregas",
     description: "Crea la presencia en línea de tu lavandería o sneaker wash: órdenes digitales, estados en vivo, fotos de inspección y delivery.",
 };
 
-export default function LavanderiasLandingPage() {
+export default async function LavanderiasLandingPage() {
+    const family = await prisma.planFamily.findUnique({
+        where: { code: 'LAVANDERIA' },
+        include: {
+            plans: {
+                where: { activo: true, isPublic: true },
+                orderBy: { displayOrder: 'asc' },
+                include: {
+                    planEntitlements: {
+                        where: { enabled: true },
+                        include: { module: true }
+                    }
+                }
+            }
+        }
+    });
     return (
         <div className="min-h-screen bg-slate-50/60 text-slate-900 font-sans selection:bg-cyan-500 selection:text-white overflow-x-hidden">
             
@@ -193,6 +210,15 @@ export default function LavanderiasLandingPage() {
                     </div>
                 </div>
             </section>
+
+            {/* Planes para Lavanderías & Calzado */}
+            <FamilyPricingSection
+                familyCode="LAVANDERIA"
+                familyName="Lavanderías & Cuidado de Calzado"
+                familyThemeColor="#0891b2"
+                plans={family?.plans || []}
+                registerTipo="SHOE_CARE"
+            />
 
             {/* Bottom CTA */}
             <section className="py-16 bg-gradient-to-r from-cyan-600 via-sky-600 to-blue-600 text-white text-center px-6">

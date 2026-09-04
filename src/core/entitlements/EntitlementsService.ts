@@ -12,8 +12,12 @@ export interface EffectiveEntitlements {
   businessId: string;
   planId: string;
   planName: string;
+  familyId?: string | null;
+  familySlug?: string | null;
   businessType: string;
   status: 'active' | 'trial' | 'expired' | 'canceled';
+  isFounder?: boolean;
+  lockedPrice?: number | null;
   capabilities: Record<string, boolean>;
   limits: {
     branches: number;
@@ -191,7 +195,15 @@ export class EntitlementsService {
       include: {
         Suscripcion: {
           include: {
-            Plan: true
+            Plan: {
+              include: {
+                planEntitlements: {
+                  include: { module: true }
+                },
+                planLimits: true,
+                family: true
+              }
+            }
           }
         }
       }
@@ -220,24 +232,39 @@ export class EntitlementsService {
     // 2. Extraer información base del plan y presets
     const planId = plan?.id || 'ENTERPRISE_DEMO';
     const planName = plan?.name || 'Plan Citiox Enterprise';
+    const familyId = plan?.familyId || null;
+    const familySlug = plan?.family?.slug || null;
     const subStatus = (suscripcion?.estado || 'active').toLowerCase() as any;
+    const isFounder = Boolean(suscripcion?.isFounder);
+    const lockedPrice = suscripcion?.lockedPrice !== undefined ? suscripcion.lockedPrice : null;
 
-    let rawPlanFeatures: Record<string, boolean> = {};
-    if (plan?.features) {
-      if (typeof plan.features === 'string') {
-        try { rawPlanFeatures = JSON.parse(plan.features); } catch { rawPlanFeatures = {}; }
-      } else if (typeof plan.features === 'object') {
-        rawPlanFeatures = plan.features as Record<string, boolean>;
+    // Resolver capacidades: si tiene planEntitlements canónicos, usarlos como fuente de verdad
+    let planCapabilities: Record<string, boolean> = {};
+    if (plan?.planEntitlements && plan.planEntitlements.length > 0) {
+      for (const ent of plan.planEntitlements) {
+        if (ent.module?.code) {
+          planCapabilities[ent.module.code] = Boolean(ent.enabled);
+        }
       }
+    } else {
+      // Fallback para planes legacy sin planEntitlements
+      let rawPlanFeatures: Record<string, boolean> = {};
+      if (plan?.features) {
+        if (typeof plan.features === 'string') {
+          try { rawPlanFeatures = JSON.parse(plan.features); } catch { rawPlanFeatures = {}; }
+        } else if (typeof plan.features === 'object') {
+          rawPlanFeatures = plan.features as Record<string, boolean>;
+        }
+      }
+      const presetCaps = this.getPresetCapabilities(negocio.tipoNegocio, negocio.slug, negocio.nombre);
+      planCapabilities = {
+        ...presetCaps,
+        ...rawPlanFeatures
+      };
     }
 
-    // Preset según tipoNegocio
-    const presetCaps = this.getPresetCapabilities(negocio.tipoNegocio, negocio.slug, negocio.nombre);
-
-    // Consolidar capacidades (Preset ➔ Legacy Config ➔ Plan Features)
     const capabilities: Record<string, boolean> = {
-      ...presetCaps,
-      ...rawPlanFeatures
+      ...planCapabilities
     };
 
     // Aplicar overrides de legacyConfig si existen explícitamente
@@ -253,24 +280,7 @@ export class EntitlementsService {
     if (legacyCaps.promotions !== undefined) capabilities.PROMOTIONS = Boolean(legacyCaps.promotions);
     if (legacyCaps.inventory !== undefined) capabilities.INVENTORY = Boolean(legacyCaps.inventory);
 
-    // Mapeo bidireccional en minúsculas y mayúsculas para compatibilidad
-    Object.keys({ ...capabilities }).forEach(k => {
-      const lowerKey = k.toLowerCase();
-      const upperKey = k.toUpperCase();
-      capabilities[lowerKey] = capabilities[k];
-      capabilities[upperKey] = capabilities[k];
-    });
-
-    // 3. Límites base del plan
-    const baseLimits = {
-      branches: plan?.max_locations ?? 1,
-      professionals: plan?.maxStaff ?? 5,
-      appointmentsMonthly: plan?.maxAppointmentsMonthly ?? plan?.max_reservations_per_month ?? 500,
-      products: plan?.max_fields ?? 1000
-    };
-
-    // 4. Procesar Add-ons contratados
-    const activeAddonsList: EffectiveEntitlements['addons'] = [];
+    // 3. Normalización agnóstica de customFeatures de Suscripcion (Compatibilidad de Addons/Overrides)
     let customFeaturesObj: any = {};
     if (suscripcion?.customFeatures) {
       if (typeof suscripcion.customFeatures === 'string') {
@@ -280,6 +290,60 @@ export class EntitlementsService {
       }
     }
 
+    const LEGACY_CUSTOM_FEATURE_MAP: Record<string, string> = {
+      courses_module: 'COURSES',
+      tournaments_module: 'TOURNAMENTS',
+      automatic_discounts: 'AUTOMATIC_DISCOUNTS',
+      loyalty_module: 'LOYALTY',
+      communications_module: 'COMMUNICATION_CENTER',
+      whatsapp_notifications: 'NOTIFICATIONS'
+    };
+
+    for (const [legacyKey, canonicalCode] of Object.entries(LEGACY_CUSTOM_FEATURE_MAP)) {
+      if (customFeaturesObj[legacyKey] !== undefined) {
+        capabilities[canonicalCode] = Boolean(customFeaturesObj[legacyKey]);
+      }
+    }
+
+    // Mapeo canónico bidireccional y aliases para retrocompatibilidad
+    Object.keys({ ...capabilities }).forEach(k => {
+      const lowerKey = k.toLowerCase();
+      const upperKey = k.toUpperCase();
+      capabilities[lowerKey] = capabilities[k];
+      capabilities[upperKey] = capabilities[k];
+    });
+
+    // Mapeo explícito de aliases retrocompatibles
+    if (capabilities.PRODUCTS !== undefined) capabilities.catalog = capabilities.PRODUCTS;
+    if (capabilities.QR_TABLE !== undefined) capabilities.qr = capabilities.QR_TABLE;
+    if (capabilities.APPOINTMENTS !== undefined) capabilities.booking = capabilities.APPOINTMENTS;
+    if (capabilities.COURSES !== undefined) capabilities.courses = capabilities.COURSES;
+    if (capabilities.COMMUNICATION_CENTER !== undefined) capabilities.communications = capabilities.COMMUNICATION_CENTER;
+
+    // 4. Límites base del plan y resolución de PlanLimit
+    const baseLimits: Record<string, number> = {
+      branches: plan?.max_locations ?? 1,
+      professionals: plan?.maxStaff ?? 5,
+      appointmentsMonthly: plan?.maxAppointmentsMonthly ?? plan?.max_reservations_per_month ?? 500,
+      products: plan?.max_fields ?? 1000
+    };
+
+    if (plan?.planLimits && plan.planLimits.length > 0) {
+      for (const pl of plan.planLimits) {
+        const val = pl.limitValue === -1 ? 999999 : pl.limitValue;
+        if (pl.limitKey === 'MAX_USERS') baseLimits.users = val;
+        if (pl.limitKey === 'MAX_PRODUCTS') baseLimits.products = val;
+        if (pl.limitKey === 'MAX_TABLES') baseLimits.tables = val;
+        if (pl.limitKey === 'MAX_COURTS') baseLimits.courts = val;
+        if (pl.limitKey === 'MAX_STAFF') baseLimits.professionals = val;
+        if (pl.limitKey === 'MAX_APPOINTMENTS_MONTHLY') baseLimits.appointmentsMonthly = val;
+        if (pl.limitKey === 'MAX_ORDERS_MONTHLY') baseLimits.ordersMonthly = val;
+        baseLimits[pl.limitKey] = val;
+      }
+    }
+
+    // 5. Procesar Add-ons contratados
+    const activeAddonsList: EffectiveEntitlements['addons'] = [];
     const rawAddonEntries = customFeaturesObj.addons || [];
     const limitAddonBonus: Record<string, number> = {
       branches: 0,
@@ -317,14 +381,15 @@ export class EntitlementsService {
     }
 
     // Calibrar límites efectivos (Plan + Addons)
-    const effectiveLimits = {
+    const effectiveLimits: any = {
+      ...baseLimits,
       branches: (baseLimits.branches === -1 || baseLimits.branches >= 999) ? 999 : baseLimits.branches + (limitAddonBonus.branches || 0),
       professionals: (baseLimits.professionals === -1 || baseLimits.professionals >= 999) ? 999 : baseLimits.professionals + (limitAddonBonus.professionals || 0),
       appointmentsMonthly: (baseLimits.appointmentsMonthly === -1 || baseLimits.appointmentsMonthly >= 9999) ? 9999 : baseLimits.appointmentsMonthly + (limitAddonBonus.appointmentsMonthly || 0),
       products: (baseLimits.products === -1 || baseLimits.products >= 9999) ? 9999 : baseLimits.products + (limitAddonBonus.products || 0)
     };
 
-    // 5. Contar uso real actual en la BD
+    // 6. Contar uso real actual en la BD
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
@@ -340,8 +405,12 @@ export class EntitlementsService {
       businessId,
       planId,
       planName,
+      familyId,
+      familySlug,
       businessType: negocio.tipoNegocio || 'PRODUCTOS',
       status: subStatus,
+      isFounder,
+      lockedPrice,
       capabilities,
       limits: effectiveLimits,
       usage: {

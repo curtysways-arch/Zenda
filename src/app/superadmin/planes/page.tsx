@@ -1,31 +1,76 @@
 import prisma from "@/lib/prisma";
-import CreatePlanButton from "@/components/superadmin/CreatePlanButton";
-import PlanesFilterableGrid from "@/components/superadmin/PlanesFilterableGrid";
+import SuperadminPlanManager from "@/components/superadmin/SuperadminPlanManager";
 
 export const dynamic = "force-dynamic";
 
 export default async function PlanesPage() {
-    const planes = await (prisma.plan as any).findMany({
-        where: { id: { not: 'founder' } },
+    // 1. Obtener familias con sus planes, entitlements y limits
+    const rawFamilies = await prisma.planFamily.findMany({
+        orderBy: { displayOrder: 'asc' },
         include: {
-            _count: {
-                select: { Suscripcion: true }
+            businessTypes: {
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true
+                }
+            },
+            plans: {
+                where: { activo: true },
+                orderBy: { displayOrder: 'asc' },
+                include: {
+                    planEntitlements: {
+                        where: { enabled: true },
+                        include: { module: true }
+                    },
+                    planLimits: true,
+                    _count: {
+                        select: { Suscripcion: true }
+                    }
+                }
             }
-        },
-        orderBy: { price: 'asc' }
+        }
     });
 
-    return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Planes de Suscripción</h2>
-                    <p className="text-slate-500 mt-1">Configura y organiza los planes por Tipo de Negocio y sus módulos.</p>
-                </div>
-                <CreatePlanButton />
-            </div>
+    // 2. Contar negocios activos por familia
+    const families = await Promise.all(rawFamilies.map(async (fam) => {
+        const planIds = fam.plans.map(p => p.id);
+        const activeSubsCount = await prisma.suscripcion.count({
+            where: {
+                planId: { in: planIds },
+                estado: { in: ['activa', 'active', 'trial'] }
+            }
+        });
 
-            <PlanesFilterableGrid planes={JSON.parse(JSON.stringify(planes))} />
-        </div>
+        return {
+            id: fam.id,
+            code: fam.code,
+            name: fam.name,
+            slug: fam.slug,
+            description: fam.description,
+            icon: fam.icon,
+            active: fam.active,
+            displayOrder: fam.displayOrder,
+            businessTypes: fam.businessTypes,
+            plans: fam.plans,
+            activeBusinessesCount: activeSubsCount
+        };
+    }));
+
+    // 3. Obtener catálogo completo de módulos canónicos y dependencias
+    const [allModules, dependencies] = await Promise.all([
+        prisma.businessModuleCatalog.findMany({
+            where: { active: true },
+            orderBy: { name: 'asc' }
+        }),
+        prisma.moduleDependency.findMany()
+    ]);
+
+    return (
+        <SuperadminPlanManager
+            initialFamilies={JSON.parse(JSON.stringify(families))}
+            allModules={JSON.parse(JSON.stringify(allModules))}
+            dependencies={JSON.parse(JSON.stringify(dependencies))}
+        />
     );
 }

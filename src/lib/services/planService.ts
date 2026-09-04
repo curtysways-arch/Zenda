@@ -136,6 +136,7 @@ export const planService = {
                 isFounder,
                 founderPosition,
                 lockedPrice,
+                customFeatures: currentSub?.customFeatures,
                 updatedAt: new Date()
             }
         });
@@ -153,11 +154,55 @@ export const planService = {
      */
     async assignDefaultPlan(businessId: string, selectedPlanId?: string) {
         let basePlan: any = null;
-        if (selectedPlanId) {
+
+        const business = await (prisma.negocio as any).findUnique({
+            where: { id: businessId },
+            select: { 
+                id: true,
+                tipoNegocio: true,
+                businessTypeId: true,
+                configuracion: true 
+            }
+        });
+
+        // 1. Intentar resolver por PlanFamily según BusinessType o tipoNegocio
+        if (business) {
+            const bType = await (prisma as any).businessType.findFirst({
+                where: {
+                    OR: [
+                        { id: business.businessTypeId || undefined },
+                        { slug: (business.tipoNegocio || '').toLowerCase() },
+                        { name: { contains: business.tipoNegocio || '', mode: 'insensitive' } }
+                    ]
+                },
+                include: {
+                    planFamily: {
+                        include: {
+                            plans: {
+                                where: { activo: true },
+                                orderBy: { displayOrder: 'asc' }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const familyPlans = bType?.planFamily?.plans || [];
+            if (selectedPlanId) {
+                basePlan = familyPlans.find((p: any) => p.id === selectedPlanId || p.slug === selectedPlanId || p.name.toLowerCase() === selectedPlanId.toLowerCase());
+            }
+            if (!basePlan && familyPlans.length > 0) {
+                basePlan = familyPlans.find((p: any) => p.isDefault) || familyPlans[0];
+            }
+        }
+
+        // 2. Si se especificó selectedPlanId y no fue hallado en la familia, buscar globalmente
+        if (!basePlan && selectedPlanId) {
             basePlan = await (prisma.plan as any).findFirst({
                 where: {
                     OR: [
                         { id: selectedPlanId },
+                        { slug: selectedPlanId },
                         { name: { equals: selectedPlanId, mode: 'insensitive' } }
                     ],
                     activo: true
@@ -165,23 +210,15 @@ export const planService = {
             });
         }
 
+        // 3. Fallback: plan por defecto o primer plan activo
         if (!basePlan) {
             basePlan = await (prisma.plan as any).findFirst({
                 where: {
-                    OR: [
-                        { id: 'plan_pro' },
-                        { name: { contains: 'PRO' } },
-                        { name: { contains: 'Pro' } }
-                    ],
+                    isDefault: true,
                     activo: true,
                     id: { not: 'founder' }
                 }
-            });
-        }
-
-        // Fallback: primer plan activo no-founder
-        if (!basePlan) {
-            basePlan = await (prisma.plan as any).findFirst({
+            }) || await (prisma.plan as any).findFirst({
                 where: {
                     activo: true,
                     id: { not: 'founder' }
@@ -194,11 +231,6 @@ export const planService = {
             console.warn('❌ assignDefaultPlan: No se encontró ningún plan activo.');
             return;
         }
-
-        const business = await (prisma.negocio as any).findUnique({
-            where: { id: businessId },
-            select: { configuracion: true }
-        });
         const timeZone = getBusinessTimeZone(business?.configuracion);
 
         const { founderLockedPrice, founderMax } = await getFounderConfig();

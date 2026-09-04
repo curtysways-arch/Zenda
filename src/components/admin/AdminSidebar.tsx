@@ -38,6 +38,8 @@ interface MenuItem {
   section: string;
   badge?: number;
   roles?: string[];
+  isLocked?: boolean;
+  lockedBadge?: string;
 }
 
 export default function AdminSidebar({ 
@@ -201,6 +203,8 @@ export default function AdminSidebar({
     }
     if (capabilities.kitchen) {
       items.push({ name: 'Comandas / Cocina', href: '/admin/cocina', icon: Utensils, section: 'GESTIÓN OPERATIVA' });
+    } else if (capabilities.orders) {
+      items.push({ name: 'Comandas / Cocina', href: '/admin/plan', icon: Utensils, section: 'GESTIÓN OPERATIVA', isLocked: true, lockedBadge: 'Pro' });
     }
     if (capabilities.appointments) {
       items.push({ 
@@ -230,9 +234,13 @@ export default function AdminSidebar({
     items.push({ name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     if (capabilities.courses) {
       items.push({ name: 'Cursos & Academia', href: '/admin/cursos', icon: GraduationCap, section: 'MARKETING' });
+    } else if (capabilities.courts) {
+      items.push({ name: 'Cursos & Academia', href: '/admin/plan', icon: GraduationCap, section: 'MARKETING', isLocked: true, lockedBadge: 'Academia' });
     }
     if (capabilities.loyalty) {
       items.push({ name: 'Club de Beneficios', href: '/admin/misiones', icon: Trophy, section: 'MARKETING' });
+    } else {
+      items.push({ name: 'Club de Beneficios', href: '/admin/plan', icon: Trophy, section: 'MARKETING', isLocked: true, lockedBadge: 'Pro' });
     }
     items.push({ name: 'Páginas', href: '/admin/paginas', icon: Layout, section: 'MARKETING' });
 
@@ -253,6 +261,8 @@ export default function AdminSidebar({
     });
     if (capabilities.delivery) {
       items.push({ name: 'Repartidores', href: '/admin/logistica', icon: Truck, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    } else if (capabilities.orders) {
+      items.push({ name: 'Repartidores', href: '/admin/plan', icon: Truck, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'], isLocked: true, lockedBadge: 'Crecimiento' });
     }
     items.push({ name: 'Reportes', href: '/admin/reportes', icon: BarChart3, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
 
@@ -382,13 +392,20 @@ export default function AdminSidebar({
                         <span className="truncate">{item.name}</span>
                       </div>
 
-                      {item.badge !== undefined && item.badge > 0 && (
-                        <span 
-                          style={{ backgroundColor: primaryColor }}
-                          className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-xs"
-                        >
-                          {item.badge}
-                        </span>
+                      {item.isLocked ? (
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-extrabold border border-slate-200 shrink-0">
+                          <Lock size={10} className="text-slate-400" />
+                          <span>{item.lockedBadge || 'Upgrade'}</span>
+                        </div>
+                      ) : (
+                        item.badge !== undefined && item.badge > 0 && (
+                          <span 
+                            style={{ backgroundColor: primaryColor }}
+                            className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-xs"
+                          >
+                            {item.badge}
+                          </span>
+                        )
                       )}
 
                       {isActive && (

@@ -1,29 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import crypto from "crypto";
 
-async function isSuperAdmin() {
-    // const session = await getServerSession(authOptions);
-    return true;
-}
+export const dynamic = "force-dynamic";
 
 export async function GET() {
-    if (!await isSuperAdmin()) {
-        return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    try {
+        const planes = await prisma.plan.findMany({
+            where: { id: { not: 'founder' } },
+            include: {
+                family: true,
+                planEntitlements: {
+                    where: { enabled: true },
+                    include: { module: true }
+                },
+                planLimits: true,
+                _count: {
+                    select: { Suscripcion: true }
+                }
+            },
+            orderBy: [{ familyId: 'asc' }, { displayOrder: 'asc' }, { price: 'asc' }]
+        });
+        return NextResponse.json(planes);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    const planes = await prisma.plan.findMany({
-        where: { id: { not: 'founder' } },
-        orderBy: { price: 'asc' } as any
-    });
-    return NextResponse.json(planes);
 }
 
 export async function POST(req: NextRequest) {
-    if (!await isSuperAdmin()) {
-        return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    }
-
     try {
         const body = await req.json();
         const name = body.name || body.nombre;
@@ -32,47 +36,95 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "El nombre es obligatorio" }, { status: 400 });
         }
 
-        // Datos completos para la creación
-        const generatedId = body.id || `plan_${name.toLowerCase().replace(/[^a-z0-9]+/g, "_")}_${Math.random().toString(36).substring(2, 7)}`;
-        const fullPlanData = {
+        const familyId = body.familyId || null;
+        const modules: string[] = Array.isArray(body.modules) ? body.modules : [];
+        const limits: Record<string, number> = body.limits || {};
+
+        // 1. VALIDACIÓN ESTRICTA DE DEPENDENCIAS EN BACKEND
+        const dependencies = await prisma.moduleDependency.findMany();
+        const activeModuleCodes = new Set(modules);
+
+        for (const dep of dependencies) {
+            if (activeModuleCodes.has(dep.moduleCode)) {
+                if (!activeModuleCodes.has(dep.dependsOnCode)) {
+                    return NextResponse.json({
+                        error: `Violación de dependencias: El módulo ${dep.moduleCode} requiere que ${dep.dependsOnCode} esté activo.`,
+                        code: 'DEPENDENCY_VIOLATION',
+                        module: dep.moduleCode,
+                        missingDependency: dep.dependsOnCode
+                    }, { status: 400 });
+                }
+            }
+        }
+
+        // 2. Crear Plan en Prisma
+        const generatedId = body.id || `plan_${name.toLowerCase().replace(/[^a-z0-9]+/g, "_")}_${crypto.randomBytes(3).toString("hex")}`;
+        const planData: any = {
             id: generatedId,
             name: String(name),
+            slug: body.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
             description: String(body.description || ""),
             price: parseFloat(String(body.price ?? 0)),
+            billingPeriod: body.billingPeriod || "monthly",
+            currency: body.currency || "USD",
             trial_days: Math.floor(Number(body.trial_days ?? 0)),
-            max_fields: Math.floor(Number(body.max_fields ?? 0)),
-            max_reservations_per_month: Math.floor(Number(body.max_reservations_per_month ?? 0)),
-            maxAppointmentsMonthly: Math.floor(Number(body.max_reservations_per_month ?? 0)),
-            tournaments_enabled: Boolean(body.tournaments_enabled ?? false),
-            automatic_discounts_enabled: Boolean(body.automatic_discounts_enabled ?? false),
-            courses_module: Boolean(body.courses_module ?? false),
-            communications_module: Boolean(body.communications_module ?? false),
-            max_locations: Math.floor(Number(body.max_locations ?? 1)),
-            is_recommended: Boolean(body.is_recommended ?? false),
-            activo: true,
-            features: body.features ? {
-                ...body.features,
-                loyalty_module: Boolean(body.loyalty_module ?? body.features?.loyalty_module ?? false)
-            } : {
-                loyalty_module: Boolean(body.loyalty_module ?? false)
-            },
+            displayOrder: Math.floor(Number(body.displayOrder ?? 0)),
+            featured: Boolean(body.featured ?? false),
+            isDefault: Boolean(body.isDefault ?? false),
+            is_recommended: Boolean(body.featured ?? false),
+            isPublic: body.isPublic !== undefined ? Boolean(body.isPublic) : true,
+            familyId: familyId,
+            activo: body.activo !== undefined ? Boolean(body.activo) : true,
             updated_at: new Date()
         };
 
-        console.log("DEBUG: Full Data ->", JSON.stringify(fullPlanData));
-
         const plan = await prisma.plan.create({
-            data: fullPlanData
+            data: planData
         });
 
-        return NextResponse.json(plan);
+        // 3. Crear PlanEntitlements vinculados a BusinessModuleCatalog
+        if (modules.length > 0) {
+            const catalogModules = await prisma.businessModuleCatalog.findMany({
+                where: { code: { in: modules } }
+            });
+
+            for (const cm of catalogModules) {
+                await prisma.planEntitlement.create({
+                    data: {
+                        planId: plan.id,
+                        moduleId: cm.id,
+                        enabled: true
+                    }
+                });
+            }
+        }
+
+        // 4. Crear PlanLimits
+        for (const [key, val] of Object.entries(limits)) {
+            await prisma.planLimit.create({
+                data: {
+                    planId: plan.id,
+                    limitKey: key,
+                    limitValue: typeof val === 'number' ? val : parseInt(String(val), 10)
+                }
+            });
+        }
+
+        // 5. Registrar en PlanAuditLog
+        await prisma.planAuditLog.create({
+            data: {
+                who: 'superadmin',
+                what: 'PLAN_CREATED',
+                targetType: 'PLAN',
+                targetId: plan.id,
+                newValue: { plan, modules, limits },
+                description: `Plan creado: ${plan.name} ($${plan.price})`
+            }
+        });
+
+        return NextResponse.json({ success: true, plan });
     } catch (error: any) {
-        console.error("FATAL ERROR:", error);
-        return NextResponse.json({
-            error: "Error en prisma.plan.create",
-            details: error.message,
-            stack: error.stack?.split("\n").slice(0, 2).join(" | "), // Pequeña traza para el alert
-            prismaCode: error.code
-        }, { status: 500 });
+        console.error("FATAL ERROR creating plan:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

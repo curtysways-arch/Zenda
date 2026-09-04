@@ -12,13 +12,30 @@ import {
     Swords
 } from 'lucide-react';
 import type { Metadata } from 'next';
+import prisma from '@/lib/prisma';
+import FamilyPricingSection from '@/components/pricing/FamilyPricingSection';
 
 export const metadata: Metadata = {
     title: "Citiox para Canchas & Clubes | Tu app de reservas y torneos",
     description: "Crea la presencia en línea de tu club deportivo o complejo de canchas: reserva de turnos por hora, disponibilidad en vivo, señas y torneos.",
 };
 
-export default function CanchasLandingPage() {
+export default async function CanchasLandingPage() {
+    const family = await prisma.planFamily.findUnique({
+        where: { code: 'CANCHAS' },
+        include: {
+            plans: {
+                where: { activo: true, isPublic: true },
+                orderBy: { displayOrder: 'asc' },
+                include: {
+                    planEntitlements: {
+                        where: { enabled: true },
+                        include: { module: true }
+                    }
+                }
+            }
+        }
+    });
     return (
         <div className="min-h-screen bg-slate-50/60 text-slate-900 font-sans selection:bg-emerald-500 selection:text-white overflow-x-hidden">
             
@@ -193,6 +210,15 @@ export default function CanchasLandingPage() {
                     </div>
                 </div>
             </section>
+
+            {/* Planes para Canchas & Clubes */}
+            <FamilyPricingSection
+                familyCode="CANCHAS"
+                familyName="Canchas & Clubes Deportivos"
+                familyThemeColor="#059669"
+                plans={family?.plans || []}
+                registerTipo="SPORTS_COURTS"
+            />
 
             {/* Bottom CTA */}
             <section className="py-16 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white text-center px-6">

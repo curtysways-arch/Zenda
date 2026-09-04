@@ -16,13 +16,30 @@ import {
     LayoutDashboard
 } from 'lucide-react';
 import type { Metadata } from 'next';
+import prisma from '@/lib/prisma';
+import FamilyPricingSection from '@/components/pricing/FamilyPricingSection';
 
 export const metadata: Metadata = {
     title: "Citiox para Restaurantes | Tu app completa de gastronomía",
     description: "Crea la presencia en línea de tu restaurante: menú digital QR, comandas de cocina KDS, pedidos a mesa, delivery y punto de venta POS.",
 };
 
-export default function RestaurantesLandingPage() {
+export default async function RestaurantesLandingPage() {
+    const family = await prisma.planFamily.findUnique({
+        where: { code: 'RESTAURANTE' },
+        include: {
+            plans: {
+                where: { activo: true, isPublic: true },
+                orderBy: { displayOrder: 'asc' },
+                include: {
+                    planEntitlements: {
+                        where: { enabled: true },
+                        include: { module: true }
+                    }
+                }
+            }
+        }
+    });
     return (
         <div className="min-h-screen bg-slate-50/60 text-slate-900 font-sans selection:bg-orange-500 selection:text-white overflow-x-hidden">
             
@@ -198,6 +215,15 @@ export default function RestaurantesLandingPage() {
                     </div>
                 </div>
             </section>
+
+            {/* Planes para Restaurantes */}
+            <FamilyPricingSection
+                familyCode="RESTAURANTE"
+                familyName="Restaurantes & Gastronomía"
+                familyThemeColor="#ea580c"
+                plans={family?.plans || []}
+                registerTipo="RESTAURANTE"
+            />
 
             {/* Bottom CTA */}
             <section className="py-16 bg-gradient-to-r from-orange-600 via-amber-600 to-rose-600 text-white text-center px-6">

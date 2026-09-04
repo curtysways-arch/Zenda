@@ -12,13 +12,30 @@ import {
     Smartphone
 } from 'lucide-react';
 import type { Metadata } from 'next';
+import prisma from '@/lib/prisma';
+import FamilyPricingSection from '@/components/pricing/FamilyPricingSection';
 
 export const metadata: Metadata = {
     title: "Citiox para Tiendas | Tu app y catálogo digital de ventas",
     description: "Crea la presencia digital de tu tienda: catálogo en línea, variantes, inventario, pedidos por WhatsApp, carrito de compras y delivery.",
 };
 
-export default function TiendasLandingPage() {
+export default async function TiendasLandingPage() {
+    const family = await prisma.planFamily.findUnique({
+        where: { code: 'TIENDA' },
+        include: {
+            plans: {
+                where: { activo: true, isPublic: true },
+                orderBy: { displayOrder: 'asc' },
+                include: {
+                    planEntitlements: {
+                        where: { enabled: true },
+                        include: { module: true }
+                    }
+                }
+            }
+        }
+    });
     return (
         <div className="min-h-screen bg-slate-50/60 text-slate-900 font-sans selection:bg-indigo-500 selection:text-white overflow-x-hidden">
             
@@ -193,6 +210,15 @@ export default function TiendasLandingPage() {
                     </div>
                 </div>
             </section>
+
+            {/* Planes para Tiendas & Comercio */}
+            <FamilyPricingSection
+                familyCode="TIENDA"
+                familyName="Tiendas & Comercio Digital"
+                familyThemeColor="#4f46e5"
+                plans={family?.plans || []}
+                registerTipo="TIENDA"
+            />
 
             {/* Bottom CTA */}
             <section className="py-16 bg-gradient-to-r from-indigo-600 via-sky-600 to-purple-600 text-white text-center px-6">

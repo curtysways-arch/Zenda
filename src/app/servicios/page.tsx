@@ -12,13 +12,30 @@ import {
     Award
 } from 'lucide-react';
 import type { Metadata } from 'next';
+import prisma from '@/lib/prisma';
+import FamilyPricingSection from '@/components/pricing/FamilyPricingSection';
 
 export const metadata: Metadata = {
     title: "Citiox para Servicios & Citas | Tu app y agenda inteligente",
     description: "Crea la presencia en línea de tu salón, spa o negocio de servicios: citas 24/7, catálogo de servicios, recordatorios por WhatsApp y ficha de clientes.",
 };
 
-export default function ServiciosLandingPage() {
+export default async function ServiciosLandingPage() {
+    const family = await prisma.planFamily.findUnique({
+        where: { code: 'SERVICIOS' },
+        include: {
+            plans: {
+                where: { activo: true, isPublic: true },
+                orderBy: { displayOrder: 'asc' },
+                include: {
+                    planEntitlements: {
+                        where: { enabled: true },
+                        include: { module: true }
+                    }
+                }
+            }
+        }
+    });
     return (
         <div className="min-h-screen bg-slate-50/60 text-slate-900 font-sans selection:bg-pink-500 selection:text-white overflow-x-hidden">
             
@@ -194,6 +211,15 @@ export default function ServiciosLandingPage() {
                     </div>
                 </div>
             </section>
+
+            {/* Planes para Servicios & Citas */}
+            <FamilyPricingSection
+                familyCode="SERVICIOS"
+                familyName="Servicios & Citas Profesionales"
+                familyThemeColor="#db2777"
+                plans={family?.plans || []}
+                registerTipo="SPA"
+            />
 
             {/* Bottom CTA */}
             <section className="py-16 bg-gradient-to-r from-pink-600 via-rose-600 to-purple-600 text-white text-center px-6">
