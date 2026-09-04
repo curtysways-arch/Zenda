@@ -504,6 +504,17 @@ model Plan {
   SubscriptionHistory_SubscriptionHistory_plan_anterior_idToPlan SubscriptionHistory[] @relation("SubscriptionHistory_plan_anterior_idToPlan")
   Suscripcion                                                    Suscripcion[]
   businessTypeLinks                                              BusinessTypePlan[]
+  familyId                                                       String?
+  family                                                         PlanFamily?           @relation(fields: [familyId], references: [id], onDelete: SetNull)
+  slug                                                           String?
+  billingPeriod                                                  String?               @default("monthly")
+  currency                                                       String?               @default("USD")
+  isPublic                                                       Boolean               @default(true)
+  displayOrder                                                   Int                   @default(0)
+  featured                                                       Boolean               @default(false)
+  isDefault                                                      Boolean               @default(false)
+  planEntitlements                                               PlanEntitlement[]
+  planLimits                                                     PlanLimit[]
 }
 
 model ProcessedMessage {
@@ -2853,6 +2864,9 @@ model BusinessType {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
+  planFamilyId      String?
+  planFamily        PlanFamily?             @relation(fields: [planFamilyId], references: [id], onDelete: SetNull)
+
   states           BusinessTypeState[]
   capabilities     BusinessTypeCapability[]
   profiles         BusinessProfile[]
@@ -2917,6 +2931,63 @@ model BusinessTypePlan {
   plan           Plan         @relation(fields: [planId], references: [id], onDelete: Cascade)
 
   @@unique([businessTypeId, planId])
+}
+
+// ─── UNIVERSAL PLAN ENGINE (FAMILIAS, ENTITLEMENTS Y LÍMITES) ───────────────
+
+model PlanFamily {
+  id           String         @id @default(uuid())
+  code         String         @unique // RESTAURANTE, SERVICIOS, CANCHAS, LAVANDERIA, TIENDA
+  name         String         // "Restaurantes & Gastronomía"
+  slug         String         @unique // "restaurantes"
+  description  String?
+  icon         String         @default("Briefcase")
+  image        String?
+  active       Boolean        @default(true)
+  displayOrder Int            @default(0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  businessTypes BusinessType[]
+  plans         Plan[]
+}
+
+model PlanEntitlement {
+  id        String                @id @default(uuid())
+  planId    String
+  moduleId  String
+  enabled   Boolean               @default(true)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+
+  plan      Plan                  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  module    BusinessModuleCatalog @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, moduleId])
+}
+
+model PlanLimit {
+  id         String   @id @default(uuid())
+  planId     String
+  limitKey   String   // MAX_USERS, MAX_PRODUCTS, MAX_TABLES, MAX_COURTS, MAX_APPOINTMENTS_MONTHLY
+  limitValue Int      // número o -1 para ilimitado
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  plan       Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, limitKey])
+}
+
+model PlanAuditLog {
+  id          String   @id @default(uuid())
+  who         String
+  what        String   // PLAN_CREATED, PLAN_UPDATED, CAPABILITY_TOGGLED, LIMIT_CHANGED
+  targetType  String   // PLAN | FAMILY
+  targetId    String
+  oldValue    Json?
+  newValue    Json?
+  description String?
+  createdAt   DateTime @default(now())
 }
 
 // ─── CITIOX RUNTIME PLATFORM (NÚCLEO ARQUITECTÓNICO DEFINITIVO) ───────────────────
@@ -3036,6 +3107,7 @@ model BusinessModuleCatalog {
   updatedAt   DateTime             @updatedAt
 
   typeLinks   BusinessTypeModule[]
+  planEntitlements PlanEntitlement[]
 }
 
 model BusinessTypeModule {

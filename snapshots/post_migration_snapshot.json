@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-09-04T05:07:14.253Z",
+  "subscriptions": [
+    {
+      "id": "sub-demo-canchas-id-100",
+      "negocioId": "demo-canchas-id-100",
+      "planId": "plan-test-id",
+      "estado": "active",
+      "fechaInicio": "2026-07-31T19:55:55.038Z",
+      "fechaFin": "2027-07-31T19:55:55.038Z",
+      "trial_inicio": "2026-07-31T19:55:55.049Z",
+      "trial_fin": null,
+      "isFounder": false,
+      "founderPosition": null,
+      "lockedPrice": null,
+      "customFeatures": null
+    },
+    {
+      "id": "sub-test-id",
+      "negocioId": "pinchos-test-id",
+      "planId": "plan-test-id",
+      "estado": "trial",
+      "fechaInicio": "2026-07-21T20:10:36.242Z",
+      "fechaFin": "2027-07-21T20:10:36.236Z",
+      "trial_inicio": "2026-07-21T20:10:36.242Z",
+      "trial_fin": "2027-07-21T20:10:36.236Z",
+      "isFounder": false,
+      "founderPosition": null,
+      "lockedPrice": null,
+      "customFeatures": null
+    }
+  ],
+  "globalConfigs": [],
+  "referralCounts": {
+    "campaigns": 0,
+    "codes": 2,
+    "events": 0,
+    "rewards": 0
+  }
+}
