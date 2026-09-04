@@ -820,7 +820,7 @@ export default function SuperadminPlanManager({
                                                 ...planForm,
                                                 limits: { ...planForm.limits, MAX_USERS: parseInt(e.target.value, 10) }
                                             })}
-                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900"
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold !text-slate-900"
                                         />
                                     </div>
                                     <div>
@@ -832,7 +832,7 @@ export default function SuperadminPlanManager({
                                                 ...planForm,
                                                 limits: { ...planForm.limits, MAX_PRODUCTS: parseInt(e.target.value, 10) }
                                             })}
-                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900"
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold !text-slate-900"
                                         />
                                     </div>
                                     <div>
@@ -844,7 +844,7 @@ export default function SuperadminPlanManager({
                                                 ...planForm,
                                                 limits: { ...planForm.limits, MAX_TABLES: parseInt(e.target.value, 10) }
                                             })}
-                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900"
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold !text-slate-900"
                                         />
                                     </div>
                                     <div>
@@ -856,7 +856,7 @@ export default function SuperadminPlanManager({
                                                 ...planForm,
                                                 limits: { ...planForm.limits, MAX_COURTS: parseInt(e.target.value, 10) }
                                             })}
-                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900"
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold !text-slate-900"
                                         />
                                     </div>
                                     <div>
@@ -868,7 +868,7 @@ export default function SuperadminPlanManager({
                                                 ...planForm,
                                                 limits: { ...planForm.limits, MAX_STAFF: parseInt(e.target.value, 10) }
                                             })}
-                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900"
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold !text-slate-900"
                                         />
                                     </div>
                                     <div>
@@ -880,7 +880,7 @@ export default function SuperadminPlanManager({
                                                 ...planForm,
                                                 limits: { ...planForm.limits, MAX_APPOINTMENTS_MONTHLY: parseInt(e.target.value, 10) }
                                             })}
-                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900"
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold !text-slate-900"
                                         />
                                     </div>
                                     <div>
@@ -892,7 +892,7 @@ export default function SuperadminPlanManager({
                                                 ...planForm,
                                                 limits: { ...planForm.limits, MAX_ORDERS_MONTHLY: parseInt(e.target.value, 10) }
                                             })}
-                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900"
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold !text-slate-900"
                                         />
                                     </div>
                                 </div>
