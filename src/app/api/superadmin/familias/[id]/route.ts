@@ -160,7 +160,7 @@ export async function DELETE(
         // Verificar si hay suscripciones o negocios que hagan referencia indirecta
         const activeBusinesses = await prisma.negocio.count({
             where: {
-                businessType: {
+                BusinessType: {
                     familyId: id
                 }
             }

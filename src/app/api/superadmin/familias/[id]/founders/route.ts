@@ -31,7 +31,7 @@ export async function GET(
                     },
                     {
                         Negocio: {
-                            businessType: {
+                            BusinessType: {
                                 familyId: familyId
                             }
                         }
@@ -47,7 +47,7 @@ export async function GET(
                         whatsapp: true,
                         emailContacto: true,
                         createdAt: true,
-                        businessType: {
+                        BusinessType: {
                             select: { id: true, name: true, slug: true }
                         }
                     }
@@ -78,7 +78,7 @@ export async function GET(
                 businessSlug: sub.Negocio?.slug || '',
                 businessPhone: sub.Negocio?.whatsapp,
                 businessEmail: sub.Negocio?.emailContacto,
-                businessType: sub.Negocio?.businessType?.name || 'No especificado',
+                businessType: sub.Negocio?.BusinessType?.name || 'No especificado',
                 planId: sub.Plan?.id,
                 planName: sub.Plan?.name || 'Sin Plan',
                 lockedPrice: sub.lockedPrice,
