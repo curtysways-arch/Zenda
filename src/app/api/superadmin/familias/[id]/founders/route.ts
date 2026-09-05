@@ -30,7 +30,7 @@ export async function GET(
                         }
                     },
                     {
-                        negocio: {
+                        Negocio: {
                             businessType: {
                                 familyId: familyId
                             }
@@ -39,7 +39,7 @@ export async function GET(
                 ]
             },
             include: {
-                negocio: {
+                Negocio: {
                     select: {
                         id: true,
                         nombre: true,
@@ -73,12 +73,12 @@ export async function GET(
             return {
                 id: sub.id,
                 founderPosition: sub.founderPosition,
-                businessId: sub.negocio.id,
-                businessName: sub.negocio.nombre,
-                businessSlug: sub.negocio.slug,
-                businessPhone: sub.negocio.whatsapp,
-                businessEmail: sub.negocio.emailContacto,
-                businessType: sub.negocio.businessType?.name || 'No especificado',
+                businessId: sub.Negocio?.id,
+                businessName: sub.Negocio?.nombre || 'Negocio sin nombre',
+                businessSlug: sub.Negocio?.slug || '',
+                businessPhone: sub.Negocio?.whatsapp,
+                businessEmail: sub.Negocio?.emailContacto,
+                businessType: sub.Negocio?.businessType?.name || 'No especificado',
                 planId: sub.Plan?.id,
                 planName: sub.Plan?.name || 'Sin Plan',
                 lockedPrice: sub.lockedPrice,
