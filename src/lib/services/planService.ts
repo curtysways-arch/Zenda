@@ -25,6 +25,34 @@ export async function getFounderConfig() {
     }
 }
 
+/**
+ * Función canónica universal de cálculo de precio efectivo de suscripción.
+ * REGLA: Si lockedPrice !== null, prevalece siempre como precio contractual histórico.
+ */
+export function getEffectiveSubscriptionPrice(subscription: {
+    lockedPrice?: number | null;
+    isFounder?: boolean;
+    customFeatures?: any;
+    Plan?: { price: number } | null;
+    plan?: { price: number } | null;
+}): number {
+    if (subscription?.lockedPrice !== null && subscription?.lockedPrice !== undefined) {
+        return Number(subscription.lockedPrice);
+    }
+    // Soporte para precio especial legado en customFeatures si lockedPrice no fue definido
+    if (subscription?.customFeatures) {
+        let features = subscription.customFeatures;
+        if (typeof features === 'string') {
+            try { features = JSON.parse(features); } catch (_) {}
+        }
+        if (features && typeof features === 'object' && features.specialPrice !== undefined && features.specialPrice !== null) {
+            return Number(features.specialPrice);
+        }
+    }
+    const plan = subscription?.Plan || subscription?.plan;
+    return plan?.price !== undefined ? Number(plan.price) : 0;
+}
+
 export const planService = {
     /**
      * Obtiene todos los planes disponibles (excluye el plan interno 'founder' si existiera)
@@ -165,49 +193,70 @@ export const planService = {
             }
         });
 
-        // 1. Intentar resolver por PlanFamily según BusinessType o tipoNegocio
-        if (business) {
-            const bType = await (prisma as any).businessType.findFirst({
-                where: {
-                    OR: [
-                        { id: business.businessTypeId || undefined },
-                        { slug: (business.tipoNegocio || '').toLowerCase() },
-                        { name: { contains: business.tipoNegocio || '', mode: 'insensitive' } }
-                    ]
-                },
-                include: {
-                    planFamily: {
-                        include: {
-                            plans: {
-                                where: { activo: true },
-                                orderBy: { displayOrder: 'asc' }
-                            }
-                        }
-                    }
-                }
-            });
-
-            const familyPlans = bType?.planFamily?.plans || [];
-            if (selectedPlanId) {
-                basePlan = familyPlans.find((p: any) => p.id === selectedPlanId || p.slug === selectedPlanId || p.name.toLowerCase() === selectedPlanId.toLowerCase());
-            }
-            if (!basePlan && familyPlans.length > 0) {
-                basePlan = familyPlans.find((p: any) => p.isDefault) || familyPlans[0];
-            }
-        }
-
-        // 2. Si se especificó selectedPlanId y no fue hallado en la familia, buscar globalmente
-        if (!basePlan && selectedPlanId) {
+        // 1. Si se especificó selectedPlanId, buscar directamente dicho plan
+        if (selectedPlanId) {
             basePlan = await (prisma.plan as any).findFirst({
                 where: {
                     OR: [
                         { id: selectedPlanId },
                         { slug: selectedPlanId },
-                        { name: { equals: selectedPlanId, mode: 'insensitive' } }
+                        { name: { equals: selectedPlanId } }
                     ],
                     activo: true
+                },
+                include: {
+                    family: {
+                        include: {
+                            founderProgram: {
+                                include: { founderPlan: true }
+                            }
+                        }
+                    }
                 }
             });
+        }
+
+        // 2. Si no se especificó o no se halló, resolver por PlanFamily según BusinessType o tipoNegocio
+        if (!basePlan && business) {
+            const whereOr: any[] = [];
+            if (business.businessTypeId) {
+                whereOr.push({ id: business.businessTypeId });
+            }
+            if (business.tipoNegocio && business.tipoNegocio.trim() !== '') {
+                whereOr.push({ slug: business.tipoNegocio.toLowerCase().trim() });
+                whereOr.push({ name: { contains: business.tipoNegocio.trim() } });
+            }
+
+            if (whereOr.length > 0) {
+                const bType = await (prisma as any).businessType.findFirst({
+                    where: { OR: whereOr },
+                    include: {
+                        planFamily: {
+                            include: {
+                                founderProgram: {
+                                    include: { founderPlan: true }
+                                },
+                                plans: {
+                                    where: { activo: true },
+                                    orderBy: { displayOrder: 'asc' }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                const family = bType?.planFamily;
+                const familyPlans = family?.plans || [];
+                if (familyPlans.length > 0) {
+                    basePlan = familyPlans.find((p: any) => p.isDefault) || familyPlans[0];
+                }
+
+                // Si hay programa de fundadores activo en la familia y tiene plan asignado, usarlo como base preferencial
+                const familyFounderProgram = family?.founderProgram;
+                if (familyFounderProgram?.enabled && familyFounderProgram?.founderPlan) {
+                    basePlan = familyFounderProgram.founderPlan;
+                }
+            }
         }
 
         // 3. Fallback: plan por defecto o primer plan activo
@@ -233,8 +282,78 @@ export const planService = {
         }
         const timeZone = getBusinessTimeZone(business?.configuracion);
 
-        const { founderLockedPrice, founderMax } = await getFounderConfig();
+        // ── PROGRAMA SOCIO FUNDADOR (POR FAMILIA O GLOBAL ATÓMICO) ──
+        // Determinar familia del plan asignado
+        const planFamilyId = basePlan.familyId;
+        const founderProgram = planFamilyId ? await prisma.founderProgram.findUnique({
+            where: { familyId: planFamilyId }
+        }) : null;
 
+        // Si la familia tiene FounderProgram explícito
+        if (founderProgram && founderProgram.enabled && founderProgram.currentMembers < founderProgram.maxMembers) {
+            // Asignación atómica dentro de transacción
+            const assignedSub = await prisma.$transaction(async (tx) => {
+                // Bloquear/releer programa para evitar condición de carrera
+                const prog = await tx.founderProgram.findUnique({
+                    where: { id: founderProgram.id }
+                });
+
+                if (!prog || !prog.enabled || prog.currentMembers >= prog.maxMembers) {
+                    return null;
+                }
+
+                // Siguiente posición histórica (nunca se reutiliza)
+                const nextPosition = prog.currentMembers + 1;
+
+                // Actualizar contador del programa de fundador
+                await tx.founderProgram.update({
+                    where: { id: prog.id },
+                    data: { currentMembers: nextPosition }
+                });
+
+                // Registrar auditoría de asignación
+                await tx.planAuditLog.create({
+                    data: {
+                        who: 'SYSTEM:ASSIGN_DEFAULT_PLAN',
+                        what: 'FOUNDER_ASSIGNED',
+                        targetType: 'FAMILY',
+                        targetId: planFamilyId,
+                        newValue: {
+                            businessId,
+                            position: nextPosition,
+                            lockedPrice: prog.founderPrice,
+                            planId: basePlan.id
+                        },
+                        description: `Asignado Socio Fundador #${nextPosition} a negocio ${businessId}`
+                    }
+                });
+
+                const { startDate, endDate } = getSubscriptionDates(timeZone, { durationMonths: 1 });
+
+                return await tx.suscripcion.create({
+                    data: {
+                        id: crypto.randomUUID(),
+                        negocioId: businessId,
+                        planId: basePlan.id,
+                        estado: 'activa',
+                        isFounder: true,
+                        founderPosition: nextPosition,
+                        lockedPrice: prog.founderPrice,
+                        fechaInicio: startDate,
+                        fechaFin: endDate,
+                        renovacion_automatica: true,
+                        updatedAt: new Date()
+                    }
+                });
+            });
+
+            if (assignedSub) {
+                return assignedSub;
+            }
+        }
+
+        // Fallback: Si no hay FounderProgram por familia, usar la configuración global legacy si aplica
+        const { founderLockedPrice, founderMax } = await getFounderConfig();
         const activeFoundersCount = await (prisma.suscripcion as any).count({
             where: {
                 isFounder: true,
@@ -242,9 +361,7 @@ export const planService = {
             }
         });
 
-        if (activeFoundersCount < founderMax) {
-            // ── ASIGNAR COMO FUNDADOR ──
-            // Precio activo → 1 mes sin trial
+        if (activeFoundersCount < founderMax && !founderProgram) {
             const { startDate, endDate } = getSubscriptionDates(timeZone, { durationMonths: 1 });
 
             return await (prisma.suscripcion as any).create({
@@ -348,9 +465,6 @@ export const planService = {
         lockedPrice: number | null;
         plan?: { price: number } | null;
     }): number {
-        if (suscripcion.isFounder && suscripcion.lockedPrice !== null) {
-            return suscripcion.lockedPrice;
-        }
-        return suscripcion.plan?.price ?? 0;
+        return getEffectiveSubscriptionPrice(suscripcion);
     }
 };

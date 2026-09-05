@@ -78,6 +78,30 @@ export async function POST(req: NextRequest) {
             updated_at: new Date()
         };
 
+        // Si este plan se marca como default y tiene familia, desactivar el default anterior en la familia
+        if (Boolean(body.isDefault) && familyId) {
+            const prevDefault = await prisma.plan.findFirst({
+                where: { familyId, isDefault: true }
+            });
+            if (prevDefault) {
+                await prisma.plan.update({
+                    where: { id: prevDefault.id },
+                    data: { isDefault: false }
+                });
+                await prisma.planAuditLog.create({
+                    data: {
+                        who: 'superadmin',
+                        what: 'PLAN_UPDATED',
+                        targetType: 'PLAN',
+                        targetId: prevDefault.id,
+                        oldValue: { isDefault: true },
+                        newValue: { isDefault: false },
+                        description: `Desactivado isDefault automático por asignación a nuevo plan en familia ${familyId}`
+                    }
+                });
+            }
+        }
+
         const plan = await prisma.plan.create({
             data: planData
         });

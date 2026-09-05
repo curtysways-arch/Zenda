@@ -515,6 +515,7 @@ model Plan {
   isDefault                                                      Boolean               @default(false)
   planEntitlements                                               PlanEntitlement[]
   planLimits                                                     PlanLimit[]
+  founderPrograms                                                FounderProgram[]      @relation("FounderPlan")
 }
 
 model ProcessedMessage {
@@ -2948,8 +2949,26 @@ model PlanFamily {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
-  businessTypes BusinessType[]
-  plans         Plan[]
+  businessTypes  BusinessType[]
+  plans          Plan[]
+  founderProgram FounderProgram?
+}
+
+model FounderProgram {
+  id             String      @id @default(uuid())
+  familyId       String      @unique
+  family         PlanFamily  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  enabled        Boolean     @default(false)
+  maxMembers     Int         @default(25)
+  currentMembers Int         @default(0)
+  founderPrice   Float       @default(10.00)
+  currency       String      @default("USD")
+  billingPeriod  String      @default("monthly")
+  lifetimePrice  Boolean     @default(true)
+  founderPlanId  String?
+  founderPlan    Plan?       @relation("FounderPlan", fields: [founderPlanId], references: [id], onDelete: SetNull)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 }
 
 model PlanEntitlement {

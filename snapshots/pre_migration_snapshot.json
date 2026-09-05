@@ -1,6 +1,78 @@
 {
-  "timestamp": "2026-09-04T04:58:55.238Z",
+  "timestamp": "2026-09-05T07:48:13.461Z",
   "subscriptions": [
+    {
+      "id": "a5b57ab1-4328-4cc6-bb7b-b2d3e1631248",
+      "negocioId": "23037986-1391-4a5e-a77c-4b20a93ba695",
+      "planId": "7ebf31c4-3962-4b02-9266-5adc75dec5c6",
+      "estado": "payment_pending",
+      "fechaInicio": "2026-07-21T23:15:13.660Z",
+      "fechaFin": "2026-08-21T23:15:13.654Z",
+      "trial_inicio": null,
+      "trial_fin": null,
+      "isFounder": false,
+      "founderPosition": null,
+      "lockedPrice": null,
+      "customFeatures": null
+    },
+    {
+      "id": "adbb770d-7cde-47e4-8cff-f6441e9f1206",
+      "negocioId": "bceea0c8-e464-4a9e-b944-dd8bcef8f179",
+      "planId": "d15ec5cc-4586-4109-b92c-d6c5f42d2e72",
+      "estado": "activa",
+      "fechaInicio": "2026-06-22T20:13:17.711Z",
+      "fechaFin": "2036-01-26T23:59:59.000Z",
+      "trial_inicio": "2026-06-22T20:13:17.713Z",
+      "trial_fin": null,
+      "isFounder": false,
+      "founderPosition": null,
+      "lockedPrice": null,
+      "customFeatures": {
+        "courses_module": true
+      }
+    },
+    {
+      "id": "b523fe3e-c932-4339-86f0-2f9c2e7eb195",
+      "negocioId": "877b9c46-29da-43a9-8654-48a71132c85e",
+      "planId": "d15ec5cc-4586-4109-b92c-d6c5f42d2e72",
+      "estado": "activa",
+      "fechaInicio": "2026-06-23T21:45:36.689Z",
+      "fechaFin": "2035-12-31T23:59:59.000Z",
+      "trial_inicio": "2026-06-23T21:45:36.693Z",
+      "trial_fin": null,
+      "isFounder": false,
+      "founderPosition": null,
+      "lockedPrice": null,
+      "customFeatures": null
+    },
+    {
+      "id": "c4f8d817-56ee-4ae1-93c3-ac63abc21531",
+      "negocioId": "bee528fe-c7fe-43af-82d4-94c3da3020ae",
+      "planId": "58cb070d-d1ca-46fe-abc5-5ac9fcd7663a",
+      "estado": "activa",
+      "fechaInicio": "2026-08-27T20:01:39.450Z",
+      "fechaFin": "2026-09-27T20:01:39.446Z",
+      "trial_inicio": null,
+      "trial_fin": null,
+      "isFounder": false,
+      "founderPosition": null,
+      "lockedPrice": null,
+      "customFeatures": null
+    },
+    {
+      "id": "ece5f408-154c-48ff-8eac-90f0035b7c20",
+      "negocioId": "ddf5bab6-867b-4d57-a224-889776d2fcbc",
+      "planId": "d15ec5cc-4586-4109-b92c-d6c5f42d2e72",
+      "estado": "expired",
+      "fechaInicio": "2026-06-25T00:14:04.987Z",
+      "fechaFin": "2026-08-30T00:14:04.987Z",
+      "trial_inicio": "2026-06-25T00:14:05.005Z",
+      "trial_fin": null,
+      "isFounder": false,
+      "founderPosition": null,
+      "lockedPrice": null,
+      "customFeatures": null
+    },
     {
       "id": "sub-demo-canchas-id-100",
       "negocioId": "demo-canchas-id-100",
@@ -9,6 +81,76 @@
       "fechaInicio": "2026-07-31T19:55:55.038Z",
       "fechaFin": "2027-07-31T19:55:55.038Z",
       "trial_inicio": "2026-07-31T19:55:55.049Z",
+      "trial_fin": null,
+      "isFounder": false,
+      "founderPosition": null,
+      "lockedPrice": null,
+      "customFeatures": null
+    },
+    {
+      "id": "sub-id-aura-spa",
+      "negocioId": "demo-id-aura-spa",
+      "planId": "d15ec5cc-4586-4109-b92c-d6c5f42d2e72",
+      "estado": "active",
+      "fechaInicio": "2026-07-03T19:47:12.163Z",
+      "fechaFin": "2027-07-03T19:47:12.163Z",
+      "trial_inicio": "2026-07-03T19:47:12.163Z",
+      "trial_fin": null,
+      "isFounder": false,
+      "founderPosition": null,
+      "lockedPrice": null,
+      "customFeatures": null
+    },
+    {
+      "id": "sub-id-barber-co",
+      "negocioId": "demo-id-barber-co",
+      "planId": "d15ec5cc-4586-4109-b92c-d6c5f42d2e72",
+      "estado": "active",
+      "fechaInicio": "2026-07-03T19:47:11.863Z",
+      "fechaFin": "2027-08-12T19:47:11.863Z",
+      "trial_inicio": "2026-07-03T19:47:11.865Z",
+      "trial_fin": null,
+      "isFounder": false,
+      "founderPosition": null,
+      "lockedPrice": null,
+      "customFeatures": null
+    },
+    {
+      "id": "sub-id-bella-nails",
+      "negocioId": "demo-id-bella-nails",
+      "planId": "d15ec5cc-4586-4109-b92c-d6c5f42d2e72",
+      "estado": "active",
+      "fechaInicio": "2026-07-03T19:47:12.430Z",
+      "fechaFin": "2027-07-03T19:47:12.430Z",
+      "trial_inicio": "2026-07-03T19:47:12.430Z",
+      "trial_fin": null,
+      "isFounder": false,
+      "founderPosition": null,
+      "lockedPrice": null,
+      "customFeatures": null
+    },
+    {
+      "id": "sub-id-dental-chip",
+      "negocioId": "demo-id-dental-chip",
+      "planId": "d15ec5cc-4586-4109-b92c-d6c5f42d2e72",
+      "estado": "active",
+      "fechaInicio": "2026-07-03T19:47:12.890Z",
+      "fechaFin": "2027-07-03T19:47:12.890Z",
+      "trial_inicio": "2026-07-03T19:47:12.891Z",
+      "trial_fin": null,
+      "isFounder": false,
+      "founderPosition": null,
+      "lockedPrice": null,
+      "customFeatures": null
+    },
+    {
+      "id": "sub-id-vortex-fitness",
+      "negocioId": "demo-id-vortex-fitness",
+      "planId": "d15ec5cc-4586-4109-b92c-d6c5f42d2e72",
+      "estado": "active",
+      "fechaInicio": "2026-07-03T19:47:12.645Z",
+      "fechaFin": "2027-07-03T19:47:12.645Z",
+      "trial_inicio": "2026-07-03T19:47:12.646Z",
       "trial_fin": null,
       "isFounder": false,
       "founderPosition": null,
@@ -30,10 +172,19 @@
       "customFeatures": null
     }
   ],
-  "globalConfigs": [],
+  "globalConfigs": [
+    {
+      "clave": "FOUNDER_LOCKED_PRICE",
+      "valor": "10"
+    },
+    {
+      "clave": "FOUNDER_MAX",
+      "valor": "25"
+    }
+  ],
   "referralCounts": {
-    "campaigns": 0,
-    "codes": 2,
+    "campaigns": 3,
+    "codes": 22,
     "events": 0,
     "rewards": 0
   }

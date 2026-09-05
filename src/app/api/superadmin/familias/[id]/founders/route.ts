@@ -1,0 +1,106 @@
+import { NextRequest, NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+import { getEffectiveSubscriptionPrice } from "@/lib/services/planService";
+
+export const dynamic = "force-dynamic";
+
+export async function GET(
+    req: NextRequest,
+    { params }: { params: { id: string } }
+) {
+    try {
+        const { id: familyId } = params;
+
+        const family = await prisma.planFamily.findUnique({
+            where: { id: familyId }
+        });
+
+        if (!family) {
+            return NextResponse.json({ error: "Familia no encontrada" }, { status: 404 });
+        }
+
+        // Buscar suscripciones fundadoras vinculadas a la familia por plan o por tipo de negocio
+        const founderSubscriptions = await prisma.suscripcion.findMany({
+            where: {
+                isFounder: true,
+                OR: [
+                    {
+                        plan: {
+                            familyId: familyId
+                        }
+                    },
+                    {
+                        negocio: {
+                            businessType: {
+                                familyId: familyId
+                            }
+                        }
+                    }
+                ]
+            },
+            include: {
+                negocio: {
+                    select: {
+                        id: true,
+                        nombre: true,
+                        slug: true,
+                        telefono: true,
+                        email: true,
+                        createdAt: true,
+                        businessType: {
+                            select: { id: true, name: true, slug: true }
+                        }
+                    }
+                },
+                plan: {
+                    select: {
+                        id: true,
+                        name: true,
+                        price: true,
+                        currency: true
+                    }
+                }
+            },
+            orderBy: [
+                { founderPosition: 'asc' },
+                { createdAt: 'asc' }
+            ]
+        });
+
+        const formattedFounders = founderSubscriptions.map((sub) => {
+            const effectivePrice = getEffectiveSubscriptionPrice(sub as any);
+
+            return {
+                id: sub.id,
+                founderPosition: sub.founderPosition,
+                businessId: sub.negocio.id,
+                businessName: sub.negocio.nombre,
+                businessSlug: sub.negocio.slug,
+                businessPhone: sub.negocio.telefono,
+                businessEmail: sub.negocio.email,
+                businessType: sub.negocio.businessType?.name || 'No especificado',
+                planId: sub.plan?.id,
+                planName: sub.plan?.name || 'Sin Plan',
+                lockedPrice: sub.lockedPrice,
+                effectivePrice: effectivePrice,
+                currency: sub.plan?.currency || 'USD',
+                status: sub.estado,
+                startDate: sub.fechaInicio,
+                createdAt: sub.createdAt
+            };
+        });
+
+        return NextResponse.json({
+            family: {
+                id: family.id,
+                name: family.name,
+                code: family.code
+            },
+            founders: formattedFounders,
+            totalFounders: formattedFounders.length
+        });
+    } catch (error: any) {
+        console.error("Error fetching founders list:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}

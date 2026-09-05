@@ -94,6 +94,30 @@ export async function PATCH(
         if (body.familyId !== undefined) updateData.familyId = body.familyId || null;
         if (body.activo !== undefined) updateData.activo = Boolean(body.activo);
 
+        const targetFamilyId = updateData.familyId !== undefined ? updateData.familyId : currentPlan.familyId;
+        if (updateData.isDefault && targetFamilyId) {
+            const prevDefault = await prisma.plan.findFirst({
+                where: { familyId: targetFamilyId, isDefault: true, id: { not: id } }
+            });
+            if (prevDefault) {
+                await prisma.plan.update({
+                    where: { id: prevDefault.id },
+                    data: { isDefault: false }
+                });
+                await prisma.planAuditLog.create({
+                    data: {
+                        who: 'superadmin',
+                        what: 'PLAN_UPDATED',
+                        targetType: 'PLAN',
+                        targetId: prevDefault.id,
+                        oldValue: { isDefault: true },
+                        newValue: { isDefault: false },
+                        description: `Desactivado isDefault automático por asignación al plan ${id} en familia ${targetFamilyId}`
+                    }
+                });
+            }
+        }
+
         const updatedPlan = await prisma.plan.update({
             where: { id },
             data: updateData

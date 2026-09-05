@@ -49,6 +49,10 @@ import {
     Lock
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import FamilyFounderTab from './plan-family/FamilyFounderTab';
+import FamilyBusinessTypesTab from './plan-family/FamilyBusinessTypesTab';
+import FamilyConfigTab from './plan-family/FamilyConfigTab';
+import FamilyAuditTab from './plan-family/FamilyAuditTab';
 
 interface PlanFamilyData {
     id: string;
@@ -61,6 +65,7 @@ interface PlanFamilyData {
     displayOrder: number;
     businessTypes?: { id: string; name: string; slug: string }[];
     plans: any[];
+    founderProgram?: any;
     activeBusinessesCount: number;
 }
 
@@ -144,11 +149,31 @@ export default function SuperadminPlanManager({
     const router = useRouter();
     const [families, setFamilies] = useState<PlanFamilyData[]>(initialFamilies);
     const [selectedFamilyId, setSelectedFamilyId] = useState<string>(initialFamilies[0]?.id || '');
+    const [activeFamilyTab, setActiveFamilyTab] = useState<'planes' | 'fundadores' | 'business_types' | 'configuracion' | 'auditoria'>('planes');
     const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
     const [isFamilyModalOpen, setIsFamilyModalOpen] = useState(false);
     const [editingPlan, setEditingPlan] = useState<any | null>(null);
     const [loading, setLoading] = useState(false);
     const [dependencyWarning, setDependencyWarning] = useState<string | null>(null);
+
+    const refreshFamilies = async () => {
+        try {
+            const famRes = await fetch('/api/superadmin/plan-families');
+            const famData = await famRes.json();
+            if (famData.families) setFamilies(famData.families);
+        } catch (err) {
+            console.error("Error refreshing families:", err);
+        }
+    };
+
+    const handleFamilyDeleted = () => {
+        refreshFamilies();
+        const remaining = families.filter(f => f.id !== selectedFamilyId);
+        if (remaining.length > 0) {
+            setSelectedFamilyId(remaining[0].id);
+        }
+        setActiveFamilyTab('planes');
+    };
 
     // Estado del Formulario de Plan
     const [planForm, setPlanForm] = useState({
@@ -477,119 +502,225 @@ export default function SuperadminPlanManager({
                 })}
             </div>
 
-            {/* 3. Listado de Planes de la Familia Seleccionada */}
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-8 space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-                    <div>
-                        <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-black uppercase tracking-wider border border-indigo-100">
-                            Familia: {activeFamily?.code}
-                        </span>
-                        <h3 className="text-xl font-black text-slate-900 tracking-tight mt-1">
-                            Planes para {activeFamily?.name}
-                        </h3>
-                    </div>
-
+            {/* 3. Panel de la Familia Seleccionada con Pestañas de Gestión */}
+            <div className="space-y-6">
+                {/* Selector de Pestañas */}
+                <div className="flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-px">
                     <button
-                        onClick={handleOpenCreatePlan}
-                        className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+                        onClick={() => setActiveFamilyTab('planes')}
+                        className={`px-4 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                            activeFamilyTab === 'planes'
+                                ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
+                                : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
+                        }`}
                     >
-                        <Plus size={15} /> Añadir Plan a {activeFamily?.name.split(' ')[0]}
+                        <Package size={15} />
+                        Planes ({activeFamily?.plans?.length || 0})
+                    </button>
+                    <button
+                        onClick={() => setActiveFamilyTab('fundadores')}
+                        className={`px-4 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                            activeFamilyTab === 'fundadores'
+                                ? 'border-amber-500 text-amber-600 bg-amber-50/50 rounded-t-xl'
+                                : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
+                        }`}
+                    >
+                        <Award size={15} />
+                        Socios Fundadores
+                        {activeFamily?.founderProgram?.enabled && (
+                            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                        )}
+                    </button>
+                    <button
+                        onClick={() => setActiveFamilyTab('business_types')}
+                        className={`px-4 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                            activeFamilyTab === 'business_types'
+                                ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
+                                : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
+                        }`}
+                    >
+                        <Layers size={15} />
+                        Tipos de Negocio ({activeFamily?.businessTypes?.length || 0})
+                    </button>
+                    <button
+                        onClick={() => setActiveFamilyTab('configuracion')}
+                        className={`px-4 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                            activeFamilyTab === 'configuracion'
+                                ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
+                                : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
+                        }`}
+                    >
+                        <SlidersHorizontal size={15} />
+                        Configuración Familia
+                    </button>
+                    <button
+                        onClick={() => setActiveFamilyTab('auditoria')}
+                        className={`px-4 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                            activeFamilyTab === 'auditoria'
+                                ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50 rounded-t-xl'
+                                : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
+                        }`}
+                    >
+                        <Activity size={15} />
+                        Auditoría
                     </button>
                 </div>
 
-                {activeFamily?.plans?.length === 0 ? (
-                    <div className="text-center py-12 space-y-3">
-                        <Package size={40} className="mx-auto text-slate-300" />
-                        <p className="text-sm font-bold text-slate-600">No hay planes creados en esta familia</p>
-                        <button
-                            onClick={handleOpenCreatePlan}
-                            className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs"
-                        >
-                            Crear Primer Plan
-                        </button>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {activeFamily?.plans?.map(plan => {
-                            const modulesCount = plan.planEntitlements?.filter((pe: any) => pe.enabled).length || 0;
+                {/* Contenido de la pestaña PLANES */}
+                {activeFamilyTab === 'planes' && (
+                    <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-8 space-y-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                            <div>
+                                <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-black uppercase tracking-wider border border-indigo-100">
+                                    Familia: {activeFamily?.code}
+                                </span>
+                                <h3 className="text-xl font-black text-slate-900 tracking-tight mt-1">
+                                    Planes para {activeFamily?.name}
+                                </h3>
+                            </div>
 
-                            return (
-                                <div
-                                    key={plan.id}
-                                    className={`rounded-3xl p-6 border transition-all flex flex-col justify-between group ${
-                                        plan.featured
-                                            ? 'border-2 border-indigo-600 bg-indigo-50/20 shadow-xl shadow-indigo-600/10'
-                                            : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md'
-                                    }`}
+                            <button
+                                onClick={handleOpenCreatePlan}
+                                className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+                            >
+                                <Plus size={15} /> Añadir Plan a {activeFamily?.name?.split(' ')[0] || ''}
+                            </button>
+                        </div>
+
+                        {activeFamily?.plans?.length === 0 ? (
+                            <div className="text-center py-12 space-y-3">
+                                <Package size={40} className="mx-auto text-slate-300" />
+                                <p className="text-sm font-bold text-slate-600">No hay planes creados en esta familia</p>
+                                <button
+                                    onClick={handleOpenCreatePlan}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs cursor-pointer"
                                 >
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between gap-2">
-                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                {plan.isDefault && (
-                                                    <span className="px-2.5 py-0.5 bg-slate-900 text-white rounded-full text-[9px] font-black uppercase tracking-wider">
-                                                        Por Defecto
-                                                    </span>
-                                                )}
-                                                {plan.featured && (
-                                                    <span className="px-2.5 py-0.5 bg-amber-400 text-slate-950 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
-                                                        <Star size={10} className="fill-slate-950" /> Destacado
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                                                plan.activo ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
-                                            }`}>
-                                                {plan.activo ? 'Activo' : 'Inactivo'}
-                                            </span>
-                                        </div>
+                                    Crear Primer Plan
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {activeFamily?.plans?.map(plan => {
+                                    const modulesCount = plan.planEntitlements?.filter((pe: any) => pe.enabled).length || 0;
 
-                                        <div>
-                                            <h4 className="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors">
-                                                {plan.name}
-                                            </h4>
-                                            <p className="text-xs text-slate-500 font-medium line-clamp-2 mt-1">
-                                                {plan.description || 'Sin descripción'}
-                                            </p>
-                                        </div>
-
-                                        <div className="pt-2">
-                                            <span className="text-3xl font-black text-slate-950">${plan.price}</span>
-                                            <span className="text-xs text-slate-400 font-bold"> / {plan.billingPeriod || 'mes'}</span>
-                                        </div>
-
-                                        <div className="py-2 border-y border-slate-100 flex items-center justify-between text-xs font-bold text-slate-600">
-                                            <span>Módulos incluidos</span>
-                                            <span className="text-indigo-600 font-black">{modulesCount} activos</span>
-                                        </div>
-
-                                        {/* Lista corta de módulos */}
-                                        <div className="space-y-1.5 pt-1">
-                                            {plan.planEntitlements?.slice(0, 5).map((pe: any) => (
-                                                <div key={pe.id} className="flex items-center gap-2 text-xs font-medium text-slate-700">
-                                                    <Check size={14} className="text-emerald-500 shrink-0" />
-                                                    <span className="truncate">{pe.module?.name || pe.module?.code}</span>
-                                                </div>
-                                            ))}
-                                            {modulesCount > 5 && (
-                                                <p className="text-[11px] font-bold text-slate-400 pt-1">
-                                                    + {modulesCount - 5} módulos más
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-6 mt-4 border-t border-slate-100 flex items-center gap-2">
-                                        <button
-                                            onClick={() => handleOpenEditPlan(plan)}
-                                            className="flex-1 py-2.5 bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-700 rounded-xl font-black text-xs uppercase tracking-wider transition-all text-center cursor-pointer"
+                                    return (
+                                        <div
+                                            key={plan.id}
+                                            className={`rounded-3xl p-6 border transition-all flex flex-col justify-between group ${
+                                                plan.featured
+                                                    ? 'border-2 border-indigo-600 bg-indigo-50/20 shadow-xl shadow-indigo-600/10'
+                                                    : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md'
+                                            }`}
                                         >
-                                            Editar Plan
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        {plan.isDefault && (
+                                                            <span className="px-2.5 py-0.5 bg-slate-900 text-white rounded-full text-[9px] font-black uppercase tracking-wider">
+                                                                Por Defecto
+                                                            </span>
+                                                        )}
+                                                        {plan.featured && (
+                                                            <span className="px-2.5 py-0.5 bg-amber-400 text-slate-950 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
+                                                                <Star size={10} className="fill-slate-950" /> Destacado
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                                                        plan.activo ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
+                                                    }`}>
+                                                        {plan.activo ? 'Activo' : 'Inactivo'}
+                                                    </span>
+                                                </div>
+
+                                                <div>
+                                                    <h4 className="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors">
+                                                        {plan.name}
+                                                    </h4>
+                                                    <p className="text-xs text-slate-500 font-medium line-clamp-2 mt-1">
+                                                        {plan.description || 'Sin descripción'}
+                                                    </p>
+                                                </div>
+
+                                                <div className="pt-2">
+                                                    <span className="text-3xl font-black text-slate-950">${plan.price}</span>
+                                                    <span className="text-xs text-slate-400 font-bold"> / {plan.billingPeriod || 'mes'}</span>
+                                                </div>
+
+                                                <div className="py-2 border-y border-slate-100 flex items-center justify-between text-xs font-bold text-slate-600">
+                                                    <span>Módulos incluidos</span>
+                                                    <span className="text-indigo-600 font-black">{modulesCount} activos</span>
+                                                </div>
+
+                                                {/* Lista corta de módulos */}
+                                                <div className="space-y-1.5 pt-1">
+                                                    {plan.planEntitlements?.slice(0, 5).map((pe: any) => (
+                                                        <div key={pe.id} className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                                                            <Check size={14} className="text-emerald-500 shrink-0" />
+                                                            <span className="truncate">{pe.module?.name || pe.module?.code}</span>
+                                                        </div>
+                                                    ))}
+                                                    {modulesCount > 5 && (
+                                                        <p className="text-[11px] font-bold text-slate-400 pt-1">
+                                                            + {modulesCount - 5} módulos más
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="pt-6 mt-4 border-t border-slate-100 flex items-center gap-2">
+                                                <button
+                                                    onClick={() => handleOpenEditPlan(plan)}
+                                                    className="flex-1 py-2.5 bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-700 rounded-xl font-black text-xs uppercase tracking-wider transition-all text-center cursor-pointer"
+                                                >
+                                                    Editar Plan
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
+                )}
+
+                {/* Contenido de la pestaña SOCIOS FUNDADORES */}
+                {activeFamilyTab === 'fundadores' && (
+                    <FamilyFounderTab
+                        familyId={activeFamily.id}
+                        familyName={activeFamily.name}
+                        familyCode={activeFamily.code}
+                        plans={activeFamily.plans || []}
+                        initialProgram={activeFamily.founderProgram}
+                        onProgramUpdated={refreshFamilies}
+                    />
+                )}
+
+                {/* Contenido de la pestaña TIPOS DE NEGOCIO */}
+                {activeFamilyTab === 'business_types' && (
+                    <FamilyBusinessTypesTab
+                        familyId={activeFamily.id}
+                        familyName={activeFamily.name}
+                        familyCode={activeFamily.code}
+                        businessTypes={activeFamily.businessTypes || []}
+                    />
+                )}
+
+                {/* Contenido de la pestaña CONFIGURACIÓN */}
+                {activeFamilyTab === 'configuracion' && (
+                    <FamilyConfigTab
+                        family={activeFamily}
+                        onFamilyUpdated={refreshFamilies}
+                        onFamilyDeleted={handleFamilyDeleted}
+                    />
+                )}
+
+                {/* Contenido de la pestaña AUDITORÍA */}
+                {activeFamilyTab === 'auditoria' && (
+                    <FamilyAuditTab
+                        familyId={activeFamily.id}
+                        familyName={activeFamily.name}
+                    />
                 )}
             </div>
 

@@ -8,6 +8,13 @@ export default async function PlanesPage() {
     const rawFamilies = await prisma.planFamily.findMany({
         orderBy: { displayOrder: 'asc' },
         include: {
+            founderProgram: {
+                include: {
+                    founderPlan: {
+                        select: { id: true, name: true, price: true }
+                    }
+                }
+            },
             businessTypes: {
                 select: {
                     id: true,
@@ -64,6 +71,7 @@ export default async function PlanesPage() {
             displayOrder: fam.displayOrder,
             businessTypes: fam.businessTypes,
             plans: fam.plans,
+            founderProgram: fam.founderProgram,
             activeBusinessesCount: activeSubsCount
         };
     }));
