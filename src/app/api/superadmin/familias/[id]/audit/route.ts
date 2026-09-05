@@ -5,10 +5,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id: familyId } = params;
+        const { id: familyId } = await params;
 
         // Obtener los IDs de los planes de esta familia
         const plans = await prisma.plan.findMany({

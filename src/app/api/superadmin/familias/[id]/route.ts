@@ -5,10 +5,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id } = params;
+        const { id } = await params;
 
         const family = await prisma.planFamily.findUnique({
             where: { id },
@@ -74,10 +74,10 @@ export async function GET(
 
 export async function PUT(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id } = params;
+        const { id } = await params;
         const body = await req.json();
         const { name, code, slug, description, icon, active, displayOrder } = body;
 
@@ -125,10 +125,10 @@ export async function PUT(
 
 export async function DELETE(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id } = params;
+        const { id } = await params;
 
         const family = await prisma.planFamily.findUnique({
             where: { id },
@@ -173,7 +173,7 @@ export async function DELETE(
             }, { status: 400 });
         }
 
-        // Borrar founderProgram si existe y no tiene fundadores asignados
+        // Borrar founderProgram si existe
         await prisma.founderProgram.deleteMany({
             where: { familyId: id }
         });

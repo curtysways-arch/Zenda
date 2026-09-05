@@ -6,10 +6,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id: familyId } = params;
+        const { id: familyId } = await params;
 
         const family = await prisma.planFamily.findUnique({
             where: { id: familyId }
@@ -44,8 +44,8 @@ export async function GET(
                         id: true,
                         nombre: true,
                         slug: true,
-                        telefono: true,
-                        email: true,
+                        whatsapp: true,
+                        emailContacto: true,
                         createdAt: true,
                         businessType: {
                             select: { id: true, name: true, slug: true }
@@ -76,8 +76,8 @@ export async function GET(
                 businessId: sub.negocio.id,
                 businessName: sub.negocio.nombre,
                 businessSlug: sub.negocio.slug,
-                businessPhone: sub.negocio.telefono,
-                businessEmail: sub.negocio.email,
+                businessPhone: sub.negocio.whatsapp,
+                businessEmail: sub.negocio.emailContacto,
                 businessType: sub.negocio.businessType?.name || 'No especificado',
                 planId: sub.plan?.id,
                 planName: sub.plan?.name || 'Sin Plan',

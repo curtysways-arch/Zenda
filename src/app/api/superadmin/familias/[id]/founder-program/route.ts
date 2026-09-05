@@ -5,10 +5,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id: familyId } = params;
+        const { id: familyId } = await params;
 
         let program = await prisma.founderProgram.findUnique({
             where: { familyId },
@@ -20,7 +20,6 @@ export async function GET(
         });
 
         if (!program) {
-            // Si no existe, podemos retornar una plantilla por defecto sin persistir
             return NextResponse.json({
                 familyId,
                 enabled: false,
@@ -44,10 +43,10 @@ export async function GET(
 
 export async function PUT(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id: familyId } = params;
+        const { id: familyId } = await params;
         const body = await req.json();
 
         const family = await prisma.planFamily.findUnique({
