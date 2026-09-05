@@ -161,7 +161,7 @@ export async function DELETE(
         const activeBusinesses = await prisma.negocio.count({
             where: {
                 BusinessType: {
-                    familyId: id
+                    planFamilyId: id
                 }
             }
         });

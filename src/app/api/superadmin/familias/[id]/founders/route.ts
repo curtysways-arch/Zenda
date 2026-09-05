@@ -32,7 +32,7 @@ export async function GET(
                     {
                         Negocio: {
                             BusinessType: {
-                                familyId: familyId
+                                planFamilyId: familyId
                             }
                         }
                     }
