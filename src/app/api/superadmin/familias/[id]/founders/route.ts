@@ -25,7 +25,7 @@ export async function GET(
                 isFounder: true,
                 OR: [
                     {
-                        plan: {
+                        Plan: {
                             familyId: familyId
                         }
                     },
@@ -52,7 +52,7 @@ export async function GET(
                         }
                     }
                 },
-                plan: {
+                Plan: {
                     select: {
                         id: true,
                         name: true,
@@ -67,8 +67,8 @@ export async function GET(
             ]
         });
 
-        const formattedFounders = founderSubscriptions.map((sub) => {
-            const effectivePrice = getEffectiveSubscriptionPrice(sub as any);
+        const formattedFounders = founderSubscriptions.map((sub: any) => {
+            const effectivePrice = getEffectiveSubscriptionPrice(sub);
 
             return {
                 id: sub.id,
@@ -79,11 +79,11 @@ export async function GET(
                 businessPhone: sub.negocio.whatsapp,
                 businessEmail: sub.negocio.emailContacto,
                 businessType: sub.negocio.businessType?.name || 'No especificado',
-                planId: sub.plan?.id,
-                planName: sub.plan?.name || 'Sin Plan',
+                planId: sub.Plan?.id,
+                planName: sub.Plan?.name || 'Sin Plan',
                 lockedPrice: sub.lockedPrice,
                 effectivePrice: effectivePrice,
-                currency: sub.plan?.currency || 'USD',
+                currency: sub.Plan?.currency || 'USD',
                 status: sub.estado,
                 startDate: sub.fechaInicio,
                 createdAt: sub.createdAt
