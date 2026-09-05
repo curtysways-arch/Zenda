@@ -32,13 +32,24 @@ export default async function PlanesPage() {
         }
     });
 
-    // 2. Contar negocios activos por familia
+    // 2. Contar negocios asociados por familia (vía suscripción activa o vía tipo de negocio vinculado)
     const families = await Promise.all(rawFamilies.map(async (fam) => {
         const planIds = fam.plans.map(p => p.id);
-        const activeSubsCount = await prisma.suscripcion.count({
+        const businessTypeIds = fam.businessTypes.map(bt => bt.id);
+
+        const activeSubsCount = await prisma.negocio.count({
             where: {
-                planId: { in: planIds },
-                estado: { in: ['activa', 'active', 'trial'] }
+                OR: [
+                    {
+                        Suscripcion: {
+                            planId: { in: planIds },
+                            estado: { in: ['activa', 'active', 'trial'] }
+                        }
+                    },
+                    {
+                        businessTypeId: { in: businessTypeIds }
+                    }
+                ]
             }
         });
 
