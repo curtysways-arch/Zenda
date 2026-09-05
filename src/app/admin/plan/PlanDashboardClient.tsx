@@ -349,7 +349,13 @@ export default function PlanDashboardClient({
                             <div className="mb-6">
                                 <h4 className="text-xl font-black text-slate-900 mb-1">{plan.name}</h4>
                                 <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-                                    {(plan as any).maxStaff >= 999999 ? (isRestaurant ? 'Usuarios Ilimitados' : 'Personal Ilimitado') : `${(plan as any).maxStaff} ${isRestaurant ? 'USUARIOS' : 'PROFESIONALES'}`} • {plan.max_locations || 1} SEDE{(plan as any).max_locations > 1 ? 'S' : ''}
+                                    {(() => {
+                                        const usersLimit = plan.planLimits?.find((l: any) => l.limitKey === 'MAX_USERS')?.limitValue ?? (plan as any).maxStaff;
+                                        if (usersLimit === -1 || usersLimit >= 999999) {
+                                            return isRestaurant ? 'Usuarios Ilimitados' : 'Personal Ilimitado';
+                                        }
+                                        return `${usersLimit || 1} ${isRestaurant ? 'USUARIOS' : 'PROFESIONALES'}`;
+                                    })()} • {plan.max_locations || 1} SEDE{(plan as any).max_locations > 1 ? 'S' : ''}
                                 </p>
                             </div>
 
