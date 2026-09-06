@@ -516,6 +516,7 @@ model Plan {
   planEntitlements                                               PlanEntitlement[]
   planLimits                                                     PlanLimit[]
   founderPrograms                                                FounderProgram[]      @relation("FounderPlan")
+  dataPolicies                                                   PlanDataPolicy[]
 }
 
 model ProcessedMessage {
@@ -2995,6 +2996,23 @@ model PlanLimit {
   plan       Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
 
   @@unique([planId, limitKey])
+}
+
+model PlanDataPolicy {
+  id        String   @id @default(uuid())
+  planId    String
+  plan      Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  resource  String   // ORDERS, APPOINTMENTS, RESERVATIONS, SERVICE_ORDERS, STORE_ORDERS, CUSTOMERS
+  action    String   // RECEIVE, VIEW, VIEW_DETAILS, VIEW_CUSTOMER, VIEW_CONTACT, VIEW_ITEMS, VIEW_PRICES, VIEW_FINANCIALS, MANAGE, EXPORT
+  effect    String   @default("DENY") // ALLOW | DENY
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([planId, resource, action])
+  @@index([planId])
+  @@index([resource])
 }
 
 model PlanAuditLog {

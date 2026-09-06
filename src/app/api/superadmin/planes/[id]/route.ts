@@ -15,6 +15,7 @@ export async function GET(
                     include: { module: true }
                 },
                 planLimits: true,
+                dataPolicies: true,
                 _count: {
                     select: { Suscripcion: true }
                 }
@@ -43,7 +44,8 @@ export async function PATCH(
             where: { id },
             include: {
                 planEntitlements: { include: { module: true } },
-                planLimits: true
+                planLimits: true,
+                dataPolicies: true
             }
         });
 
@@ -89,12 +91,27 @@ export async function PATCH(
         if (body.displayOrder !== undefined) updateData.displayOrder = Math.floor(Number(body.displayOrder));
         if (body.featured !== undefined) updateData.featured = Boolean(body.featured);
         if (body.isDefault !== undefined) updateData.isDefault = Boolean(body.isDefault);
+        if (body.isFree !== undefined) updateData.isFree = Boolean(body.isFree);
         if (body.is_recommended !== undefined) updateData.is_recommended = Boolean(body.is_recommended);
         if (body.isPublic !== undefined) updateData.isPublic = Boolean(body.isPublic);
         if (body.familyId !== undefined) updateData.familyId = body.familyId || null;
         if (body.activo !== undefined) updateData.activo = Boolean(body.activo);
 
         const targetFamilyId = updateData.familyId !== undefined ? updateData.familyId : currentPlan.familyId;
+
+        // Validar unicidad de Plan Free en la familia
+        if (updateData.isFree && targetFamilyId) {
+            const prevFree = await prisma.plan.findFirst({
+                where: { familyId: targetFamilyId, isFree: true, id: { not: id } }
+            });
+            if (prevFree) {
+                return NextResponse.json({
+                    error: `La familia ya posee un Plan Free: '${prevFree.name}'. Solo se permite un Plan Free por familia.`,
+                    code: 'FREE_PLAN_DUPLICATE'
+                }, { status: 400 });
+            }
+        }
+
         if (updateData.isDefault && targetFamilyId) {
             const prevDefault = await prisma.plan.findFirst({
                 where: { familyId: targetFamilyId, isDefault: true, id: { not: id } }
@@ -161,7 +178,31 @@ export async function PATCH(
             }
         }
 
-        // 5. Registrar Auditoría
+        // 5. Sincronizar PlanDataPolicies si fueron enviadas
+        if (Array.isArray(body.dataPolicies)) {
+            for (const dp of body.dataPolicies) {
+                await prisma.planDataPolicy.upsert({
+                    where: {
+                        planId_resource_action: {
+                            planId: id,
+                            resource: dp.resource,
+                            action: dp.action
+                        }
+                    },
+                    create: {
+                        planId: id,
+                        resource: dp.resource,
+                        action: dp.action,
+                        effect: dp.effect || 'DENY'
+                    },
+                    update: {
+                        effect: dp.effect || 'DENY'
+                    }
+                });
+            }
+        }
+
+        // 6. Registrar Auditoría
         await prisma.planAuditLog.create({
             data: {
                 who: 'superadmin',

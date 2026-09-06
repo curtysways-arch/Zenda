@@ -69,7 +69,7 @@ export default async function LandingPage() {
     try {
         const [planesDb, countDb, configsDb] = await Promise.all([
             prisma.plan.findMany({
-                where: { activo: true, id: { not: 'founder' } },
+                where: { activo: true, isFree: false, id: { not: 'founder' } },
                 orderBy: { price: 'asc' }
             }).catch(() => []),
             (prisma.suscripcion as any).count({
@@ -87,7 +87,7 @@ export default async function LandingPage() {
 
         planes = (planesDb || []).filter((p: any) => {
             const name = (p.name || '').toUpperCase();
-            return !name.includes('BEGIN') && p.id !== 'plan_begin';
+            return !name.includes('BEGIN') && p.id !== 'plan_begin' && !p.isFree;
         });
         activeFoundersCount = typeof countDb === 'number' ? countDb : 4;
         

@@ -25,7 +25,7 @@ export default async function CanchasLandingPage() {
         where: { code: 'CANCHAS' },
         include: {
             plans: {
-                where: { activo: true, isPublic: true },
+                where: { activo: true, isPublic: true, isFree: false },
                 orderBy: { displayOrder: 'asc' },
                 include: {
                     planEntitlements: {

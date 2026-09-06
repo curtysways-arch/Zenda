@@ -27,7 +27,9 @@ export async function GET() {
             },
             orderBy: { createdAt: 'desc' }
         });
-        return NextResponse.json(pedidos);
+        const { AccessPolicyService } = await import('@/core/security/AccessPolicyService');
+        const protectedPedidos = await AccessPolicyService.protectOrders(negocioId, pedidos);
+        return NextResponse.json(protectedPedidos);
     } catch (e) {
         console.error('[API_PEDIDOS_GET]', e);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

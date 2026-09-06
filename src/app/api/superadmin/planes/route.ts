@@ -15,6 +15,7 @@ export async function GET() {
                     include: { module: true }
                 },
                 planLimits: true,
+                dataPolicies: true,
                 _count: {
                     select: { Suscripcion: true }
                 }
@@ -73,10 +74,24 @@ export async function POST(req: NextRequest) {
             isDefault: Boolean(body.isDefault ?? false),
             is_recommended: Boolean(body.featured ?? false),
             isPublic: body.isPublic !== undefined ? Boolean(body.isPublic) : true,
+            isFree: Boolean(body.isFree ?? false),
             familyId: familyId,
             activo: body.activo !== undefined ? Boolean(body.activo) : true,
             updated_at: new Date()
         };
+
+        // Si este plan se marca como isFree y tiene familia, validar que no exista otro Free en la familia
+        if (Boolean(body.isFree) && familyId) {
+            const prevFree = await prisma.plan.findFirst({
+                where: { familyId, isFree: true }
+            });
+            if (prevFree) {
+                return NextResponse.json({
+                    error: `La familia ya posee un Plan Free: '${prevFree.name}'. Solo se permite un Plan Free por familia.`,
+                    code: 'FREE_PLAN_DUPLICATE'
+                }, { status: 400 });
+            }
+        }
 
         // Si este plan se marca como default y tiene familia, desactivar el default anterior en la familia
         if (Boolean(body.isDefault) && familyId) {
@@ -132,6 +147,20 @@ export async function POST(req: NextRequest) {
                     limitValue: typeof val === 'number' ? val : parseInt(String(val), 10)
                 }
             });
+        }
+
+        // 5. Crear PlanDataPolicies si fueron provistas
+        if (Array.isArray(body.dataPolicies) && body.dataPolicies.length > 0) {
+            for (const dp of body.dataPolicies) {
+                await prisma.planDataPolicy.create({
+                    data: {
+                        planId: plan.id,
+                        resource: dp.resource,
+                        action: dp.action,
+                        effect: dp.effect || 'DENY'
+                    }
+                });
+            }
         }
 
         // 5. Registrar en PlanAuditLog

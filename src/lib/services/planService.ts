@@ -59,7 +59,7 @@ export const planService = {
      */
     async getPlanes() {
         return await prisma.plan.findMany({
-            where: { id: { not: 'founder' } },
+            where: { id: { not: 'founder' }, isFree: false },
             orderBy: { price: 'asc' } as any
         });
     },

@@ -50,7 +50,9 @@ export async function GET(req: Request) {
         });
 
         const { planLimitValidator } = await import('@/lib/services/planLimitValidator');
-        const processedClientes = await planLimitValidator.obfuscateOverLimitClients(negocioId, clientesConStats);
+        const { AccessPolicyService } = await import('@/core/security/AccessPolicyService');
+        const limitProcessed = await planLimitValidator.obfuscateOverLimitClients(negocioId, clientesConStats);
+        const processedClientes = await AccessPolicyService.protectCustomers(negocioId, limitProcessed);
 
         return NextResponse.json(processedClientes);
     } catch (error) {

@@ -33,6 +33,7 @@ export async function GET() {
                             include: { module: true }
                         },
                         planLimits: true,
+                        dataPolicies: true,
                         _count: {
                             select: { Suscripcion: true }
                         }

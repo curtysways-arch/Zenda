@@ -119,10 +119,12 @@ export async function GET(
         const negocioId = session?.user ? (session.user as any).negocioId : null;
 
         let finalResponse = normalized;
-        if (negocioId) {
+        const targetBusinessId = negocioId || appointment.negocioId;
+        if (targetBusinessId) {
             const { planLimitValidator } = await import('@/lib/services/planLimitValidator');
-            const processed = await planLimitValidator.obfuscateOverLimitAppointments(negocioId, [normalized]);
-            finalResponse = processed[0];
+            const { AccessPolicyService } = await import('@/core/security/AccessPolicyService');
+            const limitProcessed = await planLimitValidator.obfuscateOverLimitAppointments(targetBusinessId, [normalized]);
+            finalResponse = await AccessPolicyService.protectAppointment(targetBusinessId, limitProcessed[0]);
         }
 
         return NextResponse.json(finalResponse);

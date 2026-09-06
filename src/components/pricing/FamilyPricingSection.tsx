@@ -15,7 +15,8 @@ export default function FamilyPricingSection({
     plans,
     registerTipo
 }: FamilyPricingSectionProps) {
-    if (!plans || plans.length === 0) return null;
+    const commercialPlans = (plans || []).filter((p: any) => !p.isFree);
+    if (!commercialPlans || commercialPlans.length === 0) return null;
 
     return (
         <section id="planes" className="py-20 bg-slate-50 border-t border-slate-200/80">
@@ -37,9 +38,9 @@ export default function FamilyPricingSection({
                 </div>
 
                 <div className={`grid grid-cols-1 gap-8 max-w-5xl mx-auto items-stretch ${
-                    plans.length === 2 ? 'md:grid-cols-2 max-w-3xl' : 'md:grid-cols-3'
+                    commercialPlans.length === 2 ? 'md:grid-cols-2 max-w-3xl' : 'md:grid-cols-3'
                 }`}>
-                    {plans.map((plan: any) => {
+                    {commercialPlans.map((plan: any) => {
                         const isFeatured = plan.featured;
                         const entitlements = plan.planEntitlements?.filter((pe: any) => pe.enabled) || [];
 

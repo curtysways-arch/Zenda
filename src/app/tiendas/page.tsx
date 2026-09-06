@@ -25,7 +25,7 @@ export default async function TiendasLandingPage() {
         where: { code: 'TIENDA' },
         include: {
             plans: {
-                where: { activo: true, isPublic: true },
+                where: { activo: true, isPublic: true, isFree: false },
                 orderBy: { displayOrder: 'asc' },
                 include: {
                     planEntitlements: {

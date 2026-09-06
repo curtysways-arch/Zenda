@@ -141,6 +141,42 @@ const MODULE_CATEGORIES: Record<string, { label: string; icon: any; modules: str
     }
 };
 
+const POLICY_ACTIONS_CONFIG = [
+    { action: 'RECEIVE', label: 'Recibir Actividad', desc: 'Permite que el público reserve o haga pedidos' },
+    { action: 'VIEW', label: 'Visualizar General (VIEW)', desc: 'Compuerta principal para listar en el panel' },
+    { action: 'VIEW_DETAILS', label: 'Ver Detalles', desc: 'Ver notas, franjas y especificaciones' },
+    { action: 'VIEW_CUSTOMER', label: 'Ver Nombre Cliente', desc: 'Identificar al comprador o paciente' },
+    { action: 'VIEW_CONTACT', label: 'Ver Contacto', desc: 'Teléfono, correo y dirección' },
+    { action: 'VIEW_ITEMS', label: 'Ver Items / Productos', desc: 'Ver los productos o platos solicitados' },
+    { action: 'VIEW_PRICES', label: 'Ver Precios', desc: 'Ver precios unitarios' },
+    { action: 'VIEW_FINANCIALS', label: 'Ver Totales y Finanzas', desc: 'Ver subtotales, totales y pagos' },
+    { action: 'MANAGE', label: 'Gestionar Estados', desc: 'Cambiar estados, cancelar o editar' },
+];
+
+const DEFAULT_PAID_POLICIES: Record<string, boolean> = {
+    RECEIVE: true,
+    VIEW: true,
+    VIEW_DETAILS: true,
+    VIEW_CUSTOMER: true,
+    VIEW_CONTACT: true,
+    VIEW_ITEMS: true,
+    VIEW_PRICES: true,
+    VIEW_FINANCIALS: true,
+    MANAGE: true,
+};
+
+const DEFAULT_FREE_POLICIES: Record<string, boolean> = {
+    RECEIVE: true,
+    VIEW: false,
+    VIEW_DETAILS: false,
+    VIEW_CUSTOMER: false,
+    VIEW_CONTACT: false,
+    VIEW_ITEMS: false,
+    VIEW_PRICES: false,
+    VIEW_FINANCIALS: false,
+    MANAGE: false,
+};
+
 export default function SuperadminPlanManager({
     initialFamilies,
     allModules,
@@ -187,9 +223,11 @@ export default function SuperadminPlanManager({
         displayOrder: 1,
         featured: false,
         isDefault: false,
+        isFree: false,
         isPublic: true,
         activo: true,
         selectedModules: new Set<string>(),
+        dataPolicies: { ...DEFAULT_PAID_POLICIES } as Record<string, boolean>,
         limits: {
             MAX_USERS: 2,
             MAX_PRODUCTS: 50,
@@ -244,9 +282,11 @@ export default function SuperadminPlanManager({
             displayOrder: (activeFamily?.plans.length || 0) + 1,
             featured: false,
             isDefault: activeFamily?.plans.length === 0,
+            isFree: false,
             isPublic: true,
             activo: true,
             selectedModules: defaultMods,
+            dataPolicies: { ...DEFAULT_PAID_POLICIES },
             limits: {
                 MAX_USERS: 2,
                 MAX_PRODUCTS: 50,
@@ -281,6 +321,13 @@ export default function SuperadminPlanManager({
             });
         }
 
+        const currentPolicies: Record<string, boolean> = plan.isFree ? { ...DEFAULT_FREE_POLICIES } : { ...DEFAULT_PAID_POLICIES };
+        if (plan.dataPolicies && plan.dataPolicies.length > 0) {
+            plan.dataPolicies.forEach((dp: any) => {
+                currentPolicies[dp.action] = dp.effect === 'ALLOW';
+            });
+        }
+
         setPlanForm({
             name: plan.name,
             slug: plan.slug || '',
@@ -292,9 +339,11 @@ export default function SuperadminPlanManager({
             displayOrder: plan.displayOrder || 1,
             featured: Boolean(plan.featured),
             isDefault: Boolean(plan.isDefault),
+            isFree: Boolean(plan.isFree),
             isPublic: plan.isPublic !== undefined ? Boolean(plan.isPublic) : true,
             activo: plan.activo !== undefined ? Boolean(plan.activo) : true,
             selectedModules: currentMods,
+            dataPolicies: currentPolicies,
             limits: {
                 MAX_USERS: limitsMap.MAX_USERS ?? 2,
                 MAX_PRODUCTS: limitsMap.MAX_PRODUCTS ?? 50,
@@ -349,6 +398,18 @@ export default function SuperadminPlanManager({
         setDependencyWarning(null);
 
         try {
+            const primaryResource = activeFamily?.code === 'SERVICIOS' ? 'APPOINTMENTS' : activeFamily?.code === 'CANCHAS' ? 'RESERVATIONS' : activeFamily?.code === 'LAVANDERIA' ? 'SERVICE_ORDERS' : activeFamily?.code === 'TIENDA' ? 'STORE_ORDERS' : 'ORDERS';
+            const primaryPoliciesList = Object.entries(planForm.dataPolicies).map(([action, allowed]) => ({
+                resource: primaryResource,
+                action,
+                effect: allowed ? 'ALLOW' : 'DENY'
+            }));
+            const customerPoliciesList = [
+                { resource: 'CUSTOMERS', action: 'VIEW', effect: planForm.dataPolicies['VIEW'] ? 'ALLOW' : 'DENY' },
+                { resource: 'CUSTOMERS', action: 'VIEW_CONTACT', effect: planForm.dataPolicies['VIEW_CONTACT'] ? 'ALLOW' : 'DENY' },
+                { resource: 'CUSTOMERS', action: 'VIEW_FINANCIALS', effect: planForm.dataPolicies['VIEW_FINANCIALS'] ? 'ALLOW' : 'DENY' },
+            ];
+
             const payload = {
                 name: planForm.name,
                 slug: planForm.slug,
@@ -360,11 +421,13 @@ export default function SuperadminPlanManager({
                 displayOrder: planForm.displayOrder,
                 featured: planForm.featured,
                 isDefault: planForm.isDefault,
+                isFree: planForm.isFree,
                 isPublic: planForm.isPublic,
                 familyId: activeFamily?.id,
                 activo: planForm.activo,
                 modules: Array.from(planForm.selectedModules),
-                limits: planForm.limits
+                limits: planForm.limits,
+                dataPolicies: [...primaryPoliciesList, ...customerPoliciesList]
             };
 
             const url = editingPlan 
@@ -567,40 +630,137 @@ export default function SuperadminPlanManager({
                 </div>
 
                 {/* Contenido de la pestaña PLANES */}
-                {activeFamilyTab === 'planes' && (
-                    <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-8 space-y-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-                            <div>
+                {activeFamilyTab === 'planes' && (() => {
+                    const freePlan = activeFamily?.plans?.find((p: any) => p.isFree);
+                    const commercialPlans = activeFamily?.plans?.filter((p: any) => !p.isFree) || [];
+
+                    return (
+                        <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-8 space-y-6">
+                            <div className="border-b border-slate-100 pb-4">
                                 <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-black uppercase tracking-wider border border-indigo-100">
                                     Familia: {activeFamily?.code}
                                 </span>
                                 <h3 className="text-xl font-black text-slate-900 tracking-tight mt-1">
-                                    Planes para {activeFamily?.name}
+                                    Arquitectura de Planes para {activeFamily?.name}
                                 </h3>
                             </div>
 
-                            <button
-                                onClick={handleOpenCreatePlan}
-                                className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
-                            >
-                                <Plus size={15} /> Añadir Plan a {activeFamily?.name?.split(' ')[0] || ''}
-                            </button>
-                        </div>
+                            {/* TARJETA / SECCIÓN DEDICADA DEL PLAN FREE CANÓNICO DE LA FAMILIA */}
+                            <div className="p-6 rounded-3xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-50/70 via-white to-slate-50 shadow-xs space-y-4">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="px-3 py-1 bg-emerald-600 text-white rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-xs">
+                                                <Lock size={12} /> Plan Free Canónico de {activeFamily?.name}
+                                            </span>
+                                            <span className="px-2.5 py-0.5 bg-slate-900 text-white rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
+                                                🚫 Oculto en Catálogo Comercial
+                                            </span>
+                                            <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[9px] font-bold">
+                                                Fallback Runtime por Expiración
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                                                {freePlan?.name || `${activeFamily?.name} Free`}
+                                            </h4>
+                                            <p className="text-xs text-slate-600 max-w-2xl font-medium mt-0.5">
+                                                {freePlan?.description || 'Plan técnico del sistema asignado automáticamente cuando una suscripción de esta vertical expira o no tiene pago activo. Los clientes pueden seguir reservando u ordenando, mientras la información sensible permanece protegida según sus Data Policies.'}
+                                            </p>
+                                        </div>
+                                    </div>
 
-                        {activeFamily?.plans?.length === 0 ? (
-                            <div className="text-center py-12 space-y-3">
-                                <Package size={40} className="mx-auto text-slate-300" />
-                                <p className="text-sm font-bold text-slate-600">No hay planes creados en esta familia</p>
+                                    <div className="flex items-center gap-3 shrink-0">
+                                        <div className="text-right hidden sm:block">
+                                            <span className="text-2xl font-black text-emerald-700">$0.00</span>
+                                            <span className="text-xs text-slate-400 font-bold block">/ mes (Sistema)</span>
+                                        </div>
+                                        {freePlan ? (
+                                            <button
+                                                onClick={() => handleOpenEditPlan(freePlan)}
+                                                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer flex items-center gap-1.5"
+                                            >
+                                                <Lock size={14} /> Gestionar Políticas del Plan Free
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => {
+                                                    handleOpenCreatePlan();
+                                                    setPlanForm(prev => ({
+                                                        ...prev,
+                                                        name: `${activeFamily?.name} Free`,
+                                                        slug: `${activeFamily?.slug}-free`,
+                                                        price: '0',
+                                                        isFree: true,
+                                                        isPublic: false,
+                                                        dataPolicies: { ...DEFAULT_FREE_POLICIES }
+                                                    }));
+                                                }}
+                                                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
+                                            >
+                                                + Inicializar Plan Free
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {freePlan && (
+                                    <div className="pt-3 border-t border-emerald-200/60 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-600">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="text-[11px] font-black uppercase text-emerald-800 tracking-wider">Políticas Activas:</span>
+                                            <span className="px-2 py-0.5 bg-emerald-100/80 text-emerald-900 rounded-md text-[11px]">
+                                                ✓ Recibir Actividad (RECEIVE)
+                                            </span>
+                                            <span className="px-2 py-0.5 bg-rose-50 text-rose-800 rounded-md text-[11px] border border-rose-100">
+                                                ✕ Visualizar Datos (VIEW: Protegido)
+                                            </span>
+                                            <span className="px-2 py-0.5 bg-rose-50 text-rose-800 rounded-md text-[11px] border border-rose-100">
+                                                ✕ Contacto Oculto
+                                            </span>
+                                            <span className="px-2 py-0.5 bg-rose-50 text-rose-800 rounded-md text-[11px] border border-rose-100">
+                                                ✕ Finanzas Redactadas (null)
+                                            </span>
+                                        </div>
+                                        <span className="text-[11px] font-bold text-slate-400">
+                                            ID: <code className="text-slate-600">{freePlan.id}</code>
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* SECCIÓN PLANES COMERCIALES PÚBLICOS */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 pt-2">
+                                <div>
+                                    <h4 className="text-base font-black text-slate-900 tracking-tight">
+                                        Planes Comerciales Disponibles para Clientes
+                                    </h4>
+                                    <p className="text-xs text-slate-500 font-medium">
+                                        Estos son los planes visibles que los negocios pueden ver y contratar en su panel o landings ({commercialPlans.length} planes activos).
+                                    </p>
+                                </div>
+
                                 <button
                                     onClick={handleOpenCreatePlan}
-                                    className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs cursor-pointer"
+                                    className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
                                 >
-                                    Crear Primer Plan
+                                    <Plus size={15} /> Añadir Plan Comercial a {activeFamily?.name?.split(' ')[0] || ''}
                                 </button>
                             </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {activeFamily?.plans?.map(plan => {
+
+                            {commercialPlans.length === 0 ? (
+                                <div className="text-center py-12 space-y-3">
+                                    <Package size={40} className="mx-auto text-slate-300" />
+                                    <p className="text-sm font-bold text-slate-600">No hay planes comerciales creados en esta familia</p>
+                                    <button
+                                        onClick={handleOpenCreatePlan}
+                                        className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-xs cursor-pointer"
+                                    >
+                                        Crear Primer Plan Comercial
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    {commercialPlans.map((plan: any) => {
                                     const modulesCount = plan.planEntitlements?.filter((pe: any) => pe.enabled).length || 0;
 
                                     return (
@@ -615,6 +775,11 @@ export default function SuperadminPlanManager({
                                             <div className="space-y-4">
                                                 <div className="flex items-center justify-between gap-2">
                                                     <div className="flex items-center gap-1.5 flex-wrap">
+                                                        {plan.isFree && (
+                                                            <span className="px-2.5 py-0.5 bg-emerald-600 text-white rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
+                                                                <Lock size={10} /> Plan Free
+                                                            </span>
+                                                        )}
                                                         {plan.isDefault && (
                                                             <span className="px-2.5 py-0.5 bg-slate-900 text-white rounded-full text-[9px] font-black uppercase tracking-wider">
                                                                 Por Defecto
@@ -680,9 +845,10 @@ export default function SuperadminPlanManager({
                                     );
                                 })}
                             </div>
-                        )}
-                    </div>
-                )}
+                            )}
+                        </div>
+                    );
+                })()}
 
                 {/* Contenido de la pestaña SOCIOS FUNDADORES */}
                 {activeFamilyTab === 'fundadores' && (
@@ -840,6 +1006,26 @@ export default function SuperadminPlanManager({
                                 </div>
 
                                 <div className="flex flex-wrap gap-6 pt-2">
+                                    <label className="flex items-center gap-2 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={planForm.isFree}
+                                            onChange={e => {
+                                                const isFree = e.target.checked;
+                                                setPlanForm({
+                                                    ...planForm,
+                                                    isFree,
+                                                    price: isFree ? '0' : (planForm.price === '0' ? '9.99' : planForm.price),
+                                                    dataPolicies: isFree ? { ...DEFAULT_FREE_POLICIES } : { ...DEFAULT_PAID_POLICIES }
+                                                });
+                                            }}
+                                            className="rounded size-4 text-emerald-600 cursor-pointer"
+                                        />
+                                        <span className="flex items-center gap-1 font-black">
+                                            <Lock size={12} className="text-emerald-600" />
+                                            Plan Free Canónico de Familia (Fallback Expiración)
+                                        </span>
+                                    </label>
                                     <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
                                         <input
                                             type="checkbox"
@@ -1026,6 +1212,84 @@ export default function SuperadminPlanManager({
                                             className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold !text-slate-900"
                                         />
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Sección 4: Acceso a Información (Data Policies) */}
+                            <div className="space-y-4 pt-4 border-t border-slate-100">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">
+                                            4. Políticas de Acceso a Datos (Data Access Policies)
+                                        </h4>
+                                        <p className="text-xs text-slate-500 font-medium">
+                                            Controla qué información sensible puede recibir y visualizar el negocio en sus paneles y reportes.
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setPlanForm({ ...planForm, dataPolicies: { ...DEFAULT_PAID_POLICIES } })}
+                                            className="px-2.5 py-1 text-[11px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer"
+                                        >
+                                            Todo Permitido
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setPlanForm({ ...planForm, dataPolicies: { ...DEFAULT_FREE_POLICIES } })}
+                                            className="px-2.5 py-1 text-[11px] font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors cursor-pointer"
+                                        >
+                                            Modo Free / Expirado
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                    {POLICY_ACTIONS_CONFIG.map(({ action, label, desc }) => {
+                                        const isAllowed = planForm.dataPolicies[action] ?? true;
+                                        return (
+                                            <label
+                                                key={action}
+                                                className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
+                                                    isAllowed
+                                                        ? 'bg-white border-emerald-200 shadow-xs'
+                                                        : 'bg-slate-100/60 border-slate-200 opacity-70'
+                                                }`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isAllowed}
+                                                    onChange={e => {
+                                                        const updated = {
+                                                            ...planForm.dataPolicies,
+                                                            [action]: e.target.checked
+                                                        };
+                                                        if (action === 'VIEW' && !e.target.checked) {
+                                                            updated.VIEW_DETAILS = false;
+                                                            updated.VIEW_CUSTOMER = false;
+                                                            updated.VIEW_CONTACT = false;
+                                                            updated.VIEW_ITEMS = false;
+                                                            updated.VIEW_PRICES = false;
+                                                            updated.VIEW_FINANCIALS = false;
+                                                        }
+                                                        setPlanForm({
+                                                            ...planForm,
+                                                            dataPolicies: updated
+                                                        });
+                                                    }}
+                                                    className="rounded size-4 text-emerald-600 mt-0.5 cursor-pointer"
+                                                />
+                                                <div className="space-y-0.5">
+                                                    <span className="block text-xs font-bold text-slate-800">
+                                                        {label}
+                                                    </span>
+                                                    <span className="block text-[11px] text-slate-500 font-medium leading-tight">
+                                                        {desc}
+                                                    </span>
+                                                </div>
+                                            </label>
+                                        );
+                                    })}
                                 </div>
                             </div>
 

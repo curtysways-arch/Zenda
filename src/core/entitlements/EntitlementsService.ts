@@ -7,6 +7,7 @@
 
 import prisma from '@/lib/prisma';
 import { AddonRegistry } from './AddonRegistry';
+import { AccessPolicyService } from '@/core/security/AccessPolicyService';
 
 export interface EffectiveEntitlements {
   businessId: string;
@@ -189,23 +190,11 @@ export class EntitlementsService {
       throw new Error('[EntitlementsService] businessId es requerido para resolver entitlements.');
     }
 
-    // 1. Obtener negocio y su suscripción actual con su plan
+    // 1. Obtener negocio y su suscripción
     const negocio = await (prisma as any).negocio.findUnique({
       where: { id: businessId },
       include: {
-        Suscripcion: {
-          include: {
-            Plan: {
-              include: {
-                planEntitlements: {
-                  include: { module: true }
-                },
-                planLimits: true,
-                family: true
-              }
-            }
-          }
-        }
+        Suscripcion: true
       }
     });
 
@@ -214,7 +203,9 @@ export class EntitlementsService {
     }
 
     const suscripcion = negocio.Suscripcion;
-    const plan = suscripcion?.Plan;
+
+    // 2. Resolver el Effective Plan canónico (en runtime degrada al Free de la familia si expiró)
+    const { plan, context } = await AccessPolicyService.getEffectivePlan(businessId);
 
     if (!suscripcion && !plan) {
       return this.getFallbackEntitlements(businessId, negocio.tipoNegocio, negocio.slug, negocio.nombre);
@@ -229,14 +220,14 @@ export class EntitlementsService {
     }
     const legacyCaps = legacyCfg.activeCapabilities || legacyCfg.capabilities || {};
 
-    // 2. Extraer información base del plan y presets
+    // 3. Extraer información base del plan y presets
     const planId = plan?.id || 'ENTERPRISE_DEMO';
     const planName = plan?.name || 'Plan Citiox Enterprise';
-    const familyId = plan?.familyId || null;
+    const familyId = plan?.familyId || context.planFamilyId || null;
     const familySlug = plan?.family?.slug || null;
-    const subStatus = (suscripcion?.estado || 'active').toLowerCase() as any;
-    const isFounder = Boolean(suscripcion?.isFounder);
-    const lockedPrice = suscripcion?.lockedPrice !== undefined ? suscripcion.lockedPrice : null;
+    const subStatus = context.isExpired ? 'expired' : ((suscripcion?.estado || 'active').toLowerCase() as any);
+    const isFounder = context.isFounder;
+    const lockedPrice = context.lockedPrice !== undefined ? context.lockedPrice : null;
 
     // Resolver capacidades: si tiene planEntitlements canónicos, usarlos como fuente de verdad
     let planCapabilities: Record<string, boolean> = {};
@@ -396,7 +387,7 @@ export class EntitlementsService {
 
     const [branchCount, staffCount, appointmentCount, productCount] = await Promise.all([
       (prisma as any).ubicacion ? (prisma as any).ubicacion.count({ where: { negocioId: businessId } }).catch(() => 1) : Promise.resolve(1),
-      (prisma as any).staff ? (prisma as any).staff.count({ where: { negocioId: businessId } }).catch(() => 1) : Promise.resolve(1),
+      (prisma as any).staff ? (prisma as any).staff.count({ where: { businessId } }).catch(() => 1) : Promise.resolve(1),
       (prisma as any).appointment ? (prisma as any).appointment.count({ where: { negocioId: businessId, createdAt: { gte: startOfMonth } } }).catch(() => 0) : Promise.resolve(0),
       (prisma as any).producto ? (prisma as any).producto.count({ where: { negocioId: businessId } }).catch(() => 0) : Promise.resolve(0)
     ]);

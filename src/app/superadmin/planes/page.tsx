@@ -31,6 +31,7 @@ export default async function PlanesPage() {
                         include: { module: true }
                     },
                     planLimits: true,
+                    dataPolicies: true,
                     _count: {
                         select: { Suscripcion: true }
                     }

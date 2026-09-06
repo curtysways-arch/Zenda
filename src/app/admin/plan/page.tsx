@@ -79,10 +79,11 @@ export default async function AdminPlanPage() {
         targetFamilyId = fallbackFam?.id;
     }
 
-    // Cargar los planes de la familia con sus entitlements canónicos
+    // Cargar los planes de la familia con sus entitlements canónicos (excluyendo el plan Free del sistema)
     let allPlans = await prisma.plan.findMany({
         where: {
             activo: true,
+            isFree: false,
             id: { not: 'founder' },
             ...(targetFamilyId ? { familyId: targetFamilyId } : {})
         },
@@ -96,10 +97,10 @@ export default async function AdminPlanPage() {
         orderBy: { displayOrder: 'asc' } as any
     });
 
-    // Si por alguna razón la familia no tuviese planes, fallback a planes activos públicos
+    // Si por alguna razón la familia no tuviese planes, fallback a planes activos comerciales
     if (!allPlans || allPlans.length === 0) {
         allPlans = await prisma.plan.findMany({
-            where: { activo: true, id: { not: 'founder' } },
+            where: { activo: true, isFree: false, id: { not: 'founder' } },
             include: {
                 planEntitlements: {
                     where: { enabled: true },
