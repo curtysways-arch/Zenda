@@ -3,6 +3,7 @@ import { UsageEngine } from '@/core/subscription/UsageEngine';
 import { LegacySubscriptionAdapter } from '@/core/subscription/LegacySubscriptionAdapter';
 import { FeatureFlag, PlanLimit } from '../features';
 import { ResourceLimitKey, FeatureAccessLevels } from '@/core/subscription/types';
+import { EntitlementsService } from '@/core/entitlements/EntitlementsService';
 
 export const featureService = {
     /**
@@ -63,8 +64,18 @@ export const featureService = {
      * Retorna TODAS las features y límites de un negocio como objeto plano para el frontend
      */
     async getAllFeatures(businessId: string): Promise<Record<string, boolean | number>> {
-        const summary = await SubscriptionEngine.getSubscriptionSummary(businessId);
-        
+        const [summary, entitlements] = await Promise.all([
+            SubscriptionEngine.getSubscriptionSummary(businessId),
+            EntitlementsService.resolve(businessId).catch(() => null)
+        ]);
+
+        // COMMUNICATION_CENTER: se activa por PlanEntitlement (plan Pro) O por Add-on contratado
+        const hasCommunicationCenter = Boolean(
+            entitlements?.capabilities?.COMMUNICATION_CENTER ||
+            entitlements?.capabilities?.communication_center ||
+            entitlements?.capabilities?.communications
+        );
+
         return {
             whatsapp_notifications: summary.features.communications !== 'none',
             whatsapp_otp: summary.features.communications !== 'none',
@@ -80,7 +91,8 @@ export const featureService = {
             automation: summary.features.automations !== 'none',
             tournaments_module: true,
             courses_module: summary.features.ai !== 'none',
-            communications_module: summary.features.communications !== 'none',
+            // Leído de EntitlementsService (PlanEntitlement canónico + Add-ons activos)
+            communications_module: hasCommunicationCenter,
             automatic_discounts: summary.features.promotions !== 'none',
             loyalty_module: true,
             max_staff: summary.limits.employees || 1,

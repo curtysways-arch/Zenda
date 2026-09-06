@@ -157,7 +157,7 @@ async function main() {
             price: 39.99,
             trial_days: 15,
             displayOrder: 3,
-            modules: ['LANDING', 'CUSTOMERS', 'PRODUCTS', 'CATEGORIES', 'TABLES', 'QR_TABLE', 'ORDERS', 'DELIVERY', 'PICKUP', 'PROMOTIONS', 'COUPONS', 'KITCHEN', 'KDS', 'POS', 'INVENTORY', 'REPORTS', 'LOYALTY'],
+            modules: ['LANDING', 'CUSTOMERS', 'PRODUCTS', 'CATEGORIES', 'TABLES', 'QR_TABLE', 'ORDERS', 'DELIVERY', 'PICKUP', 'PROMOTIONS', 'COUPONS', 'KITCHEN', 'KDS', 'POS', 'INVENTORY', 'REPORTS', 'LOYALTY', 'COMMUNICATION_CENTER'],
             limits: { MAX_USERS: 15, MAX_PRODUCTS: -1, MAX_TABLES: -1, MAX_ORDERS_MONTHLY: -1 }
         },
         // SERVICIOS
@@ -229,7 +229,7 @@ async function main() {
             price: 49.99,
             trial_days: 15,
             displayOrder: 3,
-            modules: ['LANDING', 'CUSTOMERS', 'COURTS', 'SCHEDULES', 'APPOINTMENTS', 'PAYMENTS', 'PROMOTIONS', 'REMINDERS', 'COURSES', 'STUDENTS', 'INSTRUCTORS', 'REPORTS'],
+            modules: ['LANDING', 'CUSTOMERS', 'COURTS', 'SCHEDULES', 'APPOINTMENTS', 'PAYMENTS', 'PROMOTIONS', 'REMINDERS', 'COURSES', 'STUDENTS', 'INSTRUCTORS', 'REPORTS', 'COMMUNICATION_CENTER'],
             limits: { MAX_USERS: 15, MAX_COURTS: -1, MAX_APPOINTMENTS_MONTHLY: -1 }
         },
         // LAVANDERIA
@@ -254,7 +254,7 @@ async function main() {
             trial_days: 15,
             featured: true,
             displayOrder: 2,
-            modules: ['LANDING', 'CUSTOMERS', 'SERVICES', 'LAUNDRY_ORDERS', 'WORKFLOW', 'INSPECTION_PHOTOS', 'DELIVERY', 'PICKUP', 'PROMOTIONS', 'REPORTS'],
+            modules: ['LANDING', 'CUSTOMERS', 'SERVICES', 'LAUNDRY_ORDERS', 'WORKFLOW', 'INSPECTION_PHOTOS', 'DELIVERY', 'PICKUP', 'PROMOTIONS', 'REPORTS', 'COMMUNICATION_CENTER'],
             limits: { MAX_USERS: 10, MAX_ORDERS_MONTHLY: -1 }
         },
         // TIENDA

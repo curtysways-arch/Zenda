@@ -86,6 +86,16 @@ export const SYSTEM_ADDONS: AddonDefinition[] = [
     stackable: true,
     maxQuantity: 5,
     active: true
+  },
+  {
+    id: 'ADDON_COMMUNICATION_CENTER',
+    name: 'Add-on Centro de Comunicaciones',
+    description: 'Envío masivo de mensajes Push y WhatsApp segmentados a tus clientes',
+    priceMonthly: 12.00,
+    type: 'CAPABILITY',
+    targetKey: 'COMMUNICATION_CENTER',
+    stackable: false,
+    active: true
   }
 ];
 
