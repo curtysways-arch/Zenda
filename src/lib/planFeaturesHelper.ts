@@ -9,12 +9,14 @@ export interface PlanFeatureItem {
 export function getFormattedPlanFeatures(plan: any): PlanFeatureItem[] {
     // Si el plan tiene planEntitlements canónicos por familia, construimos la lista dinámicamente
     if (plan.planEntitlements && Array.isArray(plan.planEntitlements) && plan.planEntitlements.length > 0) {
-        return plan.planEntitlements.map((pe: any) => ({
-            key: pe.module?.code || pe.moduleId,
-            emoji: '✨',
-            text: pe.module?.name || pe.module?.code,
-            included: pe.enabled ?? true
-        }));
+        return plan.planEntitlements
+            .filter((pe: any) => pe.module?.name || pe.module?.code) // ignorar huérfanos sin módulo
+            .map((pe: any) => ({
+                key: pe.module?.code || pe.moduleId,
+                emoji: '✨',
+                text: pe.module?.name || pe.module?.code,
+                included: pe.enabled ?? true
+            }));
     }
 
     const maxCitas = plan.max_reservations_per_month ?? plan.maxAppointmentsMonthly ?? 40;
