@@ -248,6 +248,32 @@ export class AccessPolicyService {
     return policy.receive;
   }
 
+  /**
+   * Obtiene la política específica para una acción sobre un recurso ('ALLOW' | 'DENY').
+   */
+  public static async getPolicy(businessId: string, resource: DataResource, action: DataAction): Promise<'ALLOW' | 'DENY'> {
+    const policy = await this.getResourcePolicy(businessId, resource);
+    if (action === 'RECEIVE') return policy.receive ? 'ALLOW' : 'DENY';
+    if (action === 'VIEW') return policy.view ? 'ALLOW' : 'DENY';
+    if (action === 'VIEW_DETAILS') return policy.details ? 'ALLOW' : 'DENY';
+    if (action === 'VIEW_CUSTOMER') return policy.customer ? 'ALLOW' : 'DENY';
+    if (action === 'VIEW_CONTACT') return policy.contact ? 'ALLOW' : 'DENY';
+    if (action === 'VIEW_ITEMS') return policy.items ? 'ALLOW' : 'DENY';
+    if (action === 'VIEW_PRICES') return policy.prices ? 'ALLOW' : 'DENY';
+    if (action === 'VIEW_FINANCIALS') return policy.financials ? 'ALLOW' : 'DENY';
+    if (action === 'MANAGE') return policy.manage ? 'ALLOW' : 'DENY';
+    if (action === 'EXPORT') return policy.export ? 'ALLOW' : 'DENY';
+    return 'DENY';
+  }
+
+  /**
+   * Determina si se permite una acción dada sobre un recurso.
+   */
+  public static async canAccess(businessId: string, resource: DataResource, action: DataAction): Promise<boolean> {
+    const effect = await this.getPolicy(businessId, resource, action);
+    return effect === 'ALLOW';
+  }
+
   // ── MÉTODOS DE PROTECCIÓN Y SANITIZACIÓN EN PUNTO DE SALIDA ──
 
   public static async protectOrder(businessId: string, order: any): Promise<any> {

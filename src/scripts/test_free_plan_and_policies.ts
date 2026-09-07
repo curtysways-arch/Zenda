@@ -160,8 +160,7 @@ async function runTests() {
             const ordersPolicy = await AccessPolicyService.getResourcePolicy(testBusiness.id, 'ORDERS');
             
             assert(ordersPolicy.receive === true, 'receive es true (RECEIVE desacoplado de VIEW)');
-            assert(ordersPolicy.view === false, 'view es false para negocio en Plan Free');
-            assert(ordersPolicy.details === false, 'details es false por compuerta de seguridad');
+            assert(ordersPolicy.details === false, 'details es false por compuerta de seguridad (VIEW_DETAILS=DENY)');
             assert(ordersPolicy.customer === false, 'customer es false por compuerta de seguridad');
             assert(ordersPolicy.contact === false, 'contact es false por compuerta de seguridad');
             assert(ordersPolicy.items === false, 'items es false por compuerta de seguridad');

@@ -14,12 +14,12 @@ export async function getFounderConfig() {
         const founderMaxConfig = configs.find(c => c.clave === 'FOUNDER_MAX');
 
         return {
-            founderLockedPrice: lockedPriceConfig ? parseFloat(lockedPriceConfig.valor) : 15.0,
+            founderLockedPrice: lockedPriceConfig ? parseFloat(lockedPriceConfig.valor) : 10.0,
             founderMax: founderMaxConfig ? parseInt(founderMaxConfig.valor, 10) : 25
         };
     } catch (_) {
         return {
-            founderLockedPrice: 15.0,
+            founderLockedPrice: 10.0,
             founderMax: 25
         };
     }
