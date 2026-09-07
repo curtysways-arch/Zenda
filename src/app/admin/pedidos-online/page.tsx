@@ -643,8 +643,8 @@ export default function PedidosOnlinePage() {
             <Bike className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-black tracking-tight text-white !text-white">Gestión Oficial de Delivery</h1>
-            <p className="text-xs text-slate-400 font-medium">Control exclusivo de pedidos con despacho a domicilio vía repartidor (creados en ventas o landing).</p>
+            <h1 className="text-xl font-black tracking-tight text-white !text-white">Pedidos App & Online</h1>
+            <p className="text-xs text-slate-400 font-medium">Bandeja de pedidos recibidos desde la Landing/App (Delivery y Retiro en local) para revisión y despacho.</p>
           </div>
         </div>
 
