@@ -11,7 +11,7 @@ git push origin main
 
 echo.
 echo 2. Conectando al VPS, compilando y reiniciando app...
-ssh root@citiox.com "cd /opt/Zenda || cd /root/zenda || cd /var/www/zenda ; git fetch origin main && git reset --hard origin/main ; sed -i 's#DATABASE_URL=.*#DATABASE_URL=\"file:./dev.db\"#g' .env ; export DATABASE_URL=\"file:./dev.db\" ; npx prisma generate ; npx prisma db push ; npm run build ; pm2 restart all --update-env"
+ssh root@citiox.com "cd /opt/Zenda || cd /root/zenda || cd /var/www/zenda ; [ -f dev.db ] && cp -p dev.db /root/dev.db.persistent_backup ; git fetch origin main && git reset --hard origin/main ; [ -f /root/dev.db.persistent_backup ] && cp -p /root/dev.db.persistent_backup dev.db ; sed -i 's#DATABASE_URL=.*#DATABASE_URL=\"file:./dev.db\"#g' .env ; export DATABASE_URL=\"file:./dev.db\" ; npx prisma generate ; npx prisma db push ; npm run build ; pm2 restart all --update-env"
 
 echo.
 echo ===================================================

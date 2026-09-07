@@ -5,9 +5,14 @@ node_modules
 .env.production
 .env.development
 
-prisma/dev.db
-prisma/*.db
-prisma/*.db-journal
+# Bases de datos SQLite
+dev.db
+dev.db*
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+prisma/*.db*
 
 dist
 build
