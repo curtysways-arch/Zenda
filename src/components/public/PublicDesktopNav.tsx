@@ -78,11 +78,12 @@ export default function PublicDesktopNav({
         };
     }, [pathname]);
 
-    // Mostrar solo en rutas públicas del negocio
+    // Mostrar solo en rutas públicas generales del negocio (excluyendo mesas con navegación propia)
     const isNegocioRoute = pathname.startsWith(`/${slug}`);
     const isAdminRoute = pathname.includes('/admin') || pathname.includes('/superadmin');
+    const isMesaRoute = pathname.includes('/mesa/');
 
-    if (!isNegocioRoute || isAdminRoute) {
+    if (!isNegocioRoute || isAdminRoute || isMesaRoute) {
         return null;
     }
 

@@ -4,9 +4,9 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Utensils, ShoppingBag, MapPin, Bell, Loader2, CheckCircle2, AlertCircle,
-  XCircle, ChevronRight, Compass, ShieldCheck, Flame, Search, ArrowRight,
-  Plus, Minus, Heart, Eye, Check, X, CreditCard, Clock, Phone, User, Tag,
-  Percent, Sparkles, AlertTriangle
+  XCircle, ChevronRight, ChevronLeft, Compass, ShieldCheck, Flame, Search,
+  ArrowRight, Plus, Minus, Heart, Eye, Check, X, CreditCard, Clock, Phone,
+  User, Tag, Percent, Sparkles, AlertTriangle
 } from 'lucide-react';
 import { CartProvider, useCart } from '@/core/context/CartContext';
 import ItemDetailModal, { DetailItem, cleanDescriptionText } from '@/components/public/ItemDetailModal';
@@ -61,6 +61,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
 
   // Carrusel Hero Banner
   const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
+  const promoScrollRef = useRef<HTMLDivElement>(null);
 
   // Modales de Detalle
   const [selectedDetailItem, setSelectedDetailItem] = useState<DetailItem | null>(null);
@@ -164,6 +165,14 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
     return () => clearInterval(interval);
   }, [heroSlides.length]);
 
+  // Control de Scroll de Promociones
+  const scrollPromos = (dir: 'left' | 'right') => {
+    if (promoScrollRef.current) {
+      const amount = dir === 'left' ? -320 : 320;
+      promoScrollRef.current.scrollBy({ left: amount, behavior: 'smooth' });
+    }
+  };
+
   // Handler para Llamar Mesero o Pedir Cuenta
   const handleCallWaiter = async (tipo: 'MESERO' | 'CUENTA') => {
     if (waiterCooldown > 0 || callingWaiter) return;
@@ -189,8 +198,8 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
       const data = await res.json();
       if (res.ok) {
         const msg = tipo === 'CUENTA'
-          ? '💳 ¡Cuenta solicitada! El mesero se acerca con tu cuenta.'
-          : '🔔 ¡Mesero notificado! En breve se acercarán a tu mesa.';
+          ? '💳 ¡Cuenta solicitada! El mesero se acerca a tu mesa con la pre-cuenta.'
+          : '🔔 ¡Mesero notificado! En breve se acercarán a atenderte.';
         setWaiterToast(msg);
         setWaiterCooldown(config.mesaCooldownLlamada || 120);
         setTimeout(() => setWaiterToast(null), 5000);
@@ -263,7 +272,6 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
     };
 
     if (!navigator.geolocation) {
-      // Fallback sin geolocalización
       await sendOrderPayload();
       return;
     }
@@ -330,14 +338,13 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
   // Slides de Hero disponibles
   const displayHeroSlides = useMemo(() => {
     if (heroSlides.length > 0) return heroSlides;
-    // Fallback: usar productos destacados como banners si no hay hero configurado
     return products.slice(0, 3).map(p => ({
       id: p.id,
       title: p.nombre,
       description: cleanDescriptionText(p.descripcion),
       image: p.imagenUrl || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&q=80',
       price: p.precio,
-      priceLabel: `$${p.precio.toFixed(2)}`,
+      priceLabel: `$${Number(p.precio).toFixed(2)}`,
       tagText: 'ESPECIALIDAD DE LA CASA'
     }));
   }, [heroSlides, products]);
@@ -396,61 +403,76 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
   const permitePedidos = mesa.permitePedidos !== false && config.mesaPedidosHabilitados !== false;
 
   return (
-    <div style={{ backgroundColor: cn, color: '#0f172a' }} className="min-h-screen w-full font-sans antialiased pb-32 select-none text-left">
+    <div style={{ backgroundColor: cn, color: '#0f172a' }} className="min-h-screen w-full font-sans antialiased pb-28 select-none text-left">
 
-      {/* ── 1. HEADER SUPERIOR CON LOGO, MESA, BOTÓN MESERO Y CARRITO ── */}
-      <header className="sticky top-0 z-40 bg-slate-950 text-white px-3 sm:px-6 py-3 shadow-md border-b border-slate-800">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+      {/* ── 1. HEADER SUPERIOR CON LOGO, MESA, ACCIONES DE ATENCIÓN Y COMANDA (RESPONSIVE PC & MOBILE) ── */}
+      <header className="sticky top-0 z-40 bg-slate-950 text-white px-4 sm:px-8 py-3.5 shadow-md border-b border-slate-800">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           
-          {/* Logo & Identificador de Mesa */}
-          <div className="flex items-center gap-2.5 min-w-0">
+          {/* Logo, Nombre del Restaurante e Identificador de Mesa */}
+          <div className="flex items-center gap-3.5 min-w-0">
             {negocio?.logoUrl ? (
               <img
                 src={negocio.logoUrl}
                 alt={negocio?.nombre || 'Restaurante'}
-                className="w-10 h-10 rounded-2xl object-cover border border-slate-700 shrink-0"
+                className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl object-cover border border-slate-700 shrink-0 shadow-sm"
               />
             ) : (
               <div
                 style={{ backgroundColor: cp }}
-                className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-black text-lg shrink-0 shadow-xs"
+                className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center text-white font-black text-lg shrink-0 shadow-xs"
               >
                 🍽️
               </div>
             )}
 
             <div className="min-w-0">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 truncate block leading-tight">
+              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-slate-400 truncate block leading-none">
                 {negocio?.nombre || 'Restaurante'}
               </span>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-                <h1 className="text-sm sm:text-base font-black text-white tracking-tight truncate">
-                  {mesa.nombre}
-                </h1>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs sm:text-sm font-black tracking-tight">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                  <span>🍽️ {mesa.nombre}</span>
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Acciones Rápidas: Botón Llamar Mesero + Botón Carrito */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Acciones Rápidas: Llamar Mesero, Pedir Cuenta y Comanda */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {config.mesaLlamarMeseroHabilitado && (
-              <button
-                type="button"
-                onClick={() => setShowWaiterModal(true)}
-                disabled={waiterCooldown > 0 || callingWaiter}
-                className={`px-3 sm:px-4 py-2 rounded-2xl font-black text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-md active:scale-95 ${
-                  waiterCooldown > 0
-                    ? 'bg-slate-800 text-slate-400 border border-slate-700'
-                    : 'bg-rose-600 hover:bg-rose-500 text-white'
-                }`}
-                title="Llamar al mesero"
-              >
-                <Bell className={`w-4 h-4 ${callingWaiter ? 'animate-spin' : ''}`} />
-                <span className="text-[11px]">
-                  {waiterCooldown > 0 ? `${waiterCooldown}s` : 'Mesero'}
-                </span>
-              </button>
+              <>
+                {/* Botón Llamar Mesero */}
+                <button
+                  type="button"
+                  onClick={() => handleCallWaiter('MESERO')}
+                  disabled={waiterCooldown > 0 || callingWaiter}
+                  className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl font-black text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-md active:scale-95 ${
+                    waiterCooldown > 0
+                      ? 'bg-slate-800 text-slate-400 border border-slate-700'
+                      : 'bg-rose-600 hover:bg-rose-500 text-white'
+                  }`}
+                  title="Llamar al mesero a la mesa"
+                >
+                  <Bell className={`w-4 h-4 ${callingWaiter ? 'animate-spin' : ''}`} />
+                  <span>
+                    {waiterCooldown > 0 ? `Espera (${waiterCooldown}s)` : 'Llamar Mesero'}
+                  </span>
+                </button>
+
+                {/* Botón Pedir Cuenta (Visible en Desktop y Tablet) */}
+                <button
+                  type="button"
+                  onClick={() => handleCallWaiter('CUENTA')}
+                  disabled={waiterCooldown > 0 || callingWaiter}
+                  className="hidden md:flex px-3.5 py-2.5 rounded-2xl font-black text-xs items-center gap-1.5 cursor-pointer transition-all shadow-md active:scale-95 bg-amber-500 hover:bg-amber-400 text-slate-950"
+                  title="Pedir la pre-cuenta a la mesa"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  <span>Pedir Cuenta</span>
+                </button>
+              </>
             )}
 
             {permitePedidos && (
@@ -458,13 +480,15 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
                 type="button"
                 onClick={() => setShowOrderDrawer(true)}
                 style={{ backgroundColor: cp, color: '#ffffff' }}
-                className="relative px-3 sm:px-4 py-2 rounded-2xl font-black text-xs flex items-center gap-1.5 cursor-pointer shadow-md active:scale-95 transition-all text-white"
+                className="relative px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl font-black text-xs flex items-center gap-2 cursor-pointer shadow-md active:scale-95 transition-all text-white"
                 title="Ver comanda / carrito"
               >
                 <ShoppingBag className="w-4 h-4" />
-                <span className="hidden sm:inline text-[11px]">Comanda</span>
+                <span className="hidden sm:inline text-xs font-black">
+                  {totalItemsCount > 0 ? `$${total.toFixed(2)}` : 'Comanda'}
+                </span>
                 {totalItemsCount > 0 && (
-                  <span className="bg-slate-950 text-white px-1.5 py-0.5 rounded-full text-[10px] font-black ml-0.5">
+                  <span className="bg-slate-950 text-white px-2 py-0.5 rounded-full text-[10px] font-black ml-0.5 shadow-xs">
                     {totalItemsCount}
                   </span>
                 )}
@@ -476,7 +500,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
 
       {/* ── TOAST DE ALERTA DE MESERO ── */}
       {waiterToast && (
-        <div className="bg-emerald-600 text-white px-4 py-2.5 text-center text-xs font-black uppercase tracking-wider shadow-md animate-in slide-in-from-top duration-300 flex items-center justify-center gap-2">
+        <div className="bg-emerald-600 text-white px-4 py-3 text-center text-xs font-black uppercase tracking-wider shadow-md animate-in slide-in-from-top duration-300 flex items-center justify-center gap-2">
           <CheckCircle2 className="w-4 h-4" />
           <span>{waiterToast}</span>
         </div>
@@ -484,399 +508,607 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
 
       {/* ── BANNER INFORMATIVO SI PEDIDOS ESTÁN DESHABILITADOS ── */}
       {!permitePedidos && (
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-amber-900 text-xs font-bold flex items-center justify-center gap-2">
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 text-amber-900 text-xs font-bold flex items-center justify-center gap-2 text-center">
           <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-          <span>Menú digital en mesa: Para ordenar platillos, solicita la atención de tu mesero.</span>
+          <span>Menú digital en mesa: Para ordenar platillos, por favor solicita la atención de tu mesero.</span>
         </div>
       )}
 
-      {/* ── CONTENEDOR PRINCIPAL ── */}
-      <main className="w-full max-w-4xl mx-auto px-3 sm:px-5 pt-3 space-y-5">
+      {/* ── CONTENEDOR PRINCIPAL (DESKTOP TWO-COLUMN & MOBILE ADAPTIVE) ── */}
+      <main className="w-full max-w-7xl mx-auto px-4 sm:px-8 pt-6 space-y-6">
+        
+        <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
 
-        {/* ── 2. BANNER HERO CARRUSEL (SIMILAR AL LANDING) ── */}
-        {displayHeroSlides.length > 0 && activeSlide && (
-          <div className="relative w-full rounded-3xl overflow-hidden shadow-xl border border-slate-800/80 min-h-[160px] sm:min-h-[195px] max-h-[220px] flex items-center bg-slate-950">
-            <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
-              <img
-                src={activeSlide.image}
-                alt={activeSlide.title || 'Especialidad'}
-                className="w-full h-full object-cover object-center scale-105 transition-all duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent" />
-            </div>
+          {/* ══════════════════════════════════════════════════════════════
+              COLUMNA PRINCIPAL (BANNERS, PROMOCIONES, CATEGORÍAS, PLATILLOS)
+              8 Columnas en Desktop / Ancho Completo en Mobile
+              ══════════════════════════════════════════════════════════════ */}
+          <div className="lg:col-span-8 space-y-6">
 
-            {/* Etiqueta Flotante Circular con Precio */}
-            {activeSlide.priceLabel && (
-              <div
-                style={{ backgroundColor: cp, color: '#ffffff' }}
-                className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 w-12 h-12 rounded-full flex flex-col items-center justify-center text-white font-black shadow-xl border-2 border-white/20 rotate-[6deg] scale-95"
-              >
-                <span className="text-[8px] uppercase tracking-tighter leading-tight opacity-90">DESDE</span>
-                <span className="text-xs font-black leading-none">
-                  {activeSlide.priceLabel.replace(/^Desde\s+/i, '')}
-                </span>
-              </div>
-            )}
-
-            <div className="relative z-10 w-3/4 sm:w-2/3 p-4 sm:p-6 space-y-1.5 flex flex-col justify-center">
-              <span style={{ color: cp }} className="text-[9px] font-black uppercase tracking-widest block">
-                {activeSlide.tagText || 'RECOMENDADO DEL CHEF'}
-              </span>
-
-              <h2 className="text-white text-lg sm:text-xl font-black tracking-tight leading-tight">
-                {activeSlide.title}
-              </h2>
-
-              {activeSlide.description && (
-                <p className="text-slate-300 text-[10px] sm:text-xs font-normal leading-relaxed line-clamp-2 max-w-[280px]">
-                  {activeSlide.description}
-                </p>
-              )}
-
-              {permitePedidos && (
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const found = products.find(p => p.id === activeSlide.id || p.nombre === activeSlide.title);
-                      if (found) {
-                        handleOpenProductDetail(found);
-                      } else {
-                        const menuEl = document.getElementById('seccion-menu-mesa');
-                        if (menuEl) menuEl.scrollIntoView({ behavior: 'smooth' });
-                      }
-                    }}
-                    style={{ backgroundColor: cp, color: '#ffffff' }}
-                    className="px-4 py-1.5 rounded-full text-[11px] font-black text-white shadow-lg flex items-center gap-1 hover:opacity-90 active:scale-95 transition-all cursor-pointer"
-                  >
-                    <span>Pedir a la Mesa</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
+            {/* ── 2. BANNER HERO CARRUSEL (RESPONSIVE PC & MOBILE) ── */}
+            {displayHeroSlides.length > 0 && activeSlide && (
+              <div className="relative w-full rounded-3xl overflow-hidden shadow-xl border border-slate-800/80 h-48 sm:h-64 md:h-72 lg:h-80 flex items-center bg-slate-950">
+                <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
+                  <img
+                    src={activeSlide.image}
+                    alt={activeSlide.title || 'Especialidad'}
+                    className="w-full h-full object-cover object-center scale-105 transition-all duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent" />
                 </div>
-              )}
-            </div>
 
-            {/* Puntos Indicadores del Carrusel */}
-            {displayHeroSlides.length > 1 && (
-              <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
-                {displayHeroSlides.map((_, idx) => {
-                  const isActive = idx === currentSlideIndex % displayHeroSlides.length;
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setCurrentSlideIndex(idx)}
-                      style={{ backgroundColor: isActive ? cp : undefined }}
-                      className={`transition-all duration-300 cursor-pointer ${
-                        isActive ? 'w-5 h-1.5 rounded-full shadow-xs' : 'w-1.5 h-1.5 rounded-full bg-white/40 hover:bg-white/70'
-                      }`}
-                    />
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── 3. SECCIÓN PROMOCIONES Y OFERTAS ESPECIALES ── */}
-        {displayPromotions.length > 0 && (
-          <div className="space-y-3 pt-1">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base sm:text-lg font-black tracking-tight flex items-center gap-1.5 text-slate-900">
-                <Flame style={{ color: cp }} className="w-5 h-5" />
-                Promociones Especiales
-              </h3>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Exclusivas en salón
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
-              {displayPromotions.map(promo => (
-                <div
-                  key={promo.id}
-                  onClick={() => {
-                    const found = products.find(p => p.id === promo.id || p.nombre === promo.title);
-                    if (found) handleOpenProductDetail(found);
-                  }}
-                  className="rounded-2xl border border-slate-200 bg-white shadow-xs p-3 flex items-center gap-3 min-w-[260px] max-w-[290px] shrink-0 hover:shadow-md transition-all cursor-pointer group"
-                >
-                  <div className="w-16 h-16 rounded-xl bg-slate-100 overflow-hidden shrink-0 relative">
-                    <img
-                      src={promo.image}
-                      alt={promo.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                    />
-                    <div
-                      style={{ backgroundColor: cp }}
-                      className="absolute top-1 left-1 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-xs"
-                    >
-                      {promo.badge || 'PROMO'}
-                    </div>
-                  </div>
-
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <h5 className="text-xs font-black truncate text-slate-900 group-hover:text-amber-600 transition-colors">
-                      {promo.title}
-                    </h5>
-                    <p className="text-[10px] font-medium line-clamp-1 text-slate-500">
-                      {promo.description}
-                    </p>
-
-                    <div className="flex items-center justify-between pt-0.5">
-                      <div className="flex items-center gap-1.5">
-                        {promo.price && (
-                          <span style={{ color: cp }} className="text-xs font-black">
-                            ${Number(promo.price).toFixed(2)}
-                          </span>
-                        )}
-                        {promo.originalPrice && (
-                          <span className="text-[10px] font-bold line-through text-slate-400">
-                            ${Number(promo.originalPrice).toFixed(2)}
-                          </span>
-                        )}
-                      </div>
-
-                      {permitePedidos ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const found = products.find(p => p.id === promo.id || p.nombre === promo.title);
-                            if (found) addToCart(found);
-                          }}
-                          style={{ backgroundColor: cp, color: '#ffffff' }}
-                          className="px-2.5 py-1 rounded-lg font-black text-[10px] flex items-center gap-1 shadow-xs hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
-                        >
-                          <Plus className="w-3 h-3 text-white" />
-                          <span>Agregar</span>
-                        </button>
-                      ) : (
-                        <span className="text-[10px] font-black text-slate-500">Ver Menú</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── 4. SELECTOR DE CATEGORÍAS & BUSCADOR ── */}
-        <div id="seccion-menu-mesa" className="space-y-3 pt-2">
-          
-          {/* Buscador Integrado */}
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-            <input
-              type="text"
-              placeholder="Buscar platillos, bebidas o postres..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-9 py-2.5 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 outline-none shadow-2xs focus:border-slate-400 transition-colors"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="p-1 text-slate-400 hover:text-slate-700 absolute right-3 top-2.5"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          {/* Chips de Categorías */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            <button
-              type="button"
-              onClick={() => setSelectedCategoryId('TODOS')}
-              style={{
-                borderColor: selectedCategoryId === 'TODOS' ? cp : '#e2e8f0',
-                color: selectedCategoryId === 'TODOS' ? cp : '#334155',
-                backgroundColor: '#ffffff'
-              }}
-              className={`px-4 py-2 rounded-2xl border flex items-center gap-1.5 shrink-0 transition-all shadow-2xs cursor-pointer ${
-                selectedCategoryId === 'TODOS' ? 'shadow-md border-2 font-black' : 'font-bold'
-              }`}
-            >
-              <span>🍽️</span>
-              <span className="text-xs">Todos ({products.length})</span>
-            </button>
-
-            {categories.map((cat) => {
-              const isActive = selectedCategoryId === cat.id;
-              const countInCat = products.filter(p => p.categoriaId === cat.id).length;
-
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => setSelectedCategoryId(cat.id)}
-                  style={{
-                    borderColor: isActive ? cp : '#e2e8f0',
-                    color: isActive ? cp : '#334155',
-                    backgroundColor: '#ffffff'
-                  }}
-                  className={`px-4 py-2 rounded-2xl border flex items-center gap-1.5 shrink-0 transition-all shadow-2xs cursor-pointer ${
-                    isActive ? 'shadow-md border-2 font-black' : 'font-bold'
-                  }`}
-                >
-                  <span>{cat.icono || '🍲'}</span>
-                  <span className="text-xs">{cat.nombre}</span>
-                  {countInCat > 0 && (
-                    <span className="text-[10px] text-slate-400 font-mono">({countInCat})</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ── 5. GRID DE PRODUCTOS / PLATILLOS DEL RESTAURANTE ── */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-900">
-              {selectedCategoryId === 'TODOS' ? 'Carta de Platillos' : 'Platillos en esta Categoría'}
-            </h3>
-            <span className="text-xs text-slate-500 font-bold font-mono">
-              {filteredProducts.length} disponibles
-            </span>
-          </div>
-
-          {filteredProducts.length === 0 ? (
-            <div className="bg-white rounded-3xl border border-slate-200 p-8 text-center space-y-2">
-              <Utensils className="w-8 h-8 text-slate-300 mx-auto" />
-              <h4 className="text-sm font-black text-slate-800 uppercase">Sin platillos disponibles</h4>
-              <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                No se encontraron productos con la búsqueda o categoría seleccionada.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-              {filteredProducts.map(prod => {
-                const qtyInCart = getItemQuantity(prod.id);
-                const isFav = !!favorites[prod.id];
-                const cleanDesc = cleanDescriptionText(prod.descripcion);
-
-                return (
+                {/* Etiqueta Flotante Circular con Precio */}
+                {activeSlide.priceLabel && (
                   <div
-                    key={prod.id}
-                    onClick={() => handleOpenProductDetail(prod)}
-                    className="bg-white rounded-3xl border border-slate-200 shadow-2xs overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all cursor-pointer"
+                    style={{ backgroundColor: cp, color: '#ffffff' }}
+                    className="absolute top-3 right-3 sm:top-5 sm:right-5 z-20 w-12 h-12 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center text-white font-black shadow-xl border-2 border-white/20 rotate-[6deg] scale-95"
                   >
-                    <div className="relative w-full h-32 sm:h-40 bg-slate-100 overflow-hidden">
-                      {prod.imagenUrl ? (
-                        <img
-                          src={prod.imagenUrl}
-                          alt={prod.nombre}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-3xl">🍲</div>
-                      )}
+                    <span className="text-[8px] sm:text-[10px] uppercase tracking-tighter leading-tight opacity-90">DESDE</span>
+                    <span className="text-xs sm:text-base font-black leading-none">
+                      {activeSlide.priceLabel.replace(/^Desde\s+/i, '')}
+                    </span>
+                  </div>
+                )}
 
+                <div className="relative z-10 w-4/5 sm:w-2/3 p-5 sm:p-8 space-y-2 flex flex-col justify-center">
+                  <span style={{ color: cp }} className="text-[9px] sm:text-xs font-black uppercase tracking-widest block">
+                    {activeSlide.tagText || 'RECOMENDADO DEL CHEF'}
+                  </span>
+
+                  <h2 className="text-white text-xl sm:text-2xl md:text-3xl font-black tracking-tight leading-tight">
+                    {activeSlide.title}
+                  </h2>
+
+                  {activeSlide.description && (
+                    <p className="text-slate-300 text-xs sm:text-sm font-normal leading-relaxed line-clamp-2 max-w-md">
+                      {activeSlide.description}
+                    </p>
+                  )}
+
+                  {permitePedidos && (
+                    <div className="pt-2">
                       <button
                         type="button"
-                        onClick={(e) => toggleFavorite(prod.id, e)}
-                        className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/40 backdrop-blur-xs text-white hover:bg-slate-900/60 transition-all cursor-pointer"
+                        onClick={() => {
+                          const found = products.find(p => p.id === activeSlide.id || p.nombre === activeSlide.title);
+                          if (found) {
+                            handleOpenProductDetail(found);
+                          } else {
+                            const menuEl = document.getElementById('seccion-menu-mesa');
+                            if (menuEl) menuEl.scrollIntoView({ behavior: 'smooth' });
+                          }
+                        }}
+                        style={{ backgroundColor: cp, color: '#ffffff' }}
+                        className="px-5 py-2.5 rounded-full text-xs font-black text-white shadow-lg flex items-center gap-1.5 hover:opacity-90 active:scale-95 transition-all cursor-pointer"
                       >
-                        <Heart
-                          className={`w-3.5 h-3.5 transition-colors ${
-                            isFav ? 'fill-red-500 text-red-500' : 'text-white'
+                        <span>Pedir a la Mesa</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Puntos Indicadores del Carrusel */}
+                {displayHeroSlides.length > 1 && (
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5">
+                    {displayHeroSlides.map((_, idx) => {
+                      const isActive = idx === currentSlideIndex % displayHeroSlides.length;
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setCurrentSlideIndex(idx)}
+                          style={{ backgroundColor: isActive ? cp : undefined }}
+                          className={`transition-all duration-300 cursor-pointer ${
+                            isActive ? 'w-6 h-1.5 rounded-full shadow-xs' : 'w-1.5 h-1.5 rounded-full bg-white/40 hover:bg-white/70'
                           }`}
                         />
-                      </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
-                      {prod.precioAnterior && prod.precioAnterior > prod.precio && (
+            {/* ── 3. SECCIÓN PROMOCIONES Y OFERTAS ESPECIALES (SIN SCROLLBAR FEO EN PC) ── */}
+            {displayPromotions.length > 0 && (
+              <div className="space-y-3 pt-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Flame style={{ color: cp }} className="w-5 h-5" />
+                    <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-900">
+                      Promociones Especiales
+                    </h3>
+                    <span className="hidden sm:inline-block px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[10px] font-black uppercase tracking-wider">
+                      Salón
+                    </span>
+                  </div>
+
+                  {/* Flechas de Navegación para PC */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => scrollPromos('left')}
+                      className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                      title="Anterior"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => scrollPromos('right')}
+                      className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                      title="Siguiente"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Slider Horizontal Limpio sin Barra Gris */}
+                <div
+                  ref={promoScrollRef}
+                  className="flex items-center gap-3 sm:gap-4 overflow-x-auto pb-1 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                >
+                  {displayPromotions.map(promo => (
+                    <div
+                      key={promo.id}
+                      onClick={() => {
+                        const found = products.find(p => p.id === promo.id || p.nombre === promo.title);
+                        if (found) handleOpenProductDetail(found);
+                      }}
+                      className="rounded-3xl border border-slate-200 bg-white shadow-xs p-3.5 flex items-center gap-3.5 min-w-[270px] sm:min-w-[300px] max-w-[320px] shrink-0 hover:shadow-md transition-all cursor-pointer group"
+                    >
+                      <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-slate-100 overflow-hidden shrink-0 relative">
+                        <img
+                          src={promo.image}
+                          alt={promo.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
                         <div
                           style={{ backgroundColor: cp }}
-                          className="absolute bottom-2 left-2 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-xs uppercase tracking-tight"
+                          className="absolute top-1 left-1 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-xs"
                         >
-                          Oferta
+                          {promo.badge || 'PROMO'}
                         </div>
-                      )}
-                    </div>
-
-                    <div className="p-3 flex flex-col flex-1 justify-between space-y-2">
-                      <div>
-                        <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 line-clamp-1 group-hover:text-amber-600 transition-colors">
-                          {prod.nombre}
-                        </h4>
-                        {cleanDesc && (
-                          <p className="text-[10px] text-slate-500 font-medium line-clamp-2 mt-0.5">
-                            {cleanDesc}
-                          </p>
-                        )}
                       </div>
 
-                      <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-                        <div className="flex flex-col">
-                          <span style={{ color: cp }} className="font-black text-xs sm:text-sm font-mono">
-                            ${Number(prod.precio || 0).toFixed(2)}
-                          </span>
-                          {prod.precioAnterior && (
-                            <span className="text-[9px] text-slate-400 line-through font-mono">
-                              ${Number(prod.precioAnterior).toFixed(2)}
-                            </span>
-                          )}
-                        </div>
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <h5 className="text-xs sm:text-sm font-black truncate text-slate-900 group-hover:text-amber-600 transition-colors">
+                          {promo.title}
+                        </h5>
+                        <p className="text-[10px] sm:text-xs font-medium line-clamp-1 text-slate-500">
+                          {promo.description}
+                        </p>
 
-                        {permitePedidos ? (
-                          qtyInCart > 0 ? (
-                            <div
-                              onClick={(e) => e.stopPropagation()}
-                              className="flex items-center gap-1 bg-slate-100 rounded-xl p-0.5"
-                            >
-                              <button
-                                type="button"
-                                onClick={() => decrementQuantity(prod.id)}
-                                className="w-5 h-5 bg-white text-slate-700 rounded-lg font-black text-xs flex items-center justify-center shadow-2xs hover:bg-slate-200 cursor-pointer"
-                              >
-                                -
-                              </button>
-                              <span className="text-[11px] font-black px-1 text-slate-900">
-                                {qtyInCart}
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="flex items-baseline gap-1.5">
+                            {promo.price && (
+                              <span style={{ color: cp }} className="text-xs sm:text-sm font-black font-mono">
+                                ${Number(promo.price).toFixed(2)}
                               </span>
-                              <button
-                                type="button"
-                                onClick={() => addToCart(prod)}
-                                style={{ backgroundColor: cp, color: '#ffffff' }}
-                                className="w-5 h-5 rounded-lg font-black text-xs flex items-center justify-center shadow-2xs text-white cursor-pointer"
-                              >
-                                +
-                              </button>
-                            </div>
-                          ) : (
+                            )}
+                            {promo.originalPrice && (
+                              <span className="text-[10px] font-bold line-through text-slate-400 font-mono">
+                                ${Number(promo.originalPrice).toFixed(2)}
+                              </span>
+                            )}
+                          </div>
+
+                          {permitePedidos ? (
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleOpenProductDetail(prod);
+                                const found = products.find(p => p.id === promo.id || p.nombre === promo.title);
+                                if (found) addToCart(found);
                               }}
                               style={{ backgroundColor: cp, color: '#ffffff' }}
-                              className="w-7 h-7 rounded-xl flex items-center justify-center font-extrabold shadow-sm hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
-                              title="Añadir a la mesa"
+                              className="px-3 py-1 rounded-xl font-black text-[11px] flex items-center gap-1 shadow-xs hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
                             >
-                              <Plus className="w-4 h-4 text-white" />
+                              <Plus className="w-3 h-3 text-white" />
+                              <span>Agregar</span>
                             </button>
-                          )
-                        ) : (
-                          <span className="text-[10px] font-extrabold text-slate-400">Ver</span>
-                        )}
+                          ) : (
+                            <span className="text-[10px] font-black text-slate-400">Ver</span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── 4. BUSCADOR & SELECTOR DE CATEGORÍAS ── */}
+            <div id="seccion-menu-mesa" className="space-y-3 pt-2">
+              
+              {/* Buscador de Platillos */}
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
+                <input
+                  type="text"
+                  placeholder="Buscar platillos, bebidas o postres..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full pl-11 pr-9 py-3 bg-white border border-slate-200 rounded-2xl text-xs sm:text-sm font-semibold text-slate-900 outline-none shadow-2xs focus:border-slate-400 transition-colors"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="p-1 text-slate-400 hover:text-slate-700 absolute right-3.5 top-3"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Chips de Categorías */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategoryId('TODOS')}
+                  style={{
+                    borderColor: selectedCategoryId === 'TODOS' ? cp : '#e2e8f0',
+                    color: selectedCategoryId === 'TODOS' ? cp : '#334155',
+                    backgroundColor: '#ffffff'
+                  }}
+                  className={`px-4 py-2.5 rounded-2xl border flex items-center gap-1.5 shrink-0 transition-all shadow-2xs cursor-pointer ${
+                    selectedCategoryId === 'TODOS' ? 'shadow-md border-2 font-black' : 'font-bold'
+                  }`}
+                >
+                  <span>🍽️</span>
+                  <span className="text-xs">Todos ({products.length})</span>
+                </button>
+
+                {categories.map((cat) => {
+                  const isActive = selectedCategoryId === cat.id;
+                  const countInCat = products.filter(p => p.categoriaId === cat.id).length;
+
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setSelectedCategoryId(cat.id)}
+                      style={{
+                        borderColor: isActive ? cp : '#e2e8f0',
+                        color: isActive ? cp : '#334155',
+                        backgroundColor: '#ffffff'
+                      }}
+                      className={`px-4 py-2.5 rounded-2xl border flex items-center gap-1.5 shrink-0 transition-all shadow-2xs cursor-pointer ${
+                        isActive ? 'shadow-md border-2 font-black' : 'font-bold'
+                      }`}
+                    >
+                      <span>{cat.icono || '🍲'}</span>
+                      <span className="text-xs">{cat.nombre}</span>
+                      {countInCat > 0 && (
+                        <span className="text-[10px] text-slate-400 font-mono">({countInCat})</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          )}
+
+            {/* ── 5. GRID DE PLATILLOS / CARTA DEL RESTAURANTE ── */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-900">
+                  {selectedCategoryId === 'TODOS' ? 'Carta de Platillos' : 'Platillos en esta Categoría'}
+                </h3>
+                <span className="text-xs text-slate-500 font-bold font-mono">
+                  {filteredProducts.length} disponibles
+                </span>
+              </div>
+
+              {filteredProducts.length === 0 ? (
+                <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-2">
+                  <Utensils className="w-10 h-10 text-slate-300 mx-auto" />
+                  <h4 className="text-sm font-black text-slate-800 uppercase">Sin platillos disponibles</h4>
+                  <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                    No se encontraron productos con la búsqueda o categoría seleccionada.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+                  {filteredProducts.map(prod => {
+                    const qtyInCart = getItemQuantity(prod.id);
+                    const isFav = !!favorites[prod.id];
+                    const cleanDesc = cleanDescriptionText(prod.descripcion);
+
+                    return (
+                      <div
+                        key={prod.id}
+                        onClick={() => handleOpenProductDetail(prod)}
+                        className="bg-white rounded-3xl border border-slate-200 shadow-2xs overflow-hidden flex flex-col justify-between group hover:shadow-md transition-all cursor-pointer"
+                      >
+                        <div className="relative w-full h-32 sm:h-40 bg-slate-100 overflow-hidden">
+                          {prod.imagenUrl ? (
+                            <img
+                              src={prod.imagenUrl}
+                              alt={prod.nombre}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-3xl">🍲</div>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={(e) => toggleFavorite(prod.id, e)}
+                            className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/40 backdrop-blur-xs text-white hover:bg-slate-900/60 transition-all cursor-pointer"
+                          >
+                            <Heart
+                              className={`w-3.5 h-3.5 transition-colors ${
+                                isFav ? 'fill-red-500 text-red-500' : 'text-white'
+                              }`}
+                            />
+                          </button>
+
+                          {prod.precioAnterior && prod.precioAnterior > prod.precio && (
+                            <div
+                              style={{ backgroundColor: cp }}
+                              className="absolute bottom-2 left-2 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-xs uppercase tracking-tight"
+                            >
+                              Oferta
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="p-3.5 flex flex-col flex-1 justify-between space-y-2.5">
+                          <div>
+                            <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 line-clamp-1 group-hover:text-amber-600 transition-colors">
+                              {prod.nombre}
+                            </h4>
+                            {cleanDesc && (
+                              <p className="text-[10px] sm:text-xs text-slate-500 font-medium line-clamp-2 mt-0.5">
+                                {cleanDesc}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                            <div className="flex flex-col">
+                              <span style={{ color: cp }} className="font-black text-xs sm:text-sm font-mono">
+                                ${Number(prod.precio || 0).toFixed(2)}
+                              </span>
+                              {prod.precioAnterior && (
+                                <span className="text-[9px] text-slate-400 line-through font-mono">
+                                  ${Number(prod.precioAnterior).toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+
+                            {permitePedidos ? (
+                              qtyInCart > 0 ? (
+                                <div
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="flex items-center gap-1 bg-slate-100 rounded-xl p-0.5"
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() => decrementQuantity(prod.id)}
+                                    className="w-5 h-5 bg-white text-slate-700 rounded-lg font-black text-xs flex items-center justify-center shadow-2xs hover:bg-slate-200 cursor-pointer"
+                                  >
+                                    -
+                                  </button>
+                                  <span className="text-[11px] font-black px-1.5 text-slate-900">
+                                    {qtyInCart}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => addToCart(prod)}
+                                    style={{ backgroundColor: cp, color: '#ffffff' }}
+                                    className="w-5 h-5 rounded-lg font-black text-xs flex items-center justify-center shadow-2xs text-white cursor-pointer"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenProductDetail(prod);
+                                  }}
+                                  style={{ backgroundColor: cp, color: '#ffffff' }}
+                                  className="w-7 h-7 rounded-xl flex items-center justify-center font-extrabold shadow-sm hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
+                                  title="Añadir a la mesa"
+                                >
+                                  <Plus className="w-4 h-4 text-white" />
+                                </button>
+                              )
+                            ) : (
+                              <span className="text-[10px] font-extrabold text-slate-400">Ver</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ══════════════════════════════════════════════════════════════
+              COLUMNA LATERAL EN DESKTOP (STICKY LIVE ORDER PANEL)
+              4 Columnas en Desktop (≥ lg) / Oculto en Mobile
+              ══════════════════════════════════════════════════════════════ */}
+          <div className="hidden lg:block lg:col-span-4 sticky top-20 self-start space-y-4">
+            
+            {/* Tarjeta de Resumen de Comanda en Mesa */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 space-y-4">
+              
+              {/* Encabezado del Panel */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div
+                    style={{ backgroundColor: cp }}
+                    className="w-9 h-9 rounded-2xl flex items-center justify-center text-white font-black text-sm shadow-xs"
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">Tu Comanda</h4>
+                    <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                      Mesa: {mesa.nombre}
+                    </span>
+                  </div>
+                </div>
+
+                {totalItemsCount > 0 && (
+                  <span className="px-2.5 py-0.5 bg-slate-100 rounded-full text-xs font-black text-slate-800 font-mono">
+                    {totalItemsCount} {totalItemsCount === 1 ? 'ítem' : 'ítems'}
+                  </span>
+                )}
+              </div>
+
+              {/* Acciones Rápidas de Mesa en el Panel */}
+              {config.mesaLlamarMeseroHabilitado && (
+                <div className="grid grid-cols-2 gap-2 text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() => handleCallWaiter('MESERO')}
+                    disabled={waiterCooldown > 0 || callingWaiter}
+                    className="py-2 px-2.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-800 flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <Bell className="w-3.5 h-3.5" />
+                    <span>Llamar Mesero</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleCallWaiter('CUENTA')}
+                    disabled={waiterCooldown > 0 || callingWaiter}
+                    className="py-2 px-2.5 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-900 flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <CreditCard className="w-3.5 h-3.5" />
+                    <span>Pedir Cuenta</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Lista de Platillos en Comanda */}
+              {permitePedidos ? (
+                cart.length === 0 ? (
+                  <div className="p-6 bg-slate-50/70 rounded-2xl border border-dashed border-slate-200 text-center space-y-2">
+                    <Utensils className="w-8 h-8 text-slate-300 mx-auto" />
+                    <span className="text-xs font-black text-slate-700 uppercase block">Comanda Vacía</span>
+                    <p className="text-[11px] text-slate-400 max-w-[200px] mx-auto">
+                      Agrega platillos del menú tocando el botón "+" en tus favoritos.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/50 max-h-60 overflow-y-auto">
+                      {cart.map(item => (
+                        <div key={item.product.id} className="p-2.5 flex items-center justify-between text-xs">
+                          <div className="min-w-0 flex-1 pr-2">
+                            <span className="font-extrabold text-slate-900 block truncate">
+                              {item.product.nombre}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              ${item.product.precio.toFixed(2)} c/u
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-1">
+                              <button
+                                type="button"
+                                onClick={() => decrementQuantity(item.product.id)}
+                                className="px-1.5 py-0.5 font-black text-slate-600 hover:text-slate-900 cursor-pointer"
+                              >
+                                -
+                              </button>
+                              <span className="px-1 font-bold text-[11px]">{item.quantity}</span>
+                              <button
+                                type="button"
+                                onClick={() => addToCart(item.product)}
+                                className="px-1.5 py-0.5 font-black text-slate-600 hover:text-slate-900 cursor-pointer"
+                              >
+                                +
+                              </button>
+                            </div>
+                            <span className="font-black text-slate-900 font-mono w-14 text-right">
+                              ${(item.product.precio * item.quantity).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Notas para Cocina en Desktop */}
+                    <div className="space-y-1 text-xs">
+                      <label className="font-bold text-slate-700">Notas para cocina (opcional):</label>
+                      <textarea
+                        rows={2}
+                        placeholder="Ej: Término medio, sin cebolla..."
+                        value={notasPedido}
+                        onChange={e => setNotasPedido(e.target.value)}
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium resize-none focus:border-slate-400 outline-none"
+                      />
+                    </div>
+
+                    {/* Total y Botón de Enviar a Cocina en Desktop */}
+                    <div className="p-3.5 bg-slate-950 rounded-2xl text-white space-y-2">
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-xs text-slate-400 font-bold uppercase">Total a Pedir</span>
+                        <span className="text-xl font-black text-amber-400 font-mono">${total.toFixed(2)}</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400">
+                        El pago se realiza directamente en mesa con tu mesero.
+                      </p>
+                    </div>
+
+                    {geoErrorMessage && (
+                      <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-start gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                        <span className="text-[11px]">{geoErrorMessage}</span>
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      disabled={requestingOrder || cart.length === 0}
+                      onClick={handleSubmitTableOrder}
+                      style={{ backgroundColor: cp, color: '#ffffff' }}
+                      className="w-full py-3 rounded-2xl font-black text-xs uppercase flex items-center justify-center gap-2 shadow-md cursor-pointer disabled:opacity-50 text-white hover:opacity-90 active:scale-95 transition-all"
+                    >
+                      {requestingOrder ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-white" />
+                          <span>Enviando a Cocina...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Utensils className="w-4 h-4 text-white" />
+                          <span>Enviar Pedido a Cocina</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )
+              ) : (
+                <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 space-y-1">
+                  <span className="font-black uppercase block">Modo Menú Digital</span>
+                  <p className="text-[11px] text-amber-800">
+                    Las comandas son tomadas por el mesero. Utiliza el botón "Llamar Mesero" para pedir tus platillos.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
         </div>
       </main>
 
-      {/* ── 6. BARRA FLOTANTE INFERIOR DE PEDIDO (SI HAY PLATILLOS EN CARRITO) ── */}
+      {/* ── 6. BARRA FLOTANTE INFERIOR DE PEDIDO (SOLO EN MOBILE / TABLET < lg) ── */}
       {permitePedidos && totalItemsCount > 0 && (
-        <div className="fixed bottom-4 left-3 right-3 sm:left-auto sm:right-auto sm:w-[450px] sm:left-1/2 sm:-translate-x-1/2 z-40 animate-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-4 left-3 right-3 sm:left-1/2 sm:-translate-x-1/2 sm:w-[420px] z-40 lg:hidden animate-in slide-in-from-bottom-5 duration-300">
           <div className="bg-slate-950 text-white p-3.5 rounded-3xl shadow-2xl border border-slate-800 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 pl-1">
               <div
@@ -908,7 +1140,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
         </div>
       )}
 
-      {/* ── MODAL: ACCIONES DE LLAMAR MESERO ── */}
+      {/* ── MODAL: ACCIONES DE LLAMAR MESERO (MOBILE Y POPUP) ── */}
       {showWaiterModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-100 text-slate-900">
@@ -973,7 +1205,7 @@ function PublicMesaContent({ slug, mesaToken }: { slug: string; mesaToken: strin
         </div>
       )}
 
-      {/* ── MODAL / DRAWER: CONFIRMAR PEDIDO EN MESA ── */}
+      {/* ── MODAL / DRAWER: CONFIRMAR PEDIDO EN MESA (MOBILE) ── */}
       {showOrderDrawer && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-100 max-h-[92vh] flex flex-col justify-between animate-in slide-in-from-bottom duration-300 text-slate-900">
