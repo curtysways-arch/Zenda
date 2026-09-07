@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { resolveLandingContent } from '@/lib/landingContentResolver';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +55,20 @@ export async function GET(
       longitudNegocio: config.longitudNegocio !== undefined ? Number(config.longitudNegocio) : -78.467838
     };
 
+    // Cargar en paralelo categorías, productos y contenido del landing (Hero banners y highlights)
+    const [categories, products, landingContent] = await Promise.all([
+      (prisma as any).categoriaProducto.findMany({
+        where: { negocioId: negocio.id, activo: true },
+        orderBy: { orden: 'asc' }
+      }),
+      (prisma as any).producto.findMany({
+        where: { negocioId: negocio.id },
+        include: { categoria: true, variantes: true },
+        orderBy: { orden: 'asc' }
+      }),
+      resolveLandingContent(negocio.id).catch(() => ({ hero: [], highlights: [] }))
+    ]);
+
     return NextResponse.json({
       success: true,
       negocio: {
@@ -61,18 +76,26 @@ export async function GET(
         nombre: negocio.nombre,
         slug: negocio.slug,
         logoUrl: negocio.logoUrl,
+        bannerUrl: (negocio as any).bannerUrl || null,
         whatsapp: negocio.whatsapp,
-        colorPrimario: negocio.colorPrimario
+        colorPrimario: negocio.colorPrimario || '#ff5500',
+        colorSecundario: negocio.colorSecundario || '#0f172a',
+        colorFondo: (negocio as any).colorFondo || '#f8fafc',
+        configuracion: negocio.configuracion
       },
       mesa: {
         id: mesa.id,
         nombre: mesa.nombre,
         numero: mesa.numero,
+        capacidad: mesa.capacidad,
         token: mesa.token,
         permitePedidos: mesa.permitePedidos && mesaConfig.mesaPedidosHabilitados,
         estado: mesa.estado
       },
-      config: mesaConfig
+      config: mesaConfig,
+      categories: categories || [],
+      products: products || [],
+      landingContent: landingContent || { hero: [], highlights: [] }
     });
   } catch (error: any) {
     console.error('[PUBLIC_MESA_GET_ERROR]', error);
