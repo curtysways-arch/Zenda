@@ -158,9 +158,15 @@ export default function AdminMesasPage() {
   const fetchAllData = async () => {
     try {
       setLoading(true);
+      const currentBranchId = typeof window !== 'undefined' ? localStorage.getItem('citiox_current_branch_id') : null;
+      const headers: Record<string, string> = {};
+      if (currentBranchId) {
+        headers['x-branch-id'] = currentBranchId;
+      }
+
       const [resMesas, resReq, resConfig, resNegocio, resProd] = await Promise.all([
-        fetch('/api/admin/mesas'),
-        fetch('/api/admin/mesas/requests'),
+        fetch('/api/admin/mesas', { headers }),
+        fetch('/api/admin/mesas/requests', { headers }),
         fetch('/api/admin/mesas/config'),
         fetch('/api/negocio'),
         fetch('/api/admin/productos')
@@ -203,7 +209,16 @@ export default function AdminMesasPage() {
     }
     fetchAllData();
     const interval = setInterval(fetchAllData, 8000); // Polling cada 8s para sincronización en vivo
-    return () => clearInterval(interval);
+
+    const handleBranchChanged = () => {
+      fetchAllData();
+    };
+    window.addEventListener('citiox-branch-changed', handleBranchChanged);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('citiox-branch-changed', handleBranchChanged);
+    };
   }, []);
 
   // Mantener actualizado el modal de detalles si la mesa cambia en el polling
@@ -221,15 +236,23 @@ export default function AdminMesasPage() {
 
     setSavingTable(true);
     try {
+      const currentBranchId = typeof window !== 'undefined' ? localStorage.getItem('citiox_current_branch_id') : null;
+      const targetBranch = currentBranchId && currentBranchId !== 'ALL' ? currentBranchId : undefined;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (currentBranchId) {
+        headers['x-branch-id'] = currentBranchId;
+      }
+
       if (editingTable) {
         const res = await fetch(`/api/admin/mesas/${editingTable.id}`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({
             nombre: tableNameInput.trim(),
             numero: tableNumberInput ? parseInt(tableNumberInput, 10) : null,
             capacidad: tableSeatsInput ? parseInt(tableSeatsInput, 10) : 4,
-            permitePedidos: tableAllowOrders
+            permitePedidos: tableAllowOrders,
+            branchId: targetBranch
           })
         });
         if (res.ok) {
@@ -240,12 +263,13 @@ export default function AdminMesasPage() {
       } else {
         const res = await fetch('/api/admin/mesas', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({
             nombre: tableNameInput.trim(),
             numero: tableNumberInput ? parseInt(tableNumberInput, 10) : null,
             capacidad: tableSeatsInput ? parseInt(tableSeatsInput, 10) : 4,
-            permitePedidos: tableAllowOrders
+            permitePedidos: tableAllowOrders,
+            branchId: targetBranch
           })
         });
         const data = await res.json();

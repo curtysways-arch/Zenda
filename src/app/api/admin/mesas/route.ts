@@ -27,17 +27,29 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const headerBranchId = req.headers.get('x-branch-id');
-    const queryBranchId = searchParams.get('branchId') || headerBranchId;
+    const cookieHeader = req.headers.get('cookie') || '';
+    const cookieBranchMatch = cookieHeader.match(/citiox_branch_id=([^;]+)/);
+    const cookieBranchId = cookieBranchMatch ? decodeURIComponent(cookieBranchMatch[1]) : null;
+
+    const queryBranchId = searchParams.get('branchId') || headerBranchId || cookieBranchId;
 
     const { BranchContextResolver } = await import('@/core/branch/BranchContext');
     const scope = await BranchContextResolver.resolveScope(user, negocioId, queryBranchId);
-    const whereBranch = BranchContextResolver.getWhereFilter(scope);
+    
+    // Filtro seguro para mesas: si es ALL no filtramos.
+    // Si es matriz / default, incluimos mesas con ese branchId O con branchId null (legacy/pre-migración)
+    // para asegurar que las mesas nunca desaparezcan de la vista.
+    const branchCondition = scope.type === 'ALL'
+      ? {}
+      : (scope.isMain || scope.isDefault)
+      ? { OR: [{ branchId: scope.branchId }, { branchId: null }] }
+      : { branchId: scope.branchId };
 
     const [mesas, rawActiveOrders] = await Promise.all([
       (prisma as any).restaurantTable.findMany({
         where: { 
           negocioId,
-          ...whereBranch
+          ...branchCondition
         },
         include: {
           _count: {
@@ -57,7 +69,7 @@ export async function GET(req: Request) {
       (prisma as any).pedido.findMany({
         where: {
           negocioId,
-          ...whereBranch,
+          ...branchCondition,
           NOT: {
             estado: { in: ['ENTREGADO', 'CANCELADO', 'COMPLETADO', 'RECHAZADO', 'DESPACHADO'] }
           }
@@ -122,25 +134,46 @@ export async function GET(req: Request) {
       }
 
       return {
-        ...mesa,
+        id: mesa.id,
+        nombre: mesa.nombre,
+        numero: mesa.numero,
+        capacidad: mesa.capacidad,
+        token: mesa.token,
+        activa: mesa.activa,
+        permitePedidos: mesa.permitePedidos,
         estado: computedEstado,
+        branchId: mesa.branchId,
         activeOrder: activeOrderSummary,
         hasBillRequest: Boolean(hasBillRequest),
         hasPendingCall: (mesa._count?.waiterCalls || 0) > 0,
-        hasPendingRequest: (mesa._count?.orderRequests || 0) > 0
+        hasPendingRequest: (mesa._count?.orderRequests || 0) > 0,
+        _count: mesa._count
       };
     });
 
-    return NextResponse.json({ success: true, mesas: enrichedMesas });
+    return NextResponse.json({
+      success: true,
+      mesas: enrichedMesas,
+      scope: {
+        type: scope.type,
+        branchId: (scope as any).branchId,
+        branchName: (scope as any).branchName
+      }
+    });
   } catch (error: any) {
     console.error('[ADMIN_MESAS_GET_ERROR]', error);
-    return NextResponse.json({ error: 'Error al obtener mesas' }, { status: 500 });
+    return NextResponse.json({ error: 'Error al consultar mesas' }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const negocioId = await getAuthNegocioId();
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+    const user = session.user as any;
+    const negocioId = user.negocioId || user.businessId;
     if (!negocioId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
@@ -167,10 +200,21 @@ export async function POST(request: Request) {
       }, { status: 403 });
     }
 
-    let targetBranchId = body.branchId;
+    const headerBranchId = request.headers.get('x-branch-id');
+    const cookieHeader = request.headers.get('cookie') || '';
+    const cookieBranchMatch = cookieHeader.match(/citiox_branch_id=([^;]+)/);
+    const cookieBranchId = cookieBranchMatch ? decodeURIComponent(cookieBranchMatch[1]) : null;
+
+    let targetBranchId = body.branchId || headerBranchId || cookieBranchId;
+    if (targetBranchId === 'ALL' || targetBranchId === 'all') {
+      targetBranchId = null;
+    }
+
     if (!targetBranchId) {
       const defaultBranch = await prisma.branch.findFirst({
         where: { businessId: negocioId, isMain: true, active: true }
+      }) || await prisma.branch.findFirst({
+        where: { businessId: negocioId, active: true }
       });
       targetBranchId = defaultBranch?.id || null;
     }

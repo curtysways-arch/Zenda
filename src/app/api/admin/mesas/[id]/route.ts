@@ -42,6 +42,17 @@ export async function PATCH(
     if (body.permitePedidos !== undefined) updateData.permitePedidos = Boolean(body.permitePedidos);
     if (body.estado !== undefined) updateData.estado = String(body.estado);
 
+    if (body.branchId !== undefined && body.branchId !== 'ALL') {
+      updateData.branchId = body.branchId || null;
+    } else if (mesaExistente.branchId === null) {
+      const defaultBranch = await prisma.branch.findFirst({
+        where: { businessId: negocioId, isMain: true, active: true }
+      });
+      if (defaultBranch?.id) {
+        updateData.branchId = defaultBranch.id;
+      }
+    }
+
     const mesaActualizada = await (prisma as any).restaurantTable.update({
       where: { id },
       data: updateData
