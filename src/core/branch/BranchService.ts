@@ -15,6 +15,8 @@ export interface CreateBranchInput {
   city?: string;
   phone?: string;
   email?: string;
+  mapUrl?: string;
+  imagenUrl?: string;
   isDefault?: boolean;
 }
 
@@ -25,6 +27,8 @@ export interface UpdateBranchInput {
   city?: string;
   phone?: string;
   email?: string;
+  mapUrl?: string;
+  imagenUrl?: string;
   isDefault?: boolean;
   active?: boolean;
 }
@@ -129,10 +133,12 @@ export class BranchService {
         });
       }
 
-      // Consolidar settings adicionales (city, email)
+      // Consolidar settings adicionales (city, email, mapUrl, imagenUrl)
       const settingsData: Record<string, any> = {};
       if (input.city) settingsData.city = input.city.trim();
       if (input.email) settingsData.email = input.email.trim();
+      if (input.mapUrl) settingsData.mapUrl = input.mapUrl.trim();
+      if (input.imagenUrl) settingsData.imagenUrl = input.imagenUrl.trim();
 
       // Crear la nueva sucursal
       const newBranch = await tx.branch.create({
@@ -226,6 +232,8 @@ export class BranchService {
       }
       if (input.city !== undefined) existingSettings.city = input.city?.trim() || null;
       if (input.email !== undefined) existingSettings.email = input.email?.trim() || null;
+      if (input.mapUrl !== undefined) existingSettings.mapUrl = input.mapUrl?.trim() || null;
+      if (input.imagenUrl !== undefined) existingSettings.imagenUrl = input.imagenUrl?.trim() || null;
 
       return tx.branch.update({
         where: { id: branchId },

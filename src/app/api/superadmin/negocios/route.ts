@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import { planService } from "@/lib/services/planService";
+import { BranchService } from "@/core/branch/BranchService";
 import crypto from "crypto";
 import { whatsappService } from "@/lib/whatsapp";
 import { BusinessProvisioningService } from "@/core/services/BusinessProvisioningService";
@@ -380,6 +381,20 @@ export async function POST(req: Request) {
             }
         } catch (planError) {
             console.error("Error al asignar plan por defecto:", planError);
+        }
+
+        // H2. Crear Sucursal Matriz inicial, Caja Registradora y Acceso
+        try {
+            await BranchService.createBranch(result.nuevoNegocio.id, {
+                name: 'Sucursal Matriz',
+                code: 'SEDE-01',
+                address: body.direccion || body.ciudad || null,
+                city: body.ciudad || null,
+                phone: whatsapp || null,
+                isDefault: true
+            });
+        } catch (branchError) {
+            console.error("⚠️ Error al crear sucursal matriz en superadmin:", branchError);
         }
 
         // I. Enviar mensaje de WhatsApp automático de bienvenida con accesos al cliente

@@ -127,15 +127,47 @@ export async function getNegocioBySlug(slug: string) {
                 }
             }
 
-            // Cargar ubicaciones (incluye mapUrl) usando Prisma ORM
+            // Cargar sucursales/ubicaciones del negocio (con mapa e imagen)
             try {
-                const ubicaciones = await prisma.ubicacion.findMany({
-                    where: { negocioId: negocio.id },
-                    orderBy: { createdAt: 'asc' }
+                const branches = await (prisma as any).branch.findMany({
+                    where: { businessId: negocio.id, active: true },
+                    orderBy: [
+                        { isMain: 'desc' },
+                        { createdAt: 'asc' }
+                    ]
                 });
-                negocio.ubicaciones = ubicaciones;
+
+                if (branches && branches.length > 0) {
+                    negocio.ubicaciones = branches.map((b: any) => {
+                        let settingsObj: any = {};
+                        if (typeof b.settings === 'string') {
+                            try { settingsObj = JSON.parse(b.settings); } catch { settingsObj = {}; }
+                        } else if (b.settings && typeof b.settings === 'object') {
+                            settingsObj = b.settings;
+                        }
+
+                        return {
+                            id: b.id,
+                            negocioId: b.businessId,
+                            nombre: b.name,
+                            direccion: b.address || '',
+                            telefono: b.phone || '',
+                            mapUrl: settingsObj.mapUrl || b.address || '',
+                            imagenUrl: settingsObj.imagenUrl || '',
+                            isMain: b.isMain,
+                            ciudad: settingsObj.city || negocio.ciudad || ''
+                        };
+                    });
+                } else {
+                    // Fallback a tabla legacy ubicacion si no tiene branches
+                    const ubicaciones = await (prisma as any).ubicacion?.findMany({
+                        where: { negocioId: negocio.id },
+                        orderBy: { createdAt: 'asc' }
+                    }).catch(() => []);
+                    negocio.ubicaciones = ubicaciones || [];
+                }
             } catch (e) {
-                console.error('Error loading business locations:', e);
+                console.error('Error loading business branches/locations:', e);
                 negocio.ubicaciones = [];
             }
 

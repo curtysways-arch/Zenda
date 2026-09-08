@@ -70,6 +70,8 @@ export async function POST(req: Request) {
       city: body.city,
       phone: body.phone,
       email: body.email,
+      mapUrl: body.mapUrl,
+      imagenUrl: body.imagenUrl,
       isDefault: body.isDefault
     });
 

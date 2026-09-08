@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { planService } from "@/lib/services/planService";
+import { BranchService } from "@/core/branch/BranchService";
 import crypto from "crypto";
 
 export async function POST(req: Request) {
@@ -106,6 +107,20 @@ export async function POST(req: Request) {
             await planService.assignDefaultPlan(result.nuevoNegocio.id, body.planId || body.plan);
         } catch (planError) {
             console.error("⚠️ Error al asignar plan trial:", planError);
+        }
+
+        // 4. Crear Sucursal Matriz inicial, Caja Registradora y Acceso
+        try {
+            await BranchService.createBranch(result.nuevoNegocio.id, {
+                name: 'Sucursal Matriz',
+                code: 'SEDE-01',
+                address: body.direccion || body.ciudad || null,
+                city: body.ciudad || null,
+                phone: body.telefono || null,
+                isDefault: true
+            });
+        } catch (branchError) {
+            console.error("⚠️ Error al crear sucursal matriz:", branchError);
         }
 
         return NextResponse.json({

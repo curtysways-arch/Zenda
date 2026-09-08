@@ -50,6 +50,8 @@ export default function SucursalesAdminPage() {
     city: '',
     phone: '',
     email: '',
+    mapUrl: '',
+    imagenUrl: '',
     isDefault: false
   });
 
@@ -88,6 +90,8 @@ export default function SucursalesAdminPage() {
       city: '',
       phone: '',
       email: '',
+      mapUrl: '',
+      imagenUrl: '',
       isDefault: branches.length === 0
     });
     setIsModalOpen(true);
@@ -95,14 +99,17 @@ export default function SucursalesAdminPage() {
 
   const handleOpenEdit = (b: BranchItem) => {
     setEditingBranch(b);
+    const settings = ((b as any).settings && typeof (b as any).settings === 'object') ? (b as any).settings : {};
     setFormData({
       name: b.name,
       code: b.code || '',
       address: b.address || '',
-      city: b.city || '',
+      city: b.city || settings.city || '',
       phone: b.phone || '',
-      email: b.email || '',
-      isDefault: b.isDefault
+      email: b.email || settings.email || '',
+      mapUrl: settings.mapUrl || '',
+      imagenUrl: settings.imagenUrl || '',
+      isDefault: b.isDefault || (b as any).isMain || false
     });
     setIsModalOpen(true);
   };
@@ -494,6 +501,35 @@ export default function SucursalesAdminPage() {
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Enlace de Google Maps (o iframe embed) para Landing
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://maps.app.goo.gl/... o dirección exacta"
+                  value={formData.mapUrl}
+                  onChange={(e) => setFormData({ ...formData, mapUrl: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Este mapa se mostrará en tu página pública/landing para que tus clientes puedan llegar fácilmente.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Foto de la Sucursal (URL de imagen)
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://... imagen de la fachada o interior"
+                  value={formData.imagenUrl}
+                  onChange={(e) => setFormData({ ...formData, imagenUrl: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
               </div>
 
               <div className="pt-2">
