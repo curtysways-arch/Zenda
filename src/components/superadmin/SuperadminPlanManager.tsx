@@ -229,6 +229,7 @@ export default function SuperadminPlanManager({
         selectedModules: new Set<string>(),
         dataPolicies: { ...DEFAULT_PAID_POLICIES } as Record<string, boolean>,
         limits: {
+            MAX_BRANCHES: 1,
             MAX_USERS: 2,
             MAX_PRODUCTS: 50,
             MAX_TABLES: 10,
@@ -288,6 +289,7 @@ export default function SuperadminPlanManager({
             selectedModules: defaultMods,
             dataPolicies: { ...DEFAULT_PAID_POLICIES },
             limits: {
+                MAX_BRANCHES: 1,
                 MAX_USERS: 2,
                 MAX_PRODUCTS: 50,
                 MAX_TABLES: 10,
@@ -345,6 +347,7 @@ export default function SuperadminPlanManager({
             selectedModules: currentMods,
             dataPolicies: currentPolicies,
             limits: {
+                MAX_BRANCHES: limitsMap.MAX_BRANCHES ?? 1,
                 MAX_USERS: limitsMap.MAX_USERS ?? 2,
                 MAX_PRODUCTS: limitsMap.MAX_PRODUCTS ?? 50,
                 MAX_TABLES: limitsMap.MAX_TABLES ?? 10,
@@ -817,6 +820,21 @@ export default function SuperadminPlanManager({
                                                     <span className="text-indigo-600 font-black">{modulesCount} activos</span>
                                                 </div>
 
+                                                {/* Límite de Sucursales destacado */}
+                                                {(() => {
+                                                    const branchLimit = plan.planLimits?.find((pl: any) => pl.limitKey === 'MAX_BRANCHES')?.limitValue ?? 1;
+                                                    return (
+                                                        <div className="flex items-center justify-between px-2.5 py-1.5 bg-slate-50 border border-slate-100 rounded-xl text-xs">
+                                                            <span className="text-slate-500 font-semibold flex items-center gap-1.5">
+                                                                🏢 Sucursales:
+                                                            </span>
+                                                            <span className={`font-black ${branchLimit === -1 || branchLimit > 1 ? 'text-indigo-600' : 'text-slate-700'}`}>
+                                                                {branchLimit === -1 ? 'Ilimitadas (Pro)' : branchLimit === 1 ? '1 (Solo Matriz)' : `${branchLimit} Sucursales`}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })()}
+
                                                 {/* Lista corta de módulos */}
                                                 <div className="space-y-1.5 pt-1">
                                                     {plan.planEntitlements?.slice(0, 5).map((pe: any) => (
@@ -1128,6 +1146,23 @@ export default function SuperadminPlanManager({
                                 </h4>
 
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                    <div className="p-3 bg-indigo-50/50 border border-indigo-200/80 rounded-2xl">
+                                        <label className="block text-[11px] font-black text-indigo-950 mb-1 flex items-center justify-between">
+                                            <span>🏢 Sucursales</span>
+                                            <span className="text-[9px] text-indigo-600 font-bold">MAX_BRANCHES</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={planForm.limits.MAX_BRANCHES ?? 1}
+                                            onChange={e => setPlanForm({
+                                                ...planForm,
+                                                limits: { ...planForm.limits, MAX_BRANCHES: parseInt(e.target.value, 10) }
+                                            })}
+                                            className="w-full px-3 py-2 bg-white border border-indigo-300 rounded-xl text-xs font-black !text-indigo-900 focus:outline-indigo-600"
+                                            placeholder="1"
+                                        />
+                                        <p className="text-[9px] text-indigo-700 font-medium mt-1">1 = Matriz | &gt;1 o -1 = Pro</p>
+                                    </div>
                                     <div>
                                         <label className="block text-[11px] font-bold text-slate-700 mb-1">Usuarios / Equipo</label>
                                         <input
