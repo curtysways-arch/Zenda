@@ -1,0 +1,379 @@
+{
+  "scannedFilesCount": 909,
+  "timestamp": "2026-09-08T15:05:04.997Z",
+  "summary": {
+    "planFeatures": 47,
+    "coursesModule": 27,
+    "communicationsModule": 31,
+    "automaticDiscounts": 22,
+    "tournamentsEnabled": 23,
+    "maxStaff": 23,
+    "maxReservations": 22,
+    "getPresetCapabilities": 3,
+    "hardcodedBusinessType": 83
+  },
+  "occurrences": {
+    "planFeatures": [
+      {
+        "file": "src/app/admin/comunicacion/page.tsx",
+        "count": 1
+      },
+      {
+        "file": "src/app/admin/plan/page.tsx",
+        "count": 1
+      },
+      {
+        "file": "src/app/api/canchas/route.ts",
+        "count": 1
+      },
+      {
+        "file": "src/app/api/canchas/[id]/route.ts",
+        "count": 2
+      },
+      {
+        "file": "src/app/api/seed-plans/route.ts",
+        "count": 6
+      },
+      {
+        "file": "src/components/admin/CanchaForm.tsx",
+        "count": 1
+      },
+      {
+        "file": "src/components/admin/ServiceForm.tsx",
+        "count": 2
+      },
+      {
+        "file": "src/components/superadmin/PlanesFilterableGrid.tsx",
+        "count": 8
+      },
+      {
+        "file": "src/components/superadmin/PlanModal.tsx",
+        "count": 4
+      },
+      {
+        "file": "src/components/ui/PlanStatusCard.tsx",
+        "count": 1
+      },
+      {
+        "file": "src/core/entitlements/EntitlementsService.ts",
+        "count": 4
+      },
+      {
+        "file": "src/core/subscription/plans.ts",
+        "count": 5
+      },
+      {
+        "file": "src/core/subscription/SubscriptionEngine.ts",
+        "count": 2
+      },
+      {
+        "file": "src/core/subscription/types.ts",
+        "count": 1
+      },
+      {
+        "file": "src/lib/planFeaturesHelper.ts",
+        "count": 4
+      },
+      {
+        "file": "src/lib/services/planService.ts",
+        "count": 4
+      }
+    ],
+    "coursesModule": [
+      {
+        "file": "src/app/api/seed-plans/route.ts",
+        "count": 4
+      },
+      {
+        "file": "src/app/[slug]/page.tsx",
+        "count": 3
+      },
+      {
+        "file": "src/components/superadmin/MisionesUnificadasClient.tsx",
+        "count": 2
+      },
+      {
+        "file": "src/components/superadmin/PlanModal.tsx",
+        "count": 10
+      },
+      {
+        "file": "src/core/entitlements/EntitlementsService.ts",
+        "count": 1
+      },
+      {
+        "file": "src/lib/features.ts",
+        "count": 4
+      },
+      {
+        "file": "src/lib/planFeaturesHelper.ts",
+        "count": 1
+      },
+      {
+        "file": "src/lib/services/featureService.ts",
+        "count": 1
+      },
+      {
+        "file": "src/lib/services/planLimitValidator.ts",
+        "count": 1
+      }
+    ],
+    "communicationsModule": [
+      {
+        "file": "src/app/admin/comunicacion/page.tsx",
+        "count": 1
+      },
+      {
+        "file": "src/components/superadmin/MisionesUnificadasClient.tsx",
+        "count": 2
+      },
+      {
+        "file": "src/components/superadmin/PlanModal.tsx",
+        "count": 11
+      },
+      {
+        "file": "src/core/entitlements/EntitlementsService.ts",
+        "count": 1
+      },
+      {
+        "file": "src/lib/features.ts",
+        "count": 5
+      },
+      {
+        "file": "src/lib/planFeaturesHelper.ts",
+        "count": 1
+      },
+      {
+        "file": "src/lib/services/featureService.ts",
+        "count": 1
+      },
+      {
+        "file": "src/lib/services/planLimitValidator.ts",
+        "count": 1
+      },
+      {
+        "file": "src/scripts/test_canonical_spec_suite.ts",
+        "count": 2
+      },
+      {
+        "file": "src/scripts/test_communications_entitlements.ts",
+        "count": 6
+      }
+    ],
+    "automaticDiscounts": [
+      {
+        "file": "src/app/admin/promociones/page.tsx",
+        "count": 1
+      },
+      {
+        "file": "src/components/superadmin/MisionesUnificadasClient.tsx",
+        "count": 2
+      },
+      {
+        "file": "src/components/superadmin/PlanModal.tsx",
+        "count": 11
+      },
+      {
+        "file": "src/core/entitlements/EntitlementsService.ts",
+        "count": 1
+      },
+      {
+        "file": "src/lib/features.ts",
+        "count": 4
+      },
+      {
+        "file": "src/lib/planFeaturesHelper.ts",
+        "count": 1
+      },
+      {
+        "file": "src/lib/services/featureService.ts",
+        "count": 1
+      },
+      {
+        "file": "src/lib/services/planLimitValidator.ts",
+        "count": 1
+      }
+    ],
+    "tournamentsEnabled": [
+      {
+        "file": "src/components/admin/PlanUpgradeModal.tsx",
+        "count": 1
+      },
+      {
+        "file": "src/components/superadmin/MisionesUnificadasClient.tsx",
+        "count": 2
+      },
+      {
+        "file": "src/components/superadmin/PlanModal.tsx",
+        "count": 10
+      },
+      {
+        "file": "src/core/entitlements/EntitlementsService.ts",
+        "count": 1
+      },
+      {
+        "file": "src/lib/features.ts",
+        "count": 4
+      },
+      {
+        "file": "src/lib/planFeaturesHelper.ts",
+        "count": 1
+      },
+      {
+        "file": "src/lib/services/featureService.ts",
+        "count": 1
+      },
+      {
+        "file": "src/lib/services/planLimitValidator.ts",
+        "count": 1
+      },
+      {
+        "file": "src/lib/services/planService.ts",
+        "count": 2
+      }
+    ],
+    "maxStaff": [
+      {
+        "file": "src/app/admin/plan/PlanDashboardClient.tsx",
+        "count": 1
+      },
+      {
+        "file": "src/app/api/seed-plans/route.ts",
+        "count": 6
+      },
+      {
+        "file": "src/components/superadmin/PlanModal.tsx",
+        "count": 7
+      },
+      {
+        "file": "src/components/ui/PlanStatusCard.tsx",
+        "count": 3
+      },
+      {
+        "file": "src/core/entitlements/EntitlementsService.ts",
+        "count": 1
+      },
+      {
+        "file": "src/lib/planFeaturesHelper.ts",
+        "count": 1
+      },
+      {
+        "file": "src/lib/services/subscriptionService.ts",
+        "count": 4
+      }
+    ],
+    "maxReservations": [
+      {
+        "file": "src/app/api/seed-plans/route.ts",
+        "count": 6
+      },
+      {
+        "file": "src/components/admin/PlanUpgradeModal.tsx",
+        "count": 1
+      },
+      {
+        "file": "src/components/superadmin/PlanModal.tsx",
+        "count": 7
+      },
+      {
+        "file": "src/core/entitlements/EntitlementsService.ts",
+        "count": 2
+      },
+      {
+        "file": "src/lib/planFeaturesHelper.ts",
+        "count": 2
+      },
+      {
+        "file": "src/lib/services/planService.ts",
+        "count": 2
+      },
+      {
+        "file": "src/lib/services/subscriptionService.ts",
+        "count": 2
+      }
+    ],
+    "getPresetCapabilities": [
+      {
+        "file": "src/core/entitlements/EntitlementsService.ts",
+        "count": 3
+      }
+    ],
+    "hardcodedBusinessType": [
+      {
+        "file": "src/app/admin/despacho/page.tsx",
+        "count": 4
+      },
+      {
+        "file": "src/app/admin/hero-destacados/page.tsx",
+        "count": 2
+      },
+      {
+        "file": "src/app/admin/onboarding/page.tsx",
+        "count": 1
+      },
+      {
+        "file": "src/app/admin/plan/PlanDashboardClient.tsx",
+        "count": 7
+      },
+      {
+        "file": "src/app/api/demo/fix-restaurant-tipo/route.ts",
+        "count": 1
+      },
+      {
+        "file": "src/app/api/superadmin/negocios/route.ts",
+        "count": 4
+      },
+      {
+        "file": "src/app/[slug]/confirmacion/[id]/page.tsx",
+        "count": 2
+      },
+      {
+        "file": "src/app/[slug]/mis-reservas/page.tsx",
+        "count": 2
+      },
+      {
+        "file": "src/app/[slug]/page.tsx",
+        "count": 18
+      },
+      {
+        "file": "src/app/[slug]/perfil/page.tsx",
+        "count": 9
+      },
+      {
+        "file": "src/app/[slug]/servicio/[id]/page.tsx",
+        "count": 5
+      },
+      {
+        "file": "src/app/[slug]/servicios/ServicesListClient.tsx",
+        "count": 2
+      },
+      {
+        "file": "src/components/admin/AdminSidebar.tsx",
+        "count": 1
+      },
+      {
+        "file": "src/components/public/ClientOrdersClient.tsx",
+        "count": 1
+      },
+      {
+        "file": "src/components/public/ProductsStoreClient.tsx",
+        "count": 6
+      },
+      {
+        "file": "src/components/public/PublicDesktopNav.tsx",
+        "count": 7
+      },
+      {
+        "file": "src/components/public/PublicMobileNav.tsx",
+        "count": 6
+      },
+      {
+        "file": "src/components/public/UniversalHeroCarousel.tsx",
+        "count": 3
+      },
+      {
+        "file": "src/lib/serviceImageHelper.ts",
+        "count": 2
+      }
+    ]
+  }
+}

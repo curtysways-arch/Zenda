@@ -13,16 +13,32 @@ async function getAuthNegocioId() {
   return user.negocioId || user.businessId || null;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const negocioId = await getAuthNegocioId();
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+    const user = session.user as any;
+    const negocioId = user.negocioId || user.businessId;
     if (!negocioId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(req.url);
+    const headerBranchId = req.headers.get('x-branch-id');
+    const queryBranchId = searchParams.get('branchId') || headerBranchId;
+
+    const { BranchContextResolver } = await import('@/core/branch/BranchContext');
+    const scope = await BranchContextResolver.resolveScope(user, negocioId, queryBranchId);
+    const whereBranch = BranchContextResolver.getWhereFilter(scope);
+
     const [mesas, rawActiveOrders] = await Promise.all([
       (prisma as any).restaurantTable.findMany({
-        where: { negocioId },
+        where: { 
+          negocioId,
+          ...whereBranch
+        },
         include: {
           _count: {
             select: {
@@ -41,6 +57,7 @@ export async function GET() {
       (prisma as any).pedido.findMany({
         where: {
           negocioId,
+          ...whereBranch,
           NOT: {
             estado: { in: ['ENTREGADO', 'CANCELADO', 'COMPLETADO', 'RECHAZADO', 'DESPACHADO'] }
           }
@@ -150,9 +167,18 @@ export async function POST(request: Request) {
       }, { status: 403 });
     }
 
+    let targetBranchId = body.branchId;
+    if (!targetBranchId) {
+      const defaultBranch = await prisma.branch.findFirst({
+        where: { businessId: negocioId, isMain: true, active: true }
+      });
+      targetBranchId = defaultBranch?.id || null;
+    }
+
     const nuevaMesa = await (prisma as any).restaurantTable.create({
       data: {
         negocioId,
+        branchId: targetBranchId,
         nombre: nombre.trim(),
         numero: numero ? parseInt(numero, 10) : null,
         capacidad: capacidad ? parseInt(capacidad, 10) : 4,

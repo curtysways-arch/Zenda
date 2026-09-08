@@ -16,6 +16,7 @@ import {
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useSession, signOut } from 'next-auth/react';
+import BranchSelector from '@/components/admin/BranchSelector';
 
 function cn(...inputs: any[]) {
   return twMerge(clsx(inputs));
@@ -268,6 +269,7 @@ export default function AdminSidebar({
 
     // Settings & Configuration
     items.push({ name: 'Configuración', href: '/admin/config', icon: Settings, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    items.push({ name: 'Sucursales', href: '/admin/sucursales', icon: Store, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN', 'OWNER'] });
     if (capabilities.payments) {
       items.push({ name: 'Métodos de Pago', href: '/admin/metodos-pago', icon: CreditCard, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     }
@@ -353,6 +355,9 @@ export default function AdminSidebar({
             <X size={18} />
           </button>
         </div>
+
+        {/* Selector de Sucursal Universal con Soporte Multi-Sede */}
+        <BranchSelector primaryColor={primaryColor} userRole={role} />
 
         {/* Links de Navegación por Secciones */}
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin scrollbar-thumb-slate-200">

@@ -181,6 +181,17 @@ export const planService = {
      * El beneficio de fundador es un flag dentro de Suscripcion.
      */
     async assignDefaultPlan(businessId: string, selectedPlanId?: string) {
+        // REGLA CANÓNICA DE PROTECCIÓN COMERCIAL:
+        // Si el negocio ya posee una suscripción, NO reemplaza, NO recalcula,
+        // NO altera lockedPrice y NO borra customFeatures.
+        const existingSub = await prisma.suscripcion.findUnique({
+            where: { negocioId: businessId }
+        });
+        if (existingSub) {
+            console.log(`[planService] assignDefaultPlan: Negocio ${businessId} ya posee suscripción activa (${existingSub.id}). Preservando estado íntegro.`);
+            return existingSub;
+        }
+
         let basePlan: any = null;
 
         const business = await (prisma.negocio as any).findUnique({

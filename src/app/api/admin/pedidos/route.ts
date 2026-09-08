@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
-export async function GET() {
+export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
@@ -14,8 +14,19 @@ export async function GET() {
     }
 
     try {
+        const { searchParams } = new URL(req.url);
+        const headerBranchId = req.headers.get('x-branch-id');
+        const queryBranchId = searchParams.get('branchId') || headerBranchId;
+
+        const { BranchContextResolver } = await import('@/core/branch/BranchContext');
+        const scope = await BranchContextResolver.resolveScope(session.user as any, negocioId, queryBranchId);
+        const whereBranch = BranchContextResolver.getWhereFilter(scope);
+
         const pedidos = await (prisma as any).pedido.findMany({
-            where: { negocioId },
+            where: { 
+                negocioId,
+                ...whereBranch
+            },
             include: { 
                 items: true,
                 payment: {
