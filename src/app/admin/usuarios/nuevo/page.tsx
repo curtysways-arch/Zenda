@@ -333,10 +333,10 @@ function UsuarioFormContent() {
                     <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-black uppercase tracking-widest">
                         <Sparkles size={12} /> Gestión de Accesos
                     </div>
-                    <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight">
+                    <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight !text-white text-white drop-shadow-sm">
                         {isEdit ? "Editar Permisos de Colaborador" : "Nuevo Colaborador / Promover"}
                     </h1>
-                    <p className="text-slate-400 text-xs md:text-sm font-medium">
+                    <p className="!text-slate-200 text-slate-200 text-xs md:text-sm font-medium">
                         {isEdit 
                             ? "Modifica la información básica y los roles asignados para este integrante del equipo."
                             : "Registra a un nuevo colaborador o promueve a un cliente existente asignándole permisos de acceso al panel."
