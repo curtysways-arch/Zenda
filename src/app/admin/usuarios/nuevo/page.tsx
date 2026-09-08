@@ -15,9 +15,121 @@ import {
     Save, 
     Loader2,
     CheckCircle2,
-    Sparkles
+    Sparkles,
+    Store,
+    MapPin,
+    Utensils,
+    Layout,
+    Bike,
+    ShoppingBag,
+    Wallet,
+    Package,
+    Calendar,
+    Users as UsersIcon,
+    BarChart3,
+    Settings,
+    ClipboardList,
+    CheckSquare,
+    Square,
+    Layers,
+    Flame
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+interface BranchOption {
+    id: string;
+    name: string;
+    address?: string | null;
+    isDefault?: boolean;
+    isMain?: boolean;
+}
+
+const SYSTEM_MODULES = [
+    {
+        id: "cocina",
+        label: "Cocina / Comandas (KDS)",
+        description: "Pantalla táctil de comandas en vivo y pedidos de cocina en tiempo real.",
+        icon: Utensils,
+        color: "text-amber-600 bg-amber-50 border-amber-200"
+    },
+    {
+        id: "mesas",
+        label: "Mesas & Salón",
+        description: "Control de mesas, salón, comandas por mesa y estado de atención.",
+        icon: Layout,
+        color: "text-emerald-600 bg-emerald-50 border-emerald-200"
+    },
+    {
+        id: "pedidos",
+        label: "Pedidos Online & Delivery",
+        description: "Recepción de pedidos desde la web/app y control de envíos.",
+        icon: Bike,
+        color: "text-blue-600 bg-blue-50 border-blue-200"
+    },
+    {
+        id: "ventas",
+        label: "Punto de Venta (POS)",
+        description: "Venta directa en mostrador y facturación rápida.",
+        icon: ShoppingBag,
+        color: "text-indigo-600 bg-indigo-50 border-indigo-200"
+    },
+    {
+        id: "caja",
+        label: "Caja & Finanzas",
+        description: "Apertura y cierre de caja, registro de turnos y arqueo de dinero.",
+        icon: Wallet,
+        color: "text-teal-600 bg-teal-50 border-teal-200"
+    },
+    {
+        id: "despacho",
+        label: "Órdenes & Despacho",
+        description: "Seguimiento y flujo de entrega de pedidos preparados.",
+        icon: ClipboardList,
+        color: "text-violet-600 bg-violet-50 border-violet-200"
+    },
+    {
+        id: "productos",
+        label: "Productos & Catálogo",
+        description: "Gestión de platos, categorías, precios y modificadores.",
+        icon: Package,
+        color: "text-rose-600 bg-rose-50 border-rose-200"
+    },
+    {
+        id: "inventario",
+        label: "Inventario & Stock",
+        description: "Control de existencias e insumos por sucursal.",
+        icon: Layers,
+        color: "text-cyan-600 bg-cyan-50 border-cyan-200"
+    },
+    {
+        id: "citas",
+        label: "Agenda / Citas / Reservas",
+        description: "Calendario de reservas y turnos de atención al cliente.",
+        icon: Calendar,
+        color: "text-sky-600 bg-sky-50 border-sky-200"
+    },
+    {
+        id: "clientes",
+        label: "Clientes & CRM",
+        description: "Historial de clientes, contacto y fidelización.",
+        icon: UsersIcon,
+        color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-200"
+    },
+    {
+        id: "reportes",
+        label: "Reportes & Métricas",
+        description: "Análisis de ventas, métricas operativas y estadísticas.",
+        icon: BarChart3,
+        color: "text-slate-600 bg-slate-50 border-slate-200"
+    },
+    {
+        id: "config",
+        label: "Configuración del Negocio",
+        description: "Ajustes de sucursales, métodos de pago y datos del negocio.",
+        icon: Settings,
+        color: "text-slate-700 bg-slate-100 border-slate-300"
+    }
+];
 
 function UsuarioFormContent() {
     const searchParams = useSearchParams();
@@ -32,36 +144,53 @@ function UsuarioFormContent() {
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(isEdit);
     const [availableRoles, setAvailableRoles] = useState<any[]>([]);
+    const [availableBranches, setAvailableBranches] = useState<BranchOption[]>([]);
 
     const [formData, setFormData] = useState({
         nombre: nameParam || "",
         phone: phoneParam || "",
         email: "",
-        roles: ["STAFF"]
+        roles: ["STAFF"],
+        branches: [] as string[],
+        allowedModules: [] as string[]
     });
 
     useEffect(() => {
-        const fetchRoles = async () => {
+        const loadInitialData = async () => {
             try {
-                const res = await fetch("/api/admin/roles");
-                if (res.ok) {
-                    const data = await res.json();
-                    if (Array.isArray(data) && data.length > 0) {
-                        setAvailableRoles(data);
-                    } else {
-                        setAvailableRoles([
-                            { id: "ADMIN", name: "ADMIN", label: "Administrador", desc: "Acceso total a la configuración y gestión del negocio." },
-                            { id: "STAFF", name: "STAFF", label: "Personal / Especialista", desc: "Atención directa a clientes y gestión de agenda propia." },
-                            { id: "RECEPCIONISTA", name: "RECEPCIONISTA", label: "Recepcionista", desc: "Registro de reservas y cobros en recepción." }
-                        ]);
+                const [resRoles, resBranches] = await Promise.all([
+                    fetch("/api/admin/roles"),
+                    fetch("/api/admin/sucursales")
+                ]);
+
+                if (resRoles.ok) {
+                    const dataRoles = await resRoles.json();
+                    if (Array.isArray(dataRoles) && dataRoles.length > 0) {
+                        setAvailableRoles(dataRoles);
+                    }
+                }
+
+                if (resBranches.ok) {
+                    const dataBranches = await resBranches.json();
+                    const list: BranchOption[] = dataBranches.branches || [];
+                    setAvailableBranches(list);
+
+                    // Si no es edición y hay sucursales, preseleccionar la sucursal matriz o todas
+                    if (!isEdit && list.length > 0) {
+                        const def = list.find(b => b.isDefault || b.isMain) || list[0];
+                        setFormData(prev => ({
+                            ...prev,
+                            branches: prev.branches.length === 0 ? [def.id] : prev.branches
+                        }));
                     }
                 }
             } catch (e) {
-                console.error(e);
+                console.error("Error cargando roles o sucursales:", e);
             }
         };
-        fetchRoles();
-    }, []);
+
+        loadInitialData();
+    }, [isEdit]);
 
     useEffect(() => {
         if (userId) {
@@ -74,7 +203,9 @@ function UsuarioFormContent() {
                             nombre: data.nombre || "",
                             phone: data.phone || "",
                             email: data.email || "",
-                            roles: Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ["STAFF"]
+                            roles: Array.isArray(data.roles) && data.roles.length > 0 ? data.roles : ["STAFF"],
+                            branches: Array.isArray(data.branches) ? data.branches : [],
+                            allowedModules: Array.isArray(data.allowedModules) ? data.allowedModules : []
                         });
                     }
                 })
@@ -85,8 +216,8 @@ function UsuarioFormContent() {
 
     const defaultRolesList = [
         { id: "ADMIN", name: "ADMIN", label: "Administrador", desc: "Acceso total a la configuración y gestión del negocio." },
-        { id: "STAFF", name: "STAFF", label: "Personal / Especialista", desc: "Atención directa a clientes y gestión de agenda propia." },
-        { id: "RECEPCIONISTA", name: "RECEPCIONISTA", label: "Recepcionista", desc: "Registro de reservas y cobros en recepción." }
+        { id: "STAFF", name: "STAFF", label: "Personal / Especialista", desc: "Atención operativa según los módulos asignados." },
+        { id: "RECEPCIONISTA", name: "RECEPCIONISTA", label: "Recepcionista", desc: "Registro de reservas, mesas y cobros en recepción." }
     ];
 
     const rolesToRender = availableRoles.length > 0 ? availableRoles : defaultRolesList;
@@ -102,6 +233,50 @@ function UsuarioFormContent() {
                 roles: newRoles.length > 0 ? newRoles : [roleName]
             };
         });
+    };
+
+    const toggleBranch = (branchId: string) => {
+        setFormData(prev => {
+            const exists = prev.branches.includes(branchId);
+            const updated = exists
+                ? prev.branches.filter(id => id !== branchId)
+                : [...prev.branches, branchId];
+            return { ...prev, branches: updated };
+        });
+    };
+
+    const toggleAllBranches = () => {
+        setFormData(prev => {
+            if (prev.branches.length === availableBranches.length) {
+                return { ...prev, branches: [] };
+            }
+            return { ...prev, branches: availableBranches.map(b => b.id) };
+        });
+    };
+
+    const toggleModule = (moduleId: string) => {
+        setFormData(prev => {
+            const exists = prev.allowedModules.includes(moduleId);
+            const updated = exists
+                ? prev.allowedModules.filter(id => id !== moduleId)
+                : [...prev.allowedModules, moduleId];
+            return { ...prev, allowedModules: updated };
+        });
+    };
+
+    // Preajustes rápidos de módulos
+    const applyPreset = (preset: 'cocina' | 'mesero' | 'caja' | 'todos' | 'ninguno') => {
+        if (preset === 'cocina') {
+            setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['cocina'] }));
+        } else if (preset === 'mesero') {
+            setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['mesas', 'pedidos'] }));
+        } else if (preset === 'caja') {
+            setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['caja', 'ventas', 'pedidos'] }));
+        } else if (preset === 'todos') {
+            setFormData(prev => ({ ...prev, allowedModules: SYSTEM_MODULES.map(m => m.id) }));
+        } else if (preset === 'ninguno') {
+            setFormData(prev => ({ ...prev, allowedModules: [] }));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -321,6 +496,200 @@ function UsuarioFormContent() {
                                 })}
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                {/* Sección 2: Sucursales Asignadas */}
+                <div className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-xl shadow-slate-200/50 space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                        <div className="flex items-center gap-3">
+                            <div className="size-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                                <Store size={20} />
+                            </div>
+                            <div>
+                                <h3 className="font-black text-slate-900 uppercase tracking-tight text-base">Sucursales Asignadas</h3>
+                                <p className="text-xs text-slate-400 font-medium">Define en qué sedes físicas puede operar este colaborador</p>
+                            </div>
+                        </div>
+
+                        {availableBranches.length > 1 && (
+                            <button
+                                type="button"
+                                onClick={toggleAllBranches}
+                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all"
+                            >
+                                {formData.branches.length === availableBranches.length ? "Desmarcar Todas" : "Seleccionar Todas"}
+                            </button>
+                        )}
+                    </div>
+
+                    {availableBranches.length === 0 ? (
+                        <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 text-center space-y-2">
+                            <p className="text-sm font-bold text-slate-700">Sucursal Matriz por Defecto</p>
+                            <p className="text-xs text-slate-400">El usuario tendrá acceso a la sede principal de tu empresa.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {availableBranches.map((branch) => {
+                                const isSelected = formData.branches.includes(branch.id);
+                                return (
+                                    <button
+                                        key={branch.id}
+                                        type="button"
+                                        onClick={() => toggleBranch(branch.id)}
+                                        className={cn(
+                                            "flex items-start justify-between p-5 rounded-2xl border-2 transition-all text-left active:scale-98",
+                                            isSelected
+                                                ? "bg-emerald-50/50 border-emerald-600 text-emerald-950 shadow-sm"
+                                                : "bg-slate-50/40 border-slate-100 text-slate-600 hover:border-slate-200 hover:bg-slate-50"
+                                        )}
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className={cn(
+                                                "size-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5",
+                                                isSelected ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-400"
+                                            )}>
+                                                <MapPin size={18} />
+                                            </div>
+                                            <div className="space-y-0.5">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-black text-xs uppercase tracking-tight text-slate-900">
+                                                        {branch.name}
+                                                    </span>
+                                                    {(branch.isDefault || branch.isMain) && (
+                                                        <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[8px] font-black uppercase tracking-widest">
+                                                            Matriz
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[11px] text-slate-400 line-clamp-1">
+                                                    {branch.address || "Dirección no especificada"}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className={cn(
+                                            "size-6 rounded-lg flex items-center justify-center shrink-0 border-2 transition-all mt-0.5",
+                                            isSelected ? "bg-emerald-600 border-emerald-600 text-white" : "border-slate-300 bg-white"
+                                        )}>
+                                            {isSelected && <Check size={14} className="stroke-[3]" />}
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                {/* Sección 3: Módulos y Permisos Habilitados */}
+                <div className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-xl shadow-slate-200/50 space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                        <div className="flex items-center gap-3">
+                            <div className="size-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                                <Layers size={20} />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="font-black text-slate-900 uppercase tracking-tight text-base">Módulos Habilitados en este Perfil</h3>
+                                    <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-black uppercase tracking-wider">
+                                        {formData.allowedModules.length} Activo(s)
+                                    </span>
+                                </div>
+                                <p className="text-xs text-slate-400 font-medium">Marca con check los módulos exactos a los que podrá acceder este usuario o dispositivo</p>
+                            </div>
+                        </div>
+
+                        {/* Presets Rápidos */}
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mr-1">Preajustes:</span>
+                            <button
+                                type="button"
+                                onClick={() => applyPreset('cocina')}
+                                className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+                            >
+                                <Utensils size={14} /> Solo Cocina (KDS)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => applyPreset('mesero')}
+                                className="px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                            >
+                                <Layout size={14} /> Mesero
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => applyPreset('caja')}
+                                className="px-3 py-1.5 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                            >
+                                <Wallet size={14} /> Caja / POS
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => applyPreset('todos')}
+                                className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all active:scale-95"
+                            >
+                                Todos
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => applyPreset('ninguno')}
+                                className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 text-xs font-bold transition-all active:scale-95"
+                            >
+                                Limpiar
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Grid de Módulos con Check */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {SYSTEM_MODULES.map((mod) => {
+                            const isChecked = formData.allowedModules.includes(mod.id);
+                            const IconComponent = mod.icon;
+                            return (
+                                <button
+                                    key={mod.id}
+                                    type="button"
+                                    onClick={() => toggleModule(mod.id)}
+                                    className={cn(
+                                        "flex items-start justify-between p-5 rounded-2xl border-2 transition-all text-left active:scale-98 relative",
+                                        isChecked
+                                            ? "bg-indigo-50/40 border-indigo-600 shadow-sm"
+                                            : "bg-slate-50/30 border-slate-100 text-slate-600 hover:border-slate-200 hover:bg-slate-50"
+                                    )}
+                                >
+                                    <div className="flex items-start gap-3.5">
+                                        <div className={cn(
+                                            "size-10 rounded-xl flex items-center justify-center shrink-0 border transition-all mt-0.5",
+                                            isChecked ? "bg-indigo-600 text-white border-indigo-600 shadow-sm" : mod.color
+                                        )}>
+                                            <IconComponent size={18} />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="font-black text-xs uppercase tracking-tight text-slate-900">
+                                                    {mod.label}
+                                                </h4>
+                                                {mod.id === 'cocina' && (
+                                                    <span className="px-2 py-0.2 rounded-full bg-amber-500 text-white text-[8px] font-black uppercase tracking-wider">
+                                                        Tablet
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-[11px] text-slate-400 font-medium leading-snug">
+                                                {mod.description}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className={cn(
+                                        "size-6 rounded-lg flex items-center justify-center shrink-0 border-2 transition-all mt-0.5 ml-2",
+                                        isChecked ? "bg-indigo-600 border-indigo-600 text-white" : "border-slate-300 bg-white"
+                                    )}>
+                                        {isChecked && <Check size={14} className="stroke-[3]" />}
+                                    </div>
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 

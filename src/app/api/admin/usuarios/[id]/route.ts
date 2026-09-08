@@ -19,6 +19,9 @@ export async function GET(
             include: {
                 UserRole: {
                     include: { Role: true }
+                },
+                branchAccesses: {
+                    select: { branchId: true }
                 }
             }
         });
@@ -27,10 +30,21 @@ export async function GET(
             return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
         }
 
+        let parsedModules: string[] | null = null;
+        if (user.allowedModules) {
+            try {
+                parsedModules = JSON.parse(user.allowedModules);
+            } catch {
+                parsedModules = null;
+            }
+        }
+
         const formatted = {
             ...user,
             password: "",
-            roles: (user.UserRole || []).map((ur: any) => ur.Role?.name || "")
+            roles: (user.UserRole || []).map((ur: any) => ur.Role?.name || ""),
+            branches: (user.branchAccesses || []).map((ba: any) => ba.branchId),
+            allowedModules: parsedModules
         };
 
         return NextResponse.json(formatted);
@@ -50,7 +64,7 @@ export async function PATCH(
 
         const negocioId = (session.user as any).negocioId;
         const body = await req.json();
-        const { nombre, phone, email, roles } = body;
+        const { nombre, phone, email, roles, branches, allowedModules } = body;
 
         // Verificar que el usuario pertenece al negocio
         const user = await prisma.usuario.findFirst({
@@ -61,14 +75,22 @@ export async function PATCH(
             return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
         }
 
+        const updateData: any = {
+            nombre: nombre !== undefined ? nombre : user.nombre,
+            phone: phone !== undefined ? phone : user.phone,
+            email: email !== undefined ? email : user.email
+        };
+
+        if (allowedModules !== undefined) {
+            updateData.allowedModules = Array.isArray(allowedModules) && allowedModules.length > 0 
+                ? JSON.stringify(allowedModules) 
+                : null;
+        }
+
         // Actualizar datos básicos
         await prisma.usuario.update({
             where: { id },
-            data: {
-                nombre: nombre || user.nombre,
-                phone: phone || user.phone,
-                email: email || user.email
-            }
+            data: updateData
         });
 
         // Actualizar roles si se proporcionan
@@ -89,6 +111,28 @@ export async function PATCH(
                         }
                     });
                 }
+            }
+        }
+
+        // Sincronizar asignaciones de sucursales si se especifican
+        if (branches !== undefined && Array.isArray(branches) && negocioId) {
+            await (prisma as any).branchAccess.deleteMany({
+                where: {
+                    userId: id,
+                    businessId: negocioId
+                }
+            });
+
+            for (const branchId of branches) {
+                await (prisma as any).branchAccess.create({
+                    data: {
+                        userId: id,
+                        branchId,
+                        businessId: negocioId,
+                        role: roles?.[0] || 'STAFF',
+                        active: true
+                    }
+                });
             }
         }
 

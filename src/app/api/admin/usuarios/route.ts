@@ -36,17 +36,33 @@ export async function GET(req: Request) {
                     include: {
                         Role: true
                     }
+                },
+                branchAccesses: {
+                    select: { branchId: true }
                 }
             },
             orderBy: { nombre: 'asc' }
         });
 
-        // Formatear para que el frontend reciba una lista plana de roles
-        const formatted = usuarios.map((u: any) => ({
-            ...u,
-            password: "", // No enviar password
-            roles: (u.UserRole || []).map((ur: any) => ur.Role?.name || "")
-        }));
+        // Formatear para que el frontend reciba roles, sucursales y módulos permitidos
+        const formatted = usuarios.map((u: any) => {
+            let parsedModules: string[] | null = null;
+            if (u.allowedModules) {
+                try {
+                    parsedModules = JSON.parse(u.allowedModules);
+                } catch {
+                    parsedModules = null;
+                }
+            }
+
+            return {
+                ...u,
+                password: "", // No enviar password
+                roles: (u.UserRole || []).map((ur: any) => ur.Role?.name || ""),
+                branches: (u.branchAccesses || []).map((ba: any) => ba.branchId),
+                allowedModules: parsedModules
+            };
+        });
 
         return NextResponse.json(formatted);
     } catch (error) {
@@ -62,7 +78,7 @@ export async function POST(req: Request) {
 
         const negocioId = (session.user as any).negocioId;
         const body = await req.json();
-        const { nombre, phone, email, roles } = body;
+        const { nombre, phone, email, roles, branches, allowedModules } = body;
 
         if (!nombre || !phone) {
             return NextResponse.json({ error: "Nombre y teléfono son obligatorios" }, { status: 400 });
@@ -71,6 +87,10 @@ export async function POST(req: Request) {
         // Generar un email ficticio si no tiene, para cumplir con el unique del schema
         const finalEmail = email || `${phone}@cancha.com`;
         
+        const serializedModules = Array.isArray(allowedModules) && allowedModules.length > 0 
+            ? JSON.stringify(allowedModules) 
+            : null;
+
         // Verificar si ya existe el usuario
         let targetUser = await prisma.usuario.findFirst({
             where: { 
@@ -82,13 +102,14 @@ export async function POST(req: Request) {
         });
 
         if (targetUser) {
-            // Actualizar el usuario existente con el negocio y nombre
+            // Actualizar el usuario existente con el negocio, nombre y módulos permitidos
             targetUser = await prisma.usuario.update({
                 where: { id: targetUser.id },
                 data: {
                     nombre,
                     phone,
                     negocioId: targetUser.negocioId || negocioId,
+                    allowedModules: serializedModules,
                     status: "active",
                     updatedAt: new Date()
                 }
@@ -108,6 +129,7 @@ export async function POST(req: Request) {
                     email: finalEmail,
                     password: await bcrypt.hash(Math.random().toString(36), 10),
                     negocioId,
+                    allowedModules: serializedModules,
                     status: "active",
                     auth_method: "otp",
                     updatedAt: new Date()
@@ -132,6 +154,30 @@ export async function POST(req: Request) {
                         data: {
                             user_id: targetUser.id,
                             role_id: role.id
+                        }
+                    });
+                }
+            }
+        }
+
+        // Sincronizar asignaciones de sucursales (BranchAccess)
+        if (negocioId) {
+            await (prisma as any).branchAccess.deleteMany({
+                where: {
+                    userId: targetUser.id,
+                    businessId: negocioId
+                }
+            });
+
+            if (Array.isArray(branches) && branches.length > 0) {
+                for (const branchId of branches) {
+                    await (prisma as any).branchAccess.create({
+                        data: {
+                            userId: targetUser.id,
+                            branchId,
+                            businessId: negocioId,
+                            role: roles?.[0] || 'STAFF',
+                            active: true
                         }
                     });
                 }

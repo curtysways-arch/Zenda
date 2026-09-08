@@ -22,6 +22,8 @@ interface Usuario {
     phone: string;
     email: string;
     roles: string[];
+    branches?: string[];
+    allowedModules?: string[] | null;
 }
 
 import { Suspense } from "react";
@@ -183,6 +185,21 @@ function UsuariosContent() {
                                         <span className="text-slate-300 text-[10px] font-bold italic">Sin roles específicos</span>
                                     )}
                                 </div>
+
+                                {user.allowedModules && user.allowedModules.length > 0 && (
+                                    <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                            Módulos Habilitados ({user.allowedModules.length})
+                                        </p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {user.allowedModules.map((m: string) => (
+                                                <span key={m} className="px-2.5 py-0.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200/60 text-[9px] font-black uppercase tracking-wider">
+                                                    {m === 'cocina' ? '🍳 Cocina (KDS)' : m === 'mesas' ? '🪑 Mesas' : m === 'caja' ? '💰 Caja' : m === 'pedidos' ? '🛵 Pedidos' : m}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}

@@ -278,11 +278,42 @@ export default function AdminSidebar({
     items.push({ name: 'Super Panel', href: '/superadmin', icon: ShieldCheck, section: 'CONFIGURACIÓN', roles: ['SUPERADMIN'] });
 
     const isRealSuperAdmin = role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || userObj?.isAdminUser === true || userObj?.isDelegated === true;
+    const allowedModules: string[] | null = userObj?.allowedModules || null;
 
     return items.filter(item => {
       if (item.href === '/superadmin') {
         return isRealSuperAdmin;
       }
+
+      // Si el usuario tiene una lista explícita de módulos permitidos (ej. tablet cocina)
+      if (!isRealSuperAdmin && allowedModules && Array.isArray(allowedModules) && allowedModules.length > 0 && !allowedModules.includes('*')) {
+        // El dashboard principal se oculta si el usuario es mono-módulo específico (ej. tablet de cocina)
+        if (item.href === '/admin') {
+          return allowedModules.length > 1;
+        }
+
+        const isModuleAllowed = allowedModules.some(modCode => {
+          const cleanCode = modCode.toLowerCase().trim();
+          if (cleanCode === 'cocina' || cleanCode === 'kitchen') return item.href === '/admin/cocina';
+          if (cleanCode === 'mesas' || cleanCode === 'tables') return item.href === '/admin/mesas';
+          if (cleanCode === 'pedidos' || cleanCode === 'pedidos-online' || cleanCode === 'delivery') return item.href.includes('/pedidos');
+          if (cleanCode === 'caja' || cleanCode === 'cash') return item.href === '/admin/caja';
+          if (cleanCode === 'ventas' || cleanCode === 'pos') return item.href === '/admin/ventas';
+          if (cleanCode === 'despacho' || cleanCode === 'dispatch') return item.href === '/admin/despacho';
+          if (cleanCode === 'productos' || cleanCode === 'products') return item.href === '/admin/productos' || item.href === '/admin/categorias';
+          if (cleanCode === 'inventario' || cleanCode === 'inventory') return item.href === '/admin/inventario';
+          if (cleanCode === 'citas' || cleanCode === 'appointments' || cleanCode === 'reservas') return item.href === '/admin/citas' || item.href === '/admin/servicios';
+          if (cleanCode === 'canchas' || cleanCode === 'courts') return item.href === '/admin/canchas' || item.href === '/admin/bloqueos';
+          if (cleanCode === 'clientes' || cleanCode === 'customers') return item.href === '/admin/clientes';
+          if (cleanCode === 'usuarios' || cleanCode === 'staff') return item.href === '/admin/usuarios';
+          if (cleanCode === 'reportes' || cleanCode === 'reports') return item.href === '/admin/reportes';
+          if (cleanCode === 'config' || cleanCode === 'settings') return item.href.startsWith('/admin/config') || item.href === '/admin/sucursales' || item.href === '/admin/metodos-pago' || item.href === '/admin/perfil';
+          return item.href.includes(cleanCode);
+        });
+
+        if (!isModuleAllowed) return false;
+      }
+
       if (!item.roles) return true;
       if (isRealSuperAdmin) return true;
       return item.roles.some(r => r === role || r === 'ADMIN' || r === 'ADMIN_NEGOCIO');

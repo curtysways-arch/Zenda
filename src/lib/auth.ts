@@ -133,6 +133,7 @@ export const authOptions: AuthOptions = {
                         negocioId: user.negocioId || null,
                         role: user.role || 'ADMIN_NEGOCIO',
                         roles: [user.role || 'ADMIN_NEGOCIO'],
+                        allowedModules: user.allowedModules ? JSON.parse(user.allowedModules) : null,
                         slug,
                         isDemo,
                         staffId: null,
@@ -154,6 +155,7 @@ export const authOptions: AuthOptions = {
                 token.negocioId = user.negocioId;
                 token.role = user.role;
                 token.roles = user.roles;
+                token.allowedModules = user.allowedModules || null;
                 token.slug = user.slug;
                 token.isDemo = user.isDemo;
                 token.staffId = user.staffId;
@@ -171,8 +173,19 @@ export const authOptions: AuthOptions = {
                 try {
                     const dbUser = await prisma.usuario.findUnique({
                         where: { id: token.id },
-                        select: { negocioId: true, role: true }
+                        select: { negocioId: true, role: true, allowedModules: true }
                     });
+                    if (dbUser) {
+                        if (dbUser.allowedModules) {
+                            try {
+                                token.allowedModules = JSON.parse(dbUser.allowedModules);
+                            } catch {
+                                token.allowedModules = null;
+                            }
+                        } else {
+                            token.allowedModules = null;
+                        }
+                    }
                     if (dbUser && dbUser.negocioId) {
                         token.negocioId = dbUser.negocioId;
                         const negocio = await prisma.negocio.findUnique({
@@ -195,6 +208,7 @@ export const authOptions: AuthOptions = {
                 session.user.negocioId = token.negocioId;
                 session.user.role = token.role;
                 session.user.roles = token.roles;
+                session.user.allowedModules = token.allowedModules || null;
                 session.user.slug = token.slug;
                 session.user.isDemo = token.isDemo;
                 session.user.staffId = token.staffId;

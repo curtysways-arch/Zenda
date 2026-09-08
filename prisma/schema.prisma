@@ -835,6 +835,7 @@ model Usuario {
   last_interaction       DateTime?
   last_message_at        DateTime?
   fechaNacimiento        DateTime?
+  allowedModules         String?            // JSON array de módulos permitidos (ej. ["cocina"])
   createdAt              DateTime           @default(now())
   updatedAt              DateTime
   Course                 Course[]
