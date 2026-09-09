@@ -474,8 +474,18 @@ export async function processExpiredSubscriptions() {
                         where: { id: sub.id },
                         data: {
                             estado: 'downgraded',
-                            planId: beginPlan.id,
-                            customFeatures: null
+                            planId: beginPlan.id
+                        }
+                    });
+
+                    // Pausar add-ons activos por downgrade a plan gratuito
+                    await prisma.subscriptionAddon.updateMany({
+                        where: {
+                            subscriptionId: sub.id,
+                            status: 'ACTIVE'
+                        },
+                        data: {
+                            status: 'PAUSED'
                         }
                     });
 
@@ -547,8 +557,18 @@ export async function processExpiredSubscriptions() {
                     where: { id: sub.id },
                     data: {
                         estado: 'downgraded',
-                        planId: beginPlan.id,
-                        customFeatures: null
+                        planId: beginPlan.id
+                    }
+                });
+
+                // Pausar add-ons activos por downgrade tras periodo de gracia
+                await prisma.subscriptionAddon.updateMany({
+                    where: {
+                        subscriptionId: sub.id,
+                        status: 'ACTIVE'
+                    },
+                    data: {
+                        status: 'PAUSED'
                     }
                 });
                 

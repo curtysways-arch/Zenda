@@ -53,6 +53,86 @@ export function getEffectiveSubscriptionPrice(subscription: {
     return plan?.price !== undefined ? Number(plan.price) : 0;
 }
 
+export interface SubscriptionPricingDetails {
+    subscriptionId: string;
+    basePlanPrice: number;
+    isFounder: boolean;
+    lockedPrice: number | null;
+    planName: string;
+    addons: Array<{
+        id: string;
+        code: string;
+        name: string;
+        quantity: number;
+        priceContracted: number;
+        subtotal: number;
+        cancelAtPeriodEnd: boolean;
+        effectiveUntil: Date | null;
+        status: string;
+    }>;
+    addonsTotal: number;
+    effectiveTotalMonthly: number;
+}
+
+/**
+ * Obtiene el desglose financiero consolidado canónico de una suscripción:
+ * Plan base (respetando lockedPrice de Fundadores) + Add-ons activos contratados.
+ * NUNCA suma ni muta lockedPrice en la base de datos.
+ */
+export async function getEffectiveSubscriptionPricingDetails(subscriptionId: string): Promise<SubscriptionPricingDetails | null> {
+    const sub = await prisma.suscripcion.findUnique({
+        where: { id: subscriptionId },
+        include: {
+            Plan: true,
+            subscriptionAddons: {
+                include: {
+                    addon: true
+                }
+            }
+        }
+    });
+
+    if (!sub) return null;
+
+    const basePrice = getEffectiveSubscriptionPrice(sub);
+    const now = new Date();
+
+    const activeAddons = (sub.subscriptionAddons || []).filter(sa => {
+        if (sa.status === 'ACTIVE') return true;
+        if (sa.cancelAtPeriodEnd && sa.effectiveUntil && new Date(sa.effectiveUntil) > now) return true;
+        return false;
+    });
+
+    const addonsBreakdown = activeAddons.map(sa => {
+        const price = Number(sa.priceContracted);
+        const qty = Number(sa.quantity || 1);
+        return {
+            id: sa.id,
+            code: sa.addon.code,
+            name: sa.addon.name,
+            quantity: qty,
+            priceContracted: price,
+            subtotal: price * qty,
+            cancelAtPeriodEnd: sa.cancelAtPeriodEnd,
+            effectiveUntil: sa.effectiveUntil,
+            status: sa.status
+        };
+    });
+
+    const addonsTotal = addonsBreakdown.reduce((sum, item) => sum + item.subtotal, 0);
+
+    return {
+        subscriptionId: sub.id,
+        basePlanPrice: basePrice,
+        isFounder: Boolean(sub.isFounder),
+        lockedPrice: sub.lockedPrice !== null && sub.lockedPrice !== undefined ? Number(sub.lockedPrice) : null,
+        planName: sub.Plan?.name || 'Plan',
+        addons: addonsBreakdown,
+        addonsTotal,
+        effectiveTotalMonthly: basePrice + addonsTotal
+    };
+}
+
 export const planService = {
     /**
      * Obtiene todos los planes disponibles (excluye el plan interno 'founder' si existiera)
@@ -477,5 +557,9 @@ export const planService = {
         plan?: { price: number } | null;
     }): number {
         return getEffectiveSubscriptionPrice(suscripcion);
+    },
+
+    getPricingDetails(subscriptionId: string) {
+        return getEffectiveSubscriptionPricingDetails(subscriptionId);
     }
 };

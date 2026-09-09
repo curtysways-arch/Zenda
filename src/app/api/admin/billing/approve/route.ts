@@ -87,8 +87,7 @@ export async function POST(req: Request) {
                 planId: payment.plan_id,
                 estado: 'active',
                 solicitudPlanId: null,
-                fechaFin: nuevaFechaFin,
-                customFeatures: null
+                fechaFin: nuevaFechaFin
             }
         });
 

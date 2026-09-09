@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
     Zap, 
     Calendar, 
@@ -12,7 +12,19 @@ import {
     TrendingUp,
     RefreshCw,
     Users,
-    X
+    X,
+    Plus,
+    ShoppingBag,
+    Store,
+    Tag,
+    MessageSquare,
+    Key,
+    Shield,
+    Sparkles,
+    Layers,
+    Info,
+    Check,
+    Loader2
 } from "lucide-react";
 import UpgradeModal from "@/components/ui/UpgradeModal";
 import { getFormattedPlanFeatures } from "@/lib/planFeaturesHelper";
@@ -43,6 +55,81 @@ export default function PlanDashboardClient({
 
     const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
     const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
+
+    // Estado para Add-ons canónicos
+    const [addonsData, setAddonsData] = useState<{
+        availableAddons: any[];
+        activeSubscriptions: any[];
+        pricingDetails: any;
+    }>({ availableAddons: [], activeSubscriptions: [], pricingDetails: null });
+    const [loadingAddons, setLoadingAddons] = useState(true);
+    const [actionAddonCode, setActionAddonCode] = useState<string | null>(null);
+
+    const fetchAddonsData = async () => {
+        try {
+            setLoadingAddons(true);
+            const res = await fetch(`/api/admin/addons?businessId=${businessId}`);
+            if (res.ok) {
+                const json = await res.json();
+                setAddonsData({
+                    availableAddons: json.availableAddons || [],
+                    activeSubscriptions: json.activeSubscriptions || [],
+                    pricingDetails: json.pricingDetails || null
+                });
+            }
+        } catch (e) {
+            console.error("Error fetching addons data:", e);
+        } finally {
+            setLoadingAddons(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchAddonsData();
+    }, [businessId]);
+
+    const handlePurchaseAddon = async (addonCode: string) => {
+        try {
+            setActionAddonCode(addonCode);
+            const res = await fetch('/api/admin/addons/purchase', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ addonCodeOrId: addonCode, quantity: 1 })
+            });
+            const resJson = await res.json();
+            if (res.ok) {
+                alert(resJson.message || 'Add-on contratado correctamente');
+                await fetchAddonsData();
+            } else {
+                alert(resJson.error || 'Error al contratar Add-on');
+            }
+        } catch (e) {
+            alert('Error de conexión');
+        } finally {
+            setActionAddonCode(null);
+        }
+    };
+
+    const handleCancelAddon = async (subscriptionAddonId: string) => {
+        if (!confirm('¿Deseas programar la cancelación de este Add-on para el final de tu ciclo de facturación? Mantendrás el beneficio hasta esa fecha.')) return;
+        try {
+            setActionAddonCode(subscriptionAddonId);
+            const res = await fetch(`/api/admin/addons/${subscriptionAddonId}/cancel`, {
+                method: 'POST'
+            });
+            const resJson = await res.json();
+            if (res.ok) {
+                alert(resJson.message || 'Cancelación programada para el final del ciclo');
+                await fetchAddonsData();
+            } else {
+                alert(resJson.error || 'Error al solicitar cancelación');
+            }
+        } catch (e) {
+            alert('Error de conexión');
+        } finally {
+            setActionAddonCode(null);
+        }
+    };
 
     const planName = data?.planName || 'Plan Pro';
     const planStatus = data?.planStatus || 'active';
@@ -283,6 +370,258 @@ export default function PlanDashboardClient({
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* ════════════════════════════════════════════════════════════════════════════════════════
+                SECCIÓN: RESUMEN FINANCIERO CONSOLIDADO & MIS ADD-ONS ACTIVOS
+            ════════════════════════════════════════════════════════════════════════════════════════ */}
+            <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8 space-y-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-6">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="p-2 bg-amber-500/10 text-amber-600 rounded-xl">
+                                <Sparkles size={18} />
+                            </span>
+                            <h3 className="text-xl font-black text-slate-900">Resumen de Facturación Consolidada</h3>
+                        </div>
+                        <p className="text-xs text-slate-500 font-medium">
+                            Desglose de tu tarifa mensual contractual protegida y los módulos complementarios activos
+                        </p>
+                    </div>
+
+                    {addonsData.pricingDetails && (
+                        <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex items-center gap-6 shrink-0">
+                            <div>
+                                <span className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Plan Base</span>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-xl font-black text-slate-900">
+                                        ${addonsData.pricingDetails.basePlanPrice?.toFixed(2)}
+                                    </span>
+                                    <span className="text-xs text-slate-400 font-bold">/m</span>
+                                </div>
+                                {addonsData.pricingDetails.isFounder && (
+                                    <span className="text-[9px] font-black text-amber-600 uppercase tracking-widest block mt-0.5">
+                                        ★ Tarifa Fundador
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="text-slate-300 font-black text-xl">+</div>
+
+                            <div>
+                                <span className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Add-ons ({addonsData.pricingDetails.addons?.length || 0})</span>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-xl font-black text-slate-900">
+                                        +${addonsData.pricingDetails.addonsTotal?.toFixed(2)}
+                                    </span>
+                                    <span className="text-xs text-slate-400 font-bold">/m</span>
+                                </div>
+                            </div>
+
+                            <div className="text-slate-300 font-black text-xl">=</div>
+
+                            <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-xs">
+                                <span className="block text-[10px] font-black uppercase tracking-wider" style={{ color: 'var(--primary-color)' }}>
+                                    Total Mensual
+                                </span>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-2xl font-black text-slate-900">
+                                        ${addonsData.pricingDetails.effectiveTotalMonthly?.toFixed(2)}
+                                    </span>
+                                    <span className="text-xs text-slate-400 font-bold">/m</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Subsección: Mis Add-ons Contratados */}
+                <div>
+                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+                        <Layers size={14} /> Mis Módulos y Extensiones Contratadas
+                    </h4>
+
+                    {loadingAddons ? (
+                        <div className="py-8 text-center text-slate-400 space-y-2">
+                            <Loader2 className="w-6 h-6 animate-spin mx-auto text-amber-500" />
+                            <p className="text-xs font-bold uppercase tracking-wider">Consultando add-ons del negocio...</p>
+                        </div>
+                    ) : addonsData.activeSubscriptions.length === 0 ? (
+                        <div className="p-6 bg-slate-50 border border-dashed border-slate-200 rounded-2xl text-center">
+                            <p className="text-xs font-bold text-slate-500">
+                                No tienes Add-ons adicionales contratados. Tu plan cuenta con los beneficios de base.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {addonsData.activeSubscriptions.map((sa: any) => {
+                                const isPendingCancel = sa.cancelAtPeriodEnd;
+                                return (
+                                    <div
+                                        key={sa.id}
+                                        className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
+                                            isPendingCancel
+                                                ? 'bg-amber-50/40 border-amber-200'
+                                                : 'bg-white border-slate-200 shadow-xs hover:border-slate-300'
+                                        }`}
+                                    >
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                                    isPendingCancel 
+                                                        ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                                                        : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                                }`}>
+                                                    {isPendingCancel ? 'Cancela al corte' : 'Activo'}
+                                                </span>
+                                                <span className="font-mono font-black text-xs text-slate-900">
+                                                    ${(sa.priceContracted * (sa.quantity || 1)).toFixed(2)}/m
+                                                </span>
+                                            </div>
+
+                                            <div>
+                                                <h5 className="font-black text-sm text-slate-900 leading-snug">
+                                                    {sa.addon?.name || sa.addonCode}
+                                                </h5>
+                                                {sa.quantity > 1 && (
+                                                    <span className="text-[11px] font-bold text-slate-500">
+                                                        Cantidad: {sa.quantity} × ${sa.priceContracted.toFixed(2)}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {isPendingCancel && sa.effectiveUntil && (
+                                                <p className="text-[11px] text-amber-700 font-medium">
+                                                    Activo hasta: {new Date(sa.effectiveUntil).toLocaleDateString()}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between">
+                                            <span className="text-[10px] font-mono text-slate-400">
+                                                {sa.addon?.type === 'LIMIT' ? 'Extensión de Límite' : 'Capacidad Premium'}
+                                            </span>
+
+                                            {!isPendingCancel && (
+                                                <button
+                                                    onClick={() => handleCancelAddon(sa.id)}
+                                                    disabled={actionAddonCode === sa.id}
+                                                    className="text-xs font-black text-rose-600 hover:text-rose-700 hover:underline cursor-pointer disabled:opacity-50"
+                                                >
+                                                    {actionAddonCode === sa.id ? 'Procesando...' : 'Cancelar al corte'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* ════════════════════════════════════════════════════════════════════════════════════════
+                SECCIÓN: MÓDULOS Y ADD-ONS DISPONIBLES PARA CONTRATAR
+            ════════════════════════════════════════════════════════════════════════════════════════ */}
+            <div className="pt-6 space-y-6">
+                <div className="text-center max-w-2xl mx-auto space-y-2">
+                    <h3 className="text-3xl font-black text-slate-900 tracking-tight">
+                        Módulos y Add-ons Disponibles
+                    </h3>
+                    <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                        Potencia tu negocio incorporando módulos de venta, comunicaciones avanzadas o ampliaciones de límites sin necesidad de cambiar tu plan actual ni perder tus beneficios de Socio Fundador.
+                    </p>
+                </div>
+
+                {loadingAddons ? (
+                    <div className="py-12 text-center text-slate-400 space-y-2">
+                        <Loader2 className="w-8 h-8 animate-spin mx-auto text-amber-500" />
+                        <p className="text-xs font-black uppercase tracking-widest">Cargando módulos disponibles...</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {addonsData.availableAddons.map((addon: any) => {
+                            const isHiring = actionAddonCode === addon.code;
+                            const isAvailable = addon.available;
+
+                            return (
+                                <div
+                                    key={addon.id}
+                                    className={`bg-white rounded-3xl p-6 border-2 transition-all flex flex-col justify-between ${
+                                        isAvailable
+                                            ? 'border-slate-200/80 hover:border-amber-400 hover:shadow-lg'
+                                            : 'border-slate-200 bg-slate-50/40 opacity-75'
+                                    }`}
+                                >
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                                addon.type === 'CAPABILITY'
+                                                    ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                                    : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                            }`}>
+                                                {addon.type === 'CAPABILITY' ? '⚡ Módulo de Capacidad' : '📈 Extensión de Límite'}
+                                            </span>
+
+                                            <span className="font-mono font-black text-sm text-slate-900">
+                                                ${addon.priceMonthly.toFixed(2)}/mes
+                                            </span>
+                                        </div>
+
+                                        <div>
+                                            <h4 className="font-black text-base text-slate-900 leading-tight">
+                                                {addon.name}
+                                            </h4>
+                                            <p className="text-xs text-slate-500 font-medium leading-relaxed mt-1">
+                                                {addon.description || 'Potencia tu negocio con este add-on.'}
+                                            </p>
+                                        </div>
+
+                                        <div className="pt-2 text-xs space-y-1.5 border-t border-slate-100">
+                                            <div className="flex justify-between text-slate-600 font-semibold">
+                                                <span>Afecta:</span>
+                                                <span className="font-mono font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
+                                                    {addon.targetKey}
+                                                </span>
+                                            </div>
+                                            {addon.type === 'LIMIT' && (
+                                                <div className="flex justify-between text-slate-600 font-semibold">
+                                                    <span>Extensión:</span>
+                                                    <span className="font-black text-emerald-600">+{addon.amount} al límite</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-5 mt-4 border-t border-slate-100">
+                                        {isAvailable ? (
+                                            <button
+                                                onClick={() => handlePurchaseAddon(addon.code)}
+                                                disabled={isHiring}
+                                                className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                                            >
+                                                {isHiring ? (
+                                                    <>
+                                                        <Loader2 className="w-4 h-4 animate-spin" /> Contratando...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Plus className="w-4 h-4" /> Agregar al Plan
+                                                    </>
+                                                )}
+                                            </button>
+                                        ) : (
+                                            <div className="w-full py-2.5 bg-slate-100 text-slate-400 rounded-2xl text-[11px] font-black uppercase tracking-wider text-center flex items-center justify-center gap-1.5">
+                                                <Check size={14} className="text-emerald-500" />
+                                                {addon.ineligibilityReason || 'Ya Activo en tu Plan'}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
             {/* Título de Planes Disponibles */}

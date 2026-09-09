@@ -196,7 +196,13 @@ export class EntitlementsService {
     const negocio = await (prisma as any).negocio.findUnique({
       where: { id: businessId },
       include: {
-        Suscripcion: true
+        Suscripcion: {
+          include: {
+            subscriptionAddons: {
+              include: { addon: true }
+            }
+          }
+        }
       }
     });
 
@@ -324,52 +330,129 @@ export class EntitlementsService {
       }
     }
 
-    // 5. Procesar Add-ons contratados
+    // 5. Procesar Add-ons contratados (SubscriptionAddon como Fuente Primaria + customFeatures como Fallback)
     const activeAddonsList: EffectiveEntitlements['addons'] = [];
-    const rawAddonEntries = customFeaturesObj.addons || [];
-    const limitAddonBonus: Record<string, number> = {
-      branches: 0,
-      professionals: 0,
-      appointmentsMonthly: 0,
-      products: 0
-    };
+    const limitAddonBonus: Record<string, number> = {};
+    const processedAddonCodes = new Set<string>();
 
+    const now = new Date();
+
+    // A. Fuente Primaria: SubscriptionAddon en base de datos
+    const dbContracts: any[] = suscripcion?.subscriptionAddons || [];
+    for (const contract of dbContracts) {
+      const addon = contract.addon;
+      const isContractActive = contract.status === 'ACTIVE' || 
+        (contract.cancelAtPeriodEnd && contract.effectiveUntil && new Date(contract.effectiveUntil) > now);
+
+      if (addon && addon.active && isContractActive) {
+        processedAddonCodes.add(addon.code);
+        processedAddonCodes.add(addon.id);
+
+        activeAddonsList.push({
+          id: addon.id,
+          name: addon.name,
+          type: addon.type,
+          targetKey: addon.targetKey,
+          amount: addon.amount ?? undefined,
+          quantity: contract.quantity || 1
+        });
+
+        if (addon.type === 'CAPABILITY') {
+          capabilities[addon.targetKey] = true;
+          capabilities[addon.targetKey.toLowerCase()] = true;
+          capabilities[addon.targetKey.toUpperCase()] = true;
+        } else if (addon.type === 'LIMIT' && addon.targetKey) {
+          const qty = contract.quantity || 1;
+          const bonus = (addon.amount || 0) * qty;
+          limitAddonBonus[addon.targetKey] = (limitAddonBonus[addon.targetKey] || 0) + bonus;
+
+          // Mapeo canónico a claves de baseLimits
+          if (addon.targetKey === 'MAX_BRANCHES') limitAddonBonus.branches = (limitAddonBonus.branches || 0) + bonus;
+          if (addon.targetKey === 'MAX_STAFF') limitAddonBonus.professionals = (limitAddonBonus.professionals || 0) + bonus;
+          if (addon.targetKey === 'MAX_APPOINTMENTS_MONTHLY') limitAddonBonus.appointmentsMonthly = (limitAddonBonus.appointmentsMonthly || 0) + bonus;
+          if (addon.targetKey === 'MAX_PRODUCTS') limitAddonBonus.products = (limitAddonBonus.products || 0) + bonus;
+          if (addon.targetKey === 'MAX_USERS') limitAddonBonus.users = (limitAddonBonus.users || 0) + bonus;
+          if (addon.targetKey === 'MAX_ORDERS_MONTHLY') limitAddonBonus.ordersMonthly = (limitAddonBonus.ordersMonthly || 0) + bonus;
+        }
+      }
+    }
+
+    // B. Fallback Legacy: customFeatures.addons (Solo si no fue procesado por DB)
+    const rawAddonEntries = customFeaturesObj.addons || [];
     if (Array.isArray(rawAddonEntries)) {
       for (const entry of rawAddonEntries) {
         const addonId = typeof entry === 'string' ? entry : entry.id;
         const qty = typeof entry === 'object' && entry.quantity ? parseInt(entry.quantity, 10) : 1;
-        const addonDef = AddonRegistry.get(addonId);
 
-        if (addonDef && addonDef.active) {
-          activeAddonsList.push({
-            id: addonDef.id,
-            name: addonDef.name,
-            type: addonDef.type,
-            targetKey: addonDef.targetKey,
-            amount: addonDef.amount,
-            quantity: qty
-          });
+        if (addonId && !processedAddonCodes.has(addonId)) {
+          const addonDef = AddonRegistry.get(addonId);
+          if (addonDef && addonDef.active) {
+            processedAddonCodes.add(addonDef.id);
+            activeAddonsList.push({
+              id: addonDef.id,
+              name: addonDef.name,
+              type: addonDef.type,
+              targetKey: addonDef.targetKey,
+              amount: addonDef.amount,
+              quantity: qty
+            });
 
-          if (addonDef.type === 'CAPABILITY') {
-            capabilities[addonDef.targetKey] = true;
-            capabilities[addonDef.targetKey.toLowerCase()] = true;
-            capabilities[addonDef.targetKey.toUpperCase()] = true;
-          } else if (addonDef.type === 'LIMIT') {
-            const currentBonus = limitAddonBonus[addonDef.targetKey] || 0;
-            limitAddonBonus[addonDef.targetKey] = currentBonus + ((addonDef.amount || 0) * qty);
+            if (addonDef.type === 'CAPABILITY') {
+              capabilities[addonDef.targetKey] = true;
+              capabilities[addonDef.targetKey.toLowerCase()] = true;
+              capabilities[addonDef.targetKey.toUpperCase()] = true;
+            } else if (addonDef.type === 'LIMIT' && addonDef.targetKey) {
+              const bonus = (addonDef.amount || 0) * qty;
+              limitAddonBonus[addonDef.targetKey] = (limitAddonBonus[addonDef.targetKey] || 0) + bonus;
+              if (addonDef.targetKey === 'branches') limitAddonBonus.branches = (limitAddonBonus.branches || 0) + bonus;
+              if (addonDef.targetKey === 'professionals') limitAddonBonus.professionals = (limitAddonBonus.professionals || 0) + bonus;
+              if (addonDef.targetKey === 'appointmentsMonthly') limitAddonBonus.appointmentsMonthly = (limitAddonBonus.appointmentsMonthly || 0) + bonus;
+              if (addonDef.targetKey === 'products') limitAddonBonus.products = (limitAddonBonus.products || 0) + bonus;
+            }
           }
         }
       }
     }
 
-    // Calibrar límites efectivos (Plan + Addons)
+    // Calibrar límites efectivos universales (Plan Base + Bonos de Addons)
+    const branchBonus = limitAddonBonus.branches || limitAddonBonus.MAX_BRANCHES || 0;
+    const staffBonus = limitAddonBonus.professionals || limitAddonBonus.MAX_STAFF || 0;
+    const apptBonus = limitAddonBonus.appointmentsMonthly || limitAddonBonus.MAX_APPOINTMENTS_MONTHLY || 0;
+    const prodBonus = limitAddonBonus.products || limitAddonBonus.MAX_PRODUCTS || 0;
+    const userBonus = limitAddonBonus.users || limitAddonBonus.MAX_USERS || 0;
+    const orderBonus = limitAddonBonus.ordersMonthly || limitAddonBonus.MAX_ORDERS_MONTHLY || 0;
+
     const effectiveLimits: any = {
       ...baseLimits,
-      branches: (baseLimits.branches === -1 || baseLimits.branches >= 999) ? 999 : baseLimits.branches + (limitAddonBonus.branches || 0),
-      professionals: (baseLimits.professionals === -1 || baseLimits.professionals >= 999) ? 999 : baseLimits.professionals + (limitAddonBonus.professionals || 0),
-      appointmentsMonthly: (baseLimits.appointmentsMonthly === -1 || baseLimits.appointmentsMonthly >= 9999) ? 9999 : baseLimits.appointmentsMonthly + (limitAddonBonus.appointmentsMonthly || 0),
-      products: (baseLimits.products === -1 || baseLimits.products >= 9999) ? 9999 : baseLimits.products + (limitAddonBonus.products || 0)
+      branches: (baseLimits.branches === -1 || baseLimits.branches >= 999) ? 999 : baseLimits.branches + branchBonus,
+      MAX_BRANCHES: (baseLimits.branches === -1 || baseLimits.branches >= 999) ? 999 : baseLimits.branches + branchBonus,
+      professionals: (baseLimits.professionals === -1 || baseLimits.professionals >= 999) ? 999 : baseLimits.professionals + staffBonus,
+      MAX_STAFF: (baseLimits.professionals === -1 || baseLimits.professionals >= 999) ? 999 : baseLimits.professionals + staffBonus,
+      appointmentsMonthly: (baseLimits.appointmentsMonthly === -1 || baseLimits.appointmentsMonthly >= 9999) ? 9999 : baseLimits.appointmentsMonthly + apptBonus,
+      MAX_APPOINTMENTS_MONTHLY: (baseLimits.appointmentsMonthly === -1 || baseLimits.appointmentsMonthly >= 9999) ? 9999 : baseLimits.appointmentsMonthly + apptBonus,
+      products: (baseLimits.products === -1 || baseLimits.products >= 9999) ? 9999 : baseLimits.products + prodBonus,
+      MAX_PRODUCTS: (baseLimits.products === -1 || baseLimits.products >= 9999) ? 9999 : baseLimits.products + prodBonus,
+      users: (baseLimits.users === -1 || (baseLimits.users && baseLimits.users >= 999)) ? 999 : ((baseLimits.users || 1) + userBonus),
+      MAX_USERS: (baseLimits.users === -1 || (baseLimits.users && baseLimits.users >= 999)) ? 999 : ((baseLimits.users || 1) + userBonus),
+      ordersMonthly: (baseLimits.ordersMonthly === -1 || (baseLimits.ordersMonthly && baseLimits.ordersMonthly >= 9999)) ? 9999 : ((baseLimits.ordersMonthly || 50) + orderBonus),
+      MAX_ORDERS_MONTHLY: (baseLimits.ordersMonthly === -1 || (baseLimits.ordersMonthly && baseLimits.ordersMonthly >= 9999)) ? 9999 : ((baseLimits.ordersMonthly || 50) + orderBonus)
     };
+
+    // Añadir bonos para cualquier otra clave personalizada
+    const standardKeys = new Set([
+      'branches', 'MAX_BRANCHES',
+      'professionals', 'MAX_STAFF',
+      'appointmentsMonthly', 'MAX_APPOINTMENTS_MONTHLY',
+      'products', 'MAX_PRODUCTS',
+      'users', 'MAX_USERS',
+      'ordersMonthly', 'MAX_ORDERS_MONTHLY'
+    ]);
+
+    for (const [key, bonusVal] of Object.entries(limitAddonBonus)) {
+      if (!standardKeys.has(key)) {
+        effectiveLimits[key] = (effectiveLimits[key] || 0) + bonusVal;
+      }
+    }
 
     // 6. Contar uso real actual en la BD (Evaluando sucursales activas)
     const startOfMonth = new Date();
