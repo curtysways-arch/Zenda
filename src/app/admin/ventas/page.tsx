@@ -37,7 +37,7 @@ function VentasContent() {
   // State
   const [nombreCliente, setNombreCliente] = useState('Cliente POS');
   const [telefonoCliente, setTelefonoCliente] = useState('0991234567');
-  const [tipoEntrega, setTipoEntrega] = useState<'DELIVERY_ORDER' | 'PICKUP_ORDER' | 'TABLE_ORDER'>('TABLE_ORDER');
+  const [tipoEntrega, setTipoEntrega] = useState<'DELIVERY_ORDER' | 'PICKUP_ORDER' | 'TABLE_ORDER'>('PICKUP_ORDER');
   const [metodoPago, setMetodoPago] = useState<'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA' | 'MIXTO' | 'OTRO'>('EFECTIVO');
   const [direccionCliente, setDireccionCliente] = useState('Venta Directa Mostrador');
   const [referenciaCliente, setReferenciaCliente] = useState('');
@@ -80,14 +80,33 @@ function VentasContent() {
   const [negocioInfo, setNegocioInfo] = useState<any>(null);
 
   const tipoUpper = (negocioInfo?.tipoNegocio || '').toUpperCase();
+  const nameUpper = (negocioInfo?.nombre || '').toUpperCase();
   const blueprintId = typeof negocioInfo?.configuracion === 'string'
     ? (() => { try { return JSON.parse(negocioInfo.configuracion).blueprintId; } catch { return undefined; } })()
     : negocioInfo?.configuracion?.blueprintId;
-  const isStore = tipoUpper === 'TIENDA' || tipoUpper === 'STORE' || blueprintId === 'STORE';
 
-  const defaultProductImage = isStore
-    ? 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500'
-    : 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
+  const isRestaurant = (
+    tipoUpper === 'RESTAURANTE' || 
+    tipoUpper === 'GASTRONOMIA' || 
+    tipoUpper === 'RESTAURANT' || 
+    tipoUpper === 'BAR' || 
+    blueprintId === 'RESTAURANT' || 
+    blueprintId === 'GASTRONOMIA' ||
+    nameUpper.includes('PARRILLA') || 
+    nameUpper.includes('RESTAURANTE') || 
+    nameUpper.includes('GASTRONOMIA') || 
+    nameUpper.includes('BURGER') || 
+    nameUpper.includes('PIZZA') || 
+    nameUpper.includes('TACO') ||
+    nameUpper.includes('PINCHOS')
+  );
+
+  // Todo negocio que no sea restaurante gastronómico opera en modo retail / mostrador / catálogo
+  const isStore = !isRestaurant;
+
+  const defaultProductImage = isRestaurant
+    ? 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500'
+    : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500';
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMsg({ text, type });
@@ -177,9 +196,26 @@ function VentasContent() {
           const nData = await resN.json();
           setNegocioInfo(nData);
           const tUpper = (nData.tipoNegocio || '').toUpperCase();
+          const nUpper = (nData.nombre || '').toUpperCase();
           const bId = (typeof nData.configuracion === 'string' ? (() => { try { return JSON.parse(nData.configuracion).blueprintId; } catch { return undefined; } })() : nData.configuracion?.blueprintId);
-          if (tUpper === 'TIENDA' || tUpper === 'STORE' || bId === 'STORE') {
+          
+          const isRest = (
+            tUpper === 'RESTAURANTE' || 
+            tUpper === 'GASTRONOMIA' || 
+            tUpper === 'RESTAURANT' || 
+            tUpper === 'BAR' || 
+            bId === 'RESTAURANT' || 
+            bId === 'GASTRONOMIA' ||
+            nUpper.includes('PARRILLA') || 
+            nUpper.includes('RESTAURANTE') || 
+            nUpper.includes('BURGER') || 
+            nUpper.includes('PIZZA') || 
+            nUpper.includes('PINCHOS')
+          );
+
+          if (!isRest) {
             setTipoEntrega('PICKUP_ORDER');
+            setTables([]);
           }
 
           if (nData.latitud) setBizLat(parseFloat(nData.latitud));
@@ -193,23 +229,25 @@ function VentasContent() {
           if (cfg.deliveryConfig) setDeliveryConfig(cfg.deliveryConfig);
           if (cfg.packagingConfig?.amount) setPackagingAmount(parseFloat(cfg.packagingConfig.amount));
 
-          // Load tables for current business from admin API
-          try {
-            const resT = await fetch('/api/admin/mesas');
-            if (resT.ok) {
-              const dT = await resT.json();
-              const realTables = dT.mesas || [];
-              setTables(realTables);
-              const urlTable = searchParams.get('tableName');
-              if (urlTable) {
-                setTipoEntrega('TABLE_ORDER');
-                setMesaCode(urlTable);
-              } else if (realTables.length > 0 && (mesaCode === 'POS-Virtual' || !mesaCode)) {
-                setMesaCode(realTables[0].nombre || realTables[0].name);
+          // Solo cargar mesas si es un negocio gastronómico/restaurante
+          if (isRest) {
+            try {
+              const resT = await fetch('/api/admin/mesas');
+              if (resT.ok) {
+                const dT = await resT.json();
+                const realTables = dT.mesas || [];
+                setTables(realTables);
+                const urlTable = searchParams.get('tableName');
+                if (urlTable) {
+                  setTipoEntrega('TABLE_ORDER');
+                  setMesaCode(urlTable);
+                } else if (realTables.length > 0 && (mesaCode === 'POS-Virtual' || !mesaCode)) {
+                  setMesaCode(realTables[0].nombre || realTables[0].name);
+                }
               }
+            } catch (errT) {
+              console.error('Error loading tables:', errT);
             }
-          } catch (errT) {
-            console.error('Error loading tables:', errT);
           }
         }
       } catch (e) {
@@ -683,16 +721,18 @@ function VentasContent() {
                 </span>
               </div>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  fetchActiveOrders();
-                  setShowActiveOrdersModal(true);
-                }}
-                className="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 text-[10px] font-black tracking-tight transition-all flex items-center gap-1 cursor-pointer border border-amber-300"
-              >
-                <span>📋</span> Adicionar a Pedido
-              </button>
+              {isRestaurant && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    fetchActiveOrders();
+                    setShowActiveOrdersModal(true);
+                  }}
+                  className="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 text-[10px] font-black tracking-tight transition-all flex items-center gap-1 cursor-pointer border border-amber-300"
+                >
+                  <span>📋</span> Adicionar a Pedido
+                </button>
+              )}
               <button
                 onClick={clearCart}
                 className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-1 cursor-pointer"
@@ -736,7 +776,7 @@ function VentasContent() {
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    <Store className="w-3 h-3" /> En Tienda
+                    <Store className="w-3 h-3" /> Mostrador / Local
                   </button>
                   <button
                     type="button"
@@ -747,7 +787,7 @@ function VentasContent() {
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    <Bike className="w-3 h-3" /> Domicilio
+                    <Bike className="w-3 h-3" /> A Domicilio
                   </button>
                 </div>
               ) : (
@@ -1102,7 +1142,7 @@ function VentasContent() {
               <span className="size-6 rounded-lg bg-white/20 flex items-center justify-center text-[10px] font-black">
                 {totalItemsCount}
               </span>
-              <span className="uppercase tracking-wider">Ver Comanda Activa</span>
+              <span className="uppercase tracking-wider">{isStore ? 'Ver Carrito Activo' : 'Ver Comanda Activa'}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-black">${grandTotal.toFixed(2)}</span>

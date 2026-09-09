@@ -79,6 +79,7 @@ export default function AdminSidebar({
     promotions: true
   });
   const [businessName, setBusinessName] = useState<string>(initialBusinessName || '');
+  const [isRestaurantBiz, setIsRestaurantBiz] = useState<boolean>(false);
 
   // Cargar capacidades activas del negocio dinámicamente mediante EntitlementsService
   useEffect(() => {
@@ -114,8 +115,9 @@ export default function AdminSidebar({
           const slugUpper = (data.slug || '').toUpperCase();
           const nameUpper = (data.nombre || businessName || '').toUpperCase();
 
-          const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT' ||
+          const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT' || tipoUpper === 'BAR' ||
             nameUpper.includes('PARRILLA') || nameUpper.includes('RESTAURANTE') || nameUpper.includes('GASTRONOMIA') || nameUpper.includes('BURGER') || nameUpper.includes('PIZZA') || nameUpper.includes('TACO');
+          setIsRestaurantBiz(isRestaurant);
           const isPinchos = tipoUpper === 'PINCHOS' || slugUpper === 'PINCHOS';
           const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || 
             slugUpper.includes('CANCHA') || slugUpper.includes('CAMPEONES') || 
@@ -200,12 +202,12 @@ export default function AdminSidebar({
     if (capabilities.dispatch) {
       items.push({ name: 'Órdenes', href: '/admin/despacho', icon: ClipboardList, section: 'GESTIÓN OPERATIVA' });
     }
-    if (capabilities.tables) {
+    if (capabilities.tables && isRestaurantBiz) {
       items.push({ name: 'Mesas', href: '/admin/mesas', icon: Layout, section: 'GESTIÓN OPERATIVA' });
     }
     if (capabilities.kitchen) {
       items.push({ name: 'Comandas', href: '/admin/cocina', icon: Utensils, section: 'GESTIÓN OPERATIVA' });
-    } else if (capabilities.orders) {
+    } else if (isRestaurantBiz && capabilities.orders) {
       items.push({ name: 'Comandas', href: '/admin/plan', icon: Utensils, section: 'GESTIÓN OPERATIVA', isLocked: true, lockedBadge: 'Pro' });
     }
     if (capabilities.appointments) {
