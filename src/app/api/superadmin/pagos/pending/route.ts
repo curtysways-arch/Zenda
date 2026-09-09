@@ -21,15 +21,41 @@ export async function GET(req: Request) {
             orderBy: { fecha_pago: 'desc' }
         });
 
-        // Obtener nombres de planes
-        const plans = await prisma.plan.findMany();
+        // Obtener nombres de planes y add-ons
+        const [plans, addons] = await Promise.all([
+            prisma.plan.findMany(),
+            prisma.addon.findMany()
+        ]);
+
         const plansMap = plans.reduce((acc, plan) => {
             acc[plan.id] = plan.name;
             return acc;
         }, {} as Record<string, string>);
 
+        const addonsMap = addons.reduce((acc, addon) => {
+            acc[addon.id] = addon.name;
+            acc[`ADDON:${addon.id}`] = addon.name;
+            acc[addon.code] = addon.name;
+            acc[`ADDON:${addon.code}`] = addon.name;
+            return acc;
+        }, {} as Record<string, string>);
+
+        // Asignar en plansMap los add-ons con prefijo claro
+        for (const [key, name] of Object.entries(addonsMap)) {
+            plansMap[key] = `[ADD-ON] ${name}`;
+        }
+
+        const enrichedPayments = pendingPayments.map(p => {
+            const isAddon = p.plan_id.startsWith('ADDON:') || Boolean(addonsMap[p.plan_id]);
+            return {
+                ...p,
+                itemType: isAddon ? 'ADDON' : 'PLAN',
+                itemName: plansMap[p.plan_id] || p.plan_id
+            };
+        });
+
         return NextResponse.json({
-            payments: pendingPayments,
+            payments: enrichedPayments,
             plansMap
         });
     } catch (error) {

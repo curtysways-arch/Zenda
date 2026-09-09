@@ -10,6 +10,7 @@ import { Addon, SubscriptionAddon, SubscriptionAddonStatus, SubscriptionAddonAct
 export interface AddonAvailabilityDTO {
   addon: Addon;
   isPurchased: boolean;
+  isPendingPayment?: boolean;
   activeContract?: {
     id: string;
     quantity: number;
@@ -20,6 +21,68 @@ export interface AddonAvailabilityDTO {
   };
   available: boolean;
   ineligibilityReason?: string;
+}
+
+export interface PurchaseAddonParams {
+  businessId: string;
+  addonCodeOrId: string;
+  requestedQuantity?: number;
+  metodoPago?: string;
+  referencia?: string;
+  comprobanteUrl?: string;
+  performedBy?: string;
+}
+
+/**
+ * Calcula el prorrateo exacto para la contratación de un add-on a mitad de ciclo.
+ */
+export function calculateAddonProration(
+  sub: { fechaInicio?: Date | string | null; fechaFin?: Date | string | null },
+  addonPriceMonthly: number,
+  quantity = 1
+) {
+  const now = new Date();
+  const totalPriceMonthly = Number((addonPriceMonthly * quantity).toFixed(2));
+
+  if (!sub.fechaInicio || !sub.fechaFin) {
+    return {
+      proratedAmount: totalPriceMonthly,
+      daysRemaining: 30,
+      totalDaysInCycle: 30,
+      isProrated: false,
+      dailyRate: Number((totalPriceMonthly / 30).toFixed(2))
+    };
+  }
+
+  const startDate = new Date(sub.fechaInicio);
+  const endDate = new Date(sub.fechaFin);
+
+  if (endDate <= now) {
+    return {
+      proratedAmount: totalPriceMonthly,
+      daysRemaining: 0,
+      totalDaysInCycle: 30,
+      isProrated: false,
+      dailyRate: Number((totalPriceMonthly / 30).toFixed(2))
+    };
+  }
+
+  const totalMs = Math.max(1000 * 60 * 60 * 24, endDate.getTime() - startDate.getTime());
+  const remainingMs = Math.max(0, endDate.getTime() - now.getTime());
+
+  const totalDays = Math.max(1, Math.round(totalMs / (1000 * 60 * 60 * 24)));
+  const remainingDays = Math.max(1, Math.min(totalDays, Math.ceil(remainingMs / (1000 * 60 * 60 * 24))));
+
+  const prorated = (totalPriceMonthly * remainingDays) / totalDays;
+  const roundedProrated = Math.max(1.00, Number(prorated.toFixed(2)));
+
+  return {
+    proratedAmount: roundedProrated,
+    daysRemaining: remainingDays,
+    totalDaysInCycle: totalDays,
+    isProrated: remainingDays < totalDays,
+    dailyRate: Number((totalPriceMonthly / totalDays).toFixed(2))
+  };
 }
 
 export const addonService = {
@@ -93,6 +156,7 @@ export const addonService = {
       const isPurchased = Boolean(
         contract && (contract.status === 'ACTIVE' || (contract.cancelAtPeriodEnd && contract.effectiveUntil && new Date(contract.effectiveUntil) > new Date()))
       );
+      const isPendingPayment = Boolean(contract && contract.status === 'PENDING');
 
       let available = true;
       let ineligibilityReason: string | undefined = undefined;
@@ -134,9 +198,16 @@ export const addonService = {
         ineligibilityReason = 'Ya se encuentra activo en tu suscripción';
       }
 
+      // 5. Si ya tiene una solicitud pendiente de pago
+      if (available && isPendingPayment) {
+        available = false;
+        ineligibilityReason = 'Solicitud en revisión (Pendiente de Aprobación de Pago)';
+      }
+
       result.push({
         addon,
         isPurchased,
+        isPendingPayment,
         activeContract: contract ? {
           id: contract.id,
           quantity: contract.quantity,
@@ -154,9 +225,34 @@ export const addonService = {
   },
 
   /**
-   * Contrata un Add-on para un negocio (o incrementa cantidad si es stackable).
+   * Registra la solicitud de compra de un Add-on para un negocio, generando el cobro con prorrateo
+   * y dejando el contrato en estado PENDING hasta que el pago sea confirmado.
    */
-  async purchaseAddon(businessId: string, addonCodeOrId: string, requestedQuantity = 1, performedBy = 'ADMIN') {
+  async purchaseAddon(
+    businessIdOrParams: string | PurchaseAddonParams,
+    addonCodeOrIdArg?: string,
+    requestedQuantityArg = 1,
+    performedByArg = 'ADMIN'
+  ) {
+    const params: PurchaseAddonParams = typeof businessIdOrParams === 'object'
+      ? businessIdOrParams
+      : {
+          businessId: businessIdOrParams,
+          addonCodeOrId: addonCodeOrIdArg!,
+          requestedQuantity: requestedQuantityArg,
+          performedBy: performedByArg
+        };
+
+    const {
+      businessId,
+      addonCodeOrId,
+      requestedQuantity = 1,
+      metodoPago = 'TRANSFERENCIA',
+      referencia,
+      comprobanteUrl,
+      performedBy = 'ADMIN'
+    } = params;
+
     if (requestedQuantity < 1) {
       throw new Error('La cantidad debe ser al menos 1');
     }
@@ -206,26 +302,35 @@ export const addonService = {
       }
     });
 
-    const now = new Date();
-    const priceContracted = addon.priceMonthly; // Fijado server-side desde el catálogo
-
-    let subscriptionAddon: SubscriptionAddon;
-
     if (existing) {
       if (!addon.stackable && existing.status === 'ACTIVE' && !existing.cancelAtPeriodEnd) {
         throw new Error('Este Add-on ya está activo en tu cuenta');
       }
+      if (existing.status === 'PENDING' && !comprobanteUrl && !referencia) {
+        throw new Error('Ya existe una solicitud pendiente de pago para este Add-on');
+      }
+    }
 
+    const now = new Date();
+    const finalQuantity = addon.stackable ? requestedQuantity : 1;
+    const priceContracted = addon.priceMonthly; // Fijado server-side desde el catálogo
+
+    // Cálculo canónico de prorrateo
+    const proration = calculateAddonProration(sub, priceContracted, finalQuantity);
+
+    let subscriptionAddon: SubscriptionAddon;
+
+    if (existing) {
       const qtyBefore = existing.quantity;
       const statusBefore = existing.status;
-      const finalQuantity = addon.stackable ? requestedQuantity : 1;
 
       subscriptionAddon = await prisma.subscriptionAddon.update({
         where: { id: existing.id },
         data: {
           quantity: finalQuantity,
           priceContracted,
-          status: 'ACTIVE',
+          currency: addon.currency,
+          status: 'PENDING', // PENDIENTE DE CONFIRMACIÓN DE PAGO
           cancelAtPeriodEnd: false,
           effectiveUntil: null,
           cancelledAt: null,
@@ -240,15 +345,15 @@ export const addonService = {
           subscriptionId: sub.id,
           addonId: addon.id,
           subscriptionAddonId: existing.id,
-          action: existing.status === 'ACTIVE' ? 'QUANTITY_CHANGED' : 'RESUMED',
+          action: 'PURCHASED',
           quantityBefore: qtyBefore,
           quantityAfter: finalQuantity,
           priceBefore: existing.priceContracted,
           priceAfter: priceContracted,
           statusBefore,
-          statusAfter: 'ACTIVE',
+          statusAfter: 'PENDING',
           performedBy,
-          reason: 'Actualización o reactivación de add-on'
+          reason: `Solicitud de compra/reactivación pendiente de pago (Monto prorrateado: $${proration.proratedAmount})`
         }
       });
     } else {
@@ -256,10 +361,10 @@ export const addonService = {
         data: {
           subscriptionId: sub.id,
           addonId: addon.id,
-          quantity: addon.stackable ? requestedQuantity : 1,
+          quantity: finalQuantity,
           priceContracted,
           currency: addon.currency,
-          status: 'ACTIVE',
+          status: 'PENDING', // PENDIENTE DE CONFIRMACIÓN DE PAGO
           startedAt: now
         }
       });
@@ -277,14 +382,206 @@ export const addonService = {
           priceBefore: 0,
           priceAfter: priceContracted,
           statusBefore: null,
-          statusAfter: 'ACTIVE',
+          statusAfter: 'PENDING',
           performedBy,
-          reason: 'Contratación inicial de add-on'
+          reason: `Contratación inicial de add-on pendiente de pago (Monto prorrateado: $${proration.proratedAmount})`
         }
       });
     }
 
-    return subscriptionAddon;
+    // Crear registro de cobro pendiente en Payment
+    const payment = await prisma.payment.create({
+      data: {
+        id: (await import('crypto')).randomUUID(),
+        negocio_id: business.id,
+        plan_id: `ADDON:${addon.id}`, // Identifica el pago como cobro de Add-on
+        monto: proration.proratedAmount,
+        metodo_pago: metodoPago,
+        referencia: referencia || `ADDON_${addon.code}_${Date.now()}`,
+        comprobante: comprobanteUrl || null,
+        estado_pago: 'pending'
+      }
+    });
+
+    // Notificar por WhatsApp al Super Admin si está configurado
+    try {
+      const adminConfig = await prisma.globalConfig.findUnique({
+        where: { clave: 'NUMERO_WHATSAPP_ADMIN' }
+      });
+      if (adminConfig?.valor) {
+        const { notificationService } = await import('@/lib/notifications');
+        const waMsg = `🚨 *Nueva Solicitud de Add-on* 🧩\n\nNegocio: *${business.nombre}*\nAdd-on: *${addon.name}* (${addon.code})\nCantidad: *${finalQuantity}*\nMonto a pagar: *$${proration.proratedAmount.toFixed(2)}*\nMétodo: *${metodoPago}*\nReferencia: *${referencia || 'N/A'}*\n\n📲 *Revisa y aprueba el pago en:* \n${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/superadmin/pagos`;
+        await notificationService.provider.sendMessage({
+          to: adminConfig.valor.replace(/\D/g, ''),
+          message: waMsg,
+          template: 'solicitud_addon_admin'
+        });
+      }
+    } catch (err) {
+      console.error('Error enviando WhatsApp de add-on al admin:', err);
+    }
+
+    return {
+      subscriptionAddon,
+      payment,
+      proration
+    };
+  },
+
+  /**
+   * Confirma o rechaza el pago de un Add-on desde Superadmin.
+   * Si es aprobado: pasa a ACTIVE e inicia vigencia otorgando capabilities y limits.
+   * Si es rechazado: pasa a CANCELLED y notifica al negocio.
+   */
+  async activateAddonPayment(paymentId: string, approved: boolean, performedBy = 'SUPERADMIN') {
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: { Negocio: true }
+    });
+
+    if (!payment) {
+      throw new Error('Registro de pago no encontrado');
+    }
+
+    const addonId = payment.plan_id.startsWith('ADDON:')
+      ? payment.plan_id.replace('ADDON:', '')
+      : payment.plan_id;
+
+    const addon = await prisma.addon.findUnique({
+      where: { id: addonId }
+    });
+
+    if (!addon) {
+      throw new Error('Add-on asociado al pago no encontrado');
+    }
+
+    const sub = await prisma.suscripcion.findUnique({
+      where: { negocioId: payment.negocio_id }
+    });
+
+    if (!sub) {
+      throw new Error('Suscripción del negocio no encontrada');
+    }
+
+    const contract = await prisma.subscriptionAddon.findUnique({
+      where: {
+        subscriptionId_addonId: {
+          subscriptionId: sub.id,
+          addonId: addon.id
+        }
+      }
+    });
+
+    if (!contract) {
+      throw new Error('Contrato de Add-on no encontrado para esta suscripción');
+    }
+
+    const now = new Date();
+
+    if (!approved) {
+      // Rechazar pago
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: { estado_pago: 'rejected' }
+      });
+
+      const updatedContract = await prisma.subscriptionAddon.update({
+        where: { id: contract.id },
+        data: {
+          status: 'CANCELLED',
+          cancelledAt: now,
+          updatedAt: now
+        }
+      });
+
+      await prisma.subscriptionAddonHistory.create({
+        data: {
+          businessId: payment.negocio_id,
+          subscriptionId: sub.id,
+          addonId: addon.id,
+          subscriptionAddonId: contract.id,
+          action: 'CANCELLED',
+          quantityBefore: contract.quantity,
+          quantityAfter: contract.quantity,
+          priceBefore: contract.priceContracted,
+          priceAfter: contract.priceContracted,
+          statusBefore: contract.status,
+          statusAfter: 'CANCELLED',
+          performedBy,
+          reason: 'Comprobante de pago rechazado por Superadmin'
+        }
+      });
+
+      // Notificar por WhatsApp de rechazo si tiene teléfono
+      if (payment.Negocio?.whatsapp) {
+        try {
+          const { notificationService } = await import('@/lib/notifications');
+          const waMsg = `❌ *Comprobante de Add-on Rechazado* ⚠️\n\nHola, tu comprobante para el módulo *${addon.name}* ha sido rechazado.\n\nPor favor, verifica los datos del pago y vuelve a subir tu comprobante desde tu panel administrativo:\n${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/admin/plan`;
+          await notificationService.provider.sendMessage({
+            to: payment.Negocio.whatsapp.replace(/\D/g, ''),
+            message: waMsg,
+            template: 'rechazo_addon'
+          });
+        } catch (err) {
+          console.error('Error enviando WhatsApp de rechazo de add-on:', err);
+        }
+      }
+
+      return updatedContract;
+    }
+
+    // APROBADO: Activar contrato
+    await prisma.payment.update({
+      where: { id: payment.id },
+      data: { estado_pago: 'approved' }
+    });
+
+    const updatedContract = await prisma.subscriptionAddon.update({
+      where: { id: contract.id },
+      data: {
+        status: 'ACTIVE',
+        startedAt: now,
+        cancelAtPeriodEnd: false,
+        effectiveUntil: null,
+        cancelledAt: null,
+        updatedAt: now
+      }
+    });
+
+    await prisma.subscriptionAddonHistory.create({
+      data: {
+        businessId: payment.negocio_id,
+        subscriptionId: sub.id,
+        addonId: addon.id,
+        subscriptionAddonId: contract.id,
+        action: 'ACTIVATED',
+        quantityBefore: contract.quantity,
+        quantityAfter: contract.quantity,
+        priceBefore: contract.priceContracted,
+        priceAfter: contract.priceContracted,
+        statusBefore: contract.status,
+        statusAfter: 'ACTIVE',
+        performedBy,
+        reason: 'Pago aprobado por Superadmin - Add-on activado canónicamente'
+      }
+    });
+
+    // Notificar por WhatsApp de activación
+    if (payment.Negocio?.whatsapp) {
+      try {
+        const { notificationService } = await import('@/lib/notifications');
+        const waMsg = `🎉 *¡Módulo Add-on Activado con Éxito!* ✅\n\nHola, tu pago para el módulo *${addon.name}* ha sido verificado y activado correctamente en *${payment.Negocio.nombre}*.\n\nYa puedes disfrutar de todas sus funcionalidades desde tu panel de control:\n${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/admin/plan`;
+        await notificationService.provider.sendMessage({
+          to: payment.Negocio.whatsapp.replace(/\D/g, ''),
+          message: waMsg,
+          template: 'activacion_addon'
+        });
+      } catch (err) {
+        console.error('Error enviando WhatsApp de aprobación de add-on:', err);
+      }
+    }
+
+    return updatedContract;
   },
 
   /**

@@ -27,6 +27,7 @@ import {
     Loader2
 } from "lucide-react";
 import UpgradeModal from "@/components/ui/UpgradeModal";
+import AddonCheckoutModal from "@/components/admin/AddonCheckoutModal";
 import { getFormattedPlanFeatures } from "@/lib/planFeaturesHelper";
 
 interface PlanDashboardClientProps {
@@ -64,6 +65,7 @@ export default function PlanDashboardClient({
     }>({ availableAddons: [], activeSubscriptions: [], pricingDetails: null });
     const [loadingAddons, setLoadingAddons] = useState(true);
     const [actionAddonCode, setActionAddonCode] = useState<string | null>(null);
+    const [checkoutAddon, setCheckoutAddon] = useState<any | null>(null);
 
     const fetchAddonsData = async () => {
         try {
@@ -457,6 +459,7 @@ export default function PlanDashboardClient({
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {addonsData.activeSubscriptions.map((sa: any) => {
+                                const isPendingApproval = sa.status === 'PENDING';
                                 const isPendingCancel = sa.cancelAtPeriodEnd;
                                 const unitPrice = Number(sa.priceContracted ?? sa.addon?.priceMonthly ?? 0);
                                 const qty = Number(sa.quantity || 1);
@@ -465,19 +468,23 @@ export default function PlanDashboardClient({
                                     <div
                                         key={sa.id}
                                         className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
-                                            isPendingCancel
-                                                ? 'bg-amber-50/40 border-amber-200'
-                                                : 'bg-white border-slate-200 shadow-xs hover:border-slate-300'
+                                            isPendingApproval
+                                                ? 'bg-amber-50/60 border-amber-300 shadow-xs'
+                                                : isPendingCancel
+                                                    ? 'bg-amber-50/40 border-amber-200'
+                                                    : 'bg-white border-slate-200 shadow-xs hover:border-slate-300'
                                         }`}
                                     >
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between">
                                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                                    isPendingCancel 
-                                                        ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                                                        : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                                    isPendingApproval
+                                                        ? 'bg-amber-500 text-white border border-amber-600 animate-pulse'
+                                                        : isPendingCancel 
+                                                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                                                            : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                                                 }`}>
-                                                    {isPendingCancel ? 'Cancela al corte' : 'Activo'}
+                                                    {isPendingApproval ? 'Pendiente de Aprobación' : isPendingCancel ? 'Cancela al corte' : 'Activo'}
                                                 </span>
                                                 <span className="font-mono font-black text-xs text-slate-900">
                                                     ${totalPrice}/m
@@ -495,6 +502,12 @@ export default function PlanDashboardClient({
                                                 )}
                                             </div>
 
+                                            {isPendingApproval && (
+                                                <p className="text-[11px] text-amber-800 font-medium leading-tight">
+                                                    Comprobante enviado. El módulo se activará automáticamente al confirmarse la acreditación.
+                                                </p>
+                                            )}
+
                                             {isPendingCancel && sa.effectiveUntil && (
                                                 <p className="text-[11px] text-amber-700 font-medium">
                                                     Activo hasta: {new Date(sa.effectiveUntil).toLocaleDateString()}
@@ -507,7 +520,7 @@ export default function PlanDashboardClient({
                                                 {sa.addon?.type === 'LIMIT' ? 'Extensión de Límite' : 'Capacidad Premium'}
                                             </span>
 
-                                            {!isPendingCancel && (
+                                            {!isPendingApproval && !isPendingCancel && (
                                                 <button
                                                     onClick={() => handleCancelAddon(sa.id)}
                                                     disabled={actionAddonCode === sa.id}
@@ -550,7 +563,8 @@ export default function PlanDashboardClient({
                             const addonCode = addon.code || item.code;
                             const addonId = addon.id || item.id || addonCode;
                             const isHiring = actionAddonCode === addonCode;
-                            const isAvailable = item.available ?? addon.available ?? true;
+                            const isPendingPayment = Boolean(item.isPendingPayment);
+                            const isAvailable = Boolean(item.available ?? addon.available ?? true) && !isPendingPayment;
                             const priceMonthly = Number(addon.priceMonthly ?? item.priceMonthly ?? 0);
                             const addonType = addon.type || item.type;
                             const addonName = addon.name || item.name;
@@ -563,9 +577,11 @@ export default function PlanDashboardClient({
                                 <div
                                     key={addonId}
                                     className={`bg-white rounded-3xl p-6 border-2 transition-all flex flex-col justify-between ${
-                                        isAvailable
-                                            ? 'border-slate-200/80 hover:border-amber-400 hover:shadow-lg'
-                                            : 'border-slate-200 bg-slate-50/40 opacity-75'
+                                        isPendingPayment
+                                            ? 'border-amber-300 bg-amber-50/20 shadow-xs'
+                                            : isAvailable
+                                                ? 'border-slate-200/80 hover:border-purple-400 hover:shadow-lg'
+                                                : 'border-slate-200 bg-slate-50/40 opacity-75'
                                     }`}
                                 >
                                     <div className="space-y-3">
@@ -609,21 +625,17 @@ export default function PlanDashboardClient({
                                     </div>
 
                                     <div className="pt-5 mt-4 border-t border-slate-100">
-                                        {isAvailable ? (
+                                        {isPendingPayment ? (
+                                            <div className="w-full py-3 bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-300/40 rounded-2xl text-[11px] font-black uppercase tracking-wider text-center flex items-center justify-center gap-1.5">
+                                                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                                                Pago en Revisión
+                                            </div>
+                                        ) : isAvailable ? (
                                             <button
-                                                onClick={() => handlePurchaseAddon(addonCode)}
-                                                disabled={isHiring}
-                                                className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                                                onClick={() => setCheckoutAddon(addon)}
+                                                className="w-full py-3 bg-slate-900 hover:bg-purple-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
                                             >
-                                                {isHiring ? (
-                                                    <>
-                                                        <Loader2 className="w-4 h-4 animate-spin" /> Contratando...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Plus className="w-4 h-4" /> Agregar al Plan
-                                                    </>
-                                                )}
+                                                <Plus className="w-4 h-4" /> Agregar al Plan
                                             </button>
                                         ) : (
                                             <div className="w-full py-2.5 bg-slate-100 text-slate-400 rounded-2xl text-[11px] font-black uppercase tracking-wider text-center flex items-center justify-center gap-1.5">
@@ -803,6 +815,20 @@ export default function PlanDashboardClient({
                 planName={allPlans.find(p => p.id === selectedPlanId)?.name || ''}
                 planPrice={allPlans.find(p => p.id === selectedPlanId)?.price || 0}
                 isRenewal={isRenewalModal}
+            />
+
+            <AddonCheckoutModal
+                isOpen={Boolean(checkoutAddon)}
+                onClose={() => setCheckoutAddon(null)}
+                addon={checkoutAddon}
+                subscriptionDates={{
+                    startDate,
+                    endDate
+                }}
+                onSuccess={async () => {
+                    await fetchAddonsData();
+                    window.location.reload();
+                }}
             />
 
         </div>

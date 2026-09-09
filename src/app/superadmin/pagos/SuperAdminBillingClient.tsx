@@ -66,6 +66,15 @@ export default function SuperAdminBillingClient({ initialPayments, plansMap }: S
                                         <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
                                         Pendiente de Aprobación
                                     </span>
+                                    {payment.itemType === 'ADDON' || payment.plan_id?.startsWith('ADDON:') ? (
+                                        <span className="bg-purple-500/10 text-purple-600 dark:text-purple-400 font-black text-[9px] px-3 py-1 rounded-lg uppercase tracking-widest border border-purple-500/20">
+                                            Módulo / Add-on
+                                        </span>
+                                    ) : (
+                                        <span className="bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-black text-[9px] px-3 py-1 rounded-lg uppercase tracking-widest border border-cyan-500/20">
+                                            Plan de Suscripción
+                                        </span>
+                                    )}
                                     <span className="text-slate-400 dark:text-slate-500 text-xs font-bold flex items-center gap-1">
                                         <Calendar size={12} />
                                         {new Date(payment.fecha_pago).toLocaleString()}
@@ -75,7 +84,7 @@ export default function SuperAdminBillingClient({ initialPayments, plansMap }: S
                                     {payment.Negocio.nombre}
                                 </h3>
                                 <p className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                                    Plan solicitado: <span className="text-slate-900 dark:text-slate-200">{plansMap[payment.plan_id] || payment.plan_id}</span>
+                                    Concepto: <span className="text-slate-900 dark:text-slate-200">{payment.itemName || plansMap[payment.plan_id] || payment.plan_id}</span>
                                 </p>
                             </div>
 

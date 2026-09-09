@@ -115,21 +115,61 @@ async function runCanonicalAddonsTest() {
             : (baseEntitlements.limits['MAX_BRANCHES'] ?? 1);
         console.log(`Límite base de MAX_BRANCHES: ${baseBranchLimit}`);
 
-        // ── 4. Compra de Add-on de Capacidad (ADDON_ECOMMERCE) ──
-        console.log('\n--- TEST 4: Contratación de ADDON_ECOMMERCE ---');
-        const subAddonCap = await addonService.purchaseAddon(testBusiness.id, 'ADDON_ECOMMERCE');
-        assert(subAddonCap.status === 'ACTIVE', 'ADDON_ECOMMERCE contratado con status ACTIVE');
+        // ── 4. Solicitud de Add-on de Capacidad (ADDON_ECOMMERCE) con Pago Previo ──
+        console.log('\n--- TEST 4: Solicitud de ADDON_ECOMMERCE con Pago Previo ---');
+        const purchaseCapResult = await addonService.purchaseAddon({
+            businessId: testBusiness.id,
+            addonCodeOrId: 'ADDON_ECOMMERCE',
+            requestedQuantity: 1,
+            metodoPago: 'TRANSFERENCIA',
+            referencia: 'TEST_REF_ECOMMERCE_123'
+        });
+
+        const subAddonCap = purchaseCapResult.subscriptionAddon;
+        assert(subAddonCap.status === 'PENDING', 'ADDON_ECOMMERCE contratado con status PENDING (esperando pago)');
         assert(subAddonCap.priceContracted === ecommerceAddon?.priceMonthly, `Precio contractual fijado server-side: $${subAddonCap.priceContracted}`);
+        assert(Boolean(purchaseCapResult.payment), 'Se generó registro de cobro en Payment');
+        assert(purchaseCapResult.payment.estado_pago === 'pending', 'El cobro en Payment está en estado pending');
+        assert(purchaseCapResult.proration.proratedAmount > 0, `Prorrateo calculado correctamente: $${purchaseCapResult.proration.proratedAmount}`);
 
-        // Verificar activación inmediata en EntitlementsService
+        // Verificación CRÍTICA: En estado PENDING, EntitlementsService NUNCA debe otorgar la capacidad
+        const entitlementsWhilePending = await EntitlementsService.resolve(testBusiness.id);
+        assert(entitlementsWhilePending.capabilities['ECOMMERCE'] !== true, 'REGLA CANÓNICA: ECOMMERCE NO está activo mientras el pago esté PENDING');
+
+        // Aprobación de pago por Superadmin
+        console.log('\n--- TEST 4.1: Aprobación de Pago en Superadmin ---');
+        const approvedCapContract = await addonService.activateAddonPayment(purchaseCapResult.payment.id, true, 'SUPERADMIN');
+        assert(approvedCapContract.status === 'ACTIVE', 'ADDON_ECOMMERCE pasa a status ACTIVE tras confirmación de pago');
+
+        // Verificación de activación tras pago confirmado
         const entitlementsAfterCap = await EntitlementsService.resolve(testBusiness.id);
-        assert(entitlementsAfterCap.capabilities['ECOMMERCE'] === true, 'ECOMMERCE ahora está activo en EntitlementsService');
+        assert(entitlementsAfterCap.capabilities['ECOMMERCE'] === true, 'ECOMMERCE ahora está plenamente ACTIVO tras aprobación del pago');
 
-        // ── 5. Compra de Add-on de Límite (ADDON_BRANCH_EXTRA) ──
-        console.log('\n--- TEST 5: Contratación de ADDON_BRANCH_EXTRA ---');
-        const subAddonLim = await addonService.purchaseAddon(testBusiness.id, 'ADDON_BRANCH_EXTRA', 2);
-        assert(subAddonLim.status === 'ACTIVE', 'ADDON_BRANCH_EXTRA contratado con status ACTIVE');
-        assert(subAddonLim.quantity === 2, 'Cantidad contratada: 2');
+        // ── 5. Solicitud de Add-on de Límite (ADDON_BRANCH_EXTRA) con Pago Previo ──
+        console.log('\n--- TEST 5: Solicitud de ADDON_BRANCH_EXTRA con Pago Previo ---');
+        const purchaseLimResult = await addonService.purchaseAddon({
+            businessId: testBusiness.id,
+            addonCodeOrId: 'ADDON_BRANCH_EXTRA',
+            requestedQuantity: 2,
+            metodoPago: 'DEUNA',
+            referencia: 'TEST_REF_BRANCH_999'
+        });
+
+        const subAddonLim = purchaseLimResult.subscriptionAddon;
+        assert(subAddonLim.status === 'PENDING', 'ADDON_BRANCH_EXTRA contratado con status PENDING');
+        assert(subAddonLim.quantity === 2, 'Cantidad solicitada: 2');
+
+        // Verificar que el límite NO cambia mientras esté PENDING
+        const entitlementsLimPending = await EntitlementsService.resolve(testBusiness.id);
+        const branchLimitPending = typeof entitlementsLimPending.limits.branches === 'number'
+            ? entitlementsLimPending.limits.branches
+            : (entitlementsLimPending.limits['MAX_BRANCHES'] ?? 0);
+        assert(branchLimitPending === baseBranchLimit, 'REGLA CANÓNICA: Límite MAX_BRANCHES NO incrementa mientras el pago esté PENDING');
+
+        // Aprobación de pago por Superadmin
+        console.log('\n--- TEST 5.1: Aprobación de Pago de Límite en Superadmin ---');
+        const approvedLimContract = await addonService.activateAddonPayment(purchaseLimResult.payment.id, true, 'SUPERADMIN');
+        assert(approvedLimContract.status === 'ACTIVE', 'ADDON_BRANCH_EXTRA pasa a status ACTIVE tras confirmación de pago');
 
         const entitlementsAfterLim = await EntitlementsService.resolve(testBusiness.id);
         const newBranchLimit = typeof entitlementsAfterLim.limits.branches === 'number'
@@ -175,9 +215,13 @@ async function runCanonicalAddonsTest() {
 
         // ── Limpieza del Negocio de Prueba ──
         console.log('\n--- Limpieza de datos de prueba ---');
+        await prisma.payment.deleteMany({
+            where: { negocio_id: testBusiness.id }
+        });
         await prisma.subscriptionAddonHistory.deleteMany({
             where: {
                 OR: [
+                    { businessId: testBusiness.id },
                     { subscriptionId: testSub.id },
                     { subscriptionAddonId: { in: [subAddonCap.id, subAddonLim.id] } }
                 ]

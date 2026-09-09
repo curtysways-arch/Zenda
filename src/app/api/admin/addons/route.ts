@@ -26,6 +26,7 @@ export async function GET(req: Request) {
       available: Boolean(item.available),
       ineligibilityReason: item.ineligibilityReason || undefined,
       isPurchased: Boolean(item.isPurchased),
+      isPendingPayment: Boolean(item.isPendingPayment),
       activeContract: item.activeContract || undefined,
       addon: item.addon // compatibilidad si la UI consulta item.addon
     }));

@@ -17,6 +17,25 @@ export async function POST(req: Request) {
         const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
         if (!payment) return NextResponse.json({ error: 'Pago no encontrado' }, { status: 404 });
 
+        // Detectar si el cobro corresponde a un Add-on en lugar de un Plan
+        const isAddonPayment = payment.plan_id.startsWith('ADDON:') || 
+                               Boolean(await prisma.addon.findUnique({ where: { id: payment.plan_id } }));
+
+        if (isAddonPayment) {
+            const { addonService } = await import('@/lib/services/addonService');
+            const result = await addonService.activateAddonPayment(
+                payment.id, 
+                approved, 
+                (session.user as any).role || 'SUPERADMIN'
+            );
+            return NextResponse.json({ 
+                success: true, 
+                status: approved ? 'approved' : 'rejected',
+                isAddon: true,
+                contract: result 
+            });
+        }
+
         if (!approved) {
             // Rechazar pago
             const updatedPayment = await prisma.payment.update({

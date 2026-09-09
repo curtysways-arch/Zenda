@@ -17,25 +17,31 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { addonCodeOrId, quantity } = body;
+    const { addonCodeOrId, quantity, metodoPago, referencia, comprobanteUrl } = body;
 
     if (!addonCodeOrId) {
       return NextResponse.json({ error: 'Se requiere addonCodeOrId' }, { status: 400 });
     }
 
-    const subscriptionAddon = await addonService.purchaseAddon(
+    const result = await addonService.purchaseAddon({
       businessId,
       addonCodeOrId,
-      quantity ? parseInt(quantity, 10) : 1
-    );
+      requestedQuantity: quantity ? parseInt(quantity, 10) : 1,
+      metodoPago: metodoPago || 'TRANSFERENCIA',
+      referencia,
+      comprobanteUrl,
+      performedBy: (session.user as any).role || 'ADMIN'
+    });
 
     return NextResponse.json({
       success: true,
-      message: 'Add-on contratado exitosamente',
-      subscriptionAddon
+      message: 'Solicitud de Add-on registrada exitosamente. Tu módulo se activará una vez verificado el pago.',
+      subscriptionAddon: result.subscriptionAddon,
+      payment: result.payment,
+      proration: result.proration
     });
   } catch (error: any) {
     console.error('[API_ADMIN_ADDONS_PURCHASE]', error);
-    return NextResponse.json({ error: error?.message || 'Error al contratar add-on' }, { status: 400 });
+    return NextResponse.json({ error: error?.message || 'Error al procesar solicitud de add-on' }, { status: 400 });
   }
 }
