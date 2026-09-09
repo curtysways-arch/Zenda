@@ -59,12 +59,19 @@ export async function PATCH(
     // Registrar en auditoría
     await prisma.subscriptionAddonHistory.create({
       data: {
-        id: crypto.randomUUID(),
+        businessId,
+        subscriptionId: subAddon.subscriptionId,
+        addonId: subAddon.addonId,
         subscriptionAddonId: updated.id,
-        action: 'UPDATE_QUANTITY',
-        priceAtChange: updated.priceContracted,
-        quantityAtChange: newQuantity,
-        notes: `Cantidad modificada de ${oldQty} a ${newQuantity}`
+        action: 'QUANTITY_CHANGED',
+        quantityBefore: oldQty,
+        quantityAfter: newQuantity,
+        priceBefore: subAddon.priceContracted,
+        priceAfter: updated.priceContracted,
+        statusBefore: subAddon.status,
+        statusAfter: updated.status,
+        performedBy: (session.user as any)?.email || 'ADMIN',
+        reason: `Cantidad modificada de ${oldQty} a ${newQuantity}`
       }
     });
 
