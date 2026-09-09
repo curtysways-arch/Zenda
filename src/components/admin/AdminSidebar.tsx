@@ -161,6 +161,7 @@ export default function AdminSidebar({
             courses: Boolean(effectiveCaps.COURSES ?? effectiveCaps.courses ?? caps.courses ?? isCanchas ?? true),
             loyalty: Boolean(effectiveCaps.LOYALTY ?? effectiveCaps.loyalty ?? caps.loyalty ?? isPinchos),
             inventory: Boolean((effectiveCaps.INVENTORY ?? effectiveCaps.inventory) ?? (hasEcommerce || caps.inventory)),
+            communications: Boolean((effectiveCaps.COMMUNICATION_CENTER ?? effectiveCaps.communications) ?? (caps.communication_center ?? caps.communications)),
             payments: Boolean(effectiveCaps.PAYMENTS ?? effectiveCaps.payments ?? !isServiceBiz)
           };
 
@@ -236,6 +237,11 @@ export default function AdminSidebar({
     // Marketing Capabilities (Universal)
     items.push({ name: 'Hero y Destacados', href: '/admin/hero-destacados', icon: Sparkles, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     items.push({ name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    if (capabilities.communications) {
+      items.push({ name: 'Comunicaciones', href: '/admin/comunicacion', icon: MessageSquare, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    } else {
+      items.push({ name: 'Comunicaciones', href: '/admin/plan', icon: MessageSquare, section: 'MARKETING', isLocked: true, lockedBadge: 'Pro', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+    }
     if (capabilities.courses) {
       items.push({ name: 'Cursos & Academia', href: '/admin/cursos', icon: GraduationCap, section: 'MARKETING' });
     } else if (capabilities.courts) {
@@ -313,6 +319,7 @@ export default function AdminSidebar({
           if (cleanCode === 'clientes' || cleanCode === 'customers') return item.href === '/admin/clientes';
           if (cleanCode === 'usuarios') return item.href === '/admin/usuarios';
           if (cleanCode === 'reportes' || cleanCode === 'reports') return item.href === '/admin/reportes';
+          if (cleanCode === 'comunicacion' || cleanCode === 'comunicaciones' || cleanCode === 'communications') return item.href === '/admin/comunicacion';
           if (cleanCode === 'config' || cleanCode === 'settings') return item.href.startsWith('/admin/config') || item.href === '/admin/sucursales' || item.href === '/admin/metodos-pago' || item.href === '/admin/perfil';
           return item.href.includes(cleanCode);
         });
