@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useConfirm } from '@/components/admin/ConfirmContext';
 import { getFcmToken } from '@/lib/firebase';
+import AddonCheckoutModal from '@/components/admin/AddonCheckoutModal';
 
 // ─── Selector de Link (igual al de páginas/contenido) ─────────────────────────
 interface LinkOption {
@@ -423,14 +424,46 @@ export default function ComunicacionAdminPage() {
 
     const [planFeatures, setPlanFeatures] = useState<any>(null);
     const [loadingFeatures, setLoadingFeatures] = useState(true);
+    const [commAddon, setCommAddon] = useState<any>(null);
+    const [subscriptionDates, setSubscriptionDates] = useState<any>(null);
+    const [isPendingApproval, setIsPendingApproval] = useState(false);
+    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
     useEffect(() => {
         const fetchFeatures = async () => {
             try {
-                const res = await fetch('/api/features');
-                if (res.ok) {
-                    const data = await res.json();
+                const [resFeat, resAddons] = await Promise.all([
+                    fetch('/api/features'),
+                    fetch('/api/admin/addons')
+                ]);
+                if (resFeat.ok) {
+                    const data = await resFeat.json();
                     setPlanFeatures(data);
+                }
+                if (resAddons.ok) {
+                    const addData = await resAddons.json();
+                    if (addData.success) {
+                        const found = (addData.availableAddons || []).find((a: any) => 
+                            a.code === 'ADDON_COMMUNICATION_CENTER' || 
+                            a.targetKey === 'COMMUNICATION_CENTER'
+                        );
+                        if (found) {
+                            setCommAddon(found.addon || found);
+                            if (found.isPendingPayment) setIsPendingApproval(true);
+                        }
+                        const pendingSub = (addData.activeSubscriptions || []).find((s: any) => 
+                            s.addon?.code === 'ADDON_COMMUNICATION_CENTER' || s.addonCode === 'ADDON_COMMUNICATION_CENTER'
+                        );
+                        if (pendingSub && pendingSub.status === 'PENDING') {
+                            setIsPendingApproval(true);
+                        }
+                        if (addData.pricingDetails) {
+                            setSubscriptionDates({
+                                startDate: addData.pricingDetails.startDate,
+                                endDate: addData.pricingDetails.endDate
+                            });
+                        }
+                    }
                 }
             } catch (err) {
                 console.error("Error fetching features:", err);
@@ -456,6 +489,7 @@ export default function ComunicacionAdminPage() {
     }
 
     if (planFeatures && planFeatures.communications_module === false) {
+        const addonPrice = commAddon ? Number(commAddon.priceMonthly || 12).toFixed(2) : '12.00';
         return (
             <div className="max-w-4xl mx-auto py-12 px-6">
                 <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-[2.5rem] p-10 md:p-16 text-white shadow-2xl relative overflow-hidden border border-indigo-500/20 text-center space-y-8">
@@ -464,7 +498,7 @@ export default function ComunicacionAdminPage() {
                     <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-48 -mt-48 pointer-events-none" />
 
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full text-xs font-black uppercase tracking-widest shadow-inner">
-                        <Lock size={14} className="text-indigo-400" /> Módulo de Plan Superior
+                        <Lock size={14} className="text-indigo-400" /> Módulo de Plan Superior / Add-on
                     </div>
 
                     <div className="space-y-4 max-w-2xl mx-auto">
@@ -497,13 +531,30 @@ export default function ComunicacionAdminPage() {
                         </div>
                     </div>
 
-                    {/* CTA */}
-                    <div className="pt-6 flex flex-col sm:flex-row justify-center gap-4">
+                    {/* CTA con Focus a la Integración */}
+                    <div className="pt-6 flex flex-col sm:flex-row justify-center items-center gap-4">
+                        {isPendingApproval ? (
+                            <div className="px-6 py-4 bg-amber-500/20 border border-amber-400/40 rounded-2xl flex items-center gap-3 text-amber-300">
+                                <div className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+                                <div className="text-left">
+                                    <span className="block text-xs font-black uppercase tracking-wider">Pago en Revisión</span>
+                                    <span className="block text-[11px] text-amber-200/80">Se activará tras confirmar tu transferencia.</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => setIsCheckoutOpen(true)}
+                                className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-emerald-900/40 flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+                            >
+                                <Zap size={16} />
+                                Activar Add-on (${addonPrice}/mes)
+                            </button>
+                        )}
                         <Link
                             href="/admin/plan"
                             className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:brightness-110 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-indigo-900/50 flex items-center justify-center gap-2 active:scale-95"
                         >
-                            Actualizar Plan Ahora
+                            Ver Planes Completos
                             <ArrowRight size={16} />
                         </Link>
                         <a
@@ -515,6 +566,24 @@ export default function ComunicacionAdminPage() {
                             Hablar con Asesor
                         </a>
                     </div>
+
+                    <AddonCheckoutModal
+                        isOpen={isCheckoutOpen}
+                        onClose={() => setIsCheckoutOpen(false)}
+                        addon={commAddon || {
+                            code: 'ADDON_COMMUNICATION_CENTER',
+                            name: 'Centro de Comunicaciones Masivas',
+                            description: 'Campañas de difusión masiva y segmentada por WhatsApp y notificaciones Push.',
+                            priceMonthly: 12.00,
+                            type: 'CAPABILITY',
+                            targetKey: 'COMMUNICATION_CENTER'
+                        }}
+                        subscriptionDates={subscriptionDates}
+                        onSuccess={async () => {
+                            setIsCheckoutOpen(false);
+                            setIsPendingApproval(true);
+                        }}
+                    />
 
                 </div>
             </div>

@@ -215,7 +215,7 @@ export default function AdminSidebar({
     if (capabilities.kitchen) {
       items.push({ name: 'Comandas', href: '/admin/cocina', icon: Utensils, section: 'GESTIÓN OPERATIVA' });
     } else if (isRestaurantBiz && capabilities.orders) {
-      items.push({ name: 'Comandas', href: '/admin/plan', icon: Utensils, section: 'GESTIÓN OPERATIVA', isLocked: true, lockedBadge: 'Pro' });
+      items.push({ name: 'Comandas', href: '/admin/cocina', icon: Utensils, section: 'GESTIÓN OPERATIVA', isLocked: true, lockedBadge: 'Pro' });
     }
     if (capabilities.appointments) {
       items.push({ 
@@ -246,17 +246,17 @@ export default function AdminSidebar({
     if (capabilities.communications) {
       items.push({ name: 'Comunicaciones', href: '/admin/comunicacion', icon: MessageSquare, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     } else {
-      items.push({ name: 'Comunicaciones', href: '/admin/plan', icon: MessageSquare, section: 'MARKETING', isLocked: true, lockedBadge: 'Pro', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
+      items.push({ name: 'Comunicaciones', href: '/admin/comunicacion', icon: MessageSquare, section: 'MARKETING', isLocked: true, lockedBadge: 'Pro', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     }
     if (capabilities.courses) {
       items.push({ name: 'Cursos & Academia', href: '/admin/cursos', icon: GraduationCap, section: 'MARKETING' });
     } else if (capabilities.courts) {
-      items.push({ name: 'Cursos & Academia', href: '/admin/plan', icon: GraduationCap, section: 'MARKETING', isLocked: true, lockedBadge: 'Academia' });
+      items.push({ name: 'Cursos & Academia', href: '/admin/cursos', icon: GraduationCap, section: 'MARKETING', isLocked: true, lockedBadge: 'Academia' });
     }
     if (capabilities.loyalty) {
       items.push({ name: 'Club de Beneficios', href: '/admin/misiones', icon: Trophy, section: 'MARKETING' });
     } else {
-      items.push({ name: 'Club de Beneficios', href: '/admin/plan', icon: Trophy, section: 'MARKETING', isLocked: true, lockedBadge: 'Pro' });
+      items.push({ name: 'Club de Beneficios', href: '/admin/misiones', icon: Trophy, section: 'MARKETING', isLocked: true, lockedBadge: 'Pro' });
     }
     items.push({ name: 'Páginas', href: '/admin/paginas', icon: Layout, section: 'MARKETING' });
 
@@ -278,7 +278,7 @@ export default function AdminSidebar({
     if (capabilities.delivery) {
       items.push({ name: 'Repartidores', href: '/admin/logistica', icon: Truck, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     } else if (capabilities.orders) {
-      items.push({ name: 'Repartidores', href: '/admin/plan', icon: Truck, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'], isLocked: true, lockedBadge: 'Crecimiento' });
+      items.push({ name: 'Repartidores', href: '/admin/logistica', icon: Truck, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'], isLocked: true, lockedBadge: 'Crecimiento' });
     }
     items.push({ name: 'Reportes', href: '/admin/reportes', icon: BarChart3, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
 
