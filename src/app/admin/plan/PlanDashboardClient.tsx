@@ -395,7 +395,7 @@ export default function PlanDashboardClient({
                                 <span className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Plan Base</span>
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-xl font-black text-slate-900">
-                                        ${addonsData.pricingDetails.basePlanPrice?.toFixed(2)}
+                                        ${Number(addonsData.pricingDetails.basePlanPrice ?? 0).toFixed(2)}
                                     </span>
                                     <span className="text-xs text-slate-400 font-bold">/m</span>
                                 </div>
@@ -412,7 +412,7 @@ export default function PlanDashboardClient({
                                 <span className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Add-ons ({addonsData.pricingDetails.addons?.length || 0})</span>
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-xl font-black text-slate-900">
-                                        +${addonsData.pricingDetails.addonsTotal?.toFixed(2)}
+                                        +${Number(addonsData.pricingDetails.addonsTotal ?? 0).toFixed(2)}
                                     </span>
                                     <span className="text-xs text-slate-400 font-bold">/m</span>
                                 </div>
@@ -426,7 +426,7 @@ export default function PlanDashboardClient({
                                 </span>
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-2xl font-black text-slate-900">
-                                        ${addonsData.pricingDetails.effectiveTotalMonthly?.toFixed(2)}
+                                        ${Number(addonsData.pricingDetails.effectiveTotalMonthly ?? 0).toFixed(2)}
                                     </span>
                                     <span className="text-xs text-slate-400 font-bold">/m</span>
                                 </div>
@@ -456,6 +456,9 @@ export default function PlanDashboardClient({
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {addonsData.activeSubscriptions.map((sa: any) => {
                                 const isPendingCancel = sa.cancelAtPeriodEnd;
+                                const unitPrice = Number(sa.priceContracted ?? sa.addon?.priceMonthly ?? 0);
+                                const qty = Number(sa.quantity || 1);
+                                const totalPrice = (unitPrice * qty).toFixed(2);
                                 return (
                                     <div
                                         key={sa.id}
@@ -475,7 +478,7 @@ export default function PlanDashboardClient({
                                                     {isPendingCancel ? 'Cancela al corte' : 'Activo'}
                                                 </span>
                                                 <span className="font-mono font-black text-xs text-slate-900">
-                                                    ${(sa.priceContracted * (sa.quantity || 1)).toFixed(2)}/m
+                                                    ${totalPrice}/m
                                                 </span>
                                             </div>
 
@@ -483,9 +486,9 @@ export default function PlanDashboardClient({
                                                 <h5 className="font-black text-sm text-slate-900 leading-snug">
                                                     {sa.addon?.name || sa.addonCode}
                                                 </h5>
-                                                {sa.quantity > 1 && (
+                                                {qty > 1 && (
                                                     <span className="text-[11px] font-bold text-slate-500">
-                                                        Cantidad: {sa.quantity} × ${sa.priceContracted.toFixed(2)}
+                                                        Cantidad: {qty} × ${unitPrice.toFixed(2)}
                                                     </span>
                                                 )}
                                             </div>
@@ -540,13 +543,23 @@ export default function PlanDashboardClient({
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {addonsData.availableAddons.map((addon: any) => {
-                            const isHiring = actionAddonCode === addon.code;
-                            const isAvailable = addon.available;
+                        {addonsData.availableAddons.map((item: any) => {
+                            const addon = item.addon || item;
+                            const addonCode = addon.code || item.code;
+                            const addonId = addon.id || item.id || addonCode;
+                            const isHiring = actionAddonCode === addonCode;
+                            const isAvailable = item.available ?? addon.available ?? true;
+                            const priceMonthly = Number(addon.priceMonthly ?? item.priceMonthly ?? 0);
+                            const addonType = addon.type || item.type;
+                            const addonName = addon.name || item.name;
+                            const addonDesc = addon.description || item.description;
+                            const targetKey = addon.targetKey || item.targetKey;
+                            const amount = addon.amount ?? item.amount;
+                            const ineligibilityReason = item.ineligibilityReason || addon.ineligibilityReason;
 
                             return (
                                 <div
-                                    key={addon.id}
+                                    key={addonId}
                                     className={`bg-white rounded-3xl p-6 border-2 transition-all flex flex-col justify-between ${
                                         isAvailable
                                             ? 'border-slate-200/80 hover:border-amber-400 hover:shadow-lg'
@@ -556,24 +569,24 @@ export default function PlanDashboardClient({
                                     <div className="space-y-3">
                                         <div className="flex items-center justify-between gap-2">
                                             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                                addon.type === 'CAPABILITY'
+                                                addonType === 'CAPABILITY'
                                                     ? 'bg-blue-100 text-blue-800 border border-blue-200'
                                                     : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                                             }`}>
-                                                {addon.type === 'CAPABILITY' ? '⚡ Módulo de Capacidad' : '📈 Extensión de Límite'}
+                                                {addonType === 'CAPABILITY' ? '⚡ Módulo de Capacidad' : '📈 Extensión de Límite'}
                                             </span>
 
                                             <span className="font-mono font-black text-sm text-slate-900">
-                                                ${addon.priceMonthly.toFixed(2)}/mes
+                                                ${priceMonthly.toFixed(2)}/mes
                                             </span>
                                         </div>
 
                                         <div>
                                             <h4 className="font-black text-base text-slate-900 leading-tight">
-                                                {addon.name}
+                                                {addonName}
                                             </h4>
                                             <p className="text-xs text-slate-500 font-medium leading-relaxed mt-1">
-                                                {addon.description || 'Potencia tu negocio con este add-on.'}
+                                                {addonDesc || 'Potencia tu negocio con este add-on.'}
                                             </p>
                                         </div>
 
@@ -581,13 +594,13 @@ export default function PlanDashboardClient({
                                             <div className="flex justify-between text-slate-600 font-semibold">
                                                 <span>Afecta:</span>
                                                 <span className="font-mono font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
-                                                    {addon.targetKey}
+                                                    {targetKey}
                                                 </span>
                                             </div>
-                                            {addon.type === 'LIMIT' && (
+                                            {addonType === 'LIMIT' && (
                                                 <div className="flex justify-between text-slate-600 font-semibold">
                                                     <span>Extensión:</span>
-                                                    <span className="font-black text-emerald-600">+{addon.amount} al límite</span>
+                                                    <span className="font-black text-emerald-600">+{amount} al límite</span>
                                                 </div>
                                             )}
                                         </div>
@@ -596,7 +609,7 @@ export default function PlanDashboardClient({
                                     <div className="pt-5 mt-4 border-t border-slate-100">
                                         {isAvailable ? (
                                             <button
-                                                onClick={() => handlePurchaseAddon(addon.code)}
+                                                onClick={() => handlePurchaseAddon(addonCode)}
                                                 disabled={isHiring}
                                                 className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                                             >
@@ -613,7 +626,7 @@ export default function PlanDashboardClient({
                                         ) : (
                                             <div className="w-full py-2.5 bg-slate-100 text-slate-400 rounded-2xl text-[11px] font-black uppercase tracking-wider text-center flex items-center justify-center gap-1.5">
                                                 <Check size={14} className="text-emerald-500" />
-                                                {addon.ineligibilityReason || 'Ya Activo en tu Plan'}
+                                                {ineligibilityReason || 'Ya Activo en tu Plan'}
                                             </div>
                                         )}
                                     </div>
@@ -654,20 +667,20 @@ export default function PlanDashboardClient({
                 {allPlans.map((plan) => {
                     const isCurrent = plan.id === currentPlanId;
                     
-                    const listMonthlyPrice = plan.price || 0;
+                    const listMonthlyPrice = Number(plan.price || 0);
                     const listAnnualPrice = (listMonthlyPrice * 12 * (1 - annualDiscount)) / 12;
                     const displayListPrice = billingPeriod === 'monthly' ? listMonthlyPrice : listAnnualPrice;
                     const totalListAnnual = listMonthlyPrice * 12 * (1 - annualDiscount);
 
-                    const hasLockedPrice = isCurrent && lockedPrice !== null && lockedPrice !== undefined && lockedPrice < plan.price;
+                    const hasLockedPrice = Boolean(isCurrent && lockedPrice !== null && lockedPrice !== undefined && Number(lockedPrice) < listMonthlyPrice);
                     const displayLockedPrice = hasLockedPrice 
-                        ? (billingPeriod === 'monthly' ? lockedPrice : (lockedPrice * 12 * (1 - annualDiscount)) / 12)
+                        ? (billingPeriod === 'monthly' ? Number(lockedPrice) : (Number(lockedPrice) * 12 * (1 - annualDiscount)) / 12)
                         : null;
-                    const totalLockedAnnual = hasLockedPrice ? lockedPrice * 12 * (1 - annualDiscount) : null;
+                    const totalLockedAnnual = hasLockedPrice ? Number(lockedPrice) * 12 * (1 - annualDiscount) : null;
 
                     const currentPlan = allPlans.find(p => p.id === currentPlanId);
-                    const currentPrice = currentPlan?.price || 0;
-                    const isSuperior = plan.price > currentPrice;
+                    const currentPrice = Number(currentPlan?.price || 0);
+                    const isSuperior = listMonthlyPrice > currentPrice;
 
                     return (
                          <div
@@ -703,15 +716,15 @@ export default function PlanDashboardClient({
                                     {hasLockedPrice && displayLockedPrice !== null ? (
                                         <div className="flex flex-col">
                                             <div className="flex items-baseline gap-2">
-                                                <span className="text-slate-400 font-black line-through text-lg">${displayListPrice.toFixed(2)}</span>
-                                                <span className="text-4xl font-black text-slate-900">${displayLockedPrice.toFixed(2)}</span>
+                                                <span className="text-slate-400 font-black line-through text-lg">${Number(displayListPrice ?? 0).toFixed(2)}</span>
+                                                <span className="text-4xl font-black text-slate-900">${Number(displayLockedPrice ?? 0).toFixed(2)}</span>
                                                 <span className="text-slate-400 font-bold text-sm">/mes</span>
                                             </div>
                                             <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mt-1">Tarifa Especial Congelada</span>
                                         </div>
                                     ) : (
                                         <div className="flex items-baseline gap-1">
-                                            <span className="text-4xl font-black text-slate-900">${displayListPrice.toFixed(2)}</span>
+                                            <span className="text-4xl font-black text-slate-900">${Number(displayListPrice ?? 0).toFixed(2)}</span>
                                             <span className="text-slate-400 font-bold">/mes</span>
                                         </div>
                                     )}
@@ -720,7 +733,7 @@ export default function PlanDashboardClient({
                                     <div className="mt-2 flex flex-col items-start">
                                         <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--primary-color)' }}>Facturado anualmente</span>
                                         <span className="text-xs font-bold text-slate-400 italic">
-                                            ${(hasLockedPrice && totalLockedAnnual !== null ? totalLockedAnnual : totalListAnnual).toFixed(2)} al año
+                                            ${Number(hasLockedPrice && totalLockedAnnual !== null ? totalLockedAnnual : totalListAnnual ?? 0).toFixed(2)} al año
                                         </span>
                                     </div>
                                 )}

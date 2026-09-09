@@ -20,7 +20,15 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Sin negocio asociado' }, { status: 400 });
     }
 
-    const availableAddons = await addonService.getAddonsForBusiness(businessId);
+    const availabilityList = await addonService.getAddonsForBusiness(businessId);
+    const availableAddons = (availabilityList || []).map((item) => ({
+      ...(item.addon || {}),
+      available: Boolean(item.available),
+      ineligibilityReason: item.ineligibilityReason || undefined,
+      isPurchased: Boolean(item.isPurchased),
+      activeContract: item.activeContract || undefined,
+      addon: item.addon // compatibilidad si la UI consulta item.addon
+    }));
 
     // Obtener detalles financieros consolidados y contratos de add-ons
     const subscription = await prisma.suscripcion.findUnique({
