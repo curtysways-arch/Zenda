@@ -100,6 +100,7 @@ export default function PlanDashboardClient({
             if (res.ok) {
                 alert(resJson.message || 'Add-on contratado correctamente');
                 await fetchAddonsData();
+                window.location.reload();
             } else {
                 alert(resJson.error || 'Error al contratar Add-on');
             }
@@ -121,6 +122,7 @@ export default function PlanDashboardClient({
             if (res.ok) {
                 alert(resJson.message || 'Cancelación programada para el final del ciclo');
                 await fetchAddonsData();
+                window.location.reload();
             } else {
                 alert(resJson.error || 'Error al solicitar cancelación');
             }

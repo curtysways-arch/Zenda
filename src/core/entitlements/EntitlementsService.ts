@@ -361,6 +361,21 @@ export class EntitlementsService {
           capabilities[addon.targetKey] = true;
           capabilities[addon.targetKey.toLowerCase()] = true;
           capabilities[addon.targetKey.toUpperCase()] = true;
+
+          // Si el add-on activa E-commerce o venta online, desbloquear capabilities de órdenes, productos y catálogo
+          if (addon.targetKey === 'ECOMMERCE') {
+            capabilities.ECOMMERCE = true;
+            capabilities.ecommerce = true;
+            capabilities.ORDERS = true;
+            capabilities.orders = true;
+            capabilities.PRODUCTS = true;
+            capabilities.products = true;
+            capabilities.catalog = true;
+            capabilities.POS = true;
+            capabilities.pos = true;
+            capabilities.INVENTORY = true;
+            capabilities.inventory = true;
+          }
         } else if (addon.type === 'LIMIT' && addon.targetKey) {
           const qty = contract.quantity || 1;
           const bonus = (addon.amount || 0) * qty;

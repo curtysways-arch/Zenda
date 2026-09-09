@@ -142,11 +142,12 @@ export default function AdminSidebar({
             nameUpper.includes('BARBERIA')
           );
           const isStore = !isRestaurant && !isPinchos && !isCanchas && !isServiceBiz;
+          const hasEcommerce = Boolean(effectiveCaps.ECOMMERCE ?? effectiveCaps.ecommerce ?? caps.ecommerce ?? caps.orders);
 
           // Entitlements efectivos estrictos por vertical
           const normalizedCaps: Record<string, boolean> = {
-            orders: Boolean((effectiveCaps.ORDERS ?? effectiveCaps.orders) ?? (isServiceBiz ? caps.orders === true : (isRestaurant || isPinchos || isStore))),
-            catalog: Boolean((effectiveCaps.PRODUCTS ?? effectiveCaps.products) ?? (isServiceBiz ? caps.catalog === true : (isRestaurant || isPinchos || isStore))),
+            orders: Boolean((effectiveCaps.ORDERS ?? effectiveCaps.orders) ?? (hasEcommerce || (isServiceBiz ? caps.orders === true : (isRestaurant || isPinchos || isStore)))),
+            catalog: Boolean((effectiveCaps.PRODUCTS ?? effectiveCaps.products) ?? (hasEcommerce || (isServiceBiz ? caps.catalog === true : (isRestaurant || isPinchos || isStore)))),
             tables: Boolean((effectiveCaps.TABLES ?? effectiveCaps.tables) || isRestaurant || caps.tables),
             kitchen: Boolean((effectiveCaps.KITCHEN ?? effectiveCaps.kitchen) || isRestaurant || isPinchos || caps.kitchen),
             delivery: Boolean((effectiveCaps.DELIVERY ?? effectiveCaps.delivery) ?? (isServiceBiz ? caps.delivery === true : (isRestaurant || isPinchos || isStore))),
@@ -157,7 +158,7 @@ export default function AdminSidebar({
             promotions: true,
             courses: Boolean(effectiveCaps.COURSES ?? effectiveCaps.courses ?? caps.courses ?? isCanchas ?? true),
             loyalty: Boolean(effectiveCaps.LOYALTY ?? effectiveCaps.loyalty ?? caps.loyalty ?? isPinchos),
-            inventory: Boolean(effectiveCaps.INVENTORY ?? effectiveCaps.inventory ?? caps.inventory),
+            inventory: Boolean((effectiveCaps.INVENTORY ?? effectiveCaps.inventory) ?? (hasEcommerce || caps.inventory)),
             payments: Boolean(effectiveCaps.PAYMENTS ?? effectiveCaps.payments ?? !isServiceBiz)
           };
 
