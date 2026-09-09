@@ -302,10 +302,13 @@ export default function AdminSidebar({
           if (cleanCode === 'despacho' || cleanCode === 'dispatch') return item.href === '/admin/despacho';
           if (cleanCode === 'productos' || cleanCode === 'products') return item.href === '/admin/productos' || item.href === '/admin/categorias';
           if (cleanCode === 'inventario' || cleanCode === 'inventory') return item.href === '/admin/inventario';
-          if (cleanCode === 'citas' || cleanCode === 'appointments' || cleanCode === 'reservas') return item.href === '/admin/citas' || item.href === '/admin/servicios';
-          if (cleanCode === 'canchas' || cleanCode === 'courts') return item.href === '/admin/canchas' || item.href === '/admin/bloqueos';
+          if (cleanCode === 'citas' || cleanCode === 'appointments' || cleanCode === 'reservas') return item.href === '/admin/citas';
+          if (cleanCode === 'servicios' || cleanCode === 'services') return item.href === '/admin/servicios';
+          if (cleanCode === 'staff' || cleanCode === 'especialistas') return item.href === '/admin/staff' || item.href === '/admin/usuarios';
+          if (cleanCode === 'canchas' || cleanCode === 'courts') return item.href === '/admin/canchas';
+          if (cleanCode === 'bloqueos') return item.href === '/admin/bloqueos';
           if (cleanCode === 'clientes' || cleanCode === 'customers') return item.href === '/admin/clientes';
-          if (cleanCode === 'usuarios' || cleanCode === 'staff') return item.href === '/admin/usuarios';
+          if (cleanCode === 'usuarios') return item.href === '/admin/usuarios';
           if (cleanCode === 'reportes' || cleanCode === 'reports') return item.href === '/admin/reportes';
           if (cleanCode === 'config' || cleanCode === 'settings') return item.href.startsWith('/admin/config') || item.href === '/admin/sucursales' || item.href === '/admin/metodos-pago' || item.href === '/admin/perfil';
           return item.href.includes(cleanCode);

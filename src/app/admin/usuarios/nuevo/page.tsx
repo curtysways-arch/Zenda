@@ -44,90 +44,147 @@ interface BranchOption {
     isMain?: boolean;
 }
 
-const SYSTEM_MODULES = [
+interface SystemModuleDef {
+    id: string;
+    label: string;
+    description: string;
+    icon: any;
+    color: string;
+    industries: ('restaurant' | 'spa' | 'canchas' | 'retail')[];
+}
+
+const ALL_SYSTEM_MODULES: SystemModuleDef[] = [
+    // Restaurante / Gastronomía
     {
         id: "cocina",
         label: "Cocina / Comandas (KDS)",
         description: "Pantalla táctil de comandas en vivo y pedidos de cocina en tiempo real.",
         icon: Utensils,
-        color: "text-amber-600 bg-amber-50 border-amber-200"
+        color: "text-amber-600 bg-amber-50 border-amber-200",
+        industries: ['restaurant']
     },
     {
         id: "mesas",
         label: "Mesas & Salón",
         description: "Control de mesas, salón, comandas por mesa y estado de atención.",
         icon: Layout,
-        color: "text-emerald-600 bg-emerald-50 border-emerald-200"
-    },
-    {
-        id: "pedidos",
-        label: "Pedidos Online & Delivery",
-        description: "Recepción de pedidos desde la web/app y control de envíos.",
-        icon: Bike,
-        color: "text-blue-600 bg-blue-50 border-blue-200"
-    },
-    {
-        id: "ventas",
-        label: "Punto de Venta (POS)",
-        description: "Venta directa en mostrador y facturación rápida.",
-        icon: ShoppingBag,
-        color: "text-indigo-600 bg-indigo-50 border-indigo-200"
-    },
-    {
-        id: "caja",
-        label: "Caja & Finanzas",
-        description: "Apertura y cierre de caja, registro de turnos y arqueo de dinero.",
-        icon: Wallet,
-        color: "text-teal-600 bg-teal-50 border-teal-200"
+        color: "text-emerald-600 bg-emerald-50 border-emerald-200",
+        industries: ['restaurant']
     },
     {
         id: "despacho",
         label: "Órdenes & Despacho",
         description: "Seguimiento y flujo de entrega de pedidos preparados.",
         icon: ClipboardList,
-        color: "text-violet-600 bg-violet-50 border-violet-200"
+        color: "text-violet-600 bg-violet-50 border-violet-200",
+        industries: ['restaurant']
     },
-    {
-        id: "productos",
-        label: "Productos & Catálogo",
-        description: "Gestión de platos, categorías, precios y modificadores.",
-        icon: Package,
-        color: "text-rose-600 bg-rose-50 border-rose-200"
-    },
-    {
-        id: "inventario",
-        label: "Inventario & Stock",
-        description: "Control de existencias e insumos por sucursal.",
-        icon: Layers,
-        color: "text-cyan-600 bg-cyan-50 border-cyan-200"
-    },
+    // Spa / Belleza / Salud / Servicios
     {
         id: "citas",
         label: "Agenda / Citas / Reservas",
-        description: "Calendario de reservas y turnos de atención al cliente.",
+        description: "Calendario de reservas, citas y turnos de atención al cliente.",
         icon: Calendar,
-        color: "text-sky-600 bg-sky-50 border-sky-200"
+        color: "text-sky-600 bg-sky-50 border-sky-200",
+        industries: ['spa', 'canchas']
+    },
+    {
+        id: "servicios",
+        label: "Servicios & Tratamientos",
+        description: "Catálogo de servicios, tiempos de sesión, precios y protocolos.",
+        icon: Scissors,
+        color: "text-pink-600 bg-pink-50 border-pink-200",
+        industries: ['spa']
+    },
+    {
+        id: "staff",
+        label: "Especialistas & Profesionales",
+        description: "Horarios, asignación de cabinas/sillones y ficha de staff.",
+        icon: UsersIcon,
+        color: "text-indigo-600 bg-indigo-50 border-indigo-200",
+        industries: ['spa']
+    },
+    // Canchas deportivas
+    {
+        id: "canchas",
+        label: "Mis Canchas & Turnos",
+        description: "Disponibilidad horaria, estado de canchas y grilla de alquiler.",
+        icon: Layers,
+        color: "text-emerald-600 bg-emerald-50 border-emerald-200",
+        industries: ['canchas']
+    },
+    {
+        id: "bloqueos",
+        label: "Bloqueos & Mantenimiento",
+        description: "Bloqueo preventivo de canchas o áreas fuera de servicio.",
+        icon: Settings,
+        color: "text-rose-600 bg-rose-50 border-rose-200",
+        industries: ['canchas']
+    },
+    // Universales
+    {
+        id: "ventas",
+        label: "Punto de Venta / Recepción (POS)",
+        description: "Cobro rápido de servicios, productos y emisión de comprobantes.",
+        icon: ShoppingBag,
+        color: "text-indigo-600 bg-indigo-50 border-indigo-200",
+        industries: ['restaurant', 'spa', 'canchas', 'retail']
+    },
+    {
+        id: "caja",
+        label: "Caja & Finanzas",
+        description: "Apertura y cierre de caja, registro de turnos y arqueo de dinero.",
+        icon: Wallet,
+        color: "text-teal-600 bg-teal-50 border-teal-200",
+        industries: ['restaurant', 'spa', 'canchas', 'retail']
+    },
+    {
+        id: "pedidos",
+        label: "Pedidos Online & Envíos",
+        description: "Recepción de pedidos desde la web/app y control de envíos.",
+        icon: Bike,
+        color: "text-blue-600 bg-blue-50 border-blue-200",
+        industries: ['restaurant', 'retail', 'spa']
+    },
+    {
+        id: "productos",
+        label: "Productos & Venta Retail",
+        description: "Cremas, cosméticos, bebidas o productos físicos en venta.",
+        icon: Package,
+        color: "text-rose-600 bg-rose-50 border-rose-200",
+        industries: ['restaurant', 'spa', 'retail', 'canchas']
+    },
+    {
+        id: "inventario",
+        label: "Inventario & Insumos",
+        description: "Control de existencias e insumos utilizados.",
+        icon: Layers,
+        color: "text-cyan-600 bg-cyan-50 border-cyan-200",
+        industries: ['restaurant', 'spa', 'retail']
     },
     {
         id: "clientes",
-        label: "Clientes & CRM",
-        description: "Historial de clientes, contacto y fidelización.",
+        label: "Clientes & Ficha / Historial",
+        description: "Historial de citas, consumos y fidelización de clientes.",
         icon: UsersIcon,
-        color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-200"
+        color: "text-fuchsia-600 bg-fuchsia-50 border-fuchsia-200",
+        industries: ['restaurant', 'spa', 'canchas', 'retail']
     },
     {
         id: "reportes",
         label: "Reportes & Métricas",
-        description: "Análisis de ventas, métricas operativas y estadísticas.",
+        description: "Análisis de ingresos, métricas operativas y estadísticas.",
         icon: BarChart3,
-        color: "text-slate-600 bg-slate-50 border-slate-200"
+        color: "text-slate-600 bg-slate-50 border-slate-200",
+        industries: ['restaurant', 'spa', 'canchas', 'retail']
     },
     {
         id: "config",
         label: "Configuración del Negocio",
-        description: "Ajustes de sucursales, métodos de pago y datos del negocio.",
+        description: "Ajustes de sucursales, métodos de pago y datos de la empresa.",
         icon: Settings,
-        color: "text-slate-700 bg-slate-100 border-slate-300"
+        color: "text-slate-700 bg-slate-100 border-slate-300",
+        industries: ['restaurant', 'spa', 'canchas', 'retail']
     }
 ];
 
@@ -145,6 +202,7 @@ function UsuarioFormContent() {
     const [fetching, setFetching] = useState(isEdit);
     const [availableRoles, setAvailableRoles] = useState<any[]>([]);
     const [availableBranches, setAvailableBranches] = useState<BranchOption[]>([]);
+    const [industry, setIndustry] = useState<'restaurant' | 'spa' | 'canchas' | 'retail'>('spa');
 
     const [formData, setFormData] = useState({
         nombre: nameParam || "",
@@ -158,9 +216,10 @@ function UsuarioFormContent() {
     useEffect(() => {
         const loadInitialData = async () => {
             try {
-                const [resRoles, resBranches] = await Promise.all([
+                const [resRoles, resBranches, resNeg] = await Promise.all([
                     fetch("/api/admin/roles"),
-                    fetch("/api/admin/sucursales")
+                    fetch("/api/admin/sucursales"),
+                    fetch("/api/negocio")
                 ]);
 
                 if (resRoles.ok) {
@@ -182,6 +241,28 @@ function UsuarioFormContent() {
                             ...prev,
                             branches: prev.branches.length === 0 ? [def.id] : prev.branches
                         }));
+                    }
+                }
+
+                if (resNeg.ok) {
+                    const negData = await resNeg.json();
+                    const tipoUpper = (negData.tipoNegocio || '').toUpperCase();
+                    const slugUpper = (negData.slug || '').toUpperCase();
+                    const nameUpper = (negData.nombre || '').toUpperCase();
+
+                    const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT' ||
+                        nameUpper.includes('PARRILLA') || nameUpper.includes('RESTAURANTE') || nameUpper.includes('GASTRONOMIA') || nameUpper.includes('BURGER') || nameUpper.includes('PIZZA') || nameUpper.includes('TACO');
+                    const isPinchos = tipoUpper === 'PINCHOS' || slugUpper === 'PINCHOS';
+                    const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || slugUpper.includes('CANCHA') || nameUpper.includes('CANCHA') || nameUpper.includes('COMPLEJO') || nameUpper.includes('PADEL');
+
+                    if (isRestaurant || isPinchos) {
+                        setIndustry('restaurant');
+                    } else if (isCanchas) {
+                        setIndustry('canchas');
+                    } else if (tipoUpper === 'STORE' || tipoUpper === 'TIENDA' || tipoUpper === 'ECOMMERCE') {
+                        setIndustry('retail');
+                    } else {
+                        setIndustry('spa');
                     }
                 }
             } catch (e) {
@@ -221,6 +302,7 @@ function UsuarioFormContent() {
     ];
 
     const rolesToRender = availableRoles.length > 0 ? availableRoles : defaultRolesList;
+    const visibleModules = ALL_SYSTEM_MODULES.filter(m => m.industries.includes(industry));
 
     const toggleRole = (roleName: string) => {
         setFormData(prev => {
@@ -264,18 +346,36 @@ function UsuarioFormContent() {
         });
     };
 
-    // Preajustes rápidos de módulos
-    const applyPreset = (preset: 'cocina' | 'mesero' | 'caja' | 'todos' | 'ninguno') => {
-        if (preset === 'cocina') {
-            setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['cocina'] }));
-        } else if (preset === 'mesero') {
-            setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['mesas', 'pedidos'] }));
-        } else if (preset === 'caja') {
-            setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['caja', 'ventas', 'pedidos'] }));
-        } else if (preset === 'todos') {
-            setFormData(prev => ({ ...prev, allowedModules: SYSTEM_MODULES.map(m => m.id) }));
-        } else if (preset === 'ninguno') {
+    // Preajustes rápidos de módulos adaptados por industria
+    const applyPreset = (presetKey: string) => {
+        if (presetKey === 'todos') {
+            setFormData(prev => ({ ...prev, allowedModules: visibleModules.map(m => m.id) }));
+        } else if (presetKey === 'ninguno') {
             setFormData(prev => ({ ...prev, allowedModules: [] }));
+        } else if (industry === 'spa') {
+            if (presetKey === 'recepcion') {
+                setFormData(prev => ({ ...prev, roles: ['RECEPCIONISTA'], allowedModules: ['citas', 'clientes', 'caja', 'ventas'] }));
+            } else if (presetKey === 'especialista') {
+                setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['citas', 'servicios'] }));
+            } else if (presetKey === 'caja') {
+                setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['caja', 'ventas'] }));
+            }
+        } else if (industry === 'restaurant') {
+            if (presetKey === 'cocina') {
+                setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['cocina'] }));
+            } else if (presetKey === 'mesero') {
+                setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['mesas', 'pedidos'] }));
+            } else if (presetKey === 'caja') {
+                setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['caja', 'ventas', 'pedidos'] }));
+            }
+        } else if (industry === 'canchas') {
+            if (presetKey === 'canchero') {
+                setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['canchas', 'bloqueos', 'citas'] }));
+            } else if (presetKey === 'recepcion') {
+                setFormData(prev => ({ ...prev, roles: ['RECEPCIONISTA'], allowedModules: ['citas', 'clientes', 'caja', 'ventas'] }));
+            } else if (presetKey === 'caja') {
+                setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['caja', 'ventas'] }));
+            }
         }
     };
 
@@ -599,30 +699,88 @@ function UsuarioFormContent() {
                             </div>
                         </div>
 
-                        {/* Presets Rápidos */}
+                        {/* Presets Rápidos según la vertical del negocio */}
                         <div className="flex flex-wrap items-center gap-2">
                             <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mr-1">Preajustes:</span>
-                            <button
-                                type="button"
-                                onClick={() => applyPreset('cocina')}
-                                className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
-                            >
-                                <Utensils size={14} /> Solo Cocina (KDS)
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => applyPreset('mesero')}
-                                className="px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
-                            >
-                                <Layout size={14} /> Mesero
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => applyPreset('caja')}
-                                className="px-3 py-1.5 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
-                            >
-                                <Wallet size={14} /> Caja / POS
-                            </button>
+                            
+                            {industry === 'spa' && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyPreset('recepcion')}
+                                        className="px-3 py-1.5 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                    >
+                                        <Calendar size={14} /> Recepcionista
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyPreset('especialista')}
+                                        className="px-3 py-1.5 rounded-xl bg-pink-100 hover:bg-pink-200 text-pink-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                    >
+                                        <Scissors size={14} /> Especialista
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyPreset('caja')}
+                                        className="px-3 py-1.5 rounded-xl bg-teal-100 hover:bg-teal-200 text-teal-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                    >
+                                        <Wallet size={14} /> Caja / Cobros
+                                    </button>
+                                </>
+                            )}
+
+                            {industry === 'restaurant' && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyPreset('cocina')}
+                                        className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+                                    >
+                                        <Utensils size={14} /> Solo Cocina (KDS)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyPreset('mesero')}
+                                        className="px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                    >
+                                        <Layout size={14} /> Mesero
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyPreset('caja')}
+                                        className="px-3 py-1.5 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                    >
+                                        <Wallet size={14} /> Caja / POS
+                                    </button>
+                                </>
+                            )}
+
+                            {industry === 'canchas' && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyPreset('canchero')}
+                                        className="px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                    >
+                                        <Layers size={14} /> Canchero / Turnos
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyPreset('recepcion')}
+                                        className="px-3 py-1.5 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                    >
+                                        <Calendar size={14} /> Recepción
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyPreset('caja')}
+                                        className="px-3 py-1.5 rounded-xl bg-teal-100 hover:bg-teal-200 text-teal-800 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                    >
+                                        <Wallet size={14} /> Caja
+                                    </button>
+                                </>
+                            )}
+
                             <button
                                 type="button"
                                 onClick={() => applyPreset('todos')}
@@ -642,7 +800,7 @@ function UsuarioFormContent() {
 
                     {/* Grid de Módulos con Check */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {SYSTEM_MODULES.map((mod) => {
+                        {visibleModules.map((mod) => {
                             const isChecked = formData.allowedModules.includes(mod.id);
                             const IconComponent = mod.icon;
                             return (
