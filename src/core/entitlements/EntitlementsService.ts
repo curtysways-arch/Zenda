@@ -305,7 +305,13 @@ export class EntitlementsService {
     if (capabilities.QR_TABLE !== undefined) capabilities.qr = capabilities.QR_TABLE;
     if (capabilities.APPOINTMENTS !== undefined) capabilities.booking = capabilities.APPOINTMENTS;
     if (capabilities.COURSES !== undefined) capabilities.courses = capabilities.COURSES;
-    if (capabilities.COMMUNICATION_CENTER !== undefined) capabilities.communications = capabilities.COMMUNICATION_CENTER;
+    if (capabilities.COMMUNICATION_CENTER !== undefined) {
+      capabilities.communications = capabilities.COMMUNICATION_CENTER;
+    } else if (capabilities.whatsapp_campaigns || capabilities.WHATSAPP_CAMPAIGNS) {
+      capabilities.COMMUNICATION_CENTER = true;
+      capabilities.communication_center = true;
+      capabilities.communications = true;
+    }
 
     // 4. Límites base del plan y resolución de PlanLimit
     const baseLimits: Record<string, number> = {

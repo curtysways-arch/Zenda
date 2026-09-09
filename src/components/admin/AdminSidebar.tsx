@@ -161,7 +161,13 @@ export default function AdminSidebar({
             courses: Boolean(effectiveCaps.COURSES ?? effectiveCaps.courses ?? caps.courses ?? isCanchas ?? true),
             loyalty: Boolean(effectiveCaps.LOYALTY ?? effectiveCaps.loyalty ?? caps.loyalty ?? isPinchos),
             inventory: Boolean((effectiveCaps.INVENTORY ?? effectiveCaps.inventory) ?? (hasEcommerce || caps.inventory)),
-            communications: Boolean((effectiveCaps.COMMUNICATION_CENTER ?? effectiveCaps.communications) ?? (caps.communication_center ?? caps.communications)),
+            communications: Boolean(
+              (effectiveCaps.COMMUNICATION_CENTER ?? effectiveCaps.communications) ||
+              (effectiveCaps.WHATSAPP_CAMPAIGNS ?? effectiveCaps.whatsapp_campaigns) ||
+              caps.communication_center ||
+              caps.communications ||
+              caps.whatsapp_campaigns
+            ),
             payments: Boolean(effectiveCaps.PAYMENTS ?? effectiveCaps.payments ?? !isServiceBiz)
           };
 

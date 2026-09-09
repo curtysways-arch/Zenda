@@ -6,6 +6,7 @@
 
 import prisma from '@/lib/prisma';
 import { Addon, SubscriptionAddon, SubscriptionAddonStatus, SubscriptionAddonAction } from '@prisma/client';
+import { LegacyCompatibilityResolver } from '@/core/modules/LegacyCompatibilityResolver';
 
 export interface AddonAvailabilityDTO {
   addon: Addon;
@@ -132,6 +133,14 @@ export const addonService = {
     const plan = sub?.Plan;
     const familyCode = business.BusinessType?.planFamily?.code;
     const activeModuleCodes = new Set(plan?.planEntitlements.map(pe => pe.module.code) || []);
+    if (plan?.features) {
+      const legacyCaps = LegacyCompatibilityResolver.resolveLegacyCapabilities(plan.features);
+      for (const [key, val] of Object.entries(legacyCaps)) {
+        if (val) {
+          activeModuleCodes.add(key.toUpperCase());
+        }
+      }
+    }
 
     const [allAddons, dependencies] = await Promise.all([
       prisma.addon.findMany({

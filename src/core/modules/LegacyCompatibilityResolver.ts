@@ -14,6 +14,7 @@
 export const LEGACY_FEATURE_MAP: Record<string, string> = {
   courses_module: 'COURSES',
   communications_module: 'COMMUNICATION_CENTER',
+  whatsapp_campaigns: 'COMMUNICATION_CENTER',
   whatsapp_notifications: 'NOTIFICATIONS',
   loyalty_module: 'LOYALTY',
   tournaments_module: 'TOURNAMENTS',
