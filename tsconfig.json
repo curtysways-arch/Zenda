@@ -45,6 +45,7 @@
     "brain",
     "scratch",
     "scripts",
+    "src/scripts",
     "prisma",
     "check_*.ts",
     "create-demo.ts",

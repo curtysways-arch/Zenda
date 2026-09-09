@@ -66,7 +66,8 @@ async function runCanonicalAddonsTest() {
                     name: 'Plan Pro Test',
                     price: 29.0,
                     trial_days: 0,
-                    activo: true
+                    activo: true,
+                    updated_at: new Date()
                 }
             });
         }
