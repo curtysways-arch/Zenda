@@ -20,13 +20,20 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Sin negocio asociado' }, { status: 400 });
     }
 
-    const { availableAddons, activeSubscriptions } = await addonService.getAddonsForBusiness(businessId);
+    const availableAddons = await addonService.getAddonsForBusiness(businessId);
 
-    // Obtener detalles financieros consolidados si tiene suscripción
+    // Obtener detalles financieros consolidados y contratos de add-ons
     const subscription = await prisma.suscripcion.findUnique({
       where: { negocioId: businessId },
-      include: { Plan: true }
+      include: {
+        Plan: true,
+        subscriptionAddons: {
+          include: { addon: true }
+        }
+      }
     });
+
+    const activeSubscriptions = subscription?.subscriptionAddons || [];
 
     let pricingDetails = null;
     if (subscription) {
