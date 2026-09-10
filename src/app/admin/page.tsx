@@ -317,11 +317,11 @@ export default async function AdminDashboard() {
                     )}
                 </header>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     <StatCard 
                         title={isStaff ? "MIS CITAS HOY" : "HOY"} 
                         value={citasHoy} 
-                        icon={<Calendar size={28} />} 
+                        icon={<Calendar size={20} />} 
                         color="blue"
                         change="+12%" 
                         detail={isStaff ? "Tu carga de trabajo" : "Citas Agendadas"} 
@@ -330,7 +330,7 @@ export default async function AdminDashboard() {
                     <StatCard 
                         title={isStaff ? "PRODUCCIÓN MES" : "RECAUDADO"} 
                         value={`$${ingresosMes._sum.total?.toString() || '0'}`} 
-                        icon={<DollarSign size={28} />} 
+                        icon={<DollarSign size={20} />} 
                         color="primary"
                         change="+8.5%" 
                         detail={isStaff ? "Tus servicios facturados" : "Cerrado este mes"} 
@@ -339,7 +339,7 @@ export default async function AdminDashboard() {
                     <StatCard 
                         title="CLIENTES" 
                         value={totalClientes} 
-                        icon={<Users size={28} />} 
+                        icon={<Users size={20} />} 
                         color="violet"
                         change="+20%" 
                         detail="Fichas Activas" 
@@ -348,7 +348,7 @@ export default async function AdminDashboard() {
                     <StatCard 
                         title="RENDIMIENTO" 
                         value={`${citasMes}`} 
-                        icon={<TrendingUp size={28} />} 
+                        icon={<TrendingUp size={20} />} 
                         color="orange"
                         change="+15%" 
                         detail="Confirmadas" 
@@ -528,33 +528,32 @@ function StatCard({ title, value, icon, color, change, detail, href }: any) {
     const colorConfig = colors[color];
 
     const content = (
-        <div className="bg-white border border-slate-200 p-10 rounded-[3rem] space-y-8 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group overflow-hidden relative shadow-sm hover:shadow-2xl">
-            <div className={`absolute -right-6 -top-6 size-32 rounded-full blur-[60px] opacity-20 transition-all duration-700 group-hover:scale-150`}
+        <div className="bg-white border border-slate-200 p-5 sm:p-6 rounded-2xl sm:rounded-3xl space-y-4 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group overflow-hidden relative shadow-sm hover:shadow-xl">
+            <div className={`absolute -right-6 -top-6 size-24 rounded-full blur-[40px] opacity-20 transition-all duration-700 group-hover:scale-150`}
                  style={{ backgroundColor: isPrimary ? colorConfig.bg : undefined }} />
             
             <div className="flex justify-between items-start relative z-10">
                 <div className={clsx(
-                    "p-5 rounded-[1.5rem] border shadow-inner transition-all duration-500 group-hover:scale-110",
+                    "p-3 rounded-xl border shadow-inner transition-all duration-500 group-hover:scale-110",
                     !isPrimary && `${colorConfig.bg} ${colorConfig.border} ${colorConfig.text}`
                 )} style={isPrimary ? { backgroundColor: colorConfig.bg, borderColor: colorConfig.border, color: colorConfig.text } : {}}>
                     {icon}
                 </div>
                 <div className={clsx(
-                    "text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest border shadow-sm",
+                    "text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest border shadow-sm",
                     change.startsWith('+') ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-red-50 text-red-700 border-red-100"
                 )} style={change.startsWith('+') ? { backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 95%)', color: 'var(--primary-color)', borderColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)' } : {}}>
                     {change}
                 </div>
             </div>
             
-            <div className="relative z-10 space-y-2">
-                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] mb-1 italic leading-none">{title}</p>
-                <div className="flex items-baseline gap-3">
-                    <p className="text-5xl font-black text-slate-900 tracking-tighter leading-none italic uppercase">{value}</p>
-                    <div className="h-2 w-2 rounded-full bg-slate-100" />
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none italic">{detail.split(' ')[0]}</p>
+            <div className="relative z-10 space-y-1">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] italic leading-none">{title}</p>
+                <div className="flex items-baseline gap-2.5">
+                    <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-none italic uppercase">{value}</p>
+                    <div className="h-1.5 w-1.5 rounded-full bg-slate-200" />
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider leading-none italic">{detail.split(' ')[0]}</p>
                 </div>
-                <p className="text-[10px] text-slate-300 font-black uppercase tracking-tight opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0 italic">{detail}</p>
             </div>
         </div>
     );

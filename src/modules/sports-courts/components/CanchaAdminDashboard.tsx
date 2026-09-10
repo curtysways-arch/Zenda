@@ -103,11 +103,11 @@ export default function CanchaAdminDashboard({
         </header>
 
         {/* 3. 4 STAT CARDS CLARAS REDONDEADAS (DISEÑO CANCHA ORIGINAL) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <StatCard
             title="HOY"
             value={stats.reservasHoy}
-            icon={<Calendar size={26} />}
+            icon={<Calendar size={20} />}
             color="blue"
             change="+12%"
             detail="Turnos"
@@ -115,7 +115,7 @@ export default function CanchaAdminDashboard({
           <StatCard
             title="RECAUDADO"
             value={`$${stats.ingresosMes.toLocaleString()}`}
-            icon={<DollarSign size={26} />}
+            icon={<DollarSign size={20} />}
             color="emerald"
             change="+8.5%"
             detail="Cerrado"
@@ -123,7 +123,7 @@ export default function CanchaAdminDashboard({
           <StatCard
             title="CLIENTES"
             value={stats.totalClientes}
-            icon={<Users size={26} />}
+            icon={<Users size={20} />}
             color="violet"
             change="+20%"
             detail="Fichas"
@@ -131,7 +131,7 @@ export default function CanchaAdminDashboard({
           <StatCard
             title="RENDIMIENTO"
             value={stats.reservasMes}
-            icon={<TrendingUp size={26} />}
+            icon={<TrendingUp size={20} />}
             color="orange"
             change="+15%"
             detail="Confirmadas"
@@ -190,23 +190,23 @@ function StatCard({ title, value, icon, color, change, detail }: any) {
   };
 
   return (
-    <div className="bg-white border border-slate-200 p-8 sm:p-10 rounded-[3rem] space-y-6 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group overflow-hidden relative shadow-sm hover:shadow-2xl">
-      <div className={`absolute -right-6 -top-6 size-32 rounded-full blur-[60px] opacity-20 transition-all duration-700 group-hover:scale-150 ${colors[color].split(' ')[0]}`} />
+    <div className="bg-white border border-slate-200 p-5 sm:p-6 rounded-2xl sm:rounded-3xl space-y-4 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group overflow-hidden relative shadow-sm hover:shadow-xl">
+      <div className={`absolute -right-6 -top-6 size-24 rounded-full blur-[40px] opacity-20 transition-all duration-700 group-hover:scale-150 ${colors[color].split(' ')[0]}`} />
 
       <div className="flex justify-between items-start relative z-10">
-        <div className={`p-4 rounded-[1.5rem] border shadow-inner transition-all duration-500 group-hover:scale-110 ${colors[color]}`}>
+        <div className={`p-3 rounded-xl border shadow-inner transition-all duration-500 group-hover:scale-110 ${colors[color]}`}>
           {icon}
         </div>
-        <div className="text-[10px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-widest border shadow-sm bg-emerald-50 text-emerald-700 border-emerald-100">
+        <div className="text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest border shadow-sm bg-emerald-50 text-emerald-700 border-emerald-100">
           {change}
         </div>
       </div>
 
-      <div className="relative z-10 space-y-2">
-        <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] mb-1 italic leading-none">{title}</p>
+      <div className="relative z-10 space-y-1">
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-1 italic leading-none">{title}</p>
         <div className="flex items-baseline gap-2">
-          <p className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter leading-none italic uppercase">{value}</p>
-          <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none italic">{detail}</span>
+          <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-none italic uppercase">{value}</p>
+          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider leading-none italic">{detail}</span>
         </div>
       </div>
     </div>
