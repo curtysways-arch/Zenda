@@ -308,6 +308,7 @@ export default function AdminSidebar({
         }
 
         const isModuleAllowed = allowedModules.some(modCode => {
+          if (!modCode || typeof modCode !== 'string') return false;
           const cleanCode = modCode.toLowerCase().trim();
           if (cleanCode === 'cocina' || cleanCode === 'kitchen') return item.href === '/admin/cocina';
           if (cleanCode === 'mesas' || cleanCode === 'tables') return item.href === '/admin/mesas';

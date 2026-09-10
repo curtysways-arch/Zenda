@@ -169,20 +169,30 @@ export default async function PromocionesPage() {
   // 2. VISTA EXCLUSIVA DE SERVICIOS / SPAS / BEAUTY (Intacta para su vertical)
   const promotionsData = await getPromotions();
 
-  const formattedPromotionsForService = promotionsData.map((promo) => ({
+  const formattedPromotionsForService = promotionsData.map((promo: any) => ({
     id: promo.id,
-    title: promo.titulo,
-    description: promo.descripcion || '',
+    // Propiedades canónicas en español (para MobilePromotions y PromotionForm)
+    titulo: promo.titulo || promo.title || '',
+    descripcion: promo.descripcion || promo.description || '',
+    imagenUrl: promo.imagenUrl || promo.imageUrl || undefined,
+    estado: promo.estaActivo ? 'activa' : 'inactiva',
+    precioPromo: promo.precioPromo || promo.promoPrice || undefined,
+    precioAnterior: promo.Servicio?.precio ? Number(promo.Servicio.precio) : undefined,
+    tipoPromo: promo.tipoDescuento === 'PORCENTAJE' ? `${promo.valorDescuento}% OFF` : `$${promo.valorDescuento} OFF`,
+    shareCount: promo._count?.Reserva || 0,
+    // Propiedades en inglés (compatibilidad con vistas de escritorio)
+    title: promo.titulo || promo.title || '',
+    description: promo.descripcion || promo.description || '',
     serviceId: promo.servicioId,
     serviceName: promo.Servicio?.nombre || 'Servicio General',
     discountType: promo.tipoDescuento === 'PORCENTAJE' ? ('PERCENTAGE' as const) : ('FIXED' as const),
     discountValue: promo.valorDescuento,
-    promoPrice: promo.precioPromo || undefined,
-    startDate: promo.fechaInicio.toISOString(),
-    endDate: promo.fechaFin ? promo.fechaFin.toISOString() : undefined,
-    isActive: promo.estaActivo,
+    promoPrice: promo.precioPromo || promo.promoPrice || undefined,
+    startDate: promo.fechaInicio ? (typeof promo.fechaInicio === 'string' ? promo.fechaInicio : promo.fechaInicio.toISOString()) : undefined,
+    endDate: promo.fechaFin ? (typeof promo.fechaFin === 'string' ? promo.fechaFin : promo.fechaFin.toISOString()) : undefined,
+    isActive: Boolean(promo.estaActivo),
     usageCount: promo._count?.Reserva || 0,
-    imageUrl: promo.imagenUrl || undefined
+    imageUrl: promo.imagenUrl || promo.imageUrl || undefined
   }));
 
   return (
