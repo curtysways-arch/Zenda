@@ -19,6 +19,7 @@ import NotificationBell from '@/components/public/NotificationBell';
 import { NotificationService } from '@/lib/notifications/notificationService';
 import HomeServicesClient from './HomeServicesClient';
 import ProductsStoreClient from '@/components/public/ProductsStoreClient';
+import PublicProductsBoutiqueSection from '@/components/public/PublicProductsBoutiqueSection';
 import { ModuleResolver } from '@/lib/modules/ModuleResolver';
 import { resolveLandingContent } from '@/lib/landingContentResolver';
 import UniversalHeroCarousel from '@/components/public/UniversalHeroCarousel';
@@ -512,6 +513,13 @@ export default async function PublicNegocioPage({
         console.error("[DEBUG] Error checking courses module:", e);
     }
 
+    // Consultar productos activos del negocio (para mostrar boutique en Spas/Servicios con venta de productos)
+    const rawProductosActivos = await (prisma as any).producto.findMany({
+        where: { negocioId: negocio.id, activo: true },
+        include: { categoria: true, variantes: true },
+        orderBy: { orden: 'asc' }
+    });
+
     const canchasConDisponibilidad = (negocio.canchas || []);
     const filteredCanchas = query ? canchasConDisponibilidad.filter((c: any) => c.nombre.toLowerCase().includes(query)) : canchasConDisponibilidad;
     
@@ -930,6 +938,16 @@ export default async function PublicNegocioPage({
                     textColor={textColor}
                 />
             </section>
+
+            {/* 5B. BOUTIQUE / PRODUCTOS DE BIENESTAR (Si el negocio tiene productos activos) */}
+            {rawProductosActivos.length > 0 && (
+                <PublicProductsBoutiqueSection 
+                    productos={rawProductosActivos}
+                    negocio={negocio}
+                    slug={slug}
+                    primaryColor={primaryColor}
+                />
+            )}
 
             {/* CURSOS Y TALLERES */}
             {coursesModuleEnabled && cursosActivos.length > 0 && (
