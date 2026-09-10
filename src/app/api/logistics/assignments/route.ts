@@ -9,15 +9,19 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    const negocioId = (session?.user as any)?.negocioId;
+    const sessionNegocioId = (session?.user as any)?.negocioId;
     const { searchParams } = new URL(req.url);
+    const negocioId = searchParams.get('businessId') || searchParams.get('negocioId') || sessionNegocioId;
     const estado = searchParams.get('estado');
     const tipo = searchParams.get('tipo');
     const resourceId = searchParams.get('resourceId');
     const fecha = searchParams.get('fecha'); // YYYY-MM-DD
 
-    const where: any = {};
-    if (negocioId) where.negocioId = negocioId;
+    if (!negocioId) {
+      return NextResponse.json([]);
+    }
+
+    const where: any = { negocioId };
     if (estado) where.estado = estado;
     if (tipo) where.tipo = tipo;
     if (resourceId) where.resourceId = resourceId;
@@ -84,9 +88,10 @@ export async function GET(req: Request) {
     }));
 
     if (enriched.length === 0) {
-      // Consultar pedidos reales de la base de datos que sean de delivery/domicilio
+      // Consultar pedidos reales de la base de datos que sean de delivery/domicilio EXCLUSIVAMENTE para este negocio
       const realDbOrders = await prisma.pedido.findMany({
         where: {
+          negocioId: negocioId,
           tipoEntrega: { in: ['DELIVERY_ORDER', 'DOMICILIO', 'DELIVERY'] }
         },
         include: {

@@ -7,12 +7,20 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    const sessionNegocioId = (session?.user as any)?.negocioId;
     const { searchParams } = new URL(req.url);
+    const negocioId = searchParams.get('businessId') || searchParams.get('negocioId') || sessionNegocioId;
     const includeInactive = searchParams.get('includeInactive') === 'true';
 
-    // 1. Buscar en OperableResource filtrando SOLO repartidores/conductores (excluyendo infraestructura/mesas)
+    if (!negocioId) {
+      return NextResponse.json([]);
+    }
+
+    // 1. Buscar en OperableResource filtrando SOLO repartidores/conductores de este negocio
     const resources = await (prisma as any).operableResource.findMany({
       where: {
+        negocioId,
         ...(includeInactive ? {} : { active: true }),
         OR: [
           { category: 'DELIVERY_DRIVER' },
@@ -30,9 +38,10 @@ export async function GET(req: Request) {
       orderBy: { createdAt: 'desc' }
     });
 
-    // 2. Buscar en Staff repartidores
+    // 2. Buscar en Staff repartidores de este negocio
     const staffDrivers = await (prisma as any).staff.findMany({
       where: {
+        negocioId,
         role: { in: ['REPARTIDOR', 'DRIVER', 'ENTREGA', 'DELIVERY'] }
       }
     });
@@ -45,7 +54,7 @@ export async function GET(req: Request) {
       tipoRecurso: 'VEHICULO',
       profile: {
         verificationStatus: 'APPROVED',
-        telefono: '0991234567',
+        telefono: s.telefono || '0991234567',
         vehiculo: 'Moto Honda Cargo 150cc',
         tipoVehiculo: 'MOTO'
       }
