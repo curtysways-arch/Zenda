@@ -92,16 +92,9 @@ function PublicProductsBoutiqueContent({
 
   return (
     <section id="tienda-productos" className="px-6 mb-10">
-      {/* ── ENCABEZADO DE LA BOUTIQUE ── */}
+      {/* ── ENCABEZADO DE PRODUCTOS ── */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
         <div>
-          <span 
-            className="text-[10px] font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5"
-            style={{ color: primaryColor }}
-          >
-            <Sparkles size={13} />
-            Boutique & Cuidado Personal
-          </span>
           <h3 className="text-2xl font-black leading-none text-slate-900 tracking-tight">
             Nuestros Productos
           </h3>

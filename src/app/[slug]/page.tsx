@@ -939,16 +939,6 @@ export default async function PublicNegocioPage({
                 />
             </section>
 
-            {/* 5B. BOUTIQUE / PRODUCTOS DE BIENESTAR (Si el negocio tiene productos activos) */}
-            {rawProductosActivos.length > 0 && (
-                <PublicProductsBoutiqueSection 
-                    productos={rawProductosActivos}
-                    negocio={negocio}
-                    slug={slug}
-                    primaryColor={primaryColor}
-                />
-            )}
-
             {/* CURSOS Y TALLERES */}
             {coursesModuleEnabled && cursosActivos.length > 0 && (
                 <section id="cursos" className="mb-6 px-6">
@@ -1006,7 +996,7 @@ export default async function PublicNegocioPage({
                                     {/* Badge del título centrado abajo */}
                                     <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full shadow-md border border-slate-100/50 max-w-[90%] truncate">
                                         <span className="text-[10px] font-black text-slate-800 tracking-wide uppercase leading-none block text-center">
-                                            {item.title}
+                                             {item.title}
                                         </span>
                                     </div>
                                 </Link>
@@ -1014,6 +1004,16 @@ export default async function PublicNegocioPage({
                         })}
                     </div>
                 </section>
+            )}
+
+            {/* 6B. PRODUCTOS (Ubicados debajo de Resultados Reales) */}
+            {rawProductosActivos.length > 0 && (
+                <PublicProductsBoutiqueSection 
+                    productos={rawProductosActivos}
+                    negocio={negocio}
+                    slug={slug}
+                    primaryColor={primaryColor}
+                />
             )}
 
             {/* 7. OPINIONES (ReviewsCarousel con slider dinámico) */}

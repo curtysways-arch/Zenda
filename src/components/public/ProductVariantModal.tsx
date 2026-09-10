@@ -519,7 +519,7 @@ export default function ProductVariantModal({
             </div>
 
             {/* Badges de Garantía y Envío */}
-            <div className="pt-3 border-t border-slate-200/60 grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs text-slate-600 font-semibold">
+            <div className="pt-3 border-t border-slate-200/60 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-slate-600 font-semibold">
               <div className="flex items-center gap-1.5 text-emerald-700 font-black">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>Compra 100% segura</span>
@@ -527,10 +527,6 @@ export default function ProductVariantModal({
               <div className="flex items-center gap-1.5 text-slate-600">
                 <Truck className="w-4 h-4 text-slate-500 shrink-0" />
                 <span>Envío en 24 – 48h</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-slate-600">
-                <RotateCcw className="w-4 h-4 text-slate-500 shrink-0" />
-                <span>Devolución gratuita</span>
               </div>
             </div>
           </div>
