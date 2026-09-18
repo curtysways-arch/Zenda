@@ -25,6 +25,8 @@ interface ImageUploaderProps {
   aspect?: 'square' | 'landscape' | 'auto';
   /** Desactivar el uploader */
   disabled?: boolean;
+  /** Modo compacto (barra horizontal de altura reducida) */
+  compact?: boolean;
   /** URL del endpoint de subida (default: /api/admin/upload) */
   uploadUrl?: string;
   /** Campos extra que se añaden al FormData (ej: { targetBusinessId: 'xxx' }) */
@@ -41,6 +43,7 @@ export default function ImageUploader({
   onRemove,
   label = 'Subir imagen',
   aspect = 'square',
+  compact = false,
   disabled = false,
   uploadUrl = '/api/admin/upload',
   extraFields = {},
@@ -144,12 +147,13 @@ export default function ImageUploader({
     onRemove?.();
   };
 
-  const aspectClass =
-    aspect === 'square'
-      ? 'aspect-square'
-      : aspect === 'landscape'
-      ? 'aspect-video'
-      : '';
+  const aspectClass = compact
+    ? 'compact'
+    : aspect === 'square'
+    ? 'aspect-square'
+    : aspect === 'landscape'
+    ? 'aspect-video'
+    : '';
 
   return (
     <div className="image-uploader-container">
@@ -195,6 +199,24 @@ export default function ImageUploader({
                 </div>
               </div>
             )}
+          </div>
+        ) : compact ? (
+          /* Estado vacío compacto */
+          <div className="flex items-center justify-between gap-3 px-3.5 py-2.5 w-full cursor-pointer hover:bg-teal-50/20 transition-colors">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="size-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0 border border-teal-100">
+                <ImageIcon size={16} />
+              </div>
+              <div className="text-left min-w-0">
+                <p className="text-xs font-black text-slate-800 line-clamp-1">{label}</p>
+                <p className="text-[10px] text-slate-400 font-medium line-clamp-1">
+                  JPG, PNG, WEBP · Clic o arrastra aquí
+                </p>
+              </div>
+            </div>
+            <span className="text-[10px] font-black text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2.5 py-1 rounded-lg shrink-0 transition-colors">
+              Subir foto
+            </span>
           </div>
         ) : (
           /* Estado vacío */
@@ -266,6 +288,16 @@ export default function ImageUploader({
           display: flex;
           align-items: center;
           justify-content: center;
+        }
+
+        .image-uploader-dropzone.compact {
+          min-height: 52px;
+          border-width: 1.5px;
+          border-radius: 14px;
+        }
+
+        .image-uploader-dropzone.compact .image-uploader-preview {
+          height: 85px;
         }
 
         .image-uploader-dropzone:not(.disabled):not(.uploading):hover {

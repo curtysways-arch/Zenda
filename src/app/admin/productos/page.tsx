@@ -794,10 +794,9 @@ export default function AdminProductos() {
                 )}
             </div>
 
-            {/* Modal Creación / Edición Con Estilo Empresarial Intuitivo */}
+            {/* Modal Creación / Edición Pantalla Completa */}
             {isOpen && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-6 bg-slate-950/70 backdrop-blur-md overflow-y-auto animate-fade-in">
-                    <div className="w-full max-w-6xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh] text-left my-auto">
+                <div className="fixed inset-0 z-[200] bg-white flex flex-col w-screen h-screen overflow-hidden animate-fade-in text-left">
                         {/* Header Modal */}
                         <div className="px-6 py-4 sm:py-5 border-b border-slate-150 flex items-center justify-between bg-white shrink-0">
                             <div className="flex items-center gap-3.5">
@@ -916,7 +915,7 @@ export default function AdminProductos() {
                                                 if (!imagenUrl) setImagenUrl(media.url);
                                             }}
                                             label={imagenesList.length === 0 ? "Subir foto del producto" : "+ Añadir otra foto"}
-                                            aspect="square"
+                                            compact={true}
                                         />
                                     </div>
 
@@ -1225,7 +1224,7 @@ export default function AdminProductos() {
                                                             if (!imagenUrl) setImagenUrl(media.url);
                                                         }}
                                                         label={imagenesList.length === 0 ? "Subir Foto Principal" : "+ Añadir Otra Foto"}
-                                                        aspect="square"
+                                                        compact={true}
                                                     />
                                                     <span className="text-[10px] text-slate-400 block font-medium leading-tight">
                                                         Sube 1 o varias fotos para activar el carrusel de miniaturas en la tienda.
@@ -2085,7 +2084,6 @@ export default function AdminProductos() {
                             </div>
                         </div>
                     </div>
-                </div>
             )}
 
             {/* Modal Creación Rápida de Categoría */}

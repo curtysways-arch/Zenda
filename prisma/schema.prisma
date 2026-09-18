@@ -138,6 +138,7 @@ model Cliente {
   clinicalRecord  ClinicalRecord?
   memberships     Membership[]
   gymAttendances  GymAttendance[]
+  gymClassBookings GymClassBooking[]
 
   @@unique([telefono, negocioId])
 }
@@ -436,6 +437,8 @@ model Negocio {
   memberships                Membership[]
   gymAccessLogs              GymAccessLog[]
   gymAttendances             GymAttendance[]
+  gymClasses                 GymClass[]
+  gymClassBookings           GymClassBooking[]
 }
 
 model OtpCode {
@@ -4263,5 +4266,50 @@ model GymAttendance {
   @@index([membershipId])
   @@index([businessId, status])
   @@index([businessId, checkedInAt])
+}
+
+model GymClass {
+  id              String             @id @default(uuid())
+  businessId      String
+  name            String
+  description     String?
+  coach           String
+  category        String             @default("General") // Cardio | Fuerza | Funcional | Mente & Cuerpo | Combate | General
+  room            String?
+  daysOfWeek      String             @default("LUN,MIE,VIE") // Lista separada por comas: LUN,MAR,MIE,JUE,VIE,SAB,DOM
+  startTime       String             // "07:00", "18:30"
+  durationMinutes Int                @default(45)
+  capacity        Int                @default(20)
+  color           String             @default("#ea580c")
+  active          Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  negocio         Negocio            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  bookings        GymClassBooking[]
+
+  @@index([businessId])
+  @@index([businessId, active])
+}
+
+model GymClassBooking {
+  id          String    @id @default(uuid())
+  businessId  String
+  classId     String
+  customerId  String
+  date        DateTime  // Fecha específica de la clase reservada (YYYY-MM-DD)
+  status      String    @default("CONFIRMED") // CONFIRMED | ATTENDED | CANCELLED | NO_SHOW
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  negocio     Negocio   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  gymClass    GymClass  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  cliente     Cliente   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([classId])
+  @@index([customerId])
+  @@index([date])
+  @@index([businessId, date])
 }
 
