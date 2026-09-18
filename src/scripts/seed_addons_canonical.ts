@@ -97,6 +97,23 @@ export const CANONICAL_ADDONS = [
     active: true,
     sortOrder: 5
   },
+  {
+    code: 'ADDON_COURSES',
+    name: 'Academia, Cursos & Talleres',
+    description: 'Habilita la creación de cursos, academias, talleres y masterclasses con gestión de alumnos, cupos y asistencia.',
+    icon: 'GraduationCap',
+    type: 'CAPABILITY' as const,
+    targetKey: 'COURSES',
+    amount: null,
+    stackable: false,
+    maxQuantity: null,
+    priceMonthly: 14.00,
+    priceAnnual: 140.00,
+    currency: 'USD',
+    applicableFamilies: null,
+    active: true,
+    sortOrder: 6
+  },
 
   // ─── 📈 EXTENSIONES DE LÍMITE (LIMIT) ─────────────────────────────────────────
   {

@@ -28,6 +28,7 @@ import {
 import { clsx } from 'clsx';
 
 import MobileAppointmentDetail from '@/components/admin/mobile/MobileAppointmentDetail';
+import CourtAppointmentDetail from '@/components/admin/canchas/CourtAppointmentDetail';
 import { useConfirm } from '@/components/admin/ConfirmContext';
 import RatingModal from '@/components/RatingModal';
 import { toLocalDateFromUTC } from '@/lib/utils';
@@ -212,6 +213,32 @@ export default function ReservaDetailPage({ params }: { params: Promise<{ id: st
     };
 
     const primaryColor = '#0ea5e9'; // Podrías obtenerlo dinámicamente
+
+    const rawTipo = (reserva?.negocio?.tipoNegocio || '').toUpperCase();
+    const slug = (reserva?.negocio?.slug || '').toLowerCase();
+    const name = (reserva?.negocio?.nombre || '').toLowerCase();
+    const serviceTipo = (reserva?.service?.tipo || '').toLowerCase();
+    const serviceName = (reserva?.service?.nombre || reserva?.nombreServicio || '').toLowerCase();
+
+    const isCanchas = 
+        rawTipo === 'SPORTS_COURTS' ||
+        rawTipo === 'CANCHAS' ||
+        rawTipo === 'SPORTS' ||
+        slug.includes('cancha') ||
+        slug.includes('padel') ||
+        slug.includes('futbol') ||
+        slug.includes('tenis') ||
+        name.includes('cancha') ||
+        serviceTipo === 'cancha' ||
+        serviceName.includes('cancha');
+
+    if (isCanchas) {
+        return (
+            <div className="min-h-screen bg-slate-50 py-6 px-4 md:py-10 md:px-6">
+                <CourtAppointmentDetail reserva={reserva} onRefresh={fetchReserva} />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 md:pb-20 md:pt-10 md:px-4">

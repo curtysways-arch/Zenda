@@ -96,7 +96,7 @@ export default function MiPerfilPage() {
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
   const [savedCards, setSavedCards] = useState<any[]>([]);
   const [favoriteItems, setFavoriteItems] = useState<any[]>([]);
-  const [cuponesCount, setCuponesCount] = useState<number>(3);
+  const [cuponesCount, setCuponesCount] = useState<number>(0);
 
   // Estado e instalador de App (PWA)
   const [isPWAInstalledState, setIsPWAInstalledState] = useState<boolean>(false);
@@ -182,12 +182,19 @@ export default function MiPerfilPage() {
 
         // Cargar cupones disponibles reales
         try {
-          const coupRes = await fetch(`/api/${slug}/mis-cupones`);
+          const coupRes = await fetch(`/api/public/${slug}/loyalty/my-rewards`);
           if (coupRes.ok) {
             const coupData = await coupRes.json();
-            if (Array.isArray(coupData)) setCuponesCount(coupData.length);
+            const count = Array.isArray(coupData?.cupones) 
+              ? coupData.cupones.length 
+              : (Array.isArray(coupData?.availableCoupons) ? coupData.availableCoupons.length : 0);
+            setCuponesCount(count);
+          } else {
+            setCuponesCount(0);
           }
-        } catch (_) {}
+        } catch (_) {
+          setCuponesCount(0);
+        }
 
         setStep('profile');
       } else {
@@ -252,7 +259,7 @@ export default function MiPerfilPage() {
 
         const customIcon = L.divIcon({
           className: 'custom-pin',
-          html: `<div style="background-color:#ea580c; width:28px; height:28px; border-radius:50%; border:3px solid white; box-shadow:0 4px 10px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">📍</div>`,
+          html: `<div style="background-color:${negocio?.colorPrimario || '#06b6d4'}; width:28px; height:28px; border-radius:50%; border:3px solid white; box-shadow:0 4px 10px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">📍</div>`,
           iconSize: [28, 28],
           iconAnchor: [14, 14]
         });
@@ -515,6 +522,9 @@ export default function MiPerfilPage() {
   const displayEmail = cliente?.email || 'carlos.caicedo@email.com';
   const firstLetter = displayName.charAt(0).toUpperCase();
 
+  const primaryColor = negocio?.colorPrimario || '#06b6d4';
+  const secondaryColor = negocio?.colorSecundario || '#0f172a';
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-3">
@@ -558,7 +568,10 @@ export default function MiPerfilPage() {
               className="relative p-2 rounded-xl bg-slate-900 text-slate-200 border border-slate-800 cursor-pointer"
             >
               <Bell size={18} />
-              <span className="absolute -top-1 -right-1 size-4 bg-red-600 text-white font-black text-[9px] rounded-full flex items-center justify-center shadow-xs">
+              <span 
+                style={{ backgroundColor: primaryColor }}
+                className="absolute -top-1 -right-1 size-4 text-white font-black text-[9px] rounded-full flex items-center justify-center shadow-xs"
+              >
                 2
               </span>
             </button>
@@ -569,7 +582,10 @@ export default function MiPerfilPage() {
               className="relative p-2 rounded-xl bg-slate-900 text-slate-200 border border-slate-800 cursor-pointer"
             >
               <MessageSquare size={18} />
-              <span className="absolute -top-1 -right-1 size-4 bg-red-600 text-white font-black text-[9px] rounded-full flex items-center justify-center shadow-xs">
+              <span 
+                style={{ backgroundColor: primaryColor }}
+                className="absolute -top-1 -right-1 size-4 text-white font-black text-[9px] rounded-full flex items-center justify-center shadow-xs"
+              >
                 4
               </span>
             </button>
@@ -666,10 +682,14 @@ export default function MiPerfilPage() {
                     <img 
                       src={cliente.imagenUrl} 
                       alt={displayName} 
-                      className="w-16 h-16 rounded-full object-cover border-2 border-amber-500 shadow-md" 
+                      style={{ borderColor: primaryColor }}
+                      className="w-16 h-16 rounded-full object-cover border-2 shadow-md" 
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-600 to-orange-600 text-white font-black text-2xl flex items-center justify-center shadow-md border-2 border-white">
+                    <div 
+                      style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}
+                      className="w-16 h-16 rounded-full text-white font-black text-2xl flex items-center justify-center shadow-md border-2 border-white"
+                    >
                       {firstLetter}
                     </div>
                   )}
@@ -709,10 +729,13 @@ export default function MiPerfilPage() {
               <button 
                 type="button"
                 onClick={() => router.push(`/${slug}/pedidos`)}
-                className="p-2.5 rounded-2xl bg-slate-50 hover:bg-amber-50/50 border border-slate-100 transition-colors cursor-pointer text-left space-y-1"
+                className="p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100/80 border border-slate-100 transition-colors cursor-pointer text-left space-y-1"
               >
                 <div className="flex items-center justify-between">
-                  <span className="p-1.5 bg-amber-100/60 text-amber-700 rounded-xl">
+                  <span 
+                    style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
+                    className="p-1.5 rounded-xl"
+                  >
                     <ShoppingBag size={14} />
                   </span>
                   <span className="text-[10px] font-black uppercase text-slate-400">Pedidos</span>
@@ -728,7 +751,7 @@ export default function MiPerfilPage() {
               <button 
                 type="button"
                 onClick={() => router.push(`/${slug}/mis-premios`)}
-                className="p-2.5 rounded-2xl bg-slate-50 hover:bg-amber-50/50 border border-slate-100 transition-colors cursor-pointer text-left space-y-1"
+                className="p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100/80 border border-slate-100 transition-colors cursor-pointer text-left space-y-1"
               >
                 <div className="flex items-center justify-between">
                   <span className="p-1.5 bg-amber-100/60 text-amber-700 rounded-xl">
@@ -747,10 +770,13 @@ export default function MiPerfilPage() {
               <button 
                 type="button"
                 onClick={() => router.push(`/${slug}/mis-cupones`)}
-                className="p-2.5 rounded-2xl bg-slate-50 hover:bg-amber-50/50 border border-slate-100 transition-colors cursor-pointer text-left space-y-1"
+                className="p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100/80 border border-slate-100 transition-colors cursor-pointer text-left space-y-1"
               >
                 <div className="flex items-center justify-between">
-                  <span className="p-1.5 bg-amber-100/60 text-amber-700 rounded-xl">
+                  <span 
+                    style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
+                    className="p-1.5 rounded-xl"
+                  >
                     <Tag size={14} />
                   </span>
                   <span className="text-[10px] font-black uppercase text-slate-400">Cupones</span>
@@ -768,7 +794,10 @@ export default function MiPerfilPage() {
             <div className="pt-4 border-t border-slate-100 space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
-                  <span className="p-2 bg-red-50 text-red-600 rounded-xl shrink-0 mt-0.5">
+                  <span 
+                    style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
+                    className="p-2 rounded-xl shrink-0 mt-0.5"
+                  >
                     <MapPin size={18} />
                   </span>
                   <div className="space-y-1">
@@ -792,7 +821,12 @@ export default function MiPerfilPage() {
               <button
                 type="button"
                 onClick={() => setIsMapModalOpen(true)}
-                className="w-full py-3 px-4 bg-red-50 hover:bg-red-100/70 text-red-600 font-black text-xs uppercase tracking-wider rounded-2xl border border-red-100 transition-colors cursor-pointer flex items-center justify-center gap-2"
+                style={{ 
+                  backgroundColor: `${primaryColor}15`, 
+                  color: primaryColor,
+                  borderColor: `${primaryColor}40`
+                }}
+                className="w-full py-3 px-4 font-black text-xs uppercase tracking-wider rounded-2xl border transition-all hover:opacity-90 cursor-pointer flex items-center justify-center gap-2"
               >
                 <Compass size={16} />
                 <span>ACTUALIZAR UBICACIÓN EN EL MAPA</span>
@@ -801,15 +835,21 @@ export default function MiPerfilPage() {
 
           </div>
 
-          {/* BANNER / AVISO INTELIGENTE DE DESCARGA DE LA APP DE RESTAURANTE */}
-          <div className="bg-gradient-to-r from-red-600 via-orange-600 to-amber-600 rounded-3xl p-4.5 text-white shadow-lg space-y-3 relative overflow-hidden">
+          {/* BANNER / AVISO INTELIGENTE DE DESCARGA DE LA APP CON COLORES CORPORATIVOS */}
+          <div 
+            style={{ 
+              background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
+              borderColor: `${primaryColor}40`
+            }}
+            className="rounded-3xl p-4.5 text-white shadow-lg space-y-3 relative overflow-hidden border"
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-2xl shrink-0 shadow-inner">
                   📱
                 </div>
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-200 block">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/80 block">
                     {(negocio?.tipoNegocio === 'RESTAURANTE' || negocio?.tipoNegocio === 'GASTRONOMIA' || negocio?.tipoNegocio === 'RESTAURANT')
                       ? 'App del Restaurante'
                       : 'App de la Tienda'}
@@ -834,13 +874,14 @@ export default function MiPerfilPage() {
               <button
                 type="button"
                 onClick={handleInstallPWA}
-                className="w-full py-3 bg-white hover:bg-slate-50 text-red-600 font-black text-xs uppercase tracking-wider rounded-2xl shadow-md cursor-pointer transition-all flex items-center justify-center gap-2 active:scale-95 border border-white"
+                style={{ color: primaryColor }}
+                className="w-full py-3 bg-white hover:bg-slate-50 font-black text-xs uppercase tracking-wider rounded-2xl shadow-md cursor-pointer transition-all flex items-center justify-center gap-2 active:scale-95 border border-white"
               >
                 <Smartphone size={16} />
                 <span>Instalar App Gratis en mi Celular</span>
               </button>
             ) : (
-              <div className="py-2 px-3 bg-white/15 rounded-xl border border-white/20 flex items-center justify-center gap-2 text-[11px] font-bold text-emerald-200">
+              <div className="py-2 px-3 bg-white/15 rounded-xl border border-white/20 flex items-center justify-center gap-2 text-[11px] font-bold text-white">
                 <CheckCircle2 size={15} />
                 <span>App lista y activa en tu dispositivo</span>
               </div>
@@ -852,12 +893,12 @@ export default function MiPerfilPage() {
             <h3 className="text-xs font-black uppercase text-slate-900 tracking-wider px-4 pt-3 pb-1">Mi cuenta</h3>
 
             {[
-              { id: 'personal_info', label: 'Información personal', desc: 'Actualiza tus datos personales', icon: User, color: 'bg-red-50 text-red-600' },
-              { id: 'addresses', label: 'Mis direcciones', desc: 'Gestiona tus direcciones guardadas', icon: MapPin, color: 'bg-red-50 text-red-600' },
-              { id: 'payments', label: 'Métodos de pago', desc: 'Tarjetas y pagos guardados', icon: CreditCard, color: 'bg-red-50 text-red-600' },
-              { id: 'favorites', label: 'Mis favoritos', desc: 'Restaurantes y productos favoritos', icon: Star, color: 'bg-red-50 text-red-600' },
-              { id: 'settings', label: 'Configuración', desc: 'Notificaciones, privacidad y más', icon: Settings, color: 'bg-red-50 text-red-600' },
-              { id: 'support', label: 'Ayuda y soporte', desc: 'Centro de ayuda y contacto', icon: HelpCircle, color: 'bg-red-50 text-red-600' },
+              { id: 'personal_info', label: 'Información personal', desc: 'Actualiza tus datos personales', icon: User },
+              { id: 'addresses', label: 'Mis direcciones', desc: 'Gestiona tus direcciones guardadas', icon: MapPin },
+              { id: 'payments', label: 'Métodos de pago', desc: 'Tarjetas y pagos guardados', icon: CreditCard },
+              { id: 'favorites', label: 'Mis favoritos', desc: 'Productos y compras favoritas', icon: Star },
+              { id: 'settings', label: 'Configuración', desc: 'Notificaciones, privacidad y más', icon: Settings },
+              { id: 'support', label: 'Ayuda y soporte', desc: 'Centro de ayuda y contacto', icon: HelpCircle },
             ].map(item => {
               const IconComponent = item.icon;
               return (
@@ -868,7 +909,10 @@ export default function MiPerfilPage() {
                   className="w-full p-3 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer flex items-center justify-between text-left"
                 >
                   <div className="flex items-center gap-3.5">
-                    <span className={`p-2.5 rounded-2xl ${item.color} shrink-0`}>
+                    <span 
+                      style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}
+                      className="p-2.5 rounded-2xl shrink-0"
+                    >
                       <IconComponent size={18} />
                     </span>
                     <div>
@@ -904,7 +948,7 @@ export default function MiPerfilPage() {
           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-5 border border-slate-200 animate-in fade-in duration-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <User className="w-5 h-5 text-red-600" />
+                <User className="w-5 h-5" style={{ color: primaryColor }} />
                 <h3 className="font-black text-sm uppercase text-slate-900">Información Personal</h3>
               </div>
               <button type="button" onClick={() => setActiveModal(null)} className="p-1 rounded-xl text-slate-400 hover:bg-slate-100">
@@ -963,7 +1007,7 @@ export default function MiPerfilPage() {
           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-red-600" />
+                <MapPin className="w-5 h-5" style={{ color: primaryColor }} />
                 <h3 className="font-black text-sm uppercase text-slate-900">Mis Direcciones Guardadas</h3>
               </div>
               <button type="button" onClick={() => setActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
@@ -979,7 +1023,12 @@ export default function MiPerfilPage() {
                       <div className="flex items-center gap-2">
                         <span className="font-black text-slate-900 truncate">{addr.etiqueta || 'Dirección'}</span>
                         {addr.principal && (
-                          <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[9px] font-black rounded-md uppercase shrink-0">Principal</span>
+                          <span 
+                            style={{ backgroundColor: `${primaryColor}20`, color: primaryColor }}
+                            className="px-2 py-0.5 text-[9px] font-black rounded-md uppercase shrink-0"
+                          >
+                            Principal
+                          </span>
                         )}
                       </div>
                       <p className="text-slate-600 font-medium leading-snug">{addr.direccion}</p>
@@ -1025,7 +1074,8 @@ export default function MiPerfilPage() {
                 setActiveModal(null);
                 setIsMapModalOpen(true);
               }}
-              className="w-full py-3 bg-red-50 hover:bg-red-100/80 text-red-600 font-black text-xs uppercase rounded-2xl border border-red-100 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99]"
+              style={{ backgroundColor: `${primaryColor}15`, color: primaryColor, borderColor: `${primaryColor}30` }}
+              className="w-full py-3 font-black text-xs uppercase rounded-2xl border flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99]"
             >
               <Plus size={16} /> Agregar Nueva Dirección desde Mapa
             </button>
@@ -1039,7 +1089,7 @@ export default function MiPerfilPage() {
           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-red-600" />
+                <CreditCard className="w-5 h-5" style={{ color: primaryColor }} />
                 <h3 className="font-black text-sm uppercase text-slate-900">Métodos de Pago</h3>
               </div>
               <button type="button" onClick={() => setActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
@@ -1084,7 +1134,7 @@ export default function MiPerfilPage() {
           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200 text-center">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 text-left">
               <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-red-600" />
+                <Star className="w-5 h-5" style={{ color: primaryColor }} />
                 <h3 className="font-black text-sm uppercase text-slate-900">Mis Favoritos</h3>
               </div>
               <button type="button" onClick={() => setActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
@@ -1098,7 +1148,7 @@ export default function MiPerfilPage() {
               </div>
               <h4 className="text-sm font-black text-slate-900">Aún no tienes favoritos</h4>
               <p className="text-xs text-slate-500 font-medium max-w-xs mx-auto">
-                Guarda tus platillos y restaurantes favoritos para encontrarlos y pedirlos rápidamente.
+                Guarda tus productos y artículos favoritos para encontrarlos y pedirlos rápidamente.
               </p>
             </div>
           </div>
@@ -1111,7 +1161,7 @@ export default function MiPerfilPage() {
           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <Settings className="w-5 h-5 text-red-600" />
+                <Settings className="w-5 h-5" style={{ color: primaryColor }} />
                 <h3 className="font-black text-sm uppercase text-slate-900">Configuración</h3>
               </div>
               <button type="button" onClick={() => setActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
@@ -1125,7 +1175,12 @@ export default function MiPerfilPage() {
                   <span className="font-black text-slate-900 block">Notificaciones de Pedido</span>
                   <span className="text-[10px] text-slate-400">Avisos del estado de tu entrega</span>
                 </div>
-                <input type="checkbox" defaultChecked className="rounded border-slate-300 text-red-600" />
+                <input 
+                  type="checkbox" 
+                  defaultChecked 
+                  style={{ accentColor: primaryColor }}
+                  className="rounded border-slate-300" 
+                />
               </div>
 
               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl">
@@ -1133,13 +1188,18 @@ export default function MiPerfilPage() {
                   <span className="font-black text-slate-900 block">Promociones y Ofertas</span>
                   <span className="text-[10px] text-slate-400">Alertas de cupones exclusivos</span>
                 </div>
-                <input type="checkbox" defaultChecked className="rounded border-slate-300 text-red-600" />
+                <input 
+                  type="checkbox" 
+                  defaultChecked 
+                  style={{ accentColor: primaryColor }}
+                  className="rounded border-slate-300" 
+                />
               </div>
 
               <button
                 type="button"
                 onClick={handleLogout}
-                className="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 font-black text-xs uppercase rounded-2xl flex items-center justify-center gap-2 mt-4"
+                className="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-600 font-black text-xs uppercase rounded-2xl flex items-center justify-center gap-2 mt-4 cursor-pointer"
               >
                 <LogOut size={16} /> Cerrar Sesión
               </button>
@@ -1154,7 +1214,7 @@ export default function MiPerfilPage() {
           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border border-slate-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <HelpCircle className="w-5 h-5 text-red-600" />
+                <HelpCircle className="w-5 h-5" style={{ color: primaryColor }} />
                 <h3 className="font-black text-sm uppercase text-slate-900">Ayuda y Soporte</h3>
               </div>
               <button type="button" onClick={() => setActiveModal(null)} className="p-1 text-slate-400 hover:bg-slate-100 rounded-xl">
@@ -1184,7 +1244,8 @@ export default function MiPerfilPage() {
           <button
             type="button"
             onClick={() => router.push(`/${slug}/pedidos`)}
-            className="w-full py-3.5 px-5 bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl flex items-center justify-between border border-red-500 cursor-pointer active:scale-95 transition-all"
+            style={{ backgroundColor: primaryColor }}
+            className="w-full py-3.5 px-5 hover:opacity-95 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl flex items-center justify-between cursor-pointer active:scale-95 transition-all"
           >
             <div className="flex items-center gap-2.5">
               <ShoppingBag size={18} />
@@ -1227,7 +1288,8 @@ export default function MiPerfilPage() {
 
           <button 
             type="button"
-            className="flex flex-col items-center gap-1 text-[10px] font-black text-red-500 cursor-pointer"
+            style={{ color: primaryColor }}
+            className="flex flex-col items-center gap-1 text-[10px] font-black cursor-pointer"
           >
             <User size={18} />
             <span>Mi cuenta</span>

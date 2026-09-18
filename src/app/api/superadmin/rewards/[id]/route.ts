@@ -16,7 +16,10 @@ export async function PUT(
     if (descripcion !== undefined) data.descripcion = descripcion;
     if (tipo !== undefined) data.tipo = tipo as RewardCatalogType;
     if (handler !== undefined) data.handler = handler;
-    if (config !== undefined) data.config = config;
+    if (config !== undefined) {
+      data.config = config;
+      data.valor = config;
+    }
     if (activo !== undefined) data.activo = !!activo;
     if (activa !== undefined) data.activa = !!activa;
 

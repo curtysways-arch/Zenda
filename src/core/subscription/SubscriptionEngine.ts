@@ -41,11 +41,11 @@ export class SubscriptionEngine {
       const planName = (sub.Plan?.name || '').toUpperCase();
       let planId: PlanId = 'FREE';
 
-      if (planName.includes('ENTERPRISE')) planId = 'ENTERPRISE';
+      if (planName.includes('ENTERPRISE') || planName.includes('EMPRESARIAL')) planId = 'ENTERPRISE';
       else if (planName.includes('PRO') || planName.includes('BUSINESS')) planId = 'PRO';
-      else if (planName.includes('GROWTH') || planName.includes('PLUS')) planId = 'GROWTH';
-      else if (planName.includes('STARTER') || planName.includes('BEGIN')) planId = 'STARTER';
-      else if (planName.includes('FREE')) planId = 'FREE';
+      else if (planName.includes('GROWTH') || planName.includes('PLUS') || planName.includes('CRECIMIENTO') || planName.includes('GESTION') || planName.includes('GESTIÓN')) planId = 'GROWTH';
+      else if (planName.includes('STARTER') || planName.includes('BEGIN') || planName.includes('INICIO') || planName.includes('BASICO') || planName.includes('BÁSICO')) planId = 'STARTER';
+      else if (planName.includes('FREE') || planName.includes('GRATIS')) planId = 'FREE';
       else planId = 'STARTER'; // Default
 
       const parseJson = (raw: any) => {

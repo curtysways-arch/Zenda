@@ -213,20 +213,24 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
 
                     {/* Acciones Rápidas */}
                     <div className="flex items-center gap-3">
-                        <a
-                            href={`https://wa.me/${cliente.telefono.replace(/\+/g, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-5 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-md shadow-emerald-500/20 active:scale-95 transition-all"
-                        >
-                            <MessageCircle size={16} /> WhatsApp
-                        </a>
-                        <a
-                            href={`tel:${cliente.telefono}`}
-                            className="px-5 py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-md active:scale-95 transition-all"
-                        >
-                            <Phone size={16} /> Llamar
-                        </a>
+                        {cliente?.telefono && (
+                            <>
+                                <a
+                                    href={`https://wa.me/${(cliente.telefono || '').replace(/\D/g, '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-5 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-md shadow-emerald-500/20 active:scale-95 transition-all"
+                                >
+                                    <MessageCircle size={16} /> WhatsApp
+                                </a>
+                                <a
+                                    href={`tel:${cliente.telefono}`}
+                                    className="px-5 py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-md active:scale-95 transition-all"
+                                >
+                                    <Phone size={16} /> Llamar
+                                </a>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -464,7 +468,7 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                                     const meta = mp.progresoRequerido || mp.Quest?.cantidadMeta || 1;
                                     const actual = mp.progresoActual || 0;
                                     const pct = Math.min(100, Math.floor((actual / meta) * 100));
-                                    const completada = mp.estado === 'COMPLETADA' || mp.estado === 'RECLAMADA' || actual >= meta;
+                                    const completada = mp.estado === 'COMPLETADA' || mp.estado === 'RECLAMADA' || mp.estado === 'RECOMPENSADA' || actual >= meta;
 
                                     return (
                                         <div key={mp.id} className="bg-slate-50 border border-slate-200/80 rounded-3xl p-6 space-y-3">
@@ -473,19 +477,32 @@ export default function ClienteDetallePage({ params }: { params: Promise<{ id: s
                                                     <h4 className="font-black text-slate-900 text-sm uppercase">{mp.Quest?.nombre || 'Misión'}</h4>
                                                     <p className="text-xs text-slate-500 font-medium">{mp.Quest?.descripcion}</p>
                                                 </div>
-                                                {completada && (
-                                                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase flex items-center gap-1">
-                                                        <CheckCircle2 size={12} /> Completada
+                                                {completada ? (
+                                                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase flex items-center gap-1 shadow-sm">
+                                                        <CheckCircle2 size={12} /> {mp.estado === 'RECLAMADA' || mp.estado === 'RECOMPENSADA' ? 'Recompensada' : 'Completada'}
+                                                    </span>
+                                                ) : (
+                                                    <span className={clsx(
+                                                        "px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1 shadow-sm",
+                                                        actual > 0 ? "bg-amber-100 text-amber-800 border border-amber-200" : "bg-slate-200/70 text-slate-600"
+                                                    )}>
+                                                        <Clock size={12} /> {actual > 0 ? 'En progreso' : 'Disponible'}
                                                     </span>
                                                 )}
                                             </div>
                                             <div className="space-y-1">
                                                 <div className="flex justify-between text-xs font-bold text-slate-500">
                                                     <span>Progreso</span>
-                                                    <span>{actual} / {meta}</span>
+                                                    <span className="font-black text-slate-800">{actual} / {meta} ({pct}%)</span>
                                                 </div>
                                                 <div className="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-indigo-600 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                                                    <div 
+                                                        className={clsx(
+                                                            "h-full rounded-full transition-all duration-500",
+                                                            completada ? "bg-emerald-500" : (actual > 0 ? "bg-pink-500" : "bg-slate-400")
+                                                        )} 
+                                                        style={{ width: `${pct}%` }} 
+                                                    />
                                                 </div>
                                             </div>
                                         </div>

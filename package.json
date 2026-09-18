@@ -17,6 +17,7 @@
     "@prisma/client": "latest",
     "@tailwindcss/typography": "^0.5.19",
     "@whiskeysockets/baileys": "^7.0.0-rc.9",
+    "adm-zip": "^0.6.1",
     "bcrypt": "latest",
     "bcryptjs": "^3.0.3",
     "clsx": "latest",
@@ -46,10 +47,12 @@
     "sqlite3": "^5.1.7",
     "tailwind-merge": "latest",
     "uuid": "^13.0.0",
-    "whatsapp-web.js": "^1.34.7"
+    "whatsapp-web.js": "^1.34.7",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.1",
+    "@types/adm-zip": "^0.5.8",
     "@types/bcrypt": "latest",
     "@types/bcryptjs": "^2.4.6",
     "@types/dompurify": "^3.0.5",

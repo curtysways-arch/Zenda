@@ -19,9 +19,10 @@ interface MobileServicesProps {
     primaryColor: string;
     onNew: () => void;
     onEdit: (service: any) => void;
+    onImport?: () => void;
 }
 
-export default function MobileServices({ services, primaryColor, onNew, onEdit }: MobileServicesProps) {
+export default function MobileServices({ services, primaryColor, onNew, onEdit, onImport }: MobileServicesProps) {
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredServices = services.filter(s => 
@@ -32,18 +33,29 @@ export default function MobileServices({ services, primaryColor, onNew, onEdit }
         <div className="flex flex-col min-h-screen bg-slate-50 animate-in fade-in duration-500 pb-24">
             {/* Header */}
             <div className="sticky top-0 z-30 bg-white border-b border-slate-100 p-6 space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                     <div>
                         <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic">Servicios</h2>
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Gestiona tus tratamientos</p>
                     </div>
-                    <button 
-                        onClick={onNew}
-                        className="size-12 rounded-2xl text-white shadow-xl flex items-center justify-center active:scale-90 transition-all"
-                        style={{ backgroundColor: primaryColor }}
-                    >
-                        <Plus size={24} strokeWidth={3} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {onImport && (
+                            <button 
+                                onClick={onImport}
+                                className="size-12 rounded-2xl bg-sky-50 text-sky-700 border border-sky-200/80 shadow-xs flex items-center justify-center active:scale-90 transition-all"
+                                title="Importar servicios desde archivo"
+                            >
+                                <Zap size={20} />
+                            </button>
+                        )}
+                        <button 
+                            onClick={onNew}
+                            className="size-12 rounded-2xl text-white shadow-xl flex items-center justify-center active:scale-90 transition-all"
+                            style={{ backgroundColor: primaryColor }}
+                        >
+                            <Plus size={24} strokeWidth={3} />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="relative group">

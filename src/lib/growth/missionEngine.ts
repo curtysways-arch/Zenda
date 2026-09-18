@@ -36,21 +36,51 @@ export class ConditionEvaluator {
   private static evaluateRule(payload: any, rule: any): boolean {
     if (!rule || !rule.field) return true;
     
-    const value = payload[rule.field];
+    // Soporte para campos anidados (ej. metadata.categoria o categoria)
+    const fieldPath = String(rule.field);
+    let value: any = payload;
+    
+    if (fieldPath.includes('.')) {
+      const parts = fieldPath.split('.');
+      for (const part of parts) {
+        if (value === null || value === undefined) break;
+        value = value[part];
+      }
+    } else {
+      value = payload[fieldPath] !== undefined 
+        ? payload[fieldPath] 
+        : (payload.metadata ? payload.metadata[fieldPath] : undefined);
+    }
+
     const target = rule.value;
 
     switch (rule.operator) {
       case 'EQUALS':
       case '==':
-        return String(value) === String(target);
+        return String(value ?? '').toLowerCase() === String(target ?? '').toLowerCase();
+      case 'NOT_EQUALS':
+      case '!=':
+        return String(value ?? '').toLowerCase() !== String(target ?? '').toLowerCase();
       case 'GREATER_THAN':
       case '>':
-        return parseFloat(String(value)) > parseFloat(String(target));
+        return parseFloat(String(value || 0)) > parseFloat(String(target || 0));
+      case 'GREATER_EQUAL':
+      case '>=':
+        return parseFloat(String(value || 0)) >= parseFloat(String(target || 0));
       case 'LESS_THAN':
       case '<':
-        return parseFloat(String(value)) < parseFloat(String(target));
+        return parseFloat(String(value || 0)) < parseFloat(String(target || 0));
+      case 'LESS_EQUAL':
+      case '<=':
+        return parseFloat(String(value || 0)) <= parseFloat(String(target || 0));
       case 'CONTAINS':
-        return Array.isArray(value) ? value.includes(target) : String(value).includes(String(target));
+        return Array.isArray(value)
+          ? value.some(v => String(v).toLowerCase() === String(target).toLowerCase())
+          : String(value ?? '').toLowerCase().includes(String(target ?? '').toLowerCase());
+      case 'IN':
+        return Array.isArray(target)
+          ? target.map(t => String(t).toLowerCase()).includes(String(value ?? '').toLowerCase())
+          : false;
       default:
         return true;
     }

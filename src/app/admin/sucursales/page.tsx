@@ -6,9 +6,11 @@ import { useState, useEffect } from 'react';
 import { 
   Store, Plus, MapPin, Phone, Mail, Building, 
   CheckCircle2, XCircle, AlertTriangle, Lock, 
-  ChevronRight, RefreshCw, ShieldAlert, Sparkles, Check
+  ChevronRight, RefreshCw, ShieldAlert, Sparkles, Check,
+  Car, Bus, ShieldCheck, Accessibility, Clock, ExternalLink
 } from 'lucide-react';
 import Link from 'next/link';
+import ImageUploader from '@/components/ui/ImageUploader';
 
 interface BranchItem {
   id: string;
@@ -18,8 +20,16 @@ interface BranchItem {
   city?: string | null;
   phone?: string | null;
   email?: string | null;
+  mapUrl?: string | null;
+  imagenUrl?: string | null;
+  horario?: string | null;
+  tieneParqueadero?: boolean;
+  tieneTransporte?: boolean;
+  tieneZonaSegura?: boolean;
+  tieneAccesoFacil?: boolean;
   isDefault: boolean;
   active: boolean;
+  settings?: any;
   cashRegisters?: Array<{ id: string; name: string; code?: string | null }>;
   _count?: { staff: number; branchAccess: number };
 }
@@ -51,7 +61,12 @@ export default function SucursalesAdminPage() {
     phone: '',
     email: '',
     mapUrl: '',
+    horario: '',
     imagenUrl: '',
+    tieneParqueadero: false,
+    tieneTransporte: false,
+    tieneZonaSegura: false,
+    tieneAccesoFacil: false,
     isDefault: false
   });
 
@@ -91,7 +106,12 @@ export default function SucursalesAdminPage() {
       phone: '',
       email: '',
       mapUrl: '',
+      horario: '',
       imagenUrl: '',
+      tieneParqueadero: false,
+      tieneTransporte: false,
+      tieneZonaSegura: false,
+      tieneAccesoFacil: false,
       isDefault: branches.length === 0
     });
     setIsModalOpen(true);
@@ -107,8 +127,13 @@ export default function SucursalesAdminPage() {
       city: b.city || settings.city || '',
       phone: b.phone || '',
       email: b.email || settings.email || '',
-      mapUrl: settings.mapUrl || '',
-      imagenUrl: settings.imagenUrl || '',
+      mapUrl: b.mapUrl || settings.mapUrl || '',
+      horario: b.horario || settings.horario || '',
+      imagenUrl: b.imagenUrl || settings.imagenUrl || '',
+      tieneParqueadero: b.tieneParqueadero ?? settings.tieneParqueadero ?? false,
+      tieneTransporte: b.tieneTransporte ?? settings.tieneTransporte ?? false,
+      tieneZonaSegura: b.tieneZonaSegura ?? settings.tieneZonaSegura ?? false,
+      tieneAccesoFacil: b.tieneAccesoFacil ?? settings.tieneAccesoFacil ?? false,
       isDefault: b.isDefault || (b as any).isMain || false
     });
     setIsModalOpen(true);
@@ -306,98 +331,160 @@ export default function SucursalesAdminPage() {
           {branches.map((b) => (
             <div
               key={b.id}
-              className={`rounded-2xl border bg-white p-5 space-y-4 transition-all shadow-xs relative flex flex-col justify-between ${
-                !b.active ? 'opacity-70 bg-slate-50/50 border-dashed border-slate-300' : 'border-slate-200/80 hover:border-slate-300'
+              className={`rounded-2xl border bg-white overflow-hidden transition-all shadow-xs relative flex flex-col justify-between ${
+                !b.active ? 'opacity-70 bg-slate-50/50 border-dashed border-slate-300' : 'border-slate-200/80 hover:border-slate-300 hover:shadow-md'
               }`}
             >
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-slate-900 text-base">
-                        {b.name}
-                      </h3>
-                      {b.isDefault && (
-                        <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-extrabold text-[10px] border border-indigo-200">
-                          Matriz
-                        </span>
+              {/* Fachada si existe */}
+              {b.imagenUrl ? (
+                <div className="w-full h-36 relative overflow-hidden bg-slate-100 border-b border-slate-100">
+                  <img 
+                    src={b.imagenUrl} 
+                    alt={b.name}
+                    className="w-full h-full object-cover"
+                  />
+                  {b.isDefault && (
+                    <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-indigo-600/90 backdrop-blur-xs text-white font-black text-[10px] shadow-sm">
+                      Matriz
+                    </span>
+                  )}
+                </div>
+              ) : null}
+
+              <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-slate-900 text-base">
+                          {b.name}
+                        </h3>
+                        {!b.imagenUrl && b.isDefault && (
+                          <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-extrabold text-[10px] border border-indigo-200">
+                            Matriz
+                          </span>
+                        )}
+                      </div>
+                      {b.code && (
+                        <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+                          CÓDIGO: {b.code}
+                        </p>
                       )}
                     </div>
-                    {b.code && (
-                      <p className="text-[11px] font-mono text-slate-400 mt-0.5">
-                        CÓDIGO: {b.code}
-                      </p>
+
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      b.active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200'
+                    }`}>
+                      {b.active ? 'Activa' : 'Inactiva'}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs text-slate-600">
+                    {b.address && (
+                      <div className="flex items-center gap-2 truncate">
+                        <MapPin size={13} className="text-slate-400 shrink-0" />
+                        <span className="truncate">{b.address}{b.city ? `, ${b.city}` : ''}</span>
+                      </div>
+                    )}
+                    {b.phone && (
+                      <div className="flex items-center gap-2 truncate">
+                        <Phone size={13} className="text-slate-400 shrink-0" />
+                        <span className="truncate">{b.phone}</span>
+                      </div>
+                    )}
+                    {b.horario && (
+                      <div className="flex items-center gap-2 truncate text-slate-500 font-medium">
+                        <Clock size={13} className="text-slate-400 shrink-0" />
+                        <span className="truncate">{b.horario}</span>
+                      </div>
+                    )}
+                    {b.email && (
+                      <div className="flex items-center gap-2 truncate">
+                        <Mail size={13} className="text-slate-400 shrink-0" />
+                        <span className="truncate">{b.email}</span>
+                      </div>
+                    )}
+                    {b.mapUrl && (
+                      <div className="pt-0.5">
+                        <a 
+                          href={b.mapUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] text-indigo-600 hover:text-indigo-800 font-semibold"
+                        >
+                          <ExternalLink size={11} /> Ver en Google Maps
+                        </a>
+                      </div>
                     )}
                   </div>
 
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    b.active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500 border border-slate-200'
-                  }`}>
-                    {b.active ? 'Activa' : 'Inactiva'}
-                  </span>
-                </div>
-
-                <div className="space-y-1.5 text-xs text-slate-600">
-                  {b.address && (
-                    <div className="flex items-center gap-2 truncate">
-                      <MapPin size={13} className="text-slate-400 shrink-0" />
-                      <span className="truncate">{b.address}{b.city ? `, ${b.city}` : ''}</span>
-                    </div>
-                  )}
-                  {b.phone && (
-                    <div className="flex items-center gap-2 truncate">
-                      <Phone size={13} className="text-slate-400 shrink-0" />
-                      <span className="truncate">{b.phone}</span>
-                    </div>
-                  )}
-                  {b.email && (
-                    <div className="flex items-center gap-2 truncate">
-                      <Mail size={13} className="text-slate-400 shrink-0" />
-                      <span className="truncate">{b.email}</span>
-                    </div>
-                  )}
-                </div>
-
-                {b.cashRegisters && b.cashRegisters.length > 0 && (
-                  <div className="pt-2 border-t border-slate-100">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                      Puntos de Cobro / Cajas
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {b.cashRegisters.map((cr) => (
-                        <span key={cr.id} className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-medium">
-                          {cr.name}
+                  {/* Chips de características de la sucursal */}
+                  {(b.tieneParqueadero || b.tieneTransporte || b.tieneZonaSegura || b.tieneAccesoFacil) && (
+                    <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-100">
+                      {b.tieneParqueadero && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-50 text-pink-600 text-[10px] font-bold">
+                          <Car size={10} /> Parqueadero
                         </span>
-                      ))}
+                      )}
+                      {b.tieneTransporte && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold">
+                          <Bus size={10} /> Transporte
+                        </span>
+                      )}
+                      {b.tieneZonaSegura && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold">
+                          <ShieldCheck size={10} /> Segura
+                        </span>
+                      )}
+                      {b.tieneAccesoFacil && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[10px] font-bold">
+                          <Accessibility size={10} /> Acceso Fácil
+                        </span>
+                      )}
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
 
-              {/* Botones de acción */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleOpenEdit(b)}
-                  className="text-xs font-bold text-slate-700 hover:text-indigo-600 transition-colors"
-                >
-                  Editar Datos
-                </button>
+                  {b.cashRegisters && b.cashRegisters.length > 0 && (
+                    <div className="pt-2 border-t border-slate-100">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                        Puntos de Cobro / Cajas
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {b.cashRegisters.map((cr) => (
+                          <span key={cr.id} className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-medium">
+                            {cr.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-                {!b.isDefault && (
+                {/* Botones de acción */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-2">
                   <button
                     type="button"
-                    onClick={() => handleToggleActive(b)}
-                    disabled={saving}
-                    className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${
-                      b.active
-                        ? 'text-red-600 hover:bg-red-50'
-                        : 'text-emerald-700 hover:bg-emerald-50'
-                    }`}
+                    onClick={() => handleOpenEdit(b)}
+                    className="text-xs font-bold text-slate-700 hover:text-indigo-600 transition-colors"
                   >
-                    {b.active ? 'Desactivar' : 'Activar Sede'}
+                    Editar Datos
                   </button>
-                )}
+
+                  {!b.isDefault && (
+                    <button
+                      type="button"
+                      onClick={() => handleToggleActive(b)}
+                      disabled={saving}
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${
+                        b.active
+                          ? 'text-red-600 hover:bg-red-50'
+                          : 'text-emerald-700 hover:bg-emerald-50'
+                      }`}
+                    >
+                      {b.active ? 'Desactivar' : 'Activar Sede'}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -407,8 +494,8 @@ export default function SucursalesAdminPage() {
       {/* Modal Crear / Editar Sucursal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <div className="w-full max-w-2xl max-h-[92vh] flex flex-col bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
               <h3 className="font-bold text-slate-900 text-base">
                 {editingBranch ? 'Editar Sucursal' : 'Nueva Sucursal'}
               </h3>
@@ -421,7 +508,7 @@ export default function SucursalesAdminPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="p-6 space-y-4">
+            <form onSubmit={handleSave} className="p-6 space-y-4 overflow-y-auto flex-1">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   Nombre de la Sucursal *
@@ -476,19 +563,34 @@ export default function SucursalesAdminPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Teléfono de Contacto
                   </label>
                   <input
                     type="text"
-                    placeholder="0999999999"
+                    placeholder="099 123 4567"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Horario de Atención
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Lun - Dom 8:00 AM - 11:00 PM"
+                    value={formData.horario}
+                    onChange={(e) => setFormData({ ...formData, horario: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Email de la Sucursal
@@ -501,35 +603,122 @@ export default function SucursalesAdminPage() {
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Link Google Maps (o iframe embed)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="https://maps.app.goo.gl/... o iframe"
+                    value={formData.mapUrl}
+                    onChange={(e) => setFormData({ ...formData, mapUrl: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Enlace de Google Maps (o iframe embed) para Landing
+              {/* Imagen de la Fachada */}
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <label className="block text-xs font-bold text-slate-700 mb-2">
+                  Imagen de la Fachada / Local (Opcional)
                 </label>
-                <input
-                  type="text"
-                  placeholder="https://maps.app.goo.gl/... o dirección exacta"
-                  value={formData.mapUrl}
-                  onChange={(e) => setFormData({ ...formData, mapUrl: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                <ImageUploader 
+                  category="page"
+                  currentUrl={formData.imagenUrl}
+                  onUploadSuccess={(media) => setFormData({ ...formData, imagenUrl: media.url })}
+                  onRemove={() => setFormData({ ...formData, imagenUrl: '' })}
+                  label="Subir foto de la sucursal"
+                  aspect="landscape"
                 />
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Este mapa se mostrará en tu página pública/landing para que tus clientes puedan llegar fácilmente.
-                </p>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Foto de la Sucursal (URL de imagen)
+              {/* CARACTERÍSTICAS DE LA UBICACIÓN */}
+              <div className="space-y-3 pt-2">
+                <label className="text-[11px] font-black text-slate-700 uppercase tracking-wider block">
+                  Características de la Ubicación
                 </label>
-                <input
-                  type="text"
-                  placeholder="https://... imagen de la fachada o interior"
-                  value={formData.imagenUrl}
-                  onChange={(e) => setFormData({ ...formData, imagenUrl: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Toggle Parqueadero */}
+                  <div className="flex items-center justify-between p-3.5 bg-white rounded-2xl border border-slate-200 shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-pink-50 text-pink-500 rounded-xl border border-pink-100/60">
+                        <Car size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">Parqueadero Disponible</p>
+                        <p className="text-[10px] text-slate-400 font-medium">Estacionamiento propio o convenio</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, tieneParqueadero: !formData.tieneParqueadero })}
+                      className={`w-11 h-6 rounded-full transition-all duration-300 relative border border-transparent ${formData.tieneParqueadero ? 'bg-pink-500' : 'bg-gray-200'}`}
+                    >
+                      <div className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full transition-all duration-300 shadow-xs ${formData.tieneParqueadero ? 'left-5.5' : 'left-0.5'}`} />
+                    </button>
+                  </div>
+
+                  {/* Toggle Transporte */}
+                  <div className="flex items-center justify-between p-3.5 bg-white rounded-2xl border border-slate-200 shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-indigo-50 text-indigo-500 rounded-xl border border-indigo-100/60">
+                        <Bus size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">Transporte Cercano</p>
+                        <p className="text-[10px] text-slate-400 font-medium">Paradas de bus o metro a pocos metros</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, tieneTransporte: !formData.tieneTransporte })}
+                      className={`w-11 h-6 rounded-full transition-all duration-300 relative border border-transparent ${formData.tieneTransporte ? 'bg-pink-500' : 'bg-gray-200'}`}
+                    >
+                      <div className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full transition-all duration-300 shadow-xs ${formData.tieneTransporte ? 'left-5.5' : 'left-0.5'}`} />
+                    </button>
+                  </div>
+
+                  {/* Toggle Zona Segura */}
+                  <div className="flex items-center justify-between p-3.5 bg-white rounded-2xl border border-slate-200 shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-emerald-50 text-emerald-500 rounded-xl border border-emerald-100/60">
+                        <ShieldCheck size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">Zona Segura</p>
+                        <p className="text-[10px] text-slate-400 font-medium">Sector vigilado, seguro y bien iluminado</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, tieneZonaSegura: !formData.tieneZonaSegura })}
+                      className={`w-11 h-6 rounded-full transition-all duration-300 relative border border-transparent ${formData.tieneZonaSegura ? 'bg-pink-500' : 'bg-gray-200'}`}
+                    >
+                      <div className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full transition-all duration-300 shadow-xs ${formData.tieneZonaSegura ? 'left-5.5' : 'left-0.5'}`} />
+                    </button>
+                  </div>
+
+                  {/* Toggle Acceso Fácil */}
+                  <div className="flex items-center justify-between p-3.5 bg-white rounded-2xl border border-slate-200 shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-amber-50 text-amber-500 rounded-xl border border-amber-100/60">
+                        <Accessibility size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">Acceso Fácil</p>
+                        <p className="text-[10px] text-slate-400 font-medium">Rampas de acceso, planta baja o ascensor</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, tieneAccesoFacil: !formData.tieneAccesoFacil })}
+                      className={`w-11 h-6 rounded-full transition-all duration-300 relative border border-transparent ${formData.tieneAccesoFacil ? 'bg-pink-500' : 'bg-gray-200'}`}
+                    >
+                      <div className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full transition-all duration-300 shadow-xs ${formData.tieneAccesoFacil ? 'left-5.5' : 'left-0.5'}`} />
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="pt-2">

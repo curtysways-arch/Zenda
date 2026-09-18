@@ -23,10 +23,13 @@ export default function UniversalHeroCarousel({
 
   const isSports = (negocio as any)?.tipoNegocio === 'SPORTS_COURTS';
   const isStore = (negocio as any)?.tipoNegocio === 'TIENDA' || (negocio as any)?.tipoNegocio === 'STORE' || (negocio as any)?.configuracion?.blueprintId === 'STORE';
+  const isGym = (negocio as any)?.tipoNegocio === 'GIMNASIO' || (negocio as any)?.tipoNegocio === 'GYM' || (negocio as any)?.tipoNegocio === 'FITNESS' || (negocio as any)?.configuracion?.blueprintId === 'GYM' || (negocio as any)?.configuracion?.blueprintId === 'GIMNASIO';
 
   // Imagen fallback inteligente por industria
   const defaultFallbackImage = isStore
     ? 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=1200'
+    : isGym
+    ? 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=1200'
     : 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&q=80&w=1200';
 
   // Normalizar items: Si no hay heroItems resolutivos, crear un ítem por defecto usando defaultImages o datos legacy
@@ -47,8 +50,8 @@ export default function UniversalHeroCarousel({
             originalPrice: null,
             button: {
               enabled: true,
-              text: null,
-              actionType: 'BOOK_SERVICE',
+              text: isStore ? 'Ver Catálogo' : isGym ? 'Ver Membresías' : null,
+              actionType: isStore ? 'PRODUCT' : isGym ? 'MEMBERSHIP' : 'BOOK_SERVICE',
               actionValue: null
             },
             position: i,
@@ -68,8 +71,8 @@ export default function UniversalHeroCarousel({
             originalPrice: null,
             button: {
               enabled: true,
-              text: null,
-              actionType: 'BOOK_SERVICE',
+              text: isStore ? 'Ver Catálogo' : isGym ? 'Ver Membresías' : null,
+              actionType: isStore ? 'PRODUCT' : isGym ? 'MEMBERSHIP' : 'BOOK_SERVICE',
               actionValue: null
             },
             position: 0,
@@ -93,6 +96,8 @@ export default function UniversalHeroCarousel({
   // Resolver texto de título y descripción por industria
   const defaultSubtitulo = isStore
     ? 'DESCUBRE NUESTRA COLECCIÓN Y RECIBE A DOMICILIO O RETIRA EN TIENDA.'
+    : isGym
+    ? 'ENTRENA AL MÁXIMO. PLANES DE MEMBRESÍA FLEXIBLES Y ACCESO INMEDIATO.'
     : 'RESERVA TU CITA DE FORMA ONLINE EN SENCILLOS PASOS.';
 
   const displayBadge = `BIENVENIDO A ${(negocio?.nombre || '').split(' - ')[0].toUpperCase()}`;
@@ -100,9 +105,9 @@ export default function UniversalHeroCarousel({
   const displayDescription = activeItem.description || negocio?.heroSubtitulo || defaultSubtitulo;
 
   // Resolver acción de botón y URL por industria
-  const button = activeItem.button || { enabled: true, actionType: 'BOOK_SERVICE' };
+  const button = activeItem.button || { enabled: true, actionType: isGym ? 'MEMBERSHIP' : 'BOOK_SERVICE' };
   const buttonEnabled = button.enabled !== false;
-  const defaultBtnText = isSports ? 'Elegir cancha' : isStore ? 'Ver Catálogo' : 'Elegir servicio';
+  const defaultBtnText = isSports ? 'Elegir cancha' : isStore ? 'Ver Catálogo' : isGym ? 'Ver Membresías' : 'Elegir servicio';
   const buttonText = button.text || defaultBtnText;
 
   const getButtonHref = () => {
@@ -126,14 +131,21 @@ export default function UniversalHeroCarousel({
     }
 
     // 4. Ir a Producto / Productos
-    if (action === 'PRODUCT' || action === 'VIEW_PRODUCT') {
+    if (action === 'PRODUCT' || action === 'VIEW_PRODUCT' || action === 'ALL_PRODUCTS') {
       if (val) return `/${slug}#producto-${val}`;
       return `/${slug}#productos`;
+    }
+
+    // 4B. Ir a Membresía / Planes de Gimnasio
+    if (action === 'MEMBERSHIP' || action === 'MEMBERSHIP_PLAN' || action === 'PLAN') {
+      if (val) return `/${slug}#plan-${val}`;
+      return `/${slug}#planes`;
     }
 
     // 5. Ir a Servicio / Servicios / Catálogo
     if (action === 'SERVICE' || action === 'BOOK_SERVICE') {
       if (isStore) return `/${slug}#productos`;
+      if (isGym) return `/${slug}#planes`;
       if (val) return `/${slug}/servicio/${val}`;
       return `/${slug}/servicios`;
     }
@@ -162,7 +174,9 @@ export default function UniversalHeroCarousel({
       }
     }
 
-    return isSports ? `/${slug}/canchas` : `/${slug}/servicios`;
+    if (isSports) return `/${slug}/canchas`;
+    if (isStore) return `/${slug}#productos`;
+    return `/${slug}/servicios`;
   };
 
   const buttonHref = getButtonHref();

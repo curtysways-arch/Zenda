@@ -15,7 +15,7 @@ export async function GET() {
         const profesores = await prisma.usuario.findMany({
             where: {
                 ...(negocioId ? { negocioId } : {}),
-                role: 'PROFESOR'
+                role: { in: ['PROFESOR', 'PROFESIONAL', 'STAFF', 'ADMIN_NEGOCIO', 'INSTRUCTOR'] }
             },
             select: {
                 id: true,

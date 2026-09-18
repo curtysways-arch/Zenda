@@ -33,6 +33,8 @@ export interface CanchaPublicLandingProps {
   torneos?: any[];
   sedes?: any[];
   paginasPersonalizadas?: any[];
+  cursos?: any[];
+  hasCoursesModule?: boolean;
 }
 
 export default function CanchaPublicLanding({
@@ -40,7 +42,9 @@ export default function CanchaPublicLanding({
   canchas = [],
   torneos = [],
   sedes = [],
-  paginasPersonalizadas = []
+  paginasPersonalizadas = [],
+  cursos = [],
+  hasCoursesModule = false
 }: CanchaPublicLandingProps) {
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
   const defaultBanner = 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&q=80&w=1200';
@@ -91,23 +95,25 @@ export default function CanchaPublicLanding({
 
   return (
     <div className="min-h-screen bg-[#0a0f1d] text-white font-sans pb-32 relative overflow-x-hidden">
-      {/* 1. TOP BAR DEMO (AMBER) */}
-      <div className="bg-amber-500 text-slate-950 px-4 py-2 flex items-center justify-between gap-2 shadow-md z-[60] relative">
-        <div className="flex items-center gap-2 max-w-7xl mx-auto w-full justify-between">
-          <div className="flex items-center gap-2">
-            <Rocket className="size-4 animate-bounce" />
-            <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">
-              ESTÁS VIENDO UNA DEMO DEL SISTEMA
-            </span>
+      {/* 1. TOP BAR DEMO (AMBER) - Solo visible en modo demo */}
+      {(negocio?.isDemo || negocio?.slug === 'demo' || negocio?.slug === 'cancha-demo') && (
+        <div className="bg-amber-500 text-slate-950 px-4 py-2 flex items-center justify-between gap-2 shadow-md z-[60] relative">
+          <div className="flex items-center gap-2 max-w-7xl mx-auto w-full justify-between">
+            <div className="flex items-center gap-2">
+              <Rocket className="size-4 animate-bounce" />
+              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">
+                ESTÁS VIENDO UNA DEMO DEL SISTEMA
+              </span>
+            </div>
+            <Link
+              href="/register"
+              className="bg-white text-slate-950 px-3.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all shadow-md"
+            >
+              CREAR MI NEGOCIO GRATIS
+            </Link>
           </div>
-          <Link
-            href="/register"
-            className="bg-white text-slate-950 px-3.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all shadow-md"
-          >
-            CREAR MI NEGOCIO GRATIS
-          </Link>
         </div>
-      </div>
+      )}
 
       {/* 2. HEADER CON LOGO, SEDE Y ACCESOS RÁPIDOS */}
       <header className="sticky top-0 z-50 bg-[#0a0f1d]/90 backdrop-blur-xl border-b border-white/5">
@@ -313,125 +319,195 @@ export default function CanchaPublicLanding({
         </div>
       </section>
 
-      {/* 5. ACADEMIA & CURSOS */}
-      <section id="academia" className="max-w-7xl mx-auto px-6 py-10 space-y-8">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-0.5 w-6 bg-emerald-500 rounded-full" />
-            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">
-              FORMACIÓN
-            </span>
-          </div>
-          <h3 className="text-2xl sm:text-4xl font-black italic tracking-tight text-white uppercase">
-            ACADEMIA & CURSOS
-          </h3>
-          <p className="text-xs text-slate-400 font-medium mt-1">
-            Apúntate a nuestras escuelas de entrenamiento y mejora tu juego.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-slate-900/90 rounded-[2.5rem] overflow-hidden border border-slate-800 p-6 space-y-6 flex flex-col justify-between">
-            <div className="space-y-4">
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800">
-                <img 
-                  src="https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&q=80&w=800" 
-                  alt="Escuela de Verano"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-3 left-3 bg-emerald-500 text-slate-950 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
-                  PAGO MENSUAL
-                </div>
-                <div className="absolute top-3 right-3 bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full flex items-center gap-1 border border-slate-800">
-                  <Users size={12} className="text-emerald-400" />
-                  <span>3/20</span>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-xl font-black text-white italic uppercase tracking-tight">ESCUELA DE VERANO</h4>
-                <p className="text-xs text-emerald-400 italic font-semibold mt-0.5">"¡Donde nacen las futuras estrellas!"</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <div className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
-                  <span className="text-[9px] font-black text-slate-500 uppercase block">EDADES</span>
-                  <span className="text-xs font-bold text-slate-200">5 - 12 años</span>
-                </div>
-                <div className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
-                  <span className="text-[9px] font-black text-slate-500 uppercase block">INSCRITOS</span>
-                  <span className="text-xs font-bold text-slate-200">3 alumnos</span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <span className="text-[9px] font-black text-slate-500 uppercase block">HORARIOS DE CLASE</span>
-                <div className="flex gap-2">
-                  <span className="px-3 py-1 bg-emerald-950/60 border border-emerald-800/80 text-emerald-400 rounded-xl text-xs font-bold">Lun • 14:00</span>
-                  <span className="px-3 py-1 bg-emerald-950/60 border border-emerald-800/80 text-emerald-400 rounded-xl text-xs font-bold">Mar • 14:00</span>
-                </div>
-              </div>
+      {/* 5. ACADEMIA & CURSOS - Solo si el módulo está activo y hay cursos creados */}
+      {hasCoursesModule && cursos && cursos.length > 0 && (
+        <section id="academia" className="max-w-7xl mx-auto px-6 py-10 space-y-8">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-0.5 w-6 bg-emerald-500 rounded-full" />
+              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">
+                FORMACIÓN
+              </span>
             </div>
+            <h3 className="text-2xl sm:text-4xl font-black italic tracking-tight text-white uppercase">
+              ACADEMIA & CURSOS
+            </h3>
+            <p className="text-xs text-slate-400 font-medium mt-1">
+              Apúntate a nuestras escuelas de entrenamiento y mejora tu juego.
+            </p>
+          </div>
 
-            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-              <div>
-                <span className="text-[9px] font-bold text-slate-500 uppercase block">INVERSIÓN</span>
-                <span className="text-2xl font-black text-white">$30</span>
-              </div>
-              <button className="bg-white text-slate-950 hover:bg-slate-100 px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all">
-                <span>MÁS DETALLES</span>
-                <ChevronRight size={14} />
-              </button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {cursos.map((curso: any) => {
+              const enrolledCount = curso._count?.enrollments || 0;
+              const capacity = curso.capacity || 20;
+              const schedules = curso.schedules || [];
+              const priceDisplay = curso.price ? `$${Number(curso.price).toLocaleString()}` : 'Gratis';
+              const paymentType = String(curso.payment_type || 'MENSUAL').toUpperCase() === 'TOTAL' ? 'PAGO ÚNICO' : 'PAGO MENSUAL';
+
+              return (
+                <div key={curso.id} className="bg-slate-900/90 rounded-[2.5rem] overflow-hidden border border-slate-800 p-6 space-y-6 flex flex-col justify-between hover:border-emerald-500/40 transition-all">
+                  <div className="space-y-4">
+                    <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800">
+                      <img 
+                        src={curso.imageUrl || defaultBanner} 
+                        alt={curso.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-3 left-3 bg-emerald-500 text-slate-950 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+                        {paymentType}
+                      </div>
+                      <div className="absolute top-3 right-3 bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full flex items-center gap-1 border border-slate-800">
+                        <Users size={12} className="text-emerald-400" />
+                        <span>{enrolledCount}/{capacity}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-xl font-black text-white italic uppercase tracking-tight">{curso.name}</h4>
+                      {curso.description && (
+                        <p className="text-xs text-emerald-400 italic font-semibold mt-0.5 line-clamp-2">"{curso.description}"</p>
+                      )}
+                    </div>
+
+                    {(curso.min_age != null || curso.max_age != null) && (
+                      <div className="grid grid-cols-2 gap-3 pt-2">
+                        <div className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                          <span className="text-[9px] font-black text-slate-500 uppercase block">EDADES</span>
+                          <span className="text-xs font-bold text-slate-200">
+                            {curso.min_age && curso.max_age 
+                              ? `${curso.min_age} - ${curso.max_age} años` 
+                              : curso.min_age ? `Desde ${curso.min_age} años` : `Hasta ${curso.max_age} años`}
+                          </span>
+                        </div>
+                        <div className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
+                          <span className="text-[9px] font-black text-slate-500 uppercase block">INSCRITOS</span>
+                          <span className="text-xs font-bold text-slate-200">{enrolledCount} alumnos</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {schedules.length > 0 && (
+                      <div className="space-y-2">
+                        <span className="text-[9px] font-black text-slate-500 uppercase block">HORARIOS DE CLASE</span>
+                        <div className="flex flex-wrap gap-2">
+                          {schedules.map((s: any, idx: number) => {
+                            const daysMap: Record<number, string> = { 1: 'Lun', 2: 'Mar', 3: 'Mié', 4: 'Jue', 5: 'Vie', 6: 'Sáb', 0: 'Dom' };
+                            const dayName = daysMap[s.day_of_week] || 'Día';
+                            return (
+                              <span key={idx} className="px-3 py-1 bg-emerald-950/60 border border-emerald-800/80 text-emerald-400 rounded-xl text-xs font-bold">
+                                {dayName} • {s.start_time || '14:00'}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+                    <div>
+                      <span className="text-[9px] font-bold text-slate-500 uppercase block">INVERSIÓN</span>
+                      <span className="text-2xl font-black text-white">{priceDisplay}</span>
+                    </div>
+                    <Link
+                      href={`/${negocio.slug}/cursos/${curso.id}`}
+                      className="bg-white text-slate-950 hover:bg-slate-100 px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all"
+                    >
+                      <span>MÁS DETALLES</span>
+                      <ChevronRight size={14} />
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* 6. NUESTRAS SEDES - Solo si hay sedes o el negocio tiene dirección */}
+      {(sedes.length > 0 || negocio.direccion) && (
+        <section id="sedes" className="max-w-7xl mx-auto px-6 py-10 space-y-8">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-0.5 w-6 bg-emerald-500 rounded-full" />
+              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">
+                DÓNDE ESTAMOS
+              </span>
             </div>
+            <h3 className="text-2xl sm:text-4xl font-black italic tracking-tight text-white uppercase">
+              Nuestras Sedes
+            </h3>
+            <p className="text-xs text-slate-400 font-medium mt-1">
+              Encuéntranos en cualquiera de nuestras ubicaciones.
+            </p>
           </div>
-        </div>
-      </section>
 
-      {/* 6. NUESTRAS SEDES */}
-      <section id="sedes" className="max-w-7xl mx-auto px-6 py-10 space-y-8">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-0.5 w-6 bg-emerald-500 rounded-full" />
-            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">
-              DÓNDE ESTAMOS
-            </span>
-          </div>
-          <h3 className="text-2xl sm:text-4xl font-black italic tracking-tight text-white uppercase">
-            Nuestras Sedes
-          </h3>
-          <p className="text-xs text-slate-400 font-medium mt-1">
-            Encuéntranos en cualquiera de nuestras ubicaciones.
-          </p>
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {sedes.length > 0 ? (
+              sedes.map((sede: any) => (
+                <div key={sede.id || sede.nombre} className="bg-slate-900/90 rounded-[2.5rem] overflow-hidden border border-slate-800 p-6 space-y-4">
+                  <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800">
+                    <img 
+                      src={sede.imageUrl || defaultBanner} 
+                      alt={sede.nombre}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full flex items-center gap-1 border border-slate-800">
+                      <span>Maps</span>
+                      <ExternalLink size={12} className="text-emerald-400" />
+                    </div>
+                  </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-slate-900/90 rounded-[2.5rem] overflow-hidden border border-slate-800 p-6 space-y-4">
-            <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800">
-              <img 
-                src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=800" 
-                alt="Sede Simón Bolívar"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full flex items-center gap-1 border border-slate-800">
-                <span>Maps</span>
-                <ExternalLink size={12} className="text-emerald-400" />
+                  <h4 className="text-lg font-black text-white italic uppercase tracking-tight">{sede.nombre}</h4>
+                  {sede.direccion && <p className="text-xs text-slate-400">{sede.direccion}</p>}
+
+                  <a 
+                    href={sede.mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${sede.nombre} ${sede.direccion || ''}`)}`}
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="w-full py-3 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+                  >
+                    <MapPin size={16} />
+                    <span>VER EN GOOGLE MAPS</span>
+                  </a>
+                </div>
+              ))
+            ) : (
+              <div className="bg-slate-900/90 rounded-[2.5rem] overflow-hidden border border-slate-800 p-6 space-y-4">
+                <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800">
+                  <img 
+                    src={negocio.bannerUrl || defaultBanner} 
+                    alt={negocio.nombre}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full flex items-center gap-1 border border-slate-800">
+                    <span>Maps</span>
+                    <ExternalLink size={12} className="text-emerald-400" />
+                  </div>
+                </div>
+
+                <h4 className="text-lg font-black text-white italic uppercase tracking-tight">
+                  {negocio.nombreSede || negocio.nombre || 'SEDE PRINCIPAL'}
+                </h4>
+                {negocio.direccion && (
+                  <p className="text-xs text-slate-400">{negocio.direccion} {negocio.ciudad ? `• ${negocio.ciudad}` : ''}</p>
+                )}
+
+                <a 
+                  href={negocio.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${negocio.nombre} ${negocio.direccion || ''} ${negocio.ciudad || ''}`)}`}
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="w-full py-3 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+                >
+                  <MapPin size={16} />
+                  <span>VER EN GOOGLE MAPS</span>
+                </a>
               </div>
-            </div>
-
-            <h4 className="text-lg font-black text-white italic uppercase tracking-tight">SIMÓN BOLÍVAR</h4>
-
-            <a 
-              href="https://maps.google.com" 
-              target="_blank" 
-              rel="noreferrer"
-              className="w-full py-3 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
-            >
-              <MapPin size={16} />
-              <span>VER EN GOOGLE MAPS</span>
-            </a>
+            )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 7. EXPERIENCIA DE PRIMERA (SERVICIOS) */}
       <section id="servicios" className="max-w-7xl mx-auto px-6 py-10 space-y-8 border-t border-white/5">
@@ -474,48 +550,62 @@ export default function CanchaPublicLanding({
         </div>
       </section>
 
-      {/* 8. NOVEDADES & EVENTOS */}
-      <section id="eventos" className="max-w-7xl mx-auto px-6 py-10 space-y-8 border-t border-white/5">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-0.5 w-6 bg-emerald-500 rounded-full" />
-            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">
-              EXCLUSIVOS
-            </span>
-          </div>
-          <h3 className="text-2xl sm:text-4xl font-black italic tracking-tight text-white uppercase">
-            NOVEDADES & EVENTOS
-          </h3>
-          <p className="text-xs text-slate-400 font-medium mt-1">
-            No te pierdas las últimas noticias, torneos relámpago y contenido exclusivo que tenemos preparado para ti.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-slate-900/90 rounded-[2.5rem] overflow-hidden border border-slate-800 p-6 space-y-6">
-            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800">
-              <img 
-                src="https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&q=80&w=800" 
-                alt="Torneo Relámpago"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-xl border border-slate-800 text-center leading-tight">
-                MAR<br /><span className="text-base font-black">29</span>
-              </div>
-              <div className="absolute top-3 right-3 bg-emerald-500 text-slate-950 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
-                ACTIVO
-              </div>
+      {/* 8. NOVEDADES & EVENTOS - Solo si hay torneos reales */}
+      {torneos && torneos.length > 0 && (
+        <section id="eventos" className="max-w-7xl mx-auto px-6 py-10 space-y-8 border-t border-white/5">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-0.5 w-6 bg-emerald-500 rounded-full" />
+              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">
+                EXCLUSIVOS
+              </span>
             </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <button className="py-2.5 px-5 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all">
-                <span>VER DETALLES</span>
-                <ChevronRight size={14} />
-              </button>
-            </div>
+            <h3 className="text-2xl sm:text-4xl font-black italic tracking-tight text-white uppercase">
+              NOVEDADES & EVENTOS
+            </h3>
+            <p className="text-xs text-slate-400 font-medium mt-1">
+              No te pierdas las últimas noticias, torneos relámpago y contenido exclusivo que tenemos preparado para ti.
+            </p>
           </div>
-        </div>
-      </section>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {torneos.map((torneo: any) => (
+              <div key={torneo.id} className="bg-slate-900/90 rounded-[2.5rem] overflow-hidden border border-slate-800 p-6 space-y-6">
+                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800">
+                  <img 
+                    src={torneo.imageUrl || defaultBanner} 
+                    alt={torneo.nombre || 'Torneo'}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-xl border border-slate-800 text-center leading-tight">
+                    {torneo.fecha ? new Date(torneo.fecha).toLocaleDateString('es', { month: 'short', day: 'numeric' }).toUpperCase() : 'ACTIVO'}
+                  </div>
+                  <div className="absolute top-3 right-3 bg-emerald-500 text-slate-950 text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+                    {torneo.estado || 'ACTIVO'}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-xl font-black text-white italic uppercase tracking-tight">{torneo.nombre}</h4>
+                  {torneo.descripcion && (
+                    <p className="text-xs text-slate-400 mt-1 line-clamp-2">{torneo.descripcion}</p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <Link
+                    href={`/${negocio.slug}/torneos/${torneo.id}`}
+                    className="py-2.5 px-5 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all"
+                  >
+                    <span>VER DETALLES</span>
+                    <ChevronRight size={14} />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 9. PÁGINAS PERSONALIZADAS */}
       {paginasPersonalizadas && paginasPersonalizadas.length > 0 && (
@@ -555,10 +645,12 @@ export default function CanchaPublicLanding({
             <span className="text-[9px] font-black uppercase tracking-widest">RESERVAS</span>
           </Link>
 
-          <Link href={`/${negocio.slug}/mis-reservas?tab=academia`} className="flex flex-col items-center justify-center gap-1 text-white/40 hover:text-white">
-            <GraduationCap className="size-5" />
-            <span className="text-[9px] font-black uppercase tracking-widest">ACADEMIA</span>
-          </Link>
+          {hasCoursesModule && cursos && cursos.length > 0 && (
+            <Link href={`/${negocio.slug}/mis-reservas?tab=academia`} className="flex flex-col items-center justify-center gap-1 text-white/40 hover:text-white">
+              <GraduationCap className="size-5" />
+              <span className="text-[9px] font-black uppercase tracking-widest">ACADEMIA</span>
+            </Link>
+          )}
 
           <Link href={`/${negocio.slug}/perfil`} className="flex flex-col items-center justify-center gap-1 text-white/40 hover:text-white">
             <User className="size-5" />

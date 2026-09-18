@@ -47,13 +47,12 @@ export default function DelegatedAdminBanner({ businessName, expiresAt, isDemo }
             });
             if (res.ok) {
                 const data = await res.json();
-                router.push(expired ? '/superadmin?expired=true' : (data.redirectUrl || '/superadmin'));
-                router.refresh();
+                window.location.href = expired ? '/superadmin/negocios?expired=true' : (data.redirectUrl || '/superadmin/negocios');
             } else {
-                router.push('/superadmin');
+                window.location.href = '/superadmin/negocios';
             }
         } catch (error) {
-            router.push('/superadmin');
+            window.location.href = '/superadmin/negocios';
         }
     };
 

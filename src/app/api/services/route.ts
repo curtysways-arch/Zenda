@@ -1,17 +1,23 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 import crypto from 'crypto';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
+import { planLimitValidator } from '@/lib/services/planLimitValidator';
+import { checkDemoRestriction } from '@/lib/demo-protection';
 
 export async function GET(req: Request) {
-    const { searchParams } = new URL(req.url);
-    let negocioId = searchParams.get('negocioId');
+    const session = await getEffectiveAdminSession();
+    const sessionNegocioId = (session?.user as any)?.negocioId;
+    const isDelegated = (session?.user as any)?.isDelegated === true;
+    const isSuperAdmin = (session?.user as any)?.role === 'SUPERADMIN' || (session?.user as any)?.roles?.includes('SUPERADMIN');
 
-    // Si no está en params, intentar obtener de la sesión
-    if (!negocioId) {
-        const session = await getServerSession(authOptions);
-        negocioId = (session?.user as any)?.negocioId;
+    const { searchParams } = new URL(req.url);
+    const paramNegocioId = searchParams.get('negocioId');
+
+    // En sesión delegada o admin normal, el negocioId de la sesión efectiva manda
+    let negocioId = sessionNegocioId;
+    if (!negocioId || (isSuperAdmin && !isDelegated && paramNegocioId)) {
+        negocioId = paramNegocioId || sessionNegocioId;
     }
 
     if (!negocioId || negocioId === 'undefined') {
@@ -46,13 +52,18 @@ export async function GET(req: Request) {
     }
 }
 
-import { planLimitValidator } from '@/lib/services/planLimitValidator';
-import { checkDemoRestriction } from '@/lib/demo-protection';
-
 export async function POST(req: Request) {
     try {
+        const session = await getEffectiveAdminSession();
+        const sessionNegocioId = (session?.user as any)?.negocioId;
+
         const body = await req.json();
-        const { nombre, categoryId, tipo, duracion, precio, negocioId, ubicacionId, extraInfo, imageMediaId, staffIds } = body;
+        const { nombre, categoryId, tipo, duracion, precio, ubicacionId, extraInfo, imageMediaId, staffIds } = body;
+        const negocioId = sessionNegocioId || body.negocioId;
+
+        if (!negocioId) {
+            return NextResponse.json({ error: 'Negocio ID requerido' }, { status: 400 });
+        }
 
         // PROTECCIÓN MODO DEMO
         const demoCheck = await checkDemoRestriction(negocioId);

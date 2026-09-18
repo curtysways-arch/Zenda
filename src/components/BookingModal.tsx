@@ -83,8 +83,19 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
     const totalMinutes = h * 60 + m + duracionMin;
     const horaFin = `${Math.floor(totalMinutes / 60).toString().padStart(2, '0')}:${(totalMinutes % 60).toString().padStart(2, '0')}`;
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        
+        if (!formData.nombre.trim()) {
+            alert('Por favor, ingresa tu nombre completo.');
+            return;
+        }
+
+        if (!formData.telefono.trim()) {
+            alert('Por favor, ingresa tu número de celular o WhatsApp para contactarte.');
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -97,8 +108,8 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
             ].filter(Boolean).join(' | ');
 
             const payload = {
-                clienteNombre: formData.nombre,
-                clienteTelefono: formData.telefono,
+                clienteNombre: formData.nombre.trim(),
+                clienteTelefono: formData.telefono.trim(),
                 comentarios: comentarioFinal,
                 fecha: format(bookingData.date, 'yyyy-MM-dd'),
                 horaInicio: bookingData.hour,
@@ -117,25 +128,28 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
                 body: JSON.stringify(payload),
             });
 
-            if (!response.ok) throw new Error('Error al crear la reserva');
-            
-            const data = await response.json();
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok || !data.success) {
+                alert(data.error || 'Error al procesar la reserva. Por favor intente nuevamente.');
+                return;
+            }
             
             // Guardar info para la próxima vez
             localStorage.setItem('customerInfo', JSON.stringify({
-                nombre: formData.nombre,
-                telefono: formData.telefono
+                nombre: formData.nombre.trim(),
+                telefono: formData.telefono.trim()
             }));
 
             setSuccess(true);
             setTimeout(() => {
                 onClose();
                 router.push(`/${bookingData.slug}/confirmacion/${data.id}`);
-            }, 1200);
+            }, 1000);
 
-        } catch (error) {
-            console.error(error);
-            alert('Error al procesar la reserva. Por favor intente nuevamente.');
+        } catch (error: any) {
+            console.error('Error al enviar reserva:', error);
+            alert('Error de conexión o al procesar la reserva: ' + (error?.message || 'Intente de nuevo'));
         } finally {
             setLoading(false);
         }
@@ -269,8 +283,8 @@ export default function BookingModal({ isOpen, onClose, bookingData }: BookingMo
                     </div>
 
                     <button
-                        type="submit"
-                        form="booking-modal-form"
+                        type="button"
+                        onClick={() => handleSubmit()}
                         disabled={loading || success}
                         className={`w-full h-15 rounded-2xl text-[12px] font-black text-white uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all shadow-xl cursor-pointer active:scale-[0.98] ${
                             success 

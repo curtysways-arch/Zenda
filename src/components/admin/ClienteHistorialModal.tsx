@@ -402,11 +402,11 @@ export default function ClienteHistorialModal({
                                             const meta = mp.progresoRequerido || mp.Quest?.cantidadMeta || 1;
                                             const actual = mp.progresoActual || 0;
                                             const pct = Math.min(100, Math.floor((actual / meta) * 100));
-                                            const completada = mp.estado === 'COMPLETADA' || mp.estado === 'RECLAMADA' || actual >= meta;
+                                            const completada = mp.estado === 'COMPLETADA' || mp.estado === 'RECLAMADA' || mp.estado === 'RECOMPENSADA' || actual >= meta;
 
                                             return (
                                                 <div 
-                                                    key={mp.id}
+                                                    key={mp.id} 
                                                     className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-[2rem] p-5 shadow-sm space-y-4"
                                                 >
                                                     <div className="flex justify-between items-start gap-4">
@@ -421,9 +421,16 @@ export default function ClienteHistorialModal({
                                                                 <p className="text-[9px] font-bold text-slate-400 mt-1">{mp.Quest?.descripcion}</p>
                                                             </div>
                                                         </div>
-                                                        {completada && (
+                                                        {completada ? (
                                                             <span className="flex items-center gap-1 text-[8px] font-black text-emerald-500 uppercase tracking-wider bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
-                                                                <CheckCircle2 size={10} /> Completada
+                                                                <CheckCircle2 size={10} /> {mp.estado === 'RECLAMADA' || mp.estado === 'RECOMPENSADA' ? 'Recompensada' : 'Completada'}
+                                                            </span>
+                                                        ) : (
+                                                            <span className={clsx(
+                                                                "flex items-center gap-1 text-[8px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border",
+                                                                actual > 0 ? "text-amber-600 bg-amber-50 border-amber-100" : "text-slate-500 bg-slate-100 border-slate-200"
+                                                            )}>
+                                                                <Clock size={10} /> {actual > 0 ? 'En progreso' : 'Disponible'}
                                                             </span>
                                                         )}
                                                     </div>

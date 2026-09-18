@@ -67,8 +67,25 @@ export async function POST(
         
         const durEnHoras = totalDuracionMinutos / 60;
         
-        const [h, m] = horaInicio.split(':').map(Number);
-        const totalMinFin = h * 60 + m + totalDuracionMinutos;
+        // Normalizador seguro de hora a formato 24h HH:mm
+        const normalizeTime = (raw: string): string => {
+            if (!raw) return '08:00';
+            const str = raw.trim().toUpperCase();
+            const isPM = str.includes('PM');
+            const isAM = str.includes('AM');
+            const parts = str.replace(/[^0-9:]/g, '').split(':').filter(Boolean);
+            let h = parseInt(parts[0] || '8', 10);
+            let m = parseInt(parts[1] || '0', 10);
+            if (isPM && h < 12) h += 12;
+            if (isAM && h === 12) h = 0;
+            if (isNaN(h) || h < 0 || h > 23) h = 8;
+            if (isNaN(m) || m < 0 || m > 59) m = 0;
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        };
+
+        const cleanHoraInicio = normalizeTime(horaInicio);
+        const [h, m] = cleanHoraInicio.split(':').map(Number);
+        const totalMinFin = (h || 0) * 60 + (m || 0) + totalDuracionMinutos;
         const horaFin = `${Math.floor(totalMinFin / 60).toString().padStart(2, '0')}:${(totalMinFin % 60).toString().padStart(2, '0')}`;
 
         // PROTECCIÓN MODO DEMO
@@ -107,7 +124,7 @@ export async function POST(
                     estado: { notIn: ['rejected', 'RECHAZADA', 'cancelled', 'CANCELADA', 'expired', 'EXPIRADA'] },
                     AND: [
                         { horaInicio: { lt: horaFin } },
-                        { horaFin: { gt: horaInicio } }
+                        { horaFin: { gt: cleanHoraInicio } }
                     ]
                 }
             });
@@ -328,7 +345,7 @@ export async function POST(
 
             const dataToCreate: any = {
                 fecha: reservationDate,
-                horaInicio: String(horaInicio),
+                horaInicio: String(cleanHoraInicio),
                 horaFin: String(horaFin),
                 duracion: Math.ceil(totalDuracionMinutos),
                 total: totalFinal,

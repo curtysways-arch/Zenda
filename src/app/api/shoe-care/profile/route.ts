@@ -9,10 +9,22 @@ export async function GET(req: Request) {
     const negocioId = searchParams.get('negocioId') || 'sneaker-wash-id';
 
     const negocio = await prisma.negocio.findUnique({
-      where: { id: negocioId }
+      where: { id: negocioId },
+      include: {
+        Service: {
+          orderBy: { createdAt: 'asc' }
+        }
+      }
     });
 
-    return NextResponse.json(negocio);
+    if (!negocio) {
+      return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      ...negocio,
+      services: (negocio as any).Service || []
+    });
   } catch (error) {
     console.error('Error fetching business profile:', error);
     return NextResponse.json({ error: 'Error al obtener perfil' }, { status: 500 });

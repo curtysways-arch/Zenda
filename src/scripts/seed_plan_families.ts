@@ -66,6 +66,11 @@ export const CANONICAL_MODULES = [
     { code: 'LOYALTY', name: 'Programa de Puntos y Fidelización', icon: 'Star', description: 'Acumulación de puntos por compras' },
     { code: 'COMMUNICATION_CENTER', name: 'Centro de Comunicación', icon: 'MessageSquare', description: 'Campañas de difusión masiva por WhatsApp y Push' },
 
+    // SALUD & ODONTOLOGÍA
+    { code: 'CLINICAL_RECORDS', name: 'Historia Clínica Digital', icon: 'FileSpreadsheet', description: 'Expedientes clínicos, antecedentes sistémicos y evolución por paciente' },
+    { code: 'ODONTOGRAM', name: 'Odontograma Interactivo', icon: 'Smile', description: 'Registro visual y dental interactivo por piezas' },
+    { code: 'DENTAL_DOCUMENTS', name: 'Consentimientos y Recetas', icon: 'FileCheck', description: 'Consentimientos informados y prescripción dental' },
+
     // OPERACIONES
     { code: 'INVENTORY', name: 'Control de Inventarios', icon: 'Boxes', description: 'Control de existencias y alertas de stock bajo' },
     { code: 'REPORTS', name: 'Métricas y Reportes Financieros', icon: 'BarChart3', description: 'Informes detallados de ventas y rendimiento' }
@@ -80,7 +85,10 @@ export const CANONICAL_DEPENDENCIES = [
     { moduleCode: 'PICKUP', dependsOnCode: 'ORDERS' },
     { moduleCode: 'COURSES', dependsOnCode: 'COURTS' },
     { moduleCode: 'COURSES', dependsOnCode: 'CUSTOMERS' },
-    { moduleCode: 'COMMUNICATION_CENTER', dependsOnCode: 'CUSTOMERS' }
+    { moduleCode: 'COMMUNICATION_CENTER', dependsOnCode: 'CUSTOMERS' },
+    { moduleCode: 'ODONTOGRAM', dependsOnCode: 'CLINICAL_RECORDS' },
+    { moduleCode: 'DENTAL_DOCUMENTS', dependsOnCode: 'CLINICAL_RECORDS' },
+    { moduleCode: 'CLINICAL_RECORDS', dependsOnCode: 'CUSTOMERS' }
 ];
 
 export const CANONICAL_FAMILIES = [
@@ -88,7 +96,8 @@ export const CANONICAL_FAMILIES = [
     { code: 'SERVICIOS', name: 'Citas & Servicios', slug: 'servicios', icon: 'Scissors', displayOrder: 2 },
     { code: 'CANCHAS', name: 'Canchas & Clubes Deportivos', slug: 'canchas', icon: 'Trophy', displayOrder: 3 },
     { code: 'LAVANDERIA', name: 'Lavanderías & Cuidado', slug: 'lavanderias', icon: 'Shirt', displayOrder: 4 },
-    { code: 'TIENDA', name: 'Tiendas & Comercio', slug: 'tiendas', icon: 'ShoppingBag', displayOrder: 5 }
+    { code: 'TIENDA', name: 'Tiendas & Comercio', slug: 'tiendas', icon: 'ShoppingBag', displayOrder: 5 },
+    { code: 'DENTISTA', name: 'Clínicas Dentales & Odontología', slug: 'dentistas', icon: 'Smile', displayOrder: 6 }
 ];
 
 export const BUSINESS_TYPE_MAPPINGS: Record<string, string> = {
@@ -96,7 +105,10 @@ export const BUSINESS_TYPE_MAPPINGS: Record<string, string> = {
     'comandas': 'RESTAURANTE',
     'reservas': 'CANCHAS',
     'ordenes-servicio': 'LAVANDERIA',
-    'ecommerce': 'TIENDA'
+    'ecommerce': 'TIENDA',
+    'dentista': 'DENTISTA',
+    'odontologia': 'DENTISTA',
+    'dental': 'DENTISTA'
 };
 
 export const CANONICAL_PLANS = [
@@ -418,6 +430,71 @@ export const CANONICAL_PLANS = [
         displayOrder: 3,
         modules: ['LANDING', 'HERO', 'PRODUCTS', 'CATEGORIES', 'CART', 'ORDERS', 'DELIVERY', 'PICKUP', 'CUSTOMERS', 'REMINDERS', 'PROMOTIONS', 'COUPONS', 'COMMUNICATION_CENTER', 'LOYALTY', 'PAYMENTS', 'POS', 'INVENTORY', 'REPORTS', 'OTP', 'PUSH'],
         limits: { MAX_PRODUCTS: -1, MAX_CATEGORIES: -1, MAX_ORDERS_MONTHLY: -1, MAX_VARIANTS: -1, MAX_STAFF: -1, MAX_DELIVERY_DRIVERS: -1, MAX_USERS: 15 }
+    },
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // 6. FAMILIA DENTISTA / ODONTOLOGÍA
+    // ══════════════════════════════════════════════════════════════════════════════
+    {
+        id: 'plan_dentistas_free',
+        familyCode: 'DENTISTA',
+        name: 'Dentistas Free',
+        slug: 'dentistas-free',
+        description: 'Plan gratuito inicial para consultorios dentales con recepción protegida.',
+        price: 0.0,
+        trial_days: 0,
+        isFree: true,
+        isDefault: false,
+        isPublic: false,
+        displayOrder: 0,
+        modules: ['STAFF', 'SERVICES', 'APPOINTMENTS', 'SCHEDULES', 'HERO', 'LANDING', 'OTP', 'PUSH'],
+        limits: { MAX_STAFF: 2, MAX_SERVICES: 10, MAX_APPOINTMENTS_MONTHLY: 40, MAX_USERS: 1 }
+    },
+    {
+        id: 'plan_dentistas_inicio',
+        familyCode: 'DENTISTA',
+        name: 'Dentistas Inicio',
+        slug: 'dentistas-inicio',
+        description: 'Ideal para odontólogos independientes o consultorios individuales sin historia clínica digital.',
+        price: 7.99,
+        trial_days: 30,
+        isFree: false,
+        isDefault: false,
+        isPublic: true,
+        displayOrder: 1,
+        // OJO: REGLA ESTRICTA -> NO INCLUYE CLINICAL_RECORDS, ODONTOGRAM NI DENTAL_DOCUMENTS
+        modules: ['LANDING', 'HERO', 'STAFF', 'SERVICES', 'APPOINTMENTS', 'SCHEDULES', 'CUSTOMERS', 'REMINDERS', 'LOYALTY', 'OTP', 'PUSH'],
+        limits: { MAX_STAFF: 4, MAX_SERVICES: 50, MAX_APPOINTMENTS_MONTHLY: 100, MAX_USERS: 2 }
+    },
+    {
+        id: 'plan_dentistas_crecimiento',
+        familyCode: 'DENTISTA',
+        name: 'Dentistas Crecimiento',
+        slug: 'dentistas-crecimiento',
+        description: 'Clínica dental completa con Historia Clínica Digital, Odontograma interactivo y recordatorios automáticos.',
+        price: 19.99,
+        trial_days: 30,
+        isFree: false,
+        isDefault: true,
+        isPublic: true,
+        displayOrder: 2,
+        modules: ['LANDING', 'HERO', 'STAFF', 'SERVICES', 'APPOINTMENTS', 'SCHEDULES', 'CUSTOMERS', 'REMINDERS', 'CLINICAL_RECORDS', 'ODONTOGRAM', 'DENTAL_DOCUMENTS', 'PROMOTIONS', 'COUPONS', 'COMMUNICATION_CENTER', 'LOYALTY', 'PAYMENTS', 'OTP', 'PUSH'],
+        limits: { MAX_STAFF: 10, MAX_SERVICES: 500, MAX_APPOINTMENTS_MONTHLY: 500, MAX_USERS: 5 }
+    },
+    {
+        id: 'plan_dentistas_pro',
+        familyCode: 'DENTISTA',
+        name: 'Dentistas Pro',
+        slug: 'dentistas-pro',
+        description: 'Centro odontológico multisede con odontograma, inventario de insumos clínicos y reportes financieros.',
+        price: 39.99,
+        trial_days: 30,
+        isFree: false,
+        isDefault: false,
+        isPublic: true,
+        displayOrder: 3,
+        modules: ['LANDING', 'HERO', 'STAFF', 'SERVICES', 'APPOINTMENTS', 'SCHEDULES', 'CUSTOMERS', 'REMINDERS', 'CLINICAL_RECORDS', 'ODONTOGRAM', 'DENTAL_DOCUMENTS', 'PROMOTIONS', 'COUPONS', 'COMMUNICATION_CENTER', 'LOYALTY', 'PAYMENTS', 'INVENTORY', 'REPORTS', 'OTP', 'PUSH'],
+        limits: { MAX_STAFF: -1, MAX_SERVICES: -1, MAX_APPOINTMENTS_MONTHLY: -1, MAX_USERS: 15 }
     }
 ];
 
@@ -427,7 +504,8 @@ const FAMILY_PRIMARY_RESOURCE: Record<string, string> = {
     SERVICIOS: DATA_RESOURCES.APPOINTMENTS,
     CANCHAS: DATA_RESOURCES.RESERVATIONS,
     LAVANDERIA: DATA_RESOURCES.SERVICE_ORDERS,
-    TIENDA: DATA_RESOURCES.STORE_ORDERS
+    TIENDA: DATA_RESOURCES.STORE_ORDERS,
+    DENTISTA: DATA_RESOURCES.APPOINTMENTS
 };
 
 async function main() {
@@ -535,35 +613,71 @@ async function main() {
             }
         });
 
-        // Upsert de PlanLimits
+        // Sincronizar PlanLimits
+        const existingLimits = await prisma.planLimit.findMany({
+            where: { planId: plan.id }
+        });
+        const limitMap = new Map<string, number>();
+        for (const l of existingLimits) {
+            limitMap.set(l.limitKey, l.limitValue);
+        }
+        const limitsToCreate: { planId: string; limitKey: string; limitValue: number }[] = [];
         for (const [limitKey, limitValue] of Object.entries(p.limits)) {
-            await prisma.planLimit.upsert({
-                where: { planId_limitKey: { planId: plan.id, limitKey } },
-                update: { limitValue: Number(limitValue) },
-                create: { planId: plan.id, limitKey, limitValue: Number(limitValue) }
+            const numVal = Number(limitValue);
+            if (limitMap.has(limitKey)) {
+                if (limitMap.get(limitKey) !== numVal) {
+                    await prisma.planLimit.update({
+                        where: { planId_limitKey: { planId: plan.id, limitKey } },
+                        data: { limitValue: numVal }
+                    });
+                }
+            } else {
+                limitsToCreate.push({ planId: plan.id, limitKey, limitValue: numVal });
+            }
+        }
+        if (limitsToCreate.length > 0) {
+            await prisma.planLimit.createMany({
+                data: limitsToCreate
             });
         }
 
-        // Upsert de PlanEntitlements
+        // Sincronizar PlanEntitlements
+        const existingEntitlements = await prisma.planEntitlement.findMany({
+            where: { planId: plan.id },
+            include: { module: true }
+        });
+        const entMap = new Map<string, { id: string; enabled: boolean }>();
+        for (const pe of existingEntitlements) {
+            if (pe.module?.code) {
+                entMap.set(pe.module.code, { id: pe.id, enabled: pe.enabled });
+            }
+        }
+        const entToCreate: { planId: string; moduleId: string; enabled: boolean }[] = [];
+        const currentModCodes = new Set(p.modules);
+
         for (const modCode of p.modules) {
             const moduleId = moduleMap.get(modCode);
             if (!moduleId) continue;
 
-            await prisma.planEntitlement.upsert({
-                where: { planId_moduleId: { planId: plan.id, moduleId } },
-                update: { enabled: true },
-                create: { planId: plan.id, moduleId, enabled: true }
+            if (entMap.has(modCode)) {
+                if (!entMap.get(modCode)!.enabled) {
+                    await prisma.planEntitlement.update({
+                        where: { id: entMap.get(modCode)!.id },
+                        data: { enabled: true }
+                    });
+                }
+            } else {
+                entToCreate.push({ planId: plan.id, moduleId, enabled: true });
+            }
+        }
+        if (entToCreate.length > 0) {
+            await prisma.planEntitlement.createMany({
+                data: entToCreate
             });
         }
 
-        // Deshabilitar entitlements que no correspondan al plan si ya existían
-        const allPlanEntitlements = await prisma.planEntitlement.findMany({
-            where: { planId: plan.id },
-            include: { module: true }
-        });
-        const currentModCodes = new Set(p.modules);
-        for (const pe of allPlanEntitlements) {
-            if (pe.module?.code && !currentModCodes.has(pe.module.code)) {
+        for (const pe of existingEntitlements) {
+            if (pe.module?.code && !currentModCodes.has(pe.module.code) && pe.enabled) {
                 await prisma.planEntitlement.update({
                     where: { id: pe.id },
                     data: { enabled: false }
@@ -571,9 +685,19 @@ async function main() {
             }
         }
 
-        // Upsert de DataPolicies
+        // Sincronizar DataPolicies
         const isFreePlan = Boolean(p.isFree);
         const primaryResource = FAMILY_PRIMARY_RESOURCE[p.familyCode];
+
+        const existingPolicies = await prisma.planDataPolicy.findMany({
+            where: { planId: plan.id }
+        });
+        const policyMap = new Map<string, string>();
+        for (const pol of existingPolicies) {
+            policyMap.set(`${pol.resource}_${pol.action}`, pol.effect);
+        }
+
+        const policiesToCreate: { planId: string; resource: string; action: string; effect: string }[] = [];
 
         for (const resource of Object.values(DATA_RESOURCES)) {
             for (const action of Object.values(DATA_ACTIONS)) {
@@ -592,12 +716,24 @@ async function main() {
                     }
                 }
 
-                await prisma.planDataPolicy.upsert({
-                    where: { planId_resource_action: { planId: plan.id, resource, action } },
-                    update: { effect },
-                    create: { planId: plan.id, resource, action, effect }
-                });
+                const key = `${resource}_${action}`;
+                if (policyMap.has(key)) {
+                    if (policyMap.get(key) !== effect) {
+                        await prisma.planDataPolicy.update({
+                            where: { planId_resource_action: { planId: plan.id, resource, action } },
+                            data: { effect }
+                        });
+                    }
+                } else {
+                    policiesToCreate.push({ planId: plan.id, resource, action, effect });
+                }
             }
+        }
+
+        if (policiesToCreate.length > 0) {
+            await prisma.planDataPolicy.createMany({
+                data: policiesToCreate
+            });
         }
 
         console.log(`  ✓ Plan [${plan.id}] "${plan.name}" sincronizado: $${plan.price} (Trial: ${plan.trial_days}d, Default: ${plan.isDefault})`);
@@ -609,7 +745,8 @@ async function main() {
         SERVICIOS: 'plan_servicios_crecimiento',
         CANCHAS: 'plan_canchas_gestion',
         LAVANDERIA: 'plan_lavanderia_crecimiento',
-        TIENDA: 'plan_tienda_crecimiento'
+        TIENDA: 'plan_tienda_crecimiento',
+        DENTISTA: 'plan_dentistas_crecimiento'
     };
 
     for (const fam of CANONICAL_FAMILIES) {
@@ -635,10 +772,10 @@ async function main() {
             }
         });
     }
-    console.log(`✅ FounderProgram sincronizado para las 5 familias (Plan Crecimiento a $10/mes).`);
+    console.log(`✅ FounderProgram sincronizado para las ${CANONICAL_FAMILIES.length} familias (Plan Crecimiento a $10/mes).`);
 
     console.log("\n=================================================================");
-    console.log("🚀 SIEMBRA CANÓNICA FINALIZADA CON ÉXITO: 20 PLANES OPERATIVOS");
+    console.log(`🚀 SIEMBRA CANÓNICA FINALIZADA CON ÉXITO: ${CANONICAL_PLANS.length} PLANES OPERATIVOS`);
     console.log("=================================================================\n");
 }
 

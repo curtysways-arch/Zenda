@@ -113,27 +113,31 @@ model Service {
   Resultado          Resultado[]
   PromotionToService PromotionToService[]
   Staff              Staff[]              @relation("StaffServices")
-  LoyaltyReward      LoyaltyReward[]     // Premios de tipo SERVICIO_GRATIS vinculados a este servicio
-  ReferralCampaign   ReferralCampaign[]  // Campañas de tipo SERVICIO_GRATIS vinculadas a este servicio
+  LoyaltyReward      LoyaltyReward[] // Premios de tipo SERVICIO_GRATIS vinculados a este servicio
+  ReferralCampaign   ReferralCampaign[] // Campañas de tipo SERVICIO_GRATIS vinculadas a este servicio
   branchServices     BranchService[]
+  dentalTreatments   DentalTreatment[]
 
   @@map("Cancha")
 }
 
 model Cliente {
-  id             String        @id
-  nombre         String
-  telefono       String
-  email          String?
-  negocioId      String
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime
+  id              String          @id
+  nombre          String
+  telefono        String
+  email           String?
+  negocioId       String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime
   imagenUrl       String?
   fechaNacimiento DateTime?
-  Negocio        Negocio       @relation(fields: [negocioId], references: [id])
-  ratingPromedio Float         @default(0)
-  totalReviews   Int           @default(0)
-  Appointment    Appointment[]
+  Negocio         Negocio         @relation(fields: [negocioId], references: [id])
+  ratingPromedio  Float           @default(0)
+  totalReviews    Int             @default(0)
+  Appointment     Appointment[]
+  clinicalRecord  ClinicalRecord?
+  memberships     Membership[]
+  gymAttendances  GymAttendance[]
 
   @@unique([telefono, negocioId])
 }
@@ -274,6 +278,7 @@ model Media {
   courses            Course[]            @relation("CourseImage")
   pages              Page[]              @relation("PageImage")
   automaticDiscounts AutomaticDiscount[] @relation("AutomaticDiscountImage")
+  clinicalDocuments  ClinicalDocument[]  @relation("ClinicalDocumentMedia")
 }
 
 model LikeResultado {
@@ -288,111 +293,111 @@ model LikeResultado {
 }
 
 model Negocio {
-  id                     String                @id
-  nombre                 String
-  propietario            String?
-  slug                   String                @unique
-  whatsapp               String?
-  direccion              String?
-  ciudad                 String?
-  logoUrl                String?
-  precioHora             Float
-  horarioApertura        String
-  horarioCierre          String
-  statusOverride         String                @default("AUTO")
-  configuracion          Json?
-  createdAt              DateTime              @default(now())
-  updatedAt              DateTime
-  pagosActivos           Boolean               @default(false)
-  pagoPorcentaje         Int                   @default(50)
-  mercadoPagoPublicKey   String?
-  mercadoPagoAccessToken String?
-  colorPrimario          String?               @default("#1dc95c")
-  colorSecundario        String?               @default("#112117")
-  colorTerciario         String?               @default("#7B68EE")
-  colorNeutral           String?               @default("#FFF5F5")
-  colorTexto             String?               @default("#ffffff")
-  colorSubTexto          String?               @default("#475569")
-  heroTitulo             String?
-  heroSubtitulo          String?
-  mensajeBienvenida      String?
-  saludoTitulo           String?               @default("Hola")
-  nombreFallback         String?               @default("Radiante")
-  tieneCafeteria         Boolean               @default(false)
-  tieneParking           Boolean               @default(false)
-  tieneWifi              Boolean               @default(false)
-  tieneVestidores        Boolean               @default(false)
-  tieneTienda            Boolean               @default(false)
-  moduloTorneos          Boolean               @default(false)
-  instagramUrl           String?
-  facebookUrl            String?
-  tiktokUrl              String?
-  emailContacto          String?
-  websiteUrl             String?
-  youtubeUrl             String?
-  faqUrl                 String?
-  terminosUrl            String?
-  privacidadUrl          String?
-  estado                 String                @default("ACTIVO")
-  isDemo                 Boolean               @default(false)
-  mostrarPrecios         Boolean               @default(true)
-  appointmentsUsed       Int                   @default(0)
-  billingStatus          String                @default("active")
-  planExpiresAt          DateTime?
-  statusNote             String?
-  AutomaticDiscount      AutomaticDiscount[]
-  Bloqueo                Bloqueo[]
-  Service                Service[]
-  Cliente                Cliente[]
-  Configuracion          Configuracion[]
-  Course                 Course[]
-  Imagen                 Imagen[]
-  Page                   Page[]
-  Payment                Payment[]
-  Promotion              Promotion[]
-  PushToken              PushToken[]
-  Appointment            Appointment[]
-  Resultado              Resultado[]
-  Staff                  Staff[]
-  Student                Student[]
-  Subscriber             Subscriber[]
-  SubscriptionHistory    SubscriptionHistory[]
-  Suscripcion            Suscripcion?
-  Ubicacion              Ubicacion[]
-  branches               Branch[]
-  branchAccesses         BranchAccess[]
-  staffBranches          StaffBranch[]
-  branchProducts         BranchProduct[]
-  branchServices         BranchService[]
-  branchInventories      BranchInventory[]
-  inventoryMovements     InventoryMovement[]
-  cashRegisters          CashRegister[]
-  cashSessions           CashRegisterSession[]
-  Usuario                Usuario[]
-  media                  Media[]               @relation("NegocioMedia")
-  ReferralCampaign       ReferralCampaign[]
-  ReferralCode           ReferralCode[]
-  ReferralEvent          ReferralEvent[]
-  ReferralReward         ReferralReward[]
-  UserPoints             UserPoints[]
-  RestaurantTable        RestaurantTable[]
-  TableOrderRequest      TableOrderRequest[]
-  WaiterCall             WaiterCall[]
-  PointsHistory          PointsHistory[]
-  LoyaltyReward          LoyaltyReward[]
-  LoyaltyRedemption      LoyaltyRedemption[]
-  Coupon                 Coupon[]
-  ClientCoupon           ClientCoupon[]
-  AutomationRule         AutomationRule[]
-  Notification           Notification[]
-  AdminUserNegocio       AdminUserNegocio[]
-  Season                 Season[]
-  Campaign               Campaign[]
-  Quest                  Quest[]
-  LevelTier              LevelTier[]
-  Badge                  Badge[]
-  UserStreak             UserStreak[]
-  RewardAudit            RewardAudit[]
+  id                         String                              @id
+  nombre                     String
+  propietario                String?
+  slug                       String                              @unique
+  whatsapp                   String?
+  direccion                  String?
+  ciudad                     String?
+  logoUrl                    String?
+  precioHora                 Float
+  horarioApertura            String
+  horarioCierre              String
+  statusOverride             String                              @default("AUTO")
+  configuracion              Json?
+  createdAt                  DateTime                            @default(now())
+  updatedAt                  DateTime
+  pagosActivos               Boolean                             @default(false)
+  pagoPorcentaje             Int                                 @default(50)
+  mercadoPagoPublicKey       String?
+  mercadoPagoAccessToken     String?
+  colorPrimario              String?                             @default("#1dc95c")
+  colorSecundario            String?                             @default("#112117")
+  colorTerciario             String?                             @default("#7B68EE")
+  colorNeutral               String?                             @default("#FFF5F5")
+  colorTexto                 String?                             @default("#ffffff")
+  colorSubTexto              String?                             @default("#475569")
+  heroTitulo                 String?
+  heroSubtitulo              String?
+  mensajeBienvenida          String?
+  saludoTitulo               String?                             @default("Hola")
+  nombreFallback             String?                             @default("Radiante")
+  tieneCafeteria             Boolean                             @default(false)
+  tieneParking               Boolean                             @default(false)
+  tieneWifi                  Boolean                             @default(false)
+  tieneVestidores            Boolean                             @default(false)
+  tieneTienda                Boolean                             @default(false)
+  moduloTorneos              Boolean                             @default(false)
+  instagramUrl               String?
+  facebookUrl                String?
+  tiktokUrl                  String?
+  emailContacto              String?
+  websiteUrl                 String?
+  youtubeUrl                 String?
+  faqUrl                     String?
+  terminosUrl                String?
+  privacidadUrl              String?
+  estado                     String                              @default("ACTIVO")
+  isDemo                     Boolean                             @default(false)
+  mostrarPrecios             Boolean                             @default(true)
+  appointmentsUsed           Int                                 @default(0)
+  billingStatus              String                              @default("active")
+  planExpiresAt              DateTime?
+  statusNote                 String?
+  AutomaticDiscount          AutomaticDiscount[]
+  Bloqueo                    Bloqueo[]
+  Service                    Service[]
+  Cliente                    Cliente[]
+  Configuracion              Configuracion[]
+  Course                     Course[]
+  Imagen                     Imagen[]
+  Page                       Page[]
+  Payment                    Payment[]
+  Promotion                  Promotion[]
+  PushToken                  PushToken[]
+  Appointment                Appointment[]
+  Resultado                  Resultado[]
+  Staff                      Staff[]
+  Student                    Student[]
+  Subscriber                 Subscriber[]
+  SubscriptionHistory        SubscriptionHistory[]
+  Suscripcion                Suscripcion?
+  Ubicacion                  Ubicacion[]
+  branches                   Branch[]
+  branchAccesses             BranchAccess[]
+  staffBranches              StaffBranch[]
+  branchProducts             BranchProduct[]
+  branchServices             BranchService[]
+  branchInventories          BranchInventory[]
+  inventoryMovements         InventoryMovement[]
+  cashRegisters              CashRegister[]
+  cashSessions               CashRegisterSession[]
+  Usuario                    Usuario[]
+  media                      Media[]                             @relation("NegocioMedia")
+  ReferralCampaign           ReferralCampaign[]
+  ReferralCode               ReferralCode[]
+  ReferralEvent              ReferralEvent[]
+  ReferralReward             ReferralReward[]
+  UserPoints                 UserPoints[]
+  RestaurantTable            RestaurantTable[]
+  TableOrderRequest          TableOrderRequest[]
+  WaiterCall                 WaiterCall[]
+  PointsHistory              PointsHistory[]
+  LoyaltyReward              LoyaltyReward[]
+  LoyaltyRedemption          LoyaltyRedemption[]
+  Coupon                     Coupon[]
+  ClientCoupon               ClientCoupon[]
+  AutomationRule             AutomationRule[]
+  Notification               Notification[]
+  AdminUserNegocio           AdminUserNegocio[]
+  Season                     Season[]
+  Campaign                   Campaign[]
+  Quest                      Quest[]
+  LevelTier                  LevelTier[]
+  Badge                      Badge[]
+  UserStreak                 UserStreak[]
+  RewardAudit                RewardAudit[]
   LoyaltyLevels              LoyaltyLevel[]
   LoyaltySeasons             LoyaltySeason[]
   BusinessGlobalMissions     BusinessGlobalMission[]
@@ -404,24 +409,33 @@ model Negocio {
   BusinessAchievements       BusinessAchievement[]
   ClientGlobalCampaigns      ClientGlobalCampaignParticipation[]
   ClientGlobalProgress       ClientGlobalQuestProgress[]
-  BusinessMissions           BusinessMission[]            // Nuevo sistema de misiones desacoplado
-  BusinessInheritances       BusinessInheritance[]        // Capa de herencia del Club Citiox
+  BusinessMissions           BusinessMission[] // Nuevo sistema de misiones desacoplado
+  BusinessInheritances       BusinessInheritance[] // Capa de herencia del Club Citiox
   paymentMethods             PaymentMethod[]
   orderPayments              OrderPayment[]
-  tipoNegocio                String                       @default("RESERVA")
+  tipoNegocio                String                              @default("RESERVA")
   businessTypeId             String?
   businessProfileId          String?
-  BusinessType               BusinessType?                @relation("NegocioBusinessType", fields: [businessTypeId], references: [id])
-  BusinessProfile            BusinessProfile?             @relation("NegocioBusinessProfile", fields: [businessProfileId], references: [id])
+  BusinessType               BusinessType?                       @relation("NegocioBusinessType", fields: [businessTypeId], references: [id])
+  BusinessProfile            BusinessProfile?                    @relation("NegocioBusinessProfile", fields: [businessProfileId], references: [id])
   categoriasProducto         CategoriaProducto[]
   productos                  Producto[]
   pedidos                    Pedido[]
   // ─── LOGÍSTICA TRANSVERSAL ─────────────────────────────────────────────────────
-  OperableResources          OperableResource[]    @relation("NegocioOperableResources")
+  OperableResources          OperableResource[]                  @relation("NegocioOperableResources")
   DeliveryRoutes             DeliveryRoute[]
   DeliveryInvitations        DeliveryInvitation[]
   heroItems                  HeroItem[]
   highlightItems             HighlightItem[]
+  clinicalRecords            ClinicalRecord[]
+  clinicalEncounters         ClinicalEncounter[]
+  dentalOdontograms          DentalOdontogram[]
+  dentalTreatments           DentalTreatment[]
+  clinicalDocuments          ClinicalDocument[]
+  membershipPlans            MembershipPlan[]
+  memberships                Membership[]
+  gymAccessLogs              GymAccessLog[]
+  gymAttendances             GymAttendance[]
 }
 
 model OtpCode {
@@ -579,17 +593,17 @@ model PushToken {
 }
 
 model Appointment {
-  id                  String        @id
+  id                  String              @id
   fecha               DateTime
   horaInicio          String
   horaFin             String
-  duracion            Int           @default(1)
-  estado              String        @default("pending")
+  duracion            Int                 @default(1)
+  estado              String              @default("pending")
   metodoPago          String?
-  pagoEstado          String        @default("PENDIENTE")
+  pagoEstado          String              @default("PENDIENTE")
   pagoId              String?
   total               Float
-  pagoAnticipo        Float         @default(0)
+  pagoAnticipo        Float               @default(0)
   precioOriginal      Float?
   descuentoAplicado   Float?
   comentarios         String?
@@ -598,28 +612,30 @@ model Appointment {
   staffId             String?
   negocioId           String
   branchId            String?
-  createdAt           DateTime      @default(now())
+  createdAt           DateTime            @default(now())
   updatedAt           DateTime
   expiresAt           DateTime?
-  reminderDaySent     Boolean       @default(false)
-  reminder2HSent      Boolean       @default(false)
-  created_by_business Boolean       @default(false)
-  shareToken          String?       @unique
+  reminderDaySent     Boolean             @default(false)
+  reminder2HSent      Boolean             @default(false)
+  created_by_business Boolean             @default(false)
+  shareToken          String?             @unique
   usuarioId           String?
   extraServices       Json?
   checkedInAt         DateTime?
   completedAt         DateTime?
   startedAt           DateTime?
-  ratingReminder1Sent Boolean       @default(false)
-  ratingReminder2Sent Boolean       @default(false)
+  ratingReminder1Sent Boolean             @default(false)
+  ratingReminder2Sent Boolean             @default(false)
   pagoReserva         PagoReserva[]
-  cliente             Cliente       @relation(fields: [clienteId], references: [id])
-  service             Service       @relation(fields: [serviceId], references: [id])
-  staff               Staff?        @relation(fields: [staffId], references: [id])
-  negocio             Negocio       @relation(fields: [negocioId], references: [id])
-  usuario             Usuario?      @relation(fields: [usuarioId], references: [id])
-  branch              Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  cliente             Cliente             @relation(fields: [clienteId], references: [id])
+  service             Service             @relation(fields: [serviceId], references: [id])
+  staff               Staff?              @relation(fields: [staffId], references: [id])
+  negocio             Negocio             @relation(fields: [negocioId], references: [id])
+  usuario             Usuario?            @relation(fields: [usuarioId], references: [id])
+  branch              Branch?             @relation(fields: [branchId], references: [id], onDelete: SetNull)
   ratings             Rating[]
+  clinicalEncounters  ClinicalEncounter[]
+  dentalTreatments    DentalTreatment[]
 
   @@index([negocioId, branchId])
   @@index([branchId])
@@ -668,31 +684,34 @@ model Role {
 }
 
 model Staff {
-  id             String           @id
-  businessId     String
-  imageMediaId   String?
-  imageMedia     Media?           @relation("StaffImage", fields: [imageMediaId], references: [id])
-  name           String
-  role           String?
-  avatar         String?
-  active         Boolean          @default(true)
-  workingHours   Json?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime
-  usuarioId      String?          @unique
-  Bloqueo        Bloqueo[]
-  Appointment    Appointment[]
-  Resultado      Resultado[]
-  Negocio        Negocio          @relation(fields: [businessId], references: [id])
-  Usuario        Usuario?         @relation(fields: [usuarioId], references: [id])
-  StaffException StaffException[]
-  StaffSchedule  StaffSchedule[]
-  staffBranches  StaffBranch[]
-  ratingPromedio Float            @default(0)
-  totalReviews   Int              @default(0)
-  Service           Service[]           @relation("StaffServices")
-  ReferralReward    ReferralReward[]
-  LoyaltyRedemption LoyaltyRedemption[]
+  id                 String              @id
+  businessId         String
+  imageMediaId       String?
+  imageMedia         Media?              @relation("StaffImage", fields: [imageMediaId], references: [id])
+  name               String
+  role               String?
+  avatar             String?
+  active             Boolean             @default(true)
+  workingHours       Json?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime
+  usuarioId          String?             @unique
+  Bloqueo            Bloqueo[]
+  Appointment        Appointment[]
+  Resultado          Resultado[]
+  Negocio            Negocio             @relation(fields: [businessId], references: [id])
+  Usuario            Usuario?            @relation(fields: [usuarioId], references: [id])
+  StaffException     StaffException[]
+  StaffSchedule      StaffSchedule[]
+  staffBranches      StaffBranch[]
+  ratingPromedio     Float               @default(0)
+  totalReviews       Int                 @default(0)
+  Service            Service[]           @relation("StaffServices")
+  ReferralReward     ReferralReward[]
+  LoyaltyRedemption  LoyaltyRedemption[]
+  clinicalEncounters ClinicalEncounter[]
+  dentalOdontograms  DentalOdontogram[]
+  dentalTreatments   DentalTreatment[]
 }
 
 model StaffException {
@@ -762,29 +781,29 @@ model SubscriptionHistory {
 }
 
 model Suscripcion {
-  id                    String    @id
-  negocioId             String    @unique
+  id                    String              @id
+  negocioId             String              @unique
   planId                String
-  estado                String    @default("trial")
-  pagoPendiente         Boolean   @default(false)
+  estado                String              @default("trial")
+  pagoPendiente         Boolean             @default(false)
   solicitudPlanId       String?
   metodoPago            String?
-  fechaInicio           DateTime  @default(now())
+  fechaInicio           DateTime            @default(now())
   fechaFin              DateTime
-  trial_inicio          DateTime? @default(now())
+  trial_inicio          DateTime?           @default(now())
   trial_fin             DateTime?
-  renovacion_automatica Boolean   @default(true)
-  createdAt             DateTime  @default(now())
+  renovacion_automatica Boolean             @default(true)
+  createdAt             DateTime            @default(now())
   updatedAt             DateTime
   lastReminderSent      DateTime?
   paymentProvider       String?
   subscriptionId        String?
   customFeatures        Json?
-  isFounder             Boolean   @default(false)
+  isFounder             Boolean             @default(false)
   founderPosition       Int?
   lockedPrice           Float?
-  Negocio               Negocio   @relation(fields: [negocioId], references: [id])
-  Plan                  Plan      @relation(fields: [planId], references: [id])
+  Negocio               Negocio             @relation(fields: [negocioId], references: [id])
+  Plan                  Plan                @relation(fields: [planId], references: [id])
   subscriptionAddons    SubscriptionAddon[]
 }
 
@@ -819,53 +838,53 @@ model UserRole {
 }
 
 model Usuario {
-  id                     String             @id
-  nombre                 String?
-  email                  String?            @unique
-  password               String?
-  phone                  String?            @unique
-  role                   String             @default("ADMIN")
-  status                 String             @default("verified")
-  auth_method            String             @default("credentials")
-  created_by             String             @default("manual")
-  negocioId              String?
-  whatsapp_notifications Boolean            @default(false)
-  otp_code               String?
-  otp_expiry             DateTime?
-  magic_token            String?            @unique
-  last_interaction       DateTime?
-  last_message_at        DateTime?
-  fechaNacimiento        DateTime?
-  allowedModules         String?            // JSON array de módulos permitidos (ej. ["cocina"])
-  createdAt              DateTime           @default(now())
-  updatedAt              DateTime
-  Course                 Course[]
-  CourseEnrollment       CourseEnrollment[]
-  PushToken              PushToken[]
-  Appointment            Appointment[]
-  Staff                  Staff?
-  UserRole               UserRole[]
-  branchAccesses         BranchAccess[]
-  Negocio                Negocio?           @relation(fields: [negocioId], references: [id])
-  ReferralCode           ReferralCode[]
-  ReferralReward         ReferralReward[]
-  ReferralEvent          ReferralEvent[]
-  UserPoints             UserPoints[]
-  PointsHistory          PointsHistory[]
-  LoyaltyRedemption      LoyaltyRedemption[]
-  CouponUsage            CouponUsage[]
-  ClientCoupon           ClientCoupon[]
-  Notification           Notification[]
-  QuestProgress          QuestProgress[]
-  QuestParticipant      QuestParticipant[]
-  UserLevel              UserLevel?
-  UserBadge              UserBadge[]
-  UserStreak             UserStreak[]
-  Wallets                Wallet[]
-  LeaderboardEntries     LeaderboardEntry[]
-  UserAchievements       UserAchievement[]
-  ClientGlobalProgress   ClientGlobalQuestProgress[]
-  GlobalLevelHistory     GlobalLevelHistory[]
+  id                      String                      @id
+  nombre                  String?
+  email                   String?                     @unique
+  password                String?
+  phone                   String?                     @unique
+  role                    String                      @default("ADMIN")
+  status                  String                      @default("verified")
+  auth_method             String                      @default("credentials")
+  created_by              String                      @default("manual")
+  negocioId               String?
+  whatsapp_notifications  Boolean                     @default(false)
+  otp_code                String?
+  otp_expiry              DateTime?
+  magic_token             String?                     @unique
+  last_interaction        DateTime?
+  last_message_at         DateTime?
+  fechaNacimiento         DateTime?
+  allowedModules          String? // JSON array de módulos permitidos (ej. ["cocina"])
+  createdAt               DateTime                    @default(now())
+  updatedAt               DateTime
+  Course                  Course[]
+  CourseEnrollment        CourseEnrollment[]
+  PushToken               PushToken[]
+  Appointment             Appointment[]
+  Staff                   Staff?
+  UserRole                UserRole[]
+  branchAccesses          BranchAccess[]
+  Negocio                 Negocio?                    @relation(fields: [negocioId], references: [id])
+  ReferralCode            ReferralCode[]
+  ReferralReward          ReferralReward[]
+  ReferralEvent           ReferralEvent[]
+  UserPoints              UserPoints[]
+  PointsHistory           PointsHistory[]
+  LoyaltyRedemption       LoyaltyRedemption[]
+  CouponUsage             CouponUsage[]
+  ClientCoupon            ClientCoupon[]
+  Notification            Notification[]
+  QuestProgress           QuestProgress[]
+  QuestParticipant        QuestParticipant[]
+  UserLevel               UserLevel?
+  UserBadge               UserBadge[]
+  UserStreak              UserStreak[]
+  Wallets                 Wallet[]
+  LeaderboardEntries      LeaderboardEntry[]
+  UserAchievements        UserAchievement[]
+  ClientGlobalProgress    ClientGlobalQuestProgress[]
+  GlobalLevelHistory      GlobalLevelHistory[]
   BusinessMissionProgress BusinessMissionProgress[] // Nuevo sistema de misiones desacoplado
 }
 
@@ -933,46 +952,46 @@ model PaymentAccount {
 // ─── SISTEMA DE REFERIDOS ───────────────────────────────────────────────────
 
 model ReferralCampaign {
-  id                  String              @id @default(cuid())
+  id                  String    @id @default(cuid())
   negocioId           String
   nombre              String
   descripcion         String?
   imagenUrl           String?
-  activa              Boolean             @default(true)
-  tipoRecompensa      String              // Descripción libre (ej. "Masaje gratis", "Camiseta") — compatibilidad histórica
+  activa              Boolean   @default(true)
+  tipoRecompensa      String // Descripción libre (ej. "Masaje gratis", "Camiseta") — compatibilidad histórica
   valorRecompensa     String
   referidosRequeridos Int
-  fechaInicio         DateTime            @default(now())
+  fechaInicio         DateTime  @default(now())
   fechaFin            DateTime?
-  limitePremios       Int?                // null = ilimitado
-  premiosEntregados   Int                 @default(0)
-  rankingActivo       Boolean             @default(false)
-  tipoIncentivo       String?             // incentivo para el referido
-  valorIncentivo      String?             // ej: "10% descuento", "Bebida gratis"
+  limitePremios       Int? // null = ilimitado
+  premiosEntregados   Int       @default(0)
+  rankingActivo       Boolean   @default(false)
+  tipoIncentivo       String? // incentivo para el referido
+  valorIncentivo      String? // ej: "10% descuento", "Bebida gratis"
 
   // Tipo de entrega y tipo de premio estructurado
-  deliveryType        RewardDeliveryType  @default(AUTOMATICO)
-  rewardType          RewardType          @default(PERSONALIZADO)
-  serviceId           String?             // Para rewardType = SERVICIO_GRATIS: servicio específico
-  recompensaImagenUrl String?             // Imagen del premio (premios manuales)
+  deliveryType        RewardDeliveryType @default(AUTOMATICO)
+  rewardType          RewardType         @default(PERSONALIZADO)
+  serviceId           String? // Para rewardType = SERVICIO_GRATIS: servicio específico
+  recompensaImagenUrl String? // Imagen del premio (premios manuales)
 
   // Configuración para Fidelización
-  estado              String?             @default("ACTIVA") // ACTIVA | PAUSADA | FINALIZADA
-  tipoCampana         String?             @default("CLIENTES_NUEVOS")
-  diasInactividad     Int?
+  estado               String?  @default("ACTIVA") // ACTIVA | PAUSADA | FINALIZADA
+  tipoCampana          String?  @default("CLIENTES_NUEVOS")
+  diasInactividad      Int?
   maxPremiosPorCliente Int?
-  permitirRepetir     Boolean?            @default(false)
-  prioridad           Int?                @default(0)
-  combinable          Boolean?            @default(false)
-  color               String?
-  icono               String?
+  permitirRepetir      Boolean? @default(false)
+  prioridad            Int?     @default(0)
+  combinable           Boolean? @default(false)
+  color                String?
+  icono                String?
 
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-  Negocio             Negocio             @relation(fields: [negocioId], references: [id])
-  Service             Service?            @relation(fields: [serviceId], references: [id])
-  ReferralEvent       ReferralEvent[]
-  ReferralReward      ReferralReward[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  Negocio        Negocio          @relation(fields: [negocioId], references: [id])
+  Service        Service?         @relation(fields: [serviceId], references: [id])
+  ReferralEvent  ReferralEvent[]
+  ReferralReward ReferralReward[]
 }
 
 model ReferralCode {
@@ -993,8 +1012,8 @@ model ReferralEvent {
   campaignId    String
   codeId        String
   negocioId     String
-  referrerId    String           // userId del que invitó
-  referredId    String           // userId del invitado
+  referrerId    String // userId del que invitó
+  referredId    String // userId del invitado
   appointmentId String?
   estado        String           @default("PENDIENTE") // PENDIENTE | VALIDO | INVALIDO
   ipAddress     String?
@@ -1010,32 +1029,32 @@ model ReferralEvent {
 }
 
 model ReferralReward {
-  id                     String             @id @default(cuid())
+  id                     String           @id @default(cuid())
   campaignId             String
   negocioId              String
   userId                 String
-  estado                 RewardStatus       @default(DISPONIBLE)
-  claimCode              String?            @unique // Código de reclamación para premios manuales (ej. PX-8FK29Q)
+  estado                 RewardStatus     @default(DISPONIBLE)
+  claimCode              String?          @unique // Código de reclamación para premios manuales (ej. PX-8FK29Q)
   fechaEntrega           DateTime?
   staffId                String?
   notas                  String?
   // Campos de auditoría de entrega física y QR seguro
-  claimToken             String?            @unique  // UUID interno y oculto para el código QR
-  claimTokenExpiresAt    DateTime?          // Fecha de expiración temporal del código QR
-  claimTokenRevokedAt    DateTime?          // Fecha en la que el QR fue revocado tras la entrega
+  claimToken             String?          @unique // UUID interno y oculto para el código QR
+  claimTokenExpiresAt    DateTime? // Fecha de expiración temporal del código QR
+  claimTokenRevokedAt    DateTime? // Fecha en la que el QR fue revocado tras la entrega
   fechaSolicitud         DateTime?
   fechaRetiro            DateTime?
-  scanCount              Int                @default(0) // Contador de escaneos/aperturas del QR
-  entregadoPorId         String?            // userId o staffId que confirmó la entrega
+  scanCount              Int              @default(0) // Contador de escaneos/aperturas del QR
+  entregadoPorId         String? // userId o staffId que confirmó la entrega
   fechaEntregaConfirmada DateTime?
   observaciones          String?
-  appointmentId          String?            // Para SERVICIO_GRATIS: reserva donde se usó
-  createdAt              DateTime           @default(now())
-  updatedAt              DateTime           @updatedAt
-  Campaign               ReferralCampaign   @relation(fields: [campaignId], references: [id])
-  Negocio                Negocio            @relation(fields: [negocioId], references: [id])
-  Usuario                Usuario            @relation(fields: [userId], references: [id])
-  Staff                  Staff?             @relation(fields: [staffId], references: [id])
+  appointmentId          String? // Para SERVICIO_GRATIS: reserva donde se usó
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  Campaign               ReferralCampaign @relation(fields: [campaignId], references: [id])
+  Negocio                Negocio          @relation(fields: [negocioId], references: [id])
+  Usuario                Usuario          @relation(fields: [userId], references: [id])
+  Staff                  Staff?           @relation(fields: [staffId], references: [id])
   ReferralEvent          ReferralEvent[]
 }
 
@@ -1055,10 +1074,10 @@ model UserPoints {
   updatedAt              DateTime @updatedAt
   Usuario                Usuario  @relation(fields: [userId], references: [id])
   Negocio                Negocio  @relation(fields: [negocioId], references: [id])
-  
-  NivelActual            LoyaltyLevel?  @relation("NivelActual", fields: [nivelActualId], references: [id])
-  UltimoNivelVisto       LoyaltyLevel?  @relation("UltimoNivelVisto", fields: [ultimoNivelVistoId], references: [id])
-  UltimaTemporadaVista   LoyaltySeason? @relation("UltimaTemporadaVista", fields: [ultimaTemporadaVistaId], references: [id])
+
+  NivelActual          LoyaltyLevel?  @relation("NivelActual", fields: [nivelActualId], references: [id])
+  UltimoNivelVisto     LoyaltyLevel?  @relation("UltimoNivelVisto", fields: [ultimoNivelVistoId], references: [id])
+  UltimaTemporadaVista LoyaltySeason? @relation("UltimaTemporadaVista", fields: [ultimaTemporadaVistaId], references: [id])
 
   @@unique([userId, negocioId])
 }
@@ -1067,9 +1086,9 @@ model PointsHistory {
   id           String   @id @default(cuid())
   userId       String
   negocioId    String
-  puntos       Int      // Positivos = acumulación, negativos = canje
-  concepto     String   // RESERVA | REFERIDO | CUMPLEANOS | RESENA | COMPARTIR | CANJE | BONO | AJUSTE
-  referenciaId String?  // ID del recurso asociado (cita, recompensa, evento, etc.)
+  puntos       Int // Positivos = acumulación, negativos = canje
+  concepto     String // RESERVA | REFERIDO | CUMPLEANOS | RESENA | COMPARTIR | CANJE | BONO | AJUSTE
+  referenciaId String? // ID del recurso asociado (cita, recompensa, evento, etc.)
   notas        String?
   createdAt    DateTime @default(now())
   Usuario      Usuario  @relation(fields: [userId], references: [id])
@@ -1082,14 +1101,14 @@ model LoyaltyReward {
   nombre              String
   descripcion         String?
   imagenUrl           String?
-  recompensaImagenUrl String?             // Imagen específica del premio (premios manuales)
+  recompensaImagenUrl String? // Imagen específica del premio (premios manuales)
   costoPuntos         Int                 @default(0) // 0 = gratis, >0 = canjeable por puntos
   tipo                RewardType          @default(PERSONALIZADO)
   deliveryType        RewardDeliveryType  @default(AUTOMATICO)
-  valor               String?             // Valor adicional: monto, porcentaje, etc.
-  serviceId           String?             // Para tipo = SERVICIO_GRATIS: servicio que se otorga
-  couponId            String?             // Para tipo = CUPON: cupón del catálogo
-  cantidadTotal       Int?                // null = ilimitado
+  valor               String? // Valor adicional: monto, porcentaje, etc.
+  serviceId           String? // Para tipo = SERVICIO_GRATIS: servicio que se otorga
+  couponId            String? // Para tipo = CUPON: cupón del catálogo
+  cantidadTotal       Int? // null = ilimitado
   cantidadDisponible  Int?
   activa              Boolean             @default(true)
   createdAt           DateTime            @default(now())
@@ -1101,73 +1120,73 @@ model LoyaltyReward {
 }
 
 model LoyaltyRedemption {
-  id                     String             @id @default(cuid())
+  id                     String        @id @default(cuid())
   negocioId              String
   userId                 String
   rewardId               String
-  questId                String?            // ID de la misión si es recompensa de misión
-  fechaExpiracion        DateTime?          // Fecha de expiración de la recompensa
-  estado                 RewardStatus       @default(DISPONIBLE)
-  claimCode              String?            @unique // Código de reclamación para premios manuales (ej. PX-8FK29Q)
+  questId                String? // ID de la misión si es recompensa de misión
+  fechaExpiracion        DateTime? // Fecha de expiración de la recompensa
+  estado                 RewardStatus  @default(DISPONIBLE)
+  claimCode              String?       @unique // Código de reclamación para premios manuales (ej. PX-8FK29Q)
   fechaEntrega           DateTime?
   staffId                String?
   notas                  String?
   // Campos de auditoría de entrega física y QR seguro
-  claimToken             String?            @unique  // UUID interno y oculto para el código QR
-  claimTokenExpiresAt    DateTime?          // Fecha de expiración temporal del código QR
-  claimTokenRevokedAt    DateTime?          // Fecha en la que el QR fue revocado tras la entrega
+  claimToken             String?       @unique // UUID interno y oculto para el código QR
+  claimTokenExpiresAt    DateTime? // Fecha de expiración temporal del código QR
+  claimTokenRevokedAt    DateTime? // Fecha en la que el QR fue revocado tras la entrega
   fechaSolicitud         DateTime?
   fechaRetiro            DateTime?
-  scanCount              Int                @default(0) // Contador de escaneos/aperturas del QR
-  entregadoPorId         String?            // userId o staffId que confirmó la entrega
+  scanCount              Int           @default(0) // Contador de escaneos/aperturas del QR
+  entregadoPorId         String? // userId o staffId que confirmó la entrega
   fechaEntregaConfirmada DateTime?
   observaciones          String?
-  appointmentId          String?            // Para SERVICIO_GRATIS: reserva donde se usó
-  createdAt              DateTime           @default(now())
-  updatedAt              DateTime           @updatedAt
-  Negocio                Negocio            @relation(fields: [negocioId], references: [id])
-  Usuario                Usuario            @relation(fields: [userId], references: [id])
-  Reward                 LoyaltyReward      @relation(fields: [rewardId], references: [id])
-  Staff                  Staff?             @relation(fields: [staffId], references: [id])
+  appointmentId          String? // Para SERVICIO_GRATIS: reserva donde se usó
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  Negocio                Negocio       @relation(fields: [negocioId], references: [id])
+  Usuario                Usuario       @relation(fields: [userId], references: [id])
+  Reward                 LoyaltyReward @relation(fields: [rewardId], references: [id])
+  Staff                  Staff?        @relation(fields: [staffId], references: [id])
 }
 
 model RewardAudit {
   id             String   @id @default(cuid())
-  rewardType     String   // PUNTOS | REFERIDO
-  rewardId       String   // ID de la redención (LoyaltyRedemption o ReferralReward)
-  claimCode      String?  // Código corto visible (ej. CTX-9F4K-PL)
-  accion         String   // REQUESTED | SCANNED | READY | DELIVERED | TOKEN_EXPIRED | REGENERATED
-  estadoAnterior String?  // Estado antes del cambio
-  estadoNuevo    String?  // Estado después del cambio
-  empleadoId     String?  // ID del staff/usuario que realizó la acción
+  rewardType     String // PUNTOS | REFERIDO
+  rewardId       String // ID de la redención (LoyaltyRedemption o ReferralReward)
+  claimCode      String? // Código corto visible (ej. CTX-9F4K-PL)
+  accion         String // REQUESTED | SCANNED | READY | DELIVERED | TOKEN_EXPIRED | REGENERATED
+  estadoAnterior String? // Estado antes del cambio
+  estadoNuevo    String? // Estado después del cambio
+  empleadoId     String? // ID del staff/usuario que realizó la acción
   negocioId      String
   ip             String?
   userAgent      String?
   createdAt      DateTime @default(now())
 
-  Negocio        Negocio  @relation(fields: [negocioId], references: [id])
+  Negocio Negocio @relation(fields: [negocioId], references: [id])
 }
 
 model Coupon {
-  id                String        @id @default(cuid())
+  id                String          @id @default(cuid())
   negocioId         String
   codigo            String
-  tipo              String        // PORCENTAJE | FIJO | SERVICIO | CATEGORIA | CUMPLEANOS | PRIMER_CLIENTE | VIP
+  tipo              String // PORCENTAJE | FIJO | SERVICIO | CATEGORIA | CUMPLEANOS | PRIMER_CLIENTE | VIP
   valor             Float
   servicioId        String?
   descripcion       String?
   fechaInicio       DateTime?
   fechaFin          DateTime?
   maxUsos           Int?
-  usosActuales      Int           @default(0)
+  usosActuales      Int             @default(0)
   maxUsosPorCliente Int?
-  acumulable        Boolean       @default(false)
-  activa            Boolean       @default(true)
-  branchScope       String        @default("ALL") // "ALL" | "BRANCHES"
+  acumulable        Boolean         @default(false)
+  activa            Boolean         @default(true)
+  branchScope       String          @default("ALL") // "ALL" | "BRANCHES"
   branchIds         Json?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-  Negocio           Negocio       @relation(fields: [negocioId], references: [id])
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  Negocio           Negocio         @relation(fields: [negocioId], references: [id])
   CouponUsage       CouponUsage[]
   LoyaltyReward     LoyaltyReward[]
   ClientCoupon      ClientCoupon[]
@@ -1190,16 +1209,16 @@ model ClientCoupon {
   negocioId       String
   clienteId       String
   couponId        String
-  questId         String?   // ID de la misión si es recompensa de misión
-  sourceType      String    // LOYALTY_REWARD | QUEST | REFERRAL | CUMPLEANOS | MANUAL | AUTOMATIZACION
+  questId         String? // ID de la misión si es recompensa de misión
+  sourceType      String // LOYALTY_REWARD | QUEST | REFERRAL | CUMPLEANOS | MANUAL | AUTOMATIZACION
   sourceId        String?
   estado          String    @default("DISPONIBLE") // DISPONIBLE | RESERVADO | USADO | VENCIDO | CANCELADO
   codigo          String    @unique // Código único generado (ej. CTX-9A8X2)
-  codigoOriginal  String    // Código del cupón original (ej. VISITA)
+  codigoOriginal  String // Código del cupón original (ej. VISITA)
   nombre          String?
   descripcion     String?
   descuento       Float
-  tipo            String    // PORCENTAJE | FIJO
+  tipo            String // PORCENTAJE | FIJO
   fechaAsignacion DateTime  @default(now())
   fechaExpiracion DateTime?
   fechaUso        DateTime?
@@ -1207,9 +1226,9 @@ model ClientCoupon {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  Negocio         Negocio   @relation(fields: [negocioId], references: [id])
-  Usuario         Usuario   @relation(fields: [clienteId], references: [id])
-  Coupon          Coupon    @relation(fields: [couponId], references: [id])
+  Negocio Negocio @relation(fields: [negocioId], references: [id])
+  Usuario Usuario @relation(fields: [clienteId], references: [id])
+  Coupon  Coupon  @relation(fields: [couponId], references: [id])
 }
 
 model AutomationRule {
@@ -1217,9 +1236,9 @@ model AutomationRule {
   negocioId   String
   nombre      String
   descripcion String?
-  disparador  String   // CUMPLEANOS | INACTIVIDAD | RESERVAS_COMPLETADAS | RECOMPENSA_GANADA | PUNTOS_ALCANZADOS | PRIMER_VISITA
-  condiciones Json?    // { diasInactividad: 60 } | { reservasRequeridas: 10 } | { puntosRequeridos: 500 }
-  acciones    Json     // [{ tipo: 'WHATSAPP', mensaje: '...' }, { tipo: 'PUNTOS', cantidad: 100 }, { tipo: 'CUPON', ... }]
+  disparador  String // CUMPLEANOS | INACTIVIDAD | RESERVAS_COMPLETADAS | RECOMPENSA_GANADA | PUNTOS_ALCANZADOS | PRIMER_VISITA
+  condiciones Json? // { diasInactividad: 60 } | { reservasRequeridas: 10 } | { puntosRequeridos: 500 }
+  acciones    Json // [{ tipo: 'WHATSAPP', mensaje: '...' }, { tipo: 'PUNTOS', cantidad: 100 }, { tipo: 'CUPON', ... }]
   activa      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -1237,29 +1256,29 @@ model AutomationLog {
 }
 
 model Notification {
-  id             String    @id @default(cuid())
-  negocioId      String
-  userId         String?   // Opcional si es global
-  tipo           String    // RESERVA | PROMO | CAMPANA | PREMIO | REFERIDOS | AUTOMATIZACION | NOTICIA | SISTEMA | AVISO | RECORDATORIO
-  categoria      String    // RESERVAS | PROMOCIONES | CAMPANAS | PREMIOS | NOTICIAS | SISTEMA | CUPONES
-  titulo         String
-  descripcion    String
-  imagenUrl      String?
-  icono          String?   // Nombre del icono de Lucide-React
-  prioridad      String    @default("INFO") // INFO | SUCCESS | WARNING | ERROR
-  recipientType  String    @default("USER") // ALL | USER | SEGMENT | VIP | INACTIVE | NEW_CLIENTS
-  actionType     String?   // VER_RESERVA | VER_CAMPANA | VER_PROMO | VER_PREMIO | VER_PERFIL | ABRIR_URL | CUSTOM
-  actionPayload  String?   // JSON string flexible (ej: {"screen": "campaign", "campaignId": "..."})
-  metricas       String?   // JSON string para estadísticas (enviadas, entregadas, vistas, clics)
-  leida          Boolean   @default(false)
-  archived       Boolean   @default(false)
-  fechaLectura   DateTime?
-  scheduledFor   DateTime? // Para envíos programados en el futuro
-  expiresAt      DateTime? // Fecha de expiración
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  Negocio        Negocio   @relation(fields: [negocioId], references: [id])
-  Usuario        Usuario?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String    @id @default(cuid())
+  negocioId     String
+  userId        String? // Opcional si es global
+  tipo          String // RESERVA | PROMO | CAMPANA | PREMIO | REFERIDOS | AUTOMATIZACION | NOTICIA | SISTEMA | AVISO | RECORDATORIO
+  categoria     String // RESERVAS | PROMOCIONES | CAMPANAS | PREMIOS | NOTICIAS | SISTEMA | CUPONES
+  titulo        String
+  descripcion   String
+  imagenUrl     String?
+  icono         String? // Nombre del icono de Lucide-React
+  prioridad     String    @default("INFO") // INFO | SUCCESS | WARNING | ERROR
+  recipientType String    @default("USER") // ALL | USER | SEGMENT | VIP | INACTIVE | NEW_CLIENTS
+  actionType    String? // VER_RESERVA | VER_CAMPANA | VER_PROMO | VER_PREMIO | VER_PERFIL | ABRIR_URL | CUSTOM
+  actionPayload String? // JSON string flexible (ej: {"screen": "campaign", "campaignId": "..."})
+  metricas      String? // JSON string para estadísticas (enviadas, entregadas, vistas, clics)
+  leida         Boolean   @default(false)
+  archived      Boolean   @default(false)
+  fechaLectura  DateTime?
+  scheduledFor  DateTime? // Para envíos programados en el futuro
+  expiresAt     DateTime? // Fecha de expiración
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  Negocio       Negocio   @relation(fields: [negocioId], references: [id])
+  Usuario       Usuario?  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([negocioId])
   @@index([userId])
@@ -1272,36 +1291,36 @@ model Notification {
 // ==========================================
 
 model AdminRole {
-  id          String                 @id @default(uuid())
-  nombre      String                 @unique
+  id          String                @id @default(uuid())
+  nombre      String                @unique
   descripcion String?
-  color       String                 @default("#ec4899")
-  icono       String                 @default("Shield")
-  activo      Boolean                @default(true)
-  jerarquia   Int                    @default(100)
-  createdAt   DateTime               @default(now())
-  updatedAt   DateTime               @updatedAt
+  color       String                @default("#ec4899")
+  icono       String                @default("Shield")
+  activo      Boolean               @default(true)
+  jerarquia   Int                   @default(100)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
   usuarios    AdminUser[]
   permisos    AdminRolePermission[]
   apiKeys     AdminApiKey[]
 }
 
 model AdminPermission {
-  id          String                 @id @default(uuid())
+  id          String                @id @default(uuid())
   modulo      String
   accion      String
-  codigo      String                 @unique
+  codigo      String                @unique
   nombre      String
   descripcion String?
-  critico     Boolean                @default(false)
+  critico     Boolean               @default(false)
   roles       AdminRolePermission[]
 }
 
 model AdminRolePermission {
-  rolId        String
-  permisoId    String
-  rol          AdminRole             @relation(fields: [rolId], references: [id], onDelete: Cascade)
-  permiso      AdminPermission       @relation(fields: [permisoId], references: [id], onDelete: Cascade)
+  rolId     String
+  permisoId String
+  rol       AdminRole       @relation(fields: [rolId], references: [id], onDelete: Cascade)
+  permiso   AdminPermission @relation(fields: [permisoId], references: [id], onDelete: Cascade)
 
   @@id([rolId, permisoId])
 }
@@ -1317,24 +1336,24 @@ model AdminTeam {
 }
 
 model AdminUser {
-  id           String               @id @default(uuid())
-  nombre       String
-  apellido     String?
-  email        String               @unique
-  password     String
-  activo       Boolean              @default(true)
-  estado       String               @default("ACTIVO") // ACTIVO, SUSPENDIDO, VACACIONES, LICENCIA, PENDIENTE, BLOQUEADO, INVITADO
-  avatar       String?
-  scope        String               @default("GLOBAL") // GLOBAL, REGIONAL, NEGOCIOS_ASIGNADOS, PERSONAL
-  cargo        String?
-  telefono     String?
-  rolId        String
-  rol          AdminRole            @relation(fields: [rolId], references: [id])
-  equipoId     String?
-  equipo       AdminTeam?           @relation(fields: [equipoId], references: [id])
-  ultimaAccion DateTime?
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
+  id                String                @id @default(uuid())
+  nombre            String
+  apellido          String?
+  email             String                @unique
+  password          String
+  activo            Boolean               @default(true)
+  estado            String                @default("ACTIVO") // ACTIVO, SUSPENDIDO, VACACIONES, LICENCIA, PENDIENTE, BLOQUEADO, INVITADO
+  avatar            String?
+  scope             String                @default("GLOBAL") // GLOBAL, REGIONAL, NEGOCIOS_ASIGNADOS, PERSONAL
+  cargo             String?
+  telefono          String?
+  rolId             String
+  rol               AdminRole             @relation(fields: [rolId], references: [id])
+  equipoId          String?
+  equipo            AdminTeam?            @relation(fields: [equipoId], references: [id])
+  ultimaAccion      DateTime?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
   negociosAsignados AdminUserNegocio[]
   loginHistory      AdminLoginHistory[]
   auditLogs         AdminAuditLog[]
@@ -1342,10 +1361,10 @@ model AdminUser {
 }
 
 model AdminUserNegocio {
-  adminUserId  String
-  negocioId    String
-  adminUser    AdminUser             @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
-  negocio      Negocio               @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  adminUserId String
+  negocioId   String
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  negocio     Negocio   @relation(fields: [negocioId], references: [id], onDelete: Cascade)
 
   @@id([adminUserId, negocioId])
 }
@@ -1367,60 +1386,60 @@ model AdminLoginHistory {
 }
 
 model AdminAuditLog {
-  id          String    @id @default(uuid())
-  adminUserId String
-  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
-  fecha       DateTime  @default(now())
-  accion      String
-  modulo      String
-  descripcion String?
-  targetId    String?
-  targetType  String?
-  datosAntes  String?   // JSON serializado
-  datosDespues String?  // JSON serializado
-  ipAddress   String?
-  resultado   String    @default("EXITOSO")
+  id           String    @id @default(uuid())
+  adminUserId  String
+  adminUser    AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  fecha        DateTime  @default(now())
+  accion       String
+  modulo       String
+  descripcion  String?
+  targetId     String?
+  targetType   String?
+  datosAntes   String? // JSON serializado
+  datosDespues String? // JSON serializado
+  ipAddress    String?
+  resultado    String    @default("EXITOSO")
 }
 
 model AdminApiKey {
-  id          String    @id @default(uuid())
-  nombre      String
-  keyHash     String    @unique
-  activo      Boolean   @default(true)
-  rolId       String
-  rol         AdminRole @relation(fields: [rolId], references: [id])
-  createdAt   DateTime  @default(now())
-  expiresAt   DateTime?
+  id        String    @id @default(uuid())
+  nombre    String
+  keyHash   String    @unique
+  activo    Boolean   @default(true)
+  rolId     String
+  rol       AdminRole @relation(fields: [rolId], references: [id])
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
 }
 
 // ─── COMMUNICATIONS HUB MODELS ───
 
 model GlobalCommunication {
-  id              String                         @id @default(uuid())
-  titulo          String
-  subtitulo       String?
-  contenido       String                         // HTML/Markdown enriquecido
-  imagenUrl       String?
-  videoUrl        String?
-  icono           String?                        // Icono de Lucide
-  color           String?                        // Color hexadecimal acento
-  prioridad       String                         @default("INFO") // INFO | SUCCESS | WARNING | ERROR
-  tipo            String                         // SISTEMA | NOTICIA | PROMO | MANTENIMIENTO | SEGURIDAD | CONSEJOS | RECORDATORIO | etc.
-  estado          String                         @default("BORRADOR") // BORRADOR | PROGRAMADO | ENVIANDO | ENVIADO | CANCELADO
-  destinatarios   String                         // Filtros JSON: { type: "ALL", planId: "...", city: "..." }
-  canales         String                         // Array JSON: ["APP", "PUSH", "WHATSAPP", "EMAIL", "SMS", "BANNER", "POPUP"]
-  popupConfig     String?                        // Configuración JSON para emergentes (rango fechas, mostrar una vez, versión, etc.)
-  scheduledFor    DateTime?                      // Fecha programada
-  sentAt          DateTime?                      // Fecha real de envío
-  repeatType      String                         @default("NONE") // NONE | DAILY | WEEKLY | MONTHLY | YEARLY
-  timeZone        String                         @default("America/Bogota")
-  createdAt       DateTime                       @default(now())
-  updatedAt       DateTime                       @updatedAt
-  autorId         String
-  autor           AdminUser                      @relation(fields: [autorId], references: [id])
+  id               String                         @id @default(uuid())
+  titulo           String
+  subtitulo        String?
+  contenido        String // HTML/Markdown enriquecido
+  imagenUrl        String?
+  videoUrl         String?
+  icono            String? // Icono de Lucide
+  color            String? // Color hexadecimal acento
+  prioridad        String                         @default("INFO") // INFO | SUCCESS | WARNING | ERROR
+  tipo             String // SISTEMA | NOTICIA | PROMO | MANTENIMIENTO | SEGURIDAD | CONSEJOS | RECORDATORIO | etc.
+  estado           String                         @default("BORRADOR") // BORRADOR | PROGRAMADO | ENVIANDO | ENVIADO | CANCELADO
+  destinatarios    String // Filtros JSON: { type: "ALL", planId: "...", city: "..." }
+  canales          String // Array JSON: ["APP", "PUSH", "WHATSAPP", "EMAIL", "SMS", "BANNER", "POPUP"]
+  popupConfig      String? // Configuración JSON para emergentes (rango fechas, mostrar una vez, versión, etc.)
+  scheduledFor     DateTime? // Fecha programada
+  sentAt           DateTime? // Fecha real de envío
+  repeatType       String                         @default("NONE") // NONE | DAILY | WEEKLY | MONTHLY | YEARLY
+  timeZone         String                         @default("America/Bogota")
+  createdAt        DateTime                       @default(now())
+  updatedAt        DateTime                       @updatedAt
+  autorId          String
+  autor            AdminUser                      @relation(fields: [autorId], references: [id])
   destinatariosLog GlobalCommunicationRecipient[]
-  analiticas      GlobalCommunicationAnalytics?
-  
+  analiticas       GlobalCommunicationAnalytics?
+
   @@index([estado])
   @@index([tipo])
 }
@@ -1430,8 +1449,8 @@ model GlobalCommunicationRecipient {
   communicationId String
   communication   GlobalCommunication @relation(fields: [communicationId], references: [id], onDelete: Cascade)
   negocioId       String?
-  userId          String?             // Usuario.id o AdminUser.id
-  canal           String              // APP | PUSH | WHATSAPP | EMAIL | SMS | BANNER | POPUP
+  userId          String? // Usuario.id o AdminUser.id
+  canal           String // APP | PUSH | WHATSAPP | EMAIL | SMS | BANNER | POPUP
   estado          String              @default("ENVIADO") // ENVIADO | ENTREGADO | LEIDO | CLIC | CONVERTIDO | ERROR
   errorDetail     String?
   fechaEntrega    DateTime?
@@ -1439,7 +1458,7 @@ model GlobalCommunicationRecipient {
   fechaClic       DateTime?
   fechaConversion DateTime?
   createdAt       DateTime            @default(now())
-  
+
   @@index([communicationId])
   @@index([negocioId])
   @@index([userId])
@@ -1447,22 +1466,22 @@ model GlobalCommunicationRecipient {
 }
 
 model GlobalCommunicationAnalytics {
-  id              String              @id @default(uuid())
-  communicationId String              @unique
-  communication   GlobalCommunication @relation(fields: [communicationId], references: [id], onDelete: Cascade)
-  enviados        Int                 @default(0)
-  entregados      Int                 @default(0)
-  abiertos        Int                 @default(0)
-  clicks          Int                 @default(0)
-  conversiones    Int                 @default(0)
-  ctr             Float               @default(0.0)
-  conversionRate  Float               @default(0.0)
-  errores         Int                 @default(0)
-  cancelados      Int                 @default(0)
-  tiempoAperturaPromedio Float       @default(0.0)
-  negociosAlcanzados     Int         @default(0)
-  clientesAlcanzados     Int         @default(0)
-  updatedAt       DateTime            @updatedAt
+  id                     String              @id @default(uuid())
+  communicationId        String              @unique
+  communication          GlobalCommunication @relation(fields: [communicationId], references: [id], onDelete: Cascade)
+  enviados               Int                 @default(0)
+  entregados             Int                 @default(0)
+  abiertos               Int                 @default(0)
+  clicks                 Int                 @default(0)
+  conversiones           Int                 @default(0)
+  ctr                    Float               @default(0.0)
+  conversionRate         Float               @default(0.0)
+  errores                Int                 @default(0)
+  cancelados             Int                 @default(0)
+  tiempoAperturaPromedio Float               @default(0.0)
+  negociosAlcanzados     Int                 @default(0)
+  clientesAlcanzados     Int                 @default(0)
+  updatedAt              DateTime            @updatedAt
 }
 
 model HelpCenterItem {
@@ -1470,9 +1489,9 @@ model HelpCenterItem {
   titulo      String
   descripcion String?
   contenido   String
-  tipo        String   // TUTORIAL | MANUAL | VIDEO | FAQ | DOC | GUIA | RECURSO
-  categoria   String   // Categoría de ayuda
-  urlRecurso  String?  // Link externo (ej: youtube, pdf, etc.)
+  tipo        String // TUTORIAL | MANUAL | VIDEO | FAQ | DOC | GUIA | RECURSO
+  categoria   String // Categoría de ayuda
+  urlRecurso  String? // Link externo (ej: youtube, pdf, etc.)
   activo      Boolean  @default(true)
   vistas      Int      @default(0)
   createdAt   DateTime @default(now())
@@ -1481,10 +1500,10 @@ model HelpCenterItem {
 
 model ChangelogItem {
   id          String   @id @default(uuid())
-  version     String   // Ej: "v2.5"
+  version     String // Ej: "v2.5"
   titulo      String
   descripcion String?
-  cambios     String   // Array JSON serializado
+  cambios     String // Array JSON serializado
   activo      Boolean  @default(true)
   fecha       DateTime @default(now())
   createdAt   DateTime @default(now())
@@ -1492,12 +1511,12 @@ model ChangelogItem {
 }
 
 model SharedMedia {
-  id          String   @id @default(uuid())
-  nombre      String
-  url         String
-  tipo        String   // IMAGE | VIDEO | PDF | LOGO | ICON | BANNER | FILE
-  sizeBytes   Int?
-  createdAt   DateTime @default(now())
+  id        String   @id @default(uuid())
+  nombre    String
+  url       String
+  tipo      String // IMAGE | VIDEO | PDF | LOGO | ICON | BANNER | FILE
+  sizeBytes Int?
+  createdAt DateTime @default(now())
 }
 
 model CommunicationTemplate {
@@ -1512,7 +1531,7 @@ model CommunicationTemplate {
   icono       String?
   color       String?
   tipo        String
-  canales     String   // Array JSON serializado
+  canales     String // Array JSON serializado
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -1522,19 +1541,19 @@ model CommunicationTemplate {
 // ==========================================
 
 model Season {
-  id              String      @id @default(cuid())
-  negocioId       String?     // Null para temporadas globales de Citiox (plataforma)
-  nombre          String      // Ej: "Temporada Navideña 2026"
-  descripcion     String?
-  icono           String      @default("Calendar")
-  color           String      @default("#4f46e5")
-  fechaInicio     DateTime
-  fechaFin        DateTime
-  activa          Boolean     @default(true)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  
-  Negocio         Negocio?    @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  negocioId   String? // Null para temporadas globales de Citiox (plataforma)
+  nombre      String // Ej: "Temporada Navideña 2026"
+  descripcion String?
+  icono       String   @default("Calendar")
+  color       String   @default("#4f46e5")
+  fechaInicio DateTime
+  fechaFin    DateTime
+  activa      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  Negocio         Negocio?               @relation(fields: [negocioId], references: [id], onDelete: Cascade)
   Campaigns       Campaign[]
   GlobalCampaigns ClientGlobalCampaign[]
   Leaderboards    Leaderboard[]
@@ -1543,89 +1562,89 @@ model Season {
 }
 
 model Campaign {
-  id              String      @id @default(cuid())
-  negocioId       String?     // Null para Campañas Globales Citiox (SuperAdmin)
-  nombre          String
-  descripcion     String?
-  activa          Boolean     @default(true)
-  
+  id          String  @id @default(cuid())
+  negocioId   String? // Null para Campañas Globales Citiox (SuperAdmin)
+  nombre      String
+  descripcion String?
+  activa      Boolean @default(true)
+
   // Metadatos del Marketplace
-  isMarketplace   Boolean     @default(false)
-  downloads       Int         @default(0)
-  rating          Float       @default(5.0)
-  benefits        String?     // Beneficios destacados
-  difficulty      String      @default("MEDIA") // FACIL | MEDIA | DIFICIL
-  estImprovement  Float       @default(0.0) // Porcentaje estimado de mejora (ej: 28.5)
-  
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  
-  Negocio         Negocio?    @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  Season          Season?     @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  seasonId        String?
-  Quests          Quest[]
+  isMarketplace  Boolean @default(false)
+  downloads      Int     @default(0)
+  rating         Float   @default(5.0)
+  benefits       String? // Beneficios destacados
+  difficulty     String  @default("MEDIA") // FACIL | MEDIA | DIFICIL
+  estImprovement Float   @default(0.0) // Porcentaje estimado de mejora (ej: 28.5)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Negocio  Negocio? @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Season   Season?  @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  seasonId String?
+  Quests   Quest[]
 
   @@index([negocioId])
   @@index([seasonId])
 }
 
 model Quest {
-  id                    String             @id @default(cuid())
-  negocioId             String?            // Null si es plantilla global Citiox
-  campaignId            String
-  nombre                String
-  descripcion           String
-  imagenUrl             String?
-  icono                 String             @default("Award")
-  color                 String             @default("#ec4899")
-  visible               Boolean            @default(true)    // false = Misión Secreta
-  repetible             Boolean            @default(false)
-  limiteUsuario         Int                @default(1)
-  limiteGlobal          Int?
-  fechaInicio           DateTime?
-  fechaFin              DateTime?
-  activa                Boolean            @default(true)
-  
+  id            String    @id @default(cuid())
+  negocioId     String? // Null si es plantilla global Citiox
+  campaignId    String
+  nombre        String
+  descripcion   String
+  imagenUrl     String?
+  icono         String    @default("Award")
+  color         String    @default("#ec4899")
+  visible       Boolean   @default(true) // false = Misión Secreta
+  repetible     Boolean   @default(false)
+  limiteUsuario Int       @default(1)
+  limiteGlobal  Int?
+  fechaInicio   DateTime?
+  fechaFin      DateTime?
+  activa        Boolean   @default(true)
+
   // Quest Chain (Prerrequisitos)
-  parentQuestId         String?
-  
+  parentQuestId String?
+
   // Segmentación Flexible
-  segmentacion          Json?              // { gender: ["M"], tags: ["VIP"], level: ["Oro"] }
-  
+  segmentacion Json? // { gender: ["M"], tags: ["VIP"], level: ["Oro"] }
+
   // Validación: AUTOMATICO | USUARIO | ADMIN | QR | CODIGO | STAFF | API | MIXTO
-  validacionTipo        String             @default("AUTOMATICO")
-  
+  validacionTipo String @default("AUTOMATICO")
+
   // Columnas indexadas para Rule Engine (Optimización de rendimiento)
-  triggerEvent          String             // BOOKING_COMPLETED | USER_REGISTERED | etc.
-  servicioId            String?            // ID del servicio asociado al trigger
-  montoMinimo           Float?             // Monto mínimo evaluable en transacciones
-  cantidadMeta          Int                @default(1) // Cantidad de repeticiones requeridas para completar
-  
+  triggerEvent String // BOOKING_COMPLETED | USER_REGISTERED | etc.
+  servicioId   String? // ID del servicio asociado al trigger
+  montoMinimo  Float? // Monto mínimo evaluable en transacciones
+  cantidadMeta Int     @default(1) // Cantidad de repeticiones requeridas para completar
+
   // JSON para condiciones extras
-  condicionesExtra      Json?
-  
+  condicionesExtra Json?
+
   // Recompensas Múltiples Desacopladas
   // Estructura: [{ action: "ADD_POINTS", value: 100 }, { action: "CREATE_COUPON", value: "c1" }]
-  acciones              Json
-  
-  // Campos de Origen y Gamificación Enterprise
-  origen                String             @default("NEGOCIO") // "NEGOCIO" | "PLANTILLA"
-  templateIdOrigen      String?
-  templateVersionOrigen String?            // Ej. "1.0.0"
-  modificadaLocalmente  Boolean            @default(false)
-  difficulty            QuestDifficulty    @default(MEDIUM)
-  xp                    Int                @default(0)
-  estimatedMinutes      Int                @default(0)
-  estimatedDays         Int                @default(0)
+  acciones Json
 
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
-  
-  Negocio               Negocio?           @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  Campaign              Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  Progress              QuestProgress[]
-  Participants          QuestParticipant[]
-  Rules                 QuestRule[]
+  // Campos de Origen y Gamificación Enterprise
+  origen                String          @default("NEGOCIO") // "NEGOCIO" | "PLANTILLA"
+  templateIdOrigen      String?
+  templateVersionOrigen String? // Ej. "1.0.0"
+  modificadaLocalmente  Boolean         @default(false)
+  difficulty            QuestDifficulty @default(MEDIUM)
+  xp                    Int             @default(0)
+  estimatedMinutes      Int             @default(0)
+  estimatedDays         Int             @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Negocio      Negocio?           @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Campaign     Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  Progress     QuestProgress[]
+  Participants QuestParticipant[]
+  Rules        QuestRule[]
 
   @@index([negocioId])
   @@index([campaignId])
@@ -1634,18 +1653,18 @@ model Quest {
 }
 
 model QuestProgress {
-  id                String             @id @default(cuid())
+  id                String    @id @default(cuid())
   questId           String
   userId            String
-  progresoActual    Int                @default(0)
-  progresoRequerido Int                @default(1)
-  estado            String             @default("EN_PROGRESO") // EN_PROGRESO | PENDIENTE_APROBACION | COMPLETADA | RECLAMADA
+  progresoActual    Int       @default(0)
+  progresoRequerido Int       @default(1)
+  estado            String    @default("EN_PROGRESO") // EN_PROGRESO | PENDIENTE_APROBACION | COMPLETADA | RECLAMADA
   fechaCompletada   DateTime?
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  
-  Quest             Quest              @relation(fields: [questId], references: [id], onDelete: Cascade)
-  Usuario           Usuario            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  Quest   Quest   @relation(fields: [questId], references: [id], onDelete: Cascade)
+  Usuario Usuario @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([questId, userId])
 }
@@ -1654,7 +1673,7 @@ model QuestParticipant {
   id        String   @id @default(cuid())
   questId   String
   userId    String
-  action    String   // AVANCE | COMPLETADO | RECLAMADO | APROBADO_ADMIN
+  action    String // AVANCE | COMPLETADO | RECLAMADO | APROBADO_ADMIN
   detalles  String?
   createdAt DateTime @default(now())
   Quest     Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
@@ -1665,37 +1684,37 @@ model QuestParticipant {
 }
 
 model LevelTier {
-  id               String            @id @default(cuid())
+  id               String      @id @default(cuid())
   negocioId        String
-  nombre           String            // Bronce, Plata, Oro, Platino, Diamante
-  puntosRequeridos Int               @default(0)
+  nombre           String // Bronce, Plata, Oro, Platino, Diamante
+  puntosRequeridos Int         @default(0)
   icono            String?
-  beneficios       String?           // JSON o texto de beneficios exclusivos
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  Negocio          Negocio           @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  beneficios       String? // JSON o texto de beneficios exclusivos
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  Negocio          Negocio     @relation(fields: [negocioId], references: [id], onDelete: Cascade)
   UserLevel        UserLevel[]
 
   @@unique([negocioId, puntosRequeridos])
 }
 
 model UserLevel {
-  id          String     @id @default(cuid())
-  userId      String     @unique
-  negocioId   String
-  levelId     String
-  puntosTier  Int        @default(0)
-  xpTotal     Int        @default(0)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  Usuario     Usuario    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  LevelTier   LevelTier  @relation(fields: [levelId], references: [id])
+  id         String    @id @default(cuid())
+  userId     String    @unique
+  negocioId  String
+  levelId    String
+  puntosTier Int       @default(0)
+  xpTotal    Int       @default(0)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  Usuario    Usuario   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  LevelTier  LevelTier @relation(fields: [levelId], references: [id])
 }
 
 model Badge {
   id          String      @id @default(cuid())
   negocioId   String
-  nombre      String      // Ej: "Primer Cliente", "Top Referidor"
+  nombre      String // Ej: "Primer Cliente", "Top Referidor"
   descripcion String
   icono       String      @default("Award")
   color       String      @default("#f59e0b")
@@ -1734,13 +1753,13 @@ model UserStreak {
 }
 
 model QuestEventLog {
-  id          String   @id @default(cuid())
-  negocioId   String
-  userId      String
-  eventType   String   // BOOKING_COMPLETED | USER_LOGIN | REVIEW_CREATED | etc.
-  payload     Json
-  procesado   Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  negocioId String
+  userId    String
+  eventType String // BOOKING_COMPLETED | USER_LOGIN | REVIEW_CREATED | etc.
+  payload   Json
+  procesado Boolean  @default(false)
+  createdAt DateTime @default(now())
 
   @@index([procesado, createdAt])
 }
@@ -1750,18 +1769,18 @@ model LoyaltyLevel {
   negocioId           String
   nombre              String
   diamantesRequeridos Int
-  color               String   // Hexadecimal (ej: #ec4899)
-  icono               String   // Icono de Lucide (ej: Award, Crown)
+  color               String // Hexadecimal (ej: #ec4899)
+  icono               String // Icono de Lucide (ej: Award, Crown)
   orden               Int
-  beneficios          Json?    // Opcional: lista de beneficios informativos
-  recompensaTipo      String?   // CUPON | PUNTOS | REGALO | SERVICIO | NULL
+  beneficios          Json? // Opcional: lista de beneficios informativos
+  recompensaTipo      String? // CUPON | PUNTOS | REGALO | SERVICIO | NULL
   recompensaValor     Json?
   multiplicador       Float    @default(1.0)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   Negocio             Negocio  @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  
-  UserPointsNivelActual     UserPoints[] @relation("NivelActual")
+
+  UserPointsNivelActual      UserPoints[] @relation("NivelActual")
   UserPointsUltimoNivelVisto UserPoints[] @relation("UltimoNivelVisto")
 
   @@index([negocioId])
@@ -1772,7 +1791,7 @@ model LoyaltySeason {
   negocioId          String
   fechaInicio        DateTime
   fechaFin           DateTime
-  duracionMeses      Int      // 1, 2, 3, 6, 12
+  duracionMeses      Int // 1, 2, 3, 6, 12
   descuentoDiamantes Int
   activa             Boolean  @default(true)
   procesada          Boolean  @default(false)
@@ -1809,7 +1828,7 @@ enum GlobalRewardType {
 }
 
 model GlobalMission {
-  id               String                  @id @default(cuid())
+  id               String                       @id @default(cuid())
   titulo           String
   descripcion      String
   tipo             GlobalMissionType
@@ -1818,12 +1837,12 @@ model GlobalMission {
   recompensaValor  Json?
   fechaInicio      DateTime?
   fechaFin         DateTime?
-  activa           Boolean                 @default(true)
-  prioridad        Int                     @default(0)
+  activa           Boolean                      @default(true)
+  prioridad        Int                          @default(0)
   icono            String?
   color            String?
-  createdAt        DateTime                @default(now())
-  updatedAt        DateTime                @updatedAt
+  createdAt        DateTime                     @default(now())
+  updatedAt        DateTime                     @updatedAt
   BusinessMissions BusinessGlobalMission[]
   RewardHistory    GlobalMissionRewardHistory[]
 }
@@ -1845,15 +1864,15 @@ model BusinessGlobalMission {
 }
 
 model GlobalMissionRewardHistory {
-  id          String           @id @default(cuid())
-  negocioId   String
-  missionId   String
-  tipo        GlobalRewardType
-  valor       Json?
-  detalles    String?          // Ej: "+15 días gratis por completar Tus primeras 20 reservas"
-  fecha       DateTime         @default(now())
-  Negocio     Negocio          @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  Mission     GlobalMission    @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  id        String           @id @default(cuid())
+  negocioId String
+  missionId String
+  tipo      GlobalRewardType
+  valor     Json?
+  detalles  String? // Ej: "+15 días gratis por completar Tus primeras 20 reservas"
+  fecha     DateTime         @default(now())
+  Negocio   Negocio          @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Mission   GlobalMission    @relation(fields: [missionId], references: [id], onDelete: Cascade)
 }
 
 // ==========================================
@@ -1914,66 +1933,66 @@ enum RewardCatalogType {
 
 model Wallet {
   id        String             @id @default(cuid())
-  negocioId String?            // Null si pertenece a un usuario/cliente final
-  usuarioId String?            // Null si pertenece a un negocio
+  negocioId String? // Null si pertenece a un usuario/cliente final
+  usuarioId String? // Null si pertenece a un negocio
   saldo     Float              @default(0.0)
   tipo      WalletCurrencyType
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
 
   Transactions WalletTransaction[]
-  Negocio      Negocio?           @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  Usuario      Usuario?           @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  Negocio      Negocio?            @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Usuario      Usuario?            @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@unique([negocioId, tipo])
   @@unique([usuarioId, tipo])
 }
 
 model WalletTransaction {
-  id           String             @id @default(cuid())
+  id           String   @id @default(cuid())
   walletId     String
-  tipo         String             // "INGRESO" | "EGRESO"
+  tipo         String // "INGRESO" | "EGRESO"
   monto        Float
-  motivo       String             // Ej: "COMPLETAR_MISION_1", "COMPRA_PAQUETE"
-  referenciaId String?            // ID de la entidad relacionada
-  fecha        DateTime           @default(now())
+  motivo       String // Ej: "COMPLETAR_MISION_1", "COMPRA_PAQUETE"
+  referenciaId String? // ID de la entidad relacionada
+  fecha        DateTime @default(now())
 
-  Wallet       Wallet             @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  Wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@index([walletId])
   @@index([referenciaId])
 }
 
 model Leaderboard {
-  id             String             @id @default(cuid())
+  id             String   @id @default(cuid())
   seasonId       String?
   globalSeasonId String?
-  tipo           String             // "SEMANAL" | "MENSUAL" | "TEMPORADA" | "HISTORICO"
+  tipo           String // "SEMANAL" | "MENSUAL" | "TEMPORADA" | "HISTORICO"
   nombre         String
-  activa         Boolean            @default(true)
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  activa         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  Season         Season?            @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  GlobalSeason   GlobalSeason?      @relation(fields: [globalSeasonId], references: [id], onDelete: Cascade)
-  Entries        LeaderboardEntry[]
+  Season       Season?            @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  GlobalSeason GlobalSeason?      @relation(fields: [globalSeasonId], references: [id], onDelete: Cascade)
+  Entries      LeaderboardEntry[]
 
   @@index([seasonId])
   @@index([globalSeasonId])
 }
 
 model LeaderboardEntry {
-  id            String      @id @default(cuid())
+  id            String   @id @default(cuid())
   leaderboardId String
   negocioId     String?
   usuarioId     String?
-  puntos        Int         @default(0)
-  rango         Int         @default(0)
-  updatedAt     DateTime    @updatedAt
+  puntos        Int      @default(0)
+  rango         Int      @default(0)
+  updatedAt     DateTime @updatedAt
 
-  Leaderboard   Leaderboard @relation(fields: [leaderboardId], references: [id], onDelete: Cascade)
-  Negocio       Negocio?    @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  Usuario       Usuario?    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  Leaderboard Leaderboard @relation(fields: [leaderboardId], references: [id], onDelete: Cascade)
+  Negocio     Negocio?    @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Usuario     Usuario?    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@unique([leaderboardId, negocioId])
   @@unique([leaderboardId, usuarioId])
@@ -1985,17 +2004,17 @@ model RewardCatalog {
   nombre      String
   descripcion String?
   tipo        RewardCatalogType
-  valor       Json?             // Metadata del premio
+  valor       Json? // Metadata del premio
   activa      Boolean           @default(true)
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
   // Nuevos campos extendidos para el patrón Strategy de plataforma (Citiox)
-  provider    String?           // Ej: "SPOTIFY", "UBER_EATS", "SYSTEM"
-  handler     String            @default("wallet") // Ej: "wallet", "coupon", "webhook", "feature"
-  config      Json?             // Parámetros flexibles del handler
-  version     String            @default("1.0.0")
-  activo      Boolean           @default(true)
+  provider String? // Ej: "SPOTIFY", "UBER_EATS", "SYSTEM"
+  handler  String  @default("wallet") // Ej: "wallet", "coupon", "webhook", "feature"
+  config   Json? // Parámetros flexibles del handler
+  version  String  @default("1.0.0")
+  activo   Boolean @default(true)
 
   QuestActions             QuestAction[]
   GlobalLevelRewards       GlobalLevelReward[]
@@ -2010,21 +2029,21 @@ enum GlobalSeasonStatus {
 }
 
 model GlobalLevel {
-  id              String                   @id @default(cuid())
-  nombre          String                   // Ej: "Nivel 1", "Nivel 2"
-  titulo          String                   // Ej: "Novato del Estilo", "Gran Maestro"
-  descripcion     String?                  // Descripción del rango o nivel
-  xpRequerida     Int                      @default(0) // Puntos de XP global necesarios para alcanzar el nivel
-  orden           Int                      @default(1) // Orden de la progresión para evitar ordenamientos costosos por XP
-  version         String                   @default("1.0.0") // Control de versiones para evitar romper lógica de usuarios antiguos
-  activo          Boolean                  @default(true) // Permite desactivar niveles sin eliminarlos de base de datos
-  beneficios      Json?                    // Metadatos únicamente para presentación en la UI (ej. [{ "icon": "crown", "text": "+5% XP" }])
-  createdAt       DateTime                 @default(now())
-  updatedAt       DateTime                 @updatedAt
-  
-  Presentation    GlobalLevelPresentation?
-  Rewards         GlobalLevelReward[]
-  History         GlobalLevelHistory[]
+  id          String   @id @default(cuid())
+  nombre      String // Ej: "Nivel 1", "Nivel 2"
+  titulo      String // Ej: "Novato del Estilo", "Gran Maestro"
+  descripcion String? // Descripción del rango o nivel
+  xpRequerida Int      @default(0) // Puntos de XP global necesarios para alcanzar el nivel
+  orden       Int      @default(1) // Orden de la progresión para evitar ordenamientos costosos por XP
+  version     String   @default("1.0.0") // Control de versiones para evitar romper lógica de usuarios antiguos
+  activo      Boolean  @default(true) // Permite desactivar niveles sin eliminarlos de base de datos
+  beneficios  Json? // Metadatos únicamente para presentación en la UI (ej. [{ "icon": "crown", "text": "+5% XP" }])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  Presentation GlobalLevelPresentation?
+  Rewards      GlobalLevelReward[]
+  History      GlobalLevelHistory[]
 
   @@unique([xpRequerida])
   @@unique([orden])
@@ -2032,26 +2051,26 @@ model GlobalLevel {
 }
 
 model GlobalLevelPresentation {
-  id            String      @id @default(cuid())
-  globalLevelId String      @unique
-  icono         String      @default("Award")
-  color         String      @default("#4f46e5")
-  imagen        String?     // URL de ilustración de fondo o Badge
-  tituloUi      String?     // Título formateado para la UI
-  descripcionUi String?     // Descripción formateada para la UI
-  metadatos     Json?       // Metadatos extras de presentación (ej. animaciones, efectos)
+  id            String  @id @default(cuid())
+  globalLevelId String  @unique
+  icono         String  @default("Award")
+  color         String  @default("#4f46e5")
+  imagen        String? // URL de ilustración de fondo o Badge
+  tituloUi      String? // Título formateado para la UI
+  descripcionUi String? // Descripción formateada para la UI
+  metadatos     Json? // Metadatos extras de presentación (ej. animaciones, efectos)
 
-  GlobalLevel   GlobalLevel @relation(fields: [globalLevelId], references: [id], onDelete: Cascade)
+  GlobalLevel GlobalLevel @relation(fields: [globalLevelId], references: [id], onDelete: Cascade)
 }
 
 model GlobalLevelReward {
-  id            String         @id @default(cuid())
+  id            String @id @default(cuid())
   globalLevelId String
   rewardId      String
-  orden         Int            @default(1) // Orden secuencial de ejecución de recompensas en este nivel
+  orden         Int    @default(1) // Orden secuencial de ejecución de recompensas en este nivel
 
-  GlobalLevel   GlobalLevel    @relation(fields: [globalLevelId], references: [id], onDelete: Cascade)
-  Reward        RewardCatalog  @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  GlobalLevel GlobalLevel   @relation(fields: [globalLevelId], references: [id], onDelete: Cascade)
+  Reward      RewardCatalog @relation(fields: [rewardId], references: [id], onDelete: Cascade)
 
   @@unique([globalLevelId, rewardId])
   @@index([globalLevelId])
@@ -2059,21 +2078,21 @@ model GlobalLevelReward {
 }
 
 model GlobalLevelHistory {
-  id                  String         @id @default(cuid())
-  userId              String
-  globalLevelId       String
-  seasonId            String?
-  xpAtUnlock          Int?           // XP exacta acumulada al momento de desbloquear el nivel
-  recompensasOtorgadas Json?          // Snapshot de las recompensas acreditadas al subir (ej. [{ action: "ADD_DIAMONDS", value: 200 }])
-  rewardVersion       String?        // Versión del catálogo de recompensas al momento del desbloqueo
-  eventType           String?        // Tipo de evento originario (ej. LEVEL_UP, QUEST_COMPLETED, ADMIN_GRANTED)
-  sourceEventId       String?        // ID del evento origen de auditoría (para trazabilidad completa)
-  walletTransactionId String?        // ID de la transacción Wallet de auditoría (para trazabilidad completa)
-  createdAt           DateTime       @default(now())
+  id                   String   @id @default(cuid())
+  userId               String
+  globalLevelId        String
+  seasonId             String?
+  xpAtUnlock           Int? // XP exacta acumulada al momento de desbloquear el nivel
+  recompensasOtorgadas Json? // Snapshot de las recompensas acreditadas al subir (ej. [{ action: "ADD_DIAMONDS", value: 200 }])
+  rewardVersion        String? // Versión del catálogo de recompensas al momento del desbloqueo
+  eventType            String? // Tipo de evento originario (ej. LEVEL_UP, QUEST_COMPLETED, ADMIN_GRANTED)
+  sourceEventId        String? // ID del evento origen de auditoría (para trazabilidad completa)
+  walletTransactionId  String? // ID de la transacción Wallet de auditoría (para trazabilidad completa)
+  createdAt            DateTime @default(now())
 
-  Usuario             Usuario        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  GlobalLevel         GlobalLevel    @relation(fields: [globalLevelId], references: [id], onDelete: Cascade)
-  Season              GlobalSeason?  @relation(fields: [seasonId], references: [id], onDelete: SetNull)
+  Usuario     Usuario       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  GlobalLevel GlobalLevel   @relation(fields: [globalLevelId], references: [id], onDelete: Cascade)
+  Season      GlobalSeason? @relation(fields: [seasonId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([globalLevelId])
@@ -2081,31 +2100,31 @@ model GlobalLevelHistory {
 }
 
 model GlobalSeason {
-  id                 String             @id @default(cuid())
-  codigo             String             @unique // Código único de la temporada (ej. "S2026-01", "SUMMER-2027")
-  nombre             String             // Ej: "Temporada de la Furia"
-  descripcion        String?
-  fechaInicio        DateTime
-  fechaFin           DateTime
-  config             Json?              // Parámetros flexibles (multiplicadores de XP, bonos, descuentos, reglas estacionales)
-  version            String             @default("1.0.0") // Versión de reglas de la temporada
-  status             GlobalSeasonStatus @default(UPCOMING)
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  
-  Leaderboards         Leaderboard[]
-  LevelHistory         GlobalLevelHistory[]
-  MissionPublications  MissionPublication[] // Nuevo sistema de misiones desacoplado
+  id          String             @id @default(cuid())
+  codigo      String             @unique // Código único de la temporada (ej. "S2026-01", "SUMMER-2027")
+  nombre      String // Ej: "Temporada de la Furia"
+  descripcion String?
+  fechaInicio DateTime
+  fechaFin    DateTime
+  config      Json? // Parámetros flexibles (multiplicadores de XP, bonos, descuentos, reglas estacionales)
+  version     String             @default("1.0.0") // Versión de reglas de la temporada
+  status      GlobalSeasonStatus @default(UPCOMING)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  Leaderboards        Leaderboard[]
+  LevelHistory        GlobalLevelHistory[]
+  MissionPublications MissionPublication[] // Nuevo sistema de misiones desacoplado
 }
 
 model DomainEvent {
   id          String    @id @default(cuid())
-  aggregate   String    // Tipo de agregación, ej. "USER", "QUEST", "SEASON"
-  aggregateId String    // ID del agregado afectado
-  eventType   String    // Ej: "QUEST_COMPLETED", "XP_GRANTED"
-  payload     Json      // Datos completos del evento
+  aggregate   String // Tipo de agregación, ej. "USER", "QUEST", "SEASON"
+  aggregateId String // ID del agregado afectado
+  eventType   String // Ej: "QUEST_COMPLETED", "XP_GRANTED"
+  payload     Json // Datos completos del evento
   status      String    @default("PENDING") // PENDING | PROCESSED | FAILED
-  errorLog    String?   // Detalle de errores si falló
+  errorLog    String? // Detalle de errores si falló
   createdAt   DateTime  @default(now())
   processedAt DateTime?
 
@@ -2114,159 +2133,159 @@ model DomainEvent {
 }
 
 model QuestRule {
-  id           String      @id @default(cuid())
+  id           String   @id @default(cuid())
   questId      String
-  triggerEvent String      // BOOKING_COMPLETED | CLIENT_REGISTERED | etc.
-  operador     String      // "GREATER_THAN" | "EQUALS" | etc.
-  campo        String      // "cantidad" | "monto"
+  triggerEvent String // BOOKING_COMPLETED | CLIENT_REGISTERED | etc.
+  operador     String // "GREATER_THAN" | "EQUALS" | etc.
+  campo        String // "cantidad" | "monto"
   valorMeta    String
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  Quest        Quest       @relation(fields: [questId], references: [id], onDelete: Cascade)
-  Actions      QuestAction[]
+  Quest   Quest         @relation(fields: [questId], references: [id], onDelete: Cascade)
+  Actions QuestAction[]
 
   @@index([questId])
 }
 
 model QuestAction {
-  id              String         @id @default(cuid())
+  id              String   @id @default(cuid())
   ruleId          String
   rewardCatalogId String?
-  actionType      String         // "ADD_DIAMONDS" | "SEND_WHATSAPP" | "ADD_XP"
-  parametros      Json?          // Parámetros dinámicos
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  actionType      String // "ADD_DIAMONDS" | "SEND_WHATSAPP" | "ADD_XP"
+  parametros      Json? // Parámetros dinámicos
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  Rule            QuestRule      @relation(fields: [ruleId], references: [id], onDelete: Cascade)
-  Reward          RewardCatalog? @relation(fields: [rewardCatalogId], references: [id], onDelete: SetNull)
+  Rule   QuestRule      @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  Reward RewardCatalog? @relation(fields: [rewardCatalogId], references: [id], onDelete: SetNull)
 
   @@index([ruleId])
   @@index([rewardCatalogId])
 }
 
 model QuestTemplate {
-  id               String                 @id @default(cuid())
-  nombre           String
-  descripcion      String
-  icono            String                 @default("Award")
-  color            String                 @default("#ec4899")
-  
+  id          String @id @default(cuid())
+  nombre      String
+  descripcion String
+  icono       String @default("Award")
+  color       String @default("#ec4899")
+
   // Categorías y Etiquetas Múltiples (ej. ["BELLEZA", "SPA", "VETERINARIA"])
-  categorias       Json                   
-  tags             Json                   
-  
+  categorias Json
+  tags       Json
+
   // Catálogo personalizado de cupones y premios para esta plantilla
-  coupons          Json?                  
-  rewards          Json?                  
-  
+  coupons Json?
+  rewards Json?
+
   // Control de Versiones Semánticas (ej. "1.2.0")
-  versionSemantica String                 @default("1.0.0")
-  estado           TemplatePublishStatus  @default(BORRADOR)
-  origenTipo       TemplateSourceType     @default(BIBLIOTECA_OFICIAL)
-  esPredeterminada Boolean                @default(false)   // Recomendada en onboarding
-  featured         Boolean                @default(false)   // Destacado en Marketplace
-  
+  versionSemantica String                @default("1.0.0")
+  estado           TemplatePublishStatus @default(BORRADOR)
+  origenTipo       TemplateSourceType    @default(BIBLIOTECA_OFICIAL)
+  esPredeterminada Boolean               @default(false) // Recomendada en onboarding
+  featured         Boolean               @default(false) // Destacado en Marketplace
+
   // Elementos Visuales y Monetización
-  coverImage       String?
-  thumbnail        String?
-  banner           String?
-  autor            String                 @default("Citiox")
-  empresa          String                 @default("Citiox")
-  licencia         String                 @default("Comercial")
-  gratuito         Boolean                @default(true)
-  precio           Float                  @default(0.0)
-  moneda           String                 @default("USD")
+  coverImage String?
+  thumbnail  String?
+  banner     String?
+  autor      String  @default("Citiox")
+  empresa    String  @default("Citiox")
+  licencia   String  @default("Comercial")
+  gratuito   Boolean @default(true)
+  precio     Float   @default(0.0)
+  moneda     String  @default("USD")
 
   // Analytics Avanzados de Marketplace
-  installCount           Int              @default(0)
-  activeBusinesses       Int              @default(0)
-  usuariosActivos        Int              @default(0)       // Clientes finales participando
-  completionRate         Float            @default(0.0)     // Tasa de finalización
-  porcentajeAbandono     Float            @default(0.0)
-  averageCompletionDays  Float            @default(0.0)
-  rating                 Float            @default(5.0)
-  misionMasDificilId     String?
-  misionMasFacilId       String?
-  
-  createdAt        DateTime               @default(now())
-  updatedAt        DateTime               @updatedAt
+  installCount          Int     @default(0)
+  activeBusinesses      Int     @default(0)
+  usuariosActivos       Int     @default(0) // Clientes finales participando
+  completionRate        Float   @default(0.0) // Tasa de finalización
+  porcentajeAbandono    Float   @default(0.0)
+  averageCompletionDays Float   @default(0.0)
+  rating                Float   @default(5.0)
+  misionMasDificilId    String?
+  misionMasFacilId      String?
 
-  Missions         QuestTemplateMission[]
-  InstalledBy      InstalledTemplate[]
-  Snapshots        InstalledTemplateSnapshot[]
-  Packs            QuestPackTemplate[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Missions    QuestTemplateMission[]
+  InstalledBy InstalledTemplate[]
+  Snapshots   InstalledTemplateSnapshot[]
+  Packs       QuestPackTemplate[]
 }
 
 model QuestTemplateMission {
-  id               String           @id @default(cuid())
-  templateId       String
-  nombre           String
-  descripcion      String
-  imagenUrl        String?
-  icono            String           @default("Award")
-  color            String           @default("#ec4899")
-  visible          Boolean          @default(true)
-  repetible        Boolean          @default(false)
-  limiteUsuario    Int              @default(1)
-  limiteGlobal     Int?
-  fechaInicio      DateTime?
-  fechaFin         DateTime?
-  activa           Boolean          @default(true)
-  parentQuestId    String?
-  segmentacion     Json?            
-  validacionTipo   String           @default("AUTOMATICO")
-  
+  id             String    @id @default(cuid())
+  templateId     String
+  nombre         String
+  descripcion    String
+  imagenUrl      String?
+  icono          String    @default("Award")
+  color          String    @default("#ec4899")
+  visible        Boolean   @default(true)
+  repetible      Boolean   @default(false)
+  limiteUsuario  Int       @default(1)
+  limiteGlobal   Int?
+  fechaInicio    DateTime?
+  fechaFin       DateTime?
+  activa         Boolean   @default(true)
+  parentQuestId  String?
+  segmentacion   Json?
+  validacionTipo String    @default("AUTOMATICO")
+
   // Gamificación y Estimación de Tiempo
-  difficulty       QuestDifficulty  @default(MEDIUM)
-  xp               Int              @default(0)       // Experiencia que otorga
-  estimatedMinutes Int              @default(0)       // Tiempo estimado de completado
-  estimatedDays    Int              @default(0)
-  
-  triggerEvent     String           
+  difficulty       QuestDifficulty @default(MEDIUM)
+  xp               Int             @default(0) // Experiencia que otorga
+  estimatedMinutes Int             @default(0) // Tiempo estimado de completado
+  estimatedDays    Int             @default(0)
+
+  triggerEvent     String
   servicioId       String?
   montoMinimo      Float?
-  cantidadMeta     Int              @default(1)
+  cantidadMeta     Int     @default(1)
   condicionesExtra Json?
   acciones         Json
 
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  Template         QuestTemplate    @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  Template QuestTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
   @@index([templateId])
   @@index([triggerEvent])
 }
 
 model InstalledTemplate {
-  id               String               @id @default(cuid())
-  negocioId        String
-  templateId       String
-  versionInstalada String               // Ej. "1.1.0"
+  id                  String               @id @default(cuid())
+  negocioId           String
+  templateId          String
+  versionInstalada    String // Ej. "1.1.0"
   estadoActualizacion TemplateUpdateStatus @default(UP_TO_DATE)
-  installedAt      DateTime             @default(now())
-  reinstalledAt    DateTime?
+  installedAt         DateTime             @default(now())
+  reinstalledAt       DateTime?
 
-  Negocio          Negocio              @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  Template         QuestTemplate        @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  Negocio  Negocio       @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Template QuestTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
   @@unique([negocioId, templateId])
 }
 
 model InstalledTemplateSnapshot {
-  id           String        @id @default(cuid())
-  negocioId    String
-  templateId   String
-  versionCopy  String        // Versión guardada
-  
-  // Respaldo JSON completo de la plantilla y sus misiones al momento de la instalación.
-  snapshotData Json          
-  
-  installedAt  DateTime      @default(now())
+  id          String @id @default(cuid())
+  negocioId   String
+  templateId  String
+  versionCopy String // Versión guardada
 
-  Negocio      Negocio       @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  Template     QuestTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  // Respaldo JSON completo de la plantilla y sus misiones al momento de la instalación.
+  snapshotData Json
+
+  installedAt DateTime @default(now())
+
+  Negocio  Negocio       @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Template QuestTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
   @@index([negocioId])
 }
@@ -2283,28 +2302,28 @@ model QuestPack {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  Templates   QuestPackTemplate[]
+  Templates QuestPackTemplate[]
 }
 
 model QuestPackTemplate {
-  id         String        @id @default(cuid())
+  id         String @id @default(cuid())
   packId     String
   templateId String
 
-  Pack       QuestPack     @relation(fields: [packId], references: [id], onDelete: Cascade)
-  Template   QuestTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  Pack     QuestPack     @relation(fields: [packId], references: [id], onDelete: Cascade)
+  Template QuestTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
   @@unique([packId, templateId])
 }
 
 model Achievement {
   id          String   @id @default(cuid())
-  nombre      String   // Ej: "Primer Cliente", "100 Reservas"
+  nombre      String // Ej: "Primer Cliente", "100 Reservas"
   descripcion String
   icono       String   @default("Award")
   color       String   @default("#f59e0b")
-  tipoTarget  String   // "NEGOCIO" | "USUARIO"
-  condiciones Json     // Reglas para desbloquear
+  tipoTarget  String // "NEGOCIO" | "USUARIO"
+  condiciones Json // Reglas para desbloquear
   puntosXP    Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -2314,25 +2333,25 @@ model Achievement {
 }
 
 model UserAchievement {
-  id            String      @id @default(cuid())
-  achievementId String
-  userId        String
-  desbloqueadoAt DateTime   @default(now())
+  id             String   @id @default(cuid())
+  achievementId  String
+  userId         String
+  desbloqueadoAt DateTime @default(now())
 
-  Achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
-  Usuario       Usuario     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  Usuario     Usuario     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([achievementId, userId])
 }
 
 model BusinessAchievement {
-  id            String      @id @default(cuid())
-  achievementId String
-  negocioId     String
-  desbloqueadoAt DateTime   @default(now())
+  id             String   @id @default(cuid())
+  achievementId  String
+  negocioId      String
+  desbloqueadoAt DateTime @default(now())
 
-  Achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
-  Negocio       Negocio     @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  Negocio     Negocio     @relation(fields: [negocioId], references: [id], onDelete: Cascade)
 
   @@unique([achievementId, negocioId])
 }
@@ -2344,15 +2363,15 @@ model BusinessAchievement {
 // ==========================================
 
 enum BusinessInheritanceMode {
-  INHERITED   // Usa el recurso global de Citiox sin modificaciones
-  CUSTOMIZED  // Usa una versión local personalizada (Copy-On-Write)
-  DISABLED    // El recurso global no aplica para este negocio
+  INHERITED // Usa el recurso global de Citiox sin modificaciones
+  CUSTOMIZED // Usa una versión local personalizada (Copy-On-Write)
+  DISABLED // El recurso global no aplica para este negocio
 }
 
 enum InheritanceResource {
-  GLOBAL_LEVEL    // Referencia a GlobalLevel
-  GLOBAL_SEASON   // Referencia a GlobalSeason
-  REWARD          // Referencia a RewardCatalog
+  GLOBAL_LEVEL // Referencia a GlobalLevel
+  GLOBAL_SEASON // Referencia a GlobalSeason
+  REWARD // Referencia a RewardCatalog
   COUPON_TEMPLATE // Referencia a CouponTemplate
 }
 
@@ -2364,7 +2383,7 @@ model CouponTemplate {
   id          String   @id @default(cuid())
   nombre      String
   descripcion String
-  config      Json     // { tipo: "PORCENTAJE" | "FIJO", valor: number, descripcion: string }
+  config      Json // { tipo: "PORCENTAJE" | "FIJO", valor: number, descripcion: string }
   activo      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -2379,14 +2398,14 @@ model BusinessInheritance {
   id           String                  @id @default(cuid())
   negocioId    String
   resourceType InheritanceResource
-  resourceId   String                  // ID del recurso global (GlobalLevel.id, GlobalSeason.id, etc.)
+  resourceId   String // ID del recurso global (GlobalLevel.id, GlobalSeason.id, etc.)
   mode         BusinessInheritanceMode @default(INHERITED)
-  customId     String?                 // ID del recurso local si mode=CUSTOMIZED (LoyaltyLevel.id, etc.)
-  config       Json?                   // Configuración adicional o overrides de presentación
+  customId     String? // ID del recurso local si mode=CUSTOMIZED (LoyaltyLevel.id, etc.)
+  config       Json? // Configuración adicional o overrides de presentación
   createdAt    DateTime                @default(now())
   updatedAt    DateTime                @updatedAt
 
-  Negocio        Negocio         @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Negocio Negocio @relation(fields: [negocioId], references: [id], onDelete: Cascade)
 
   @@unique([negocioId, resourceType, resourceId])
   @@index([negocioId])
@@ -2398,57 +2417,57 @@ model BusinessInheritance {
 // ==========================================
 
 model ClientGlobalCampaign {
-  id             String        @id @default(cuid())
-  nombre         String        // Ej: "Navidad Citiox", "San Valentín"
-  descripcion    String
-  bannerUrl      String?
-  bannerColor    String?       @default("#4f46e5")
-  fechaInicio    DateTime
-  fechaFin       DateTime
-  activa         Boolean       @default(true)
-  prioridad      Int           @default(0)
-  reglas         Json          
-  recompensas    Json          
-  seasonId       String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id          String   @id @default(cuid())
+  nombre      String // Ej: "Navidad Citiox", "San Valentín"
+  descripcion String
+  bannerUrl   String?
+  bannerColor String?  @default("#4f46e5")
+  fechaInicio DateTime
+  fechaFin    DateTime
+  activa      Boolean  @default(true)
+  prioridad   Int      @default(0)
+  reglas      Json
+  recompensas Json
+  seasonId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  Season         Season?       @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  Participantes  ClientGlobalCampaignParticipation[]
-  Progress       ClientGlobalQuestProgress[]
+  Season        Season?                             @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  Participantes ClientGlobalCampaignParticipation[]
+  Progress      ClientGlobalQuestProgress[]
 
   @@index([seasonId])
 }
 
 model ClientGlobalCampaignParticipation {
-  id          String               @id @default(cuid())
-  campaignId  String
-  negocioId   String
-  participa   Boolean              @default(true)
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+  id         String   @id @default(cuid())
+  campaignId String
+  negocioId  String
+  participa  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  Campaign    ClientGlobalCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  Negocio     Negocio              @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Campaign ClientGlobalCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  Negocio  Negocio              @relation(fields: [negocioId], references: [id], onDelete: Cascade)
 
   @@unique([campaignId, negocioId])
 }
 
 model ClientGlobalQuestProgress {
-  id              String               @id @default(cuid())
+  id              String    @id @default(cuid())
   campaignId      String
   negocioId       String
   userId          String
-  progresoActual  Int                  @default(0)
-  completada      Boolean              @default(false)
-  recompensaDada  Boolean              @default(false)
+  progresoActual  Int       @default(0)
+  completada      Boolean   @default(false)
+  recompensaDada  Boolean   @default(false)
   fechaCompletada DateTime?
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  Campaign        ClientGlobalCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  Negocio         Negocio              @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  Usuario         Usuario              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Campaign ClientGlobalCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  Negocio  Negocio              @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Usuario  Usuario              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([campaignId, negocioId, userId])
 }
@@ -2476,7 +2495,7 @@ enum MissionPublicationStatus {
 }
 
 enum BusinessMissionStatus {
-  PENDING_REWARD   // requiresBusinessReward=true y sin configurar
+  PENDING_REWARD // requiresBusinessReward=true y sin configurar
   ACTIVE
   PAUSED
   ENDED
@@ -2498,26 +2517,26 @@ enum MissionCategory {
 // NO contiene cashback, diamantes, cupones, productos ni servicios.
 // ──────────────────────────────────────────────────────────────────────────────
 model MissionDefinition {
-  id                    String            @id @default(cuid())
-  nombre                String
-  descripcion           String
-  imagenUrl             String?
-  categoria             MissionCategory   @default(RESERVAS)
-  dificultad            QuestDifficulty   @default(MEDIUM) // Reutiliza el enum existente
-  triggerEvent          String            // BOOKING_COMPLETED | USER_REGISTERED | etc.
-  cantidadMeta          Int               @default(1)      // Número de veces que debe ocurrir el trigger
-  condicionesExtra      Json?             // Rule Engine JSON — mismo formato que Quest.condicionesExtra
-  config                Json?             // Configuración adicional flexible
-  metadata              Json?             // Tags, keywords, notas internas
-  version               String            @default("1.0.0")
-  status                MissionDefStatus  @default(DRAFT)
-  requiresBusinessReward Boolean          @default(false)  // Si TRUE el negocio debe configurar su propio premio
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
+  id                     String           @id @default(cuid())
+  nombre                 String
+  descripcion            String
+  imagenUrl              String?
+  categoria              MissionCategory  @default(RESERVAS)
+  dificultad             QuestDifficulty  @default(MEDIUM) // Reutiliza el enum existente
+  triggerEvent           String // BOOKING_COMPLETED | USER_REGISTERED | etc.
+  cantidadMeta           Int              @default(1) // Número de veces que debe ocurrir el trigger
+  condicionesExtra       Json? // Rule Engine JSON — mismo formato que Quest.condicionesExtra
+  config                 Json? // Configuración adicional flexible
+  metadata               Json? // Tags, keywords, notas internas
+  version                String           @default("1.0.0")
+  status                 MissionDefStatus @default(DRAFT)
+  requiresBusinessReward Boolean          @default(false) // Si TRUE el negocio debe configurar su propio premio
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
 
-  Rewards               MissionRewardDefinition[]
-  Publications          MissionPublication[]
-  BusinessMissions      BusinessMission[]
+  Rewards          MissionRewardDefinition[]
+  Publications     MissionPublication[]
+  BusinessMissions BusinessMission[]
 
   @@index([status])
   @@index([categoria])
@@ -2529,14 +2548,14 @@ model MissionDefinition {
 // La lógica de ejecución vive en RewardHandlers del RewardDispatcher.
 // ──────────────────────────────────────────────────────────────────────────────
 model MissionRewardDefinition {
-  id                  String            @id @default(cuid())
+  id                  String   @id @default(cuid())
   missionDefinitionId String
   rewardCatalogId     String
-  orden               Int               @default(1) // Orden de ejecución
-  createdAt           DateTime          @default(now())
+  orden               Int      @default(1) // Orden de ejecución
+  createdAt           DateTime @default(now())
 
-  MissionDefinition   MissionDefinition @relation(fields: [missionDefinitionId], references: [id], onDelete: Cascade)
-  RewardCatalog       RewardCatalog     @relation(fields: [rewardCatalogId], references: [id], onDelete: Cascade)
+  MissionDefinition MissionDefinition @relation(fields: [missionDefinitionId], references: [id], onDelete: Cascade)
+  RewardCatalog     RewardCatalog     @relation(fields: [rewardCatalogId], references: [id], onDelete: Cascade)
 
   @@unique([missionDefinitionId, rewardCatalogId])
   @@index([missionDefinitionId])
@@ -2548,19 +2567,19 @@ model MissionRewardDefinition {
 // NO modifica MissionDefinition.
 // ──────────────────────────────────────────────────────────────────────────────
 model MissionPublication {
-  id                  String                  @id @default(cuid())
+  id                  String                   @id @default(cuid())
   missionDefinitionId String
-  globalSeasonId      String?                 // Asociación opcional a una temporada
+  globalSeasonId      String? // Asociación opcional a una temporada
   fechaInicio         DateTime?
   fechaFin            DateTime?
   status              MissionPublicationStatus @default(DRAFT)
-  prioridad           Int                     @default(0)
-  segmentacion        Json?                   // { minLevel: 2, tags: ["VIP"] }
-  createdAt           DateTime                @default(now())
-  updatedAt           DateTime                @updatedAt
+  prioridad           Int                      @default(0)
+  segmentacion        Json? // { minLevel: 2, tags: ["VIP"] }
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
 
-  MissionDefinition   MissionDefinition  @relation(fields: [missionDefinitionId], references: [id], onDelete: Cascade)
-  GlobalSeason        GlobalSeason?      @relation(fields: [globalSeasonId], references: [id], onDelete: SetNull)
+  MissionDefinition MissionDefinition @relation(fields: [missionDefinitionId], references: [id], onDelete: Cascade)
+  GlobalSeason      GlobalSeason?     @relation(fields: [globalSeasonId], references: [id], onDelete: SetNull)
 
   @@index([missionDefinitionId])
   @@index([globalSeasonId])
@@ -2578,16 +2597,16 @@ model BusinessMission {
   id                  String                @id @default(cuid())
   missionDefinitionId String
   negocioId           String
-  rewardConfiguration Json?                 // Premio local del negocio
+  rewardConfiguration Json? // Premio local del negocio
   status              BusinessMissionStatus @default(ACTIVE)
   publishedAt         DateTime?
   metadata            Json?
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
 
-  MissionDefinition   MissionDefinition @relation(fields: [missionDefinitionId], references: [id], onDelete: Cascade)
-  Negocio             Negocio           @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  Progress            BusinessMissionProgress[]
+  MissionDefinition MissionDefinition         @relation(fields: [missionDefinitionId], references: [id], onDelete: Cascade)
+  Negocio           Negocio                   @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Progress          BusinessMissionProgress[]
 
   @@unique([missionDefinitionId, negocioId])
   @@index([negocioId])
@@ -2599,19 +2618,19 @@ model BusinessMission {
 // Progreso de un cliente (usuario) en una BusinessMission instalada.
 // ──────────────────────────────────────────────────────────────────────────────
 model BusinessMissionProgress {
-  id                String          @id @default(cuid())
+  id                String    @id @default(cuid())
   businessMissionId String
   userId            String
-  progresoActual    Int             @default(0)
-  progresoRequerido Int             @default(1)
-  estado            String          @default("EN_PROGRESO") // EN_PROGRESO | COMPLETADA | RECOMPENSADA
-  recompensaDada    Boolean         @default(false)
+  progresoActual    Int       @default(0)
+  progresoRequerido Int       @default(1)
+  estado            String    @default("EN_PROGRESO") // EN_PROGRESO | COMPLETADA | RECOMPENSADA
+  recompensaDada    Boolean   @default(false)
   fechaCompletada   DateTime?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  BusinessMission   BusinessMission @relation(fields: [businessMissionId], references: [id], onDelete: Cascade)
-  Usuario           Usuario         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  BusinessMission BusinessMission @relation(fields: [businessMissionId], references: [id], onDelete: Cascade)
+  Usuario         Usuario         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([businessMissionId, userId])
   @@index([businessMissionId])
@@ -2619,95 +2638,95 @@ model BusinessMissionProgress {
 }
 
 model CategoriaProducto {
-  id         String     @id @default(uuid())
-  nombre     String
-  activo     Boolean    @default(true)
-  orden      Int        @default(0)
-  negocioId  String
-  negocio    Negocio    @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  productos  Producto[]
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  id        String     @id @default(uuid())
+  nombre    String
+  activo    Boolean    @default(true)
+  orden     Int        @default(0)
+  negocioId String
+  negocio   Negocio    @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  productos Producto[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   @@index([negocioId])
 }
 
 model Producto {
-  id             String             @id @default(uuid())
-  nombre         String
-  descripcion    String?
-  precio         Float
-  imagenUrl      String?
-  activo         Boolean            @default(true)
-  stock          Int?               // Opcional para control de stock
-  sku            String?            // Código de barra/referencia principal
-  tieneVariantes Boolean            @default(false)
-  orden          Int                @default(0)
-  llevaEmpaque   Boolean            @default(true)
-  precioEmpaque  Float              @default(0.25)
-  extraInfo      Json?
-  negocioId      String
-  categoriaId    String?
-  negocio        Negocio            @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  categoria      CategoriaProducto? @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  id                String             @id @default(uuid())
+  nombre            String
+  descripcion       String?
+  precio            Float
+  imagenUrl         String?
+  activo            Boolean            @default(true)
+  stock             Int? // Opcional para control de stock
+  sku               String? // Código de barra/referencia principal
+  tieneVariantes    Boolean            @default(false)
+  orden             Int                @default(0)
+  llevaEmpaque      Boolean            @default(true)
+  precioEmpaque     Float              @default(0.25)
+  extraInfo         Json?
+  negocioId         String
+  categoriaId       String?
+  negocio           Negocio            @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  categoria         CategoriaProducto? @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
   items             PedidoItem[]
   variantes         ProductoVariante[]
   branchProducts    BranchProduct[]
   branchInventories BranchInventory[]
   createdAt         DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  updatedAt         DateTime           @updatedAt
 
   @@index([negocioId])
   @@index([categoriaId])
 }
 
 model ProductoVariante {
-  id             String    @id @default(uuid())
+  id             String   @id @default(uuid())
   productoId     String
   sku            String?
-  nombre         String    // Ej: "Rojo / Talla M"
-  atributos      Json?     // Ej: { "color": "Rojo", "talla": "M" }
-  precio         Float?    // Opcional: sobreescribe el precio base si > 0
+  nombre         String // Ej: "Rojo / Talla M"
+  atributos      Json? // Ej: { "color": "Rojo", "talla": "M" }
+  precio         Float? // Opcional: sobreescribe el precio base si > 0
   precioAnterior Float?
-  stock          Int       @default(0)
+  stock          Int      @default(0)
   imagenUrl      String?
-  activo         Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  activo         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  producto       Producto  @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  producto Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
 
   @@index([productoId])
   @@index([sku])
 }
 
 model Pedido {
-  id                String       @id @default(uuid())
-  negocioId         String
-  numeroPedido      Int          // Número incremental por negocio
-  tipoEntrega       String       // "RETIRO" | "DOMICILIO"
-  nombreCliente     String
-  telefonoCliente   String
-  direccionCliente  String?
-  referenciaCliente String?
-  latitud           Float?
-  longitud          Float?
-  fechaEntrega      DateTime
-  franjaHoraria     String       // Ej: "9-11", "11-13", "14-16", "16-18"
-  subtotal          Float
-  costoEnvio        Float
-  total             Float
-  estado            String       @default("RECIBIDO") // "RECIBIDO" | "PRODUCTOS_CONFIRMADOS" | "CAMBIOS_SOLICITADOS" | "CAMBIOS_ACEPTADOS" | "PAGO_ADICIONAL_PENDIENTE" | "ACEPTADO" | "EN_PREPARACION" | "LISTO" | "FULFILLMENT" | "ASIGNADO" | "EN_CAMINO" | "ENTREGADO" | "FINALIZADO" | "CANCELADO"
-  estadoDisponibilidad String   @default("PENDIENTE") // "PENDIENTE" | "PRODUCTOS_CONFIRMADOS" | "CAMBIOS_SOLICITADOS" | "CAMBIOS_ACEPTADOS"
-  notas             String?
-  extraInfo         Json?
-  branchId          String?
-  negocio           Negocio      @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  branch            Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  items             PedidoItem[]
-  payment           OrderPayment?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  id                   String        @id @default(uuid())
+  negocioId            String
+  numeroPedido         Int // Número incremental por negocio
+  tipoEntrega          String // "RETIRO" | "DOMICILIO"
+  nombreCliente        String
+  telefonoCliente      String
+  direccionCliente     String?
+  referenciaCliente    String?
+  latitud              Float?
+  longitud             Float?
+  fechaEntrega         DateTime
+  franjaHoraria        String // Ej: "9-11", "11-13", "14-16", "16-18"
+  subtotal             Float
+  costoEnvio           Float
+  total                Float
+  estado               String        @default("RECIBIDO") // "RECIBIDO" | "PRODUCTOS_CONFIRMADOS" | "CAMBIOS_SOLICITADOS" | "CAMBIOS_ACEPTADOS" | "PAGO_ADICIONAL_PENDIENTE" | "ACEPTADO" | "EN_PREPARACION" | "LISTO" | "FULFILLMENT" | "ASIGNADO" | "EN_CAMINO" | "ENTREGADO" | "FINALIZADO" | "CANCELADO"
+  estadoDisponibilidad String        @default("PENDIENTE") // "PENDIENTE" | "PRODUCTOS_CONFIRMADOS" | "CAMBIOS_SOLICITADOS" | "CAMBIOS_ACEPTADOS"
+  notas                String?
+  extraInfo            Json?
+  branchId             String?
+  negocio              Negocio       @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  branch               Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  items                PedidoItem[]
+  payment              OrderPayment?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 
   @@index([negocioId])
   @@index([branchId])
@@ -2779,12 +2798,12 @@ model OrderPayment {
   montoExcedente        Float             @default(0)
   moneda                String            @default("USD")
   estado                String            @default("PENDIENTE") // "PENDIENTE" | "COMPROBANTE_ENVIADO" | "EN_REVISION" | "CONFIRMADO" | "PAGO_VERIFICADO" | "PAGO_RECHAZADO" | "REEMBOLSO_PENDIENTE" | "REEMBOLSADO" | "EXPIRADO"
-  metodoDevolucion      String?           // "TRANSFERENCIA" | "EFECTIVO" | "OTRO"
+  metodoDevolucion      String? // "TRANSFERENCIA" | "EFECTIVO" | "OTRO"
   referenciaDevolucion  String?
   observacionDevolucion String?
   devolucionAt          DateTime?
   devolucionUser        String?
-  codigoPago            String?           // Código de referencia único de pago
+  codigoPago            String? // Código de referencia único de pago
   motivoRechazo         String?
   observaciones         String?
   pedido                Pedido            @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
@@ -2839,7 +2858,7 @@ model PinchoCheckoutSession {
   pasoActual      Int      @default(1)
   items           Json
   cuponCodigo     String?
-  tipoEntrega     String?  // "RETIRO" | "DOMICILIO"
+  tipoEntrega     String? // "RETIRO" | "DOMICILIO"
   direccion       String?
   referencia      String?
   latitud         Float?
@@ -2857,7 +2876,7 @@ model PinchoCheckoutAnalytics {
   id          String   @id @default(uuid())
   negocioId   String
   sessionId   String
-  stepName    String   // "ADD_TO_CART" | "CHECKOUT_START" | "OTP_VALIDATED" | "ADDRESS_ENTERED" | "PAYMENT_PAGE_VIEW" | "EVIDENCE_UPLOADED" | "PAYMENT_CONFIRMED" | "ABANDONED"
+  stepName    String // "ADD_TO_CART" | "CHECKOUT_START" | "OTP_VALIDATED" | "ADDRESS_ENTERED" | "PAYMENT_PAGE_VIEW" | "EVIDENCE_UPLOADED" | "PAYMENT_CONFIRMED" | "ABANDONED"
   stepIndex   Int
   timeSpentMs Int?
   metadata    Json?
@@ -2883,39 +2902,39 @@ model PinchoOrderTimeline {
 // ─── BUSINESS TYPE MANAGER (RFC-0010 ENTERPRISE CONFIGURABLE) ────────────────
 
 model BusinessType {
-  id                String   @id @default(uuid())
-  slug              String   @unique
-  name              String
-  description       String?
-  icon              String   @default("Briefcase")
-  color             String   @default("#6366f1")
-  resourceType      String   @default("HUMAN") // "HUMAN" | "INFRASTRUCTURE" | "EQUIPMENT" | "PHYSICAL_ITEM"
-  active            Boolean  @default(true)
-  sortOrder         Int      @default(0)
-  rulesOverride     Json?
-  landingThemeId    String?  @default("modern")
-  adminThemeId      String?  @default("sidebar")
-  initialConfig     Json?
-  uiLabels          Json?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id             String   @id @default(uuid())
+  slug           String   @unique
+  name           String
+  description    String?
+  icon           String   @default("Briefcase")
+  color          String   @default("#6366f1")
+  resourceType   String   @default("HUMAN") // "HUMAN" | "INFRASTRUCTURE" | "EQUIPMENT" | "PHYSICAL_ITEM"
+  active         Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  rulesOverride  Json?
+  landingThemeId String?  @default("modern")
+  adminThemeId   String?  @default("sidebar")
+  initialConfig  Json?
+  uiLabels       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  planFamilyId      String?
-  planFamily        PlanFamily?             @relation(fields: [planFamilyId], references: [id], onDelete: SetNull)
+  planFamilyId String?
+  planFamily   PlanFamily? @relation(fields: [planFamilyId], references: [id], onDelete: SetNull)
 
-  states           BusinessTypeState[]
-  capabilities     BusinessTypeCapability[]
-  profiles         BusinessProfile[]
-  planLinks        BusinessTypePlan[]
-  negocios         Negocio[]               @relation("NegocioBusinessType")
-  blueprints       BusinessBlueprint[]
-  experiences      BusinessTypeExperience[]
-  landingTemplates BusinessLandingTemplate[]
-  adminTemplates   BusinessAdminTemplate[]
-  moduleLinks      BusinessTypeModule[]
-  featureLinks     BusinessTypeFeature[]
-  addonLinks       BusinessTypeAddon[]
-  operationRules   OperationRule[]
+  states              BusinessTypeState[]
+  capabilities        BusinessTypeCapability[]
+  profiles            BusinessProfile[]
+  planLinks           BusinessTypePlan[]
+  negocios            Negocio[]                 @relation("NegocioBusinessType")
+  blueprints          BusinessBlueprint[]
+  experiences         BusinessTypeExperience[]
+  landingTemplates    BusinessLandingTemplate[]
+  adminTemplates      BusinessAdminTemplate[]
+  moduleLinks         BusinessTypeModule[]
+  featureLinks        BusinessTypeFeature[]
+  addonLinks          BusinessTypeAddon[]
+  operationRules      OperationRule[]
   intelligenceConfigs IntelligenceConfig[]
 }
 
@@ -2972,17 +2991,17 @@ model BusinessTypePlan {
 // ─── UNIVERSAL PLAN ENGINE (FAMILIAS, ENTITLEMENTS Y LÍMITES) ───────────────
 
 model PlanFamily {
-  id           String         @id @default(uuid())
-  code         String         @unique // RESTAURANTE, SERVICIOS, CANCHAS, LAVANDERIA, TIENDA
-  name         String         // "Restaurantes & Gastronomía"
-  slug         String         @unique // "restaurantes"
+  id           String   @id @default(uuid())
+  code         String   @unique // RESTAURANTE, SERVICIOS, CANCHAS, LAVANDERIA, TIENDA
+  name         String // "Restaurantes & Gastronomía"
+  slug         String   @unique // "restaurantes"
   description  String?
-  icon         String         @default("Briefcase")
+  icon         String   @default("Briefcase")
   image        String?
-  active       Boolean        @default(true)
-  displayOrder Int            @default(0)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  active       Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   businessTypes  BusinessType[]
   plans          Plan[]
@@ -2990,32 +3009,32 @@ model PlanFamily {
 }
 
 model FounderProgram {
-  id             String      @id @default(uuid())
-  familyId       String      @unique
-  family         PlanFamily  @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  enabled        Boolean     @default(false)
-  maxMembers     Int         @default(25)
-  currentMembers Int         @default(0)
-  founderPrice   Float       @default(10.00)
-  currency       String      @default("USD")
-  billingPeriod  String      @default("monthly")
-  lifetimePrice  Boolean     @default(true)
+  id             String     @id @default(uuid())
+  familyId       String     @unique
+  family         PlanFamily @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  enabled        Boolean    @default(false)
+  maxMembers     Int        @default(25)
+  currentMembers Int        @default(0)
+  founderPrice   Float      @default(10.00)
+  currency       String     @default("USD")
+  billingPeriod  String     @default("monthly")
+  lifetimePrice  Boolean    @default(true)
   founderPlanId  String?
-  founderPlan    Plan?       @relation("FounderPlan", fields: [founderPlanId], references: [id], onDelete: SetNull)
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  founderPlan    Plan?      @relation("FounderPlan", fields: [founderPlanId], references: [id], onDelete: SetNull)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 }
 
 model PlanEntitlement {
-  id        String                @id @default(uuid())
+  id        String   @id @default(uuid())
   planId    String
   moduleId  String
-  enabled   Boolean               @default(true)
-  createdAt DateTime              @default(now())
-  updatedAt DateTime              @updatedAt
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  plan      Plan                  @relation(fields: [planId], references: [id], onDelete: Cascade)
-  module    BusinessModuleCatalog @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  plan   Plan                  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  module BusinessModuleCatalog @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
   @@unique([planId, moduleId])
 }
@@ -3023,8 +3042,8 @@ model PlanEntitlement {
 model PlanLimit {
   id         String   @id @default(uuid())
   planId     String
-  limitKey   String   // MAX_USERS, MAX_PRODUCTS, MAX_TABLES, MAX_COURTS, MAX_APPOINTMENTS_MONTHLY
-  limitValue Int      // número o -1 para ilimitado
+  limitKey   String // MAX_USERS, MAX_PRODUCTS, MAX_TABLES, MAX_COURTS, MAX_APPOINTMENTS_MONTHLY
+  limitValue Int // número o -1 para ilimitado
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   plan       Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
@@ -3033,13 +3052,13 @@ model PlanLimit {
 }
 
 model PlanDataPolicy {
-  id        String   @id @default(uuid())
-  planId    String
-  plan      Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  planId String
+  plan   Plan   @relation(fields: [planId], references: [id], onDelete: Cascade)
 
-  resource  String   // ORDERS, APPOINTMENTS, RESERVATIONS, SERVICE_ORDERS, STORE_ORDERS, CUSTOMERS
-  action    String   // RECEIVE, VIEW, VIEW_DETAILS, VIEW_CUSTOMER, VIEW_CONTACT, VIEW_ITEMS, VIEW_PRICES, VIEW_FINANCIALS, MANAGE, EXPORT
-  effect    String   @default("DENY") // ALLOW | DENY
+  resource String // ORDERS, APPOINTMENTS, RESERVATIONS, SERVICE_ORDERS, STORE_ORDERS, CUSTOMERS
+  action   String // RECEIVE, VIEW, VIEW_DETAILS, VIEW_CUSTOMER, VIEW_CONTACT, VIEW_ITEMS, VIEW_PRICES, VIEW_FINANCIALS, MANAGE, EXPORT
+  effect   String @default("DENY") // ALLOW | DENY
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -3052,8 +3071,8 @@ model PlanDataPolicy {
 model PlanAuditLog {
   id          String   @id @default(uuid())
   who         String
-  what        String   // PLAN_CREATED, PLAN_UPDATED, CAPABILITY_TOGGLED, LIMIT_CHANGED
-  targetType  String   // PLAN | FAMILY
+  what        String // PLAN_CREATED, PLAN_UPDATED, CAPABILITY_TOGGLED, LIMIT_CHANGED
+  targetType  String // PLAN | FAMILY
   targetId    String
   oldValue    Json?
   newValue    Json?
@@ -3064,17 +3083,17 @@ model PlanAuditLog {
 // ─── CITIOX RUNTIME PLATFORM (NÚCLEO ARQUITECTÓNICO DEFINITIVO) ───────────────────
 
 model BusinessBlueprint {
-  id                  String       @id @default(uuid())
-  slug                String       @unique
-  code                String       @unique
-  name                String
-  description         String?
-  icon                String       @default("Layers")
-  businessTypeId      String
-  version             String       @default("1.0.0")
-  active              Boolean      @default(true)
-  isDefault           Boolean      @default(false)
-  
+  id             String  @id @default(uuid())
+  slug           String  @unique
+  code           String  @unique
+  name           String
+  description    String?
+  icon           String  @default("Layers")
+  businessTypeId String
+  version        String  @default("1.0.0")
+  active         Boolean @default(true)
+  isDefault      Boolean @default(false)
+
   modules             Json?
   capabilities        Json?
   workflowId          String?
@@ -3083,54 +3102,54 @@ model BusinessBlueprint {
   integrations        Json?
   aiSkills            Json?
 
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  businessType        BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+  businessType BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
 }
 
 model ExperienceProfile {
-  id                  String   @id @default(uuid())
-  code                String   @unique
-  name                String
-  description         String?
-  version             String   @default("1.0.0")
-  active              Boolean  @default(true)
-  
-  landingPackId       String?
-  adminPackId         String?
-  dashboardPackId     String?
-  navigationPackId    String?
-  formsPackId         String?
-  cardsPackId         String?
-  tablesPackId        String?
-  widgetsPackId       String?
-  themePackId         String?
-  mobilePackId        String?
-  reportsPackId       String?
-  kpiPackId           String?
+  id          String  @id @default(uuid())
+  code        String  @unique
+  name        String
+  description String?
+  version     String  @default("1.0.0")
+  active      Boolean @default(true)
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  landingPackId    String?
+  adminPackId      String?
+  dashboardPackId  String?
+  navigationPackId String?
+  formsPackId      String?
+  cardsPackId      String?
+  tablesPackId     String?
+  widgetsPackId    String?
+  themePackId      String?
+  mobilePackId     String?
+  reportsPackId    String?
+  kpiPackId        String?
 
-  typeLinks           BusinessTypeExperience[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  typeLinks BusinessTypeExperience[]
 }
 
 model BusinessTypeExperience {
-  id                  String            @id @default(uuid())
+  id                  String   @id @default(uuid())
   businessTypeId      String
   experienceProfileId String
-  isDefault           Boolean           @default(false)
-  createdAt           DateTime          @default(now())
+  isDefault           Boolean  @default(false)
+  createdAt           DateTime @default(now())
 
-  businessType        BusinessType      @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
-  experienceProfile   ExperienceProfile @relation(fields: [experienceProfileId], references: [id], onDelete: Cascade)
+  businessType      BusinessType      @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+  experienceProfile ExperienceProfile @relation(fields: [experienceProfileId], references: [id], onDelete: Cascade)
 
   @@unique([businessTypeId, experienceProfileId])
 }
 
 model BusinessLandingTemplate {
-  id             String       @id @default(uuid())
+  id             String   @id @default(uuid())
   businessTypeId String
   name           String
   slug           String
@@ -3138,117 +3157,117 @@ model BusinessLandingTemplate {
   component      String
   previewImage   String?
   thumbnail      String?
-  version        String       @default("1.0.0")
-  active         Boolean      @default(true)
-  isDefault      Boolean      @default(false)
-  sortOrder      Int          @default(0)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  version        String   @default("1.0.0")
+  active         Boolean  @default(true)
+  isDefault      Boolean  @default(false)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  businessType   BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
-  
+  businessType BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+
   @@unique([businessTypeId, slug])
 }
 
 model BusinessAdminTemplate {
-  id             String       @id @default(uuid())
+  id             String   @id @default(uuid())
   businessTypeId String
   name           String
   component      String
-  layoutType     String       @default("SIDEBAR")
+  layoutType     String   @default("SIDEBAR")
   previewImage   String?
-  version        String       @default("1.0.0")
-  active         Boolean      @default(true)
-  isDefault      Boolean      @default(false)
-  sortOrder      Int          @default(0)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  version        String   @default("1.0.0")
+  active         Boolean  @default(true)
+  isDefault      Boolean  @default(false)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  businessType   BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+  businessType BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
 }
 
 model BusinessModuleCatalog {
-  id          String               @id @default(uuid())
-  code        String               @unique
+  id          String   @id @default(uuid())
+  code        String   @unique
   name        String
   description String?
-  icon        String               @default("Package")
-  active      Boolean              @default(true)
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+  icon        String   @default("Package")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  typeLinks   BusinessTypeModule[]
+  typeLinks        BusinessTypeModule[]
   planEntitlements PlanEntitlement[]
 }
 
 model BusinessTypeModule {
-  id             String                @id @default(uuid())
+  id             String   @id @default(uuid())
   businessTypeId String
   moduleId       String
-  enabled        Boolean               @default(true)
-  required       Boolean               @default(false)
-  createdAt      DateTime              @default(now())
+  enabled        Boolean  @default(true)
+  required       Boolean  @default(false)
+  createdAt      DateTime @default(now())
 
-  businessType   BusinessType          @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
-  module         BusinessModuleCatalog @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  businessType BusinessType          @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+  module       BusinessModuleCatalog @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
   @@unique([businessTypeId, moduleId])
 }
 
 model BusinessFeatureCatalog {
-  id          String                @id @default(uuid())
-  code        String                @unique
+  id          String   @id @default(uuid())
+  code        String   @unique
   name        String
   description String?
-  icon        String                @default("Zap")
-  createdAt   DateTime              @default(now())
+  icon        String   @default("Zap")
+  createdAt   DateTime @default(now())
 
-  typeLinks   BusinessTypeFeature[]
+  typeLinks BusinessTypeFeature[]
 }
 
 model BusinessTypeFeature {
-  id             String                 @id @default(uuid())
+  id             String   @id @default(uuid())
   businessTypeId String
   featureId      String
-  enabled        Boolean                @default(true)
-  createdAt      DateTime               @default(now())
+  enabled        Boolean  @default(true)
+  createdAt      DateTime @default(now())
 
-  businessType   BusinessType           @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
-  feature        BusinessFeatureCatalog @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  businessType BusinessType           @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+  feature      BusinessFeatureCatalog @relation(fields: [featureId], references: [id], onDelete: Cascade)
 
   @@unique([businessTypeId, featureId])
 }
 
 model BusinessAddonCatalog {
-  id          String              @id @default(uuid())
-  code        String              @unique
+  id          String   @id @default(uuid())
+  code        String   @unique
   name        String
   description String?
-  icon        String              @default("PlusCircle")
-  price       Float               @default(0)
-  createdAt   DateTime            @default(now())
+  icon        String   @default("PlusCircle")
+  price       Float    @default(0)
+  createdAt   DateTime @default(now())
 
-  typeLinks   BusinessTypeAddon[]
+  typeLinks BusinessTypeAddon[]
 }
 
 model BusinessTypeAddon {
-  id             String               @id @default(uuid())
+  id             String   @id @default(uuid())
   businessTypeId String
   addonId        String
-  enabled        Boolean              @default(true)
-  createdAt      DateTime             @default(now())
+  enabled        Boolean  @default(true)
+  createdAt      DateTime @default(now())
 
-  businessType   BusinessType         @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
-  addon          BusinessAddonCatalog @relation(fields: [addonId], references: [id], onDelete: Cascade)
+  businessType BusinessType         @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+  addon        BusinessAddonCatalog @relation(fields: [addonId], references: [id], onDelete: Cascade)
 
   @@unique([businessTypeId, addonId])
 }
 
 model ModuleDependency {
-  id                String   @id @default(uuid())
-  moduleCode        String
-  dependsOnCode     String
-  createdAt         DateTime @default(now())
+  id            String   @id @default(uuid())
+  moduleCode    String
+  dependsOnCode String
+  createdAt     DateTime @default(now())
 
   @@unique([moduleCode, dependsOnCode])
 }
@@ -3323,67 +3342,68 @@ model BusinessAiSkill {
 }
 
 model BusinessPolicy {
-  id          String   @id @default(uuid())
-  code        String   @unique
-  name        String
-  category    String   @default("GENERAL")
-  rules       Json?
-  createdAt   DateTime @default(now())
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  category  String   @default("GENERAL")
+  rules     Json?
+  createdAt DateTime @default(now())
 }
 
 model BusinessIntegration {
-  id          String   @id @default(uuid())
-  code        String   @unique
-  name        String
-  category    String   @default("PAYMENT")
-  icon        String   @default("Plug")
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  category  String   @default("PAYMENT")
+  icon      String   @default("Plug")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
 }
 
 model OperationRule {
-  id             String       @id @default(uuid())
+  id             String   @id @default(uuid())
   businessTypeId String
   code           String
   name           String
-  ruleType       String       @default("POLICY")
+  ruleType       String   @default("POLICY")
   config         Json?
-  createdAt      DateTime     @default(now())
+  createdAt      DateTime @default(now())
 
-  businessType   BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+  businessType BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
 }
 
 model IntelligenceConfig {
-  id                String       @id @default(uuid())
+  id                String   @id @default(uuid())
   businessTypeId    String
   code              String
   name              String
   aiAssistantId     String?
   promptTemplate    String?
   suggestionsConfig Json?
-  createdAt         DateTime     @default(now())
+  createdAt         DateTime @default(now())
 
-  businessType      BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
+  businessType BusinessType @relation(fields: [businessTypeId], references: [id], onDelete: Cascade)
 }
+
 // ─── MÓDULO DE LOGÍSTICA TRANSVERSAL (v1.0.0) ────────────────────────────────────
 // Arquitectura: capability=delivery, OperableResource como abstracción universal
 // Compatible con: BubbleWash, Restaurantes, Florerías, Farmacias, Veterinarias, etc.
 
 /// Abstracción universal de recursos asignables (canchas, staff, vehículos, repartidores)
 model OperableResource {
-  id           String          @id @default(uuid())
+  id           String               @id @default(uuid())
   negocioId    String
-  name         String          // "Juan García" | "Moto #1" | "Cancha Padel"
-  resourceType String          // HUMAN | VEHICLE | INFRASTRUCTURE | EQUIPMENT
-  category     String?         // DELIVERY_DRIVER | SPECIALIST | COURT | CABIN
+  name         String // "Juan García" | "Moto #1" | "Cancha Padel"
+  resourceType String // HUMAN | VEHICLE | INFRASTRUCTURE | EQUIPMENT
+  category     String? // DELIVERY_DRIVER | SPECIALIST | COURT | CABIN
   avatar       String?
-  capacity     Int             @default(1)
-  active       Boolean         @default(true)
-  estado       String          @default("DISPONIBLE") // DISPONIBLE | OCUPADO | FUERA_DE_SERVICIO
+  capacity     Int                  @default(1)
+  active       Boolean              @default(true)
+  estado       String               @default("DISPONIBLE") // DISPONIBLE | OCUPADO | FUERA_DE_SERVICIO
   metadata     Json?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-  negocio      Negocio         @relation("NegocioOperableResources", fields: [negocioId], references: [id], onDelete: Cascade)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  negocio      Negocio              @relation("NegocioOperableResources", fields: [negocioId], references: [id], onDelete: Cascade)
   profile      ResourceProfile?
   invitation   DeliveryInvitation?
   assignments  DeliveryAssignment[]
@@ -3397,11 +3417,11 @@ model OperableResource {
 
 /// Perfil especializado solo para category = DELIVERY_DRIVER
 model ResourceProfile {
-  id                 String          @id @default(uuid())
-  resourceId         String          @unique
-  verificationStatus String          @default("INVITED")
+  id                 String @id @default(uuid())
+  resourceId         String @unique
+  verificationStatus String @default("INVITED")
   // INVITED | PENDING_VERIFICATION | APPROVED | REJECTED | SUSPENDED
-  
+
   // Datos personales
   licencia           String?
   documento          String?
@@ -3411,46 +3431,46 @@ model ResourceProfile {
   direccion          String?
   email              String?
   contactoEmergencia String?
-  
-  // Vehículo extendido
-  vehiculo           String?         // Moto | Auto | Bicicleta | A pie
-  marca              String?
-  modelo             String?
-  color              String?
-  placa              String?
-  anio               String?
-  tipoVehiculo       String?         // MOTO | AUTO | BICICLETA | A_PIE | CAMION
-  
-  // Documentos subidos (URLs o IDs privadas)
-  cedulaFrenteUrl    String?
-  cedulaReversoUrl   String?
-  licenciaUrl        String?
-  matriculaUrl       String?
-  fotoVehiculoUrl    String?
-  selfieUrl          String?
 
-  activo             Boolean         @default(true)
-  observaciones      String?
-  motivoRechazo      String?
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  resource           OperableResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  // Vehículo extendido
+  vehiculo     String? // Moto | Auto | Bicicleta | A pie
+  marca        String?
+  modelo       String?
+  color        String?
+  placa        String?
+  anio         String?
+  tipoVehiculo String? // MOTO | AUTO | BICICLETA | A_PIE | CAMION
+
+  // Documentos subidos (URLs o IDs privadas)
+  cedulaFrenteUrl  String?
+  cedulaReversoUrl String?
+  licenciaUrl      String?
+  matriculaUrl     String?
+  fotoVehiculoUrl  String?
+  selfieUrl        String?
+
+  activo        Boolean          @default(true)
+  observaciones String?
+  motivoRechazo String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  resource      OperableResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 }
 
 /// Invitación de registro para nuevos repartidores
 model DeliveryInvitation {
-  id          String           @id @default(uuid())
-  negocioId   String
-  resourceId  String           @unique
-  telefono    String
-  token       String           @unique // UUID o token unico
-  expiresAt   DateTime
-  usedAt      DateTime?
-  status      String           @default("PENDING") // PENDING | USED | EXPIRED | CANCELLED
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  negocio     Negocio          @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  resource    OperableResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  id         String           @id @default(uuid())
+  negocioId  String
+  resourceId String           @unique
+  telefono   String
+  token      String           @unique // UUID o token unico
+  expiresAt  DateTime
+  usedAt     DateTime?
+  status     String           @default("PENDING") // PENDING | USED | EXPIRED | CANCELLED
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  negocio    Negocio          @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  resource   OperableResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 
   @@index([negocioId])
   @@index([token])
@@ -3458,29 +3478,29 @@ model DeliveryInvitation {
 
 /// Misión de transporte individual (un retiro o una entrega)
 model DeliveryAssignment {
-  id               String             @id @default(uuid())
-  negocioId        String
-  resourceId       String             // OperableResource (repartidor asignado)
-  routeId          String?            // DeliveryRoute (opcional, si pertenece a una ruta)
-  tipo             String             // RETIRO | ENTREGA
-  estado           String             @default("ASIGNADO")
+  id                  String           @id @default(uuid())
+  negocioId           String
+  resourceId          String // OperableResource (repartidor asignado)
+  routeId             String? // DeliveryRoute (opcional, si pertenece a una ruta)
+  tipo                String // RETIRO | ENTREGA
+  estado              String           @default("ASIGNADO")
   // estados: ASIGNADO | ACEPTADO | EN_RUTA | LLEGO | COMPLETADO | CANCELADO
-  ordenReferenciaId  String?          // ID de Pedido o Orden de Servicio (desacoplado)
-  ordenReferenciaTipo String?         // SHOE_CARE | RESTAURANT | PHARMACY | etc.
-  clienteNombre    String?
-  clienteTelefono  String?
-  clienteDireccion String?
-  clienteLatitud   Float?
-  clienteLongitud  Float?
-  notas            String?
-  horaAsignacion   DateTime           @default(now())
-  horaSalida       DateTime?
-  horaLlegada      DateTime?
-  horaCompletado   DateTime?
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  resource         OperableResource   @relation(fields: [resourceId], references: [id])
-  route            DeliveryRoute?     @relation(fields: [routeId], references: [id])
+  ordenReferenciaId   String? // ID de Pedido o Orden de Servicio (desacoplado)
+  ordenReferenciaTipo String? // SHOE_CARE | RESTAURANT | PHARMACY | etc.
+  clienteNombre       String?
+  clienteTelefono     String?
+  clienteDireccion    String?
+  clienteLatitud      Float?
+  clienteLongitud     Float?
+  notas               String?
+  horaAsignacion      DateTime         @default(now())
+  horaSalida          DateTime?
+  horaLlegada         DateTime?
+  horaCompletado      DateTime?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  resource            OperableResource @relation(fields: [resourceId], references: [id])
+  route               DeliveryRoute?   @relation(fields: [routeId], references: [id])
 
   @@index([negocioId])
   @@index([resourceId])
@@ -3492,7 +3512,7 @@ model DeliveryAssignment {
 model DeliveryRoute {
   id          String               @id @default(uuid())
   negocioId   String
-  nombre      String               // "Ruta Mañana #1" | "Zona Norte"
+  nombre      String // "Ruta Mañana #1" | "Zona Norte"
   fecha       DateTime
   estado      String               @default("PLANIFICADA")
   // estados: PLANIFICADA | EN_PROGRESO | COMPLETADA | CANCELADA
@@ -3509,24 +3529,24 @@ model DeliveryRoute {
 
 /// Parada individual dentro de una ruta (permite reordenar y asignar recursos)
 model DeliveryRouteStop {
-  id          String            @id @default(uuid())
-  routeId     String
-  resourceId  String?           // OperableResource (repartidor asignado a esta parada)
-  orden       Int               // Posición en la ruta (1, 2, 3, ...)
-  tipo        String            // RETIRO | ENTREGA
-  estado      String            @default("PENDIENTE")
+  id               String            @id @default(uuid())
+  routeId          String
+  resourceId       String? // OperableResource (repartidor asignado a esta parada)
+  orden            Int // Posición en la ruta (1, 2, 3, ...)
+  tipo             String // RETIRO | ENTREGA
+  estado           String            @default("PENDIENTE")
   clienteNombre    String?
   clienteTelefono  String?
   clienteDireccion String?
-  latitud     Float?
-  longitud    Float?
-  horaEstimada     String?      // HH:mm
+  latitud          Float?
+  longitud         Float?
+  horaEstimada     String? // HH:mm
   horaReal         DateTime?
-  notas       String?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  route       DeliveryRoute     @relation(fields: [routeId], references: [id], onDelete: Cascade)
-  resource    OperableResource? @relation(fields: [resourceId], references: [id])
+  notas            String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  route            DeliveryRoute     @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  resource         OperableResource? @relation(fields: [resourceId], references: [id])
 
   @@index([routeId])
 }
@@ -3545,8 +3565,8 @@ model DriverLocation {
 model HeroItem {
   id            String    @id @default(uuid())
   businessId    String
-  type          String    // AUTOMATIC | IMAGE | PROMOTION | PRODUCT | SERVICE | COMBO
-  sourceType    String?   // PROMOTION | PRODUCT | SERVICE | COMBO | CUSTOM
+  type          String // AUTOMATIC | IMAGE | PROMOTION | PRODUCT | SERVICE | COMBO
+  sourceType    String? // PROMOTION | PRODUCT | SERVICE | COMBO | CUSTOM
   sourceId      String?
   image         String?
   mobileImage   String?
@@ -3564,7 +3584,7 @@ model HeroItem {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  Negocio       Negocio   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  Negocio Negocio @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@index([isActive])
@@ -3573,8 +3593,8 @@ model HeroItem {
 model HighlightItem {
   id          String    @id @default(uuid())
   businessId  String
-  type        String    // PROMOTION | PRODUCT | SERVICE | COMBO | IMAGE
-  sourceType  String?   // PROMOTION | PRODUCT | SERVICE | COMBO | CUSTOM
+  type        String // PROMOTION | PRODUCT | SERVICE | COMBO | IMAGE
+  sourceType  String? // PROMOTION | PRODUCT | SERVICE | COMBO | CUSTOM
   sourceId    String?
   image       String?
   title       String?
@@ -3587,7 +3607,7 @@ model HighlightItem {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  Negocio     Negocio   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  Negocio Negocio @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@index([isActive])
@@ -3596,24 +3616,24 @@ model HighlightItem {
 // ── 🍽️ MODELOS PARA MESAS, QR Y PEDIDOS EN MESA ──
 
 model RestaurantTable {
-  id              String             @id @default(uuid())
-  negocioId       String
-  nombre          String
-  numero          Int?
-  token           String             @unique @default(uuid())
-  activa          Boolean            @default(true)
-  permitePedidos  Boolean            @default(true)
-  capacidad       Int?               @default(4)
-  estado          String             @default("DISPONIBLE") // "DISPONIBLE" | "OCUPADA" | "ATENCION_REQUERIDA"
-  branchId        String?
+  id             String  @id @default(uuid())
+  negocioId      String
+  nombre         String
+  numero         Int?
+  token          String  @unique @default(uuid())
+  activa         Boolean @default(true)
+  permitePedidos Boolean @default(true)
+  capacidad      Int?    @default(4)
+  estado         String  @default("DISPONIBLE") // "DISPONIBLE" | "OCUPADA" | "ATENCION_REQUERIDA"
+  branchId       String?
 
-  negocio         Negocio            @relation(fields: [negocioId], references: [id], onDelete: Cascade)
-  branch          Branch?            @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  orderRequests   TableOrderRequest[]
-  waiterCalls     WaiterCall[]
+  negocio       Negocio             @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  branch        Branch?             @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  orderRequests TableOrderRequest[]
+  waiterCalls   WaiterCall[]
 
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([negocioId])
   @@index([token])
@@ -3622,28 +3642,28 @@ model RestaurantTable {
 }
 
 model TableOrderRequest {
-  id                    String          @id @default(uuid())
-  negocioId             String
-  tableId               String
-  tableSessionId        String
-  nombreCliente         String?
-  telefonoCliente       String?
-  items                 Json
-  subtotal              Float
-  total                 Float
-  notas                 String?
-  estado                String          @default("PENDING_ADMIN_CONFIRMATION") // "PENDING_ADMIN_CONFIRMATION" | "CONFIRMED" | "REJECTED" | "EXPIRED" | "CANCELLED"
-  locationValidated     Boolean         @default(false)
-  distanceFromBusiness  Float?
-  clientLat             Float?
-  clientLng             Float?
-  pedidoId              String?
+  id                   String  @id @default(uuid())
+  negocioId            String
+  tableId              String
+  tableSessionId       String
+  nombreCliente        String?
+  telefonoCliente      String?
+  items                Json
+  subtotal             Float
+  total                Float
+  notas                String?
+  estado               String  @default("PENDING_ADMIN_CONFIRMATION") // "PENDING_ADMIN_CONFIRMATION" | "CONFIRMED" | "REJECTED" | "EXPIRED" | "CANCELLED"
+  locationValidated    Boolean @default(false)
+  distanceFromBusiness Float?
+  clientLat            Float?
+  clientLng            Float?
+  pedidoId             String?
 
-  table                 RestaurantTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
-  negocio               Negocio         @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  table   RestaurantTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  negocio Negocio         @relation(fields: [negocioId], references: [id], onDelete: Cascade)
 
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([negocioId])
   @@index([tableId])
@@ -3652,18 +3672,18 @@ model TableOrderRequest {
 }
 
 model WaiterCall {
-  id              String          @id @default(uuid())
-  negocioId       String
-  tableId         String
-  tableSessionId  String
-  estado          String          @default("PENDING") // "PENDING" | "ACKNOWLEDGED" | "RESOLVED" | "CANCELLED"
-  notas           String?
+  id             String  @id @default(uuid())
+  negocioId      String
+  tableId        String
+  tableSessionId String
+  estado         String  @default("PENDING") // "PENDING" | "ACKNOWLEDGED" | "RESOLVED" | "CANCELLED"
+  notas          String?
 
-  table           RestaurantTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
-  negocio         Negocio         @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  table   RestaurantTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  negocio Negocio         @relation(fields: [negocioId], references: [id], onDelete: Cascade)
 
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([negocioId])
   @@index([tableId])
@@ -3674,37 +3694,40 @@ model WaiterCall {
 // ─── 🏢 ARQUITECTURA MULTI-SUCURSAL CANÓNICA CITIOX ──────────────────────────
 
 model Branch {
-  id              String                @id @default(uuid())
-  businessId      String
-  name            String
-  slug            String
-  code            String?
-  address         String?
-  phone           String?
-  latitude        Float?
-  longitude       Float?
-  timezone        String                @default("America/Guayaquil")
-  active          Boolean               @default(true)
-  isMain          Boolean               @default(false)
-  settings        Json?
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
+  id         String   @id @default(uuid())
+  businessId String
+  name       String
+  slug       String
+  code       String?
+  address    String?
+  phone      String?
+  latitude   Float?
+  longitude  Float?
+  timezone   String   @default("America/Guayaquil")
+  active     Boolean  @default(true)
+  isMain     Boolean  @default(false)
+  settings   Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  negocio         Negocio               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  negocio Negocio @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
-  accesses        BranchAccess[]
-  staffBranches   StaffBranch[]
-  branchProducts  BranchProduct[]
-  branchServices  BranchService[]
-  inventory       BranchInventory[]
-  inventoryMoves  InventoryMovement[]
-  tables          RestaurantTable[]
-  orders          Pedido[]
-  appointments    Appointment[]
-  bloqueos        Bloqueo[]
-  staffSchedules  StaffSchedule[]
-  cashRegisters   CashRegister[]
-  cashSessions    CashRegisterSession[]
+  accesses       BranchAccess[]
+  staffBranches  StaffBranch[]
+  branchProducts BranchProduct[]
+  branchServices BranchService[]
+  inventory      BranchInventory[]
+  inventoryMoves InventoryMovement[]
+  tables         RestaurantTable[]
+  orders         Pedido[]
+  appointments   Appointment[]
+  bloqueos       Bloqueo[]
+  staffSchedules StaffSchedule[]
+  cashRegisters  CashRegister[]
+  cashSessions   CashRegisterSession[]
+  memberships    Membership[]
+  gymAccessLogs  GymAccessLog[]
+  gymAttendances GymAttendance[]
 
   @@unique([businessId, slug])
   @@index([businessId])
@@ -3722,10 +3745,10 @@ model BranchAccess {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  usuario    Usuario  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  branch     Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  negocio    Negocio  @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  roleObj    Role?    @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  usuario Usuario @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branch  Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  negocio Negocio @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  roleObj Role?   @relation(fields: [roleId], references: [id], onDelete: SetNull)
 
   @@unique([userId, branchId])
   @@index([userId])
@@ -3742,9 +3765,9 @@ model StaffBranch {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  staff      Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
-  branch     Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  negocio    Negocio  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  staff   Staff   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  branch  Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  negocio Negocio @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@unique([staffId, branchId])
   @@index([staffId])
@@ -3753,18 +3776,18 @@ model StaffBranch {
 }
 
 model BranchProduct {
-  id         String    @id @default(uuid())
+  id         String   @id @default(uuid())
   branchId   String
   productId  String
   businessId String
-  enabled    Boolean   @default(true)
+  enabled    Boolean  @default(true)
   price      Float?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  branch     Branch    @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  producto   Producto  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  negocio    Negocio   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branch   Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  producto Producto @relation(fields: [productId], references: [id], onDelete: Cascade)
+  negocio  Negocio  @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@unique([branchId, productId])
   @@index([branchId])
@@ -3783,9 +3806,9 @@ model BranchService {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  branch     Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  service    Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  negocio    Negocio  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branch  Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  negocio Negocio @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@unique([branchId, serviceId])
   @@index([branchId])
@@ -3794,20 +3817,20 @@ model BranchService {
 }
 
 model BranchInventory {
-  id          String   @id @default(uuid())
-  branchId    String
-  productId   String
-  varianteId  String?
-  businessId  String
-  stock       Int      @default(0)
-  minStock    Int      @default(0)
-  maxStock    Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(uuid())
+  branchId   String
+  productId  String
+  varianteId String?
+  businessId String
+  stock      Int      @default(0)
+  minStock   Int      @default(0)
+  maxStock   Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  branch      Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  producto    Producto @relation(fields: [productId], references: [id], onDelete: Cascade)
-  negocio     Negocio  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branch   Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  producto Producto @relation(fields: [productId], references: [id], onDelete: Cascade)
+  negocio  Negocio  @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@unique([branchId, productId, varianteId])
   @@index([branchId])
@@ -3816,19 +3839,19 @@ model BranchInventory {
 }
 
 model InventoryMovement {
-  id          String   @id @default(uuid())
-  businessId  String
-  branchId    String
-  productId   String
-  varianteId  String?
-  quantity    Int
-  type        String   // "INICIAL" | "ENTRADA" | "SALIDA" | "AJUSTE" | "VENTA" | "TRANSFERENCIA_SALIDA" | "TRANSFERENCIA_ENTRADA"
-  reference   String?
-  createdBy   String?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  businessId String
+  branchId   String
+  productId  String
+  varianteId String?
+  quantity   Int
+  type       String // "INICIAL" | "ENTRADA" | "SALIDA" | "AJUSTE" | "VENTA" | "TRANSFERENCIA_SALIDA" | "TRANSFERENCIA_ENTRADA"
+  reference  String?
+  createdBy  String?
+  createdAt  DateTime @default(now())
 
-  branch      Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  negocio     Negocio  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branch  Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  negocio Negocio @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@index([branchId])
@@ -3837,44 +3860,44 @@ model InventoryMovement {
 }
 
 model CashRegister {
-  id         String                @id @default(uuid())
+  id         String   @id @default(uuid())
   businessId String
   branchId   String
   name       String
   code       String?
-  active     Boolean               @default(true)
-  createdAt  DateTime              @default(now())
-  updatedAt  DateTime              @updatedAt
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  branch     Branch                @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  negocio    Negocio               @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  sessions   CashRegisterSession[]
+  branch   Branch                @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  negocio  Negocio               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  sessions CashRegisterSession[]
 
   @@index([businessId])
   @@index([branchId])
 }
 
 model CashRegisterSession {
-  id             String       @id @default(uuid())
+  id             String    @id @default(uuid())
   businessId     String
   branchId       String
   cashRegisterId String
   openedBy       String
-  openedAt       DateTime     @default(now())
-  openingAmount  Float        @default(0)
+  openedAt       DateTime  @default(now())
+  openingAmount  Float     @default(0)
   closedBy       String?
   closedAt       DateTime?
   closingAmount  Float?
   expectedAmount Float?
   difference     Float?
-  status         String       @default("OPEN") // "OPEN" | "CLOSED"
+  status         String    @default("OPEN") // "OPEN" | "CLOSED"
   notes          String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  branch         Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  cashRegister   CashRegister @relation(fields: [cashRegisterId], references: [id], onDelete: Cascade)
-  negocio        Negocio      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branch       Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  cashRegister CashRegister @relation(fields: [cashRegisterId], references: [id], onDelete: Cascade)
+  negocio      Negocio      @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@index([branchId])
@@ -3909,56 +3932,56 @@ enum SubscriptionAddonAction {
 }
 
 model Addon {
-  id                 String               @id @default(uuid())
-  code               String               @unique // ej. ADDON_ECOMMERCE, ADDON_BRANCH_EXTRA
-  name               String               // ej. "Sucursal Operativa Adicional"
-  description        String?
-  icon               String?              @default("PlusCircle")
-  type               AddonType            // CAPABILITY | LIMIT
-  
-  targetKey          String               // Para CAPABILITY: código en BusinessModuleCatalog (ej. 'ECOMMERCE', 'COMMUNICATION_CENTER')
-                                          // Para LIMIT: limitKey canónico en PlanLimit (ej. 'MAX_BRANCHES', 'MAX_STAFF')
-  amount             Int?                 // Incremento cuantitativo si es LIMIT (ej. +1, +3, +500)
-  
-  stackable          Boolean              @default(false)
-  maxQuantity        Int?                 // Límite máximo de contrataciones (ej. 10)
-  
-  priceMonthly       Float                @default(0.0)
-  priceAnnual        Float?
-  currency           String               @default("USD")
-  
-  applicableFamilies String?              // JSON array o null si es universal (ej. '["RESTAURANTE", "SERVICIOS"]')
-  active             Boolean              @default(true)
-  sortOrder          Int                  @default(0)
-  
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  
+  id          String    @id @default(uuid())
+  code        String    @unique // ej. ADDON_ECOMMERCE, ADDON_BRANCH_EXTRA
+  name        String // ej. "Sucursal Operativa Adicional"
+  description String?
+  icon        String?   @default("PlusCircle")
+  type        AddonType // CAPABILITY | LIMIT
+
+  targetKey String // Para CAPABILITY: código en BusinessModuleCatalog (ej. 'ECOMMERCE', 'COMMUNICATION_CENTER')
+  // Para LIMIT: limitKey canónico en PlanLimit (ej. 'MAX_BRANCHES', 'MAX_STAFF')
+  amount    Int? // Incremento cuantitativo si es LIMIT (ej. +1, +3, +500)
+
+  stackable   Boolean @default(false)
+  maxQuantity Int? // Límite máximo de contrataciones (ej. 10)
+
+  priceMonthly Float  @default(0.0)
+  priceAnnual  Float?
+  currency     String @default("USD")
+
+  applicableFamilies String? // JSON array o null si es universal (ej. '["RESTAURANTE", "SERVICIOS"]')
+  active             Boolean @default(true)
+  sortOrder          Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   subscriptionAddons SubscriptionAddon[]
 }
 
 model SubscriptionAddon {
-  id                 String                  @id @default(uuid())
-  subscriptionId     String
-  addonId            String
-  
-  quantity           Int                     @default(1)
-  priceContracted    Float                   // Precio pactado inmutable al contratar
-  currency           String                  @default("USD")
-  
-  status             SubscriptionAddonStatus @default(ACTIVE)
-  cancelAtPeriodEnd  Boolean                 @default(false)
-  effectiveUntil     DateTime?               // Fecha hasta la cual tiene derecho de uso si canceló
-  
-  startedAt          DateTime                @default(now())
-  cancelledAt        DateTime?
-  
-  createdAt          DateTime                @default(now())
-  updatedAt          DateTime                @updatedAt
-  
-  subscription       Suscripcion             @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  addon              Addon                   @relation(fields: [addonId], references: [id], onDelete: Restrict)
-  
+  id             String @id @default(uuid())
+  subscriptionId String
+  addonId        String
+
+  quantity        Int    @default(1)
+  priceContracted Float // Precio pactado inmutable al contratar
+  currency        String @default("USD")
+
+  status            SubscriptionAddonStatus @default(ACTIVE)
+  cancelAtPeriodEnd Boolean                 @default(false)
+  effectiveUntil    DateTime? // Fecha hasta la cual tiene derecho de uso si canceló
+
+  startedAt   DateTime  @default(now())
+  cancelledAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscription Suscripcion @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  addon        Addon       @relation(fields: [addonId], references: [id], onDelete: Restrict)
+
   @@unique([subscriptionId, addonId])
   @@index([subscriptionId])
   @@index([addonId])
@@ -3966,26 +3989,279 @@ model SubscriptionAddon {
 }
 
 model SubscriptionAddonHistory {
-  id                  String                  @id @default(uuid())
+  id                  String  @id @default(uuid())
   businessId          String
   subscriptionId      String
   addonId             String
   subscriptionAddonId String?
-  
-  action              SubscriptionAddonAction
-  quantityBefore      Int?
-  quantityAfter       Int?
-  priceBefore         Float?
-  priceAfter          Float?
-  statusBefore        String?
-  statusAfter         String?
-  performedBy         String                  // 'SUPERADMIN' | 'ADMIN' | 'SYSTEM' | 'CRON' | 'BILLING'
-  reason              String?
-  
-  createdAt           DateTime                @default(now())
-  
+
+  action         SubscriptionAddonAction
+  quantityBefore Int?
+  quantityAfter  Int?
+  priceBefore    Float?
+  priceAfter     Float?
+  statusBefore   String?
+  statusAfter    String?
+  performedBy    String // 'SUPERADMIN' | 'ADMIN' | 'SYSTEM' | 'CRON' | 'BILLING'
+  reason         String?
+
+  createdAt DateTime @default(now())
+
   @@index([businessId])
   @@index([subscriptionId])
   @@index([addonId])
   @@index([createdAt])
 }
+
+// ─── MÓDULO ODONTOLOGÍA Y GESTIÓN CLÍNICA (AISLADO) ───────────────────────────
+
+model ClinicalRecord {
+  id                  String   @id @default(uuid())
+  negocioId           String
+  clienteId           String   @unique
+  numeroHistoria      String?
+  grupoSanguineo      String?
+  antecedentesMedicos Json?
+  alergias            Json?
+  medicacionActual    String?
+  habitos             Json?
+  observaciones       String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  Negocio     Negocio             @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  Cliente     Cliente             @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  encounters  ClinicalEncounter[]
+  odontograms DentalOdontogram[]
+  treatments  DentalTreatment[]
+  documents   ClinicalDocument[]
+
+  @@unique([negocioId, clienteId])
+  @@index([negocioId])
+}
+
+model ClinicalEncounter {
+  id                     String    @id @default(uuid())
+  negocioId              String
+  clinicalRecordId       String
+  appointmentId          String?
+  staffId                String?
+  fecha                  DateTime  @default(now())
+  motivoConsulta         String
+  problemaActual         Json?
+  signosVitales          Json?
+  examenFisico           String?
+  diagnostico            String?
+  codigoCIE              String?
+  procedimientoRealizado String?
+  prescripcion           String?
+  indicaciones           String?
+  proximaCita            DateTime?
+  odontogramId           String?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  Negocio        Negocio           @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  ClinicalRecord ClinicalRecord    @relation(fields: [clinicalRecordId], references: [id], onDelete: Cascade)
+  Appointment    Appointment?      @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  Staff          Staff?            @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  Odontogram     DentalOdontogram? @relation(fields: [odontogramId], references: [id], onDelete: SetNull)
+
+  @@index([negocioId])
+  @@index([clinicalRecordId])
+}
+
+model DentalOdontogram {
+  id               String   @id @default(uuid())
+  negocioId        String
+  clinicalRecordId String
+  tipo             String   @default("PERMANENTE")
+  titulo           String?
+  piezas           Json
+  especificaciones Json?
+  isSnapshot       Boolean  @default(false)
+  snapshotNumber   Int      @default(1)
+  registeredBy     String?
+  staffId          String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  Negocio        Negocio             @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  ClinicalRecord ClinicalRecord      @relation(fields: [clinicalRecordId], references: [id], onDelete: Cascade)
+  Staff          Staff?              @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  encounters     ClinicalEncounter[]
+
+  @@index([negocioId])
+  @@index([clinicalRecordId])
+}
+
+model DentalTreatment {
+  id               String    @id @default(uuid())
+  negocioId        String
+  clinicalRecordId String
+  serviceId        String?
+  appointmentId    String?
+  staffId          String?
+  diente           String?
+  superficies      String?
+  descripcion      String
+  costoEstimado    Float?
+  estado           String    @default("PLANIFICADO")
+  prioridad        String?   @default("MEDIA")
+  fechaInicio      DateTime?
+  fechaRealizado   DateTime?
+  notas            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  Negocio        Negocio        @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  ClinicalRecord ClinicalRecord @relation(fields: [clinicalRecordId], references: [id], onDelete: Cascade)
+  Service        Service?       @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  Staff          Staff?         @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  Appointment    Appointment?   @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  @@index([negocioId])
+  @@index([clinicalRecordId])
+}
+
+model ClinicalDocument {
+  id               String   @id @default(uuid())
+  negocioId        String
+  clinicalRecordId String
+  mediaId          String?
+  tipo             String
+  titulo           String
+  descripcion      String?
+  archivoUrl       String
+  mimeType         String?
+  tamanoBytes      Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  Negocio        Negocio        @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  ClinicalRecord ClinicalRecord @relation(fields: [clinicalRecordId], references: [id], onDelete: Cascade)
+  Media          Media?         @relation("ClinicalDocumentMedia", fields: [mediaId], references: [id], onDelete: SetNull)
+
+  @@index([negocioId])
+  @@index([clinicalRecordId])
+}
+
+// ─── VERTICAL GIMNASIO & FITNESS ─────────────────────────────────────────────
+
+model MembershipPlan {
+  id           String       @id @default(uuid())
+  businessId   String
+  name         String
+  description  String?
+  price        Float
+  currency     String       @default("USD")
+  durationDays Int          @default(30)
+  active       Boolean      @default(true)
+  displayOrder Int          @default(0)
+  featured     Boolean      @default(false)
+  benefits     Json?
+  accessRules  Json?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  negocio      Negocio      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  memberships  Membership[]
+
+  @@index([businessId])
+  @@index([businessId, active])
+}
+
+model Membership {
+  id               String          @id @default(uuid())
+  businessId       String
+  customerId       String
+  membershipPlanId String
+  status           String          @default("ACTIVE") // PENDING_PAYMENT | ACTIVE | EXPIRED | FROZEN | CANCELLED
+  startAt          DateTime        @default(now())
+  endAt            DateTime
+  price            Float
+  currency         String          @default("USD")
+  paymentStatus    String          @default("PAID") // PENDING | PAID | FAILED | REFUNDED
+  paymentMethod    String?
+  paymentReference String?
+  branchId         String?
+
+  frozenAt         DateTime?
+  freezeReason     String?
+  freezeDays       Int?
+  unfrozenAt       DateTime?
+  frozenByUserId   String?
+
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  negocio          Negocio         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  cliente          Cliente         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  membershipPlan   MembershipPlan  @relation(fields: [membershipPlanId], references: [id], onDelete: Restrict)
+  branch           Branch?         @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  accessLogs       GymAccessLog[]
+  attendances      GymAttendance[]
+
+  @@index([businessId])
+  @@index([customerId])
+  @@index([membershipPlanId])
+  @@index([status])
+  @@index([businessId, status])
+  @@index([startAt, endAt])
+}
+
+model GymAccessLog {
+  id           String          @id @default(uuid())
+  businessId   String
+  customerId   String
+  membershipId String?
+  status       String          // GRANTED | DENIED
+  reason       String?
+  method       String          @default("QR") // QR | MANUAL | NFC | TURNSTILE
+  branchId     String?
+  metadata     Json?
+  createdAt    DateTime        @default(now())
+
+  negocio      Negocio         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  membership   Membership?     @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  branch       Branch?         @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  attendances  GymAttendance[]
+
+  @@index([businessId])
+  @@index([customerId])
+  @@index([membershipId])
+  @@index([businessId, status])
+  @@index([businessId, createdAt])
+}
+
+model GymAttendance {
+  id              String        @id @default(uuid())
+  businessId      String
+  customerId      String
+  membershipId    String?
+  accessLogId     String?
+  checkedInAt     DateTime      @default(now())
+  checkedOutAt    DateTime?
+  durationMinutes Int?
+  status          String        @default("INSIDE") // INSIDE | COMPLETED | AUTO_CLOSED
+  method          String        @default("QR") // QR | MEMBER_QR | GYM_QR | MANUAL | NFC | TURNSTILE | ADMIN
+  branchId        String?
+  notes           String?
+  metadata        Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  negocio         Negocio       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  cliente         Cliente       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  membership      Membership?   @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  accessLog       GymAccessLog? @relation(fields: [accessLogId], references: [id], onDelete: SetNull)
+  branch          Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@index([businessId])
+  @@index([customerId])
+  @@index([membershipId])
+  @@index([businessId, status])
+  @@index([businessId, checkedInAt])
+}
+

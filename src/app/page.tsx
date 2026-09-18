@@ -1,726 +1,720 @@
 import Link from 'next/link';
-import prisma from '@/lib/prisma';
 import { 
     Check, 
     ArrowRight, 
     Smartphone, 
-    Zap, 
-    PlayCircle,
-    Star,
-    Rocket,
-    BarChart3,
-    Sparkles,
-    MessageCircle,
-    Calendar,
-    Award,
+    Star, 
+    BarChart3, 
+    Sparkles, 
+    Calendar, 
+    Users, 
+    ChevronDown, 
+    UtensilsCrossed, 
+    ShoppingBag, 
+    Scissors, 
+    Shirt, 
+    Trophy, 
+    Dumbbell, 
+    Store, 
+    SlidersHorizontal, 
+    CreditCard, 
+    Tag, 
+    CheckCircle2, 
+    XCircle,
     Bell,
-    Globe,
-    CheckCircle2,
-    MessageSquare,
-    TrendingUp,
-    Shield,
-    Users,
-    ChevronRight,
-    Play,
-    UtensilsCrossed,
-    ShoppingBag,
-    Scissors,
-    Shirt,
-    Trophy,
-    Dumbbell,
-    Store,
-    Layers,
-    Boxes,
-    SlidersHorizontal,
-    Search,
-    ChevronDown,
-    Plus,
-    Activity,
-    CreditCard
+    ExternalLink,
+    Lock,
+    Shield
 } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: "Citiox | Crea la presencia de tu negocio en línea",
-    description: "Mucho más que un sitio web. Tu negocio tiene su propia app para mostrar lo que haces, recibir clientes, vender y administrar todo desde un solo lugar.",
+    title: "Citiox | Tu negocio. Tu propia app.",
+    description: "No importa qué tipo de negocio tengas. Con Citiox puedes crear la app de tu negocio para recibir clientes, vender, gestionar reservas, pedidos, servicios, membresías y mucho más.",
     openGraph: {
-        title: "Citiox | Crea la presencia de tu negocio en línea",
-        description: "Mucho más que un sitio web. Tu negocio tiene su propia app para mostrar, vender y administrar todo.",
+        title: "Citiox | Tu negocio. Tu propia app.",
+        description: "No importa qué tipo de negocio tengas. Con Citiox crea la app de tu negocio.",
         images: ["/logo-citiox.png"],
         type: "website"
     }
 };
 
-const CitioxLogo = ({ className = "" }: { className?: string }) => (
-    <img 
-        src="/logo-citiox.png" 
-        alt="Citiox Logo" 
-        className={`object-contain ${className}`}
-    />
+const ToothIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M7 3C4.24 3 2 5.24 2 8c0 3.5 2 6 3 9.5C6 21 8 21 9 18c.5-1.5 1-3 3-3s2.5 1.5 3 3c1 3 3 3 4-0.5 1-3.5 3-6 3-9.5 0-2.76-2.24-5-5-5-1.5 0-2.8.7-3.8 1.8-.2.2-.4.4-.6.6a1 1 0 0 1-1.2 0c-.2-.2-.4-.4-.6-.6C10.8 3.7 9.5 3 7 3z" />
+    </svg>
 );
 
-export default async function LandingPage() {
-    let planes: any[] = [];
-    let activeFoundersCount = 4;
-    let founderMax = 25;
-    let founderPrice = "10";
-    let cuposDisponibles = 21;
-
-    try {
-        const [planesDb, countDb, configsDb] = await Promise.all([
-            prisma.plan.findMany({
-                where: { activo: true, isFree: false, id: { not: 'founder' } },
-                orderBy: { price: 'asc' }
-            }).catch(() => []),
-            (prisma.suscripcion as any).count({
-                where: {
-                    isFounder: true,
-                    estado: { in: ['activa', 'active', 'ACTIVA'] }
-                }
-            }).catch(() => 4),
-            prisma.globalConfig.findMany({
-                where: {
-                    clave: { in: ['FOUNDER_LOCKED_PRICE', 'FOUNDER_MAX'] }
-                }
-            }).catch(() => [])
-        ]);
-
-        planes = (planesDb || []).filter((p: any) => {
-            const name = (p.name || '').toUpperCase();
-            return !name.includes('BEGIN') && p.id !== 'plan_begin' && !p.isFree;
-        });
-        activeFoundersCount = typeof countDb === 'number' ? countDb : 4;
-        
-        const founderMaxVal = configsDb.find((c: any) => c.clave === 'FOUNDER_MAX')?.valor || '25';
-        const founderPriceVal = configsDb.find((c: any) => c.clave === 'FOUNDER_LOCKED_PRICE')?.valor || '10.0';
-        founderMax = parseInt(founderMaxVal) || 25;
-        const rawPrice = parseFloat(founderPriceVal) || 10;
-        founderPrice = rawPrice % 1 === 0 ? rawPrice.toString() : rawPrice.toFixed(2);
-        cuposDisponibles = Math.max(0, founderMax - activeFoundersCount);
-    } catch (err) {
-        console.error("Error loading landing page DB data:", err);
-    }
-
+const CitioxBrandLogo = ({ className = "" }: { className?: string }) => (
+    <div className={`flex items-center gap-2.5 ${className}`}>
+        <img 
+            src="/logo-citiox.png" 
+            alt="Citiox" 
+            className="h-10 w-auto object-contain select-none" 
+        />
+    </div>
+);
+export default function LandingPage() {
     return (
-        <div className="min-h-screen bg-[#fcfbfe] text-slate-900 font-sans selection:bg-[#4f46e5] selection:text-white overflow-x-hidden">
-            
-            {/* ================= 1. TOP BANNER / ANUNCIO ================= */}
-            <div className="bg-[#0b0f19] py-2.5 px-4 relative z-50 text-white text-center border-b border-white/10 shadow-sm">
-                <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-3 text-xs md:text-sm font-semibold">
-                    <span className="flex items-center gap-1.5 text-slate-200">
-                        <span className="text-amber-400">🔥</span>
-                        <strong className="text-amber-400 font-black tracking-wide">PLAN FUNDADORES:</strong>
-                        <span>Últimos <strong className="underline text-white font-black">{cuposDisponibles} cupos</strong> con tarifa especial de <strong>${founderPrice}/mes</strong> de por vida.</span>
-                    </span>
-                    <a 
-                        href="#precios" 
-                        className="bg-white hover:bg-slate-100 text-slate-950 px-3.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider transition-all shadow-sm flex items-center gap-1 cursor-pointer"
-                    >
-                        VER PLANES &rarr;
-                    </a>
-                </div>
-            </div>
+        <div className="min-h-screen bg-[#FAFCFF] text-slate-900 font-sans selection:bg-[#0066FF] selection:text-white overflow-x-hidden">
 
-            {/* ================= 2. NAVBAR ================= */}
-            <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-xs">
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* 1. NAVBAR SUPERIOR                                              */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
                     
-                    {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2.5 group">
-                        <CitioxLogo className="h-9 w-auto object-contain group-hover:scale-105 transition-transform" />
-                        <span className="text-2xl font-black tracking-tight text-slate-900 flex items-center">
-                            Citi<span className="text-[#4f46e5]">Ox</span>
-                        </span>
+                    {/* Brand Logo */}
+                    <Link href="/" className="group flex items-center">
+                        <CitioxBrandLogo />
                     </Link>
                     
-                    {/* Menu links */}
-                    <div className="hidden lg:flex items-center gap-8 text-xs font-bold text-slate-600">
-                        <a href="#soluciones" className="hover:text-[#4f46e5] transition-colors flex items-center gap-1">
-                            Soluciones <ChevronDown size={14} className="text-slate-400" />
+                    {/* Menú de Enlaces */}
+                    <div className="hidden lg:flex items-center gap-7 text-xs font-bold text-slate-600">
+                        <a href="#verticales" className="hover:text-[#0066FF] transition-colors flex items-center gap-1">
+                            Soluciones <ChevronDown size={13} className="text-slate-400" />
                         </a>
-                        <a href="#como-funciona" className="hover:text-[#4f46e5] transition-colors">¿Cómo funciona?</a>
-                        <a href="#que-incluye" className="hover:text-[#4f46e5] transition-colors">Qué incluye</a>
-                        <a href="#testimonios" className="hover:text-[#4f46e5] transition-colors">Casos de éxito</a>
-                        <a href="#precios" className="hover:text-[#4f46e5] transition-colors">Precios</a>
+                        <a href="#como-funciona" className="hover:text-[#0066FF] transition-colors flex items-center gap-1">
+                            Cómo funciona <ChevronDown size={13} className="text-slate-400" />
+                        </a>
+                        <a href="#verticales" className="hover:text-[#0066FF] transition-colors flex items-center gap-1">
+                            Para tu negocio <ChevronDown size={13} className="text-slate-400" />
+                        </a>
+                        <a href="/admin/plan" className="hover:text-[#0066FF] transition-colors">
+                            Precios
+                        </a>
+                        <a href="#funciones" className="hover:text-[#0066FF] transition-colors flex items-center gap-1">
+                            Recursos <ChevronDown size={13} className="text-slate-400" />
+                        </a>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-3">
+                    {/* Acciones */}
+                    <div className="flex items-center gap-4">
                         <Link
                             href="/login"
-                            className="text-xs font-bold text-slate-700 hover:text-[#4f46e5] px-3 py-2 transition-colors"
+                            className="text-xs font-bold text-slate-700 hover:text-[#0066FF] px-2 py-1.5 transition-colors"
                         >
                             Iniciar sesión
                         </Link>
-                        <a
-                            href="#soluciones"
-                            className="bg-[#4f46e5] hover:bg-[#4338ca] text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-indigo-500/25 active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                        <Link
+                            href="/register"
+                            className="bg-[#0066FF] hover:bg-[#0052cc] text-white px-5 py-2.5 rounded-full font-extrabold text-xs transition-all shadow-md shadow-blue-500/20 active:scale-95 flex items-center gap-1.5"
                         >
-                            CREAR MI NEGOCIO GRATIS &rarr;
-                        </a>
+                            <span>Crear mi app</span>
+                            <ArrowRight size={13} />
+                        </Link>
                     </div>
                 </div>
             </nav>
 
-            {/* ================= 3. HERO PRINCIPAL ================= */}
-            <header className="relative pt-12 md:pt-16 pb-20 bg-gradient-to-b from-[#f5f3ff]/60 via-white to-white overflow-hidden">
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* 2. HERO PRINCIPAL CON LOS 4 TELÉFONOS EN PERSPECTIVA            */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            <header className="relative pt-12 md:pt-16 pb-20 md:pb-28 overflow-hidden bg-gradient-to-b from-[#EEF5FF]/80 via-[#F7FAFF]/50 to-[#FAFCFF]">
+                
+                {/* Resplandores de fondo */}
+                <div className="absolute top-1/4 right-10 w-[550px] h-[550px] bg-gradient-to-tr from-blue-200/40 via-sky-200/40 to-indigo-100/30 rounded-full blur-3xl -z-10 pointer-events-none" />
+                <div className="absolute top-10 left-1/3 w-[300px] h-[300px] bg-blue-100/30 rounded-full blur-2xl -z-10 pointer-events-none" />
+
                 <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
                         
-                        {/* Columna Izquierda: Mensaje Central */}
-                        <div className="lg:col-span-6 space-y-6 text-left">
+                        {/* Columna Izquierda: Mensaje y CTA */}
+                        <div className="lg:col-span-5 space-y-6 text-left z-10">
                             
-                            {/* Badge Pill */}
-                            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#eef2ff] text-[#4f46e5] border border-[#e0e7ff] rounded-full text-[11px] font-black uppercase tracking-wider shadow-2xs">
-                                <span className="text-sm">⚛️</span>
-                                <span>PLATAFORMA DIGITAL TODO EN UNO</span>
+                            {/* Tag Badge */}
+                            <div className="inline-flex items-center px-3.5 py-1.5 rounded-full bg-[#E8F1FF] text-[#0066FF] text-[11px] font-black uppercase tracking-wider">
+                                TU NEGOCIO EN UNA APP
                             </div>
                             
-                            {/* Headline */}
-                            <h1 className="text-4xl sm:text-5xl md:text-[54px] font-black text-slate-950 tracking-tight leading-[1.12]">
-                                Crea la presencia de <br />
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2563eb] via-[#4f46e5] to-[#7c3aed]">
-                                    tu negocio en línea.
-                                </span>
+                            {/* Titular */}
+                            <h1 className="text-5xl sm:text-6xl lg:text-[62px] font-black text-slate-950 tracking-tight leading-[1.08]">
+                                Tu negocio.<br />
+                                <span className="text-[#0066FF]">Tu propia app.</span>
                             </h1>
                             
-                            {/* Subtitle */}
-                            <p className="text-slate-600 text-base md:text-[17px] font-medium leading-relaxed max-w-xl">
-                                Mucho más que un sitio web. Tu negocio tiene su propia app para mostrar lo que haces, recibir clientes, vender y administrar todo desde un solo lugar.
-                            </p>
-
-                            {/* Botones principales */}
-                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-1">
-                                <a
-                                    href="#soluciones"
-                                    className="bg-gradient-to-r from-[#4f46e5] to-[#6366f1] hover:brightness-110 text-white px-7 py-3.5 rounded-xl font-black text-xs uppercase tracking-wider text-center transition-all shadow-lg shadow-indigo-500/30 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
-                                >
-                                    CREA TU NEGOCIO GRATIS &rarr;
-                                </a>
-                                <a
-                                    href="#como-funciona"
-                                    className="bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-wider text-center transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer"
-                                >
-                                    <PlayCircle size={17} className="text-[#4f46e5]" />
-                                    VER CÓMO FUNCIONA
-                                </a>
+                            {/* Subtítulo */}
+                            <div className="space-y-2 text-slate-600 text-base md:text-lg leading-relaxed max-w-lg font-medium">
+                                <p className="font-bold text-slate-900">
+                                    No importa qué tipo de negocio tengas.
+                                </p>
+                                <p className="text-slate-500 text-sm md:text-base">
+                                    Con Citiox puedes crear la app de tu negocio para recibir clientes, vender, gestionar reservas, pedidos, servicios, membresías y mucho más.
+                                </p>
                             </div>
 
-                            {/* Píldoras de valor con checks */}
-                            <div className="flex flex-wrap gap-2.5 text-[11px] font-extrabold text-slate-700 pt-2">
-                                <span className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-emerald-200/80 shadow-2xs text-emerald-800">
-                                    <CheckCircle2 size={15} className="text-emerald-500 shrink-0" /> Tu propio enlace en línea
-                                </span>
-                                <span className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-indigo-200/80 shadow-2xs text-indigo-900">
-                                    <CheckCircle2 size={15} className="text-indigo-500 shrink-0" /> App completa para clientes
-                                </span>
-                                <span className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-sky-200/80 shadow-2xs text-sky-900">
-                                    <CheckCircle2 size={15} className="text-sky-500 shrink-0" /> Panel de operaciones y caja
-                                </span>
+                            {/* Botón Principal */}
+                            <div className="pt-2">
+                                <Link
+                                    href="/register"
+                                    className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-[#0066FF] hover:bg-[#0052cc] text-white font-extrabold text-sm shadow-xl shadow-blue-500/30 hover:shadow-blue-500/40 active:scale-95 transition-all"
+                                >
+                                    <span>Crear mi app gratis</span>
+                                    <ArrowRight size={16} />
+                                </Link>
                             </div>
 
+                            {/* Checks de Confianza */}
+                            <div className="flex flex-wrap items-center gap-y-2 gap-x-5 text-xs font-semibold text-slate-600 pt-2">
+                                <span className="flex items-center gap-1.5">
+                                    <Check size={14} className="text-[#0066FF] stroke-[3]" />
+                                    Sin complicaciones
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <Check size={14} className="text-[#0066FF] stroke-[3]" />
+                                    Configúrala a tu manera
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <Check size={14} className="text-[#0066FF] stroke-[3]" />
+                                    Empieza en minutos
+                                </span>
+                            </div>
                         </div>
 
-                        {/* Columna Derecha: Dual Mockup Exacto al Diseño */}
-                        <div className="lg:col-span-6 relative flex justify-center items-center">
+                        {/* Columna Derecha: Mockups Realistas de los 4 Smartphones */}
+                        <div className="lg:col-span-7 relative flex justify-center items-center py-4 lg:py-0">
                             
-                            {/* Resplandor ambiente */}
-                            <div className="absolute w-[460px] h-[460px] bg-gradient-to-tr from-indigo-200/40 via-purple-200/40 to-sky-200/30 rounded-full blur-3xl opacity-70 -z-10" />
-
-                            <div className="relative w-full max-w-lg">
+                            <div className="relative w-full max-w-[620px] flex items-center justify-center -space-x-10 sm:-space-x-12 select-none">
                                 
-                                {/* 💻 MOCKUP LAPTOP / TABLET DE ADMINISTRACIÓN */}
-                                <div className="bg-[#0b101e] rounded-3xl p-3 shadow-2xl border border-slate-800/90 text-white">
+                                {/* ─── TELÉFONO 1: LA PARRILLA (Restaurante Demo en Vivo) ─── */}
+                                <div className="w-[195px] sm:w-[215px] h-[410px] sm:h-[450px] bg-white rounded-[2.5rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform -rotate-6 translate-y-6 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-10 hidden sm:block group/phone1">
+                                    {/* Barra superior con Isla Dinámica y botón de pantalla completa */}
+                                    <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
+                                        <div className="w-14 h-3 bg-slate-900 rounded-full mx-auto" />
+                                        <a 
+                                            href="/parrilla-citiox-demo" 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="absolute right-1 top-0 size-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[8px] hover:bg-[#0066FF] transition-colors"
+                                            title="Abrir app en pantalla completa"
+                                        >
+                                            <ExternalLink size={10} />
+                                        </a>
+                                    </div>
                                     
-                                    {/* Header de la ventana */}
-                                    <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800/80 text-[11px]">
-                                        <div className="flex items-center gap-1.5">
-                                            <div className="size-2.5 rounded-full bg-rose-500" />
-                                            <div className="size-2.5 rounded-full bg-amber-500" />
-                                            <div className="size-2.5 rounded-full bg-emerald-500" />
+                                    {/* Pantalla con Iframe de la App Real */}
+                                    <div className="h-[calc(100%-24px)] bg-white rounded-[1.8rem] overflow-hidden relative border border-slate-100 shadow-inner">
+                                        {/* Badge flotante en vivo */}
+                                        <div className="absolute top-1 left-2 z-20 pointer-events-none flex items-center gap-1 bg-slate-900/80 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[7px] font-bold">
+                                            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                            <span>Restaurante</span>
                                         </div>
-                                        <div className="flex items-center gap-2 text-slate-400 text-[10px]">
-                                            <Search size={12} />
-                                            <span className="size-4 rounded-full bg-slate-800 inline-block text-center text-[9px] font-bold">M</span>
-                                        </div>
+                                        <iframe 
+                                            src="/parrilla-citiox-demo" 
+                                            title="La Parrilla Demo"
+                                            className="w-[375px] h-[780px] origin-top-left scale-[0.52] border-0 select-none pointer-events-auto"
+                                            loading="lazy"
+                                        />
                                     </div>
-
-                                    {/* Contenedor del panel */}
-                                    <div className="grid grid-cols-12 gap-2 p-2 bg-slate-950/60 rounded-2xl">
-                                        
-                                        {/* Barra lateral interna oscura */}
-                                        <div className="col-span-3 bg-[#0d1428] rounded-xl p-2.5 space-y-3 border border-slate-800/60 hidden sm:block">
-                                            <div className="flex items-center gap-1.5 text-white font-black text-xs">
-                                                <div className="size-4 rounded-md bg-[#4f46e5] flex items-center justify-center text-[9px]">⚡</div>
-                                                <span>CitiOx</span>
-                                            </div>
-                                            <div className="space-y-1 text-[9px] font-bold text-slate-400">
-                                                <div className="bg-[#4f46e5] text-white p-1 rounded-md flex items-center gap-1">
-                                                    <span>📊</span> Panel
-                                                </div>
-                                                <div className="p-1 hover:text-white flex items-center gap-1">🛍️ Ventas</div>
-                                                <div className="p-1 hover:text-white flex items-center gap-1">📦 Pedidos</div>
-                                                <div className="p-1 hover:text-white flex items-center gap-1">🏷️ Productos</div>
-                                                <div className="p-1 hover:text-white flex items-center gap-1">👥 Clientes</div>
-                                                <div className="p-1 hover:text-white flex items-center gap-1">⚙️ Ajustes</div>
-                                            </div>
-                                        </div>
-
-                                        {/* Área de contenido del panel (Fondo blanco pulcro) */}
-                                        <div className="col-span-12 sm:col-span-9 bg-white text-slate-900 rounded-xl p-3.5 space-y-3 shadow-inner">
-                                            
-                                            {/* Saludo */}
-                                            <div className="border-b border-slate-100 pb-2">
-                                                <h3 className="font-extrabold text-xs text-slate-900 flex items-center gap-1">
-                                                    ¡Hola, Mariana! 👋
-                                                </h3>
-                                                <p className="text-[10px] text-slate-400 font-medium">Resumen de tu negocio</p>
-                                            </div>
-
-                                            {/* 3 Tarjetas de estadísticas */}
-                                            <div className="grid grid-cols-3 gap-2">
-                                                <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                                                    <p className="text-[8px] font-bold text-slate-400 uppercase">Ventas totales</p>
-                                                    <p className="text-xs font-black text-slate-900 mt-0.5">$24,680</p>
-                                                    <span className="text-[8px] font-black text-emerald-600">+18.6% vs ayer</span>
-                                                </div>
-                                                <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                                                    <p className="text-[8px] font-bold text-slate-400 uppercase">Pedidos</p>
-                                                    <p className="text-xs font-black text-slate-900 mt-0.5">342</p>
-                                                    <span className="text-[8px] font-black text-emerald-600">+12.2% vs ayer</span>
-                                                </div>
-                                                <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-                                                    <p className="text-[8px] font-bold text-slate-400 uppercase">Clientes</p>
-                                                    <p className="text-xs font-black text-slate-900 mt-0.5">1,248</p>
-                                                    <span className="text-[8px] font-black text-emerald-600">+21.3% vs ayer</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Órdenes recientes */}
-                                            <div className="space-y-1.5 pt-1">
-                                                <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Órdenes recientes</p>
-                                                <div className="space-y-1 text-[9px] font-bold">
-                                                    <div className="flex items-center justify-between p-1 bg-slate-50 rounded-md">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <div className="size-4 rounded-full bg-indigo-100 text-indigo-700 font-black flex items-center justify-center text-[8px]">M</div>
-                                                            <span>Orden #1258</span>
-                                                            <span className="text-slate-400">• María G.</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5">
-                                                            <span>$28.50</span>
-                                                            <span className="px-1 py-0.2 rounded bg-emerald-100 text-emerald-700 text-[8px] font-black">Pagado</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center justify-between p-1 bg-slate-50 rounded-md">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <div className="size-4 rounded-full bg-blue-100 text-blue-700 font-black flex items-center justify-center text-[8px]">C</div>
-                                                            <span>Orden #1257</span>
-                                                            <span className="text-slate-400">• Carlos L.</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5">
-                                                            <span>$15.00</span>
-                                                            <span className="px-1 py-0.2 rounded bg-amber-100 text-amber-800 text-[8px] font-black">En preparación</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center justify-between p-1 bg-slate-50 rounded-md">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <div className="size-4 rounded-full bg-purple-100 text-purple-700 font-black flex items-center justify-center text-[8px]">A</div>
-                                                            <span>Orden #1256</span>
-                                                            <span className="text-slate-400">• Andrea P.</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5">
-                                                            <span>$31.20</span>
-                                                            <span className="px-1 py-0.2 rounded bg-sky-100 text-sky-700 text-[8px] font-black">Enviado</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-
                                 </div>
 
-                                {/* 📱 MOCKUP TELÉFONO MÓVIL SUPERPUESTO (DERECHA) */}
-                                <div className="absolute -bottom-8 -right-4 sm:-right-8 w-48 sm:w-56 bg-slate-950 p-2 rounded-[2.2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-2 border-slate-800 animate-in fade-in slide-in-from-bottom-6 duration-700">
-                                    
-                                    {/* Notch */}
-                                    <div className="w-16 h-3 bg-slate-950 rounded-full mx-auto mb-1 flex items-center justify-center">
-                                        <div className="size-1 rounded-full bg-slate-800" />
+                                {/* ─── TELÉFONO 2: FITZONE / VORTEX (Gimnasio Demo en Vivo - Central) ─── */}
+                                <div className="w-[215px] sm:w-[240px] h-[450px] sm:h-[490px] bg-white rounded-[2.8rem] p-2 shadow-2xl shadow-blue-500/25 border-[6px] border-slate-950 shrink-0 z-30 transform hover:scale-105 hover:z-40 transition-all duration-300 group/phone2">
+                                    {/* Isla Dinámica con acceso a pantalla completa */}
+                                    <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
+                                        <div className="w-18 h-3.5 bg-slate-950 rounded-full mx-auto flex items-center justify-center">
+                                            <div className="size-1.5 rounded-full bg-slate-800 ml-auto mr-1.5" />
+                                        </div>
+                                        <a 
+                                            href="/vortex-fitness" 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="absolute right-1 top-0 size-5 rounded-full bg-slate-950 text-white flex items-center justify-center text-[8px] hover:bg-[#0066FF] transition-colors"
+                                            title="Abrir app en pantalla completa"
+                                        >
+                                            <ExternalLink size={10} />
+                                        </a>
                                     </div>
 
-                                    {/* Pantalla PWA */}
-                                    <div className="bg-slate-900 text-white rounded-[1.8rem] p-2.5 space-y-2 font-sans overflow-hidden">
-                                        
-                                        {/* Header Cliente */}
-                                        <div className="flex items-center justify-between text-[8px] pb-1 border-b border-white/10">
-                                            <div>
-                                                <p className="font-extrabold text-white leading-none">¡Hola, Andrea!</p>
-                                                <p className="text-[7px] text-slate-400">📍 Quito, Ecuador</p>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <div className="size-4 rounded-full bg-indigo-600 text-white text-[7px] font-black flex items-center justify-center">A</div>
-                                            </div>
+                                    {/* Pantalla con Iframe de la App Real */}
+                                    <div className="h-[calc(100%-26px)] bg-slate-950 rounded-[2rem] overflow-hidden relative border border-slate-900 shadow-inner">
+                                        <div className="absolute top-1 left-2 z-20 pointer-events-none flex items-center gap-1 bg-blue-600/90 backdrop-blur-sm text-white px-2 py-0.5 rounded-full text-[7.5px] font-black">
+                                            <span className="size-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                                            <span>Gimnasio & Fitness</span>
                                         </div>
+                                        <iframe 
+                                            src="/vortex-fitness" 
+                                            title="FitZone Vortex Demo"
+                                            className="w-[390px] h-[800px] origin-top-left scale-[0.57] border-0 select-none pointer-events-auto"
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                </div>
 
-                                        {/* Buscador */}
-                                        <div className="bg-slate-800 px-2 py-1 rounded-md text-[8px] text-slate-400 flex items-center gap-1">
-                                            <Search size={9} />
-                                            <span>Buscar productos...</span>
-                                        </div>
-
-                                        {/* Banner Promo 20% OFF */}
-                                        <div className="bg-gradient-to-r from-purple-700 to-indigo-700 p-2 rounded-xl flex items-center justify-between">
-                                            <div>
-                                                <p className="text-[7px] uppercase font-black text-indigo-200">Promo del día</p>
-                                                <p className="text-[10px] font-black text-white">20% OFF en combos</p>
-                                            </div>
-                                            <span className="text-base">🍔</span>
-                                        </div>
-
-                                        {/* Categorías */}
-                                        <div className="flex items-center justify-between text-[7px] font-bold text-slate-300 px-0.5">
-                                            <div className="text-center"><span className="block text-xs">🍔</span>Burgers</div>
-                                            <div className="text-center"><span className="block text-xs">🍕</span>Pizzas</div>
-                                            <div className="text-center"><span className="block text-xs">🥤</span>Bebidas</div>
-                                            <div className="text-center"><span className="block text-xs">🍰</span>Postres</div>
-                                        </div>
-
-                                        {/* Producto Popular */}
-                                        <div className="bg-slate-800/90 p-1.5 rounded-lg border border-slate-700 flex items-center justify-between gap-1.5">
-                                            <div className="size-8 rounded-md bg-amber-500/20 text-base flex items-center justify-center shrink-0">🍔</div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-[8px] font-extrabold text-white truncate">Combo Clásico</p>
-                                                <p className="text-[9px] font-black text-amber-400">$12.50</p>
-                                            </div>
-                                            <button className="bg-[#4f46e5] text-white px-2 py-1 rounded text-[8px] font-black shrink-0">
-                                                Agregar
-                                            </button>
-                                        </div>
-
-                                        {/* Bottom Nav móvil */}
-                                        <div className="flex items-center justify-around text-[7px] text-slate-400 pt-1 border-t border-white/10">
-                                            <span className="text-[#4f46e5] font-black">Inicio</span>
-                                            <span>Pedidos</span>
-                                            <span>Carrito</span>
-                                            <span>Perfil</span>
-                                        </div>
-
+                                {/* ─── TELÉFONO 3: LAVAYA (Lavandería Demo en Vivo) ─── */}
+                                <div className="w-[195px] sm:w-[215px] h-[415px] sm:h-[450px] bg-white rounded-[2.6rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform rotate-3 translate-y-4 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-20 group/phone3">
+                                    <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
+                                        <div className="w-14 h-3 bg-slate-900 rounded-full mx-auto" />
+                                        <a 
+                                            href="/lavado" 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="absolute right-1 top-0 size-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[8px] hover:bg-sky-600 transition-colors"
+                                            title="Abrir app en pantalla completa"
+                                        >
+                                            <ExternalLink size={10} />
+                                        </a>
                                     </div>
 
+                                    {/* Pantalla con Iframe de la App Real */}
+                                    <div className="h-[calc(100%-24px)] bg-slate-50 rounded-[1.8rem] overflow-hidden relative border border-slate-100 shadow-inner">
+                                        <div className="absolute top-1 left-2 z-20 pointer-events-none flex items-center gap-1 bg-sky-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[7px] font-bold">
+                                            <span className="size-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                                            <span>Lavandería</span>
+                                        </div>
+                                        <iframe 
+                                            src="/lavado" 
+                                            title="LavaYa Demo"
+                                            className="w-[375px] h-[780px] origin-top-left scale-[0.52] border-0 select-none pointer-events-auto"
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* ─── TELÉFONO 4: MI TIENDA (E-commerce Retail Demo en Vivo) ─── */}
+                                <div className="w-[185px] sm:w-[205px] h-[395px] sm:h-[430px] bg-white rounded-[2.4rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform rotate-8 translate-y-10 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-10 hidden md:block group/phone4">
+                                    <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
+                                        <div className="w-12 h-2.5 bg-slate-900 rounded-full mx-auto" />
+                                        <a 
+                                            href="/tienda" 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="absolute right-1 top-0 size-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[8px] hover:bg-purple-600 transition-colors"
+                                            title="Abrir app en pantalla completa"
+                                        >
+                                            <ExternalLink size={10} />
+                                        </a>
+                                    </div>
+
+                                    {/* Pantalla con Iframe de la App Real */}
+                                    <div className="h-[calc(100%-22px)] bg-white rounded-[1.6rem] overflow-hidden relative border border-slate-100 shadow-inner">
+                                        <div className="absolute top-1 left-2 z-20 pointer-events-none flex items-center gap-1 bg-purple-600/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[7px] font-bold">
+                                            <span className="size-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                                            <span>Tienda & Retail</span>
+                                        </div>
+                                        <iframe 
+                                            src="/tienda" 
+                                            title="Citiox Store Demo"
+                                            className="w-[375px] h-[780px] origin-top-left scale-[0.50] border-0 select-none pointer-events-auto"
+                                            loading="lazy"
+                                        />
+                                    </div>
                                 </div>
 
                             </div>
-
                         </div>
 
                     </div>
                 </div>
             </header>
 
-            {/* ================= 4. FEATURE ICONS STRIP (FRANJA OSCURA CON 6 CAPACIDADES) ================= */}
-            <section id="que-incluye" className="bg-[#0b1021] text-white py-14 border-y border-slate-800">
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* 3. GRID DE VERTICALES: UNA APP DIFERENTE PARA CADA NEGOCIO     */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            <section id="verticales" className="py-20 bg-white border-t border-slate-100 relative">
                 <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-                        
-                        {/* 1. Tu negocio, tu marca */}
-                        <div className="space-y-2 text-center sm:text-left">
-                            <div className="size-11 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 flex items-center justify-center mx-auto sm:mx-0 shadow-sm">
-                                <SlidersHorizontal size={20} />
-                            </div>
-                            <h3 className="font-extrabold text-xs text-white">Tu negocio, tu marca</h3>
-                            <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-                                Personaliza tu sitio y app con tu identidad.
-                            </p>
-                        </div>
-
-                        {/* 2. Apps para clientes */}
-                        <div className="space-y-2 text-center sm:text-left">
-                            <div className="size-11 rounded-2xl bg-teal-500/20 border border-teal-500/30 text-teal-400 flex items-center justify-center mx-auto sm:mx-0 shadow-sm">
-                                <Smartphone size={20} />
-                            </div>
-                            <h3 className="font-extrabold text-xs text-white">Apps para clientes</h3>
-                            <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-                                iOS y Android con tu marca y dominio propio.
-                            </p>
-                        </div>
-
-                        {/* 3. Órdenes en línea */}
-                        <div className="space-y-2 text-center sm:text-left">
-                            <div className="size-11 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mx-auto sm:mx-0 shadow-sm">
-                                <Shield size={20} />
-                            </div>
-                            <h3 className="font-extrabold text-xs text-white">Órdenes en línea</h3>
-                            <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-                                Recibe pedidos, reservas o compras 24/7.
-                            </p>
-                        </div>
-
-                        {/* 4. Panel de control */}
-                        <div className="space-y-2 text-center sm:text-left">
-                            <div className="size-11 rounded-2xl bg-purple-500/20 border border-purple-500/30 text-purple-400 flex items-center justify-center mx-auto sm:mx-0 shadow-sm">
-                                <Boxes size={20} />
-                            </div>
-                            <h3 className="font-extrabold text-xs text-white">Panel de control</h3>
-                            <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-                                Administra todo tu negocio desde un solo lugar.
-                            </p>
-                        </div>
-
-                        {/* 5. Promociones y campañas */}
-                        <div className="space-y-2 text-center sm:text-left">
-                            <div className="size-11 rounded-2xl bg-pink-500/20 border border-pink-500/30 text-pink-400 flex items-center justify-center mx-auto sm:mx-0 shadow-sm">
-                                <Sparkles size={20} />
-                            </div>
-                            <h3 className="font-extrabold text-xs text-white">Promociones y campañas</h3>
-                            <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-                                Crea ofertas y fideliza a tus clientes.
-                            </p>
-                        </div>
-
-                        {/* 6. Reportes y métricas */}
-                        <div className="space-y-2 text-center sm:text-left">
-                            <div className="size-11 rounded-2xl bg-blue-500/20 border border-blue-500/30 text-blue-400 flex items-center justify-center mx-auto sm:mx-0 shadow-sm">
-                                <BarChart3 size={20} />
-                            </div>
-                            <h3 className="font-extrabold text-xs text-white">Reportes y métricas</h3>
-                            <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
-                                Toma mejores decisiones con datos reales.
-                            </p>
-                        </div>
-
-                    </div>
-                </div>
-            </section>
-
-            {/* ================= 5. SECCIÓN: SOLUCIONES PARA CADA NEGOCIO ================= */}
-            <section id="soluciones" className="py-20 max-w-7xl mx-auto px-6">
-                
-                {/* Header de la sección */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-                    <div className="space-y-2">
-                        <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#4f46e5]">
-                            <span>⚛️</span>
-                            <span>SOLUCIONES PARA CADA NEGOCIO</span>
-                        </div>
-                        <h2 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tight">
-                            Elige el tipo de negocio que <span className="text-[#6366f1]">mejor te represente</span>
-                        </h2>
-                    </div>
-
-                    <a 
-                        href="#soluciones"
-                        className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#4f46e5] hover:text-[#4338ca] transition-colors"
-                    >
-                        VER TODOS LOS TIPOS &rarr;
-                    </a>
-                </div>
-
-                {/* 5 Tarjetas de solución idénticas a la imagen */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
                     
-                    {/* 1. Citas y Reservas */}
-                    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
-                        <div className="space-y-4">
-                            <div className="size-12 rounded-2xl bg-purple-500 text-white flex items-center justify-center shadow-md shadow-purple-500/30">
-                                <Calendar size={22} />
-                            </div>
-                            <div>
-                                <h3 className="text-base font-black text-slate-900 group-hover:text-[#4f46e5] transition-colors">
-                                    Citas y Reservas
-                                </h3>
-                                <p className="text-xs text-slate-500 font-medium mt-2 leading-relaxed">
-                                    Spas, salones, barberías, clínicas y más.
-                                </p>
-                            </div>
+                    {/* Encabezado con Anotación Manuscrita */}
+                    <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+                        <div className="space-y-3 max-w-2xl text-left">
+                            <span className="inline-block px-3 py-1 rounded-full bg-[#E8F1FF] text-[#0066FF] text-[11px] font-black tracking-wider uppercase">
+                                ¿QUÉ TIPO DE NEGOCIO TIENES?
+                            </span>
+                            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-950 tracking-tight leading-tight">
+                                Una app diferente<br />
+                                para cada forma de hacer negocios.
+                            </h2>
+                            <p className="text-slate-500 text-sm sm:text-base font-medium">
+                                Citiox adapta la experiencia de tu app a la manera en que funciona tu negocio.
+                            </p>
                         </div>
 
-                        <div className="pt-6 mt-4 border-t border-slate-100">
-                            <Link 
-                                href="/servicios"
-                                className="text-xs font-black text-[#4f46e5] hover:underline flex items-center gap-1"
-                            >
-                                <span>Ver solución</span> &rarr;
-                            </Link>
+                        {/* Anotación decorativa manuscrita con flecha */}
+                        <div className="hidden md:flex items-center gap-2 text-sky-600 font-serif italic text-sm font-semibold select-none pb-2">
+                            <span>Elige tu vertical y empieza hoy</span>
+                            <svg width="40" height="40" viewBox="0 0 50 50" fill="none" className="text-sky-500 stroke-current -rotate-12">
+                                <path d="M12 12 C 26 14, 38 24, 36 40 M 36 40 L 26 36 M 36 40 L 40 30" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
                         </div>
                     </div>
 
-                    {/* 2. Restaurantes */}
-                    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
-                        <div className="space-y-4">
-                            <div className="size-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/30">
-                                <Store size={22} />
-                            </div>
-                            <div>
-                                <h3 className="text-base font-black text-slate-900 group-hover:text-[#4f46e5] transition-colors">
-                                    Restaurantes
-                                </h3>
-                                <p className="text-xs text-slate-500 font-medium mt-2 leading-relaxed">
-                                    Pedidos en línea, delivery y para llevar con tu app.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="pt-6 mt-4 border-t border-slate-100">
-                            <Link 
-                                href="/restaurantes"
-                                className="text-xs font-black text-emerald-600 hover:underline flex items-center gap-1"
-                            >
-                                <span>Ver solución</span> &rarr;
-                            </Link>
-                        </div>
-                    </div>
-
-                    {/* 3. Canchas y Complejos */}
-                    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
-                        <div className="space-y-4">
-                            <div className="size-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/30">
-                                <Trophy size={22} />
-                            </div>
-                            <div>
-                                <h3 className="text-base font-black text-slate-900 group-hover:text-[#4f46e5] transition-colors">
-                                    Canchas y Complejos
-                                </h3>
-                                <p className="text-xs text-slate-500 font-medium mt-2 leading-relaxed">
-                                    Reserva de canchas, piscinas, paintball y más.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="pt-6 mt-4 border-t border-slate-100">
-                            <Link 
-                                href="/canchas"
-                                className="text-xs font-black text-amber-600 hover:underline flex items-center gap-1"
-                            >
-                                <span>Ver solución</span> &rarr;
-                            </Link>
-                        </div>
-                    </div>
-
-                    {/* 4. Tienda en línea */}
-                    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
-                        <div className="space-y-4">
-                            <div className="size-12 rounded-2xl bg-blue-500 text-white flex items-center justify-center shadow-md shadow-blue-500/30">
-                                <ShoppingBag size={22} />
-                            </div>
-                            <div>
-                                <h3 className="text-base font-black text-slate-900 group-hover:text-[#4f46e5] transition-colors">
-                                    Tienda en línea
-                                </h3>
-                                <p className="text-xs text-slate-500 font-medium mt-2 leading-relaxed">
-                                    Vende productos físicos o digitales con tu propia tienda.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="pt-6 mt-4 border-t border-slate-100">
-                            <Link 
-                                href="/tiendas"
-                                className="text-xs font-black text-blue-600 hover:underline flex items-center gap-1"
-                            >
-                                <span>Ver solución</span> &rarr;
-                            </Link>
-                        </div>
-                    </div>
-
-                    {/* 5. Gimnasios & Lavanderías */}
-                    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
-                        <div className="space-y-4">
-                            <div className="size-12 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-md shadow-rose-500/30">
-                                <Dumbbell size={22} />
-                            </div>
-                            <div>
-                                <h3 className="text-base font-black text-slate-900 group-hover:text-[#4f46e5] transition-colors">
-                                    Gimnasios & Cuidado
-                                </h3>
-                                <p className="text-xs text-slate-500 font-medium mt-2 leading-relaxed">
-                                    Planes, rutinas, lavandería y seguimiento de clientes.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="pt-6 mt-4 border-t border-slate-100">
-                            <Link 
-                                href="/lavanderias"
-                                className="text-xs font-black text-rose-600 hover:underline flex items-center gap-1"
-                            >
-                                <span>Ver solución</span> &rarr;
-                            </Link>
-                        </div>
-                    </div>
-
-                </div>
-
-            </section>
-
-            {/* ================= 6. MÉTRICAS & TESTIMONIO (FRANJA DE CONFIANZA) ================= */}
-            <section id="testimonios" className="py-16 max-w-7xl mx-auto px-6">
-                <div className="bg-[#f5f4fa] rounded-[2.5rem] p-6 sm:p-10 border border-slate-200/80">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    {/* Las 7 Tarjetas de Verticales */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
                         
-                        {/* 3 Métricas */}
-                        <div className="lg:col-span-6 grid grid-cols-3 gap-4 text-center">
-                            
-                            <div className="space-y-1">
-                                <div className="size-10 rounded-xl bg-indigo-100 text-indigo-700 mx-auto flex items-center justify-center mb-2">
-                                    <Users size={18} />
+                        {/* 1. SERVICIOS */}
+                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between text-left group">
+                            <div>
+                                <div className="size-11 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <Scissors size={20} />
                                 </div>
-                                <p className="text-2xl sm:text-3xl font-black text-slate-950">+2,500</p>
-                                <p className="text-[11px] font-bold text-slate-500 leading-tight">
-                                    Negocios activos que ya confían en Citiox
+                                <h3 className="text-base font-black text-slate-900 mb-1">Servicios</h3>
+                                <p className="text-[11px] text-slate-400 font-medium mb-4 leading-tight">
+                                    Citas, clientes y servicios.
                                 </p>
+                                <ul className="space-y-1 text-xs text-slate-600 font-semibold mb-6">
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Peluquerías</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Barberías</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Spas</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Uñas y más</li>
+                                </ul>
                             </div>
-
-                            <div className="space-y-1">
-                                <div className="size-10 rounded-xl bg-sky-100 text-sky-700 mx-auto flex items-center justify-center mb-2">
-                                    <TrendingUp size={18} />
-                                </div>
-                                <p className="text-2xl sm:text-3xl font-black text-slate-950">+150K</p>
-                                <p className="text-[11px] font-bold text-slate-500 leading-tight">
-                                    Órdenes procesadas cada mes en la plataforma
-                                </p>
-                            </div>
-
-                            <div className="space-y-1">
-                                <div className="size-10 rounded-xl bg-amber-100 text-amber-600 mx-auto flex items-center justify-center mb-2">
-                                    <Star size={18} className="fill-amber-500 text-amber-500" />
-                                </div>
-                                <p className="text-2xl sm:text-3xl font-black text-slate-950">4.9/5</p>
-                                <p className="text-[11px] font-bold text-slate-500 leading-tight">
-                                    Calificación promedio de nuestros clientes
-                                </p>
-                            </div>
-
+                            <Link 
+                                href="/register?tipo=servicios" 
+                                className="text-[11px] font-extrabold text-[#0066FF] hover:text-[#0052cc] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                            >
+                                <span>Crear app de servicios</span>
+                                <span>&rarr;</span>
+                            </Link>
                         </div>
 
-                        {/* Testimonio Destacado */}
-                        <div className="lg:col-span-6">
-                            <div className="bg-white p-6 sm:p-7 rounded-3xl border border-slate-100 shadow-md space-y-4 relative">
-                                <span className="text-4xl text-[#4f46e5]/20 font-serif leading-none absolute top-4 left-4">“</span>
-                                <p className="text-slate-700 text-xs sm:text-sm font-semibold italic leading-relaxed pt-2 pl-4">
-                                    “Citiox transformó mi negocio. Ahora mis clientes pueden reservar y pedir en línea 24/7. ¡Totalmente recomendado!”
+                        {/* 2. RESTAURANTES */}
+                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between text-left group">
+                            <div>
+                                <div className="size-11 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <UtensilsCrossed size={20} />
+                                </div>
+                                <h3 className="text-base font-black text-slate-900 mb-1">Restaurantes</h3>
+                                <p className="text-[11px] text-slate-400 font-medium mb-4 leading-tight">
+                                    Pedidos, mesas y ventas.
                                 </p>
+                                <ul className="space-y-1 text-xs text-slate-600 font-semibold mb-6">
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Menú digital</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Pedidos</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Mesas QR</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Delivery y más</li>
+                                </ul>
+                            </div>
+                            <Link 
+                                href="/register?tipo=restaurante" 
+                                className="text-[11px] font-extrabold text-[#0066FF] hover:text-[#0052cc] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                            >
+                                <span>Crear app para restaurante</span>
+                                <span>&rarr;</span>
+                            </Link>
+                        </div>
 
-                                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-black flex items-center justify-center text-sm shadow-sm">
-                                            A
+                        {/* 3. TIENDAS */}
+                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between text-left group">
+                            <div>
+                                <div className="size-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <ShoppingBag size={20} />
+                                </div>
+                                <h3 className="text-base font-black text-slate-900 mb-1">Tiendas</h3>
+                                <p className="text-[11px] text-slate-400 font-medium mb-4 leading-tight">
+                                    Tu tienda siempre en el bolsillo de tus clientes.
+                                </p>
+                                <ul className="space-y-1 text-xs text-slate-600 font-semibold mb-6">
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Catálogo</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Variantes</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Carrito</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Pagos y más</li>
+                                </ul>
+                            </div>
+                            <Link 
+                                href="/register?tipo=tienda" 
+                                className="text-[11px] font-extrabold text-[#0066FF] hover:text-[#0052cc] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                            >
+                                <span>Crear tienda app</span>
+                                <span>&rarr;</span>
+                            </Link>
+                        </div>
+
+                        {/* 4. CANCHAS */}
+                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between text-left group">
+                            <div>
+                                <div className="size-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <Trophy size={20} />
+                                </div>
+                                <h3 className="text-base font-black text-slate-900 mb-1">Canchas</h3>
+                                <p className="text-[11px] text-slate-400 font-medium mb-4 leading-tight">
+                                    Tus canchas, reservas y clientes en un solo lugar.
+                                </p>
+                                <ul className="space-y-1 text-xs text-slate-600 font-semibold mb-6">
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Reservas</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Disponibilidad</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Horarios</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Pagos y más</li>
+                                </ul>
+                            </div>
+                            <Link 
+                                href="/register?tipo=canchas" 
+                                className="text-[11px] font-extrabold text-[#0066FF] hover:text-[#0052cc] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                            >
+                                <span>Crear app de canchas</span>
+                                <span>&rarr;</span>
+                            </Link>
+                        </div>
+
+                        {/* 5. LAVANDERÍAS */}
+                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between text-left group">
+                            <div>
+                                <div className="size-11 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <Shirt size={20} />
+                                </div>
+                                <h3 className="text-base font-black text-slate-900 mb-1">Lavanderías</h3>
+                                <p className="text-[11px] text-slate-400 font-medium mb-4 leading-tight">
+                                    Recibe, gestiona y entrega tus servicios.
+                                </p>
+                                <ul className="space-y-1 text-xs text-slate-600 font-semibold mb-6">
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Solicitudes</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Recolección</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Artículos</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Estados y más</li>
+                                </ul>
+                            </div>
+                            <Link 
+                                href="/register?tipo=lavanderia" 
+                                className="text-[11px] font-extrabold text-[#0066FF] hover:text-[#0052cc] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                            >
+                                <span>Crear app de lavandería</span>
+                                <span>&rarr;</span>
+                            </Link>
+                        </div>
+
+                        {/* 6. GIMNASIOS */}
+                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between text-left group">
+                            <div>
+                                <div className="size-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <Dumbbell size={20} />
+                                </div>
+                                <h3 className="text-base font-black text-slate-900 mb-1">Gimnasios</h3>
+                                <p className="text-[11px] text-slate-400 font-medium mb-4 leading-tight">
+                                    Convierte tu gimnasio en una experiencia digital.
+                                </p>
+                                <ul className="space-y-1 text-xs text-slate-600 font-semibold mb-6">
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Membresías</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Planes</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Asistencias</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Clases y más</li>
+                                </ul>
+                            </div>
+                            <Link 
+                                href="/register?tipo=gimnasio" 
+                                className="text-[11px] font-extrabold text-[#0066FF] hover:text-[#0052cc] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                            >
+                                <span>Crear app de gimnasio</span>
+                                <span>&rarr;</span>
+                            </Link>
+                        </div>
+
+                        {/* 7. CLÍNICAS Y ODONTOLOGÍA */}
+                        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col justify-between text-left group">
+                            <div>
+                                <div className="size-11 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <ToothIcon className="size-5" />
+                                </div>
+                                <h3 className="text-base font-black text-slate-900 mb-1">Clínicas y odontología</h3>
+                                <p className="text-[11px] text-slate-400 font-medium mb-4 leading-tight">
+                                    Una experiencia digital para tus pacientes.
+                                </p>
+                                <ul className="space-y-1 text-xs text-slate-600 font-semibold mb-6">
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Pacientes</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Citas</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Historia clínica</li>
+                                    <li className="flex items-center gap-1.5"><span className="text-slate-300">•</span> Tratamientos y más</li>
+                                </ul>
+                            </div>
+                            <Link 
+                                href="/register?tipo=dentista" 
+                                className="text-[11px] font-extrabold text-[#0066FF] hover:text-[#0052cc] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                            >
+                                <span>Crear app para mi clínica</span>
+                                <span>&rarr;</span>
+                            </Link>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* 4. COMPARATIVA: NO ES SOLO UNA WEB. ES LA APP DE TU NEGOCIO.    */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            <section id="como-funciona" className="py-20 md:py-28 bg-[#EEF5FF]/70 border-t border-b border-blue-100/60 relative overflow-hidden">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                        
+                        {/* Texto Izquierdo */}
+                        <div className="lg:col-span-4 space-y-5 text-left">
+                            <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-black text-slate-950 tracking-tight leading-[1.12]">
+                                No es solo una página web.<br />
+                                <span className="text-[#0066FF]">Es la app de tu negocio.</span>
+                            </h2>
+                            <p className="text-slate-600 text-sm sm:text-base font-medium leading-relaxed">
+                                Una experiencia móvil, rápida y completa para que tus clientes te encuentren, compren, reserven y vuelvan.
+                            </p>
+                            <div className="pt-2">
+                                <Link
+                                    href="/register"
+                                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#0066FF] hover:bg-[#0052cc] text-white font-extrabold text-xs shadow-md shadow-blue-500/20 active:scale-95 transition-all"
+                                >
+                                    <span>Ver cómo funciona</span>
+                                    <ArrowRight size={14} />
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Comparativa Cara a Cara en el Centro */}
+                        <div className="lg:col-span-5 flex items-center justify-center">
+                            <div className="relative flex items-center gap-3 w-full max-w-md">
+                                
+                                {/* Tarjeta: Página Web Tradicional */}
+                                <div className="flex-1 bg-white/90 rounded-2xl p-4 border border-slate-200/80 shadow-xs text-left">
+                                    <div className="flex items-center gap-1.5 pb-2 mb-3 border-b border-slate-100">
+                                        <span className="text-sm">📄</span>
+                                        <span className="text-[11px] font-extrabold text-slate-600 truncate">Página web tradicional</span>
+                                    </div>
+                                    <ul className="space-y-2 text-[11px] font-semibold text-slate-400">
+                                        <li className="flex items-center gap-1.5 text-slate-500"><span>✓</span> Información</li>
+                                        <li className="flex items-center gap-1.5 text-slate-500"><span>✓</span> El cliente visita</li>
+                                        <li className="flex items-center gap-1.5 text-slate-500"><span>✓</span> Catálogo</li>
+                                        <li className="flex items-center gap-1.5 text-slate-500"><span>✓</span> Contacto</li>
+                                        <li className="flex items-center gap-1.5 text-slate-500"><span>✓</span> Formulario</li>
+                                        <li className="flex items-center gap-1.5 text-slate-500"><span>✓</span> Una URL</li>
+                                        <li className="flex items-center gap-1.5 text-slate-500"><span>✓</span> Difícil de actualizar</li>
+                                    </ul>
+                                </div>
+
+                                {/* Insignia VS Central */}
+                                <div className="size-8 rounded-full bg-[#0066FF] text-white flex items-center justify-center font-black text-[10px] shadow-md shadow-blue-500/30 shrink-0 z-10">
+                                    VS
+                                </div>
+
+                                {/* Tarjeta: Tu App Citiox */}
+                                <div className="flex-1 bg-white rounded-2xl p-4 border-2 border-blue-500/40 shadow-lg shadow-blue-500/10 text-left relative">
+                                    <div className="flex items-center gap-1.5 pb-2 mb-3 border-b border-blue-100">
+                                        <span className="text-sm">📱</span>
+                                        <span className="text-[11px] font-black text-[#0066FF] truncate">Tu app Citiox</span>
+                                    </div>
+                                    <ul className="space-y-2 text-[11px] font-extrabold text-slate-800">
+                                        <li className="flex items-center gap-1.5 text-[#0066FF]"><Check size={12} className="stroke-[3]" /> Información + interacción</li>
+                                        <li className="flex items-center gap-1.5 text-[#0066FF]"><Check size={12} className="stroke-[3]" /> El cliente vuelve</li>
+                                        <li className="flex items-center gap-1.5 text-[#0066FF]"><Check size={12} className="stroke-[3]" /> Catálogo + compra</li>
+                                        <li className="flex items-center gap-1.5 text-[#0066FF]"><Check size={12} className="stroke-[3]" /> Acciones directas</li>
+                                        <li className="flex items-center gap-1.5 text-[#0066FF]"><Check size={12} className="stroke-[3]" /> Reservas / pedidos</li>
+                                        <li className="flex items-center gap-1.5 text-[#0066FF]"><Check size={12} className="stroke-[3]" /> Experiencia de app</li>
+                                        <li className="flex items-center gap-1.5 text-[#0066FF]"><Check size={12} className="stroke-[3]" /> Tú la gestionas</li>
+                                    </ul>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        {/* Teléfono con Simulación de Admin Citiox a la Derecha */}
+                        <div className="lg:col-span-3 flex justify-center items-center">
+                            <div className="w-[230px] h-[430px] bg-slate-950 rounded-[2.8rem] p-2.5 shadow-2xl shadow-blue-950/30 border-[5px] border-slate-900 relative overflow-hidden flex flex-col justify-between select-none">
+                                
+                                {/* Dynamic Island / Speaker & Status Bar */}
+                                <div className="relative z-20 flex items-center justify-between px-3 pt-1 text-[9px] font-semibold text-slate-400">
+                                    <span>9:41</span>
+                                    <div className="w-16 h-3.5 bg-black rounded-full flex items-center justify-end px-1.5">
+                                        <div className="size-1.5 rounded-full bg-emerald-500 animate-ping" />
+                                    </div>
+                                    <div className="flex items-center gap-1 text-[8px]">
+                                        <span>5G</span>
+                                        <div className="w-3.5 h-1.5 border border-slate-700 rounded-xs p-[0.5px]">
+                                            <div className="h-full w-full bg-emerald-500 rounded-[1px]" />
                                         </div>
-                                        <div>
-                                            <p className="font-black text-xs text-slate-900">— Andrés R.</p>
-                                            <p className="text-[11px] text-slate-500 font-medium">Restaurante La Esquina</p>
+                                    </div>
+                                </div>
+
+                                {/* Pantalla del Admin (Simulación Visual sin acciones) */}
+                                <div className="flex-1 bg-slate-900 text-white rounded-[2rem] mt-1.5 p-2.5 flex flex-col justify-between border border-white/10 overflow-hidden relative">
+                                    
+                                    {/* Cabecera del Admin Móvil */}
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="size-5 rounded-lg bg-[#0066FF] flex items-center justify-center font-black text-[9px] text-white">
+                                                    C
+                                                </div>
+                                                <div className="text-left">
+                                                    <p className="text-[9px] font-black tracking-tight leading-none">Mi Negocio</p>
+                                                    <p className="text-[7px] text-slate-400 font-medium">Panel Admin</p>
+                                                </div>
+                                            </div>
+                                            <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[7px] font-black uppercase tracking-wider flex items-center gap-1">
+                                                <span className="size-1 rounded-full bg-emerald-400 animate-pulse" /> En Vivo
+                                            </span>
+                                        </div>
+
+                                        {/* Tarjeta de Ingresos y Operación del Día */}
+                                        <div className="bg-white/5 border border-white/10 rounded-xl p-2 text-left">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <span className="text-[7px] font-bold text-slate-400 uppercase tracking-wider">Hoy en Caja</span>
+                                                    <h4 className="text-sm font-black text-white">$485.00</h4>
+                                                </div>
+                                                <span className="text-[7px] font-bold text-emerald-400 bg-emerald-500/10 px-1 py-0.5 rounded">
+                                                    ▲ +24%
+                                                </span>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-1.5 mt-1.5 pt-1.5 border-t border-white/5 text-[7px]">
+                                                <div>
+                                                    <span className="text-slate-400">Accesos / Turnos:</span>
+                                                    <p className="font-bold text-slate-200">18 hoy</p>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-400">Clientes activos:</span>
+                                                    <p className="font-bold text-slate-200">9 dentro</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Botones de Acción Rápida (Simulados) */}
+                                        <div className="grid grid-cols-2 gap-1.5 text-left">
+                                            <div className="bg-[#0066FF]/20 border border-[#0066FF]/40 rounded-lg p-1.5 flex items-center gap-1.5">
+                                                <div className="size-4 rounded-md bg-[#0066FF] flex items-center justify-center text-white text-[8px]">
+                                                    ⚡
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-[7px] font-black text-white truncate">Escanear QR</p>
+                                                    <p className="text-[6px] text-blue-200 truncate">Acceso rápido</p>
+                                                </div>
+                                            </div>
+                                            <div className="bg-white/5 border border-white/10 rounded-lg p-1.5 flex items-center gap-1.5">
+                                                <div className="size-4 rounded-md bg-white/10 flex items-center justify-center text-amber-400 text-[8px]">
+                                                    💰
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-[7px] font-black text-white truncate">Cobro / Caja</p>
+                                                    <p className="text-[6px] text-slate-400 truncate">Turno abierto</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Actividad en Vivo Reciente */}
+                                        <div className="space-y-1 text-left">
+                                            <span className="text-[7px] font-black uppercase text-slate-400 tracking-wider">Actividad en Vivo</span>
+                                            <div className="space-y-1">
+                                                <div className="bg-white/[0.04] rounded-lg p-1.5 flex items-center justify-between border border-white/5">
+                                                    <div className="flex items-center gap-1.5 min-w-0">
+                                                        <span className="size-1.5 rounded-full bg-emerald-400 shrink-0" />
+                                                        <span className="text-[7px] font-bold text-slate-200 truncate">Check-in QR • Sofía M.</span>
+                                                    </div>
+                                                    <span className="text-[6px] text-slate-400 shrink-0">10:24</span>
+                                                </div>
+                                                <div className="bg-white/[0.04] rounded-lg p-1.5 flex items-center justify-between border border-white/5">
+                                                    <div className="flex items-center gap-1.5 min-w-0">
+                                                        <span className="size-1.5 rounded-full bg-blue-400 shrink-0" />
+                                                        <span className="text-[7px] font-bold text-slate-200 truncate">Plan Mensual • $35</span>
+                                                    </div>
+                                                    <span className="text-[6px] text-slate-400 shrink-0">10:18</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {/* 5 Stars */}
-                                    <div className="flex items-center gap-0.5 text-amber-400">
-                                        <Star size={14} className="fill-amber-400" />
-                                        <Star size={14} className="fill-amber-400" />
-                                        <Star size={14} className="fill-amber-400" />
-                                        <Star size={14} className="fill-amber-400" />
-                                        <Star size={14} className="fill-amber-400" />
+                                    {/* Barra de Navegación Inferior Móvil de la App */}
+                                    <div className="bg-white/5 rounded-xl px-3 py-1 flex justify-between items-center border border-white/10 text-[7px] text-slate-400 mt-2">
+                                        <span className="text-[#0066FF] font-bold">Inicio</span>
+                                        <span>Accesos</span>
+                                        <span>Caja</span>
+                                        <span>Socios</span>
                                     </div>
+
+                                    {/* Indicador Home Bar de iPhone */}
+                                    <div className="w-16 h-1 bg-white/30 rounded-full mx-auto mt-1" />
                                 </div>
                             </div>
                         </div>
@@ -729,217 +723,293 @@ export default async function LandingPage() {
                 </div>
             </section>
 
-            {/* ================= 7. SECCIÓN DE PRECIOS & PLANES ================= */}
-            <section id="precios" className="py-20 bg-white border-t border-slate-100">
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* 5. TU NEGOCIO CRECE. TU APP TAMBIÉN. (8 MÓDULOS)                */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            <section id="funciones" className="py-20 bg-white">
                 <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center max-w-3xl mx-auto mb-14 space-y-3">
-                        <span className="px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
-                            Planes Transparentes
+                    
+                    {/* Encabezado */}
+                    <div className="text-left space-y-2 mb-12">
+                        <span className="inline-block px-3.5 py-1.5 rounded-full bg-[#E8F1FF] text-[#0066FF] text-[11px] font-black tracking-wider uppercase">
+                            TODO LO QUE TU APP PUEDE HACER
                         </span>
-                        <h2 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tight">
-                            Comienza gratis. Escala sin límites.
+                        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-950 tracking-tight leading-tight">
+                            Tu negocio crece.<br />
+                            Tu app también.
                         </h2>
-                        <p className="text-slate-600 text-sm font-medium">
-                            15 días de prueba completa en todas las soluciones. Sin compromiso.
+                        <p className="text-slate-500 text-sm sm:text-base font-medium">
+                            Gestiona todo desde un solo lugar, sin complicaciones.
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch">
+                    {/* Fila de 8 Módulos Funcionales */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 sm:gap-4">
                         
-                        {/* Plan Inicial */}
-                        <div className="bg-slate-50 p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6 flex flex-col justify-between">
-                            <div className="space-y-4">
-                                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-200 text-slate-700">
-                                    Para Empezar
-                                </span>
-                                <h3 className="text-2xl font-black text-slate-900">Plan Inicial</h3>
-                                <p className="text-xs text-slate-500 font-medium">Ideal para lanzar tu presencia digital y recibir tus primeros clientes.</p>
-                                <div className="pt-2">
-                                    <span className="text-4xl font-black text-slate-950">$19</span>
-                                    <span className="text-xs text-slate-500 font-bold"> /mes</span>
-                                </div>
-                                <ul className="text-xs font-bold text-slate-700 space-y-2.5 pt-4 border-t border-slate-200">
-                                    <li className="flex items-center gap-2"><Check size={15} className="text-emerald-500" /> Presencia web & App digital</li>
-                                    <li className="flex items-center gap-2"><Check size={15} className="text-emerald-500" /> Catálogo o menú con fotos</li>
-                                    <li className="flex items-center gap-2"><Check size={15} className="text-emerald-500" /> Hasta 300 pedidos / reservas al mes</li>
-                                    <li className="flex items-center gap-2"><Check size={15} className="text-emerald-500" /> Integración con WhatsApp</li>
-                                </ul>
+                        {/* 1. Clientes */}
+                        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-blue-200 transition-all text-center flex flex-col items-center">
+                            <div className="size-10 rounded-xl bg-blue-50 text-[#0066FF] flex items-center justify-center mb-3">
+                                <Users size={18} />
                             </div>
-                            <Link
-                                href="/register?plan=inicial"
-                                className="w-full py-3.5 bg-white hover:bg-slate-100 text-slate-900 border-2 border-slate-200 rounded-xl font-black text-xs uppercase tracking-wider text-center transition-all active:scale-95"
-                            >
-                                Comenzar Prueba Gratis
-                            </Link>
-                        </div>
-
-                        {/* Plan Fundador (Destacado) */}
-                        <div className="bg-gradient-to-b from-[#131938] via-[#0f142b] to-[#0a0d1d] text-white p-8 rounded-3xl border-2 border-amber-400 shadow-2xl space-y-6 flex flex-col justify-between relative">
-                            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 px-4 py-1 rounded-full font-black text-[10px] uppercase tracking-widest shadow-md">
-                                ★ MÁS POPULAR • CUPOS LIMITADOS
-                            </div>
-                            <div className="space-y-4">
-                                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                                    Acceso Fundador
-                                </span>
-                                <h3 className="text-2xl font-black text-white">Tarifa Vitalicia</h3>
-                                <p className="text-xs text-indigo-200 font-medium">Quedan {cuposDisponibles} cupos con precio congelado para siempre.</p>
-                                <div className="pt-2">
-                                    <span className="text-5xl font-black text-amber-400">${founderPrice}</span>
-                                    <span className="text-xs text-indigo-200 font-bold"> /mes de por vida</span>
-                                </div>
-                                <ul className="text-xs font-bold text-indigo-100 space-y-2.5 pt-4 border-t border-indigo-800/60">
-                                    <li className="flex items-center gap-2"><Check size={15} className="text-amber-400" /> Todas las soluciones incluidas</li>
-                                    <li className="flex items-center gap-2"><Check size={15} className="text-amber-400" /> Pedidos y reservas ilimitadas</li>
-                                    <li className="flex items-center gap-2"><Check size={15} className="text-amber-400" /> Punto de Venta POS & Pantalla KDS</li>
-                                    <li className="flex items-center gap-2"><Check size={15} className="text-amber-400" /> Soporte prioritario VIP</li>
-                                </ul>
-                            </div>
-                            <Link
-                                href="/register?plan=founder"
-                                className="w-full py-4 bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-slate-950 rounded-xl font-black text-xs uppercase tracking-wider text-center transition-all shadow-xl shadow-amber-400/20 active:scale-95"
-                            >
-                                ASEGURAR TARIFA FUNDADOR &rarr;
-                            </Link>
-                        </div>
-
-                        {/* Plan Pro */}
-                        <div className="bg-slate-50 p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6 flex flex-col justify-between">
-                            <div className="space-y-4">
-                                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-200 text-slate-700">
-                                    Negocios en Expansión
-                                </span>
-                                <h3 className="text-2xl font-black text-slate-900">Plan Pro</h3>
-                                <p className="text-xs text-slate-500 font-medium">Para negocios con alto volumen, múltiples sucursales o equipo.</p>
-                                <div className="pt-2">
-                                    <span className="text-4xl font-black text-slate-950">$49</span>
-                                    <span className="text-xs text-slate-500 font-bold"> /mes</span>
-                                </div>
-                                <ul className="text-xs font-bold text-slate-700 space-y-2.5 pt-4 border-t border-slate-200">
-                                    <li className="flex items-center gap-2"><Check size={15} className="text-emerald-500" /> Múltiples usuarios y cajeros</li>
-                                    <li className="flex items-center gap-2"><Check size={15} className="text-emerald-500" /> Control de inventario multi-bodega</li>
-                                    <li className="flex items-center gap-2"><Check size={15} className="text-emerald-500" /> Gestión de repartidores con GPS</li>
-                                    <li className="flex items-center gap-2"><Check size={15} className="text-emerald-500" /> Reportes financieros avanzados</li>
-                                </ul>
-                            </div>
-                            <Link
-                                href="/register?plan=pro"
-                                className="w-full py-3.5 bg-white hover:bg-slate-100 text-slate-900 border-2 border-slate-200 rounded-xl font-black text-xs uppercase tracking-wider text-center transition-all active:scale-95"
-                            >
-                                Comenzar Prueba Gratis
-                            </Link>
-                        </div>
-
-                    </div>
-
-                </div>
-            </section>
-
-            {/* ================= 8. BOTTOM CTA BANNER (COHETE / SIGUIENTE NIVEL) ================= */}
-            <section className="py-14 max-w-7xl mx-auto px-6">
-                <div className="bg-gradient-to-r from-[#0b1026] via-[#10183b] to-[#1c1242] rounded-[2.5rem] p-8 sm:p-12 text-white shadow-2xl relative overflow-hidden">
-                    
-                    {/* Glows decorativos */}
-                    <div className="absolute top-0 right-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl -z-0" />
-                    
-                    <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
-                        
-                        {/* Cohete + Textos */}
-                        <div className="flex items-center gap-6 text-center lg:text-left">
-                            <div className="text-6xl sm:text-7xl shrink-0 animate-bounce duration-1000 hidden sm:block">
-                                🚀
-                            </div>
-                            <div className="space-y-2">
-                                <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
-                                    Empieza hoy mismo <br />
-                                    y lleva tu negocio al <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-300 to-purple-300">siguiente nivel</span>
-                                </h2>
-                                <p className="text-slate-300 text-xs sm:text-sm font-medium">
-                                    Prueba gratuita • Sin tarjeta de crédito • Configuración en minutos
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Botón CTA + Avatares */}
-                        <div className="flex flex-col items-center lg:items-end gap-3 shrink-0">
-                            <a
-                                href="#soluciones"
-                                className="bg-white hover:bg-slate-100 text-slate-950 px-8 py-3.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all shadow-xl active:scale-95 cursor-pointer"
-                            >
-                                CREA TU NEGOCIO GRATIS &rarr;
-                            </a>
-
-                            <div className="flex items-center gap-2 text-[11px] text-slate-300 font-bold">
-                                <div className="flex -space-x-2">
-                                    <div className="size-6 rounded-full bg-indigo-500 border-2 border-slate-900 text-[9px] flex items-center justify-center font-black">👨‍🍳</div>
-                                    <div className="size-6 rounded-full bg-pink-500 border-2 border-slate-900 text-[9px] flex items-center justify-center font-black">💇</div>
-                                    <div className="size-6 rounded-full bg-emerald-500 border-2 border-slate-900 text-[9px] flex items-center justify-center font-black">⚽</div>
-                                </div>
-                                <span>Únete a miles de emprendedores exitosos</span>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </section>
-
-            {/* ================= 9. FOOTER SAAS PROFESIONAL ================= */}
-            <footer className="bg-white border-t border-slate-200/80 py-16 text-slate-500 text-xs">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pb-12 border-b border-slate-100">
-                        
-                        {/* Columna 1: Marca */}
-                        <div className="col-span-2 md:col-span-1 space-y-4">
-                            <div className="flex items-center gap-2">
-                                <CitioxLogo className="h-8 w-auto" />
-                                <span className="text-xl font-black text-slate-900">Citi<span className="text-[#4f46e5]">Ox</span></span>
-                            </div>
-                            <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                                Plataforma digital completa para cualquier negocio. Crea tu presencia en línea, conecta con clientes y administra tus operaciones.
+                            <h4 className="text-xs font-black text-slate-900 mb-1">Clientes</h4>
+                            <p className="text-[10px] text-slate-400 font-medium leading-tight">
+                                Conoce y administra tus clientes.
                             </p>
                         </div>
 
-                        {/* Columna 2: Citiox */}
-                        <div className="space-y-3">
-                            <p className="text-xs font-black uppercase tracking-wider text-slate-900">Citiox</p>
-                            <ul className="space-y-2 font-bold">
-                                <li><a href="#" className="hover:text-slate-900 transition-colors">Inicio</a></li>
-                                <li><a href="#como-funciona" className="hover:text-slate-900 transition-colors">Cómo funciona</a></li>
-                                <li><a href="#soluciones" className="hover:text-slate-900 transition-colors">Soluciones</a></li>
-                                <li><a href="#precios" className="hover:text-slate-900 transition-colors">Precios</a></li>
-                                <li><Link href="/login" className="hover:text-slate-900 transition-colors">Iniciar sesión</Link></li>
+                        {/* 2. Ventas */}
+                        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-orange-200 transition-all text-center flex flex-col items-center">
+                            <div className="size-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center mb-3">
+                                <Store size={18} />
+                            </div>
+                            <h4 className="text-xs font-black text-slate-900 mb-1">Ventas</h4>
+                            <p className="text-[10px] text-slate-400 font-medium leading-tight">
+                                Recibe pedidos y controla tus ventas.
+                            </p>
+                        </div>
+
+                        {/* 3. Reservas */}
+                        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-sky-200 transition-all text-center flex flex-col items-center">
+                            <div className="size-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center mb-3">
+                                <Calendar size={18} />
+                            </div>
+                            <h4 className="text-xs font-black text-slate-900 mb-1">Reservas</h4>
+                            <p className="text-[10px] text-slate-400 font-medium leading-tight">
+                                Gestiona citas, horarios y disponibilidad.
+                            </p>
+                        </div>
+
+                        {/* 4. Pagos */}
+                        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-purple-200 transition-all text-center flex flex-col items-center">
+                            <div className="size-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3">
+                                <CreditCard size={18} />
+                            </div>
+                            <h4 className="text-xs font-black text-slate-900 mb-1">Pagos</h4>
+                            <p className="text-[10px] text-slate-400 font-medium leading-tight">
+                                Recibe pagos de forma segura y fácil.
+                            </p>
+                        </div>
+
+                        {/* 5. Promociones */}
+                        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-pink-200 transition-all text-center flex flex-col items-center">
+                            <div className="size-10 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center mb-3">
+                                <Tag size={18} />
+                            </div>
+                            <h4 className="text-xs font-black text-slate-900 mb-1">Promociones</h4>
+                            <p className="text-[10px] text-slate-400 font-medium leading-tight">
+                                Haz que tus clientes regresen.
+                            </p>
+                        </div>
+
+                        {/* 6. Fidelización */}
+                        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-amber-200 transition-all text-center flex flex-col items-center">
+                            <div className="size-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+                                <Star size={18} />
+                            </div>
+                            <h4 className="text-xs font-black text-slate-900 mb-1">Fidelización</h4>
+                            <p className="text-[10px] text-slate-400 font-medium leading-tight">
+                                Misiones, premios y recompensas.
+                            </p>
+                        </div>
+
+                        {/* 7. Operación */}
+                        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-slate-300 transition-all text-center flex flex-col items-center">
+                            <div className="size-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center mb-3">
+                                <SlidersHorizontal size={18} />
+                            </div>
+                            <h4 className="text-xs font-black text-slate-900 mb-1">Operación</h4>
+                            <p className="text-[10px] text-slate-400 font-medium leading-tight">
+                                Gestiona el día a día de tu negocio.
+                            </p>
+                        </div>
+
+                        {/* 8. Reportes */}
+                        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-teal-200 transition-all text-center flex flex-col items-center">
+                            <div className="size-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center mb-3">
+                                <BarChart3 size={18} />
+                            </div>
+                            <h4 className="text-xs font-black text-slate-900 mb-1">Reportes</h4>
+                            <p className="text-[10px] text-slate-400 font-medium leading-tight">
+                                Entiende cómo está funcionando tu negocio.
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* 6. BANNER AZUL CTA: HOY PUEDES CREARLA                          */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            <section className="py-12 bg-white">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="relative rounded-[2.5rem] bg-gradient-to-r from-[#0052cc] via-[#0066FF] to-[#0055EE] text-white p-8 sm:p-12 overflow-hidden shadow-2xl shadow-blue-500/25 flex flex-col lg:flex-row items-center justify-between gap-8">
+                        
+                        {/* Decoración de ondas de fondo */}
+                        <div className="absolute -right-20 -bottom-20 w-96 h-96 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                        <div className="absolute left-10 -top-20 w-72 h-72 bg-sky-300/10 rounded-full blur-xl pointer-events-none" />
+
+                        {/* Teléfonos miniatura a la izquierda */}
+                        <div className="hidden sm:flex items-center -space-x-4 shrink-0">
+                            <div className="w-16 h-28 bg-slate-900 rounded-2xl border-2 border-white/40 p-1 shadow-lg transform -rotate-6 overflow-hidden">
+                                <img 
+                                    src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=150&auto=format&fit=crop&q=80" 
+                                    alt="Restaurante App" 
+                                    className="w-full h-full object-cover rounded-xl"
+                                />
+                            </div>
+                            <div className="w-20 h-32 bg-slate-950 rounded-2xl border-2 border-white/60 p-1 shadow-xl z-10 overflow-hidden">
+                                <img 
+                                    src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=200&auto=format&fit=crop&q=80" 
+                                    alt="Gym App" 
+                                    className="w-full h-full object-cover rounded-xl"
+                                />
+                            </div>
+                            <div className="w-16 h-28 bg-slate-900 rounded-2xl border-2 border-white/40 p-1 shadow-lg transform rotate-6 overflow-hidden">
+                                <img 
+                                    src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=150&auto=format&fit=crop&q=80" 
+                                    alt="Tienda App" 
+                                    className="w-full h-full object-cover rounded-xl"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Texto Central y Chips */}
+                        <div className="space-y-3 text-center lg:text-left flex-1 max-w-xl z-10">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-blue-200">
+                                ¿Y SI TU NEGOCIO TUVIERA SU PROPIA APP?
+                            </span>
+                            <h3 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                                Hoy puedes crearla.
+                            </h3>
+                            <p className="text-xs sm:text-sm text-blue-100 font-medium">
+                                Elige tu tipo de negocio y empieza.
+                            </p>
+
+                            {/* Chips de Tipos de Negocio */}
+                            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-1.5 pt-2">
+                                <Link href="/register?tipo=servicios" className="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[10px] font-bold transition-colors">
+                                    ✂ Servicios
+                                </Link>
+                                <Link href="/register?tipo=restaurante" className="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[10px] font-bold transition-colors">
+                                    🍴 Restaurantes
+                                </Link>
+                                <Link href="/register?tipo=tienda" className="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[10px] font-bold transition-colors">
+                                    🛍 Tiendas
+                                </Link>
+                                <Link href="/register?tipo=canchas" className="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[10px] font-bold transition-colors">
+                                    ⚽ Canchas
+                                </Link>
+                                <Link href="/register?tipo=lavanderia" className="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[10px] font-bold transition-colors">
+                                    👕 Lavanderías
+                                </Link>
+                                <Link href="/register?tipo=gimnasio" className="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[10px] font-bold transition-colors">
+                                    🏋 Gimnasios
+                                </Link>
+                                <Link href="/register?tipo=dentista" className="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-[10px] font-bold transition-colors">
+                                    🦷 Clínicas
+                                </Link>
+                                <Link href="/register" className="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-[10px] font-bold transition-colors">
+                                    + Más
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Botón Blanco a la Derecha */}
+                        <div className="shrink-0 z-10">
+                            <Link
+                                href="/register"
+                                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-white text-[#0066FF] hover:bg-blue-50 font-black text-xs shadow-lg transition-all active:scale-95"
+                            >
+                                <span>Crear mi app</span>
+                                <ArrowRight size={14} />
+                            </Link>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* 7. FOOTER CANÓNICO                                              */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            <footer className="pt-16 pb-12 bg-white border-t border-slate-100 text-slate-500 text-xs">
+                <div className="max-w-7xl mx-auto px-6">
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-slate-100">
+                        
+                        {/* Logo y Slogan */}
+                        <div className="md:col-span-5 space-y-3 text-left">
+                            <CitioxBrandLogo />
+                            <p className="text-xs text-slate-400 font-medium max-w-sm">
+                                Tu negocio. Tu propia app.
+                            </p>
+                        </div>
+
+                        {/* Columna: Soluciones */}
+                        <div className="md:col-span-3 space-y-2 text-left">
+                            <h5 className="font-extrabold text-slate-900 text-xs">Soluciones</h5>
+                            <ul className="space-y-1.5 text-xs text-slate-500 font-medium">
+                                <li><Link href="/register?tipo=servicios" className="hover:text-[#0066FF] transition-colors">Servicios</Link></li>
+                                <li><Link href="/register?tipo=restaurante" className="hover:text-[#0066FF] transition-colors">Restaurantes</Link></li>
+                                <li><Link href="/register?tipo=tienda" className="hover:text-[#0066FF] transition-colors">Tiendas</Link></li>
+                                <li><Link href="/register?tipo=canchas" className="hover:text-[#0066FF] transition-colors">Canchas</Link></li>
+                                <li><Link href="/register?tipo=lavanderia" className="hover:text-[#0066FF] transition-colors">Lavanderías</Link></li>
+                                <li><Link href="/register?tipo=gimnasio" className="hover:text-[#0066FF] transition-colors">Gimnasios</Link></li>
+                                <li><Link href="/register?tipo=dentista" className="hover:text-[#0066FF] transition-colors">Clínicas</Link></li>
+                                <li><Link href="/register" className="hover:text-[#0066FF] transition-colors">Otros negocios</Link></li>
                             </ul>
                         </div>
 
-                        {/* Columna 3: Soluciones */}
-                        <div className="space-y-3">
-                            <p className="text-xs font-black uppercase tracking-wider text-slate-900">Soluciones</p>
-                            <ul className="space-y-2 font-bold">
-                                <li><Link href="/servicios" className="hover:text-slate-900 transition-colors">Citas y Reservas</Link></li>
-                                <li><Link href="/restaurantes" className="hover:text-slate-900 transition-colors">Restaurantes</Link></li>
-                                <li><Link href="/canchas" className="hover:text-slate-900 transition-colors">Canchas y Complejos</Link></li>
-                                <li><Link href="/tiendas" className="hover:text-slate-900 transition-colors">Tienda en línea</Link></li>
-                                <li><Link href="/lavanderias" className="hover:text-slate-900 transition-colors">Lavanderías & Calzado</Link></li>
+                        {/* Columna: Empresa */}
+                        <div className="md:col-span-2 space-y-2 text-left">
+                            <h5 className="font-extrabold text-slate-900 text-xs">Empresa</h5>
+                            <ul className="space-y-1.5 text-xs text-slate-500 font-medium">
+                                <li><a href="#" className="hover:text-[#0066FF] transition-colors">Nosotros</a></li>
+                                <li><a href="#" className="hover:text-[#0066FF] transition-colors">Contacto</a></li>
+                                <li><Link href="/admin/plan" className="hover:text-[#0066FF] transition-colors">Precios</Link></li>
+                                <li><a href="#" className="hover:text-[#0066FF] transition-colors">Ayuda</a></li>
                             </ul>
                         </div>
 
-                        {/* Columna 4: Empresa */}
-                        <div className="space-y-3">
-                            <p className="text-xs font-black uppercase tracking-wider text-slate-900">Empresa</p>
-                            <ul className="space-y-2 font-bold">
-                                <li><Link href="/demo" className="hover:text-slate-900 transition-colors">Demos en vivo</Link></li>
-                                <li><Link href="/terminos" className="hover:text-slate-900 transition-colors">Términos de servicio</Link></li>
-                                <li><Link href="/privacidad" className="hover:text-slate-900 transition-colors">Política de privacidad</Link></li>
-                                <li><a href="mailto:soporte@citiox.com" className="hover:text-slate-900 transition-colors">Contacto</a></li>
+                        {/* Columna: Legal */}
+                        <div className="md:col-span-2 space-y-2 text-left">
+                            <h5 className="font-extrabold text-slate-900 text-xs">Legal</h5>
+                            <ul className="space-y-1.5 text-xs text-slate-500 font-medium">
+                                <li><Link href="/terminos" className="hover:text-[#0066FF] transition-colors">Términos</Link></li>
+                                <li><Link href="/privacidad" className="hover:text-[#0066FF] transition-colors">Privacidad</Link></li>
                             </ul>
                         </div>
 
                     </div>
 
-                    <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] font-bold text-slate-400">
-                        <p>© 2026 CitiOx. Todos los derechos reservados. Plataforma Digital para Negocios.</p>
-                        <p className="text-[#4f46e5]">«empieza a crecer tu negocio»</p>
+                    {/* Fila Inferior con Redes y Copyright */}
+                    <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400 text-[11px]">
+                        
+                        {/* Redes Sociales */}
+                        <div className="flex items-center gap-3 text-slate-400">
+                            <a href="#" className="hover:text-slate-600 transition-colors" aria-label="Instagram">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+                            </a>
+                            <a href="#" className="hover:text-slate-600 transition-colors" aria-label="Facebook">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                            </a>
+                            <a href="#" className="hover:text-slate-600 transition-colors" aria-label="YouTube">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><polygon points="10 15 15 12 10 9 10 15"/></svg>
+                            </a>
+                            <a href="#" className="hover:text-slate-600 transition-colors" aria-label="TikTok">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>
+                            </a>
+                            <a href="#" className="hover:text-slate-600 transition-colors" aria-label="LinkedIn">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+                            </a>
+                        </div>
+
+                        <div>
+                            © 2026 Citiox. Todos los derechos reservados.
+                        </div>
                     </div>
+
                 </div>
             </footer>
 

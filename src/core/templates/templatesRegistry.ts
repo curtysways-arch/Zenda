@@ -144,10 +144,234 @@ export const TEMPLATE_REGISTRY: Record<string, BusinessTemplateManifest> = {
       { name: 'Mesa 2', resourceType: 'INFRASTRUCTURE', category: 'TABLE', capacity: 2, active: true },
       { name: 'Mesa 3 (Terraza)', resourceType: 'INFRASTRUCTURE', category: 'TABLE', capacity: 6, active: true },
     ],
-    initialServices: [],
+    initialServices: [
+      { nombre: 'Menú Ejecutivo Almuerzo', precio: 18000, categoria: 'Almuerzos' },
+      { nombre: 'Bebida Refrescante Especial', precio: 6000, categoria: 'Bebidas' },
+    ],
+  },
+
+  STORE_STANDARD: {
+    id: 'store_standard',
+    templateVersion: '1.0.0',
+    name: '🛍️ Tienda & E-Commerce / Retail',
+    description: 'Venta de productos físicos, control de stock, variantes de talla/color, carrito de compras y envíos a domicilio.',
+    badge: 'Comercio',
+    icon: 'ShoppingBag',
+    module: 'STORE',
+    profile: 'RetailStore',
+    capabilities: {
+      store: true,
+      products: true,
+      categories: true,
+      inventory: true,
+      delivery: true,
+      pickup: true,
+      variants: true,
+      payments: true,
+      crm: true,
+      customers: true,
+    },
+    settings: {
+      labels: {
+        resourceNameSingular: 'Punto de Venta / Bodega',
+        resourceNamePlural: 'Puntos de Venta / Bodegas',
+        itemNameSingular: 'Pedido',
+      },
+      channels: {
+        availableInDelivery: true,
+        availableInPickup: true,
+      },
+    },
+    suggestedColors: { primaryColor: '#0ea5e9', secondaryColor: '#0369a1' },
+    initialResources: [
+      { name: 'Mostrador Principal (POS)', resourceType: 'EQUIPMENT', category: 'POS', active: true },
+      { name: 'Bodega Central de Despacho', resourceType: 'INFRASTRUCTURE', category: 'WAREHOUSE', active: true },
+    ],
+    initialServices: [
+      { nombre: 'Envío Estándar a Domicilio', precio: 8000, categoria: 'Logística' },
+      { nombre: 'Empaque de Regalo Personalizado', precio: 4000, categoria: 'Adicionales' },
+    ],
+  },
+
+  FAST_FOOD_STANDARD: {
+    id: 'fast_food_standard',
+    templateVersion: '1.0.0',
+    name: '⚡ Comida Rápida & PinchoListo Express',
+    description: 'Producción ultrarrápida, despacho express, pedidos por WhatsApp o QR y cocina KDS sin comanda de mesa obligatoria.',
+    badge: 'Rápido',
+    icon: 'Zap',
+    module: 'FOOD_DELIVERY',
+    profile: 'FastFoodExpress',
+    capabilities: {
+      orders: true,
+      products: true,
+      categories: true,
+      kitchen: true,
+      delivery: true,
+      pickup: true,
+      payments: true,
+      qr_ordering: true,
+      dispatch: true,
+      customers: true,
+    },
+    settings: {
+      orderSettings: {
+        enableKDSView: true,
+        allowTakeaway: true,
+        deliveryRadiusKm: 12,
+      },
+      orderWorkflow: {
+        customStatuses: ['NUEVA', 'PREPARANDO', 'EMPACADO', 'EN_CAMINO', 'ENTREGADO'],
+      },
+      labels: {
+        resourceNameSingular: 'Estación de Cocina',
+        resourceNamePlural: 'Estaciones de Cocina',
+        itemNameSingular: 'Orden Express',
+      },
+      channels: {
+        availableInDelivery: true,
+        availableInPickup: true,
+      },
+    },
+    suggestedColors: { primaryColor: '#f59e0b', secondaryColor: '#b45309' },
+    initialResources: [
+      { name: 'Estación de Plancha / Cocina Rápida', resourceType: 'EQUIPMENT', category: 'KITCHEN', active: true },
+      { name: 'Mostrador de Despacho Express', resourceType: 'INFRASTRUCTURE', category: 'DISPATCH', active: true },
+      { name: 'Caja POS Express', resourceType: 'EQUIPMENT', category: 'POS', active: true },
+    ],
+    initialServices: [
+      { nombre: 'Combo Pincho Clásico + Bebida', precio: 15000, categoria: 'Combos' },
+      { nombre: 'Despacho Express Prioritario', precio: 5000, categoria: 'Envíos' },
+    ],
+  },
+
+  BARBERSHOP_STANDARD: {
+    id: 'barbershop_standard',
+    templateVersion: '1.0.0',
+    name: '💈 Barbería & Peluquería',
+    description: 'Gestión de sillones de corte, barberos y estilistas, citas rápidas de 30-45 min, lavados y catálogo de productos.',
+    badge: 'Estilo',
+    icon: 'Scissors',
+    module: 'BARBER',
+    profile: 'ModernBarbershop',
+    capabilities: {
+      booking: true,
+      service: true,
+      crm: true,
+      inventory: true,
+      customers: true,
+      payments: true,
+    },
+    settings: {
+      bookingSettings: {
+        slotGranularityMinutes: 30,
+        enableNightLightingFee: false,
+      },
+      labels: {
+        resourceNameSingular: 'Barbero / Estilista',
+        resourceNamePlural: 'Barberos / Estilistas',
+        itemNameSingular: 'Turno de Corte',
+      },
+    },
+    suggestedColors: { primaryColor: '#6366f1', secondaryColor: '#312e81' },
+    initialResources: [
+      { name: 'Sillón de Barbería 1', resourceType: 'EQUIPMENT', category: 'BARBER_CHAIR', active: true },
+      { name: 'Sillón de Barbería 2', resourceType: 'EQUIPMENT', category: 'BARBER_CHAIR', active: true },
+      { name: 'Estación de Lavado Capilar', resourceType: 'INFRASTRUCTURE', category: 'WASHING_STATION', active: true },
+    ],
+    initialServices: [
+      { nombre: 'Corte Clásico & Fade', precio: 25000, duracionMinutos: 35, categoria: 'Cortes' },
+      { nombre: 'Perfilado de Barba con Toalla Caliente', precio: 18000, duracionMinutos: 25, categoria: 'Barba' },
+      { nombre: 'Combo Completo: Corte + Barba + Mascarilla', precio: 38000, duracionMinutos: 55, categoria: 'Combos VIP' },
+    ],
+  },
+
+  CLINIC_MEDICAL_STANDARD: {
+    id: 'clinic_medical_standard',
+    templateVersion: '1.0.0',
+    name: '🩺 Clínica, Odontología & Salud',
+    description: 'Consultorios médicos y sillones odontológicos, agenda de pacientes, fichas clínicas y agendamiento por turnos.',
+    badge: 'Salud',
+    icon: 'Stethoscope',
+    module: 'DENTAL',
+    profile: 'MedicalClinic',
+    capabilities: {
+      booking: true,
+      service: true,
+      crm: true,
+      customers: true,
+      payments: true,
+    },
+    settings: {
+      bookingSettings: {
+        slotGranularityMinutes: 45,
+        enableNightLightingFee: false,
+      },
+      labels: {
+        resourceNameSingular: 'Doctor / Consultorio',
+        resourceNamePlural: 'Doctores / Consultorios',
+        itemNameSingular: 'Consulta Médica',
+      },
+    },
+    suggestedColors: { primaryColor: '#06b6d4', secondaryColor: '#0e7490' },
+    initialResources: [
+      { name: 'Consultorio Médico 1', resourceType: 'INFRASTRUCTURE', category: 'CONSULTING_ROOM', active: true },
+      { name: 'Sillón Odontológico / Camilla', resourceType: 'EQUIPMENT', category: 'DENTAL_CHAIR', active: true },
+    ],
+    initialServices: [
+      { nombre: 'Consulta de Valoración Médica', precio: 60000, duracionMinutos: 45, categoria: 'Consultas' },
+      { nombre: 'Limpieza Dental Profiláctica', precio: 85000, duracionMinutos: 40, categoria: 'Odontología' },
+      { nombre: 'Evaluación y Diagnóstico Especializado', precio: 70000, duracionMinutos: 45, categoria: 'Especialidades' },
+    ],
+  },
+
+  ACADEMY_COURSES_STANDARD: {
+    id: 'academy_courses_standard',
+    templateVersion: '1.0.0',
+    name: '🎓 Academia, Clases & Cursos',
+    description: 'Inscripción de estudiantes, venta de talleres y cursos, control de asistencia, profesores y cupos por aula.',
+    badge: 'Educación',
+    icon: 'GraduationCap',
+    module: 'ACADEMY',
+    profile: 'SportsAcademy',
+    capabilities: {
+      academy: true,
+      booking: true,
+      crm: true,
+      payments: true,
+      customers: true,
+    },
+    settings: {
+      bookingSettings: {
+        slotGranularityMinutes: 60,
+        enableNightLightingFee: false,
+      },
+      labels: {
+        resourceNameSingular: 'Instructor / Aula',
+        resourceNamePlural: 'Instructores / Aulas',
+        itemNameSingular: 'Inscripción / Clase',
+      },
+    },
+    suggestedColors: { primaryColor: '#8b5cf6', secondaryColor: '#5b21b6' },
+    initialResources: [
+      { name: 'Aula Principal / Salón de Clases', resourceType: 'INFRASTRUCTURE', category: 'CLASSROOM', active: true },
+      { name: 'Instructor Principal', resourceType: 'HUMAN', category: 'INSTRUCTOR', active: true },
+    ],
+    initialServices: [
+      { nombre: 'Mensualidad Clases Regulares (2 Días/Semana)', precio: 120000, duracionMinutos: 60, categoria: 'Membresías' },
+      { nombre: 'Taller Intensivo Fin de Semana', precio: 75000, duracionMinutos: 120, categoria: 'Talleres' },
+      { nombre: 'Clase Suelta de Nivelación', precio: 25000, duracionMinutos: 60, categoria: 'Clases Individuales' },
+    ],
   },
 };
 
 export function getTemplateManifest(templateId: string): BusinessTemplateManifest {
-  return TEMPLATE_REGISTRY[templateId] || TEMPLATE_REGISTRY.PADEL_CLUB_STANDARD;
+  if (!templateId) return TEMPLATE_REGISTRY.PADEL_CLUB_STANDARD;
+  const match = TEMPLATE_REGISTRY[templateId] || 
+    Object.values(TEMPLATE_REGISTRY).find(t => 
+      t.id.toLowerCase() === templateId.toLowerCase() || 
+      t.module.toLowerCase() === templateId.toLowerCase()
+    );
+  return match || TEMPLATE_REGISTRY.PADEL_CLUB_STANDARD;
 }
+

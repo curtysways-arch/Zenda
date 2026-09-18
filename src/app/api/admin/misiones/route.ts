@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { GLOBAL_QUEST_TEMPLATES } from '@/lib/growth/globalTemplates';
 import { BusinessMissionService } from '@/lib/growth/businessMissionService';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 
 
 /**
@@ -11,24 +12,44 @@ import { BusinessMissionService } from '@/lib/growth/businessMissionService';
  */
 export async function GET(request: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         const userId = (session?.user as any)?.id;
 
         if (!userId) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        // Obtener el negocio asociado al administrador logueado
-        // Buscamos en Negocio donde el administrador tenga permisos
-        const user = await prisma.usuario.findUnique({
-            where: { id: userId },
-            select: { negocioId: true }
-        });
+        // Obtener el negocio asociado a la sesión efectiva (soporta sesión delegada)
+        let negocioId = (session?.user as any)?.negocioId;
+        if (!negocioId) {
+            const user = await prisma.usuario.findUnique({
+                where: { id: userId },
+                select: { negocioId: true }
+            });
+            negocioId = user?.negocioId;
+        }
 
-        const negocioId = user?.negocioId;
         if (!negocioId) {
             return NextResponse.json({ error: 'Negocio no configurado para este usuario' }, { status: 400 });
         }
+
+        const negocio = await prisma.negocio.findUnique({
+            where: { id: negocioId },
+            select: {
+                id: true,
+                nombre: true,
+                slug: true,
+                tipoNegocio: true,
+                businessTypeId: true,
+                BusinessType: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true
+                    }
+                }
+            }
+        });
 
         // 1. Auto-instalar todas las misiones publicadas para el negocio
         await BusinessMissionService.ensureAllMissionsInstalledForNegocio(negocioId);
@@ -55,31 +76,61 @@ export async function GET(request: Request) {
             }
         });
 
+        // Determinar vocabulario según el tipo de negocio
+        const rawTipo = `${negocio?.tipoNegocio || ''} ${negocio?.BusinessType?.slug || ''} ${negocio?.slug || ''} ${negocio?.nombre || ''}`.toUpperCase();
+        const isCanchas = rawTipo.includes('CANCHA') || rawTipo.includes('COURT') || rawTipo.includes('PADEL') || rawTipo.includes('FUTBOL') || rawTipo.includes('TENIS') || rawTipo.includes('DEPORTE') || rawTipo.includes('SPORTS');
+        const isShoeCare = rawTipo.includes('SHOE') || rawTipo.includes('CALZADO') || rawTipo.includes('LAVANDERIA') || rawTipo.includes('SNEAKER') || rawTipo.includes('CLEAN') || rawTipo.includes('TINTORERIA');
+        const isRestaurante = rawTipo.includes('RESTAURAN') || rawTipo.includes('GASTRO') || rawTipo.includes('FOOD') || rawTipo.includes('BAR') || rawTipo.includes('BURGER') || rawTipo.includes('PIZZA') || rawTipo.includes('CAFETERIA') || rawTipo.includes('PINCHOS');
+        const isDental = rawTipo.includes('DENTAL') || rawTipo.includes('ODONTOLOG') || rawTipo.includes('CLINICA') || rawTipo.includes('SALUD') || rawTipo.includes('MEDIC');
+        const isTienda = rawTipo.includes('TIENDA') || rawTipo.includes('STORE') || rawTipo.includes('ECOMMERCE') || rawTipo.includes('PRODUCT') || rawTipo.includes('RETAIL');
+        const isGym = rawTipo.includes('GIMNASIO') || rawTipo.includes('GYM') || rawTipo.includes('FITNESS') || rawTipo.includes('CROSSFIT') || rawTipo.includes('ENTRENAMIENTO');
+        const isBarber = rawTipo.includes('BARBER') || rawTipo.includes('PELUQUER') || rawTipo.includes('CORTE');
+        const isSpa = rawTipo.includes('SPA') || rawTipo.includes('ESTETIC') || rawTipo.includes('MASAJE') || rawTipo.includes('BEAUTY') || rawTipo.includes('BIENESTAR');
+
         // 3. Agrupar las BusinessMissions por categoria para simular campañas
+        const reservasLabel = isCanchas ? 'Misiones de Partidos & Canchas' :
+            isShoeCare ? 'Misiones de Lavado & Limpieza' :
+            isRestaurante ? 'Misiones de Visitas & Pedidos' :
+            isDental ? 'Misiones de Consultas & Citas' :
+            isTienda ? 'Misiones de Pedidos & Compras' :
+            isGym ? 'Misiones de Asistencia & Clases' :
+            isBarber ? 'Misiones de Cortes & Estilo' :
+            isSpa ? 'Misiones de Citas de Spa & Relax' : 'Misiones de Reservas';
+
+        const reservasDesc = isCanchas ? 'Retos relacionados con reserva de canchas, turnos y partidos jugados.' :
+            isShoeCare ? 'Retos relacionados con órdenes de lavado, limpieza y cuidado.' :
+            isRestaurante ? 'Retos relacionados con visitas al local, reservas de mesa y consumo.' :
+            isDental ? 'Retos relacionados con asistencia a revisiones preventivas y consultas odontológicas.' :
+            isTienda ? 'Retos relacionados con órdenes de compra y adquisición de productos.' :
+            isGym ? 'Retos relacionados con asistencias periódicas y sesiones de entrenamiento.' :
+            isBarber ? 'Retos relacionados con citas de corte, perfilado y barbería.' :
+            isSpa ? 'Retos relacionados con citas de bienestar, spa y relajación.' :
+            'Retos relacionados con reservas de citas y asistencia.';
+
         const CATEGORY_NAMES: Record<string, string> = {
-            RESERVAS: 'Misiones de Reservas',
-            REFERIDOS: 'Misiones de Referidos',
-            RESENAS: 'Misiones de Reseñas',
-            COMPRAS: 'Misiones de Compras',
-            PERFIL: 'Misiones de Perfil',
-            CUMPLEANOS: 'Misiones de Cumpleaños',
+            RESERVAS: isGym ? 'Misiones de Asistencia & Clases' : reservasLabel,
+            REFERIDOS: isGym ? 'Misiones de Referidos & Gym Bros' : 'Misiones de Referidos',
+            RESENAS: isGym ? 'Misiones de Opinión & Reseñas del Gym' : 'Misiones de Reseñas',
+            COMPRAS: isGym ? 'Misiones de Suplementación & Pro-Shop' : (isCanchas ? 'Misiones de Cafetería & Pro-Shop' : isRestaurante ? 'Misiones de Consumo & Platos' : isShoeCare ? 'Misiones de Productos de Cuidado' : 'Misiones de Compras'),
+            PERFIL: isGym ? 'Misiones de Ficha de Atleta' : 'Misiones de Perfil',
+            CUMPLEANOS: isGym ? 'Misiones de Cumpleaños del Socio' : 'Misiones de Cumpleaños',
             SOCIAL: 'Misiones de Redes Sociales',
-            OTRO: 'Misiones Especiales'
+            OTRO: isGym ? 'Retos Especiales Fitness' : 'Misiones Especiales'
         };
 
         const CATEGORY_DESCS: Record<string, string> = {
-            RESERVAS: 'Retos relacionados con reservas de citas y asistencia.',
-            REFERIDOS: 'Retos de recomendación y captación de nuevos amigos.',
-            RESENAS: 'Retos de opiniones y reseñas en la plataforma.',
-            COMPRAS: 'Retos de consumo y compra de servicios/productos.',
-            PERFIL: 'Retos para completar la información del perfil de usuario.',
-            CUMPLEANOS: 'Retos de celebración estacional de cumpleaños.',
-            SOCIAL: 'Retos de interacción social.',
-            OTRO: 'Retos y promociones especiales del club.'
+            RESERVAS: isGym ? 'Retos relacionados con asistencias periódicas, check-ins y sesiones de entrenamiento.' : reservasDesc,
+            REFERIDOS: isGym ? 'Premia a tus socios por invitar amigos y compañeros a entrenar al gimnasio.' : (isCanchas ? 'Retos de recomendación e invitación de nuevos amigos a jugar.' : 'Retos de recomendación y captación de nuevos amigos.'),
+            RESENAS: isGym ? 'Premia las opiniones y valoraciones sobre máquinas, higiene, coaches e instalaciones.' : (isCanchas ? 'Retos de opiniones y valoraciones sobre las canchas e instalaciones.' : 'Retos de opiniones y reseñas en la plataforma.'),
+            COMPRAS: isGym ? 'Retos de consumo en barra de batidos, bebidas isotónicas, suplementos y ropa deportiva.' : (isCanchas ? 'Retos de consumo en cafetería, tienda deportiva o alquiler.' : isRestaurante ? 'Retos de pedidos y compras de la carta.' : 'Retos de consumo y compra de servicios/productos.'),
+            PERFIL: isGym ? 'Retos para completar los datos del socio, objetivos físicos y contacto.' : (isCanchas ? 'Retos para completar los datos de jugador y contacto.' : 'Retos para completar la información del perfil de usuario.'),
+            CUMPLEANOS: isGym ? 'Premia a tus socios durante el mes de su cumpleaños con pases o regalos.' : 'Retos de celebración estacional de cumpleaños.',
+            SOCIAL: 'Retos de interacción social y difusión de la comunidad.',
+            OTRO: isGym ? 'Retos, eventos y desafíos fitness especiales del gimnasio.' : 'Retos y promociones especiales del club.'
         };
 
         const CATEGORY_COLORS: Record<string, string> = {
-            RESERVAS: '#ec4899',
+            RESERVAS: isGym ? '#10b981' : '#ec4899',
             REFERIDOS: '#3b82f6',
             RESENAS: '#eab308',
             COMPRAS: '#f43f5e',
@@ -90,14 +141,14 @@ export async function GET(request: Request) {
         };
 
         const CATEGORY_ICONS: Record<string, string> = {
-            RESERVAS: 'Calendar',
+            RESERVAS: isGym ? 'Zap' : 'Calendar',
             REFERIDOS: 'Users',
             RESENAS: 'Star',
             COMPRAS: 'ShoppingBag',
             PERFIL: 'UserCheck',
             CUMPLEANOS: 'Cake',
             SOCIAL: 'Share2',
-            OTRO: 'Award'
+            OTRO: isGym ? 'Trophy' : 'Award'
         };
 
         // Agrupar por categoría
@@ -119,10 +170,23 @@ export async function GET(request: Request) {
             const recompensas: string[] = [];
             def.Rewards.forEach(r => {
                 const catalog = r.RewardCatalog;
+                const config = (catalog.config as any) || {};
+                const valor = (catalog.valor as any) || {};
+
                 if (catalog.tipo === 'XP') {
-                    recompensas.push(`+${(catalog.valor as any)?.cantidad ?? 0} XP`);
+                    let xpAmount = config.xp ?? config.valor ?? config.cantidad ?? valor.xp ?? valor.cantidad ?? valor.valor;
+                    if (xpAmount === undefined || xpAmount === null || isNaN(Number(xpAmount))) {
+                        const match = catalog.nombre.match(/(\d+)\s*XP/i);
+                        xpAmount = match ? parseInt(match[1]) : 0;
+                    }
+                    recompensas.push(`+${xpAmount} XP`);
                 } else if (catalog.tipo === 'DIAMONDS') {
-                    recompensas.push(`+${(catalog.valor as any)?.cantidad ?? 0} Diamantes`);
+                    let diamondAmount = config.valor ?? config.diamantes ?? config.cantidad ?? valor.diamantes ?? valor.valor ?? valor.cantidad;
+                    if (diamondAmount === undefined || diamondAmount === null || isNaN(Number(diamondAmount))) {
+                        const match = catalog.nombre.match(/(\d+)\s*Diamante/i);
+                        diamondAmount = match ? parseInt(match[1]) : 0;
+                    }
+                    recompensas.push(`+${diamondAmount} Diamantes`);
                 } else if (catalog.tipo === 'COUPON') {
                     recompensas.push(`Cupón: ${catalog.nombre}`);
                 } else {
@@ -137,24 +201,56 @@ export async function GET(request: Request) {
                 } else if (rc.rewardType === 'COUPON') {
                     recompensas.push(`Cupón de Descuento`);
                 } else if (rc.rewardType === 'FREE_SERVICE' || rc.rewardType === 'SERVICE') {
-                    recompensas.push(`Servicio Gratis`);
+                    recompensas.push(isGym ? `Pase Libre Gratis` : `Servicio Gratis`);
                 } else if (rc.rewardType === 'PRODUCT') {
-                    recompensas.push(`Producto Gratis`);
+                    recompensas.push(isGym ? `Shake / Suplemento Gratis` : `Producto Gratis`);
                 } else {
                     recompensas.push(rc.descripcion || 'Recompensa local');
                 }
             }
 
+            let nombreVisible = def.nombre;
+            let descripcionVisible = def.descripcion || '';
+            let triggerVisible = def.triggerEvent;
+
+            if (isGym) {
+                const upper = def.nombre.toUpperCase();
+                if (upper.includes('PRIMERA CITA') || (def.triggerEvent === 'BOOKING_COMPLETED' && def.cantidadMeta === 1)) {
+                    nombreVisible = 'Primer Entrenamiento';
+                    descripcionVisible = 'Asiste a tu primer entrenamiento o check-in con QR y gana tus primeros puntos.';
+                    triggerVisible = 'ASISTENCIA_GYM';
+                } else if (upper.includes('CLIENTE FRECUENTE') || (def.triggerEvent === 'BOOKING_COMPLETED' && def.cantidadMeta > 1)) {
+                    nombreVisible = 'Atleta Constante';
+                    descripcionVisible = `Completa ${def.cantidadMeta} asistencias o entrenamientos en el gimnasio y demuestra tu disciplina.`;
+                    triggerVisible = 'ASISTENCIA_GYM';
+                } else if (upper.includes('TU OPINIÓN CUENTA') || upper.includes('TU OPINION CUENTA')) {
+                    nombreVisible = 'Califica Tu Gym';
+                    descripcionVisible = 'Deja tu valoración sobre nuestras máquinas, coaches y ambiente deportivo.';
+                    triggerVisible = 'REVIEW_CREATED';
+                } else if (upper.includes('EMBAJADOR DE LA MARCA') || def.triggerEvent === 'REFERRAL_COMPLETED') {
+                    nombreVisible = 'Trae a tu Gym Bro';
+                    descripcionVisible = 'Invita a un amigo a entrenar al gimnasio y gana pases o premios cuando active su membresía.';
+                    triggerVisible = 'REFERRAL_COMPLETED';
+                } else if (upper.includes('PERFIL AL DÍA') || upper.includes('PERFIL AL DIA') || def.triggerEvent === 'PROFILE_COMPLETED') {
+                    nombreVisible = 'Ficha de Atleta Completa';
+                    descripcionVisible = 'Completa tus datos de contacto y objetivos de entrenamiento en la app.';
+                    triggerVisible = 'PROFILE_COMPLETED';
+                } else if (def.triggerEvent === 'BOOKING_COMPLETED') {
+                    triggerVisible = 'ASISTENCIA_GYM';
+                }
+            }
+
             groupedMap.get(cat).Quests.push({
                 id: bm.id,
-                nombre: def.nombre,
-                descripcion: def.descripcion || '',
-                icono: CATEGORY_ICONS[cat] || 'Award',
-                color: CATEGORY_COLORS[cat] || '#ec4899',
+                nombre: nombreVisible,
+                descripcion: descripcionVisible,
+                icono: isGym && ((cat as string) === 'RESERVAS' || (cat as string) === 'ASISTENCIA') ? 'Zap' : (CATEGORY_ICONS[cat] || 'Award'),
+                color: CATEGORY_COLORS[cat] || '#10b981',
                 visible: true,
                 repetible: false,
                 limiteUsuario: 1,
-                triggerEvent: def.triggerEvent,
+                triggerEvent: triggerVisible,
+                rawTriggerEvent: def.triggerEvent,
                 cantidadMeta: def.cantidadMeta,
                 validacionTipo: def.triggerEvent === 'MANUAL' ? 'MANUAL' : 'AUTOMATICO',
                 condicionesExtra: def.condicionesExtra ? JSON.stringify(def.condicionesExtra) : null,
@@ -195,6 +291,14 @@ export async function GET(request: Request) {
 
         return NextResponse.json({
             success: true,
+            negocio: negocio ? {
+                id: negocio.id,
+                nombre: negocio.nombre,
+                slug: negocio.slug,
+                tipoNegocio: negocio.tipoNegocio,
+                businessTypeSlug: negocio.BusinessType?.slug || negocio.tipoNegocio,
+                businessTypeName: negocio.BusinessType?.name || negocio.tipoNegocio
+            } : null,
             campaigns,
             stats: {
                 totalParticipantes,
@@ -213,19 +317,22 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         const userId = (session?.user as any)?.id;
 
         if (!userId) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        const user = await prisma.usuario.findUnique({
-            where: { id: userId },
-            select: { negocioId: true }
-        });
+        let negocioId = (session?.user as any)?.negocioId;
+        if (!negocioId) {
+            const user = await prisma.usuario.findUnique({
+                where: { id: userId },
+                select: { negocioId: true }
+            });
+            negocioId = user?.negocioId;
+        }
 
-        const negocioId = user?.negocioId;
         if (!negocioId) {
             return NextResponse.json({ error: 'Negocio no configurado para este usuario' }, { status: 400 });
         }
@@ -386,19 +493,22 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         const userId = (session?.user as any)?.id;
 
         if (!userId) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        const user = await prisma.usuario.findUnique({
-            where: { id: userId },
-            select: { negocioId: true }
-        });
+        let negocioId = (session?.user as any)?.negocioId;
+        if (!negocioId) {
+            const user = await prisma.usuario.findUnique({
+                where: { id: userId },
+                select: { negocioId: true }
+            });
+            negocioId = user?.negocioId;
+        }
 
-        const negocioId = user?.negocioId;
         if (!negocioId) {
             return NextResponse.json({ error: 'Negocio no configurado' }, { status: 400 });
         }
@@ -508,19 +618,22 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         const userId = (session?.user as any)?.id;
 
         if (!userId) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        const user = await prisma.usuario.findUnique({
-            where: { id: userId },
-            select: { negocioId: true }
-        });
+        let negocioId = (session?.user as any)?.negocioId;
+        if (!negocioId) {
+            const user = await prisma.usuario.findUnique({
+                where: { id: userId },
+                select: { negocioId: true }
+            });
+            negocioId = user?.negocioId;
+        }
 
-        const negocioId = user?.negocioId;
         if (!negocioId) {
             return NextResponse.json({ error: 'Negocio no configurado' }, { status: 400 });
         }

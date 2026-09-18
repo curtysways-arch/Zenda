@@ -23,7 +23,7 @@ export const MODULE_DEPENDENCIES: Record<string, string[]> = {
   APPOINTMENTS: ['SERVICES'],
 
   // Canchas / Deportes
-  SCHEDULES: ['COURTS'],
+  COURTS: ['SCHEDULES'],
   STUDENTS: ['COURSES'],
   INSTRUCTORS: ['COURSES'],
   COURSES: ['CUSTOMERS'],

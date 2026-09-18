@@ -458,6 +458,65 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
     });
   }
 
+  // ── FALLBACK AUTOMÁTICO DE HERO SI NO HAY HEROITEMS CONFIGURADOS ──────────
+  if (resolvedHero.length === 0) {
+    try {
+      const biz = await (prisma as any).negocio.findUnique({
+        where: { id: businessId },
+        include: { Imagen: true }
+      });
+
+      if (biz) {
+        let config = biz.configuracion;
+        if (typeof config === 'string') {
+          try { config = JSON.parse(config); } catch (_) {}
+        }
+
+        const bannerImage =
+          config?.bannerUrl ||
+          (biz as any).bannerUrl ||
+          (Array.isArray(config?.bannerUrls) && config.bannerUrls[0]) ||
+          (biz.Imagen && biz.Imagen.find((img: any) => img.tipo === 'BANNER')?.url) ||
+          (biz.tipoNegocio === 'TIENDA' || biz.tipoNegocio === 'STORE' || config?.blueprintId === 'STORE'
+            ? 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=1200'
+            : 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&q=80&w=1200');
+
+        const isStore = biz.tipoNegocio === 'TIENDA' || biz.tipoNegocio === 'STORE' || config?.blueprintId === 'STORE';
+        const defaultSubtitulo = isStore
+          ? 'Descubre nuestra selección exclusiva y recibe a domicilio o retira en tienda.'
+          : 'Reserva tu cita de forma online en sencillos pasos.';
+
+        resolvedHero.push({
+          id: `fallback-biz-banner-${biz.id}`,
+          businessId,
+          type: 'IMAGE',
+          sourceType: 'CUSTOM',
+          sourceId: null,
+          image: bannerImage,
+          mobileImage: bannerImage,
+          title: biz.heroTitulo || `Bienvenido a ${biz.nombre}`,
+          description: biz.heroSubtitulo || defaultSubtitulo,
+          price: null,
+          previousPrice: null,
+          originalPrice: null,
+          hasVariants: false,
+          priceLabel: null,
+          button: {
+            enabled: true,
+            text: isStore ? 'Explorar Catálogo' : 'Ver Servicios',
+            actionType: isStore ? 'PRODUCT' : 'SERVICE',
+            actionValue: null
+          },
+          position: 0,
+          priority: 1,
+          isAutomatic: true
+        });
+      }
+    } catch (fallbackErr) {
+      console.error('[RESOLVE_HERO_FALLBACK_ERROR]', fallbackErr);
+    }
+  }
+
   // ── RESOLUCIÓN DE HIGHLIGHT ITEMS (DESTACADOS Y PROMOCIONES DE LA BD) ──────
   const resolvedHighlights: ResolvedHighlightItem[] = [];
 

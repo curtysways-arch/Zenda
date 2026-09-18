@@ -69,9 +69,33 @@ export class ProvisioningEngine {
     const businessId = crypto.randomUUID();
     const hashedPassword = await bcrypt.hash(generalInfo.adminPassword, 10);
 
+    // Determinar el tipo de negocio canónico para compatibilidad multi-módulo
+    let tipoNegocio = 'RESERVA';
+    const bIdUpper = (blueprintId || '').toUpperCase();
+    if (bIdUpper.includes('RESTAURANT')) {
+      tipoNegocio = 'RESTAURANT';
+    } else if (bIdUpper.includes('FAST_FOOD') || bIdUpper.includes('PINCHO')) {
+      tipoNegocio = 'RESTAURANT';
+    } else if (bIdUpper.includes('STORE') || bIdUpper.includes('TIENDA') || bIdUpper.includes('RETAIL')) {
+      tipoNegocio = 'TIENDA';
+    } else if (bIdUpper.includes('SHOE') || bIdUpper.includes('CALZADO') || bIdUpper.includes('LAUNDRY')) {
+      tipoNegocio = 'SHOE_CARE';
+    } else if (bIdUpper.includes('PADEL') || bIdUpper.includes('CANCHA') || bIdUpper.includes('COURT')) {
+      tipoNegocio = 'SPORTS_COURTS';
+    } else if (bIdUpper.includes('BARBER') || bIdUpper.includes('PELUQUERIA')) {
+      tipoNegocio = 'PELUQUERIA';
+    } else if (bIdUpper.includes('ACADEMY') || bIdUpper.includes('CURSO') || bIdUpper.includes('CLASES')) {
+      tipoNegocio = 'ACADEMIA';
+    } else if (bIdUpper.includes('GYM') || bIdUpper.includes('GIMNASIO') || bIdUpper.includes('FITNESS')) {
+      tipoNegocio = 'GIMNASIO';
+    } else if (bIdUpper.includes('CLINIC') || bIdUpper.includes('DENTAL') || bIdUpper.includes('SPA')) {
+      tipoNegocio = 'RESERVA';
+    }
+
     // 2. Construir la configuración declarativa del Runtime
     const runtimeConfig = {
       blueprintId,
+      tipoNegocio,
       channels,
       activeCapabilities,
       activeModules,
@@ -89,6 +113,7 @@ export class ProvisioningEngine {
         id: businessId,
         nombre: generalInfo.nombre,
         slug: generalInfo.slug,
+        tipoNegocio,
         whatsapp: generalInfo.whatsapp || null,
         emailContacto: generalInfo.emailContacto || generalInfo.adminEmail,
         direccion: generalInfo.direccion || null,
@@ -119,17 +144,29 @@ export class ProvisioningEngine {
     });
 
     // 5. Asignar el Plan y Addons en el Subscription Engine
-    const planName = planId.toUpperCase();
-    let dbPlan = await prisma.plan.findFirst({
-      where: { name: { contains: planName } }
+    let dbPlan = await prisma.plan.findUnique({
+      where: { id: planId }
     });
+
+    if (!dbPlan) {
+      const planName = (planId || '').toUpperCase();
+      dbPlan = await prisma.plan.findFirst({
+        where: {
+          OR: [
+            { name: { contains: planName } },
+            { id: { contains: (planId || '').toLowerCase() } },
+            { slug: { contains: (planId || '').toLowerCase() } }
+          ]
+        }
+      });
+    }
 
     if (!dbPlan) {
       dbPlan = await prisma.plan.findFirst() || await prisma.plan.create({
         data: {
           id: crypto.randomUUID(),
           name: `Plan ${planId}`,
-          price: planId === 'FREE' ? 0 : (planId === 'STARTER' ? 19 : 49),
+          price: 19.99,
           updated_at: new Date()
         }
       });
@@ -152,20 +189,27 @@ export class ProvisioningEngine {
     });
 
     // 6. Instanciar Recursos y Servicios Iniciales según el Blueprint
+    const infrastructureCategories = [
+      'TABLE', 'INFRASTRUCTURE', 'EQUIPMENT', 'WAREHOUSE', 'POS', 
+      'KITCHEN', 'DISPATCH', 'BARBER_CHAIR', 'DENTAL_CHAIR', 'CLASSROOM', 
+      'WASHING_STATION', 'CONSULTING_ROOM', 'CANCHA', 'Pádel', 'Padel'
+    ];
+
     if (initialResources && initialResources.length > 0) {
       for (const res of initialResources) {
         const qty = res.quantity || 1;
         for (let i = 1; i <= qty; i++) {
           const resName = qty > 1 ? `${res.name} ${i}` : res.name;
+          const isOperable = infrastructureCategories.includes(res.category || '');
           
-          if (res.category === 'TABLE') {
+          if (isOperable) {
             await (prisma as any).operableResource.create({
               data: {
                 negocioId: businessId,
                 name: resName,
-                resourceType: 'INFRASTRUCTURE',
-                category: 'TABLE',
-                capacity: res.capacity || 4,
+                resourceType: res.category === 'POS' || res.category === 'BARBER_CHAIR' || res.category === 'DENTAL_CHAIR' ? 'EQUIPMENT' : 'INFRASTRUCTURE',
+                category: res.category || 'TABLE',
+                capacity: res.capacity || 1,
                 estado: 'LIBRE',
                 metadata: { code: resName.replace(/\s+/g, '') }
               }
@@ -184,6 +228,46 @@ export class ProvisioningEngine {
           }
         }
       }
+    }
+
+    // 7. Instanciar Servicios Iniciales sugeridos por el Blueprint
+    const { getTemplateManifest } = await import('../templates/templatesRegistry');
+    const templateManifest = getTemplateManifest(blueprintId);
+    if (templateManifest && Array.isArray(templateManifest.initialServices) && templateManifest.initialServices.length > 0) {
+      for (const s of templateManifest.initialServices) {
+        await prisma.service.create({
+          data: {
+            id: crypto.randomUUID(),
+            negocioId: businessId,
+            nombre: s.nombre,
+            precio: s.precio,
+            duracion: s.duracionMinutos || 30,
+            estaActivo: true,
+            extraInfo: {
+              descripcion: s.descripcion || `Servicio inicial configurado para ${templateManifest.name}`,
+              categoria: s.categoria || 'General'
+            },
+            updatedAt: new Date()
+          }
+        });
+      }
+    }
+
+    // 8. Instanciar Categorías Iniciales si es Tienda o Restaurante
+    if (tipoNegocio === 'TIENDA' || tipoNegocio === 'PRODUCTOS') {
+      await (prisma as any).categoriaProducto.createMany({
+        data: [
+          { id: crypto.randomUUID(), negocioId: businessId, nombre: 'Colección General', orden: 1, activo: true, updatedAt: new Date() },
+          { id: crypto.randomUUID(), negocioId: businessId, nombre: 'Novedades & Destacados', orden: 2, activo: true, updatedAt: new Date() }
+        ]
+      });
+    } else if (tipoNegocio === 'RESTAURANT') {
+      await (prisma as any).categoriaProducto.createMany({
+        data: [
+          { id: crypto.randomUUID(), negocioId: businessId, nombre: 'Platos & Especialidades', orden: 1, activo: true, updatedAt: new Date() },
+          { id: crypto.randomUUID(), negocioId: businessId, nombre: 'Bebidas & Refrescos', orden: 2, activo: true, updatedAt: new Date() }
+        ]
+      });
     }
 
     // 7. Guardar como Plantilla Reutilizable si fue solicitado

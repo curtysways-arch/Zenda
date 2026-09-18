@@ -24,6 +24,13 @@ interface DbAccount {
     logo: string | null;
 }
 
+interface AvailablePlanItem {
+    id: string;
+    name: string;
+    price: number;
+    description?: string;
+}
+
 interface AddonCheckoutModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -32,6 +39,8 @@ interface AddonCheckoutModalProps {
         startDate?: string | Date | null;
         endDate?: string | Date | null;
     };
+    hasActivePaidPlan?: boolean;
+    availablePlans?: AvailablePlanItem[];
     onSuccess: () => void;
 }
 
@@ -40,6 +49,8 @@ export default function AddonCheckoutModal({
     onClose,
     addon,
     subscriptionDates,
+    hasActivePaidPlan = true,
+    availablePlans = [],
     onSuccess
 }: AddonCheckoutModalProps) {
     const [quantity, setQuantity] = useState(1);
@@ -50,6 +61,9 @@ export default function AddonCheckoutModal({
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [copiedAccount, setCopiedAccount] = useState<string | null>(null);
+
+    // Plan base seleccionado cuando no tiene plan activo
+    const [selectedPlanId, setSelectedPlanId] = useState<string>('');
 
     // Cuentas de banco
     const [dbAccounts, setDbAccounts] = useState<DbAccount[]>([]);
@@ -63,6 +77,10 @@ export default function AddonCheckoutModal({
             setComprobanteBase64('');
             setFileName('');
             setSuccess(false);
+
+            if (!hasActivePaidPlan && availablePlans && availablePlans.length > 0) {
+                setSelectedPlanId(availablePlans[0].id);
+            }
 
             const fetchAccounts = async () => {
                 setLoadingAccounts(true);
@@ -81,9 +99,9 @@ export default function AddonCheckoutModal({
             };
             fetchAccounts();
         }
-    }, [isOpen]);
+    }, [isOpen, hasActivePaidPlan, availablePlans]);
 
-    // Cálculo de prorrateo
+    // Cálculo de prorrateo para usuarios con plan activo
     const proration = useMemo(() => {
         if (!addon) return { proratedAmount: 0, daysRemaining: 30, totalDaysInCycle: 30, isProrated: false };
         const priceMonthly = Number(addon.priceMonthly || 0);
@@ -119,6 +137,25 @@ export default function AddonCheckoutModal({
         };
     }, [addon, quantity, subscriptionDates]);
 
+    // Plan base seleccionado para el cálculo total cuando !hasActivePaidPlan
+    const activeSelectedPlan = useMemo(() => {
+        if (hasActivePaidPlan) return null;
+        return availablePlans.find(p => p.id === selectedPlanId) || availablePlans[0] || null;
+    }, [hasActivePaidPlan, availablePlans, selectedPlanId]);
+
+    const addonPriceCalculated = useMemo(() => {
+        if (!addon) return 0;
+        return Number(addon.priceMonthly || 0) * quantity;
+    }, [addon, quantity]);
+
+    const totalToPay = useMemo(() => {
+        if (hasActivePaidPlan) {
+            return proration.proratedAmount;
+        }
+        const planPrice = activeSelectedPlan ? Number(activeSelectedPlan.price || 0) : 0;
+        return Number((planPrice + addonPriceCalculated).toFixed(2));
+    }, [hasActivePaidPlan, proration.proratedAmount, activeSelectedPlan, addonPriceCalculated]);
+
     if (!isOpen || !addon) return null;
 
     const maxQty = addon.stackable ? (addon.maxQuantity || 10) : 1;
@@ -143,6 +180,11 @@ export default function AddonCheckoutModal({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!hasActivePaidPlan && !activeSelectedPlan) {
+            alert('Por favor selecciona un plan base para continuar con la activación.');
+            return;
+        }
+
         if (!comprobanteBase64 && !referencia) {
             alert('Por favor adjunta el comprobante de pago o ingresa el número de referencia.');
             return;
@@ -156,6 +198,7 @@ export default function AddonCheckoutModal({
                 body: JSON.stringify({
                     addonCodeOrId: addon.code || addon.id,
                     quantity,
+                    planId: !hasActivePaidPlan && activeSelectedPlan ? activeSelectedPlan.id : undefined,
                     metodoPago: metodo,
                     referencia: referencia.trim() || undefined,
                     comprobanteUrl: comprobanteBase64 || undefined
@@ -229,12 +272,76 @@ export default function AddonCheckoutModal({
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* Selector de Plan Base si NO tiene plan activo de pago */}
+                            {!hasActivePaidPlan && (
+                                <div className="p-5 rounded-3xl bg-amber-500/10 border border-amber-500/20 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <span className="p-1.5 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-lg">
+                                                <Sparkles size={16} />
+                                            </span>
+                                            <div>
+                                                <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white block">
+                                                    1. Selecciona tu Plan Base
+                                                </span>
+                                                <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                                                    Se requiere un plan comercial activo para incorporar este Add-on
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                                            Requerido
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                                        {availablePlans && availablePlans.length > 0 ? (
+                                            availablePlans.map((plan) => {
+                                                const isSelected = (activeSelectedPlan?.id === plan.id);
+                                                return (
+                                                    <button
+                                                        key={plan.id}
+                                                        type="button"
+                                                        onClick={() => setSelectedPlanId(plan.id)}
+                                                        className={`p-3 rounded-2xl border text-left transition-all flex items-center justify-between cursor-pointer ${
+                                                            isSelected
+                                                                ? 'bg-white dark:bg-slate-800 border-purple-500 shadow-md shadow-purple-500/10 ring-2 ring-purple-500/30'
+                                                                : 'bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-slate-800'
+                                                        }`}
+                                                    >
+                                                        <div>
+                                                            <span className="text-xs font-black text-slate-900 dark:text-white block">
+                                                                {plan.name}
+                                                            </span>
+                                                            <span className="text-xs font-mono font-bold text-purple-600 dark:text-purple-400">
+                                                                ${Number(plan.price).toFixed(2)} <span className="text-[10px] text-slate-400">/mes</span>
+                                                            </span>
+                                                        </div>
+                                                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                                                            isSelected
+                                                                ? 'border-purple-600 bg-purple-600 text-white'
+                                                                : 'border-slate-300 dark:border-slate-600'
+                                                        }`}>
+                                                            {isSelected && <Check size={12} strokeWidth={3} />}
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })
+                                        ) : (
+                                            <div className="col-span-2 text-xs text-amber-700 dark:text-amber-300 p-2">
+                                                Cargando planes disponibles...
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Selector de cantidad (si es stackable) */}
                             {addon.stackable && (
                                 <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 flex items-center justify-between">
                                     <div>
                                         <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white block">
-                                            Cantidad a Contratar
+                                            Cantidad de Add-on a Contratar
                                         </span>
                                         <span className="text-[11px] text-slate-500">
                                             Límite máximo permitido: {maxQty} unidades
@@ -264,41 +371,87 @@ export default function AddonCheckoutModal({
                                 </div>
                             )}
 
-                            {/* Tarjeta de Resumen y Prorrateo */}
-                            <div className="p-5 rounded-3xl bg-linear-to-br from-purple-500/10 via-slate-50 to-emerald-500/10 dark:from-purple-950/30 dark:via-slate-900 dark:to-emerald-950/30 border border-purple-200/50 dark:border-purple-500/20 space-y-3">
-                                <div className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
-                                    <span className="flex items-center gap-1.5">
-                                        <Calendar size={14} className="text-purple-500" />
-                                        Días restantes del ciclo actual:
-                                    </span>
-                                    <span className="font-black text-slate-900 dark:text-white">
-                                        {proration.daysRemaining} de {proration.totalDaysInCycle} días
-                                    </span>
-                                </div>
-
-                                <div className="flex items-baseline justify-between pt-2 border-t border-slate-200/60 dark:border-white/10">
-                                    <div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">
-                                            Monto a Pagar Ahora (Prorrateado)
+                            {/* Tarjeta de Resumen y Costo */}
+                            {hasActivePaidPlan ? (
+                                <div className="p-5 rounded-3xl bg-linear-to-br from-purple-500/10 via-slate-50 to-emerald-500/10 dark:from-purple-950/30 dark:via-slate-900 dark:to-emerald-950/30 border border-purple-200/50 dark:border-purple-500/20 space-y-3">
+                                    <div className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
+                                        <span className="flex items-center gap-1.5">
+                                            <Calendar size={14} className="text-purple-500" />
+                                            Días restantes del ciclo actual:
                                         </span>
-                                        <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-                                            ${proration.proratedAmount.toFixed(2)} USD
+                                        <span className="font-black text-slate-900 dark:text-white">
+                                            {proration.daysRemaining} de {proration.totalDaysInCycle} días
                                         </span>
                                     </div>
-                                    <div className="text-right">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">
-                                            Próxima Renovación
-                                        </span>
-                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                                            ${(Number(addon.priceMonthly || 0) * quantity).toFixed(2)}/mes
-                                        </span>
-                                    </div>
-                                </div>
 
-                                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight italic">
-                                    * Solo pagas los días restantes hasta tu próximo corte. Tu precio base de plan no sufrirá modificaciones.
-                                </p>
-                            </div>
+                                    <div className="flex items-baseline justify-between pt-2 border-t border-slate-200/60 dark:border-white/10">
+                                        <div>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">
+                                                Monto a Pagar Ahora (Prorrateado)
+                                            </span>
+                                            <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                                                ${proration.proratedAmount.toFixed(2)} USD
+                                            </span>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">
+                                                Próxima Renovación
+                                            </span>
+                                            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                                                ${addonPriceCalculated.toFixed(2)}/mes
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight italic">
+                                        * Solo pagas los días restantes hasta tu próximo corte. Tu precio base de plan no sufrirá modificaciones.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="p-5 rounded-3xl bg-linear-to-br from-purple-500/10 via-slate-50 to-emerald-500/10 dark:from-purple-950/30 dark:via-slate-900 dark:to-emerald-950/30 border border-purple-200/50 dark:border-purple-500/20 space-y-3">
+                                    <div className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                        Desglose de Activación (Combo Plan + Add-on)
+                                    </div>
+
+                                    <div className="space-y-1.5 text-xs">
+                                        <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                                            <span>Plan Base ({activeSelectedPlan?.name || 'Seleccionado'}):</span>
+                                            <span className="font-bold text-slate-900 dark:text-white">
+                                                ${Number(activeSelectedPlan?.price || 0).toFixed(2)} USD
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                                            <span>Add-on ({addon.name}{quantity > 1 ? ` x${quantity}` : ''}):</span>
+                                            <span className="font-bold text-slate-900 dark:text-white">
+                                                ${addonPriceCalculated.toFixed(2)} USD
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-baseline justify-between pt-2 border-t border-slate-200/60 dark:border-white/10">
+                                        <div>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">
+                                                Total a Pagar Ahora
+                                            </span>
+                                            <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                                                ${totalToPay.toFixed(2)} USD
+                                            </span>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">
+                                                Renovación Mensual
+                                            </span>
+                                            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                                                ${totalToPay.toFixed(2)}/mes
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight italic">
+                                        * Al verificar tu comprobante se activará tu plan comercial y el módulo Add-on simultáneamente por 1 mes.
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Método de Pago */}
                             <div className="space-y-2">
@@ -446,7 +599,10 @@ export default function AddonCheckoutModal({
                                     ) : (
                                         <>
                                             <ShieldCheck size={16} />
-                                            Confirmar y Enviar Solicitud (${proration.proratedAmount.toFixed(2)})
+                                            {hasActivePaidPlan 
+                                                ? `Confirmar y Enviar Solicitud ($${totalToPay.toFixed(2)})`
+                                                : `Confirmar Plan + Add-on ($${totalToPay.toFixed(2)})`
+                                            }
                                         </>
                                     )}
                                 </button>

@@ -59,7 +59,8 @@ export default function PromotionDashboard({
   const handleEditPromo = (promo: any) => {
     setSelectedPromotion(promo);
     setBuilderPrefilledData(promo);
-    setActiveTab('BUILDER');
+    const isCombo = promo.tipoPromo === 'COMBO' || promo.alcance === 'COMBO' || (promo.titulo && promo.titulo.toLowerCase().includes('combo'));
+    setActiveTab(isCombo ? 'COMBO' : 'BUILDER');
   };
 
   const handleToggleStatus = async (promo: any) => {
@@ -94,8 +95,9 @@ export default function PromotionDashboard({
 
   const handleSavePromotion = async (promoData: any) => {
     try {
-      const method = selectedPromotion ? 'PUT' : 'POST';
-      const payload = selectedPromotion ? { ...promoData, id: selectedPromotion.id } : promoData;
+      const targetId = selectedPromotion?.id || promoData.id;
+      const method = targetId ? 'PUT' : 'POST';
+      const payload = targetId ? { ...promoData, id: targetId } : promoData;
 
       const res = await fetch('/api/admin/promociones', {
         method,
@@ -217,7 +219,23 @@ export default function PromotionDashboard({
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => {
+                if (tab.id === 'BUILDER' && activeTab !== 'BUILDER') {
+                  const isStandard = selectedPromotion && selectedPromotion.tipoPromo !== 'COMBO' && selectedPromotion.alcance !== 'COMBO';
+                  if (!isStandard) {
+                    setSelectedPromotion(null);
+                    setBuilderPrefilledData(null);
+                  }
+                }
+                if (tab.id === 'COMBO' && activeTab !== 'COMBO') {
+                  const isCombo = selectedPromotion && (selectedPromotion.tipoPromo === 'COMBO' || selectedPromotion.alcance === 'COMBO' || (selectedPromotion.titulo && selectedPromotion.titulo.toLowerCase().includes('combo')));
+                  if (!isCombo) {
+                    setSelectedPromotion(null);
+                    setBuilderPrefilledData(null);
+                  }
+                }
+                setActiveTab(tab.id as any);
+              }}
               className={`py-2.5 px-4 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
                 isAct ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
               }`}
@@ -276,7 +294,11 @@ export default function PromotionDashboard({
           categories={categories}
           initialData={builderPrefilledData}
           onSave={handleSavePromotion}
-          onCancel={() => setActiveTab('DASHBOARD')}
+          onCancel={() => {
+            setActiveTab('DASHBOARD');
+            setSelectedPromotion(null);
+            setBuilderPrefilledData(null);
+          }}
           negocio={negocio}
         />
       )}
@@ -285,7 +307,13 @@ export default function PromotionDashboard({
         <ComboBuilder
           products={products}
           categories={categories}
+          initialData={builderPrefilledData}
           onSaveCombo={handleSavePromotion}
+          onCancel={() => {
+            setActiveTab('DASHBOARD');
+            setSelectedPromotion(null);
+            setBuilderPrefilledData(null);
+          }}
           negocio={negocio}
         />
       )}

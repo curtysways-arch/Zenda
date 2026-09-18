@@ -90,7 +90,11 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        const { nombre, descripcion, precio, imagenUrl, imagenes, dimensiones, activo, stock, orden, categoriaId, llevaEmpaque, precioEmpaque, sku, tieneVariantes, variantesIniciales } = body;
+        const { 
+            nombre, descripcion, precio, imagenUrl, imagenes, dimensiones, activo, stock, 
+            orden, categoriaId, llevaEmpaque, precioEmpaque, sku, tieneVariantes, variantesIniciales,
+            fichaTecnica, caracteristicas, fotosDetalle, resenasConfig
+        } = body;
         
         if (!nombre || precio === undefined) {
             return NextResponse.json({ error: 'El nombre y precio son obligatorios' }, { status: 400 });
@@ -125,6 +129,10 @@ export async function POST(req: Request) {
         const extraData: any = {};
         if (imagenesList.length > 0) extraData.imagenes = imagenesList;
         if (Array.isArray(dimensiones) && dimensiones.length > 0) extraData.dimensiones = dimensiones;
+        if (fichaTecnica && typeof fichaTecnica === 'object') extraData.fichaTecnica = fichaTecnica;
+        if (Array.isArray(caracteristicas)) extraData.caracteristicas = caracteristicas;
+        if (Array.isArray(fotosDetalle)) extraData.fotosDetalle = fotosDetalle;
+        if (resenasConfig && typeof resenasConfig === 'object') extraData.resenasConfig = resenasConfig;
 
         const nuevoProducto = await (prisma as any).producto.create({
             data: {
@@ -184,7 +192,11 @@ export async function PUT(req: Request) {
 
     try {
         const body = await req.json();
-        const { id, nombre, descripcion, precio, imagenUrl, imagenes, dimensiones, activo, stock, orden, categoriaId, llevaEmpaque, precioEmpaque, sku, tieneVariantes } = body;
+        const { 
+            id, nombre, descripcion, precio, imagenUrl, imagenes, dimensiones, activo, 
+            stock, orden, categoriaId, llevaEmpaque, precioEmpaque, sku, tieneVariantes,
+            fichaTecnica, caracteristicas, fotosDetalle, resenasConfig
+        } = body;
         
         if (!id || !nombre || precio === undefined) {
             return NextResponse.json({ error: 'El ID, nombre y precio son obligatorios' }, { status: 400 });
@@ -207,7 +219,11 @@ export async function PUT(req: Request) {
         const updatedExtra = {
             ...currentExtra,
             ...(imagenesList.length > 0 ? { imagenes: imagenesList } : {}),
-            ...(Array.isArray(dimensiones) ? { dimensiones } : {})
+            ...(Array.isArray(dimensiones) ? { dimensiones } : {}),
+            ...(fichaTecnica !== undefined ? { fichaTecnica } : {}),
+            ...(caracteristicas !== undefined ? { caracteristicas } : {}),
+            ...(fotosDetalle !== undefined ? { fotosDetalle } : {}),
+            ...(resenasConfig !== undefined ? { resenasConfig } : {})
         };
 
         const prodActualizado = await (prisma as any).producto.update({

@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Plus, Dribbble, Users, CheckCircle2, ChevronRight, Loader2 } from 'lucide-react';
 import CanchaForm from '@/components/admin/CanchaForm';
 import { useSession } from 'next-auth/react';
 
 export default function CanchasAdminPage() {
     const { data: session } = useSession();
+    const router = useRouter();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [canchas, setCanchas] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -14,8 +16,18 @@ export default function CanchasAdminPage() {
 
     const fetchCanchas = async () => {
         try {
-            const negocioId = (session?.user as any)?.negocioId;
-            const res = await fetch(`/api/canchas?negocioId=${negocioId || ''}`);
+            // Verificar capabilities primero
+            const entRes = await fetch('/api/admin/entitlements');
+            if (entRes.ok) {
+                const entData = await entRes.json();
+                const caps = entData.capabilities || {};
+                if (!caps.COURTS && !caps.courts) {
+                    router.replace('/admin/servicios');
+                    return;
+                }
+            }
+
+            const res = await fetch('/api/canchas');
             const data = await res.json();
             if (Array.isArray(data)) {
                 setCanchas(data);

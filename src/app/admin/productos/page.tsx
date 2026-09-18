@@ -4,15 +4,17 @@ import React, { useState, useEffect } from 'react';
 import { 
     Plus, Edit, Trash2, Loader2, Save, X, ToggleLeft, ToggleRight, 
     ShoppingBag, Search, Tag, Image as ImageIcon, AlertTriangle,
-    Package, Layers, DollarSign, HelpCircle, ExternalLink, Copy, Box, Info, Sparkles
+    Package, Layers, DollarSign, HelpCircle, ExternalLink, Copy, Box, Info, Sparkles,
+    Star, CheckCircle2, FileText, Check, Zap, Settings2, ArrowRight
 } from 'lucide-react';
 import ImageUploader from '@/components/ui/ImageUploader';
 import Image from 'next/image';
 import ProductVariantManager from '@/components/admin/ProductVariantManager';
 
 import Link from 'next/link';
-import { FolderPlus } from 'lucide-react';
+import { FolderPlus, FileSpreadsheet } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import TemplateDownloadButton from '@/components/admin/TemplateDownloadButton';
 
 interface Product {
     id: string;
@@ -65,7 +67,45 @@ export default function AdminProductos() {
     // Product Modal states
     const [isOpen, setIsOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-    const [modalTab, setModalTab] = useState<'basic' | 'inventory' | 'variants' | 'pricing' | 'all'>('all');
+    const [modalTab, setModalTab] = useState<'basic' | 'inventory' | 'variants' | 'pricing' | 'details' | 'all'>('all');
+    const [creationMode, setCreationMode] = useState<'simple' | 'advanced'>('simple');
+
+    // Ficha Técnica, Detalles y Reseñas
+    const [caracteristicas, setCaracteristicas] = useState<string[]>([]);
+    const [newFeatureInput, setNewFeatureInput] = useState('');
+    const [fichaTecnica, setFichaTecnica] = useState<{
+        material?: string;
+        cuidados?: string;
+        garantia?: string;
+        corte?: string;
+        origen?: string;
+        peso?: string;
+    }>({
+        material: '',
+        cuidados: '',
+        garantia: '',
+        corte: '',
+        origen: '',
+        peso: ''
+    });
+    const [fotosDetalle, setFotosDetalle] = useState<Array<{ url: string; label: string }>>([
+        { url: '', label: 'Bordado 3D de alta densidad' },
+        { url: '', label: 'Ajuste snapback' },
+        { url: '', label: 'Visera plana premium' }
+    ]);
+    const [resenasConfig, setResenasConfig] = useState<{
+        rating: number;
+        totalOpiniones: number;
+        reviews: Array<{ autor: string; calif: number; comentario: string }>;
+    }>({
+        rating: 4.9,
+        totalOpiniones: 124,
+        reviews: [
+            { autor: 'Carlos M.', calif: 5, comentario: '¡Calidad insuperable! La tela y el acabado son de primer nivel. El envío llegó en menos de 24 horas.' },
+            { autor: 'Sofía R.', calif: 5, comentario: 'La talla queda perfecta y los colores son exactamente iguales a las fotos. Muy recomendada.' },
+            { autor: 'Mateo G.', calif: 5, comentario: 'Excelente compra, la mejor gorra que he tenido. Volveré a pedir más colores.' }
+        ]
+    });
 
     // Quick Category Modal states
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -293,6 +333,8 @@ export default function AdminProductos() {
 
     const handleCreateNew = () => {
         setEditingProduct(null);
+        setCreationMode('simple');
+        setModalTab('all');
         setNombre('');
         setDescripcion('');
         setPrecio('0');
@@ -332,11 +374,50 @@ export default function AdminProductos() {
                 newValueInput: ''
             }
         ]);
+        setCaracteristicas([
+            'Confección estructurada de máxima durabilidad',
+            'Materiales premium con acabado suave y transpirable',
+            'Bordados y costuras de alta densidad reforzadas',
+            'Ajuste cómodo y resistente para uso prolongado'
+        ]);
+        setNewFeatureInput('');
+        setFichaTecnica({
+            material: '100% Algodón Premium / Mezcla reforzada',
+            cuidados: 'Lavar con agua fría, no usar lejía ni blanqueadores',
+            garantia: 'Garantía oficial de 30 días por defectos de fábrica',
+            corte: 'Estructurado / Confort fit',
+            origen: 'Importación Premium',
+            peso: '120g'
+        });
+        setFotosDetalle([
+            { url: '', label: 'Bordado 3D de alta densidad' },
+            { url: '', label: 'Ajuste snapback' },
+            { url: '', label: 'Visera plana premium' }
+        ]);
+        setResenasConfig({
+            rating: 4.9,
+            totalOpiniones: 124,
+            reviews: [
+                { autor: 'Carlos M.', calif: 5, comentario: '¡Calidad insuperable! La tela y el acabado son de primer nivel. El envío llegó en menos de 24 horas.' },
+                { autor: 'Sofía R.', calif: 5, comentario: 'La talla queda perfecta y los colores son exactamente iguales a las fotos. Muy recomendada.' },
+                { autor: 'Mateo G.', calif: 5, comentario: 'Excelente compra, la mejor gorra que he tenido. Volveré a pedir más colores.' }
+            ]
+        });
         setIsOpen(true);
     };
 
     const handleOpenEdit = (p: any) => {
         setEditingProduct(p);
+        const hasAdvanced = Boolean(
+            p.tieneVariantes || 
+            (p.variantes && p.variantes.length > 0) ||
+            p.sku ||
+            (p.extraInfo?.caracteristicas && p.extraInfo.caracteristicas.length > 0) ||
+            (p.extraInfo?.fotosDetalle && p.extraInfo.fotosDetalle.some((f: any) => f.url)) ||
+            (p.extraInfo?.fichaTecnica && Object.values(p.extraInfo.fichaTecnica).some(Boolean))
+        );
+        setCreationMode(hasAdvanced ? 'advanced' : 'simple');
+        setModalTab('all');
         setNombre(p.nombre);
         setDescripcion(p.descripcion || '');
         setPrecio(p.precio.toString());
@@ -403,6 +484,37 @@ export default function AdminProductos() {
             ]);
         }
 
+        const extra = (p.extraInfo && typeof p.extraInfo === 'object') ? p.extraInfo : {};
+        setCaracteristicas(Array.isArray(extra.caracteristicas) && extra.caracteristicas.length > 0 ? extra.caracteristicas : [
+            'Confección estructurada de máxima durabilidad',
+            'Materiales premium con acabado suave y transpirable',
+            'Bordados y costuras de alta densidad reforzadas',
+            'Ajuste cómodo y resistente para uso prolongado'
+        ]);
+        setNewFeatureInput('');
+        setFichaTecnica({
+            material: extra.fichaTecnica?.material || '100% Algodón Premium / Mezcla reforzada',
+            cuidados: extra.fichaTecnica?.cuidados || 'Lavar con agua fría, no usar lejía ni blanqueadores',
+            garantia: extra.fichaTecnica?.garantia || 'Garantía oficial de 30 días por defectos de fábrica',
+            corte: extra.fichaTecnica?.corte || 'Estructurado / Confort fit',
+            origen: extra.fichaTecnica?.origen || 'Importación Premium',
+            peso: extra.fichaTecnica?.peso || '120g'
+        });
+        setFotosDetalle(Array.isArray(extra.fotosDetalle) && extra.fotosDetalle.length > 0 ? extra.fotosDetalle : [
+            { url: '', label: 'Bordado 3D de alta densidad' },
+            { url: '', label: 'Ajuste snapback' },
+            { url: '', label: 'Visera plana premium' }
+        ]);
+        setResenasConfig(extra.resenasConfig && typeof extra.resenasConfig === 'object' ? extra.resenasConfig : {
+            rating: 4.9,
+            totalOpiniones: 124,
+            reviews: [
+                { autor: 'Carlos M.', calif: 5, comentario: '¡Calidad insuperable! La tela y el acabado son de primer nivel. El envío llegó en menos de 24 horas.' },
+                { autor: 'Sofía R.', calif: 5, comentario: 'La talla queda perfecta y los colores son exactamente iguales a las fotos. Muy recomendada.' },
+                { autor: 'Mateo G.', calif: 5, comentario: 'Excelente compra, la mejor gorra que he tenido. Volveré a pedir más colores.' }
+            ]
+        });
+
         setIsOpen(true);
     };
 
@@ -445,7 +557,11 @@ export default function AdminProductos() {
                 categoriaId: categoriaId || null,
                 llevaEmpaque: isStore ? false : llevaEmpaque,
                 precioEmpaque: isStore ? 0 : parseNum(precioEmpaque, 0.25),
-                variantesIniciales: !isEdit && tieneVariantes ? initialVariants : undefined
+                variantesIniciales: !isEdit && tieneVariantes ? initialVariants : undefined,
+                caracteristicas,
+                fichaTecnica,
+                fotosDetalle,
+                resenasConfig
             };
 
             const res = await fetch('/api/admin/productos', {
@@ -516,10 +632,22 @@ export default function AdminProductos() {
                         Productos
                     </h1>
                     <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1.5">
-                        Administra el catálogo de pinchos y productos que ofreces
+                        {tipoUpper === 'PINCHOS' 
+                            ? 'Administra el catálogo de pinchos y productos que ofreces'
+                            : tipoUpper === 'SHOE_CARE' || tipoUpper === 'LAVANDERIA'
+                            ? 'Administra el catálogo de productos, accesorios y combos de cuidado'
+                            : 'Administra el catálogo de productos y artículos de tu negocio'}
                     </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                    <TemplateDownloadButton size="small" />
+                    <Link
+                        href="/admin/catalogo/importar"
+                        className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
+                    >
+                        <FileSpreadsheet className="size-4 text-emerald-600" />
+                        Importar Catálogo
+                    </Link>
                     <Link
                         href="/admin/categorias"
                         className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
@@ -693,80 +821,350 @@ export default function AdminProductos() {
                             </button>
                         </div>
 
-                        {/* Main Body with Sidebar + Content */}
-                        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
-                            {/* Sidebar Navigation */}
-                            <div className="w-full lg:w-72 bg-slate-50/70 border-b lg:border-b-0 lg:border-r border-slate-150 p-4 sm:p-5 flex flex-col justify-between shrink-0 space-y-4 overflow-y-auto">
-                                <div className="space-y-2">
-                                    {[
-                                        { id: 'basic', num: '1', title: 'Información básica', desc: 'Nombre, descripción y categoría', icon: Tag },
-                                        { id: 'inventory', num: '2', title: 'Inventario y estado', desc: 'Stock, estado y orden visual', icon: Package },
-                                        { id: 'variants', num: '3', title: 'Variantes del producto', desc: 'Crea las variantes y atributos', icon: Layers },
-                                        { id: 'pricing', num: '4', title: 'Precio y publicación', desc: 'Precio, impuestos y visibilidad', icon: DollarSign },
-                                    ].map(step => {
-                                        const IconComp = step.icon;
-                                        const isActive = modalTab === step.id || modalTab === 'all';
-                                        return (
-                                            <button
-                                                key={step.id}
-                                                type="button"
-                                                onClick={() => setModalTab(step.id as any)}
-                                                className={`w-full p-3 rounded-2xl text-left transition-all flex items-start gap-3 border cursor-pointer ${
-                                                    modalTab === step.id
-                                                        ? 'bg-teal-50/90 border-teal-300 text-teal-950 shadow-xs ring-1 ring-teal-500/20'
-                                                        : 'bg-white hover:bg-slate-100/70 border-slate-200/80 text-slate-700'
-                                                }`}
+                        {/* Switcher de Modos: Simple vs Avanzado */}
+                        <div className="px-4 sm:px-6 py-2 bg-slate-50 border-b border-slate-200/80 flex items-center justify-between gap-2 shrink-0">
+                            <div className="flex items-center p-1 bg-slate-200/70 rounded-xl">
+                                <button
+                                    type="button"
+                                    onClick={() => setCreationMode('simple')}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                                        creationMode === 'simple'
+                                            ? 'bg-white text-teal-900 shadow-xs'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    <Zap className="size-3.5 text-teal-600" />
+                                    <span>Modo Simple</span>
+                                    <span className="hidden sm:inline text-[9px] font-extrabold uppercase bg-teal-50 text-teal-700 px-1.5 py-0.5 rounded-md">
+                                        Predeterminado
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setCreationMode('advanced')}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                                        creationMode === 'advanced'
+                                            ? 'bg-white text-teal-900 shadow-xs'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    <Settings2 className="size-3.5 text-teal-600" />
+                                    <span>Opciones Avanzadas</span>
+                                    {tieneVariantes && (
+                                        <span className="size-2 rounded-full bg-teal-500 animate-pulse" title="Variantes activas" />
+                                    )}
+                                </button>
+                            </div>
+                            <div className="text-[11px] text-slate-400 font-medium hidden sm:block">
+                                {creationMode === 'simple' 
+                                    ? '⚡ Nombre, fotos, categoría, precio, stock y descripción' 
+                                    : '🛠️ Variantes, inventario, SKU, ficha técnica y reseñas'}
+                            </div>
+                        </div>
+
+                        {creationMode === 'simple' ? (
+                            /* Modo Simple Rápido y Optimizado para Móvil */
+                            <div className="flex-1 p-4 sm:p-6 overflow-y-auto custom-scrollbar bg-slate-50/40">
+                                <form id="productForm" onSubmit={handleSave} className="max-w-2xl mx-auto space-y-4 sm:space-y-5">
+                                    {/* 1. Galería de Imágenes */}
+                                    <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                                <ImageIcon className="size-3.5 text-teal-600" />
+                                                <span>Imágenes del producto ({imagenesList.length})</span>
+                                            </label>
+                                            <span className="text-[10px] text-teal-600 font-bold">
+                                                La primera foto será la principal
+                                            </span>
+                                        </div>
+
+                                        {/* Miniaturas */}
+                                        {imagenesList.length > 0 && (
+                                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+                                                {imagenesList.map((url, idx) => (
+                                                    <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-2xs">
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img src={url} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
+                                                        {idx === 0 && (
+                                                            <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-teal-600 text-white font-black text-[8px] uppercase shadow-xs">
+                                                                Principal
+                                                            </span>
+                                                        )}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const nextList = imagenesList.filter((_, i) => i !== idx);
+                                                                setImagenesList(nextList);
+                                                                if (idx === 0) setImagenUrl(nextList[0] || '');
+                                                            }}
+                                                            className="absolute top-1 right-1 size-6 rounded-full bg-rose-600 text-white flex items-center justify-center sm:opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-md"
+                                                            title="Eliminar foto"
+                                                        >
+                                                            <X className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        <ImageUploader
+                                            category="products"
+                                            currentUrl=""
+                                            onUploadSuccess={(media) => {
+                                                const nextList = [...imagenesList, media.url];
+                                                setImagenesList(nextList);
+                                                if (!imagenUrl) setImagenUrl(media.url);
+                                            }}
+                                            label={imagenesList.length === 0 ? "Subir foto del producto" : "+ Añadir otra foto"}
+                                            aspect="square"
+                                        />
+                                    </div>
+
+                                    {/* 2. Datos Clave: Nombre y Categoría */}
+                                    <div className="bg-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                                                Nombre del producto <span className="text-rose-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                required
+                                                placeholder="Ej: Camiseta Oversize Negra, Hamburguesa Doble..."
+                                                value={nombre}
+                                                onChange={e => setNombre(e.target.value)}
+                                                className="w-full bg-slate-50/80 rounded-xl px-4 py-2.5 sm:py-3 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-teal-500 focus:bg-white transition-colors"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <div className="flex justify-between items-center mb-1.5">
+                                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                                                    Categoría <span className="text-rose-500">*</span>
+                                                </label>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsCategoryModalOpen(true)}
+                                                    className="text-[10px] font-black text-teal-700 hover:text-teal-800 uppercase tracking-wider flex items-center gap-1 bg-teal-50 px-2 py-0.5 rounded-lg transition-colors cursor-pointer"
+                                                >
+                                                    <FolderPlus className="size-3" />
+                                                    <span>+ Nueva</span>
+                                                </button>
+                                            </div>
+                                            <select
+                                                required
+                                                value={categoriaId}
+                                                onChange={e => setCategoriaId(e.target.value)}
+                                                className="w-full bg-slate-50/80 rounded-xl px-4 py-2.5 sm:py-3 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:border-teal-500 cursor-pointer"
                                             >
-                                                <div className={`size-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-black ${
-                                                    modalTab === step.id ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600'
-                                                }`}>
-                                                    <IconComp className="size-4" />
+                                                <option value="" disabled>Seleccionar categoría...</option>
+                                                {categories.map(cat => (
+                                                    <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Precio y Stock en 2 columnas */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1">
+                                            <div>
+                                                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                                                    Precio ($) <span className="text-rose-500">*</span>
+                                                </label>
+                                                <div className="relative">
+                                                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-extrabold text-sm">$</span>
+                                                    <input
+                                                        type="number"
+                                                        required
+                                                        step="0.01"
+                                                        min="0"
+                                                        placeholder="0.00"
+                                                        value={precio}
+                                                        onChange={e => setPrecio(e.target.value)}
+                                                        className="w-full bg-slate-50/80 rounded-xl pl-8 pr-3.5 py-2.5 sm:py-3 border border-slate-200 text-xs sm:text-sm font-extrabold text-slate-900 focus:outline-none focus:border-teal-500 focus:bg-white"
+                                                    />
                                                 </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <div className="text-xs font-extrabold line-clamp-1">
-                                                        {step.num}. {step.title}
-                                                    </div>
-                                                    <div className="text-[10px] text-slate-400 font-medium line-clamp-1">
-                                                        {step.desc}
-                                                    </div>
+                                            </div>
+
+                                            <div>
+                                                <div className="flex items-center justify-between mb-1.5">
+                                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                                                        Stock disponible
+                                                    </label>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setStock(stock === '' ? '20' : '')}
+                                                        className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
+                                                            stock === '' ? 'bg-teal-100 text-teal-800' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                                        }`}
+                                                    >
+                                                        {stock === '' ? '∞ Ilimitado' : 'Definir número'}
+                                                    </button>
                                                 </div>
-                                            </button>
-                                        );
-                                    })}
-                                    {modalTab !== 'all' && (
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    placeholder="Vacío = Stock ilimitado"
+                                                    value={stock}
+                                                    onChange={e => setStock(e.target.value)}
+                                                    className="w-full bg-slate-50/80 rounded-xl px-4 py-2.5 sm:py-3 border border-slate-200 text-xs sm:text-sm font-semibold placeholder:text-slate-400 focus:outline-none focus:border-teal-500 focus:bg-white"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Descripción */}
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                                                Descripción del producto
+                                            </label>
+                                            <textarea
+                                                placeholder="Describe el producto, materiales o ingredientes..."
+                                                value={descripcion}
+                                                onChange={e => setDescripcion(e.target.value)}
+                                                rows={3}
+                                                className="w-full bg-slate-50/80 rounded-xl px-4 py-2.5 border border-slate-200 text-xs sm:text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-teal-500 focus:bg-white resize-none"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Banner Opciones Avanzadas */}
+                                    <div className="bg-gradient-to-r from-teal-50/90 to-emerald-50/90 p-4 rounded-2xl sm:rounded-3xl border border-teal-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                                        <div className="space-y-0.5">
+                                            <div className="flex items-center gap-1.5 text-teal-950 font-black text-xs">
+                                                <Sparkles className="size-3.5 text-teal-600" />
+                                                <span>¿Quieres agregar variantes, SKU o ficha técnica?</span>
+                                            </div>
+                                            <p className="text-[11px] text-slate-500 font-medium">
+                                                Crea opciones de tallas/colores, control de empaque para llevar, viñetas de características y reseñas.
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setCreationMode('advanced')}
+                                            className="w-full sm:w-auto px-4 py-2 rounded-xl bg-white hover:bg-teal-50 text-teal-900 border border-teal-200 text-xs font-black shadow-xs transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+                                        >
+                                            <span>Opciones avanzadas</span>
+                                            <ArrowRight className="size-3.5 text-teal-600" />
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        ) : (
+                            /* Modo Avanzado con Layout Responsivo: Tabs horizontales en móvil y Sidebar en desktop */
+                            <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+                                {/* Navegación Móvil Horizontal */}
+                                <div className="lg:hidden w-full overflow-x-auto p-2 bg-slate-100/90 border-b border-slate-200 shrink-0 no-scrollbar">
+                                    <div className="flex items-center gap-1.5 min-w-max">
+                                        {[
+                                            { id: 'basic', num: '1', title: 'Básico', icon: Tag },
+                                            { id: 'inventory', num: '2', title: 'Inventario', icon: Package },
+                                            { id: 'variants', num: '3', title: 'Variantes', icon: Layers },
+                                            { id: 'pricing', num: '4', title: 'Precio/SKU', icon: DollarSign },
+                                            { id: 'details', num: '5', title: 'Ficha técnica', icon: Sparkles },
+                                        ].map(step => {
+                                            const IconComp = step.icon;
+                                            const isActive = modalTab === step.id;
+                                            return (
+                                                <button
+                                                    key={step.id}
+                                                    type="button"
+                                                    onClick={() => setModalTab(step.id as any)}
+                                                    className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all shrink-0 cursor-pointer ${
+                                                        isActive
+                                                            ? 'bg-teal-600 text-white shadow-xs'
+                                                            : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                                                    }`}
+                                                >
+                                                    <IconComp className="size-3.5" />
+                                                    <span>{step.num}. {step.title}</span>
+                                                </button>
+                                            );
+                                        })}
                                         <button
                                             type="button"
                                             onClick={() => setModalTab('all')}
-                                            className="w-full text-center text-[10px] font-bold text-teal-700 hover:underline pt-1 cursor-pointer"
+                                            className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all shrink-0 cursor-pointer ${
+                                                modalTab === 'all'
+                                                    ? 'bg-slate-900 text-white shadow-xs'
+                                                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                                            }`}
                                         >
-                                            Mostrar todas las secciones
+                                            Ver todo
                                         </button>
-                                    )}
-                                </div>
-
-                                {/* Guía / Ayuda Box */}
-                                <div className="p-4 bg-white rounded-2xl border border-slate-200/80 space-y-2">
-                                    <div className="flex items-center gap-2 text-slate-700 text-xs font-extrabold">
-                                        <HelpCircle className="size-4 text-teal-600" />
-                                        <span>¿Necesitas ayuda?</span>
                                     </div>
-                                    <p className="text-[10px] text-slate-400 font-medium">Consulta nuestra guía de variantes e inventario.</p>
-                                    <a
-                                        href="/admin/ayuda"
-                                        target="_blank"
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 text-[10px] font-bold text-slate-700 bg-slate-50 transition-colors w-full justify-center"
-                                    >
-                                        <span>Ver guía</span>
-                                        <ExternalLink className="size-3 text-slate-400" />
-                                    </a>
                                 </div>
-                            </div>
 
-                            {/* Content Body */}
-                            <div className="flex-1 p-5 sm:p-6 overflow-y-auto space-y-6 custom-scrollbar bg-slate-50/30">
-                                <form id="productForm" onSubmit={handleSave} className="space-y-6">
-                                    
-                                    {/* SECCIÓN 1: INFORMACIÓN BÁSICA */}
+                                {/* Sidebar Navigation Desktop */}
+                                <div className="hidden lg:flex lg:w-72 bg-slate-50/70 border-r border-slate-150 p-4 sm:p-5 flex-col justify-between shrink-0 space-y-4 overflow-y-auto">
+                                    <div className="space-y-2">
+                                        {[
+                                            { id: 'basic', num: '1', title: 'Información básica', desc: 'Nombre, descripción y categoría', icon: Tag },
+                                            { id: 'inventory', num: '2', title: 'Inventario y estado', desc: 'Stock, estado y orden visual', icon: Package },
+                                            { id: 'variants', num: '3', title: 'Variantes del producto', desc: 'Crea las variantes y atributos', icon: Layers },
+                                            { id: 'pricing', num: '4', title: 'Precio y publicación', desc: 'Precio, impuestos y visibilidad', icon: DollarSign },
+                                            { id: 'details', num: '5', title: 'Ficha técnica y detalles', desc: 'Checks, materiales, fotos y reseñas', icon: Sparkles },
+                                        ].map(step => {
+                                            const IconComp = step.icon;
+                                            const isActive = modalTab === step.id;
+                                            return (
+                                                <button
+                                                    key={step.id}
+                                                    type="button"
+                                                    onClick={() => setModalTab(step.id as any)}
+                                                    className={`w-full p-3 rounded-2xl text-left transition-all flex items-start gap-3 border cursor-pointer ${
+                                                        modalTab === step.id
+                                                            ? 'bg-teal-50/90 border-teal-300 text-teal-950 shadow-xs ring-1 ring-teal-500/20'
+                                                            : 'bg-white hover:bg-slate-100/70 border-slate-200/80 text-slate-700'
+                                                    }`}
+                                                >
+                                                    <div className={`size-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-black ${
+                                                        modalTab === step.id ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600'
+                                                    }`}>
+                                                        <IconComp className="size-4" />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="text-xs font-extrabold line-clamp-1">
+                                                            {step.num}. {step.title}
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-400 font-medium line-clamp-1">
+                                                            {step.desc}
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                        {modalTab !== 'all' && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setModalTab('all')}
+                                                className="w-full text-center text-[10px] font-bold text-teal-700 hover:underline pt-1 cursor-pointer"
+                                            >
+                                                Mostrar todas las secciones
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Guía / Ayuda Box */}
+                                    <div className="p-4 bg-white rounded-2xl border border-slate-200/80 space-y-2">
+                                        <div className="flex items-center gap-2 text-slate-700 text-xs font-extrabold">
+                                            <HelpCircle className="size-4 text-teal-600" />
+                                            <span>¿Necesitas ayuda?</span>
+                                        </div>
+                                        <p className="text-[10px] text-slate-400 font-medium">Consulta nuestra guía de variantes e inventario.</p>
+                                        <a
+                                            href="/admin/ayuda"
+                                            target="_blank"
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 text-[10px] font-bold text-slate-700 bg-slate-50 transition-colors w-full justify-center"
+                                        >
+                                            <span>Ver guía</span>
+                                            <ExternalLink className="size-3 text-slate-400" />
+                                        </a>
+                                    </div>
+                                </div>
+
+                                {/* Content Body de Avanzado */}
+                                <div className="flex-1 p-5 sm:p-6 overflow-y-auto space-y-6 custom-scrollbar bg-slate-50/30">
+                                    <form id="productForm" onSubmit={handleSave} className="space-y-6">
+                                        
+                                        {/* SECCIÓN 1: INFORMACIÓN BÁSICA */}
                                     {(modalTab === 'all' || modalTab === 'basic') && (
                                         <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
                                             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -1258,25 +1656,411 @@ export default function AdminProductos() {
                                             )}
                                         </div>
                                     )}
-                                </form>
+
+                                    {/* SECCIÓN 5: FICHA TÉCNICA, DETALLES Y RESEÑAS */}
+                                    {(modalTab === 'all' || modalTab === 'details') && (
+                                        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-6">
+                                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <Sparkles className="size-4 text-teal-600" />
+                                                    <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-900">
+                                                        FICHA TÉCNICA, DETALLES Y RESEÑAS
+                                                    </h4>
+                                                </div>
+                                                <span className="text-[10px] font-bold text-slate-400">
+                                                    Personaliza las pestañas de la tienda online
+                                                </span>
+                                            </div>
+
+                                            {/* 1. Características destacadas con Check */}
+                                            <div className="space-y-3 p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                                                        <CheckCircle2 className="size-3.5 text-teal-600" />
+                                                        <span>Características destacadas (Viñetas con Check)</span>
+                                                    </label>
+                                                    <span className="text-[10px] text-slate-400 font-medium">Se muestran en la pestaña "Descripción"</span>
+                                                </div>
+
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={newFeatureInput}
+                                                        onChange={e => setNewFeatureInput(e.target.value)}
+                                                        onKeyDown={e => {
+                                                            if (e.key === 'Enter') {
+                                                                e.preventDefault();
+                                                                if (newFeatureInput.trim()) {
+                                                                    setCaracteristicas(prev => [...prev, newFeatureInput.trim()]);
+                                                                    setNewFeatureInput('');
+                                                                }
+                                                            }
+                                                        }}
+                                                        placeholder="Ej: Confección estructurada de máxima durabilidad"
+                                                        className="flex-1 bg-white rounded-xl px-3.5 py-2 border border-slate-200 text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-teal-500"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (newFeatureInput.trim()) {
+                                                                setCaracteristicas(prev => [...prev, newFeatureInput.trim()]);
+                                                                setNewFeatureInput('');
+                                                            }
+                                                        }}
+                                                        className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0"
+                                                    >
+                                                        + Añadir
+                                                    </button>
+                                                </div>
+
+                                                <div className="space-y-1.5 pt-1">
+                                                    {caracteristicas.map((item, cIdx) => (
+                                                        <div key={cIdx} className="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-slate-200/80 group">
+                                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-700 min-w-0">
+                                                                <div className="size-4 rounded-full bg-teal-600 text-white flex items-center justify-center shrink-0">
+                                                                    <Check className="size-2.5 text-white stroke-[3]" />
+                                                                </div>
+                                                                <span className="truncate">{item}</span>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setCaracteristicas(prev => prev.filter((_, i) => i !== cIdx))}
+                                                                className="text-slate-400 hover:text-rose-600 p-1 transition-colors cursor-pointer"
+                                                                title="Eliminar viñeta"
+                                                            >
+                                                                <Trash2 className="size-3.5" />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* 2. Ficha Técnica */}
+                                            <div className="space-y-3 p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                                                        <FileText className="size-3.5 text-teal-600" />
+                                                        <span>Ficha Técnica y Cuidados</span>
+                                                    </label>
+                                                    <span className="text-[10px] text-slate-400 font-medium">Se muestran en la pestaña "Detalles"</span>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                                            Material / Composición
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={fichaTecnica.material || ''}
+                                                            onChange={e => setFichaTecnica(prev => ({ ...prev, material: e.target.value }))}
+                                                            placeholder="Ej: 100% Algodón Premium / Mezcla reforzada"
+                                                            className="w-full bg-white rounded-xl px-3 py-2 border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-teal-500"
+                                                        />
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                                            Instrucciones de Cuidado
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={fichaTecnica.cuidados || ''}
+                                                            onChange={e => setFichaTecnica(prev => ({ ...prev, cuidados: e.target.value }))}
+                                                            placeholder="Ej: Lavar con agua fría, no usar lejía"
+                                                            className="w-full bg-white rounded-xl px-3 py-2 border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-teal-500"
+                                                        />
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                                            Garantía del Producto
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={fichaTecnica.garantia || ''}
+                                                            onChange={e => setFichaTecnica(prev => ({ ...prev, garantia: e.target.value }))}
+                                                            placeholder="Ej: Garantía oficial de 30 días"
+                                                            className="w-full bg-white rounded-xl px-3 py-2 border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-teal-500"
+                                                        />
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                                            Corte / Estilo
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={fichaTecnica.corte || ''}
+                                                            onChange={e => setFichaTecnica(prev => ({ ...prev, corte: e.target.value }))}
+                                                            placeholder="Ej: Estructurado / Ajuste regular"
+                                                            className="w-full bg-white rounded-xl px-3 py-2 border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-teal-500"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* 3. Fotos de Detalle con Etiquetas (3 Fotos) */}
+                                            <div className="space-y-3 p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                                                        <ImageIcon className="size-3.5 text-teal-600" />
+                                                        <span>Cuadrícula de Fotos de Detalle con Etiquetas</span>
+                                                    </label>
+                                                    {imagenesList.length > 0 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setFotosDetalle([
+                                                                    { url: imagenesList[0] || '', label: fotosDetalle[0]?.label || 'Bordado 3D de alta densidad' },
+                                                                    { url: imagenesList[1] || imagenesList[0] || '', label: fotosDetalle[1]?.label || 'Ajuste snapback' },
+                                                                    { url: imagenesList[2] || imagenesList[0] || '', label: fotosDetalle[2]?.label || 'Visera plana premium' },
+                                                                ]);
+                                                            }}
+                                                            className="text-[10px] font-bold text-teal-700 hover:underline cursor-pointer"
+                                                        >
+                                                            Usar fotos de la galería
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                    {[0, 1, 2].map(idx => (
+                                                        <div key={idx} className="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+                                                            <div className="text-[10px] font-black text-slate-400 uppercase">
+                                                                Foto {idx + 1} {idx === 0 ? '(Principal Ancha)' : '(Inferior)'}
+                                                            </div>
+                                                            <div className="h-20 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 relative flex items-center justify-center">
+                                                                {(fotosDetalle[idx]?.url || imagenesList[idx] || imagenUrl) ? (
+                                                                    <img
+                                                                        src={fotosDetalle[idx]?.url || imagenesList[idx] || imagenUrl}
+                                                                        alt={`Detalle ${idx + 1}`}
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <span className="text-[9px] text-slate-400 font-bold">Sin foto</span>
+                                                                )}
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-[9px] font-bold text-slate-500 uppercase mb-1">
+                                                                    Texto de la Insignia
+                                                                </label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={fotosDetalle[idx]?.label || ''}
+                                                                    onChange={e => {
+                                                                        const val = e.target.value;
+                                                                        setFotosDetalle(prev => {
+                                                                            const copy = [...prev];
+                                                                            copy[idx] = { ...copy[idx], label: val };
+                                                                            return copy;
+                                                                        });
+                                                                    }}
+                                                                    placeholder="Ej: Bordado 3D de alta densidad"
+                                                                    className="w-full bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-[9px] font-bold text-slate-500 uppercase mb-1">
+                                                                    URL Foto Específica (Opcional)
+                                                                </label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={fotosDetalle[idx]?.url || ''}
+                                                                    onChange={e => {
+                                                                        const val = e.target.value;
+                                                                        setFotosDetalle(prev => {
+                                                                            const copy = [...prev];
+                                                                            copy[idx] = { ...copy[idx], url: val };
+                                                                            return copy;
+                                                                        });
+                                                                    }}
+                                                                    placeholder="https://..."
+                                                                    className="w-full bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-200 text-[11px] font-mono text-slate-700 focus:outline-none focus:border-teal-500"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* 4. Reseñas y Calificaciones */}
+                                            <div className="space-y-3 p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                                                        <Star className="size-3.5 text-amber-500 fill-amber-500" />
+                                                        <span>Calificaciones y Reseñas Destacadas</span>
+                                                    </label>
+                                                    <span className="text-[10px] text-slate-400 font-medium">Se muestran en la pestaña "Reseñas"</span>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                                            Puntuación Promedio (1.0 - 5.0)
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            step="0.1"
+                                                            min="1"
+                                                            max="5"
+                                                            value={resenasConfig.rating}
+                                                            onChange={e => setResenasConfig(prev => ({ ...prev, rating: parseFloat(e.target.value) || 5.0 }))}
+                                                            className="w-full bg-white rounded-xl px-3 py-2 border border-slate-200 text-xs font-extrabold text-slate-900 focus:outline-none focus:border-teal-500"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                                                            Número Total de Opiniones
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={resenasConfig.totalOpiniones}
+                                                            onChange={e => setResenasConfig(prev => ({ ...prev, totalOpiniones: parseInt(e.target.value) || 0 }))}
+                                                            className="w-full bg-white rounded-xl px-3 py-2 border border-slate-200 text-xs font-extrabold text-slate-900 focus:outline-none focus:border-teal-500"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-3 pt-2">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">
+                                                            Opiniones de Clientes Verificadas ({resenasConfig.reviews.length})
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setResenasConfig(prev => ({
+                                                                    ...prev,
+                                                                    totalOpiniones: prev.totalOpiniones + 1,
+                                                                    reviews: [
+                                                                        ...prev.reviews,
+                                                                        { autor: '', calif: 5, comentario: '' }
+                                                                    ]
+                                                                }));
+                                                            }}
+                                                            className="text-[10px] font-black text-teal-700 hover:text-teal-800 uppercase tracking-wider flex items-center gap-1 bg-teal-50 px-2.5 py-1 rounded-lg transition-colors cursor-pointer border border-teal-200"
+                                                        >
+                                                            <span>+ Nueva Opinión</span>
+                                                        </button>
+                                                    </div>
+
+                                                    {resenasConfig.reviews.length === 0 ? (
+                                                        <div className="text-center py-6 bg-white rounded-xl border border-dashed border-slate-200">
+                                                            <p className="text-xs text-slate-400 font-medium">No hay opiniones configuradas.</p>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setResenasConfig(prev => ({
+                                                                        ...prev,
+                                                                        totalOpiniones: 1,
+                                                                        reviews: [{ autor: '', calif: 5, comentario: '' }]
+                                                                    }));
+                                                                }}
+                                                                className="mt-2 text-[10px] font-bold text-teal-600 hover:underline cursor-pointer"
+                                                            >
+                                                                Agregar la primera opinión
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        resenasConfig.reviews.map((rev, rIdx) => (
+                                                            <div key={rIdx} className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-2 relative group/rev">
+                                                                <div className="flex items-center justify-between gap-2">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={rev.autor}
+                                                                        onChange={e => {
+                                                                            const val = e.target.value;
+                                                                            setResenasConfig(prev => {
+                                                                                const copy = [...prev.reviews];
+                                                                                copy[rIdx] = { ...copy[rIdx], autor: val };
+                                                                                return { ...prev, reviews: copy };
+                                                                            });
+                                                                        }}
+                                                                        placeholder="Nombre del cliente (ej: Mariana G.)"
+                                                                        className="bg-slate-50 rounded-lg px-2.5 py-1 border border-slate-200 text-xs font-bold text-slate-800 flex-1 focus:outline-none focus:border-teal-500"
+                                                                    />
+                                                                    <div className="flex items-center gap-2 shrink-0">
+                                                                        <div className="flex items-center gap-1">
+                                                                            <span className="text-[10px] font-bold text-slate-400">Estrellas:</span>
+                                                                            <select
+                                                                                value={rev.calif}
+                                                                                onChange={e => {
+                                                                                    const val = parseInt(e.target.value) || 5;
+                                                                                    setResenasConfig(prev => {
+                                                                                        const copy = [...prev.reviews];
+                                                                                        copy[rIdx] = { ...copy[rIdx], calif: val };
+                                                                                        return { ...prev, reviews: copy };
+                                                                                    });
+                                                                                }}
+                                                                                className="bg-slate-50 rounded-lg px-2 py-1 border border-slate-200 text-xs font-bold text-amber-600 focus:outline-none focus:border-teal-500 cursor-pointer"
+                                                                            >
+                                                                                {[5, 4, 3, 2, 1].map(num => (
+                                                                                    <option key={num} value={num}>★ {num}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                        </div>
+                                                                        <button
+                                                                            type="button"
+                                                                            title="Eliminar opinión"
+                                                                            onClick={() => {
+                                                                                setResenasConfig(prev => {
+                                                                                    const filtered = prev.reviews.filter((_, i) => i !== rIdx);
+                                                                                    return {
+                                                                                        ...prev,
+                                                                                        totalOpiniones: Math.max(0, prev.totalOpiniones - 1),
+                                                                                        reviews: filtered
+                                                                                    };
+                                                                                });
+                                                                            }}
+                                                                            className="size-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors cursor-pointer border border-transparent hover:border-rose-200"
+                                                                        >
+                                                                            <Trash2 className="size-3.5" />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                                <textarea
+                                                                    rows={2}
+                                                                    value={rev.comentario}
+                                                                    onChange={e => {
+                                                                        const val = e.target.value;
+                                                                        setResenasConfig(prev => {
+                                                                            const copy = [...prev.reviews];
+                                                                            copy[rIdx] = { ...copy[rIdx], comentario: val };
+                                                                            return { ...prev, reviews: copy };
+                                                                        });
+                                                                    }}
+                                                                    placeholder="Comentario o testimonio del cliente..."
+                                                                    className="w-full bg-slate-50 rounded-lg p-2 border border-slate-200 text-xs font-medium text-slate-700 resize-none focus:outline-none focus:border-teal-500"
+                                                                />
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                    </form>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Footer Modal Action Bar */}
-                        <div className="px-6 py-4 border-t border-slate-150 bg-white flex items-center justify-between shrink-0">
+                        <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-t border-slate-150 bg-white flex items-center justify-between shrink-0">
                             <button
                                 type="button"
                                 onClick={() => setIsOpen(false)}
-                                className="px-5 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 font-extrabold text-xs transition-colors cursor-pointer"
+                                className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 font-extrabold text-xs transition-colors cursor-pointer"
                             >
                                 Cancelar
                             </button>
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 sm:gap-3">
                                 <button
                                     type="button"
                                     onClick={() => setIsOpen(false)}
-                                    className="px-5 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 font-extrabold text-xs transition-colors cursor-pointer hidden sm:block"
+                                    className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 font-extrabold text-xs transition-colors cursor-pointer hidden sm:block"
                                 >
                                     Guardar borrador
                                 </button>
@@ -1284,7 +2068,7 @@ export default function AdminProductos() {
                                     type="submit"
                                     form="productForm"
                                     disabled={saving}
-                                    className="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shadow-md active:scale-98 cursor-pointer disabled:opacity-50"
+                                    className="px-5 sm:px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shadow-md active:scale-98 cursor-pointer disabled:opacity-50"
                                 >
                                     {saving ? (
                                         <>
@@ -1293,7 +2077,7 @@ export default function AdminProductos() {
                                         </>
                                     ) : (
                                         <>
-                                            <span>Guardar y continuar</span>
+                                            <span>{editingProduct ? 'Guardar Cambios' : (creationMode === 'simple' ? 'Guardar Producto' : 'Guardar y Continuar')}</span>
                                             <span className="text-sm">→</span>
                                         </>
                                     )}

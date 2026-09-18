@@ -99,6 +99,65 @@ export const STORE_BLUEPRINT_MANIFEST: BlueprintManifest = {
   }
 };
 
+export const BARBER_BLUEPRINT_MANIFEST: BlueprintManifest = {
+  id: 'BARBER',
+  version: '1.0.0',
+  name: 'Blueprint Barbería & Peluquería',
+  description: 'Gestión rápida de citas, sillones de barbería y catálogo para cuidado masculino',
+  capabilities: [
+    { id: 'spa', version: '1.0.0', enabled: true, configuration: { slotIntervalMinutes: 30 }, dependencies: [] }
+  ],
+  defaultConfiguration: {
+    slotIntervalMinutes: 30,
+    requirePrepayment: false
+  }
+};
+
+export const CLINIC_BLUEPRINT_MANIFEST: BlueprintManifest = {
+  id: 'DENTAL',
+  version: '1.0.0',
+  name: 'Blueprint Clínica, Odontología & Salud',
+  description: 'Gestión de consultorios, médicos especialistas, turnos clínicos y pacientes',
+  capabilities: [
+    { id: 'spa', version: '1.0.0', enabled: true, configuration: { slotIntervalMinutes: 45 }, dependencies: [] }
+  ],
+  defaultConfiguration: {
+    slotIntervalMinutes: 45,
+    requirePrepayment: false
+  }
+};
+
+export const ACADEMY_BLUEPRINT_MANIFEST: BlueprintManifest = {
+  id: 'ACADEMY',
+  version: '1.0.0',
+  name: 'Blueprint Academia, Cursos & Clases',
+  description: 'Inscripción de alumnos, cursos, talleres y control de profesores',
+  capabilities: [
+    { id: 'courts', version: '1.0.0', enabled: true, configuration: { reservationDurationMinutes: 60 }, dependencies: [] }
+  ],
+  defaultConfiguration: {
+    reservationDurationMinutes: 60,
+    requirePrepayment: true
+  }
+};
+
+export const GYM_BLUEPRINT_MANIFEST: BlueprintManifest = {
+  id: 'GYM',
+  version: '1.0.0',
+  name: 'Blueprint Gimnasio & Centro Fitness',
+  description: 'Gestión especializada de socios, planes de membresía, control de accesos QR y asistencias',
+  capabilities: [
+    { id: 'memberships', version: '1.0.0', enabled: true, configuration: { allowFreezing: true }, dependencies: [] },
+    { id: 'attendance', version: '1.0.0', enabled: true, configuration: { duplicateScanWindowSeconds: 60 }, dependencies: [] }
+  ],
+  defaultConfiguration: {
+    allowFreezing: true,
+    maxFreezeDaysPerYear: 30,
+    accessGracePeriodDays: 0,
+    duplicateScanWindowSeconds: 60
+  }
+};
+
 export const ALL_BLUEPRINT_MANIFESTS: Record<string, BlueprintManifest> = {
   // Claves Enterprise (canónicas)
   RESTAURANT: RESTAURANT_BLUEPRINT_MANIFEST,
@@ -107,13 +166,21 @@ export const ALL_BLUEPRINT_MANIFESTS: Record<string, BlueprintManifest> = {
   SPORTS_COURTS: COURTS_BLUEPRINT_MANIFEST,
   PINCHO_LISTO: PINCHO_LISTO_BLUEPRINT_MANIFEST,
   STORE: STORE_BLUEPRINT_MANIFEST,
+  BARBER: BARBER_BLUEPRINT_MANIFEST,
+  DENTAL: CLINIC_BLUEPRINT_MANIFEST,
+  CLINIC: CLINIC_BLUEPRINT_MANIFEST,
+  ACADEMY: ACADEMY_BLUEPRINT_MANIFEST,
+  GYM: GYM_BLUEPRINT_MANIFEST,
 
   // Alias legacy (tipoNegocio en Prisma) → Blueprint Enterprise
   RESERVA: SPA_BLUEPRINT_MANIFEST,
-  PELUQUERIA: SPA_BLUEPRINT_MANIFEST,
+  PELUQUERIA: BARBER_BLUEPRINT_MANIFEST,
   PRODUCTOS: STORE_BLUEPRINT_MANIFEST,
   TIENDA: STORE_BLUEPRINT_MANIFEST,
   SHOE_CARE: LAUNDRY_BLUEPRINT_MANIFEST,
   CANCHAS: COURTS_BLUEPRINT_MANIFEST,
+  GIMNASIO: GYM_BLUEPRINT_MANIFEST,
+  FITNESS: GYM_BLUEPRINT_MANIFEST,
   'ordenes-servicio': LAUNDRY_BLUEPRINT_MANIFEST
 };
+

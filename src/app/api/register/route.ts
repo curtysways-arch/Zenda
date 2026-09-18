@@ -123,6 +123,22 @@ export async function POST(req: Request) {
             console.error("⚠️ Error al crear sucursal matriz:", branchError);
         }
 
+        // 5. Notificar al Super Admin por WhatsApp
+        try {
+            const { notifyAdminBusinessCreated } = await import('@/lib/adminNotificationHelper');
+            await notifyAdminBusinessCreated({
+                businessName: negocioNombre,
+                slug: result.nuevoNegocio.slug,
+                city: ciudad,
+                businessType: normalizedTipo,
+                userName: nombre,
+                userEmail: email,
+                userPhone: telefono || null
+            });
+        } catch (notifErr) {
+            console.error("⚠️ Error enviando WhatsApp al admin por nuevo negocio:", notifErr);
+        }
+
         return NextResponse.json({
             success: true,
             message: "Registro completado con éxito",

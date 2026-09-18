@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import DynamicFavicon from '@/components/DynamicFavicon';
@@ -54,7 +54,7 @@ import {
 import MapSelectionModal from '@/components/public/MapSelectionModal';
 
 interface ShoeCareBackofficeProps {
-  negocio: any;
+  negocio?: any;
 }
 
 type TabType = 'dashboard' | 'ordenes' | 'clientes' | 'perfil' | 'servicios' | 'promociones' | 'repartidores' | 'inventario' | 'planes' | 'reportes' | 'configuracion';
@@ -106,6 +106,36 @@ export default function ShoeCareBackoffice({ negocio: negocioProp }: ShoeCareBac
   const [inventory, setInventory] = useState<any[]>([]);
   const [promotions, setPromotions] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>({});
+  const [servicesList, setServicesList] = useState<any[]>(
+    Array.isArray(negocioProp?.services) && negocioProp.services.length > 0 ? negocioProp.services : []
+  );
+
+  // Catálogo unificado y reactivo de servicios registrados para el negocio
+  const effectiveServices = useMemo(() => {
+    const raw = (servicesList && servicesList.length > 0)
+      ? servicesList
+      : ((negocio?.services && Array.isArray(negocio.services) && negocio.services.length > 0)
+          ? negocio.services
+          : []);
+
+    if (raw.length > 0) {
+      return raw.map((s: any) => ({
+        id: s.id,
+        nombre: s.nombre,
+        precio: parseFloat(s.precio) || 0,
+        descripcion: s.descripcion || ''
+      }));
+    }
+
+    return [
+      { id: 'basico', nombre: 'Lavado Básico', precio: 4.00, descripcion: 'Ideal para calzado con poco suciedad' },
+      { id: 'completo', nombre: 'Lavado Completo', precio: 6.00, descripcion: 'Limpieza profunda interior y exterior' },
+      { id: 'premium', nombre: 'Sneakers Premium', precio: 8.00, descripcion: 'Materiales delicados y gamuza fina' },
+      { id: 'blancos', nombre: 'Blancos', precio: 7.00, descripcion: 'Recuperación de color y suelas' },
+      { id: 'gamuza', nombre: 'Gamuza', precio: 9.00, descripcion: 'Proceso especializado para gamuza y nobuk' },
+      { id: 'restauracion', nombre: 'Restauración', precio: 15.00, descripcion: 'Limpieza profunda + repintado / retoques' }
+    ];
+  }, [servicesList, negocio?.services]);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -136,11 +166,46 @@ export default function ShoeCareBackoffice({ negocio: negocioProp }: ShoeCareBac
     horaEstimada: '17:00'
   });
 
+  // Inicializar o ajustar servicio en receptionForm y newOrderForm con el catálogo real disponible
+  useEffect(() => {
+    if (effectiveServices.length > 0) {
+      const matchRec = effectiveServices.find((s: any) => s.nombre === receptionForm.servicioNombre);
+      if (!matchRec) {
+        setReceptionForm(prev => ({
+          ...prev,
+          servicioNombre: effectiveServices[0].nombre,
+          precioServicio: effectiveServices[0].precio
+        }));
+      } else if (receptionForm.precioServicio !== matchRec.precio) {
+        setReceptionForm(prev => ({
+          ...prev,
+          precioServicio: matchRec.precio
+        }));
+      }
+
+      const matchOrd = effectiveServices.find((s: any) => s.nombre === newOrderForm.servicioNombre);
+      if (!matchOrd) {
+        setNewOrderForm(prev => ({
+          ...prev,
+          servicioNombre: effectiveServices[0].nombre,
+          precioServicio: effectiveServices[0].precio
+        }));
+      } else if (newOrderForm.precioServicio !== matchOrd.precio) {
+        setNewOrderForm(prev => ({
+          ...prev,
+          precioServicio: matchOrd.precio
+        }));
+      }
+    }
+  }, [effectiveServices]);
+
   // Form Nueva Orden (Domicilio)
   const [newOrderForm, setNewOrderForm] = useState({
     nombreCliente: '',
     telefonoCliente: '',
     modo: 'LOCAL',
+    servicioNombre: 'Lavado Completo',
+    precioServicio: 6.00,
     cantidadPares: '1',
     notas: '',
     direccionCliente: '',
@@ -183,14 +248,15 @@ export default function ShoeCareBackoffice({ negocio: negocioProp }: ShoeCareBac
   // Carga inicial de datos
   const fetchAllData = async () => {
     try {
-      const [resOrd, resCli, resDrv, resInv, resSet, resProf, resProm] = await Promise.all([
+      const [resOrd, resCli, resDrv, resInv, resSet, resProf, resProm, resSrv] = await Promise.all([
         fetch(`/api/shoe-care/orders?negocioId=${negocioId}`),
         fetch(`/api/shoe-care/clients?negocioId=${negocioId}`),
         fetch(`/api/shoe-care/drivers?negocioId=${negocioId}`),
         fetch(`/api/shoe-care/inventory?negocioId=${negocioId}`),
         fetch(`/api/shoe-care/settings?negocioId=${negocioId}`),
         fetch(`/api/shoe-care/profile?negocioId=${negocioId}`),
-        fetch(`/api/shoe-care/promotions?negocioId=${negocioId}`)
+        fetch(`/api/shoe-care/promotions?negocioId=${negocioId}`),
+        fetch(`/api/services?negocioId=${negocioId}`)
       ]);
 
       if (resOrd.ok) setOrdenes(await resOrd.json());
@@ -201,7 +267,18 @@ export default function ShoeCareBackoffice({ negocio: negocioProp }: ShoeCareBac
       if (resProm.ok) setPromotions(await resProm.json());
       if (resProf.ok) {
         const profData = await resProf.json();
-        if (profData && profData.id) setNegocio(profData);
+        if (profData && profData.id) {
+          setNegocio((prev: any) => ({ ...prev, ...profData }));
+          if (Array.isArray(profData.services) && profData.services.length > 0) {
+            setServicesList(profData.services);
+          }
+        }
+      }
+      if (resSrv && resSrv.ok) {
+        const srvData = await resSrv.json();
+        if (Array.isArray(srvData) && srvData.length > 0) {
+          setServicesList(srvData);
+        }
       }
     } catch (e) {
       console.error('Error cargando datos del backoffice:', e);
@@ -234,7 +311,19 @@ export default function ShoeCareBackoffice({ negocio: negocioProp }: ShoeCareBac
 
       if (res.ok) {
         setShowNewOrderModal(false);
-        setNewOrderForm({ nombreCliente: '', telefonoCliente: '', modo: 'LOCAL', cantidadPares: '1', notas: '', direccionCliente: '', referenciaCliente: '', fechaHoraRetiro: '', fotosRecepcion: [] });
+        setNewOrderForm({ 
+          nombreCliente: '', 
+          telefonoCliente: '', 
+          modo: 'LOCAL', 
+          servicioNombre: effectiveServices[0]?.nombre || 'Lavado Completo',
+          precioServicio: effectiveServices[0]?.precio || 6.00,
+          cantidadPares: '1', 
+          notas: '', 
+          direccionCliente: '', 
+          referenciaCliente: '', 
+          fechaHoraRetiro: '', 
+          fotosRecepcion: [] 
+        });
         fetchAllData();
       }
     } catch (e) {
@@ -673,6 +762,29 @@ ${marca}`;
                 </div>
               </div>
 
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase text-slate-500 block">Tipo de Servicio *</label>
+                <select
+                  value={newOrderForm.servicioNombre}
+                  onChange={(e) => {
+                    const srvName = e.target.value;
+                    const match = effectiveServices.find((s: any) => s.nombre === srvName);
+                    setNewOrderForm({
+                      ...newOrderForm,
+                      servicioNombre: srvName,
+                      precioServicio: match ? match.precio : 6.00
+                    });
+                  }}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-emerald-500"
+                >
+                  {effectiveServices.map((srv: any, idx: number) => (
+                    <option key={srv.id || idx} value={srv.nombre}>
+                      {srv.nombre} (${srv.precio.toFixed(2)} USD)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Modo de Ingreso / Servicio</label>
@@ -691,6 +803,7 @@ ${marca}`;
                   <label className="text-[10px] font-black uppercase text-slate-500 block mb-1">Cantidad de Pares</label>
                   <input 
                     type="number" 
+                    min={1}
                     value={newOrderForm.cantidadPares}
                     onChange={e => setNewOrderForm({ ...newOrderForm, cantidadPares: e.target.value })}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-emerald-500"
@@ -1069,35 +1182,18 @@ ${marca}`;
                       value={receptionForm.servicioNombre}
                       onChange={(e) => {
                         const srvName = e.target.value;
-                        const catalog = (negocio?.services && Array.isArray(negocio.services) && negocio.services.length > 0)
-                          ? negocio.services
-                          : [
-                              { nombre: 'Lavado Básico', precio: 4.00 },
-                              { nombre: 'Lavado Completo', precio: 6.00 },
-                              { nombre: 'Sneakers Premium', precio: 8.00 },
-                              { nombre: 'Blancos', precio: 7.00 },
-                              { nombre: 'Gamuza', precio: 9.00 },
-                              { nombre: 'Restauración', precio: 15.00 }
-                            ];
-                        const match = catalog.find((s: any) => s.nombre === srvName);
+                        const match = effectiveServices.find((s: any) => s.nombre === srvName);
                         setReceptionForm({
                           ...receptionForm,
                           servicioNombre: srvName,
-                          precioServicio: match ? parseFloat(match.precio) : 6.00
+                          precioServicio: match ? match.precio : 6.00
                         });
                       }}
                       className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-purple-500 shadow-xs"
                     >
-                      {[
-                        'Lavado Básico',
-                        'Lavado Completo',
-                        'Sneakers Premium',
-                        'Blancos',
-                        'Gamuza',
-                        'Restauración'
-                      ].map((sName, idx) => (
-                        <option key={idx} value={sName}>
-                          {sName}
+                      {effectiveServices.map((srv: any, idx: number) => (
+                        <option key={srv.id || idx} value={srv.nombre}>
+                          {srv.nombre} (${srv.precio.toFixed(2)} USD)
                         </option>
                       ))}
                     </select>

@@ -72,7 +72,7 @@ export default async function AdminLayout({
         status = await checkSubscriptionStatus(negocioId);
         negocio = await prisma.negocio.findUnique({
             where: { id: negocioId },
-            select: { colorPrimario: true, configuracion: true, nombre: true, tipoNegocio: true }
+            select: { colorPrimario: true, configuracion: true, nombre: true, tipoNegocio: true, slug: true }
         });
         primaryColor = negocio?.colorPrimario || '#0ea5e9';
         
@@ -107,7 +107,11 @@ export default async function AdminLayout({
             <div className="flex h-screen bg-slate-50 overflow-hidden light-theme" style={{ '--primary-color': primaryColor } as any}>
                 
                 {/* Sidebar Unificado para todos los negocios de Citiox */}
-                <AdminSidebar primaryColor={primaryColor} initialBusinessName={negocio?.nombre} />
+                <AdminSidebar 
+                    primaryColor={primaryColor} 
+                    initialBusinessName={negocio?.nombre} 
+                    initialSlug={negocio?.slug}
+                />
 
                 {/* ── ÁREA PRINCIPAL CON DESPLAZAMIENTO PARA SIDEBAR Y BANNERS ── */}
                 <div className="flex-1 flex justify-center md:justify-start overflow-hidden relative md:pl-64">
@@ -115,7 +119,11 @@ export default async function AdminLayout({
                         
                         {/* TopBar: solo en móvil */}
                         <div className="md:hidden">
-                            <MobileTopBar primaryColor={primaryColor} negocioNombre={negocio?.nombre} />
+                            <MobileTopBar 
+                                primaryColor={primaryColor} 
+                                negocioNombre={negocio?.nombre} 
+                                slug={negocio?.slug}
+                            />
                         </div>
 
                         {/* Banners de estado */}

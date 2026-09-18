@@ -42,18 +42,46 @@ export async function GET(req: Request) {
       }
     });
 
-    const activeSubscriptions = subscription?.subscriptionAddons || [];
+    const now = new Date();
+    const isExpired = !subscription || (subscription.fechaFin && new Date(subscription.fechaFin) < now) || ['expired', 'vencida', 'suspendida', 'cancelada'].includes((subscription.estado || '').toLowerCase());
+    const isFreePlan = Boolean(subscription?.Plan?.isFree || subscription?.Plan?.price === 0);
+    const hasActivePaidPlan = !isExpired && !isFreePlan;
 
-    let pricingDetails = null;
-    if (subscription) {
-      pricingDetails = await planService.getPricingDetails(subscription.id);
+    // Obtener planes comerciales disponibles si necesita contratar plan
+    let availablePlans: any[] = [];
+    if (!hasActivePaidPlan) {
+      const familyId = subscription?.Plan?.familyId;
+      availablePlans = await prisma.plan.findMany({
+        where: {
+          activo: true,
+          isFree: false,
+          ...(familyId ? { familyId } : {})
+        },
+        orderBy: { price: 'asc' }
+      });
+      if (availablePlans.length === 0) {
+        availablePlans = await prisma.plan.findMany({
+          where: { activo: true, isFree: false },
+          orderBy: { price: 'asc' }
+        });
+      }
     }
+
+    const activeSubscriptions = subscription?.subscriptionAddons || [];
+    const pricingDetails = null;
 
     return NextResponse.json({
       success: true,
       availableAddons,
       activeSubscriptions,
-      pricingDetails
+      pricingDetails,
+      hasActivePaidPlan,
+      availablePlans: availablePlans.map(p => ({
+        id: p.id,
+        name: p.name,
+        price: Number(p.price),
+        slug: p.slug
+      }))
     });
   } catch (error: any) {
     console.error('[API_ADMIN_ADDONS_GET]', error);

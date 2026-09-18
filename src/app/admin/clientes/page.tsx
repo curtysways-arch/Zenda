@@ -37,10 +37,12 @@ export default function ClientesPage() {
         if (color) setPrimaryColor(color);
     }, []);
 
-    const filteredClientes = clientes.filter(c =>
-        c.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.telefono.includes(searchTerm)
-    );
+    const filteredClientes = clientes.filter(c => {
+        const nombre = (c?.nombre || '').toLowerCase();
+        const telefono = (c?.telefono || '');
+        const search = searchTerm.toLowerCase();
+        return nombre.includes(search) || telefono.includes(search);
+    });
 
     if (loading) {
         return (
@@ -109,73 +111,83 @@ export default function ClientesPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredClientes.map((cliente) => (
-                        <div key={cliente.id} className="bg-white rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/30 overflow-hidden hover:scale-[1.02] transition-transform group flex flex-col justify-between">
-                            <div className="p-8 space-y-6">
-                                <div className="flex justify-between items-start">
-                                    <Link href={`/admin/clientes/${cliente.id}`} className="flex items-center gap-4 group/title">
-                                        <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 font-black text-xl transition shadow-inner group-hover/title:bg-[var(--primary-color)] group-hover/title:text-white">
-                                            {cliente.nombre.charAt(0)}
+                    {filteredClientes.map((cliente) => {
+                        const initialLetter = (cliente?.nombre || 'C').charAt(0).toUpperCase();
+                        const formattedDate = cliente?.createdAt
+                            ? (() => {
+                                try { return format(new Date(cliente.createdAt), "MMM yyyy", { locale: es }); }
+                                catch { return 'Reciente'; }
+                              })()
+                            : 'Reciente';
+
+                        return (
+                            <div key={cliente.id} className="bg-white rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/30 overflow-hidden hover:scale-[1.02] transition-transform group flex flex-col justify-between">
+                                <div className="p-8 space-y-6">
+                                    <div className="flex justify-between items-start">
+                                        <Link href={`/admin/clientes/${cliente.id}`} className="flex items-center gap-4 group/title">
+                                            <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 font-black text-xl transition shadow-inner group-hover/title:bg-[var(--primary-color)] group-hover/title:text-white">
+                                                {initialLetter}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-black text-gray-900 text-lg leading-tight uppercase tracking-tight group-hover/title:text-[var(--primary-color)] transition-colors">{cliente?.nombre || 'Sin Nombre'}</h3>
+                                                <div className="flex items-center gap-3 mt-1">
+                                                    <p className="text-xs text-gray-500 font-bold flex items-center gap-1">
+                                                        <Phone size={12} style={{ color: 'var(--primary-color)' }} />
+                                                        {cliente?.telefono || 'Sin teléfono'}
+                                                    </p>
+                                                    {cliente?.totalReviews > 0 && (
+                                                        <div className="flex items-center gap-1 text-amber-500 font-black text-[10px]">
+                                                            <Star size={10} fill="currentColor" />
+                                                            <span>{Number(cliente.ratingPromedio || 0).toFixed(1)}</span>
+                                                            <span className="text-gray-300 font-medium text-[9px]">({cliente.totalReviews})</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </Link>
+                                        <Link 
+                                            href={`/admin/clientes/${cliente.id}`}
+                                            className="p-2 text-gray-400 hover:text-[var(--primary-color)] hover:bg-slate-50 rounded-xl transition active:scale-95 outline-none"
+                                            title="Ver Ficha Completa del Cliente"
+                                        >
+                                            <ExternalLink size={18} />
+                                        </Link>
+                                    </div>
+
+                                    <Link href={`/admin/clientes/${cliente.id}`} className="grid grid-cols-2 gap-4 block">
+                                        <div className="p-4 rounded-2xl space-y-1"
+                                             style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 95%)', borderColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', borderStyle: 'solid', borderWidth: '1px' }}>
+                                            <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--primary-color)' }}>Servicios</p>
+                                            <div className="flex items-center gap-2">
+                                                <Calendar size={14} style={{ color: 'var(--primary-color)' }} />
+                                                <p className="font-black text-gray-900 text-xl">{cliente?.totalReservas || 0}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 className="font-black text-gray-900 text-lg leading-tight uppercase tracking-tight group-hover/title:text-[var(--primary-color)] transition-colors">{cliente.nombre}</h3>
-                                            <div className="flex items-center gap-3 mt-1">
-                                                <p className="text-xs text-gray-500 font-bold flex items-center gap-1">
-                                                    <Phone size={12} style={{ color: 'var(--primary-color)' }} />
-                                                    {cliente.telefono}
-                                                </p>
-                                                {cliente.totalReviews > 0 && (
-                                                    <div className="flex items-center gap-1 text-amber-500 font-black text-[10px]">
-                                                        <Star size={10} fill="currentColor" />
-                                                        <span>{cliente.ratingPromedio.toFixed(1)}</span>
-                                                        <span className="text-gray-300 font-medium text-[9px]">({cliente.totalReviews})</span>
-                                                    </div>
-                                                )}
+                                        <div className="bg-purple-50/50 p-4 rounded-2xl border border-purple-50 space-y-1">
+                                            <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest">Inversión</p>
+                                            <div className="flex items-center gap-2">
+                                                <DollarSign size={14} className="text-purple-500" />
+                                                <p className="font-black text-gray-900 text-xl">${cliente?.totalSpent || cliente?.totalGastado || '0.00'}</p>
                                             </div>
                                         </div>
                                     </Link>
-                                    <Link 
-                                        href={`/admin/clientes/${cliente.id}`}
-                                        className="p-2 text-gray-400 hover:text-[var(--primary-color)] hover:bg-slate-50 rounded-xl transition active:scale-95 outline-none"
-                                        title="Ver Ficha Completa del Cliente"
-                                    >
-                                        <ExternalLink size={18} />
-                                    </Link>
-                                </div>
 
-                                <Link href={`/admin/clientes/${cliente.id}`} className="grid grid-cols-2 gap-4 block">
-                                    <div className="p-4 rounded-2xl space-y-1"
-                                         style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 95%)', borderColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', borderStyle: 'solid', borderWidth: '1px' }}>
-                                        <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--primary-color)' }}>Citas</p>
-                                        <div className="flex items-center gap-2">
-                                            <Calendar size={14} style={{ color: 'var(--primary-color)' }} />
-                                            <p className="font-black text-gray-900 text-xl">{cliente.totalReservas}</p>
+                                    <div className="pt-4 border-t border-gray-50 flex justify-between items-center">
+                                        <div>
+                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-none">Miembro desde</p>
+                                            <p className="text-xs font-bold text-gray-700 whitespace-nowrap">{formattedDate}</p>
                                         </div>
+                                        <Link
+                                            href={`/admin/clientes/${cliente.id}`}
+                                            className="flex items-center gap-2 px-3.5 py-2 bg-slate-900 text-white hover:bg-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95"
+                                        >
+                                            Ver Ficha Completa →
+                                        </Link>
                                     </div>
-                                    <div className="bg-purple-50/50 p-4 rounded-2xl border border-purple-50 space-y-1">
-                                        <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest">Inversión</p>
-                                        <div className="flex items-center gap-2">
-                                            <DollarSign size={14} className="text-purple-500" />
-                                            <p className="font-black text-gray-900 text-xl">${cliente.totalSpent || cliente.totalGastado}</p>
-                                        </div>
-                                    </div>
-                                </Link>
-
-                                <div className="pt-4 border-t border-gray-50 flex justify-between items-center">
-                                    <div>
-                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-none">Miembro desde</p>
-                                        <p className="text-xs font-bold text-gray-700 whitespace-nowrap">{format(new Date(cliente.createdAt), "MMM yyyy", { locale: es })}</p>
-                                    </div>
-                                    <Link
-                                        href={`/admin/clientes/${cliente.id}`}
-                                        className="flex items-center gap-2 px-3.5 py-2 bg-slate-900 text-white hover:bg-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95"
-                                    >
-                                        Ver Ficha Completa →
-                                    </Link>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {filteredClientes.length === 0 && (

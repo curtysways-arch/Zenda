@@ -391,7 +391,8 @@ export default function MisionesUnificadasClient({
   };
   const statusLabel=(s:string)=>s==='PUBLISHED'?'Publicada':s==='ARCHIVED'?'Archivada':'Borrador';
 
-  const inputCls='w-full px-4 py-3 bg-white border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:outline-none focus:border-indigo-500 text-slate-800 placeholder:text-slate-400';
+  const inputCls = 'w-full px-4 py-3 !bg-white dark:!bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:outline-none focus:border-indigo-500 !text-slate-900 dark:!text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 [color-scheme:light] dark:[color-scheme:dark] transition-colors';
+  const selectCls = 'w-full px-4 py-3 bg-white border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:outline-none focus:border-indigo-500 text-slate-800 placeholder:text-slate-400';
 
   const labelCls='block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1';
 
@@ -653,7 +654,7 @@ export default function MisionesUnificadasClient({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className={labelCls}>Tipo de Misión</label>
-                    <select value={tipo} onChange={e=>setTipo(e.target.value as GlobalMissionType)} className={inputCls}>
+                    <select value={tipo} onChange={e=>setTipo(e.target.value as GlobalMissionType)} className={selectCls}>
                       <option value="COMPLETED_RESERVATIONS">Reservas Completadas</option>
                       <option value="FIRST_RESERVATIONS">Primeras Reservas</option>
                       <option value="CLIENTS_REGISTERED">Clientes Registrados</option>
@@ -691,7 +692,7 @@ export default function MisionesUnificadasClient({
                           setRecompensaValorInput('15');
                         }
                       }} 
-                      className={inputCls}
+                      className={selectCls}
                     >
                       <option value="FREE_DAYS">Días Gratis (Suscripción)</option>
                       <option value="DIAMONDS">Diamantes Citiox</option>
@@ -708,7 +709,7 @@ export default function MisionesUnificadasClient({
                         <select 
                           value={recompensaValorInput} 
                           onChange={e => setRecompensaValorInput(e.target.value)} 
-                          className={inputCls}
+                          className={selectCls}
                         >
                           <option value="whatsapp_notifications">Notificaciones básicas por WhatsApp</option>
                           <option value="whatsapp_otp">Verificación OTP por WhatsApp</option>
@@ -737,7 +738,7 @@ export default function MisionesUnificadasClient({
                   </div>
                   <div>
                     <label className={labelCls}>Icono</label>
-                    <select value={icono} onChange={e=>setIcono(e.target.value)} className={inputCls}>
+                    <select value={icono} onChange={e=>setIcono(e.target.value)} className={selectCls}>
                       {['Trophy','Zap','Users','Calendar','Briefcase','Crown','Link','Smartphone','UserCheck','Coins','Award'].map(i=><option key={i} value={i}>{i}</option>)}
                     </select>
                   </div>
@@ -771,7 +772,7 @@ export default function MisionesUnificadasClient({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className={labelCls}>Evento Disparador *</label>
-                    <select value={triggerEvent} onChange={e=>setTriggerEvent(e.target.value)} className={inputCls}>
+                    <select value={triggerEvent} onChange={e=>setTriggerEvent(e.target.value)} className={selectCls}>
                       <option value="BOOKING_COMPLETED">Cita Completada</option>
                       <option value="USER_REGISTERED">Registro Nuevo</option>
                       <option value="REVIEW_CREATED">Reseña Publicada</option>
@@ -787,7 +788,7 @@ export default function MisionesUnificadasClient({
                   </div>
                   <div>
                     <label className={labelCls}>Categoría</label>
-                    <select value={categoria} onChange={e=>setCategoria(e.target.value as MissionCategory)} className={inputCls}>
+                    <select value={categoria} onChange={e=>setCategoria(e.target.value as MissionCategory)} className={selectCls}>
                       <option value="RESERVAS">Reservas</option>
                       <option value="REFERIDOS">Referidos</option>
                       <option value="PERFIL">Perfil</option>
@@ -800,7 +801,7 @@ export default function MisionesUnificadasClient({
                   </div>
                   <div>
                     <label className={labelCls}>Dificultad</label>
-                    <select value={dificultad} onChange={e=>setDificultad(e.target.value as QuestDifficulty)} className={inputCls}>
+                    <select value={dificultad} onChange={e=>setDificultad(e.target.value as QuestDifficulty)} className={selectCls}>
                       <option value="EASY">Fácil</option>
                       <option value="MEDIUM">Media</option>
                       <option value="HARD">Difícil</option>
@@ -899,7 +900,7 @@ export default function MisionesUnificadasClient({
                         setRewardHandler('wallet');
                         setRewardConfigValor(val === 'XP' ? '100' : '15');
                       }
-                    }} className={inputCls}>
+                    }} className={selectCls}>
                       <option value="COUPON">🎟️ Cupón de Descuento (Cliente)</option>
                       <option value="XP">🪙 Puntos XP - Nivel (Cliente)</option>
                       <option value="CASHBACK">💵 Cashback / Saldo (Cliente)</option>
@@ -912,7 +913,7 @@ export default function MisionesUnificadasClient({
 
                   <div>
                     <label className={labelCls}>Método / Handler</label>
-                    <select value={rewardHandler} onChange={e=>setRewardHandler(e.target.value)} className={inputCls}>
+                    <select value={rewardHandler} onChange={e=>setRewardHandler(e.target.value)} className={selectCls}>
                       <option value="coupon">coupon (Generación de cupones)</option>
                       <option value="wallet">wallet (Abono directo al saldo)</option>
                       <option value="free_days">free_days (Regalo de días premium)</option>
@@ -925,7 +926,7 @@ export default function MisionesUnificadasClient({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
                     <div>
                       <label className={labelCls}>Tipo de Cupón</label>
-                      <select value={rewardConfigTipo} onChange={e=>setRewardConfigTipo(e.target.value)} className={inputCls}>
+                      <select value={rewardConfigTipo} onChange={e=>setRewardConfigTipo(e.target.value)} className={selectCls}>
                         <option value="PORCENTAJE">Porcentaje (%)</option>
                         <option value="FIJO">Fijo ($ USD)</option>
                       </select>

@@ -111,7 +111,7 @@ export default function PhoneInput({
                         )}
                     >
                         <span className="text-xl shrink-0">{selectedCountry.flag}</span>
-                        <span className="text-xs font-black shrink-0">{selectedCountry.code}</span>
+                        <span className="text-xs font-black shrink-0" style={{ color: darkMode ? '#ffffff' : '#0f172a' }}>{selectedCountry.code}</span>
                         <ChevronDown size={14} className={clsx("transition-transform shrink-0", darkMode ? "text-white/40" : "text-slate-400", isOpen && "rotate-180")} />
                     </button>
 
@@ -141,7 +141,7 @@ export default function PhoneInput({
                     "flex-1 min-w-0 flex items-center pr-4 border rounded-2xl transition-all cursor-text overflow-hidden",
                     darkMode
                         ? "bg-white/5 border-white/10 focus-within:border-emerald-500/50 focus-within:ring-2 focus-within:ring-emerald-500/20"
-                        : "bg-gray-50 border-gray-100 focus-within:bg-white focus-within:border-emerald-500/30"
+                        : "bg-gray-50 border-gray-100 focus-within:bg-white focus-within:border-cyan-400 focus-within:ring-4 focus-within:ring-cyan-500/10"
                 )}>
                     <input
                         id={id}
@@ -151,11 +151,12 @@ export default function PhoneInput({
                         value={localNumber}
                         onChange={handleNumberChange}
                         placeholder={placeholder}
+                        style={{ color: darkMode ? '#ffffff' : '#0f172a' }}
                         className={clsx(
-                            "block w-full h-full py-3 bg-transparent border-none shadow-none focus:outline-none focus:ring-0 font-black text-sm px-4 rounded-2xl placeholder:font-normal",
+                            "block w-full h-full py-3 !bg-transparent !border-none !shadow-none focus:outline-none focus:ring-0 font-bold text-sm px-4 rounded-2xl placeholder:font-normal",
                             darkMode 
-                                ? "text-white placeholder:text-white/20 caret-emerald-500" 
-                                : "text-slate-900 placeholder:text-slate-400 caret-emerald-500"
+                                ? "!text-white placeholder:text-white/40 caret-emerald-500" 
+                                : "!text-slate-900 placeholder:text-slate-400 caret-emerald-500"
                         )}
                     />
                 </label>

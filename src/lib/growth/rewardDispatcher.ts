@@ -36,8 +36,9 @@ export class WalletHandler implements RewardHandler {
     referenceId?: string,
     tx?: Prisma.TransactionClient
   ): Promise<any> {
-    const val = definition.valor || {};
-    const valorNumerico = parseFloat(String(val.valor || val.amount || val || 0));
+    const val = (definition.valor as any) || {};
+    const rawVal = val.xp ?? val.valor ?? val.amount ?? val.diamantes ?? val.cantidad ?? (typeof val === 'number' ? val : 0);
+    const valorNumerico = parseFloat(String(rawVal)) || 0;
     const currency = definition.tipo as WalletCurrencyType;
     return await WalletService.addFunds(
       targetId,

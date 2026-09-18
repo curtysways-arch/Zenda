@@ -1,15 +1,20 @@
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next";
 import crypto from 'crypto';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 
 export async function GET(req: Request) {
-    const { searchParams } = new URL(req.url);
-    let negocioId = searchParams.get('negocioId');
+    const session = await getEffectiveAdminSession();
+    const sessionNegocioId = (session?.user as any)?.negocioId;
+    const isDelegated = (session?.user as any)?.isDelegated === true;
+    const isSuperAdmin = (session?.user as any)?.role === 'SUPERADMIN' || (session?.user as any)?.roles?.includes('SUPERADMIN');
 
-    if (!negocioId) {
-        const session = await getServerSession();
-        negocioId = (session?.user as any)?.negocioId;
+    const { searchParams } = new URL(req.url);
+    const paramNegocioId = searchParams.get('negocioId');
+
+    let negocioId = sessionNegocioId;
+    if (!negocioId || (isSuperAdmin && !isDelegated && paramNegocioId)) {
+        negocioId = paramNegocioId || sessionNegocioId;
     }
 
     if (!negocioId) {
@@ -49,14 +54,13 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     try {
+        const session = await getEffectiveAdminSession();
+        const sessionNegocioId = (session?.user as any)?.negocioId;
+
         const body = await req.json();
         const { nombre, tipo, tipoId, capacidad, precioHora, estaActiva, ubicacionId, extraInfo, imagenes, negocioId } = body;
 
-        let realNegocioId = negocioId;
-        if (!realNegocioId) {
-            const session = await getServerSession();
-            realNegocioId = (session?.user as any)?.negocioId;
-        }
+        const realNegocioId = sessionNegocioId || negocioId;
 
         if (!realNegocioId) {
             return NextResponse.json({ error: 'Negocio ID es requerido' }, { status: 400 });

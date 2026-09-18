@@ -24,7 +24,10 @@ import {
     CheckCircle2,
     Sparkles,
     Scissors,
-    UserCircle
+    UserCircle,
+    AlertTriangle,
+    Trophy,
+    Activity
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import MobileAgenda from '@/components/admin/mobile/MobileAgenda';
@@ -79,6 +82,7 @@ function CitasAdminPageContent() {
     const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
     const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
     const [slug, setSlug] = useState('');
+    const [negocioTipo, setNegocioTipo] = useState('');
 
     const fetchCitas = async () => {
         setLoading(true);
@@ -93,6 +97,7 @@ function CitasAdminPageContent() {
             if (resNegocio.ok) {
                 const nData = await resNegocio.json();
                 setSlug(nData?.slug || '');
+                setNegocioTipo(nData?.tipoNegocio || nData?.tipo || '');
             }
             
             // Trigger auto-expiration in the background (non-blocking) to prevent SQLite db lock
@@ -129,7 +134,6 @@ function CitasAdminPageContent() {
             setCitas((prevCitas) => {
                 const { merged, newAppointments, updatedAppointments } = AgendaSyncService.applyChanges(prevCitas, updates);
                 
-                // Si hay nuevas reservas
                 if (newAppointments.length > 0) {
                     playNotificationSound();
                     const clientNames = newAppointments.map(n => n.cliente?.nombre || 'Nuevo Cliente').join(', ');
@@ -137,7 +141,6 @@ function CitasAdminPageContent() {
                     setTimeout(() => setToastMessage(null), 6000);
                 }
 
-                // Resaltar celdas/tarjetas que tuvieron cambios
                 const changedIds = [...newAppointments, ...updatedAppointments].map(c => c.id);
                 if (changedIds.length > 0) {
                     setHighlightedCitas((prev) => {
@@ -158,9 +161,7 @@ function CitasAdminPageContent() {
             });
         });
 
-        // Escuchar notificaciones FCM y forzar sync incremental inmediato
         const handleFcmNotify = () => {
-            console.log('[REALTIME] Notificación push recibida en vivo, sincronizando citas...');
             syncService.sync();
         };
         window.addEventListener('fcm-notification-received', handleFcmNotify);
@@ -171,17 +172,55 @@ function CitasAdminPageContent() {
         };
     }, []);
 
+    const isCanchas = useMemo(() => {
+        const t = (negocioTipo || '').toUpperCase();
+        const s = (slug || '').toLowerCase();
+        return t === 'SPORTS_COURTS' || t === 'CANCHAS' || s.includes('cancha') || s.includes('padel') || s.includes('futbol') || citas.some(c => (c.service?.tipo || '').toLowerCase() === 'cancha' || (c.service?.nombre || '').toLowerCase().includes('cancha'));
+    }, [negocioTipo, slug, citas]);
+
+    const isReservaPast = (res: any) => {
+        try {
+            if (!res.fecha) return false;
+            const fechaBaseStr = typeof res.fecha === 'string' 
+                ? res.fecha.split('T')[0] 
+                : new Date(res.fecha).toISOString().split('T')[0];
+            
+            const horaFin = res.horaFin || res.horaInicio || '23:59';
+            const [h, m] = horaFin.split(':').map(Number);
+            
+            const [year, month, day] = fechaBaseStr.split('-').map(Number);
+            const endDateTime = new Date(year, month - 1, day, h || 0, m || 0, 0);
+            
+            return endDateTime.getTime() < Date.now();
+        } catch (_) {
+            return false;
+        }
+    };
+
+    const isUnmanagedReserva = (res: any) => {
+        const estado = res.estado?.toLowerCase() || 'pending';
+        const isOpen = estado === 'pending' || estado === 'confirmed' || estado === 'approved' || estado === 'client_checked_in' || estado === 'in_progress';
+        return isOpen && isReservaPast(res);
+    };
+
+    const unmanagedCount = useMemo(() => {
+        return citas.filter(isUnmanagedReserva).length;
+    }, [citas]);
+
     const filteredCitas = citas.filter(res => {
         const matchesSearch = res.cliente?.nombre?.toLowerCase().includes(searchQuery.toLowerCase()) || 
                              res.cliente?.telefono?.includes(searchQuery) ||
                              res.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                              res.shareToken?.toLowerCase().includes(searchQuery.toLowerCase());
         
+        const unmanaged = isUnmanagedReserva(res);
+
         const matchesFilter = 
             filterStatus === 'all' ? true : 
-            filterStatus === 'active' ? (res.estado === 'pending' || res.estado === 'confirmed' || res.estado === 'approved' || res.estado === 'client_checked_in' || res.estado === 'in_progress') :
-            filterStatus === 'pending' ? res.estado === 'pending' :
-            filterStatus === 'confirmed' ? (res.estado === 'confirmed' || res.estado === 'approved') :
+            filterStatus === 'unmanaged' ? unmanaged :
+            filterStatus === 'active' ? ((res.estado === 'pending' || res.estado === 'confirmed' || res.estado === 'approved' || res.estado === 'client_checked_in' || res.estado === 'in_progress') && !unmanaged) :
+            filterStatus === 'pending' ? (res.estado === 'pending' && !unmanaged) :
+            filterStatus === 'confirmed' ? ((res.estado === 'confirmed' || res.estado === 'approved') && !unmanaged) :
             filterStatus === 'completed' ? res.estado === 'completed' :
             filterStatus === 'cancelled' ? (res.estado === 'cancelled' || res.estado === 'no_show') :
             filterStatus === 'expired' ? res.estado === 'expired' : true;
@@ -344,10 +383,12 @@ function CitasAdminPageContent() {
                         <div className="space-y-4">
                             <div className="inline-flex items-center gap-2 px-4 py-2 border rounded-full" style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', borderColor: 'color-mix(in srgb, var(--primary-color), transparent 80%)' }}>
                                 <Zap size={12} className="animate-pulse" style={{ color: 'var(--primary-color)' }} />
-                                <span className="text-[9px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--primary-color)' }}>Caja Operativa</span>
+                                <span className="text-[9px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--primary-color)' }}>
+                                    {isCanchas ? 'Control de Canchas' : 'Caja Operativa'}
+                                </span>
                             </div>
                             <h1 className="text-5xl md:text-8xl font-black text-slate-900 tracking-tighter uppercase italic leading-[0.8]">
-                                Central <br /> <span style={{ color: 'var(--primary-color)' }}>Inbox</span>
+                                Central <br /> <span style={{ color: 'var(--primary-color)' }}>{isCanchas ? 'de Turnos' : 'Inbox'}</span>
                             </h1>
                         </div>
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
@@ -355,7 +396,7 @@ function CitasAdminPageContent() {
                                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 transition-all" style={{ color: 'var(--primary-color)' }} size={20} />
                                 <input 
                                     type="text"
-                                    placeholder="CLIENTE, TELÉFONO O ID..."
+                                    placeholder={isCanchas ? "JUGADOR, TELÉFONO O ID..." : "CLIENTE, TELÉFONO O ID..."}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="bg-white border border-slate-200 text-slate-900 text-base py-5 pl-14 pr-8 w-full sm:w-96 rounded-3xl focus:outline-none transition-all shadow-sm placeholder:text-slate-300 italic font-black uppercase"
@@ -364,16 +405,19 @@ function CitasAdminPageContent() {
                             </div>
                             <div className="flex flex-wrap bg-white p-1.5 rounded-3xl border border-slate-200 shadow-xl gap-1">
                                 {[
-                                    { id: 'active', label: 'Pendientes y Confirmadas' },
+                                    { id: 'active', label: isCanchas ? 'Turnos Activos' : 'Pendientes y Confirmadas' },
+                                    ...(unmanagedCount > 0 ? [{ id: 'unmanaged', label: `⚠️ Sin Gestionar (${unmanagedCount})`, isAlert: true }] : []),
                                     { id: 'pending', label: 'Solo Pendientes' },
                                     { id: 'confirmed', label: 'Solo Confirmadas' },
                                     { id: 'completed', label: 'Finalizadas' },
                                     { id: 'cancelled', label: 'Canceladas' },
                                     { id: 'all', label: 'Ver Todo' }
-                                ].map((opt) => (
+                                ].map((opt: any) => (
                                     <button key={opt.id} onClick={() => setFilterStatus(opt.id)}
                                         className={clsx("px-4 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all",
-                                            filterStatus === opt.id ? "bg-slate-900 text-white shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-900 hover:bg-slate-50")}>
+                                            filterStatus === opt.id 
+                                                ? (opt.isAlert ? "bg-amber-600 text-white shadow-xl shadow-amber-500/20" : "bg-slate-900 text-white shadow-xl shadow-slate-200") 
+                                                : (opt.isAlert ? "text-amber-800 bg-amber-100/70 hover:bg-amber-200/70 font-black" : "text-slate-400 hover:text-slate-900 hover:bg-slate-50"))}>
                                         {opt.label}
                                     </button>
                                 ))}
@@ -382,17 +426,44 @@ function CitasAdminPageContent() {
                     </div>
                 </div>
 
+                {/* Banner de alerta para reservas vencidas sin gestionar */}
+                {unmanagedCount > 0 && (
+                    <div 
+                        onClick={() => setFilterStatus('unmanaged')}
+                        className="bg-amber-50 border-2 border-amber-300/80 p-5 rounded-[2.5rem] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 cursor-pointer hover:bg-amber-100/60 transition-all shadow-sm group"
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="size-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform">
+                                <AlertTriangle size={22} />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-black text-amber-950 uppercase tracking-tight">
+                                    ⚠️ {unmanagedCount} {unmanagedCount === 1 ? 'reserva sin gestionar' : 'reservas sin gestionar'}
+                                </h4>
+                                <p className="text-xs text-amber-800 font-medium">
+                                    Tienes reservas de días u horarios anteriores que concluyeron sin registrarse. Haz clic para resolverlas.
+                                </p>
+                            </div>
+                        </div>
+                        <span className="px-4 py-2 bg-amber-600 group-hover:bg-amber-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors shrink-0">
+                            Resolver Pendientes ({unmanagedCount})
+                        </span>
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-                    <StatCard label="Ingresos Hoy" value={`$${ingresosHoy}`} icon={TrendingUp} color="emerald" trend={citasHoy.length > 0 ? `${citasHoy.length} citas hoy` : "Sin citas hoy"} />
-                    <StatCard label="Total en Agenda" value={`$${totalAgenda}`} icon={Zap} color="blue" trend="Venta bruta lista" />
-                    <StatCard label="Aprobadas" value={filteredCitas.filter(r => r.estado === 'confirmed' || r.estado === 'approved').length} icon={Check} color="emerald" trend="Agendadas" />
-                    <StatCard label="Pendientes" value={filteredCitas.filter(r => r.estado === 'pending').length} icon={Clock} color="amber" trend="Por confirmar" />
+                    <StatCard label="Ingresos Hoy" value={`$${ingresosHoy}`} icon={TrendingUp} color="emerald" trend={citasHoy.length > 0 ? `${citasHoy.length} ${isCanchas ? 'turnos hoy' : 'citas hoy'}` : (isCanchas ? "Sin turnos hoy" : "Sin citas hoy")} />
+                    <StatCard label={isCanchas ? "Total en Turnos" : "Total en Agenda"} value={`$${totalAgenda}`} icon={Zap} color="blue" trend="Venta bruta lista" />
+                    <StatCard label="Aprobadas" value={citas.filter(r => (r.estado === 'confirmed' || r.estado === 'approved') && !isUnmanagedReserva(r)).length} icon={Check} color="emerald" trend="Agendadas" />
+                    <StatCard label="Pendientes" value={citas.filter(r => r.estado === 'pending' && !isUnmanagedReserva(r)).length} icon={Clock} color="amber" trend="Por confirmar" />
                 </div>
 
                 <div className="flex items-center justify-between mx-4">
                     <div className="flex items-center gap-3">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 italic">{filteredCitas.length} Servicios en agenda</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 italic">
+                            {filteredCitas.length} {isCanchas ? 'Turnos de cancha en agenda' : 'Servicios en agenda'}
+                        </span>
                     </div>
                     <div className="flex bg-white p-1.5 rounded-2xl border border-slate-200 gap-1 shadow-sm">
                         <button onClick={() => setViewMode('table')} className={clsx("p-3 rounded-xl transition-all", viewMode === 'table' ? "text-white shadow-lg" : "text-slate-300 hover:text-slate-600 hover:bg-slate-50")} style={viewMode === 'table' ? { backgroundColor: 'var(--primary-color)' } : {}}>
@@ -450,14 +521,20 @@ function CitasAdminPageContent() {
                                                                     <span className="block text-slate-400 text-[9px] font-black uppercase tracking-widest leading-none">{reserva.cliente.telefono}</span>
                                                                 </div>
                                                             </div>
-                                                            <ServiceInfo reserva={reserva} />
+                                                            <ServiceInfo reserva={reserva} isCanchas={isCanchas} />
                                                         </div>
                                                     </td>
                                                     <td className="px-10 py-10">
                                                         <div className="space-y-2">
                                                             <div className="flex items-center gap-3">
-                                                                <Scissors size={14} style={{ color: 'var(--primary-color)' }} />
-                                                                <span className="text-xs font-black text-slate-700 italic uppercase">{reserva.service?.nombre || reserva.nombreServicio}</span>
+                                                                {isCanchas ? (
+                                                                    <Trophy size={15} className="text-emerald-600" />
+                                                                ) : (
+                                                                    <Scissors size={14} style={{ color: 'var(--primary-color)' }} />
+                                                                )}
+                                                                <span className="text-xs font-black text-slate-700 italic uppercase">
+                                                                    {reserva.service?.nombre || reserva.nombreServicio}
+                                                                </span>
                                                             </div>
                                                             <div className="flex flex-col gap-1">
                                                                 <span className="text-[10px] font-black uppercase tracking-tighter italic" style={{ color: 'var(--primary-color)' }}>
@@ -474,6 +551,15 @@ function CitasAdminPageContent() {
                                                     </td>
                                                     <td className="px-10 py-10">
                                                         {(() => {
+                                                            const unmanaged = isUnmanagedReserva(reserva);
+                                                            if (unmanaged) {
+                                                                return (
+                                                                    <span className="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.1em] border border-amber-300 bg-amber-100 text-amber-900 animate-pulse shadow-sm">
+                                                                        ⚠️ Sin gestionar
+                                                                    </span>
+                                                                );
+                                                            }
+
                                                             const status = reserva.estado?.toLowerCase() || 'pending';
                                                             const isPending = status === 'pending';
                                                             const isConfirmed = status === 'confirmed' || status === 'approved' || status === 'confirmada';
@@ -556,7 +642,7 @@ function CitasAdminPageContent() {
                                                 <div>
                                                     <h3 className="text-xl font-black text-slate-900 italic tracking-tighter leading-none uppercase truncate max-w-[140px]">{reserva.cliente.nombre}</h3>
                                                     <p className="text-[10px] font-black uppercase tracking-widest mt-2 italic" style={{ color: 'var(--primary-color)' }}>{reserva.cliente.telefono}</p>
-                                                    <ServiceInfo reserva={reserva} />
+                                                    <ServiceInfo reserva={reserva} isCanchas={isCanchas} />
                                                 </div>
                                             </div>
                                             <ChevronRight size={24} className="text-slate-200 group-hover/card:text-slate-900 group-hover/card:translate-x-2 transition-all" />
@@ -564,7 +650,11 @@ function CitasAdminPageContent() {
                                         <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 space-y-6">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    <Scissors size={16} style={{ color: 'var(--primary-color)' }} />
+                                                    {isCanchas ? (
+                                                        <Trophy size={16} className="text-emerald-600" />
+                                                    ) : (
+                                                        <Scissors size={16} style={{ color: 'var(--primary-color)' }} />
+                                                    )}
                                                     <span className="text-xs font-black text-slate-700 italic uppercase">{reserva.service?.nombre || reserva.nombreServicio}</span>
                                                 </div>
                                                 <span className="text-[10px] font-black text-slate-400 italic uppercase">{format(new Date(reserva.fecha), 'd MMM', { locale: es })}</span>
@@ -582,6 +672,15 @@ function CitasAdminPageContent() {
                                         </div>
                                         <div className="flex items-center justify-between px-2">
                                             {(() => {
+                                                const unmanaged = isUnmanagedReserva(reserva);
+                                                if (unmanaged) {
+                                                    return (
+                                                        <div className="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.1em] border border-amber-300 bg-amber-100 text-amber-900 animate-pulse shadow-sm">
+                                                            ⚠️ Sin gestionar
+                                                        </div>
+                                                    );
+                                                }
+
                                                 const status = reserva.estado?.toLowerCase() || 'pending';
                                                 const isPending = status === 'pending';
                                                 const isConfirmed = status === 'confirmed' || status === 'approved' || status === 'confirmada';
@@ -715,7 +814,17 @@ function StatCard({ label, value, icon: Icon, color, trend }: any) {
     );
 }
 
-function ServiceInfo({ reserva }: { reserva: any }) {
+function ServiceInfo({ reserva, isCanchas }: { reserva: any; isCanchas?: boolean }) {
+    if (isCanchas) {
+        return (
+            <div className="mt-3 flex items-center gap-1.5 animate-in zoom-in-95 duration-500">
+                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600 italic">
+                    {reserva.service?.nombre || 'Cancha Deportiva'}
+                </span>
+            </div>
+        );
+    }
     return (
         <div className="mt-4 space-y-2 animate-in zoom-in-95 duration-500">
             <div className="flex items-center gap-2">

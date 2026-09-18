@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Calendar, User, Gift, Sparkles, PackageCheck, GraduationCap } from 'lucide-react';
+import { Home, Calendar, User, Gift, Sparkles, PackageCheck, GraduationCap, CreditCard, QrCode, CalendarCheck, Dumbbell } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
@@ -45,11 +45,15 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
         checkSession();
     }, [pathname, slug]);
 
-    // Visibilidad ampliada: Mostrar en la landing, cursos, reservas y servicios
+    // Visibilidad ampliada: Mostrar en la landing, cursos, reservas, membresías y servicios
     const isVisible =
         pathname === `/${slug}` ||
         pathname.includes('/cursos') ||
         pathname.includes('/mis-reservas') ||
+        pathname.includes('/mi-membresia') ||
+        pathname.includes('/mi-qr') ||
+        pathname.includes('/mi-gym') ||
+        pathname.includes('/asistencias') ||
         pathname.includes('/pedidos') ||
         pathname.includes('/perfil') ||
         pathname.includes('/referidos') ||
@@ -80,77 +84,170 @@ export default function PublicMobileNav({ slug, hasActiveCourses = false, tipoNe
     const canOrders = hasModule(tipoNegocio, 'ORDERS');
     const isShoeCare = tipoNegocio === 'SHOE_CARE' || slug.includes('lavado') || slug.includes('sneaker');
 
+    const isGym = tipoNegocio === 'GIMNASIO' || tipoNegocio === 'GYM' || tipoNegocio === 'FITNESS' || slug.includes('gym') || slug.includes('fitness') || slug.includes('vortex');
+
     const tabs = [];
 
-    // 1. Tab Inicio
-    tabs.push({
-        label: 'Inicio',
-        icon: Home,
-        href: `/${slug}`,
-        active: pathname === `/${slug}` && !pathname.includes('/servicios'),
-        visible: true
-    });
+    if (isGym) {
+        // Tabs especializados para Gimnasio (Portal del Socio vs Landing)
+        const inMemberArea = pathname.includes('/mi-gym') || pathname.includes('/mi-qr') || pathname.includes('/mi-membresia') || pathname.includes('/asistencias');
+        
+        if (inMemberArea || hasSession) {
+            // Experiencia Socio
+            tabs.push({
+                label: 'Mi Gym',
+                icon: Home,
+                href: `/${slug}/mi-gym`,
+                active: pathname === `/${slug}/mi-gym`,
+                visible: true
+            });
 
-    // 2. Tab Secundario: "Agenda" (RESERVA) vs "Mis Pedidos / Órdenes" (PRODUCTOS / SHOE_CARE) vs "Reservas" (SPORTS_COURTS)
-    if (canAppointments) {
+            tabs.push({
+                label: 'Entrenar',
+                icon: Dumbbell,
+                href: `/${slug}/mi-gym/entrenar`,
+                active: pathname.includes('/mi-gym/entrenar'),
+                visible: true
+            });
+
+            tabs.push({
+                label: 'Acceso',
+                icon: QrCode,
+                href: `/${slug}/mi-gym/acceso`,
+                active: pathname.includes('/mi-gym/acceso') || pathname.includes('/mi-qr'),
+                isCentral: true,
+                visible: true
+            });
+
+            tabs.push({
+                label: 'Asistencia',
+                icon: CalendarCheck,
+                href: `/${slug}/mi-gym/asistencia`,
+                active: pathname.includes('/mi-gym/asistencia') || pathname.includes('/asistencias'),
+                visible: true
+            });
+
+            tabs.push({
+                label: 'Membresía',
+                icon: CreditCard,
+                href: `/${slug}/mi-gym/membresia`,
+                active: pathname.includes('/mi-gym/membresia') || pathname.includes('/mi-membresia'),
+                visible: true
+            });
+        } else {
+            // Experiencia Visitante / Landing
+            tabs.push({
+                label: 'Inicio',
+                icon: Home,
+                href: `/${slug}`,
+                active: pathname === `/${slug}`,
+                visible: true
+            });
+
+            tabs.push({
+                label: 'Planes',
+                icon: CreditCard,
+                href: `/${slug}#planes`,
+                active: false,
+                visible: true
+            });
+
+            tabs.push({
+                label: 'Mi Acceso',
+                icon: QrCode,
+                href: `/${slug}/mi-gym/acceso`,
+                active: false,
+                isCentral: true,
+                visible: true
+            });
+
+            tabs.push({
+                label: 'Clases',
+                icon: CalendarCheck,
+                href: `/${slug}/mi-gym/clases`,
+                active: pathname.includes('/mi-gym/clases'),
+                visible: true
+            });
+
+            tabs.push({
+                label: 'Soy Socio',
+                icon: User,
+                href: `/${slug}/mi-gym`,
+                active: pathname.includes('/mi-gym'),
+                visible: true
+            });
+        }
+    } else {
+        // 1. Tab Inicio
         tabs.push({
-            label: 'Agenda',
-            icon: Calendar,
-            href: `/${slug}/mis-reservas`,
-            active: pathname.includes('/mis-reservas') && activeTabParam !== 'academia',
+            label: 'Inicio',
+            icon: Home,
+            href: `/${slug}`,
+            active: pathname === `/${slug}` && !pathname.includes('/servicios'),
             visible: true
         });
-    } else if (canOrders) {
+
+        // 2. Tab Secundario: "Agenda" (RESERVA) vs "Mis Pedidos / Órdenes" (PRODUCTOS / SHOE_CARE) vs "Reservas" (SPORTS_COURTS)
+        if (canAppointments) {
+            tabs.push({
+                label: 'Agenda',
+                icon: Calendar,
+                href: `/${slug}/mis-reservas`,
+                active: pathname.includes('/mis-reservas') && activeTabParam !== 'academia',
+                visible: true
+            });
+        } else if (canOrders) {
+            tabs.push({
+                label: isShoeCare ? 'Mis Órdenes' : 'Mis Pedidos',
+                icon: PackageCheck,
+                href: `/${slug}/pedidos`,
+                active: pathname.includes('/pedidos'),
+                visible: true
+            });
+        }
+
+        // Tab opcional Academia para canchas/deportes
+        if (hasModule(tipoNegocio, 'ACADEMIA') || hasActiveCourses) {
+            tabs.push({
+                label: 'Academia',
+                icon: GraduationCap,
+                href: `/${slug}/mis-reservas?tab=academia`,
+                active: pathname.includes('/cursos') || (pathname.includes('/mis-reservas') && activeTabParam === 'academia'),
+                visible: true
+            });
+        }
+
+        // 3. Tab Central: Servicios / Catálogo
+        const isServicesModule = hasModule(tipoNegocio, 'SERVICES') || tipoNegocio === 'SPA' || tipoNegocio === 'RESERVA' || slug.includes('symechas');
         tabs.push({
-            label: isShoeCare ? 'Mis Órdenes' : 'Mis Pedidos',
-            icon: PackageCheck,
-            href: `/${slug}/pedidos`,
-            active: pathname.includes('/pedidos'),
+            label: isServicesModule ? 'Servicios' : 'Catálogo',
+            icon: Sparkles,
+            href: isServicesModule ? `/${slug}/servicios` : `/${slug}#catalogo`,
+            active: pathname.includes('/servicios'),
+            isCentral: true,
+            visible: true
+        });
+
+        // 4. Tab Premios (Loyalty)
+        if (hasModule(tipoNegocio, 'LOYALTY')) {
+            tabs.push({
+                label: 'Premios',
+                icon: Gift,
+                href: `/${slug}/misiones`,
+                active: pathname.includes('/referidos') || pathname.includes('/misiones'),
+                visible: isLoyaltyEnabled
+            });
+        }
+
+        // 5. Tab Perfil
+        tabs.push({
+            label: 'Perfil',
+            icon: User,
+            href: `/${slug}/perfil`,
+            active: pathname.includes('/perfil'),
             visible: true
         });
     }
-
-    // Tab opcional Academia para canchas/deportes
-    if (hasModule(tipoNegocio, 'ACADEMIA') || hasActiveCourses) {
-        tabs.push({
-            label: 'Academia',
-            icon: GraduationCap,
-            href: `/${slug}/mis-reservas?tab=academia`,
-            active: pathname.includes('/cursos') || (pathname.includes('/mis-reservas') && activeTabParam === 'academia'),
-            visible: true
-        });
-    }
-
-    // 3. Tab Central: Servicios / Catálogo
-    const isServicesModule = hasModule(tipoNegocio, 'SERVICES') || tipoNegocio === 'SPA' || tipoNegocio === 'RESERVA' || slug.includes('symechas');
-    tabs.push({
-        label: isServicesModule ? 'Servicios' : 'Catálogo',
-        icon: Sparkles,
-        href: isServicesModule ? `/${slug}/servicios` : `/${slug}#catalogo`,
-        active: pathname.includes('/servicios'),
-        isCentral: true,
-        visible: true
-    });
-
-    // 4. Tab Premios (Loyalty)
-    if (hasModule(tipoNegocio, 'LOYALTY')) {
-        tabs.push({
-            label: 'Premios',
-            icon: Gift,
-            href: `/${slug}/misiones`,
-            active: pathname.includes('/referidos') || pathname.includes('/misiones'),
-            visible: isLoyaltyEnabled
-        });
-    }
-
-    // 5. Tab Perfil
-    tabs.push({
-        label: 'Perfil',
-        icon: User,
-        href: `/${slug}/perfil`,
-        active: pathname.includes('/perfil'),
-        visible: true
-    });
 
     const visibleTabs = tabs.filter(t => t.visible);
 

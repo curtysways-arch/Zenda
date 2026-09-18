@@ -33,11 +33,16 @@ export default async function AdminPlanPage() {
                 },
                 Suscripcion: {
                     select: {
+                        id: true,
+                        estado: true,
+                        fechaFin: true,
                         planId: true,
                         Plan: {
                             select: {
                                 id: true,
                                 name: true,
+                                price: true,
+                                isFree: true,
                                 familyId: true
                             }
                         }
@@ -142,11 +147,18 @@ export default async function AdminPlanPage() {
         features: ['Gestión Comercial', 'Órdenes & Ventas', 'Notificaciones WhatsApp', 'Soporte 24/7']
     };
 
+    const sub = business?.Suscripcion;
+    const now = new Date();
+    const isExpired = !sub || (sub.fechaFin && new Date(sub.fechaFin) < now) || ['expired', 'vencida', 'suspendida', 'cancelada'].includes((sub.estado || '').toLowerCase());
+    const isFreePlan = Boolean(sub?.Plan?.isFree || sub?.Plan?.price === 0);
+    const hasActivePaidPlan = !isExpired && !isFreePlan;
+
     return (
         <PlanDashboardClient
             data={planData}
             allPlans={JSON.parse(JSON.stringify(allPlans || []))}
             currentPlanId={business?.Suscripcion?.planId}
+            hasActivePaidPlan={hasActivePaidPlan}
             businessName={business?.nombre || ''}
             businessId={business?.id || ''}
             tipoNegocio={business?.tipoNegocio || 'GENERAL'}

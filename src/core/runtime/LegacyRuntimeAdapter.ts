@@ -13,11 +13,13 @@ export class LegacyRuntimeAdapter {
     const tipo = (negocio?.tipoNegocio || config.tipoNegocio || 'RESERVA').toUpperCase();
     const isShoeCare = tipo === 'SHOE_CARE' || negocio?.slug === 'lavado';
     const isSports = tipo === 'SPORTS_COURTS' || (negocio?.slug || '').includes('canchas');
-    const isRestaurant = tipo === 'RESTAURANT' || tipo === 'FOOD_DELIVERY' || Boolean(rawCaps.kitchen || rawCaps.tables);
+    const isRestaurant = tipo === 'RESTAURANTE' || tipo === 'RESTAURANT' || tipo === 'FOOD_DELIVERY' || Boolean(rawCaps.kitchen || rawCaps.tables);
+    const isDental = tipo === 'DENTAL' || tipo === 'ODONTOLOGIA' || (negocio?.slug || '').includes('dental') || (config.tipoNegocio || '').toUpperCase().includes('ODONTOL');
+    const isGym = tipo === 'GIMNASIO' || tipo === 'GYM' || tipo === 'FITNESS' || (negocio?.slug || '').includes('gym') || (negocio?.slug || '').includes('fitness') || (config.tipoNegocio || '').toUpperCase().includes('GIMNASIO');
 
     const capabilities: Record<string, boolean> = {
-      booking: Boolean(rawCaps.booking ?? (isSports || tipo === 'RESERVA')),
-      service: Boolean(rawCaps.service ?? isShoeCare),
+      booking: Boolean(rawCaps.booking ?? (!isGym && (isSports || tipo === 'RESERVA'))),
+      service: Boolean(rawCaps.service ?? (!isGym && isShoeCare)),
       orders: Boolean(rawCaps.orders ?? (tipo === 'PRODUCTOS' || isRestaurant)),
       delivery: Boolean(rawCaps.delivery ?? config.capabilities?.delivery ?? (isShoeCare || isRestaurant)),
       tables: Boolean(rawCaps.tables ?? isRestaurant),
@@ -27,6 +29,10 @@ export class LegacyRuntimeAdapter {
       qr_ordering: Boolean(rawCaps.qr_ordering ?? isRestaurant),
       inventory: Boolean(rawCaps.inventory ?? true),
       crm: Boolean(rawCaps.crm ?? true),
+      memberships: Boolean(rawCaps.memberships ?? isGym),
+      membership_plans: Boolean(rawCaps.membership_plans ?? isGym),
+      access: Boolean(rawCaps.access ?? isGym),
+      attendance: Boolean(rawCaps.attendance ?? isGym),
     };
 
     const modules: string[] = [];
@@ -70,20 +76,24 @@ export class LegacyRuntimeAdapter {
       },
       experience: {
         landing: {
-          component: isRestaurant ? 'RestaurantLanding' : (isShoeCare ? 'ShoeCareLanding' : (isSports ? 'CanchaPublicLanding' : 'DefaultLanding')),
-          theme: negocio?.landingThemeId || config.landingThemeId || (isRestaurant ? 'RestaurantTheme' : 'modern')
+          component: isGym ? 'GymLanding' : (isDental ? 'DentalLanding' : (isRestaurant ? 'RestaurantLanding' : (isShoeCare ? 'ShoeCareLanding' : (isSports ? 'CanchaPublicLanding' : 'DefaultLanding')))),
+          theme: negocio?.landingThemeId || config.landingThemeId || (isGym ? 'gym-dark' : (isRestaurant ? 'RestaurantTheme' : 'modern'))
         },
         admin: {
           component: isRestaurant ? 'SidebarKitchen' : 'AdminSidebarLayout',
           layoutType: negocio?.adminThemeId || config.adminThemeId || 'SIDEBAR'
         },
         dashboard: {
-          layoutType: isRestaurant ? 'KitchenDashboard' : (isShoeCare ? 'KANBAN' : (isSports ? 'CALENDAR' : 'CARDS'))
+          layoutType: isGym ? 'GYM_DASHBOARD' : (isDental ? 'CLINIC' : (isRestaurant ? 'KitchenDashboard' : (isShoeCare ? 'KANBAN' : (isSports ? 'CALENDAR' : 'CARDS'))))
         },
         navigation: {
-          items: isRestaurant
-            ? ['INICIO', 'COCINA', 'MESAS', 'MESEROS', 'PEDIDOS', 'LOGISTICA', 'PRODUCTOS', 'CONFIGURACION']
-            : ['INICIO', 'RESERVAS', 'SERVICIOS', 'CLIENTES', 'CONFIGURACION']
+          items: isGym
+            ? ['INICIO', 'SOCIOS', 'MEMBRESIAS', 'PLANES', 'ACCESOS', 'ASISTENCIAS', 'CONFIGURACION']
+            : (isDental
+              ? ['INICIO', 'PACIENTES', 'CITAS', 'HISTORIA_CLINICA', 'TRATAMIENTOS', 'DOCUMENTOS', 'CONFIGURACION']
+              : (isRestaurant
+                ? ['INICIO', 'COCINA', 'MESAS', 'MESEROS', 'PEDIDOS', 'LOGISTICA', 'PRODUCTOS', 'CONFIGURACION']
+                : ['INICIO', 'RESERVAS', 'SERVICIOS', 'CLIENTES', 'CONFIGURACION']))
         },
         forms: { pack: isRestaurant ? 'KitchenForms' : 'MINIMAL_ROUNDED' },
         cards: { pack: isRestaurant ? 'KitchenCards' : 'GLASS' },

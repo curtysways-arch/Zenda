@@ -16,10 +16,12 @@ interface MobileClientsProps {
 export default function MobileClients({ clientes, primaryColor, onVerHistorial }: MobileClientsProps) {
     const [searchTerm, setSearchTerm] = useState('');
 
-    const filtered = clientes.filter(c =>
-        c.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.telefono.includes(searchTerm)
-    );
+    const filtered = clientes.filter(c => {
+        const nombre = (c?.nombre || '').toLowerCase();
+        const telefono = (c?.telefono || '');
+        const search = searchTerm.toLowerCase();
+        return nombre.includes(search) || telefono.includes(search);
+    });
 
     return (
         <div className="flex flex-col bg-slate-50 min-h-screen animate-in fade-in duration-500 pb-20">
@@ -49,72 +51,93 @@ export default function MobileClients({ clientes, primaryColor, onVerHistorial }
 
             {/* List */}
             <div className="p-5 space-y-4">
-                {filtered.map((c) => (
-                    <div 
-                        key={c.id}
-                        className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm active:scale-[0.98] transition-all group"
-                    >
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-4">
-                                <div className="size-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 font-black text-xl border border-slate-100 group-active:bg-[var(--primary-color)] group-active:text-white transition-colors"
-                                     style={ { '--primary-color': primaryColor } as any }>
-                                    {c.nombre.charAt(0)}
-                                </div>
-                                <div className="space-y-1">
-                                    <h3 className="font-black text-slate-900 uppercase italic leading-none">{c.nombre}</h3>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{c.telefono}</p>
-                                </div>
-                            </div>
-                            
-                            <div className="flex gap-2">
-                                <a 
-                                    href={`tel:${c.telefono}`}
-                                    className="size-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm"
-                                >
-                                    <Phone size={16} />
-                                </a>
-                                <a 
-                                    href={`https://wa.me/${c.telefono.replace(/\+/g, '')}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="size-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm"
-                                >
-                                    <MessageCircle size={16} />
-                                </a>
-                            </div>
-                        </div>
+                {filtered.map((c) => {
+                    const cleanPhone = (c?.telefono || '').replace(/\D/g, '');
+                    const initialLetter = (c?.nombre || 'C').charAt(0).toUpperCase();
+                    const formattedDate = c?.createdAt 
+                        ? (() => {
+                            try { return format(new Date(c.createdAt), 'MMM yyyy', { locale: es }); }
+                            catch { return 'Reciente'; }
+                          })()
+                        : 'Reciente';
 
-                        <div className="mt-5 grid grid-cols-2 gap-3">
-                            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Calendar size={12} style={{ color: primaryColor }} />
-                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Citas</span>
+                    return (
+                        <div 
+                            key={c.id}
+                            className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm active:scale-[0.98] transition-all group"
+                        >
+                            <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="size-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 font-black text-xl border border-slate-100 group-active:bg-[var(--primary-color)] group-active:text-white transition-colors"
+                                         style={ { '--primary-color': primaryColor } as any }>
+                                        {initialLetter}
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h3 className="font-black text-slate-900 uppercase italic leading-none">{c?.nombre || 'Sin Nombre'}</h3>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{c?.telefono || 'Sin teléfono'}</p>
+                                    </div>
                                 </div>
-                                <p className="text-lg font-black text-slate-900 leading-none">{c.totalReservas || 0}</p>
-                            </div>
-                            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <DollarSign size={12} className="text-purple-500" />
-                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Total</span>
+                                
+                                <div className="flex gap-2">
+                                    {c?.telefono ? (
+                                        <>
+                                            <a 
+                                                href={`tel:${c.telefono}`}
+                                                className="size-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm active:scale-95 transition-all"
+                                                title="Llamar"
+                                            >
+                                                <Phone size={16} />
+                                            </a>
+                                            <a 
+                                                href={`https://wa.me/${cleanPhone}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="size-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm active:scale-95 transition-all"
+                                                title="WhatsApp"
+                                            >
+                                                <MessageCircle size={16} />
+                                            </a>
+                                        </>
+                                    ) : (
+                                        <div className="text-[10px] font-bold text-slate-300 py-2">
+                                            Sin contacto
+                                        </div>
+                                    )}
                                 </div>
-                                <p className="text-lg font-black text-slate-900 leading-none">${c.totalSpent || c.totalGastado || 0}</p>
                             </div>
-                        </div>
 
-                        <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
-                            <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">
-                                MIEMBRO DESDE {format(new Date(c.createdAt), 'MMM yyyy', { locale: es })}
-                            </span>
-                            <Link 
-                                href={`/admin/clientes/${c.id}`}
-                                className="flex items-center gap-1 text-[9px] font-black uppercase italic active:scale-95 transition-transform outline-none" 
-                                style={{ color: primaryColor }}
-                            >
-                                Ver Ficha <ChevronRight size={12} />
-                            </Link>
+                            <div className="mt-5 grid grid-cols-2 gap-3">
+                                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Calendar size={12} style={{ color: primaryColor }} />
+                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Servicios</span>
+                                    </div>
+                                    <p className="text-lg font-black text-slate-900 leading-none">{c.totalReservas || 0}</p>
+                                </div>
+                                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <DollarSign size={12} className="text-purple-500" />
+                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Inversión</span>
+                                    </div>
+                                    <p className="text-lg font-black text-slate-900 leading-none">${c.totalSpent || c.totalGastado || '0.00'}</p>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
+                                <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">
+                                    MIEMBRO DESDE {formattedDate}
+                                </span>
+                                <Link 
+                                    href={`/admin/clientes/${c.id}`}
+                                    className="flex items-center gap-1 text-[9px] font-black uppercase italic active:scale-95 transition-transform outline-none" 
+                                    style={{ color: primaryColor }}
+                                >
+                                    Ver Ficha <ChevronRight size={12} />
+                                </Link>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
 
                 {filtered.length === 0 && (
                     <div className="py-20 text-center space-y-4">

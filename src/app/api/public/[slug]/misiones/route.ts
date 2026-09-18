@@ -261,6 +261,9 @@ export async function GET(
         }
 
         // 8. Mapear las BusinessMissions a Quests compatibles con el frontend
+        const rawNegocioTipo = `${negocio.tipoNegocio || ''} ${negocio.slug || ''} ${negocio.nombre || ''}`.toUpperCase();
+        const isNegocioGym = rawNegocioTipo.includes('GIMNASIO') || rawNegocioTipo.includes('GYM') || rawNegocioTipo.includes('FITNESS') || rawNegocioTipo.includes('CROSSFIT') || rawNegocioTipo.includes('ENTRENAMIENTO');
+
         const mappedQuests = businessMissions.map(bm => {
             const def = bm.MissionDefinition;
             const progress = userProgressMap[bm.id];
@@ -271,10 +274,23 @@ export async function GET(
             // Recompensas de Citiox (definición)
             def.Rewards.forEach(r => {
                 const catalog = r.RewardCatalog;
+                const config = (catalog.config as any) || {};
+                const valor = (catalog.valor as any) || {};
+
                 if (catalog.tipo === 'XP') {
-                    recompensas.push(`+${(catalog.valor as any)?.cantidad ?? 0} XP`);
+                    let xpAmount = config.xp ?? config.valor ?? config.cantidad ?? valor.xp ?? valor.cantidad ?? valor.valor;
+                    if (xpAmount === undefined || xpAmount === null || isNaN(Number(xpAmount))) {
+                        const match = catalog.nombre.match(/(\d+)\s*XP/i);
+                        xpAmount = match ? parseInt(match[1]) : 0;
+                    }
+                    recompensas.push(`+${xpAmount} XP`);
                 } else if (catalog.tipo === 'DIAMONDS') {
-                    recompensas.push(`+${(catalog.valor as any)?.cantidad ?? 0} Diamantes`);
+                    let diamondAmount = config.valor ?? config.diamantes ?? config.cantidad ?? valor.diamantes ?? valor.valor ?? valor.cantidad;
+                    if (diamondAmount === undefined || diamondAmount === null || isNaN(Number(diamondAmount))) {
+                        const match = catalog.nombre.match(/(\d+)\s*Diamante/i);
+                        diamondAmount = match ? parseInt(match[1]) : 0;
+                    }
+                    recompensas.push(`+${diamondAmount} Diamantes`);
                 } else if (catalog.tipo === 'COUPON') {
                     recompensas.push(`Cupón: ${catalog.nombre}`);
                 } else {
@@ -290,9 +306,9 @@ export async function GET(
                 } else if (rc.rewardType === 'COUPON') {
                     recompensas.push(`Cupón de Descuento`);
                 } else if (rc.rewardType === 'FREE_SERVICE' || rc.rewardType === 'SERVICE') {
-                    recompensas.push(`Servicio Gratis`);
+                    recompensas.push(isNegocioGym ? `Pase Libre Gratis` : `Servicio Gratis`);
                 } else if (rc.rewardType === 'PRODUCT') {
-                    recompensas.push(`Producto Gratis`);
+                    recompensas.push(isNegocioGym ? `Shake / Suplemento Gratis` : `Producto Gratis`);
                 } else {
                     recompensas.push(rc.descripcion || 'Premio de fidelidad');
                 }
@@ -312,20 +328,52 @@ export async function GET(
                 }
             }
 
+            let nombreVisible = def.nombre;
+            let descripcionVisible = def.descripcion || '';
+            let campañaVisible = def.categoria || 'Retos';
+
+            if (isNegocioGym) {
+                const upper = def.nombre.toUpperCase();
+                if (upper.includes('PRIMERA CITA') || (def.triggerEvent === 'BOOKING_COMPLETED' && def.cantidadMeta === 1)) {
+                    nombreVisible = 'Primer Entrenamiento';
+                    descripcionVisible = 'Asiste a tu primera sesión o check-in con QR y gana tus primeros puntos.';
+                } else if (upper.includes('CLIENTE FRECUENTE') || (def.triggerEvent === 'BOOKING_COMPLETED' && def.cantidadMeta > 1)) {
+                    nombreVisible = 'Atleta Constante';
+                    descripcionVisible = `Completa ${def.cantidadMeta} asistencias en el gimnasio y demuestra tu disciplina.`;
+                } else if (upper.includes('TU OPINIÓN CUENTA') || upper.includes('TU OPINION CUENTA')) {
+                    nombreVisible = 'Califica Tu Gym';
+                    descripcionVisible = 'Deja tu valoración sobre nuestras máquinas, limpieza y ambiente deportivo.';
+                } else if (upper.includes('EMBAJADOR DE LA MARCA') || def.triggerEvent === 'REFERRAL_COMPLETED') {
+                    nombreVisible = 'Trae a tu Gym Bro';
+                    descripcionVisible = 'Invita a un amigo a entrenar al gimnasio y gana pases o premios cuando active su membresía.';
+                } else if (upper.includes('PERFIL AL DÍA') || upper.includes('PERFIL AL DIA') || def.triggerEvent === 'PROFILE_COMPLETED') {
+                    nombreVisible = 'Ficha de Atleta Completa';
+                    descripcionVisible = 'Completa tus datos de socio y metas de entrenamiento en la app.';
+                }
+
+                if (def.categoria === 'RESERVAS') {
+                    campañaVisible = 'Asistencias & Clases';
+                } else if (def.categoria === 'REFERIDOS') {
+                    campañaVisible = 'Referidos & Gym Bros';
+                }
+            }
+
             return {
                 id: bm.id,
-                nombre: def.nombre,
-                descripcion: def.descripcion || '',
+                nombre: nombreVisible,
+                descripcion: descripcionVisible,
                 imagenUrl: def.imagenUrl || undefined,
-                icono: CATEGORY_ICONS[def.categoria] || 'Award',
-                color: CATEGORY_COLORS[def.categoria] || '#3b82f6',
+                icono: isNegocioGym && def.categoria === 'RESERVAS' ? 'Zap' : (CATEGORY_ICONS[def.categoria] || 'Award'),
+                color: isNegocioGym && def.categoria === 'RESERVAS' ? '#10b981' : (CATEGORY_COLORS[def.categoria] || '#3b82f6'),
                 campaignId: bm.id,
-                campañaNombre: def.categoria || 'Retos',
+                campañaNombre: campañaVisible,
                 fechaInicio: bm.publishedAt?.toISOString(),
                 fechaFin: undefined,
                 validacionTipo: def.triggerEvent === 'MANUAL' ? 'MANUAL' : 'AUTOMATICO',
                 progresoActual: progress ? progress.progresoActual : 0,
                 progresoRequerido: def.cantidadMeta,
+                aggregation: (def.config as any)?.aggregation || 'COUNT',
+                unit: (def.config as any)?.unit || ((def.config as any)?.aggregation === 'AMOUNT' ? '$' : ''),
                 estado,
                 fechaCompletada: progress?.fechaCompletada?.toISOString() || null,
                 recompensas: recompensasFinal

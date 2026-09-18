@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import ResourceScheduleGrid, { GridAppointmentItem } from '@/components/admin/ResourceScheduleGrid';
+import AppointmentDrawer from '@/components/admin/AppointmentDrawer';
+import QuickBlockModal from '@/components/admin/QuickBlockModal';
+import QuickBookingModal from '@/components/admin/QuickBookingModal';
 import { OperableResource } from '@/core/resources/types';
 import { Trophy, RefreshCw, Plus, Zap, Filter, Calendar } from 'lucide-react';
 
@@ -12,7 +15,15 @@ export default function CourtGridPage() {
   const [resources, setResources] = useState<OperableResource[]>([]);
   const [appointments, setAppointments] = useState<GridAppointmentItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [granularity, setGranularity] = useState<number>(90); // 90 min por defecto para Pádel
+  const [granularity, setGranularity] = useState<number>(60);
+
+  // Drawer y Modales
+  const [selectedAppointment, setSelectedAppointment] = useState<GridAppointmentItem | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+  const [isReserveModalOpen, setIsReserveModalOpen] = useState(false);
+  const [modalResourceId, setModalResourceId] = useState<string>('');
+  const [modalTime, setModalTime] = useState<string>('08:00');
 
   const fetchGridData = async (date: string) => {
     setLoading(true);
@@ -35,12 +46,20 @@ export default function CourtGridPage() {
   }, [selectedDate]);
 
   const handleSlotClick = (resourceId: string, time: string) => {
-    const court = resources.find((r) => r.id === resourceId);
-    alert(`💡 Reservar turno en ${court?.name || 'Cancha'} a las ${time} hs (${selectedDate})`);
+    setModalResourceId(resourceId);
+    setModalTime(time);
+    setIsReserveModalOpen(true);
+  };
+
+  const handleBlockClick = (resourceId: string, time: string) => {
+    setModalResourceId(resourceId);
+    setModalTime(time);
+    setIsBlockModalOpen(true);
   };
 
   const handleAppointmentClick = (app: GridAppointmentItem) => {
-    alert(`🎾 Detalle del Turno: ${app.clientName} - ${app.serviceName} (${app.startTime} a ${app.endTime})`);
+    setSelectedAppointment(app);
+    setIsDrawerOpen(true);
   };
 
   return (
@@ -111,6 +130,7 @@ export default function CourtGridPage() {
         onDateChange={setSelectedDate}
         onSlotClick={handleSlotClick}
         onAppointmentClick={handleAppointmentClick}
+        onBlockClick={handleBlockClick}
         granularityMinutes={granularity}
         startHour={7}
         endHour={23}
@@ -120,6 +140,58 @@ export default function CourtGridPage() {
           resourceNameSingular: 'Cancha',
           resourceNamePlural: 'Canchas',
         }}
+      />
+
+      {/* Drawer y Modales */}
+      <AppointmentDrawer
+        appointment={selectedAppointment}
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        onUpdateStatus={async (appId, newStatus) => {
+          await fetch(`/api/appointments/${appId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: newStatus }),
+          });
+          fetchGridData(selectedDate);
+        }}
+        onUpdatePayment={async (appId, newPayment) => {
+          await fetch(`/api/appointments/${appId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pagoEstado: newPayment }),
+          });
+          fetchGridData(selectedDate);
+        }}
+        onDeleteBlock={async (blockId) => {
+          await fetch('/api/admin/canchas/grilla', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'UNBLOCK', id: blockId }),
+          });
+          fetchGridData(selectedDate);
+        }}
+        onRefresh={() => fetchGridData(selectedDate)}
+      />
+
+      <QuickBookingModal
+        isOpen={isReserveModalOpen}
+        onClose={() => setIsReserveModalOpen(false)}
+        resources={resources}
+        selectedResourceId={modalResourceId}
+        selectedDate={selectedDate}
+        selectedTime={modalTime}
+        onBookingCreated={() => fetchGridData(selectedDate)}
+      />
+
+      <QuickBlockModal
+        isOpen={isBlockModalOpen}
+        onClose={() => setIsBlockModalOpen(false)}
+        resources={resources}
+        selectedResourceId={modalResourceId}
+        selectedDate={selectedDate}
+        selectedTime={modalTime}
+        onBlockCreated={() => fetchGridData(selectedDate)}
       />
     </div>
   );

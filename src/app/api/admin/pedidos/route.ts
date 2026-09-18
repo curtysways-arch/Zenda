@@ -473,6 +473,48 @@ export async function PUT(req: Request) {
             }
         }
 
+        // Emisión canónica al Motor Universal de Misiones Citiox
+        if (['ENTREGADO', 'FINALIZADO'].includes(estado)) {
+            try {
+                let userId = (pedidoActualizado as any).clienteId;
+                if (!userId && pedidoActualizado.telefonoCliente) {
+                    const cleanPhone = pedidoActualizado.telefonoCliente.replace(/\D/g, '');
+                    const user = await prisma.usuario.findFirst({
+                        where: {
+                            OR: [
+                                { phone: pedidoActualizado.telefonoCliente },
+                                { phone: cleanPhone },
+                                { phone: `+${cleanPhone}` }
+                            ]
+                        }
+                    });
+                    if (user) userId = user.id;
+                }
+
+                if (userId) {
+                    const { publishBusinessEvent } = await import('@/lib/growth/eventBus');
+                    const totalItems = pedidoActualizado.items?.reduce((acc: number, item: any) => acc + (item.cantidad || 1), 0) || 1;
+                    
+                    publishBusinessEvent({
+                        negocioId: pedidoActualizado.negocioId,
+                        userId,
+                        eventType: 'ORDER_COMPLETED',
+                        entityId: pedidoActualizado.id,
+                        monto: pedidoActualizado.total || 0,
+                        cantidad: totalItems,
+                        metadata: {
+                            numeroPedido: pedidoActualizado.numeroPedido,
+                            tipoEntrega: pedidoActualizado.tipoEntrega,
+                            itemsCount: totalItems,
+                            subtotal: pedidoActualizado.subtotal
+                        }
+                    }).catch(bErr => console.error('[ADMIN_PEDIDOS_MISSION_EVENT_ASYNC_ERR]', bErr));
+                }
+            } catch (growthErr: any) {
+                console.error('[ADMIN_PEDIDOS_MISSION_EVENT_ERROR]', growthErr.message);
+            }
+        }
+
         // Notificaciones Push + SSE + WhatsApp del Bot al Cliente
         try {
             const { whatsappService } = require('@/lib/whatsapp');

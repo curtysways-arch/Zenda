@@ -72,6 +72,10 @@ export default async function PromocionesPage() {
     nameUpper.includes('PELUQUERIA') ||
     nameUpper.includes('BARBERIA');
 
+  const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT' ||
+    nameUpper.includes('PARRILLA') || nameUpper.includes('RESTAURANTE') || nameUpper.includes('GASTRONOMIA') || nameUpper.includes('BURGER') || nameUpper.includes('PIZZA') || nameUpper.includes('TACO');
+  const isStore = !isRestaurant && (tipoUpper === 'TIENDA' || tipoUpper === 'ECOMMERCE' || tipoUpper === 'COMERCIO');
+
   // Evaluar capabilities y productos existentes
   const [servicesCount, productsCount, entitlements] = await Promise.all([
     (prisma as any).service.count({ where: { negocioId, estaActivo: true } }),
@@ -86,11 +90,13 @@ export default async function PromocionesPage() {
     entitlements.capabilities['commerce'] ||
     entitlements.capabilities['PRODUCT_SALES'] ||
     entitlements.capabilities['product_sales'] ||
-    entitlements.capabilities['RESTAURANT']
+    entitlements.capabilities['RESTAURANT'] ||
+    isRestaurant ||
+    isStore
   );
 
   const hasProducts = productsCount > 0 || hasProductCapability;
-  const hasServices = isServiceBiz || servicesCount > 0;
+  const hasServices = !isRestaurant && !isStore && (isServiceBiz || servicesCount > 0);
   const isHybrid = hasServices && hasProducts;
 
   // ── PREPARAR DATOS DE PRODUCTOS (Si aplica) ──────────────────────────────────
@@ -221,7 +227,7 @@ export default async function PromocionesPage() {
   // ── PREPARAR DATOS DE SERVICIOS (Si aplica) ──────────────────────────────────
   let formattedServicePromotions: any[] = [];
   if (hasServices) {
-    const promotionsData = await getPromotions();
+    const promotionsData = await getPromotions(negocioId);
 
     formattedServicePromotions = promotionsData.map((promo: any) => ({
       id: promo.id,
@@ -250,8 +256,9 @@ export default async function PromocionesPage() {
 
   // ── RENDERIZADO SEGÚN LA CAPACIDAD DEL NEGOCIO ────────────────────────────────
 
-  // 1. Negocio Híbrido (Servicios + Productos, ej. Aura Spa con Venta de Productos activa)
+  // 1. Negocio Híbrido (Servicios + Productos, ej. Aura Spa con Venta de Productos activa o Bubble Wash)
   if (isHybrid) {
+    const prefersProductPromos = tipoUpper === 'SHOE_CARE' || tipoUpper === 'LAVANDERIA' || formattedServicePromotions.length === 0;
     return (
       <PromocionesHybridView
         initialServicePromotions={formattedServicePromotions}
@@ -260,7 +267,7 @@ export default async function PromocionesPage() {
         categories={categories}
         initialMetrics={productMetrics}
         negocio={rawNegocio}
-        defaultTab="SERVICIOS"
+        defaultTab={prefersProductPromos ? "PRODUCTOS" : "SERVICIOS"}
       />
     );
   }

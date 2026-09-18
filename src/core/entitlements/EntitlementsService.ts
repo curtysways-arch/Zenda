@@ -63,11 +63,14 @@ export class EntitlementsService {
     const slugUpper = (slug || '').toUpperCase();
     const nameUpper = (nombre || '').toUpperCase();
 
+    const isGym = tipoUpper === 'GIMNASIO' || tipoUpper === 'GYM' || tipoUpper === 'FITNESS' ||
+      slugUpper.includes('GYM') || slugUpper.includes('FITNESS') || slugUpper.includes('GIMNASIO') ||
+      nameUpper.includes('GYM') || nameUpper.includes('FITNESS') || nameUpper.includes('GIMNASIO') || nameUpper.includes('CROSSFIT');
     const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT' ||
       nameUpper.includes('PARRILLA') || nameUpper.includes('RESTAURANTE') || nameUpper.includes('GASTRONOMIA') || nameUpper.includes('BURGER') || nameUpper.includes('PIZZA') || nameUpper.includes('TACO');
     const isPinchos = tipoUpper === 'PINCHOS' || slugUpper === 'PINCHOS';
     const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || slugUpper === 'CANCHAS';
-    const isServiceBiz = !isRestaurant && !isPinchos && !isCanchas && (
+    const isServiceBiz = !isGym && !isRestaurant && !isPinchos && !isCanchas && (
       tipoUpper === 'SPA' ||
       tipoUpper === 'CENTRO_ESTETICA' ||
       tipoUpper === 'PELUQUERIA' ||
@@ -87,6 +90,34 @@ export class EntitlementsService {
       nameUpper.includes('PELUQUERIA') ||
       nameUpper.includes('BARBERIA')
     );
+
+    if (isGym) {
+      return {
+        MEMBERSHIPS: true,
+        MEMBERSHIP_PLANS: true,
+        ACCESS: true,
+        ATTENDANCE: true,
+        PAYMENTS: true,
+        PROMOTIONS: true,
+        LOYALTY: true,
+        REPORTS: true,
+        CUSTOMERS: true,
+        CLASSES: false,
+        TRAINERS: false,
+        APPOINTMENTS: false,
+        SERVICES: false,
+        TABLES: false,
+        KITCHEN: false,
+        POS: false,
+        DELIVERY: false,
+        DISPATCH: false,
+        COURTS: false,
+        INVENTORY: false,
+        PRODUCTS: false,
+        CATEGORIES: false,
+        ORDERS: false
+      };
+    }
 
     if (isPinchos) {
       return {
@@ -313,6 +344,98 @@ export class EntitlementsService {
       capabilities.communications = true;
     }
 
+    // Blindaje estricto por vertical de negocio: Spa / Servicios nunca debe recibir canchas deportivas
+    const tipoUpper = (negocio.tipoNegocio || '').toUpperCase();
+    const slugUpper = (negocio.slug || '').toUpperCase();
+    const nameUpper = (negocio.nombre || '').toUpperCase();
+    const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT' ||
+      nameUpper.includes('PARRILLA') || nameUpper.includes('RESTAURANTE') || nameUpper.includes('GASTRONOMIA') || nameUpper.includes('BURGER') || nameUpper.includes('PIZZA') || nameUpper.includes('TACO');
+    const isPinchos = tipoUpper === 'PINCHOS' || slugUpper === 'PINCHOS';
+    const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || 
+      slugUpper.includes('CANCHA') || slugUpper.includes('CAMPEONES') || 
+      nameUpper.includes('CANCHA') || nameUpper.includes('COMPLEJO') || 
+      nameUpper.includes('CAMPEONES') || nameUpper.includes('PADEL') || nameUpper.includes('SINTETICA');
+    const isStore = tipoUpper === 'RETAIL' || tipoUpper === 'TIENDA' || tipoUpper === 'STORE' || tipoUpper === 'COMMERCE' || tipoUpper === 'MODA' || tipoUpper === 'ROPA';
+    const isServiceBiz = !isRestaurant && !isPinchos && !isCanchas && !isStore && (
+      tipoUpper === 'SPA' ||
+      tipoUpper === 'CENTRO_ESTETICA' ||
+      tipoUpper === 'PELUQUERIA' ||
+      tipoUpper === 'BARBERIA' ||
+      tipoUpper === 'SHOE_CARE' ||
+      tipoUpper === 'LAVANDERIA' ||
+      tipoUpper === 'ORDENES-SERVICIO' ||
+      tipoUpper === 'BEAUTY_SPA' ||
+      tipoUpper === 'RESERVA' ||
+      familySlug === 'servicios' ||
+      slugUpper.includes('SPA') ||
+      slugUpper.includes('BARBER') ||
+      slugUpper.includes('NAILS') ||
+      slugUpper.includes('DENTAL') ||
+      slugUpper.includes('CITAS') ||
+      nameUpper.includes('SPA') ||
+      nameUpper.includes('ESTETICA') ||
+      nameUpper.includes('PELUQUERIA') ||
+      nameUpper.includes('BARBERIA')
+    );
+
+    if (isServiceBiz) {
+      capabilities.COURTS = false;
+      capabilities.courts = false;
+      capabilities.SERVICES = true;
+      capabilities.services = true;
+    }
+
+    const isDentalBiz = tipoUpper === 'ODONTOLOGIA' || tipoUpper === 'DENTAL' ||
+      slugUpper.includes('DENTAL') || slugUpper.includes('ODONTOLOG') ||
+      nameUpper.includes('DENTAL') || nameUpper.includes('ODONTOLOG');
+
+    if (isDentalBiz) {
+      capabilities.DENTAL_CLINICAL_RECORD = true;
+      capabilities.dental_clinical_record = true;
+      capabilities.DENTAL_ODONTOGRAM = true;
+      capabilities.dental_odontogram = true;
+      capabilities.DENTAL_TREATMENT_PLAN = true;
+      capabilities.dental_treatment_plan = true;
+      capabilities.DENTAL_DIAGNOSIS = true;
+      capabilities.dental_diagnosis = true;
+      capabilities.DENTAL_DOCUMENTS = true;
+      capabilities.dental_documents = true;
+    }
+
+    if (isRestaurant || isPinchos) {
+      capabilities.APPOINTMENTS = false;
+      capabilities.appointments = false;
+      capabilities.booking = false;
+      capabilities.SERVICES = false;
+      capabilities.services = false;
+      capabilities.COURTS = false;
+      capabilities.courts = false;
+      capabilities.COURSES = false;
+      capabilities.courses = false;
+      if (isRestaurant) {
+        capabilities.TABLES = true;
+        capabilities.tables = true;
+        capabilities.KITCHEN = true;
+        capabilities.kitchen = true;
+      }
+    }
+
+    if (isStore) {
+      capabilities.APPOINTMENTS = false;
+      capabilities.appointments = false;
+      capabilities.booking = false;
+      capabilities.SERVICES = false;
+      capabilities.services = false;
+      capabilities.COURTS = false;
+      capabilities.courts = false;
+      capabilities.COURSES = false;
+      capabilities.courses = false;
+      capabilities.TABLES = false;
+      capabilities.tables = false;
+      capabilities.KITCHEN = false;
+      capabilities.kitchen = false;
+    }
+
     // 4. Límites base del plan y resolución de PlanLimit
     const baseLimits: Record<string, number> = {
       branches: plan?.max_locations ?? 1,
@@ -480,16 +603,56 @@ export class EntitlementsService {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const [branchCount, staffCount, appointmentCount, productCount] = await Promise.all([
+    const [branchCount, staffCount, appointmentCount, productCount, orderCount, tableCount] = await Promise.all([
       (prisma as any).branch
         ? (prisma as any).branch.count({ where: { businessId, active: true } }).catch(() => 1)
         : (prisma as any).ubicacion
         ? (prisma as any).ubicacion.count({ where: { negocioId: businessId } }).catch(() => 1)
         : Promise.resolve(1),
-      (prisma as any).staff ? (prisma as any).staff.count({ where: { businessId } }).catch(() => 1) : Promise.resolve(1),
+      (prisma as any).staff 
+        ? (prisma as any).staff.count({ where: { businessId } }).catch(() => 0) 
+        : (prisma as any).user 
+        ? (prisma as any).user.count({ where: { negocioId: businessId } }).catch(() => 1) 
+        : Promise.resolve(1),
       (prisma as any).appointment ? (prisma as any).appointment.count({ where: { negocioId: businessId, createdAt: { gte: startOfMonth } } }).catch(() => 0) : Promise.resolve(0),
-      (prisma as any).producto ? (prisma as any).producto.count({ where: { negocioId: businessId } }).catch(() => 0) : Promise.resolve(0)
+      (prisma as any).producto ? (prisma as any).producto.count({ where: { negocioId: businessId } }).catch(() => 0) : Promise.resolve(0),
+      (prisma as any).pedido ? (prisma as any).pedido.count({ where: { negocioId: businessId, createdAt: { gte: startOfMonth }, estado: { not: 'CANCELADO' } } }).catch(() => 0) : Promise.resolve(0),
+      (prisma as any).restaurantTable ? (prisma as any).restaurantTable.count({ where: { negocioId: businessId, activa: true } }).catch(() => 0) : Promise.resolve(0)
     ]);
+
+    // Blindaje final por vertical de negocio
+    if (isRestaurant || isPinchos) {
+      capabilities.APPOINTMENTS = false;
+      capabilities.appointments = false;
+      capabilities.booking = false;
+      capabilities.SERVICES = false;
+      capabilities.services = false;
+      capabilities.COURTS = false;
+      capabilities.courts = false;
+      capabilities.COURSES = false;
+      capabilities.courses = false;
+    } else if (isStore) {
+      capabilities.APPOINTMENTS = false;
+      capabilities.appointments = false;
+      capabilities.booking = false;
+      capabilities.SERVICES = false;
+      capabilities.services = false;
+      capabilities.COURTS = false;
+      capabilities.courts = false;
+      capabilities.COURSES = false;
+      capabilities.courses = false;
+      capabilities.TABLES = false;
+      capabilities.tables = false;
+      capabilities.KITCHEN = false;
+      capabilities.kitchen = false;
+    } else if (isCanchas) {
+      capabilities.SERVICES = false;
+      capabilities.services = false;
+      capabilities.TABLES = false;
+      capabilities.tables = false;
+      capabilities.KITCHEN = false;
+      capabilities.kitchen = false;
+    }
 
     return {
       businessId,
@@ -506,8 +669,12 @@ export class EntitlementsService {
       usage: {
         branches: branchCount,
         professionals: staffCount,
+        users: staffCount,
         appointmentsMonthly: appointmentCount,
-        products: productCount
+        products: productCount,
+        ordersMonthly: orderCount,
+        orders: orderCount,
+        tables: tableCount
       },
       addons: activeAddonsList
     };

@@ -17,6 +17,30 @@ interface PromotionBuilderProps {
   negocio?: any;
 }
 
+function extractBuilderProductIds(data: any): string[] {
+  if (!data) return [];
+  const set = new Set<string>();
+  if (Array.isArray(data.productosRelacionados)) {
+    data.productosRelacionados.forEach((id: any) => {
+      if (typeof id === 'string' && id.trim()) set.add(id.trim());
+      else if (id && typeof id.id === 'string') set.add(id.id.trim());
+    });
+  }
+  if (typeof data.descripcion === 'string' && data.descripcion.includes('<!-- CITIOX_META:')) {
+    try {
+      const jsonStr = data.descripcion.split('<!-- CITIOX_META:')[1].split('-->')[0].trim();
+      const meta = JSON.parse(jsonStr);
+      if (Array.isArray(meta.productosRelacionados)) {
+        meta.productosRelacionados.forEach((id: any) => {
+          if (typeof id === 'string' && id.trim()) set.add(id.trim());
+          else if (id && typeof id.id === 'string') set.add(id.id.trim());
+        });
+      }
+    } catch (_) {}
+  }
+  return Array.from(set);
+}
+
 export default function PromotionBuilder({
   products = [],
   categories = [],
@@ -29,6 +53,9 @@ export default function PromotionBuilder({
   const blueprintId = (negocio?.configuracion as any)?.blueprintId;
   const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || blueprintId === 'RESTAURANT';
   const isStore = tipoUpper === 'TIENDA' || tipoUpper === 'STORE' || blueprintId === 'STORE';
+  const itemSingular = isStore ? 'Producto' : isRestaurant ? 'Platillo' : 'Ítem';
+  const itemPlural = isStore ? 'Productos' : isRestaurant ? 'Platillos' : 'Ítems';
+  const catalogTerm = isStore ? 'Catálogo' : isRestaurant ? 'Menú' : 'Catálogo';
 
   // ── ESTADO DE NAVEGACIÓN Y PASOS ──────────────────────────────────────────
   const [currentStep, setCurrentStep] = useState<number>(1);
@@ -41,12 +68,21 @@ export default function PromotionBuilder({
   const [alcance, setAlcance] = useState<string>(initialData?.alcance || 'PEDIDO_COMPLETO');
   const [productoRequeridoId, setProductoRequeridoId] = useState<string>(initialData?.productoRequeridoId || initialData?.servicioRequeridoId || '');
   const [categoriaRequeridaId, setCategoriaRequeridaId] = useState<string>(initialData?.categoriaRequeridaId || '');
-  const [productosRelacionados, setProductosRelacionados] = useState<string[]>(initialData?.productosRelacionados || []);
+  const [productosRelacionados, setProductosRelacionados] = useState<string[]>(() => extractBuilderProductIds(initialData));
 
   // ── PASO 2: TIPO DE BENEFICIO / OFERTA ────────────────────────────────────
   // 'PORCENTAJE' | 'DESCUENTO_FIJO' | 'PRECIO_ESPECIAL' | 'DOS_POR_UNO' | 'TRES_POR_DOS' | 'COMBO' | 'ENVIO_GRATIS' | 'CUPON' | 'CUSTOM'
   const [tipoPromo, setTipoPromo] = useState<string>(initialData?.tipoPromo || 'PORCENTAJE');
   const [cuponTipoModalidad, setCuponTipoModalidad] = useState<'PORCENTAJE' | 'DESCUENTO_FIJO' | 'PRECIO_ESPECIAL'>(initialData?.cuponTipoModalidad || 'PORCENTAJE');
+
+  const isCombo = tipoPromo === 'COMBO' || alcance === 'COMBO';
+
+  // Sincronizar automáticamente alcance si tipoPromo es COMBO
+  useEffect(() => {
+    if (tipoPromo === 'COMBO' && alcance !== 'COMBO') {
+      setAlcance('COMBO');
+    }
+  }, [tipoPromo, alcance]);
 
   // ── PASO 3: MONTO & CÁLCULOS ─────────────────────────────────────────────
   const [precioPromo, setPrecioPromo] = useState<number>(initialData?.precioPromo !== undefined ? Number(initialData.precioPromo) : 15);
@@ -99,6 +135,25 @@ export default function PromotionBuilder({
   const [imagenUrl, setImagenUrl] = useState<string>(initialData?.imagenUrl || '');
   const [userEditedTitle, setUserEditedTitle] = useState<boolean>(!!initialData?.titulo);
 
+  // Sincronizar estados si initialData cambia dinámicamente
+  useEffect(() => {
+    if (initialData) {
+      setAlcance(initialData.alcance || (initialData.tipoPromo === 'COMBO' ? 'COMBO' : 'PEDIDO_COMPLETO'));
+      setTipoPromo(initialData.tipoPromo || 'PORCENTAJE');
+      setProductoRequeridoId(initialData.productoRequeridoId || initialData.servicioRequeridoId || '');
+      setCategoriaRequeridaId(initialData.categoriaRequeridaId || '');
+      setProductosRelacionados(extractBuilderProductIds(initialData));
+      if (initialData.precioPromo !== undefined) setPrecioPromo(Number(initialData.precioPromo) || 0);
+      if (initialData.precioAnterior !== undefined) setPrecioAnteriorInput(Number(initialData.precioAnterior) || undefined);
+      setTitulo(initialData.titulo || '');
+      let cleanD = initialData.descripcion || '';
+      if (cleanD.includes('<!-- CITIOX_META:')) cleanD = cleanD.split('<!-- CITIOX_META:')[0].trim();
+      setDescripcion(cleanD);
+      setImagenUrl(initialData.imagenUrl || '');
+      setUserEditedTitle(true);
+    }
+  }, [initialData]);
+
   // ── EFECTOS DE AUTOMATIZACIÓN DE VALORES ──────────────────────────────────
 
   // Obtener producto y categoría seleccionados
@@ -117,25 +172,33 @@ export default function PromotionBuilder({
   // Imagen para la previsualización viva (del producto o URL personalizada)
   const displayImage = useMemo(() => {
     if (imagenUrl) return imagenUrl;
+    if (isCombo) {
+      if (selectedComboProducts.length > 0 && selectedComboProducts[0].imagenUrl) {
+        return selectedComboProducts[0].imagenUrl;
+      }
+    }
     if (selectedProduct?.imagenUrl) return selectedProduct.imagenUrl;
     if (selectedComboProducts.length > 0 && selectedComboProducts[0].imagenUrl) {
       return selectedComboProducts[0].imagenUrl;
     }
     return '';
-  }, [imagenUrl, selectedProduct, selectedComboProducts]);
+  }, [imagenUrl, isCombo, selectedProduct, selectedComboProducts]);
 
   // Precio base real de referencia
   const basePrice = useMemo(() => {
+    if (isCombo) {
+      if (selectedComboProducts.length > 0) {
+        return selectedComboProducts.reduce((sum, p) => sum + (Number(p.precio) || 0), 0);
+      }
+      return 0;
+    }
     if (alcance === 'PRODUCTOS' && selectedProduct) {
       return Number(selectedProduct.precio) || 0;
-    }
-    if (alcance === 'COMBO' && selectedComboProducts.length > 0) {
-      return selectedComboProducts.reduce((sum, p) => sum + (Number(p.precio) || 0), 0);
     }
     if (precioAnteriorInput && precioAnteriorInput > 0) return precioAnteriorInput;
     if (products.length > 0 && products[0].precio) return Number(products[0].precio);
     return 12.00;
-  }, [alcance, selectedProduct, selectedComboProducts, precioAnteriorInput, products]);
+  }, [isCombo, alcance, selectedProduct, selectedComboProducts, precioAnteriorInput, products]);
 
   // Autogenerar título y descripción inteligentes si el usuario no los ha personalizado
   useEffect(() => {
@@ -163,10 +226,10 @@ export default function PromotionBuilder({
       const prodStr = selectedProduct ? selectedProduct.nombre : 'Platillos Seleccionados';
       autoTitle = `🎁 3x2 en ${prodStr}`;
       autoDesc = `Lleva 3 ${prodStr} y paga únicamente 2.`;
-    } else if (tipoPromo === 'COMBO') {
+    } else if (isCombo) {
       const count = selectedComboProducts.length;
-      autoTitle = `🍔 Combo Especial ${count > 0 ? `(${count} productos)` : ''} a $${precioPromo.toFixed(2)}`;
-      autoDesc = selectedComboProducts.length > 0 ? `Incluye: ${selectedComboProducts.map(p => p.nombre).join(' + ')}` : 'Paquete especial del menú a precio reducido.';
+      autoTitle = `${isStore ? '🎁 Pack Especial' : '🍔 Combo Especial'} ${count > 0 ? `(${count} ${itemPlural.toLowerCase()})` : ''} a $${precioPromo.toFixed(2)}`;
+      autoDesc = selectedComboProducts.length > 0 ? `Incluye: ${selectedComboProducts.map(p => p.nombre).join(' + ')}` : (isStore ? 'Pack especial de productos a precio reducido.' : 'Paquete especial del menú a precio reducido.');
     } else if (tipoPromo === 'ENVIO_GRATIS') {
       autoTitle = esCostoCompleto ? '🚚 100% Envío Gratis' : `💰 Subsidio de Envío $${(costoMaximoSubsidiado || 0).toFixed(2)} OFF`;
       autoDesc = 'Descuento especial en el costo de entrega a domicilio.';
@@ -180,7 +243,7 @@ export default function PromotionBuilder({
 
     if (autoTitle) setTitulo(autoTitle);
     if (autoDesc) setDescripcion(autoDesc);
-  }, [tipoPromo, alcance, selectedProduct, selectedCategory, selectedComboProducts, precioPromo, cuponCodigo, cuponTipoModalidad, esCostoCompleto, costoMaximoSubsidiado, beneficioPersonalizado, userEditedTitle]);
+  }, [tipoPromo, alcance, isCombo, isStore, itemPlural, selectedProduct, selectedCategory, selectedComboProducts, precioPromo, cuponCodigo, cuponTipoModalidad, esCostoCompleto, costoMaximoSubsidiado, beneficioPersonalizado, userEditedTitle]);
 
   // CÁLCULOS MATEMÁTICOS INTELIGENTES EN TIEMPO REAL PARA LA PREVISUALIZACIÓN VIVA
   const previewCalculation = useMemo(() => {
@@ -264,20 +327,20 @@ export default function PromotionBuilder({
         return `⚠️ El precio promocional ($${precioPromo.toFixed(2)}) debe ser menor al precio normal ($${selectedProduct.precio.toFixed(2)}).`;
       }
       if (tipoPromo === 'DESCUENTO_FIJO' && selectedProduct && precioPromo >= selectedProduct.precio) {
-        return `⚠️ El descuento ($${precioPromo.toFixed(2)}) no puede ser mayor o igual al precio del platillo ($${selectedProduct.precio.toFixed(2)}).`;
+        return `⚠️ El descuento ($${precioPromo.toFixed(2)}) no puede ser mayor o igual al precio del ${itemSingular.toLowerCase()} ($${selectedProduct.precio.toFixed(2)}).`;
       }
       if (tipoPromo === 'CUPON' && !cuponCodigo.trim()) {
         return '⚠️ Por favor escribe el código del cupón (ej. VERANO10).';
       }
-      if (tipoPromo === 'COMBO' && selectedComboProducts.length === 0) {
-        return '⚠️ Selecciona al menos 1 platillo para formar el combo.';
+      if (isCombo && selectedComboProducts.length === 0) {
+        return `⚠️ Selecciona al menos 1 ${itemSingular.toLowerCase()} para formar el combo.`;
       }
       if (fechaFin && fechaInicio && new Date(fechaFin) < new Date(fechaInicio)) {
         return '⚠️ La fecha de fin no puede ser anterior a la fecha de inicio.';
       }
     }
     return null;
-  }, [currentStep, tipoPromo, precioPromo, selectedProduct, cuponCodigo, selectedComboProducts, fechaFin, fechaInicio]);
+  }, [currentStep, tipoPromo, isCombo, itemSingular, precioPromo, selectedProduct, cuponCodigo, selectedComboProducts, fechaFin, fechaInicio]);
 
   // APLICAR SUGERENCIA DE OBJETIVO INTELIGENTE
   const handleApplyPreset = (presetKey: string) => {
@@ -324,28 +387,28 @@ export default function PromotionBuilder({
     }
   };
 
-  // HANDLER SUBMIT FINAL
+  // ENVIAR GUARDADO
   const handleSaveSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!titulo.trim()) {
-      alert('Por favor ingresa un título para la promoción.');
-      return;
-    }
 
     if (validationError) {
       alert(validationError);
       return;
     }
 
+    const comboFirstImg = selectedComboProducts.length > 0 ? selectedComboProducts[0].imagenUrl : '';
+    const finalImageUrl = imagenUrl || (isCombo ? (comboFirstImg || '') : (selectedProduct?.imagenUrl || ''));
+    const finalMainProductId = isCombo ? (selectedComboProducts[0]?.id || productoRequeridoId) : productoRequeridoId;
+
     onSave({
+      id: initialData?.id,
       titulo,
       descripcion,
       tipoPromo: tipoPromo === 'CUPON' && cuponTipoModalidad === 'PORCENTAJE' ? 'PORCENTAJE' : tipoPromo,
       cuponTipoModalidad,
       precioPromo,
       precioAnterior: basePrice,
-      imagenUrl: imagenUrl || (selectedProduct?.imagenUrl || ''),
+      imagenUrl: finalImageUrl,
       fechaInicio,
       fechaFin,
       diasValidos,
@@ -354,16 +417,16 @@ export default function PromotionBuilder({
       canales,
       montoMinimo,
       cantidadMinima: 0,
-      productoRequeridoId,
-      servicioRequeridoId: productoRequeridoId,
+      productoRequeridoId: finalMainProductId,
+      servicioRequeridoId: finalMainProductId,
       categoriaRequeridaId,
       cuponCodigo,
       tipoCliente,
       usosTotalesMaximo,
       usosPorClienteMaximo,
-      productosRelacionados: alcance === 'COMBO' ? productosRelacionados : [],
+      productosRelacionados: isCombo ? productosRelacionados : [],
       goalPreset,
-      alcance,
+      alcance: isCombo ? 'COMBO' : alcance,
       distanciaMaximaKm,
       costoMaximoSubsidiado,
       esCostoCompleto,
@@ -621,9 +684,9 @@ export default function PromotionBuilder({
               {alcance === 'PRODUCTOS' && (
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
-                    <Utensils className="w-5 h-5 text-amber-600" />
+                    {isStore ? <Package className="w-5 h-5 text-amber-600" /> : <Utensils className="w-5 h-5 text-amber-600" />}
                     <span className="text-xs font-black text-amber-950">
-                      {selectedProduct ? `Platillo: ${selectedProduct.nombre} ($${(Number(selectedProduct.precio) || 0).toFixed(2)})` : 'Ningún platillo seleccionado aún'}
+                      {selectedProduct ? `${itemSingular}: ${selectedProduct.nombre} ($${(Number(selectedProduct.precio) || 0).toFixed(2)})` : `Ningún ${itemSingular.toLowerCase()} seleccionado aún`}
                     </span>
                   </div>
                   <button
@@ -631,7 +694,7 @@ export default function PromotionBuilder({
                     onClick={() => setShowProductModal(true)}
                     className="py-2 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-xs cursor-pointer"
                   >
-                    {selectedProduct ? 'Cambiar Platillo' : 'Seleccionar Platillo'}
+                    {selectedProduct ? `Cambiar ${itemSingular}` : `Seleccionar ${itemSingular}`}
                   </button>
                 </div>
               )}
@@ -651,6 +714,51 @@ export default function PromotionBuilder({
                   >
                     {selectedCategory ? 'Cambiar Categoría' : 'Seleccionar Categoría'}
                   </button>
+                </div>
+              )}
+
+              {alcance === 'COMBO' && (
+                <div className="p-4 bg-purple-50 border border-purple-200 rounded-2xl space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <Gift className="w-5 h-5 text-purple-600" />
+                      <span className="text-xs font-black text-purple-950">
+                        {selectedComboProducts.length > 0 
+                          ? `${selectedComboProducts.length} ${itemPlural} seleccionados para este combo:` 
+                          : `Selecciona los ${itemPlural.toLowerCase()} que formarán este combo:`}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-black uppercase px-2.5 py-1 bg-purple-200 text-purple-900 rounded-xl">
+                      {selectedComboProducts.length} seleccionados
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                    {products.map(p => {
+                      const isChecked = productosRelacionados.includes(p.id);
+                      return (
+                        <div
+                          key={p.id}
+                          onClick={() => toggleComboProduct(p.id)}
+                          className={`p-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                            isChecked 
+                              ? 'bg-purple-600 text-white border-purple-600 shadow-xs' 
+                              : 'bg-white text-slate-700 border-slate-200 hover:border-purple-300'
+                          }`}
+                        >
+                          <span className="truncate">{p.nombre}</span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="font-mono text-[11px] opacity-80">${(Number(p.precio) || 0).toFixed(2)}</span>
+                            <span className={`size-5 rounded-md flex items-center justify-center text-[10px] font-black ${
+                              isChecked ? 'bg-white text-purple-700' : 'bg-slate-100 text-slate-400'
+                            }`}>
+                              {isChecked ? '✓' : '+'}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
@@ -693,7 +801,14 @@ export default function PromotionBuilder({
                     <button
                       key={b.id}
                       type="button"
-                      onClick={() => setTipoPromo(b.id)}
+                      onClick={() => {
+                        setTipoPromo(b.id);
+                        if (b.id === 'COMBO') {
+                          setAlcance('COMBO');
+                        } else if (b.id === 'ENVIO_GRATIS') {
+                          setAlcance('ENVIO_GRATIS');
+                        }
+                      }}
                       className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                         isSelected 
                           ? 'bg-amber-50 border-amber-500 text-amber-950 font-black shadow-xs ring-2 ring-amber-500/20' 
@@ -765,7 +880,7 @@ export default function PromotionBuilder({
                       onClick={() => setShowProductModal(true)}
                       className="w-full p-3 bg-white border border-dashed border-amber-300 rounded-xl text-xs font-black text-amber-800 text-center hover:bg-amber-50 cursor-pointer"
                     >
-                      + Seleccionar Platillo para Precio Especial
+                      + Seleccionar {itemSingular} para Precio Especial
                     </button>
                   )}
 
@@ -881,7 +996,7 @@ export default function PromotionBuilder({
                       onClick={() => setShowProductModal(true)}
                       className="w-full p-3 bg-white border border-dashed border-purple-300 rounded-xl text-xs font-black text-purple-800 text-center hover:bg-purple-50 cursor-pointer"
                     >
-                      + Seleccionar Platillo que participa
+                      + Seleccionar {itemSingular} que participa
                     </button>
                   )}
                 </div>
@@ -891,13 +1006,13 @@ export default function PromotionBuilder({
               {tipoPromo === 'COMBO' && (
                 <div className="p-4 bg-purple-50/70 border border-purple-200 rounded-2xl space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-black text-purple-950">Platillos Incluidos en el Combo ({selectedComboProducts.length})</span>
+                    <span className="text-xs font-black text-purple-950">{itemPlural} Incluidos en el Combo ({selectedComboProducts.length})</span>
                     <button
                       type="button"
                       onClick={() => setShowProductModal(true)}
                       className="text-xs font-black text-purple-700 hover:underline cursor-pointer"
                     >
-                      + Seleccionar Productos
+                      + Seleccionar {itemPlural}
                     </button>
                   </div>
 
@@ -1371,54 +1486,108 @@ export default function PromotionBuilder({
             </div>
 
             {/* CARD 1: HERO DARK BANNER CON INSIGNIAS Y DIVIDER */}
-            <div className="relative rounded-3xl bg-gradient-to-b from-[#2d1154] via-[#1c0a38] to-[#0d031c] text-white p-5 text-center shadow-xl overflow-hidden space-y-3 border border-purple-900/40">
+            <div className="relative rounded-3xl bg-gradient-to-b from-[#2d1154] via-[#1c0a38] to-[#0d031c] text-white p-5 text-center shadow-xl overflow-hidden space-y-3.5 border border-purple-900/40">
               {/* Badges superiores */}
               <div className="flex items-center justify-between gap-2">
-                <span className="px-3 py-1 bg-amber-400 text-slate-950 font-black text-[10px] uppercase rounded-full shadow-md flex items-center gap-1.5">
-                  <Percent className="w-3 h-3" />
-                  <span>{previewCalculation.normType}</span>
+                <span className="px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 font-black text-[10px] uppercase rounded-full shadow-md flex items-center gap-1.5 tracking-wider">
+                  <Flame className="w-3 h-3 text-slate-950 fill-slate-950" />
+                  <span>
+                    {previewCalculation.percentageOff > 0 
+                      ? `${previewCalculation.percentageOff}% DESCUENTO` 
+                      : tipoPromo === 'PRECIO_ESPECIAL'
+                      ? 'PRECIO ESPECIAL'
+                      : tipoPromo === 'COMBO'
+                      ? 'PACK COMBO'
+                      : tipoPromo === 'ENVIO_GRATIS'
+                      ? 'ENVÍO GRATIS'
+                      : (tipoPromo || 'OFERTA').replace(/_/g, ' ')}
+                  </span>
                 </span>
-                <span className="px-3 py-1 bg-emerald-400 text-slate-950 font-black text-[10px] uppercase rounded-full shadow-md">
-                  {previewCalculation.percentageOff > 0 ? `-${previewCalculation.percentageOff}% DESCUENTO` : 'OFERTA ESPECIAL'}
+                <span className="px-3 py-1 bg-white/15 backdrop-blur-md font-black text-[10px] uppercase rounded-full border border-white/20 shadow-xs flex items-center gap-1" style={{ color: '#ffffff' }}>
+                  <Clock className="w-3 h-3 text-amber-300" />
+                  <span>Tiempo Limitado</span>
                 </span>
               </div>
 
-              {/* Imagen principal flotante */}
-              <div className="w-24 h-24 mx-auto relative my-2">
+              {/* Imagen principal con marco de vitrina */}
+              <div className="w-32 h-32 mx-auto relative my-2 rounded-2xl bg-black/40 border border-white/20 p-2 shadow-2xl flex items-center justify-center overflow-hidden backdrop-blur-xs">
                 {displayImage ? (
                   <img
                     src={displayImage}
                     alt={titulo}
-                    className="w-full h-full object-cover rounded-2xl shadow-2xl border-2 border-white/20"
+                    className="w-full h-full object-contain rounded-xl drop-shadow-md"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-5xl drop-shadow-md">
-                    🍔
+                  <div className="w-full h-full flex items-center justify-center text-4xl drop-shadow-md">
+                    {isStore ? '🛍️' : '🍔'}
                   </div>
                 )}
               </div>
 
-              {/* Título & Divisor de Cubiertos */}
-              <div>
-                <h4 className="text-base font-black tracking-widest text-white uppercase italic">
-                  {selectedProduct ? selectedProduct.nombre : 'CITIOX GASTRONOMÍA'}
-                </h4>
-                <div className="flex items-center justify-center gap-2 my-1">
-                  <span className="h-[1px] w-8 bg-amber-400/50" />
-                  <Utensils className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="h-[1px] w-8 bg-amber-400/50" />
+              {/* Título & Divisor con texto en blanco asegurado */}
+              <div className="space-y-1">
+                <div 
+                  className="text-base sm:text-lg font-black tracking-wide uppercase italic leading-tight drop-shadow-md"
+                  style={{ color: '#ffffff' }}
+                >
+                  {isCombo 
+                    ? (titulo || (selectedComboProducts.length > 0 
+                        ? `Combo: ${selectedComboProducts.map(p => p.nombre).join(' + ')}` 
+                        : 'COMBO ESPECIAL'))
+                    : (selectedProduct 
+                        ? selectedProduct.nombre 
+                        : (titulo || (isStore ? 'CITIOX URBAN STORE' : 'CITIOX GASTRONOMÍA')))}
                 </div>
-                <p className="text-xs text-slate-300 font-medium">
-                  Disfruta de nuestros mejores sabores <span className="text-amber-400 font-black">¡por menos!</span>
+
+                <div className="flex items-center justify-center gap-2 my-1.5 opacity-80">
+                  <span className="h-[1px] w-10 bg-gradient-to-r from-transparent to-amber-400" />
+                  {isStore ? <Package className="w-3.5 h-3.5 text-amber-400" /> : <Utensils className="w-3.5 h-3.5 text-amber-400" />}
+                  <span className="h-[1px] w-10 bg-gradient-to-l from-transparent to-amber-400" />
+                </div>
+
+                <p 
+                  className="text-xs font-medium leading-relaxed px-2 line-clamp-2"
+                  style={{ color: '#cbd5e1' }}
+                >
+                  {descripcion 
+                    ? descripcion 
+                    : isStore 
+                    ? 'Lleva esta prenda exclusiva con descuento preferencial por tiempo limitado.' 
+                    : 'Disfruta de nuestros mejores sabores al mejor precio.'}
                 </p>
               </div>
 
-              {/* Pill inferior de alcance */}
-              <div className="pt-1">
-                <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-white text-purple-950 font-black text-[11px] uppercase rounded-full shadow-md">
-                  <span>🎂</span>
-                  <span>{selectedProduct ? `Platillo: ${selectedProduct.nombre}` : selectedCategory ? `Categoría: ${selectedCategory.nombre}` : 'Menú Completo'}</span>
-                </span>
+              {/* Botón CTA Promocional */}
+              <div className="pt-2">
+                <div className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg flex items-center justify-between gap-2 border border-amber-300/40">
+                  <span className="flex items-center gap-2 truncate">
+                    <ShoppingBag className="w-4 h-4 shrink-0 text-slate-950" />
+                    <span className="truncate">
+                      {isCombo 
+                        ? `LLEVAR PACK (${selectedComboProducts.length} ${itemPlural.toLowerCase()})` 
+                        : selectedProduct 
+                        ? `COMPRAR CON DESCUENTO` 
+                        : `APROVECHAR OFERTA`}
+                    </span>
+                  </span>
+                  <span className="text-xs font-black bg-slate-950/15 px-2 py-0.5 rounded-lg shrink-0">
+                    ${previewCalculation.totalPromo.toFixed(2)}
+                  </span>
+                </div>
+
+                {isCombo && selectedComboProducts.length > 0 && (
+                  <div className="flex items-center justify-center gap-1 flex-wrap pt-2">
+                    {selectedComboProducts.map(p => (
+                      <span 
+                        key={p.id} 
+                        className="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-white/10 border border-white/15 truncate max-w-[130px]"
+                        style={{ color: '#e2e8f0' }}
+                      >
+                        • {p.nombre}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1429,11 +1598,17 @@ export default function PromotionBuilder({
                   <Tag className="w-5 h-5" />
                 </div>
                 <div>
-                  <h5 className="text-xs font-black text-emerald-700 uppercase">
+                  <div className="text-xs font-black text-emerald-700 uppercase">
                     {previewCalculation.percentageOff > 0 ? `${previewCalculation.percentageOff}% DE DESCUENTO` : 'OFERTA ESPECIAL'}
-                  </h5>
+                  </div>
                   <p className="text-[11px] text-slate-600 font-bold leading-tight">
-                    {selectedProduct ? `en ${selectedProduct.nombre}` : selectedCategory ? `en categoría ${selectedCategory.nombre}` : 'en todo el menú'}
+                    {isCombo 
+                      ? `en combo de ${selectedComboProducts.length} ${itemPlural.toLowerCase()} (${selectedComboProducts.map(p => p.nombre).join(', ')})`
+                      : selectedProduct 
+                      ? `en ${selectedProduct.nombre}` 
+                      : selectedCategory 
+                      ? `en categoría ${selectedCategory.nombre}` 
+                      : `en todo el ${catalogTerm.toLowerCase()}`}
                   </p>
                   <p className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">
                     {descripcion || 'Aprovecha esta promoción especial.'}
@@ -1584,8 +1759,8 @@ function ProductSelectorModal({
         
         <div className="p-4 border-b border-slate-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <Utensils className="w-5 h-5 text-amber-500" />
-            <h3 className="font-black text-sm uppercase text-slate-900">Seleccionar Platillo o Bebida</h3>
+            <Package className="w-5 h-5 text-amber-500" />
+            <h3 className="font-black text-sm uppercase text-slate-900">Seleccionar Producto del Catálogo</h3>
           </div>
           <button type="button" onClick={onClose} className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500 cursor-pointer">
             <X className="w-5 h-5" />
@@ -1599,7 +1774,7 @@ function ProductSelectorModal({
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              placeholder="Buscar por nombre de platillo..."
+              placeholder="Buscar por nombre de producto..."
               className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-amber-500"
             />
           </div>

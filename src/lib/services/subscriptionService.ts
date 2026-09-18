@@ -42,7 +42,11 @@ export const subscriptionService = {
             where: { id: businessId },
             include: {
                 Suscripcion: {
-                    include: { Plan: true }
+                    include: { 
+                        Plan: {
+                            include: { planLimits: true }
+                        } 
+                    }
                 },
                 Service: true,
                 Staff: true,
@@ -69,8 +73,16 @@ export const subscriptionService = {
             }
         });
 
-        const maxStaff = (plan as any).maxStaff || 1;
-        const maxAppointments = (plan as any).maxAppointmentsMonthly || (plan as any).max_reservations_per_month || 40;
+        const limitsArray = (plan as any).planLimits || [];
+        const staffLimitObj = limitsArray.find((l: any) => l.limitKey === 'MAX_STAFF');
+        const apptLimitObj = limitsArray.find((l: any) => l.limitKey === 'MAX_APPOINTMENTS_MONTHLY');
+        const servLimitObj = limitsArray.find((l: any) => l.limitKey === 'MAX_SERVICES');
+        const locLimitObj = limitsArray.find((l: any) => l.limitKey === 'MAX_BRANCHES');
+
+        const maxStaff = staffLimitObj ? (staffLimitObj.limitValue === -1 ? 999999 : staffLimitObj.limitValue) : ((plan as any).maxStaff || 1);
+        const maxAppointments = apptLimitObj ? (apptLimitObj.limitValue === -1 ? 999999 : apptLimitObj.limitValue) : ((plan as any).maxAppointmentsMonthly || (plan as any).max_reservations_per_month || 40);
+        const maxServices = servLimitObj ? (servLimitObj.limitValue === -1 ? 999999 : servLimitObj.limitValue) : ((plan as any).max_fields || 100);
+        const maxLocations = locLimitObj ? (locLimitObj.limitValue === -1 ? 999999 : locLimitObj.limitValue) : ((plan as any).max_locations || 1);
 
         return {
             planName: (plan as any).name,

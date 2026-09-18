@@ -114,6 +114,40 @@ export default function HeroDestacadosPage() {
     setTimeout(() => setMessage(null), 4000);
   };
 
+  // Banner configurado en el perfil/configuración del negocio
+  const existingBanner = (() => {
+    if (!options.negocio) return null;
+    let cfg = options.negocio.configuracion;
+    if (typeof cfg === 'string') {
+      try { cfg = JSON.parse(cfg); } catch (_) {}
+    }
+    return (
+      cfg?.bannerUrl ||
+      options.negocio.bannerUrl ||
+      (Array.isArray(cfg?.bannerUrls) && cfg.bannerUrls[0]) ||
+      null
+    );
+  })();
+
+  const handleImportProfileBanner = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/hero-destacados/sync-banner', {
+        method: 'POST'
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al sincronizar banner de perfil');
+      }
+      toast('success', '¡Banner de perfil importado exitosamente como Hero!');
+      await fetchData();
+    } catch (err: any) {
+      toast('error', err.message || 'Error al importar banner');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // ── ACCIONES HERO ──────────────────────────────────────────────────────────
   const handleOpenNewHero = () => {
     setEditingHero({
@@ -398,7 +432,19 @@ export default function HeroDestacadosPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {existingBanner && (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={handleImportProfileBanner}
+              className="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 px-4 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition shadow-2xs"
+              title="Importar imagen y textos del banner del perfil como Hero"
+            >
+              <Sparkles size={16} className="text-amber-600" />
+              {saving ? 'Importando...' : 'Importar Banner de Perfil'}
+            </button>
+          )}
           <button
             type="button"
             onClick={handleOpenNewHero}
@@ -469,21 +515,73 @@ export default function HeroDestacadosPage() {
       {activeTab === 'hero' && (
         <div className="space-y-4">
           {heroItems.length === 0 ? (
-            <div className="bg-white rounded-[2.5rem] border border-dashed border-gray-200 p-12 text-center flex flex-col items-center justify-center">
-              <ImageIcon size={48} className="text-gray-300 mb-4" />
-              <h3 className="text-lg font-black text-gray-900">No hay elementos Hero configurados</h3>
-              <p className="text-xs font-medium text-gray-400 max-w-md mt-1 mb-6">
-                Agrega banners de imágenes, promociones o configura un Hero automático para la portada pública.
-              </p>
-              <button
-                type="button"
-                onClick={handleOpenNewHero}
-                style={{ backgroundColor: cp }}
-                className="text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider hover:opacity-90 transition"
-              >
-                + Crear primer Hero
-              </button>
-            </div>
+            existingBanner ? (
+              <div className="bg-gradient-to-br from-amber-50/60 via-white to-amber-50/40 rounded-[2.5rem] border-2 border-dashed border-amber-300/80 p-8 sm:p-10 text-center flex flex-col items-center justify-center shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 mb-4 shadow-2xs">
+                  <Sparkles size={24} />
+                </div>
+                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-[10px] font-black uppercase tracking-wider mb-2">
+                  Banner Detectado en tu Perfil
+                </span>
+                <h3 className="text-lg sm:text-xl font-black text-gray-900">
+                  Tu negocio ya tiene un banner configurado en su perfil
+                </h3>
+                <p className="text-xs font-medium text-gray-500 max-w-lg mt-1 mb-6 leading-relaxed">
+                  Detectamos que tienes un banner asignado en la configuración general de tu negocio. Puedes importarlo directamente para activarlo como tu primer Hero interactivo con botón y enlace.
+                </p>
+
+                {/* Vista previa del banner detectado */}
+                <div className="w-full max-w-md aspect-[16/9] rounded-2xl overflow-hidden shadow-md border border-gray-200/80 relative mb-6 group">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={existingBanner} alt="Banner Perfil" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent flex flex-col justify-end p-4 text-left">
+                    <h4 className="text-white font-black text-sm uppercase tracking-tight line-clamp-1">
+                      {options.negocio?.heroTitulo || options.negocio?.nombre || 'Banner de Portada'}
+                    </h4>
+                    <p className="text-white/80 font-medium text-[10px] line-clamp-2 mt-0.5">
+                      {options.negocio?.heroSubtitulo || 'Banner configurado en el perfil'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full justify-center">
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={handleImportProfileBanner}
+                    style={{ backgroundColor: cp }}
+                    className="w-full sm:w-auto text-white px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider hover:opacity-90 transition shadow-md flex items-center justify-center gap-2"
+                  >
+                    <Sparkles size={16} />
+                    {saving ? 'Importando...' : '✨ Usar este Banner como mi Primer Hero'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleOpenNewHero}
+                    className="w-full sm:w-auto bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider transition"
+                  >
+                    + Crear otro Hero desde Cero
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-[2.5rem] border border-dashed border-gray-200 p-12 text-center flex flex-col items-center justify-center">
+                <ImageIcon size={48} className="text-gray-300 mb-4" />
+                <h3 className="text-lg font-black text-gray-900">No hay elementos Hero configurados</h3>
+                <p className="text-xs font-medium text-gray-400 max-w-md mt-1 mb-6">
+                  Agrega banners de imágenes, promociones o configura un Hero automático para la portada pública.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleOpenNewHero}
+                  style={{ backgroundColor: cp }}
+                  className="text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider hover:opacity-90 transition"
+                >
+                  + Crear primer Hero
+                </button>
+              </div>
+            )
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {heroItems.map((item, idx) => (

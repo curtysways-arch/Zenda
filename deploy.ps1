@@ -1,4 +1,4 @@
-﻿# SCRIPT DE DESPLIEGUE ZENDA
+# SCRIPT DE DESPLIEGUE ZENDA
 # Ejecutar desde: d:\Documentos\antigravity\spa\Spa
 $VPS = "root@157.173.203.174"
 $REMOTE = "/opt/Zenda"
@@ -14,7 +14,13 @@ $files = @(
     "src/components/admin/mobile/MobileStaff.tsx",
     "src/components/admin/mobile/MobileClients.tsx",
     "src/app/api/superadmin/negocios/route.ts",
-    "src/app/api/onboarding/route.ts"
+    "src/app/api/onboarding/route.ts",
+    "src/components/superadmin/MisionesUnificadasClient.tsx",
+    "src/app/api/public/[slug]/misiones/route.ts",
+    "src/app/api/admin/misiones/route.ts",
+    "src/lib/growth/rewardDispatcher.ts",
+    "src/app/api/superadmin/rewards/route.ts",
+    "src/app/api/superadmin/rewards/[id]/route.ts"
 )
 
 foreach ($file in $files) {

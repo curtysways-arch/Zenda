@@ -15,6 +15,7 @@ export default function OnboardingWizard() {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [hasPredefinedType, setHasPredefinedType] = useState(false);
     
     // State data
     const [data, setData] = useState({
@@ -55,10 +56,45 @@ export default function OnboardingWizard() {
                         router.push('/admin');
                         return;
                     }
+
+                    const rawTipo = (negocioData.tipoNegocio || negocioData.configuracion?.tipoNegocio || negocioData.configuracion?.blueprintId || '').toUpperCase();
+                    const isKnown = Boolean(rawTipo && rawTipo !== 'GENERAL' && rawTipo !== 'OTRO');
+                    setHasPredefinedType(isKnown);
+
+                    // Defaults coherentes según la vertical si aún no están configurados
+                    let defNombre = '';
+                    let defDuracion = '60';
+                    let defPrecio = '';
+                    if (rawTipo === 'RESTAURANTE' || rawTipo === 'GASTRONOMIA') {
+                        defNombre = 'Combo Almuerzo Especial';
+                        defDuracion = '20';
+                        defPrecio = '8.50';
+                    } else if (rawTipo === 'TIENDA' || rawTipo === 'ECOMMERCE') {
+                        defNombre = 'Producto Principal de Tienda';
+                        defDuracion = '0';
+                        defPrecio = '25.00';
+                    } else if (rawTipo === 'SPORTS_COURTS' || rawTipo === 'CANCHAS') {
+                        defNombre = 'Cancha Sintética 1 (Fútbol 5)';
+                        defDuracion = '60';
+                        defPrecio = '25.00';
+                    } else if (rawTipo === 'SHOE_CARE' || rawTipo === 'LAVANDERIA') {
+                        defNombre = 'Lavado Completo Sneakers';
+                        defDuracion = '48';
+                        defPrecio = '7.00';
+                    } else if (rawTipo === 'BARBERIA') {
+                        defNombre = 'Corte de Cabello + Barba';
+                        defDuracion = '45';
+                        defPrecio = '15.00';
+                    } else if (rawTipo === 'SPA' || rawTipo === 'CENTRO_ESTETICA') {
+                        defNombre = 'Masaje Relajante Corporal (60 min)';
+                        defDuracion = '60';
+                        defPrecio = '40.00';
+                    }
                     
                     setData(prev => ({
                         ...prev,
                         nombre: negocioData.nombre || '',
+                        tipoNegocio: rawTipo || '',
                         telefono: negocioData.whatsapp || '',
                         direccion: negocioData.direccion || '',
                         ciudad: negocioData.ciudad || '',
@@ -69,7 +105,10 @@ export default function OnboardingWizard() {
                         slug: negocioData.slug || '',
                         diasAtencion: negocioData.configuracion?.diasAtencion || [1, 2, 3, 4, 5, 6, 0],
                         colorPrimario: negocioData.colorPrimario || '#ec4899',
-                        colorSecundario: negocioData.colorSecundario || '#112117'
+                        colorSecundario: negocioData.colorSecundario || '#112117',
+                        servicioNombre: prev.servicioNombre || defNombre,
+                        servicioDuracion: prev.servicioDuracion || defDuracion,
+                        servicioPrecio: prev.servicioPrecio || defPrecio
                     }));
                 }
             } catch (e) {
@@ -81,7 +120,10 @@ export default function OnboardingWizard() {
         fetchNegocio();
     }, [router]);
 
-    const handleNext = () => setStep(s => Math.min(s + 1, 6));
+    const totalSteps = hasPredefinedType ? 4 : 5;
+    const finalSuccessStep = totalSteps + 1;
+
+    const handleNext = () => setStep(s => Math.min(s + 1, finalSuccessStep));
     const handlePrev = () => setStep(s => Math.max(s - 1, 1));
 
     const handleSubmit = async () => {
@@ -93,7 +135,7 @@ export default function OnboardingWizard() {
                 body: JSON.stringify(data)
             });
             if (res.ok) {
-                setStep(6); // Go to success
+                setStep(finalSuccessStep); // Go to success
             } else {
                 alert('Hubo un error al guardar. Intenta nuevamente.');
             }
@@ -112,18 +154,29 @@ export default function OnboardingWizard() {
         );
     }
 
-    const steps = [
+    const tUpper = (data.tipoNegocio || '').toUpperCase();
+    const itemStepTitle = 
+        ['RESTAURANTE', 'GASTRONOMIA', 'BAR', 'BURGER', 'PIZZA'].includes(tUpper) ? 'Menú' :
+        ['TIENDA', 'ECOMMERCE'].includes(tUpper) ? 'Producto' :
+        ['SPORTS_COURTS', 'CANCHAS'].includes(tUpper) ? 'Cancha' : 'Servicio';
+
+    const steps = hasPredefinedType ? [
+        { id: 1, title: 'Información', icon: <Store size={18} /> },
+        { id: 2, title: 'Visual', icon: <ImageIcon size={18} /> },
+        { id: 3, title: itemStepTitle, icon: <Sparkles size={18} /> },
+        { id: 4, title: 'Horarios', icon: <Clock size={18} /> }
+    ] : [
         { id: 1, title: 'Información', icon: <Store size={18} /> },
         { id: 2, title: 'Visual', icon: <ImageIcon size={18} /> },
         { id: 3, title: 'Tipo', icon: <Briefcase size={18} /> },
-        { id: 4, title: 'Servicio', icon: <Sparkles size={18} /> },
+        { id: 4, title: itemStepTitle, icon: <Sparkles size={18} /> },
         { id: 5, title: 'Horarios', icon: <Clock size={18} /> }
     ];
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col relative z-50">
             {/* Header / Progress */}
-            {step < 6 && (
+            {step < finalSuccessStep && (
                 <div className="bg-white border-b border-slate-200 sticky top-0 z-10 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center justify-between w-full sm:w-auto shrink-0">
                         <div className="flex items-center gap-3">
@@ -152,16 +205,16 @@ export default function OnboardingWizard() {
                         <div className="flex-1">
                             <div className="flex justify-between mb-2">
                                 <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                                    Paso {step} de 5
+                                    Paso {step} de {totalSteps}
                                 </span>
                                 <span className="text-[10px] font-black uppercase text-cyan-500 tracking-widest">
-                                    {Math.round((step / 5) * 100)}% Completado
+                                    {Math.round((step / totalSteps) * 100)}% Completado
                                 </span>
                             </div>
                             <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                                 <div 
                                     className="h-full bg-gradient-to-r from-cyan-500 via-sky-400 to-purple-500 transition-all duration-500 rounded-full"
-                                    style={{ width: `${(step / 5) * 100}%` }}
+                                    style={{ width: `${(step / totalSteps) * 100}%` }}
                                 />
                             </div>
                         </div>
@@ -186,16 +239,16 @@ export default function OnboardingWizard() {
                 {step === 2 && (
                     <StepVisual data={data} setData={setData} onNext={handleNext} onPrev={handlePrev} />
                 )}
-                {step === 3 && (
+                {!hasPredefinedType && step === 3 && (
                     <StepType data={data} setData={setData} onNext={handleNext} onPrev={handlePrev} />
                 )}
-                {step === 4 && (
-                    <StepService data={data} setData={setData} onNext={handleNext} onPrev={handlePrev} />
+                {((hasPredefinedType && step === 3) || (!hasPredefinedType && step === 4)) && (
+                    <StepCatalogItem data={data} setData={setData} onNext={handleNext} onPrev={handlePrev} />
                 )}
-                {step === 5 && (
+                {((hasPredefinedType && step === 4) || (!hasPredefinedType && step === 5)) && (
                     <StepHours data={data} setData={setData} onPrev={handlePrev} onSubmit={handleSubmit} saving={saving} />
                 )}
-                {step === 6 && (
+                {step === finalSuccessStep && (
                     <StepSuccess data={data} />
                 )}
             </main>
@@ -206,6 +259,27 @@ export default function OnboardingWizard() {
 // -- STEPS COMPONENTS --
 
 function StepInfo({ data, setData, onNext }: any) {
+    const t = (data.tipoNegocio || '').toUpperCase();
+    let namePlaceholder = 'Ej. Spa Bella';
+    let descPlaceholder = 'El mejor lugar para relajarse...';
+
+    if (['RESTAURANTE', 'GASTRONOMIA', 'BAR', 'BURGER', 'PIZZA'].includes(t)) {
+        namePlaceholder = 'Ej. Restaurante & Parrilla Don Carlos';
+        descPlaceholder = 'Los mejores cortes de carne, hamburguesas y platillos especiales...';
+    } else if (['TIENDA', 'ECOMMERCE', 'COMERCIO'].includes(t)) {
+        namePlaceholder = 'Ej. Tienda Urban Store';
+        descPlaceholder = 'Moda urbana, calzado deportivo y accesorios en tendencia...';
+    } else if (['SPORTS_COURTS', 'CANCHAS'].includes(t)) {
+        namePlaceholder = 'Ej. Complejo Deportivo Los Campeones';
+        descPlaceholder = 'Canchas sintéticas de fútbol 5 y pádel con iluminación nocturna...';
+    } else if (['SHOE_CARE', 'LAVANDERIA'].includes(t)) {
+        namePlaceholder = 'Ej. Sneaker Wash & Calzado';
+        descPlaceholder = 'Limpieza profunda, desinfección y restauración de calzado...';
+    } else if (['BARBERIA'].includes(t)) {
+        namePlaceholder = 'Ej. Barbería Clásica & Estilo';
+        descPlaceholder = 'Cortes modernos, afeitado tradicional con navaja y cuidado de barba...';
+    }
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
@@ -219,7 +293,7 @@ function StepInfo({ data, setData, onNext }: any) {
                     <input 
                         type="text" 
                         className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-bold !text-slate-900 placeholder:!text-slate-400"
-                        placeholder="Ej. Spa Bella"
+                        placeholder={namePlaceholder}
                         value={data.nombre}
                         onChange={e => setData({...data, nombre: e.target.value})}
                     />
@@ -228,7 +302,7 @@ function StepInfo({ data, setData, onNext }: any) {
                     <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">Descripción Corta</label>
                     <textarea 
                         className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-bold !text-slate-900 placeholder:!text-slate-400 resize-none h-24"
-                        placeholder="El mejor lugar para relajarse..."
+                        placeholder={descPlaceholder}
                         value={data.descripcion}
                         onChange={e => setData({...data, descripcion: e.target.value})}
                     />
@@ -563,48 +637,151 @@ function StepType({ data, setData, onNext, onPrev }: any) {
     );
 }
 
-function StepService({ data, setData, onNext, onPrev }: any) {
+function StepCatalogItem({ data, setData, onNext, onPrev }: any) {
+    const t = (data.tipoNegocio || '').toUpperCase();
+    const isRestaurant = ['RESTAURANTE', 'GASTRONOMIA', 'BAR', 'BURGER', 'PIZZA'].includes(t);
+    const isStore = ['TIENDA', 'ECOMMERCE', 'COMERCIO'].includes(t);
+    const isCourts = ['SPORTS_COURTS', 'CANCHAS'].includes(t);
+    const isBarber = ['BARBERIA'].includes(t);
+    const isLaundry = ['SHOE_CARE', 'LAVANDERIA'].includes(t);
+
+    let config = {
+        title: 'Tu Primer Servicio',
+        subtitle: 'Puedes crearlo ahora o dejarlo para más tarde.',
+        nameLabel: 'Nombre del Servicio',
+        namePlaceholder: 'Ej. Masaje Relajante Corporal',
+        showDuration: true,
+        durationLabel: 'Duración (minutos)',
+        durationOptions: [
+            { label: '15 min', val: '15' },
+            { label: '30 min', val: '30' },
+            { label: '45 min', val: '45' },
+            { label: '60 min', val: '60' },
+            { label: '90 min', val: '90' },
+            { label: '120 min', val: '120' },
+        ],
+        priceLabel: 'Precio ($)',
+        pricePlaceholder: '0.00',
+        descLabel: 'Descripción Corta',
+        descPlaceholder: 'Detalles del servicio...',
+        imageLabel: 'Imagen del Servicio (Opcional)',
+        emptyNotice: 'No tienes servicios creados todavía. Puedes crearlos más tarde en el panel de control.',
+        btnText: data.servicioNombre ? 'Crear y Continuar' : 'Omitir y Continuar'
+    };
+
+    if (isRestaurant) {
+        config = {
+            title: 'Tu Primer Platillo o Producto',
+            subtitle: 'Registra el primer ítem de tu menú gastronómico. Podrás añadir más o importar tu catálogo completo después.',
+            nameLabel: 'Nombre del Platillo / Bebida',
+            namePlaceholder: 'Ej. Hamburguesa Especial con Papas',
+            showDuration: true,
+            durationLabel: 'Tiempo estimado de preparación',
+            durationOptions: [
+                { label: '10 min', val: '10' },
+                { label: '15 min', val: '15' },
+                { label: '20 min', val: '20' },
+                { label: '30 min', val: '30' },
+                { label: '45 min', val: '45' },
+                { label: '60 min', val: '60' },
+            ],
+            priceLabel: 'Precio de Venta ($)',
+            pricePlaceholder: '8.50',
+            descLabel: 'Descripción / Ingredientes',
+            descPlaceholder: 'Carne angus 200g, queso cheddar, cebolla caramelizada y salsa especial...',
+            imageLabel: 'Foto del Platillo (Opcional)',
+            emptyNotice: 'No has registrado ningún platillo todavía. Podrás crearlos o importar tu menú desde la sección Productos.',
+            btnText: data.servicioNombre ? 'Guardar Platillo y Continuar' : 'Omitir y Continuar'
+        };
+    } else if (isStore) {
+        config = {
+            title: 'Tu Primer Producto',
+            subtitle: 'Registra el primer artículo de tu catálogo de productos.',
+            nameLabel: 'Nombre del Producto',
+            namePlaceholder: 'Ej. Camiseta Oversize Unisex',
+            showDuration: false,
+            durationLabel: '',
+            durationOptions: [],
+            priceLabel: 'Precio ($)',
+            pricePlaceholder: '25.00',
+            descLabel: 'Descripción del Producto',
+            descPlaceholder: 'Material 100% algodón, tallas disponibles, detalles...',
+            imageLabel: 'Foto del Producto (Opcional)',
+            emptyNotice: 'No has registrado ningún producto todavía. Podrás cargarlos o importar tu catálogo desde la sección Productos.',
+            btnText: data.servicioNombre ? 'Guardar Producto y Continuar' : 'Omitir y Continuar'
+        };
+    } else if (isCourts) {
+        config = {
+            title: 'Tu Primera Cancha o Escenario',
+            subtitle: 'Registra tu primera cancha deportiva y su tarifa por hora.',
+            nameLabel: 'Nombre de la Cancha',
+            namePlaceholder: 'Ej. Cancha Sintética 1 (Fútbol 5)',
+            showDuration: true,
+            durationLabel: 'Duración del Turno (minutos)',
+            durationOptions: [
+                { label: '30 min', val: '30' },
+                { label: '60 min (1 hora)', val: '60' },
+                { label: '90 min', val: '90' },
+                { label: '120 min (2 horas)', val: '120' },
+            ],
+            priceLabel: 'Tarifa por Hora ($)',
+            pricePlaceholder: '25.00',
+            descLabel: 'Características de la Cancha',
+            descPlaceholder: 'Césped sintético monofilamento, iluminación LED nocturna...',
+            imageLabel: 'Foto de la Cancha (Opcional)',
+            emptyNotice: 'No has registrado ninguna cancha todavía. Podrás configurarlas en la sección Mis Canchas.',
+            btnText: data.servicioNombre ? 'Guardar Cancha y Continuar' : 'Omitir y Continuar'
+        };
+    } else if (isBarber) {
+        config.title = 'Tu Primer Servicio de Barbería';
+        config.namePlaceholder = 'Ej. Corte Clásico + Barba';
+        config.descPlaceholder = 'Corte degradado, afeitado con toalla caliente y perfilado de barba...';
+    } else if (isLaundry) {
+        config.title = 'Tu Primer Servicio de Lavado';
+        config.namePlaceholder = 'Ej. Lavado Completo de Sneakers';
+        config.descPlaceholder = 'Limpieza de capellada, mediasuelas, plantillas y cordones...';
+    }
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
-                <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter italic">Tu Primer Servicio</h2>
-                <p className="text-slate-500 font-medium">Puedes crearlo ahora o dejarlo para más tarde.</p>
+                <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter italic">{config.title}</h2>
+                <p className="text-slate-500 font-medium">{config.subtitle}</p>
             </div>
 
             <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm space-y-6">
                 <div>
-                    <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">Nombre del Servicio</label>
+                    <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">{config.nameLabel}</label>
                     <input 
                         type="text" 
                         className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-bold !text-slate-900 placeholder:!text-slate-400"
-                        placeholder="Ej. Masaje Relajante"
+                        placeholder={config.namePlaceholder}
                         value={data.servicioNombre}
                         onChange={e => setData({...data, servicioNombre: e.target.value})}
                     />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-6">
+                <div className={`grid ${config.showDuration ? 'grid-cols-2' : 'grid-cols-1'} gap-6`}>
+                    {config.showDuration && (
+                        <div>
+                            <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">{config.durationLabel}</label>
+                            <select 
+                                className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-bold !text-slate-900"
+                                value={data.servicioDuracion}
+                                onChange={e => setData({...data, servicioDuracion: e.target.value})}
+                            >
+                                {config.durationOptions.map(opt => (
+                                    <option key={opt.val} value={opt.val}>{opt.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                     <div>
-                        <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">Duración (minutos)</label>
-                        <select 
-                            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-bold !text-slate-900"
-                            value={data.servicioDuracion}
-                            onChange={e => setData({...data, servicioDuracion: e.target.value})}
-                        >
-                            <option value="15">15 min</option>
-                            <option value="30">30 min</option>
-                            <option value="45">45 min</option>
-                            <option value="60">60 min</option>
-                            <option value="90">90 min</option>
-                            <option value="120">120 min</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">Precio ($)</label>
+                        <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">{config.priceLabel}</label>
                         <input 
                             type="number" 
                             className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-bold !text-slate-900 placeholder:!text-slate-400"
-                            placeholder="0.00"
+                            placeholder={config.pricePlaceholder}
                             value={data.servicioPrecio}
                             onChange={e => setData({...data, servicioPrecio: e.target.value})}
                         />
@@ -612,10 +789,10 @@ function StepService({ data, setData, onNext, onPrev }: any) {
                 </div>
 
                 <div>
-                    <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">Descripción Corta</label>
+                    <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-2">{config.descLabel}</label>
                     <textarea 
                         className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-cyan-500 font-bold !text-slate-900 placeholder:!text-slate-400 resize-none h-20"
-                        placeholder="Detalles del servicio..."
+                        placeholder={config.descPlaceholder}
                         value={data.servicioDescripcion}
                         onChange={e => setData({...data, servicioDescripcion: e.target.value})}
                     />
@@ -623,13 +800,13 @@ function StepService({ data, setData, onNext, onPrev }: any) {
 
                 {data.servicioNombre && (
                     <div className="border-t border-slate-100 pt-6">
-                        <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-4">Imagen del Servicio (Opcional)</label>
+                        <label className="text-[11px] font-black uppercase text-slate-400 tracking-widest block mb-4">{config.imageLabel}</label>
                         <ImageUploader
                             category="service"
                             currentUrl={data.servicioImageUrl}
                             onUploadSuccess={(media) => setData({...data, servicioImageUrl: media.url, servicioImageMediaId: media.id})}
                             onRemove={() => setData({...data, servicioImageUrl: '', servicioImageMediaId: ''})}
-                            label="Sube una foto del servicio (16:9 recomendado)"
+                            label="Sube una foto representativa (16:9 recomendado)"
                             aspect="landscape"
                         />
                     </div>
@@ -639,7 +816,7 @@ function StepService({ data, setData, onNext, onPrev }: any) {
                     <div className="bg-amber-50 p-4 rounded-xl flex items-start gap-3 border border-amber-100">
                         <AlertTriangle className="text-amber-500 shrink-0" size={20} />
                         <p className="text-[11px] text-amber-700 font-bold leading-tight">
-                            No tienes servicios creados todavía. Puedes crearlos más tarde en el panel de control.
+                            {config.emptyNotice}
                         </p>
                     </div>
                 )}
@@ -651,7 +828,7 @@ function StepService({ data, setData, onNext, onPrev }: any) {
                     onClick={onNext}
                     className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-2xl font-black uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20"
                 >
-                    {data.servicioNombre ? 'Crear y Continuar' : 'Omitir y Continuar'} <ArrowRight size={18} />
+                    {config.btnText} <ArrowRight size={18} />
                 </button>
             </div>
         </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Save, Loader2, CheckCircle2, AlertCircle, MapPin, Upload } from 'lucide-react';
 import ImageUploader from '@/components/ui/ImageUploader';
 import PaymentMethodsConfig from '@/components/admin/PaymentMethodsConfig';
+import BusinessLocationPicker from '@/components/admin/BusinessLocationPicker';
 
 interface Props {
     negocio: any;
@@ -194,29 +195,26 @@ export default function ProductsConfig({ negocio, onSaveNegocio, saving, message
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Latitud GPS (Local)</label>
-                                <input
-                                    type="number"
-                                    required
-                                    step="0.000001"
-                                    value={latitudNegocio}
-                                    onChange={e => setLatitudNegocio(e.target.value)}
-                                    className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Longitud GPS (Local)</label>
-                                <input
-                                    type="number"
-                                    required
-                                    step="0.000001"
-                                    value={longitudNegocio}
-                                    onChange={e => setLongitudNegocio(e.target.value)}
-                                    className="w-full bg-slate-50 rounded-xl px-4 py-3 border border-slate-100 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:border-slate-300"
-                                />
-                            </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">
+                                Ubicación Geográfica del Local (Mapa GPS)
+                            </label>
+                            <BusinessLocationPicker
+                                lat={latitudNegocio}
+                                lng={longitudNegocio}
+                                currentAddress={direccion}
+                                primaryColor={negocio?.colorPrimario || '#06b6d4'}
+                                onChange={(newLat, newLng, addressName) => {
+                                    setLatitudNegocio(newLat);
+                                    setLongitudNegocio(newLng);
+                                    if (addressName && !direccion) {
+                                        setDireccion(addressName);
+                                    }
+                                }}
+                                onApplyAddress={(newAddr) => {
+                                    setDireccion(newAddr);
+                                }}
+                            />
                         </div>
                         <div className="flex gap-2 bg-slate-50 p-4 rounded-xl border border-slate-100 text-[10px] text-slate-500 font-semibold leading-relaxed">
                             <MapPin className="size-4 shrink-0 text-slate-400 mt-0.5" />

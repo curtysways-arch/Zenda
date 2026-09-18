@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { 
     Award, 
@@ -65,111 +65,1587 @@ interface ActionConfig {
     eventos: { id: string; label: string; defaultMeta?: number; type: 'SIMPLE' | 'ACUMULATIVO' }[];
 }
 
-const QUEST_ACTIONS_CATALOG: ActionConfig[] = [
-    {
-        id: 'RESERVAS',
-        label: 'Reservas',
-        desc: 'Premia a tus clientes por agendar y completar citas.',
-        icono: 'Calendar',
-        color: '#ec4899',
-        eventos: [
-            { id: 'BOOKING_CREATED', label: 'Reserva creada', type: 'SIMPLE' },
-            { id: 'BOOKING_APPROVED', label: 'Reserva confirmada', type: 'SIMPLE' },
-            { id: 'BOOKING_COMPLETED', label: 'Cita completada', type: 'ACUMULATIVO', defaultMeta: 5 },
-            { id: 'FIRST_BOOKING', label: 'Primera cita completada', type: 'SIMPLE', defaultMeta: 1 },
-            { id: 'MULTIPLE_BOOKINGS', label: 'Completar X citas', type: 'ACUMULATIVO', defaultMeta: 10 }
-        ]
-    },
-    {
-        id: 'REFERIDOS',
-        label: 'Referidos',
-        desc: 'Premia a tus clientes por invitar amigos al negocio.',
-        icono: 'Users',
-        color: '#3b82f6',
-        eventos: [
-            { id: 'REFERRAL_REGISTERED', label: 'Registró un amigo', type: 'SIMPLE' },
-            { id: 'REFERRAL_VERIFIED', label: 'El amigo verificó su teléfono', type: 'SIMPLE' },
-            { id: 'REFERRAL_FIRST_BOOKING', label: 'El amigo hizo su primera reserva', type: 'SIMPLE' },
-            { id: 'REFERRAL_COMPLETED', label: 'El amigo completó su primera cita', type: 'SIMPLE' },
-            { id: 'REFERRAL_X_APPOINTMENTS', label: 'El amigo completó X citas', type: 'ACUMULATIVO', defaultMeta: 3 }
-        ]
-    },
-    {
-        id: 'RESEÑAS',
-        label: 'Reseñas',
-        desc: 'Premia las opiniones de tus clientes sobre tu negocio.',
-        icono: 'Star',
-        color: '#eab308',
-        eventos: [
-            { id: 'REVIEW_CREATED', label: 'Dejó una reseña', type: 'SIMPLE' },
-            { id: 'REVIEW_5_STARS', label: 'Calificó con 5 estrellas', type: 'SIMPLE' },
-            { id: 'REVIEW_COMMENTED', label: 'Comentó una reseña', type: 'SIMPLE' }
-        ]
-    },
-    {
-        id: 'COMPRAS',
-        label: 'Compras',
-        desc: 'Premia por la adquisición de productos o cursos.',
-        icono: 'ShoppingBag',
-        color: '#f43f5e',
-        eventos: [
-            { id: 'PURCHASE_COMPLETED', label: 'Compra realizada', type: 'SIMPLE' },
-            { id: 'FIRST_PURCHASE', label: 'Primera compra', type: 'SIMPLE' },
-            { id: 'PURCHASE_OVER_AMOUNT', label: 'Compra superior a un monto', type: 'SIMPLE' },
-            { id: 'PURCHASE_SPECIFIC_PRODUCT', label: 'Compró producto o curso específico', type: 'SIMPLE' }
-        ]
-    },
-    {
-        id: 'PERFIL',
-        label: 'Perfil',
-        desc: 'Motiva a que tus clientes completen sus datos de registro.',
-        icono: 'UserCheck',
-        color: '#06b6d4',
-        eventos: [
-            { id: 'PROFILE_COMPLETED', label: 'Completar perfil completo', type: 'SIMPLE' },
-            { id: 'WHATSAPP_VERIFIED', label: 'Verificar número de WhatsApp', type: 'SIMPLE' },
-            { id: 'EMAIL_VERIFIED', label: 'Verificar correo electrónico', type: 'SIMPLE' },
-            { id: 'AVATAR_UPLOADED', label: 'Subir foto de perfil', type: 'SIMPLE' },
-            { id: 'TERMS_ACCEPTED', label: 'Aceptar términos y condiciones', type: 'SIMPLE' }
-        ]
-    },
-    {
-        id: 'CUMPLEAÑOS',
-        label: 'Cumpleaños',
-        desc: 'Premia a tus clientes en su mes o fecha de cumpleaños.',
-        icono: 'Cake',
-        color: '#10b981',
-        eventos: [
-            { id: 'CUMPLEANOS', label: 'Día del cumpleaños', type: 'SIMPLE' },
-            { id: 'CUMPLEANOS_WEEK', label: 'Semana del cumpleaños', type: 'SIMPLE' },
-            { id: 'CUMPLEANOS_MONTH', label: 'Mes del cumpleaños', type: 'SIMPLE' }
-        ]
-    },
-    {
-        id: 'SOCIAL',
-        label: 'Redes Sociales',
-        desc: 'Premia por compartir o seguir en redes sociales.',
-        icono: 'Share2',
-        color: '#8b5cf6',
-        eventos: [
-            { id: 'INSTAGRAM_FOLLOW', label: 'Seguir Instagram', type: 'SIMPLE' },
-            { id: 'FACEBOOK_FOLLOW', label: 'Seguir Facebook', type: 'SIMPLE' },
-            { id: 'POST_SHARE', label: 'Compartir publicación', type: 'SIMPLE' },
-            { id: 'POST_LIKE', label: 'Dar Like', type: 'SIMPLE' },
-            { id: 'WHATSAPP_JOIN', label: 'Unirse a WhatsApp', type: 'SIMPLE' },
-            { id: 'VIDEO_WATCH', label: 'Ver video', type: 'SIMPLE' },
-            { id: 'LINK_SHARE', label: 'Compartir enlace', type: 'SIMPLE' }
-        ]
-    },
-    {
-        id: 'PERSONALIZADA',
-        label: 'Personalizada',
-        desc: 'Escribe tus propios detonadores y reglas.',
-        icono: 'Sparkles',
-        color: '#64748b',
-        eventos: []
+export type VerticalCategory = 'CANCHAS' | 'SHOE_CARE' | 'RESTAURANTE' | 'TIENDA' | 'DENTAL' | 'GIMNASIO' | 'BARBERIA' | 'SPA' | 'GENERAL';
+
+export function resolveVerticalCategory(tipoNegocio?: string, businessTypeSlug?: string, businessName?: string): VerticalCategory {
+    const raw = `${tipoNegocio || ''} ${businessTypeSlug || ''} ${businessName || ''}`.toUpperCase();
+    if (raw.includes('CANCHA') || raw.includes('COURT') || raw.includes('PADEL') || raw.includes('FUTBOL') || raw.includes('TENIS') || raw.includes('DEPORTE') || raw.includes('SPORTS')) {
+        return 'CANCHAS';
     }
-];
+    if (raw.includes('SHOE') || raw.includes('CALZADO') || raw.includes('LAVANDERIA') || raw.includes('SNEAKER') || raw.includes('CLEAN') || raw.includes('TINTORERIA')) {
+        return 'SHOE_CARE';
+    }
+    if (raw.includes('RESTAURAN') || raw.includes('GASTRO') || raw.includes('FOOD') || raw.includes('BAR') || raw.includes('BURGER') || raw.includes('PIZZA') || raw.includes('CAFETERIA') || raw.includes('PINCHOS')) {
+        return 'RESTAURANTE';
+    }
+    if (raw.includes('DENTAL') || raw.includes('ODONTOLOG') || raw.includes('CLINICA') || raw.includes('SALUD') || raw.includes('MEDIC')) {
+        return 'DENTAL';
+    }
+    if (raw.includes('TIENDA') || raw.includes('STORE') || raw.includes('ECOMMERCE') || raw.includes('PRODUCT') || raw.includes('RETAIL')) {
+        return 'TIENDA';
+    }
+    if (raw.includes('GIMNASIO') || raw.includes('GYM') || raw.includes('FITNESS') || raw.includes('CROSSFIT') || raw.includes('ENTRENAMIENTO')) {
+        return 'GIMNASIO';
+    }
+    if (raw.includes('BARBER') || raw.includes('PELUQUER') || raw.includes('CORTE')) {
+        return 'BARBERIA';
+    }
+    if (raw.includes('SPA') || raw.includes('ESTETIC') || raw.includes('MASAJE') || raw.includes('BEAUTY') || raw.includes('BIENESTAR')) {
+        return 'SPA';
+    }
+    return 'GENERAL';
+}
+
+export function formatQuestTitle(name: string, vertical: VerticalCategory): string {
+    if (!name) return '';
+    if (vertical === 'GIMNASIO') {
+        const upper = name.toUpperCase();
+        if (upper.includes('PRIMERA CITA')) return 'Primer Entrenamiento';
+        if (upper.includes('CLIENTE FRECUENTE')) return 'Atleta Constante';
+        if (upper.includes('TU OPINIÓN CUENTA') || upper.includes('TU OPINION CUENTA')) return 'Califica Tu Gym';
+        if (upper.includes('EMBAJADOR DE LA MARCA')) return 'Trae a tu Gym Bro';
+        if (upper.includes('PERFIL AL DÍA') || upper.includes('PERFIL AL DIA')) return 'Ficha de Atleta Completa';
+    }
+    return name;
+}
+
+export function formatTriggerBadge(trigger: string, vertical: VerticalCategory): string {
+    if (!trigger) return '';
+    if (vertical === 'GIMNASIO') {
+        const t = trigger.toUpperCase();
+        if (t === 'BOOKING_COMPLETED' || t === 'GYM_ATTENDANCE' || t === 'CHECKIN' || t === 'ASISTENCIA_GYM') {
+            return 'ASISTENCIA / CHECK-IN';
+        }
+        if (t === 'FIRST_BOOKING' || t === 'FIRST_ATTENDANCE') {
+            return 'PRIMER ENTRENAMIENTO';
+        }
+        if (t === 'MULTIPLE_BOOKINGS') {
+            return 'ASISTENCIAS ACUMULADAS';
+        }
+        if (t === 'CLASS_ATTENDED') {
+            return 'CLASE GRUPAL';
+        }
+        if (t === 'MEMBERSHIP_RENEWED') {
+            return 'RENOVACIÓN MEMBRESÍA';
+        }
+        if (t === 'REFERRAL_COMPLETED') {
+            return 'AMIGO REFERIDO';
+        }
+        if (t === 'REVIEW_CREATED') {
+            return 'RESEÑA DEL GYM';
+        }
+        if (t === 'PROFILE_COMPLETED') {
+            return 'FICHA DE SOCIO';
+        }
+    }
+    return trigger;
+}
+
+export function getQuestActionsCatalog(vertical: VerticalCategory): ActionConfig[] {
+    const reservasLabel = vertical === 'CANCHAS' ? 'Turnos & Canchas' :
+        vertical === 'SHOE_CARE' ? 'Servicios de Lavado' :
+        vertical === 'RESTAURANTE' ? 'Visitas & Mesas' :
+        vertical === 'TIENDA' ? 'Pedidos & Compras' :
+        vertical === 'DENTAL' ? 'Citas & Consultas' :
+        vertical === 'GIMNASIO' ? 'Entrenamientos & Asistencias' :
+        vertical === 'BARBERIA' ? 'Citas de Barbería' :
+        vertical === 'SPA' ? 'Citas de Spa & Relax' : 'Reservas & Citas';
+
+    const reservasDesc = vertical === 'CANCHAS' ? 'Premia a tus jugadores por reservar turnos y completar partidos.' :
+        vertical === 'SHOE_CARE' ? 'Premia a tus clientes por solicitar y recibir servicios de limpieza.' :
+        vertical === 'RESTAURANTE' ? 'Premia a tus comensales por visitar el local o reservar mesas.' :
+        vertical === 'TIENDA' ? 'Premia a tus clientes por generar compras y pedidos.' :
+        vertical === 'DENTAL' ? 'Premia a tus pacientes por agendar y asistir a revisiones.' :
+        vertical === 'GIMNASIO' ? 'Premia a tus socios por registrar su check-in en recepción/tótem o asistir a clases.' :
+        vertical === 'BARBERIA' ? 'Premia a tus clientes por agendar y completar turnos de corte.' :
+        vertical === 'SPA' ? 'Premia a tus clientes por agendar y completar citas de bienestar.' :
+        'Premia a tus clientes por agendar y completar servicios.';
+
+    const bookingCreatedLabel = vertical === 'CANCHAS' ? 'Turno de cancha reservado' :
+        vertical === 'SHOE_CARE' ? 'Orden de servicio creada' :
+        vertical === 'RESTAURANTE' ? 'Reserva o pedido creado' :
+        vertical === 'TIENDA' ? 'Pedido creado' :
+        vertical === 'DENTAL' ? 'Cita agendada' :
+        vertical === 'GIMNASIO' ? 'Clase reservada' : 'Reserva creada';
+
+    const bookingApprovedLabel = vertical === 'CANCHAS' ? 'Turno confirmado' :
+        vertical === 'SHOE_CARE' ? 'Orden recibida en taller' :
+        vertical === 'RESTAURANTE' ? 'Mesa / pedido confirmado' :
+        vertical === 'TIENDA' ? 'Pedido confirmado' :
+        vertical === 'DENTAL' ? 'Cita confirmada' :
+        vertical === 'GIMNASIO' ? 'Cupo confirmado' : 'Reserva confirmada';
+
+    const bookingCompletedLabel = vertical === 'CANCHAS' ? 'Partido o turno completado' :
+        vertical === 'SHOE_CARE' ? 'Servicio de lavado entregado' :
+        vertical === 'RESTAURANTE' ? 'Visita / consumo completado' :
+        vertical === 'TIENDA' ? 'Compra / pedido entregado' :
+        vertical === 'DENTAL' ? 'Consulta odontológica completada' :
+        vertical === 'GIMNASIO' ? 'Entrenamiento completado' :
+        vertical === 'BARBERIA' ? 'Corte completado' :
+        vertical === 'SPA' ? 'Cita completada' : 'Servicio / cita completada';
+
+    const firstBookingLabel = vertical === 'CANCHAS' ? 'Primer partido completado' :
+        vertical === 'SHOE_CARE' ? 'Primer servicio completado' :
+        vertical === 'RESTAURANTE' ? 'Primera visita completada' :
+        vertical === 'TIENDA' ? 'Primera compra completada' :
+        vertical === 'DENTAL' ? 'Primera consulta asistida' :
+        vertical === 'GIMNASIO' ? 'Primer entrenamiento asistido' :
+        vertical === 'BARBERIA' ? 'Primer corte completado' : 'Primera cita o servicio';
+
+    const multipleBookingsLabel = vertical === 'CANCHAS' ? 'Completar X partidos / turnos' :
+        vertical === 'SHOE_CARE' ? 'Completar X servicios de limpieza' :
+        vertical === 'RESTAURANTE' ? 'Completar X visitas' :
+        vertical === 'TIENDA' ? 'Completar X compras' :
+        vertical === 'DENTAL' ? 'Completar X consultas' :
+        vertical === 'GIMNASIO' ? 'Completar X asistencias' :
+        vertical === 'BARBERIA' ? 'Completar X turnos de corte' : 'Completar X citas';
+
+    const referralDesc = vertical === 'CANCHAS' ? 'Premia a tus jugadores por invitar amigos a jugar.' :
+        vertical === 'SHOE_CARE' ? 'Premia a tus clientes por invitar amigos a lavar su calzado o prendas.' :
+        vertical === 'RESTAURANTE' ? 'Premia a tus comensales por invitar amigos al restaurante.' :
+        vertical === 'DENTAL' ? 'Premia a tus pacientes por recomendar familiares y amigos.' :
+        vertical === 'GIMNASIO' ? 'Premia a tus socios por invitar amigos a entrenar.' :
+        'Premia a tus clientes por invitar amigos al negocio.';
+
+    const referralFirstBookingLabel = vertical === 'CANCHAS' ? 'El amigo reservó su primera cancha' :
+        vertical === 'SHOE_CARE' ? 'El amigo solicitó su primer lavado' :
+        vertical === 'RESTAURANTE' ? 'El amigo realizó su primera visita' :
+        vertical === 'TIENDA' ? 'El amigo hizo su primera compra' :
+        vertical === 'DENTAL' ? 'El amigo agendó su primera consulta' :
+        vertical === 'GIMNASIO' ? 'El amigo asistió a su primera clase' : 'El amigo hizo su primera reserva';
+
+    const referralCompletedLabel = vertical === 'CANCHAS' ? 'El amigo completó su primer partido' :
+        vertical === 'SHOE_CARE' ? 'El amigo completó su primer servicio' :
+        vertical === 'RESTAURANTE' ? 'El amigo completó su primera visita' :
+        vertical === 'TIENDA' ? 'El amigo completó su primera compra' :
+        vertical === 'DENTAL' ? 'El amigo completó su primera consulta' :
+        vertical === 'GIMNASIO' ? 'El amigo completó su primer entrenamiento' : 'El amigo completó su primera cita';
+
+    const referralXAppointmentsLabel = vertical === 'CANCHAS' ? 'El amigo completó X partidos' :
+        vertical === 'SHOE_CARE' ? 'El amigo completó X servicios de lavado' :
+        vertical === 'RESTAURANTE' ? 'El amigo completó X visitas' :
+        vertical === 'TIENDA' ? 'El amigo completó X compras' :
+        vertical === 'DENTAL' ? 'El amigo completó X consultas' :
+        vertical === 'GIMNASIO' ? 'El amigo completó X entrenamientos' : 'El amigo completó X citas';
+
+    const comprasDesc = vertical === 'CANCHAS' ? 'Premia por consumos en cafetería, tienda deportiva o alquiler.' :
+        vertical === 'SHOE_CARE' ? 'Premia por compras de productos de cuidado, impermeabilizantes y accesorios.' :
+        vertical === 'RESTAURANTE' ? 'Premia por consumo de platos, combos o bebidas de la carta.' :
+        vertical === 'DENTAL' ? 'Premia por compra de productos de higiene bucal o kits de cuidado.' :
+        vertical === 'TIENDA' ? 'Premia por compras de artículos y productos del catálogo.' :
+        vertical === 'GIMNASIO' ? 'Premia por compras de suplementación, bebidas o indumentaria deportiva.' :
+        'Premia por la adquisición de productos o cursos.';
+
+    const perfilDesc = vertical === 'CANCHAS' ? 'Motiva a que tus jugadores completen su ficha y WhatsApp para coordinar partidos.' :
+        vertical === 'SHOE_CARE' ? 'Motiva a que tus clientes completen sus datos y dirección para agilizar órdenes.' :
+        vertical === 'DENTAL' ? 'Motiva a que tus pacientes completen sus datos para su historia clínica.' :
+        'Motiva a que tus clientes completen sus datos de registro.';
+
+    return [
+        {
+            id: 'RESERVAS',
+            label: reservasLabel,
+            desc: reservasDesc,
+            icono: 'Calendar',
+            color: '#ec4899',
+            eventos: [
+                { id: 'BOOKING_CREATED', label: bookingCreatedLabel, type: 'SIMPLE' },
+                { id: 'BOOKING_APPROVED', label: bookingApprovedLabel, type: 'SIMPLE' },
+                { id: 'BOOKING_COMPLETED', label: bookingCompletedLabel, type: 'ACUMULATIVO', defaultMeta: vertical === 'CANCHAS' ? 5 : vertical === 'DENTAL' ? 3 : 5 },
+                { id: 'FIRST_BOOKING', label: firstBookingLabel, type: 'SIMPLE', defaultMeta: 1 },
+                { id: 'MULTIPLE_BOOKINGS', label: multipleBookingsLabel, type: 'ACUMULATIVO', defaultMeta: 10 }
+            ]
+        },
+        {
+            id: 'REFERIDOS',
+            label: 'Referidos',
+            desc: referralDesc,
+            icono: 'Users',
+            color: '#3b82f6',
+            eventos: [
+                { id: 'REFERRAL_REGISTERED', label: 'Registró un amigo', type: 'SIMPLE' },
+                { id: 'REFERRAL_VERIFIED', label: 'El amigo verificó su teléfono', type: 'SIMPLE' },
+                { id: 'REFERRAL_FIRST_BOOKING', label: referralFirstBookingLabel, type: 'SIMPLE' },
+                { id: 'REFERRAL_COMPLETED', label: referralCompletedLabel, type: 'SIMPLE' },
+                { id: 'REFERRAL_X_APPOINTMENTS', label: referralXAppointmentsLabel, type: 'ACUMULATIVO', defaultMeta: 3 }
+            ]
+        },
+        {
+            id: 'RESEÑAS',
+            label: 'Reseñas',
+            desc: vertical === 'CANCHAS' ? 'Premia las opiniones sobre las canchas e instalaciones.' : 'Premia las opiniones de tus clientes sobre tu negocio.',
+            icono: 'Star',
+            color: '#eab308',
+            eventos: [
+                { id: 'REVIEW_CREATED', label: 'Dejó una reseña', type: 'SIMPLE' },
+                { id: 'REVIEW_5_STARS', label: 'Calificó con 5 estrellas', type: 'SIMPLE' },
+                { id: 'REVIEW_COMMENTED', label: 'Comentó una reseña', type: 'SIMPLE' }
+            ]
+        },
+        {
+            id: 'COMPRAS',
+            label: vertical === 'CANCHAS' ? 'Cafetería & Pro-Shop' : vertical === 'RESTAURANTE' ? 'Consumos & Carta' : 'Compras',
+            desc: comprasDesc,
+            icono: 'ShoppingBag',
+            color: '#f43f5e',
+            eventos: [
+                { id: 'PURCHASE_COMPLETED', label: 'Compra realizada', type: 'SIMPLE' },
+                { id: 'FIRST_PURCHASE', label: 'Primera compra', type: 'SIMPLE' },
+                { id: 'PURCHASE_OVER_AMOUNT', label: 'Compra superior a un monto', type: 'SIMPLE' },
+                { id: 'PURCHASE_SPECIFIC_PRODUCT', label: 'Compró producto específico', type: 'SIMPLE' }
+            ]
+        },
+        {
+            id: 'PERFIL',
+            label: 'Perfil',
+            desc: perfilDesc,
+            icono: 'UserCheck',
+            color: '#06b6d4',
+            eventos: [
+                { id: 'PROFILE_COMPLETED', label: 'Completar perfil completo', type: 'SIMPLE' },
+                { id: 'WHATSAPP_VERIFIED', label: 'Verificar número de WhatsApp', type: 'SIMPLE' },
+                { id: 'EMAIL_VERIFIED', label: 'Verificar correo electrónico', type: 'SIMPLE' },
+                { id: 'AVATAR_UPLOADED', label: 'Subir foto de perfil', type: 'SIMPLE' },
+                { id: 'TERMS_ACCEPTED', label: 'Aceptar términos y condiciones', type: 'SIMPLE' }
+            ]
+        },
+        {
+            id: 'CUMPLEAÑOS',
+            label: 'Cumpleaños',
+            desc: 'Premia a tus clientes en su mes o fecha de cumpleaños.',
+            icono: 'Cake',
+            color: '#10b981',
+            eventos: [
+                { id: 'CUMPLEANOS', label: 'Día del cumpleaños', type: 'SIMPLE' },
+                { id: 'CUMPLEANOS_WEEK', label: 'Semana del cumpleaños', type: 'SIMPLE' },
+                { id: 'CUMPLEANOS_MONTH', label: 'Mes del cumpleaños', type: 'SIMPLE' }
+            ]
+        },
+        {
+            id: 'SOCIAL',
+            label: 'Redes Sociales',
+            desc: 'Premia por compartir o seguir en redes sociales.',
+            icono: 'Share2',
+            color: '#8b5cf6',
+            eventos: [
+                { id: 'INSTAGRAM_FOLLOW', label: 'Seguir Instagram', type: 'SIMPLE' },
+                { id: 'FACEBOOK_FOLLOW', label: 'Seguir Facebook', type: 'SIMPLE' },
+                { id: 'POST_SHARE', label: 'Compartir publicación', type: 'SIMPLE' },
+                { id: 'POST_LIKE', label: 'Dar Like', type: 'SIMPLE' },
+                { id: 'WHATSAPP_JOIN', label: 'Unirse a WhatsApp', type: 'SIMPLE' },
+                { id: 'VIDEO_WATCH', label: 'Ver video', type: 'SIMPLE' },
+                { id: 'LINK_SHARE', label: 'Compartir enlace', type: 'SIMPLE' }
+            ]
+        },
+        {
+            id: 'PERSONALIZADA',
+            label: 'Personalizada',
+            desc: 'Escribe tus propios detonadores y reglas.',
+            icono: 'Sparkles',
+            color: '#64748b',
+            eventos: []
+        }
+    ];
+}
+
+export function getLocalTemplates(vertical: VerticalCategory, businessName: string) {
+    const biz = businessName ? businessName : '';
+
+    if (vertical === 'CANCHAS') {
+        return [
+            {
+                id: 'tpl_reserva_5',
+                nombre: 'Partidos Completados',
+                descripcion: `Reserva y juega 5 partidos en ${biz || 'nuestras canchas'} y obtén 150 puntos y un cupón del 10%.`,
+                categoria: 'RESERVAS',
+                triggerEvent: 'BOOKING_COMPLETED',
+                cantidadMeta: 5,
+                icono: 'Calendar',
+                color: '#ec4899',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { puntos: true, cupon: true },
+                puntosRecompensa: 150,
+                cuponNombre: 'Descuento 10% Alquiler de Cancha',
+                cuponValor: 10,
+                cuponTipo: 'PORCENTAJE',
+                cuponVencimiento: 30,
+                estado: 'ACTIVA',
+                dificultad: 'NORMAL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_referido_3',
+                nombre: 'Trae a tu Equipo',
+                descripcion: 'Invita a 3 amigos a jugar y gana 1 hora de alquiler de cancha gratis.',
+                categoria: 'REFERIDOS',
+                triggerEvent: 'REFERRAL_COMPLETED',
+                cantidadMeta: 3,
+                icono: 'Users',
+                color: '#3b82f6',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { servicioGratis: true },
+                servicioGratisNombre: '1 Hora de Cancha gratis',
+                estado: 'ACTIVA',
+                dificultad: 'DIFICIL',
+                prioridad: 'ALTA',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_reseña',
+                nombre: 'Tu Opinión Vale Oro',
+                descripcion: `Califica las instalaciones y canchas de ${biz || 'nuestro club'} y obtén 100 puntos.`,
+                categoria: 'RESEÑAS',
+                triggerEvent: 'REVIEW_CREATED',
+                cantidadMeta: 1,
+                icono: 'Star',
+                color: '#eab308',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { puntos: true },
+                puntosRecompensa: 100,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_perfil',
+                nombre: 'Ficha de Jugador Completa',
+                descripcion: 'Completa tus datos de jugador y WhatsApp para coordinar tus reservas y obtén 50 puntos.',
+                categoria: 'PERFIL',
+                triggerEvent: 'PROFILE_COMPLETED',
+                cantidadMeta: 1,
+                icono: 'UserCheck',
+                color: '#06b6d4',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { puntos: true },
+                puntosRecompensa: 50,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'BAJA',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_compras',
+                nombre: 'Consumo en Canchas & Cafetería',
+                descripcion: 'Realiza 3 compras en cafetería, tienda deportiva o alquiler de equipamiento y obtén $15 de saldo Cashback.',
+                categoria: 'COMPRAS',
+                triggerEvent: 'PURCHASE_COMPLETED',
+                cantidadMeta: 3,
+                icono: 'ShoppingBag',
+                color: '#f43f5e',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { cashback: true },
+                cashbackMonto: 15,
+                estado: 'ACTIVA',
+                dificultad: 'NORMAL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_cumple',
+                nombre: 'Cumpleaños en Cancha VIP',
+                descripcion: 'Recibe un cupón de 15% de descuento en tu turno el mes de tu cumpleaños.',
+                categoria: 'CUMPLEAÑOS',
+                triggerEvent: 'CUMPLEANOS',
+                cantidadMeta: 1,
+                icono: 'Cake',
+                color: '#10b981',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { cupon: true },
+                cuponNombre: 'Cupón Cumpleaños en Cancha VIP',
+                cuponValor: 15,
+                cuponTipo: 'PORCENTAJE',
+                cuponVencimiento: 30,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            }
+        ];
+    }
+
+    if (vertical === 'SHOE_CARE') {
+        return [
+            {
+                id: 'tpl_reserva_5',
+                nombre: 'Calzado Impecable',
+                descripcion: `Completa 5 servicios de lavado o limpieza en ${biz || 'nuestro taller'} y obtén 150 puntos y un cupón del 10%.`,
+                categoria: 'RESERVAS',
+                triggerEvent: 'BOOKING_COMPLETED',
+                cantidadMeta: 5,
+                icono: 'Calendar',
+                color: '#ec4899',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { puntos: true, cupon: true },
+                puntosRecompensa: 150,
+                cuponNombre: 'Descuento 10% en Próximo Lavado',
+                cuponValor: 10,
+                cuponTipo: 'PORCENTAJE',
+                cuponVencimiento: 30,
+                estado: 'ACTIVA',
+                dificultad: 'NORMAL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_referido_3',
+                nombre: 'Trae a un Amigo',
+                descripcion: 'Refiere a 3 amigos y gana un servicio de limpieza express gratis.',
+                categoria: 'REFERIDOS',
+                triggerEvent: 'REFERRAL_COMPLETED',
+                cantidadMeta: 3,
+                icono: 'Users',
+                color: '#3b82f6',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { servicioGratis: true },
+                servicioGratisNombre: 'Limpieza Express gratis',
+                estado: 'ACTIVA',
+                dificultad: 'DIFICIL',
+                prioridad: 'ALTA',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_reseña',
+                nombre: 'Tu Opinión Vale Oro',
+                descripcion: `Déjanos una reseña sobre el resultado de nuestro servicio de limpieza y obtén 100 puntos.`,
+                categoria: 'RESEÑAS',
+                triggerEvent: 'REVIEW_CREATED',
+                cantidadMeta: 1,
+                icono: 'Star',
+                color: '#eab308',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { puntos: true },
+                puntosRecompensa: 100,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_perfil',
+                nombre: 'Completa tu Registro',
+                descripcion: 'Completa tus datos y dirección de entrega para agilizar tus órdenes y obtén 50 puntos.',
+                categoria: 'PERFIL',
+                triggerEvent: 'PROFILE_COMPLETED',
+                cantidadMeta: 1,
+                icono: 'UserCheck',
+                color: '#06b6d4',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { puntos: true },
+                puntosRecompensa: 50,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'BAJA',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_compras',
+                nombre: 'Cuidado Premium',
+                descripcion: 'Realiza 3 compras de productos de cuidado, impermeabilizantes o accesorios y obtén $15 de saldo Cashback.',
+                categoria: 'COMPRAS',
+                triggerEvent: 'PURCHASE_COMPLETED',
+                cantidadMeta: 3,
+                icono: 'ShoppingBag',
+                color: '#f43f5e',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { cashback: true },
+                cashbackMonto: 15,
+                estado: 'ACTIVA',
+                dificultad: 'NORMAL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_cumple',
+                nombre: 'Regalo de Cumpleaños VIP',
+                descripcion: 'Recibe un cupón de 15% de descuento en tu servicio el mes de tu cumpleaños.',
+                categoria: 'CUMPLEAÑOS',
+                triggerEvent: 'CUMPLEANOS',
+                cantidadMeta: 1,
+                icono: 'Cake',
+                color: '#10b981',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { cupon: true },
+                cuponNombre: 'Cupón Cumpleaños VIP',
+                cuponValor: 15,
+                cuponTipo: 'PORCENTAJE',
+                cuponVencimiento: 30,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            }
+        ];
+    }
+
+    if (vertical === 'RESTAURANTE') {
+        return [
+            {
+                id: 'tpl_reserva_5',
+                nombre: 'Comensal Frecuente',
+                descripcion: `Completa 5 visitas o pedidos en ${biz || 'nuestro restaurante'} y obtén 150 puntos y un cupón del 10%.`,
+                categoria: 'RESERVAS',
+                triggerEvent: 'BOOKING_COMPLETED',
+                cantidadMeta: 5,
+                icono: 'Calendar',
+                color: '#ec4899',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { puntos: true, cupon: true },
+                puntosRecompensa: 150,
+                cuponNombre: 'Descuento 10% en Próximo Consumo',
+                cuponValor: 10,
+                cuponTipo: 'PORCENTAJE',
+                cuponVencimiento: 30,
+                estado: 'ACTIVA',
+                dificultad: 'NORMAL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_referido_3',
+                nombre: 'Invita a tus Amigos',
+                descripcion: 'Recomienda nuestro local a 3 amigos y gana un postre o bebida especial de cortesía.',
+                categoria: 'REFERIDOS',
+                triggerEvent: 'REFERRAL_COMPLETED',
+                cantidadMeta: 3,
+                icono: 'Users',
+                color: '#3b82f6',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { servicioGratis: true },
+                servicioGratisNombre: 'Postre o Bebida Especial gratis',
+                estado: 'ACTIVA',
+                dificultad: 'DIFICIL',
+                prioridad: 'ALTA',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_reseña',
+                nombre: 'Tu Opinión Vale Oro',
+                descripcion: 'Comparte tu experiencia gastronómica y califica nuestros platos para ganar 100 puntos.',
+                categoria: 'RESEÑAS',
+                triggerEvent: 'REVIEW_CREATED',
+                cantidadMeta: 1,
+                icono: 'Star',
+                color: '#eab308',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { puntos: true },
+                puntosRecompensa: 100,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_perfil',
+                nombre: 'Perfil Gourmet Completo',
+                descripcion: 'Completa tus preferencias y fecha de cumpleaños para promociones exclusivas y obtén 50 puntos.',
+                categoria: 'PERFIL',
+                triggerEvent: 'PROFILE_COMPLETED',
+                cantidadMeta: 1,
+                icono: 'UserCheck',
+                color: '#06b6d4',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { puntos: true },
+                puntosRecompensa: 50,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'BAJA',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_compras',
+                nombre: 'Cliente Gourmet',
+                descripcion: 'Realiza 3 consumos o pedidos superiores en el restaurante y obtén $15 de saldo Cashback.',
+                categoria: 'COMPRAS',
+                triggerEvent: 'PURCHASE_COMPLETED',
+                cantidadMeta: 3,
+                icono: 'ShoppingBag',
+                color: '#f43f5e',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { cashback: true },
+                cashbackMonto: 15,
+                estado: 'ACTIVA',
+                dificultad: 'NORMAL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_cumple',
+                nombre: 'Cumpleaños Gourmet VIP',
+                descripcion: 'Recibe un cupón de 15% de descuento en tu cuenta el mes de tu cumpleaños.',
+                categoria: 'CUMPLEAÑOS',
+                triggerEvent: 'CUMPLEANOS',
+                cantidadMeta: 1,
+                icono: 'Cake',
+                color: '#10b981',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { cupon: true },
+                cuponNombre: 'Cupón Cumpleaños Gourmet VIP',
+                cuponValor: 15,
+                cuponTipo: 'PORCENTAJE',
+                cuponVencimiento: 30,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            }
+        ];
+    }
+
+    if (vertical === 'TIENDA') {
+        return [
+            {
+                id: 'tpl_reserva_5',
+                nombre: 'Comprador Estrella',
+                descripcion: `Completa 5 compras en ${biz || 'nuestra tienda'} y obtén 150 puntos y un cupón del 10%.`,
+                categoria: 'RESERVAS',
+                triggerEvent: 'BOOKING_COMPLETED',
+                cantidadMeta: 5,
+                icono: 'Calendar',
+                color: '#ec4899',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { puntos: true, cupon: true },
+                puntosRecompensa: 150,
+                cuponNombre: 'Descuento 10% en Próxima Compra',
+                cuponValor: 10,
+                cuponTipo: 'PORCENTAJE',
+                cuponVencimiento: 30,
+                estado: 'ACTIVA',
+                dificultad: 'NORMAL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_referido_3',
+                nombre: 'Recomienda a un Amigo',
+                descripcion: 'Invita a 3 amigos a comprar en la tienda y gana un regalo exclusivo.',
+                categoria: 'REFERIDOS',
+                triggerEvent: 'REFERRAL_COMPLETED',
+                cantidadMeta: 3,
+                icono: 'Users',
+                color: '#3b82f6',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { servicioGratis: true },
+                servicioGratisNombre: 'Regalo Exclusivo de Tienda',
+                estado: 'ACTIVA',
+                dificultad: 'DIFICIL',
+                prioridad: 'ALTA',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_reseña',
+                nombre: 'Tu Opinión Vale Oro',
+                descripcion: 'Déjanos una reseña sobre tu experiencia de compra y atención para obtener 100 puntos.',
+                categoria: 'RESEÑAS',
+                triggerEvent: 'REVIEW_CREATED',
+                cantidadMeta: 1,
+                icono: 'Star',
+                color: '#eab308',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { puntos: true },
+                puntosRecompensa: 100,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_perfil',
+                nombre: 'Perfil de Envío Completo',
+                descripcion: 'Completa tus datos de facturación y dirección para envíos rápidos y obtén 50 puntos.',
+                categoria: 'PERFIL',
+                triggerEvent: 'PROFILE_COMPLETED',
+                cantidadMeta: 1,
+                icono: 'UserCheck',
+                color: '#06b6d4',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { puntos: true },
+                puntosRecompensa: 50,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'BAJA',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_compras',
+                nombre: 'Cliente Premium',
+                descripcion: 'Realiza 3 compras en la tienda y obtén $15 de saldo Cashback en tu monedero.',
+                categoria: 'COMPRAS',
+                triggerEvent: 'PURCHASE_COMPLETED',
+                cantidadMeta: 3,
+                icono: 'ShoppingBag',
+                color: '#f43f5e',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { cashback: true },
+                cashbackMonto: 15,
+                estado: 'ACTIVA',
+                dificultad: 'NORMAL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_cumple',
+                nombre: 'Regalo de Cumpleaños VIP',
+                descripcion: 'Recibe un cupón de 15% de descuento en cualquier producto el mes de tu cumpleaños.',
+                categoria: 'CUMPLEAÑOS',
+                triggerEvent: 'CUMPLEANOS',
+                cantidadMeta: 1,
+                icono: 'Cake',
+                color: '#10b981',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { cupon: true },
+                cuponNombre: 'Cupón Cumpleaños VIP',
+                cuponValor: 15,
+                cuponTipo: 'PORCENTAJE',
+                cuponVencimiento: 30,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            }
+        ];
+    }
+
+    if (vertical === 'DENTAL') {
+        return [
+            {
+                id: 'tpl_reserva_5',
+                nombre: 'Paciente Frecuente',
+                descripcion: `Completa 3 consultas o revisiones preventivas en ${biz || 'nuestra clínica'} y obtén 150 puntos y un cupón del 10%.`,
+                categoria: 'RESERVAS',
+                triggerEvent: 'BOOKING_COMPLETED',
+                cantidadMeta: 3,
+                icono: 'Calendar',
+                color: '#ec4899',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { puntos: true, cupon: true },
+                puntosRecompensa: 150,
+                cuponNombre: 'Descuento 10% en Tratamiento Dental',
+                cuponValor: 10,
+                cuponTipo: 'PORCENTAJE',
+                cuponVencimiento: 30,
+                estado: 'ACTIVA',
+                dificultad: 'NORMAL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_referido_3',
+                nombre: 'Sonrisas Compartidas',
+                descripcion: 'Refiere a 3 amigos o familiares y gana una profilaxis o limpieza dental preventiva gratis.',
+                categoria: 'REFERIDOS',
+                triggerEvent: 'REFERRAL_COMPLETED',
+                cantidadMeta: 3,
+                icono: 'Users',
+                color: '#3b82f6',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { servicioGratis: true },
+                servicioGratisNombre: 'Limpieza Dental Preventiva gratis',
+                estado: 'ACTIVA',
+                dificultad: 'DIFICIL',
+                prioridad: 'ALTA',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_reseña',
+                nombre: 'Tu Opinión Vale Oro',
+                descripcion: 'Déjanos una reseña sobre tu atención clínica y valoración profesional y obtén 100 puntos.',
+                categoria: 'RESEÑAS',
+                triggerEvent: 'REVIEW_CREATED',
+                cantidadMeta: 1,
+                icono: 'Star',
+                color: '#eab308',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { puntos: true },
+                puntosRecompensa: 100,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_perfil',
+                nombre: 'Ficha Clínica Completa',
+                descripcion: 'Completa tus antecedentes y datos de contacto para tu historia clínica y obtén 50 puntos.',
+                categoria: 'PERFIL',
+                triggerEvent: 'PROFILE_COMPLETED',
+                cantidadMeta: 1,
+                icono: 'UserCheck',
+                color: '#06b6d4',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { puntos: true },
+                puntosRecompensa: 50,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'BAJA',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_compras',
+                nombre: 'Cuidado Bucal Integral',
+                descripcion: 'Realiza 3 compras de productos de higiene bucal o kits de cuidado y obtén $15 de saldo Cashback.',
+                categoria: 'COMPRAS',
+                triggerEvent: 'PURCHASE_COMPLETED',
+                cantidadMeta: 3,
+                icono: 'ShoppingBag',
+                color: '#f43f5e',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { cashback: true },
+                cashbackMonto: 15,
+                estado: 'ACTIVA',
+                dificultad: 'NORMAL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_cumple',
+                nombre: 'Sonrisa de Cumpleaños VIP',
+                descripcion: 'Recibe un cupón de 15% de descuento en tratamientos estéticos el mes de tu cumpleaños.',
+                categoria: 'CUMPLEAÑOS',
+                triggerEvent: 'CUMPLEANOS',
+                cantidadMeta: 1,
+                icono: 'Cake',
+                color: '#10b981',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { cupon: true },
+                cuponNombre: 'Cupón Cumpleaños VIP',
+                cuponValor: 15,
+                cuponTipo: 'PORCENTAJE',
+                cuponVencimiento: 30,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            }
+        ];
+    }
+
+    if (vertical === 'GIMNASIO') {
+        return [
+            {
+                id: 'tpl_reserva_5',
+                nombre: 'Disciplina de Hierro',
+                descripcion: `Completa 10 asistencias o entrenamientos en ${biz || 'nuestro gimnasio'} y obtén 150 puntos y un cupón del 10%.`,
+                categoria: 'RESERVAS',
+                triggerEvent: 'BOOKING_COMPLETED',
+                cantidadMeta: 10,
+                icono: 'Calendar',
+                color: '#ec4899',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { puntos: true, cupon: true },
+                puntosRecompensa: 150,
+                cuponNombre: 'Descuento 10% en Próxima Mensualidad',
+                cuponValor: 10,
+                cuponTipo: 'PORCENTAJE',
+                cuponVencimiento: 30,
+                estado: 'ACTIVA',
+                dificultad: 'NORMAL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_referido_3',
+                nombre: 'Entrena con un Amigo',
+                descripcion: 'Invita a 3 amigos a unirse al gimnasio y gana un pase mensual o asesoría fitness gratis.',
+                categoria: 'REFERIDOS',
+                triggerEvent: 'REFERRAL_COMPLETED',
+                cantidadMeta: 3,
+                icono: 'Users',
+                color: '#3b82f6',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { servicioGratis: true },
+                servicioGratisNombre: 'Pase Libre 1 Mes gratis',
+                estado: 'ACTIVA',
+                dificultad: 'DIFICIL',
+                prioridad: 'ALTA',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_reseña',
+                nombre: 'Tu Opinión Vale Oro',
+                descripcion: 'Comparte tu experiencia de entrenamiento y motivación en el gym y obtén 100 puntos.',
+                categoria: 'RESEÑAS',
+                triggerEvent: 'REVIEW_CREATED',
+                cantidadMeta: 1,
+                icono: 'Star',
+                color: '#eab308',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { puntos: true },
+                puntosRecompensa: 100,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_perfil',
+                nombre: 'Ficha de Atleta Completa',
+                descripcion: 'Completa tus datos de contacto y objetivos de entrenamiento y obtén 50 puntos.',
+                categoria: 'PERFIL',
+                triggerEvent: 'PROFILE_COMPLETED',
+                cantidadMeta: 1,
+                icono: 'UserCheck',
+                color: '#06b6d4',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { puntos: true },
+                puntosRecompensa: 50,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'BAJA',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_compras',
+                nombre: 'Suplementación & Pro-Shop',
+                descripcion: 'Realiza 3 compras de suplementos, bebidas o indumentaria deportiva y obtén $15 de Cashback.',
+                categoria: 'COMPRAS',
+                triggerEvent: 'PURCHASE_COMPLETED',
+                cantidadMeta: 3,
+                icono: 'ShoppingBag',
+                color: '#f43f5e',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { cashback: true },
+                cashbackMonto: 15,
+                estado: 'ACTIVA',
+                dificultad: 'NORMAL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_cumple',
+                nombre: 'Cumpleaños Fitness VIP',
+                descripcion: 'Recibe un cupón de 15% de descuento en tu renovación el mes de tu cumpleaños.',
+                categoria: 'CUMPLEAÑOS',
+                triggerEvent: 'CUMPLEANOS',
+                cantidadMeta: 1,
+                icono: 'Cake',
+                color: '#10b981',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { cupon: true },
+                cuponNombre: 'Cupón Cumpleaños Fitness VIP',
+                cuponValor: 15,
+                cuponTipo: 'PORCENTAJE',
+                cuponVencimiento: 30,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            }
+        ];
+    }
+
+    if (vertical === 'BARBERIA') {
+        return [
+            {
+                id: 'tpl_reserva_5',
+                nombre: 'Corte Impecable',
+                descripcion: `Completa 5 visitas de corte o estilismo en ${biz || 'nuestra barbería'} y obtén 150 puntos y un cupón del 10%.`,
+                categoria: 'RESERVAS',
+                triggerEvent: 'BOOKING_COMPLETED',
+                cantidadMeta: 5,
+                icono: 'Calendar',
+                color: '#ec4899',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { puntos: true, cupon: true },
+                puntosRecompensa: 150,
+                cuponNombre: 'Descuento 10% en Próximo Corte',
+                cuponValor: 10,
+                cuponTipo: 'PORCENTAJE',
+                cuponVencimiento: 30,
+                estado: 'ACTIVA',
+                dificultad: 'NORMAL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_referido_3',
+                nombre: 'Trae a un Amigo',
+                descripcion: 'Refiere a 3 amigos y gana un perfilado de barba o lavado capilar premium gratis.',
+                categoria: 'REFERIDOS',
+                triggerEvent: 'REFERRAL_COMPLETED',
+                cantidadMeta: 3,
+                icono: 'Users',
+                color: '#3b82f6',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { servicioGratis: true },
+                servicioGratisNombre: 'Perfilado de Barba gratis',
+                estado: 'ACTIVA',
+                dificultad: 'DIFICIL',
+                prioridad: 'ALTA',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_reseña',
+                nombre: 'Tu Opinión Vale Oro',
+                descripcion: 'Déjanos una reseña sobre la atención de nuestros profesionales y obtén 100 puntos.',
+                categoria: 'RESEÑAS',
+                triggerEvent: 'REVIEW_CREATED',
+                cantidadMeta: 1,
+                icono: 'Star',
+                color: '#eab308',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { puntos: true },
+                puntosRecompensa: 100,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_perfil',
+                nombre: 'Perfil de Cliente Frecuente',
+                descripcion: 'Completa tus datos de registro para agendar turnos rápidamente y obtén 50 puntos.',
+                categoria: 'PERFIL',
+                triggerEvent: 'PROFILE_COMPLETED',
+                cantidadMeta: 1,
+                icono: 'UserCheck',
+                color: '#06b6d4',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { puntos: true },
+                puntosRecompensa: 50,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'BAJA',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_compras',
+                nombre: 'Grooming & Estilo',
+                descripcion: 'Realiza 3 compras de pomadas, lociones o productos de cuidado y obtén $15 de Cashback.',
+                categoria: 'COMPRAS',
+                triggerEvent: 'PURCHASE_COMPLETED',
+                cantidadMeta: 3,
+                icono: 'ShoppingBag',
+                color: '#f43f5e',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { cashback: true },
+                cashbackMonto: 15,
+                estado: 'ACTIVA',
+                dificultad: 'NORMAL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_cumple',
+                nombre: 'Corte de Cumpleaños VIP',
+                descripcion: 'Recibe un cupón de 15% de descuento en tu servicio el mes de tu cumpleaños.',
+                categoria: 'CUMPLEAÑOS',
+                triggerEvent: 'CUMPLEANOS',
+                cantidadMeta: 1,
+                icono: 'Cake',
+                color: '#10b981',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { cupon: true },
+                cuponNombre: 'Cupón Cumpleaños VIP',
+                cuponValor: 15,
+                cuponTipo: 'PORCENTAJE',
+                cuponVencimiento: 30,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            }
+        ];
+    }
+
+    if (vertical === 'SPA') {
+        return [
+            {
+                id: 'tpl_reserva_5',
+                nombre: 'Cita de Bienestar',
+                descripcion: `Completa 5 citas en ${biz || 'nuestro Spa'} y obtén 150 puntos y un cupón del 10%.`,
+                categoria: 'RESERVAS',
+                triggerEvent: 'BOOKING_COMPLETED',
+                cantidadMeta: 5,
+                icono: 'Calendar',
+                color: '#ec4899',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { puntos: true, cupon: true },
+                puntosRecompensa: 150,
+                cuponNombre: 'Descuento 10% Completa Citas',
+                cuponValor: 10,
+                cuponTipo: 'PORCENTAJE',
+                cuponVencimiento: 30,
+                estado: 'ACTIVA',
+                dificultad: 'NORMAL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_referido_3',
+                nombre: 'Trae una Amiga',
+                descripcion: 'Refiere a 3 amigos y gana un servicio de Masaje Express gratis.',
+                categoria: 'REFERIDOS',
+                triggerEvent: 'REFERRAL_COMPLETED',
+                cantidadMeta: 3,
+                icono: 'Users',
+                color: '#3b82f6',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { servicioGratis: true },
+                servicioGratisNombre: 'Masaje Express gratis',
+                estado: 'ACTIVA',
+                dificultad: 'DIFICIL',
+                prioridad: 'ALTA',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_reseña',
+                nombre: 'Tu Opinión Vale Oro',
+                descripcion: `Déjanos una reseña sobre tu experiencia en ${biz || 'el Spa'} y obtén 100 puntos.`,
+                categoria: 'RESEÑAS',
+                triggerEvent: 'REVIEW_CREATED',
+                cantidadMeta: 1,
+                icono: 'Star',
+                color: '#eab308',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { puntos: true },
+                puntosRecompensa: 100,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_perfil',
+                nombre: 'Completa tu Registro',
+                descripcion: 'Completa todos tus datos de perfil para mejorar nuestro servicio y obtén 50 puntos.',
+                categoria: 'PERFIL',
+                triggerEvent: 'PROFILE_COMPLETED',
+                cantidadMeta: 1,
+                icono: 'UserCheck',
+                color: '#06b6d4',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { puntos: true },
+                puntosRecompensa: 50,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'BAJA',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_compras',
+                nombre: 'Cliente Premium de Compras',
+                descripcion: `Realiza 3 compras de productos o tratamientos en ${biz || 'el Spa'} y obtén $15 de saldo Cashback.`,
+                categoria: 'COMPRAS',
+                triggerEvent: 'PURCHASE_COMPLETED',
+                cantidadMeta: 3,
+                icono: 'ShoppingBag',
+                color: '#f43f5e',
+                progresoTipo: 'ACUMULATIVO',
+                recompensasSeleccionadas: { cashback: true },
+                cashbackMonto: 15,
+                estado: 'ACTIVA',
+                dificultad: 'NORMAL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            },
+            {
+                id: 'tpl_cumple',
+                nombre: 'Regalo de Cumpleaños VIP',
+                descripcion: 'Recibe un cupón de 15% de descuento el mes de tu cumpleaños.',
+                categoria: 'CUMPLEAÑOS',
+                triggerEvent: 'CUMPLEANOS',
+                cantidadMeta: 1,
+                icono: 'Cake',
+                color: '#10b981',
+                progresoTipo: 'SIMPLE',
+                recompensasSeleccionadas: { cupon: true },
+                cuponNombre: 'Cupón Cumpleaños VIP',
+                cuponValor: 15,
+                cuponTipo: 'PORCENTAJE',
+                cuponVencimiento: 30,
+                estado: 'ACTIVA',
+                dificultad: 'FACIL',
+                prioridad: 'NORMAL',
+                validacionTipo: 'AUTOMATICO',
+                visible: true,
+                repetible: false,
+                limiteUsuario: 1,
+                limiteGlobal: '',
+                condiciones: []
+            }
+        ];
+    }
+
+    // Default / General
+    return [
+        {
+            id: 'tpl_reserva_5',
+            nombre: 'Visitas Frecuentes',
+            descripcion: `Completa 5 visitas o reservas en ${biz || 'nuestro negocio'} y obtén 150 puntos y un cupón del 10%.`,
+            categoria: 'RESERVAS',
+            triggerEvent: 'BOOKING_COMPLETED',
+            cantidadMeta: 5,
+            icono: 'Calendar',
+            color: '#ec4899',
+            progresoTipo: 'ACUMULATIVO',
+            recompensasSeleccionadas: { puntos: true, cupon: true },
+            puntosRecompensa: 150,
+            cuponNombre: 'Descuento 10% Cliente Frecuente',
+            cuponValor: 10,
+            cuponTipo: 'PORCENTAJE',
+            cuponVencimiento: 30,
+            estado: 'ACTIVA',
+            dificultad: 'NORMAL',
+            prioridad: 'NORMAL',
+            validacionTipo: 'AUTOMATICO',
+            visible: true,
+            repetible: false,
+            limiteUsuario: 1,
+            limiteGlobal: '',
+            condiciones: []
+        },
+        {
+            id: 'tpl_referido_3',
+            nombre: 'Trae a un Amigo',
+            descripcion: 'Refiere a 3 amigos y gana un servicio de cortesía gratis.',
+            categoria: 'REFERIDOS',
+            triggerEvent: 'REFERRAL_COMPLETED',
+            cantidadMeta: 3,
+            icono: 'Users',
+            color: '#3b82f6',
+            progresoTipo: 'ACUMULATIVO',
+            recompensasSeleccionadas: { servicioGratis: true },
+            servicioGratisNombre: 'Servicio de Cortesía gratis',
+            estado: 'ACTIVA',
+            dificultad: 'DIFICIL',
+            prioridad: 'ALTA',
+            validacionTipo: 'AUTOMATICO',
+            visible: true,
+            repetible: false,
+            limiteUsuario: 1,
+            limiteGlobal: '',
+            condiciones: []
+        },
+        {
+            id: 'tpl_reseña',
+            nombre: 'Tu Opinión Vale Oro',
+            descripcion: `Déjanos una reseña sobre tu experiencia en ${biz || 'nuestro negocio'} y obtén 100 puntos.`,
+            categoria: 'RESEÑAS',
+            triggerEvent: 'REVIEW_CREATED',
+            cantidadMeta: 1,
+            icono: 'Star',
+            color: '#eab308',
+            progresoTipo: 'SIMPLE',
+            recompensasSeleccionadas: { puntos: true },
+            puntosRecompensa: 100,
+            estado: 'ACTIVA',
+            dificultad: 'FACIL',
+            prioridad: 'NORMAL',
+            validacionTipo: 'AUTOMATICO',
+            visible: true,
+            repetible: false,
+            limiteUsuario: 1,
+            limiteGlobal: '',
+            condiciones: []
+        },
+        {
+            id: 'tpl_perfil',
+            nombre: 'Completa tu Registro',
+            descripcion: 'Completa todos tus datos de perfil para mejorar nuestro servicio y obtén 50 puntos.',
+            categoria: 'PERFIL',
+            triggerEvent: 'PROFILE_COMPLETED',
+            cantidadMeta: 1,
+            icono: 'UserCheck',
+            color: '#06b6d4',
+            progresoTipo: 'SIMPLE',
+            recompensasSeleccionadas: { puntos: true },
+            puntosRecompensa: 50,
+            estado: 'ACTIVA',
+            dificultad: 'FACIL',
+            prioridad: 'BAJA',
+            validacionTipo: 'AUTOMATICO',
+            visible: true,
+            repetible: false,
+            limiteUsuario: 1,
+            limiteGlobal: '',
+            condiciones: []
+        },
+        {
+            id: 'tpl_compras',
+            nombre: 'Cliente Premium de Compras',
+            descripcion: `Realiza 3 compras en ${biz || 'nuestro negocio'} y obtén $15 de saldo Cashback.`,
+            categoria: 'COMPRAS',
+            triggerEvent: 'PURCHASE_COMPLETED',
+            cantidadMeta: 3,
+            icono: 'ShoppingBag',
+            color: '#f43f5e',
+            progresoTipo: 'ACUMULATIVO',
+            recompensasSeleccionadas: { cashback: true },
+            cashbackMonto: 15,
+            estado: 'ACTIVA',
+            dificultad: 'NORMAL',
+            prioridad: 'NORMAL',
+            validacionTipo: 'AUTOMATICO',
+            visible: true,
+            repetible: false,
+            limiteUsuario: 1,
+            limiteGlobal: '',
+            condiciones: []
+        },
+        {
+            id: 'tpl_cumple',
+            nombre: 'Regalo de Cumpleaños VIP',
+            descripcion: 'Recibe un cupón de 15% de descuento el mes de tu cumpleaños.',
+            categoria: 'CUMPLEAÑOS',
+            triggerEvent: 'CUMPLEANOS',
+            cantidadMeta: 1,
+            icono: 'Cake',
+            color: '#10b981',
+            progresoTipo: 'SIMPLE',
+            recompensasSeleccionadas: { cupon: true },
+            cuponNombre: 'Cupón Cumpleaños VIP',
+            cuponValor: 15,
+            cuponTipo: 'PORCENTAJE',
+            cuponVencimiento: 30,
+            estado: 'ACTIVA',
+            dificultad: 'FACIL',
+            prioridad: 'NORMAL',
+            validacionTipo: 'AUTOMATICO',
+            visible: true,
+            repetible: false,
+            limiteUsuario: 1,
+            limiteGlobal: '',
+            condiciones: []
+        }
+    ];
+}
 
 export default function QuestDashboard() {
     const { data: session } = useSession();
@@ -179,6 +1655,24 @@ export default function QuestDashboard() {
     const [submitting, setSubmitting] = useState(false);
     const [toastMsg, setToastMsg] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
     const [isGuideOpen, setIsGuideOpen] = useState(false);
+
+    // Información del negocio y vertical activa
+    const [negocioInfo, setNegocioInfo] = useState<{ id?: string; nombre?: string; tipoNegocio?: string; businessTypeSlug?: string; businessTypeName?: string }>({});
+
+    // Vertical de negocio calculada reactivamente
+    const activeVertical = useMemo(() => {
+        return resolveVerticalCategory(negocioInfo.tipoNegocio, negocioInfo.businessTypeSlug, negocioInfo.nombre);
+    }, [negocioInfo]);
+
+    // Catálogo de acciones y triggers adaptado a la vertical
+    const QUEST_ACTIONS_CATALOG = useMemo(() => {
+        return getQuestActionsCatalog(activeVertical);
+    }, [activeVertical]);
+
+    // Plantillas recomendadas adaptadas a la vertical y nombre del negocio
+    const LOCAL_TEMPLATES = useMemo(() => {
+        return getLocalTemplates(activeVertical, negocioInfo.nombre || '');
+    }, [activeVertical, negocioInfo.nombre]);
 
     // Estados de Datos
     const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -358,7 +1852,8 @@ export default function QuestDashboard() {
                 staffRes,
                 servicesRes,
                 globalMissionsRes,
-                installedTemplatesRes
+                installedTemplatesRes,
+                negocioRes
             ] = await Promise.all([
                 fetch('/api/admin/misiones').then(res => res.json()),
                 fetch('/api/admin/misiones/templates').then(res => res.json()),
@@ -371,8 +1866,22 @@ export default function QuestDashboard() {
                 fetch('/api/admin/roles').then(res => res.json()).catch(() => ({ staff: [] })),
                 fetch('/api/services').then(res => res.json()).catch(() => []),
                 fetch('/api/admin/misiones-globales').then(res => res.json()).catch(() => ({ success: false, missions: [], progress: [], history: [] })),
-                fetch('/api/admin/plantillas/instaladas').then(res => res.json()).catch(() => ({ success: false, installed: [] }))
+                fetch('/api/admin/plantillas/instaladas').then(res => res.json()).catch(() => ({ success: false, installed: [] })),
+                fetch('/api/negocio').then(res => res.json()).catch(() => null)
             ]);
+
+            // Consolidar datos de Negocio para adaptar la experiencia a la vertical
+            if (misionesRes?.negocio) {
+                setNegocioInfo(misionesRes.negocio);
+            } else if (negocioRes && !negocioRes.error) {
+                setNegocioInfo({
+                    id: negocioRes.id,
+                    nombre: negocioRes.nombre,
+                    tipoNegocio: negocioRes.tipoNegocio,
+                    businessTypeSlug: negocioRes.BusinessType?.slug || negocioRes.tipoNegocio,
+                    businessTypeName: negocioRes.BusinessType?.name || negocioRes.tipoNegocio
+                });
+            }
 
             // Consolidar Misiones Globales
             if (globalMissionsRes.success) {
@@ -508,149 +2017,6 @@ export default function QuestDashboard() {
         return () => window.removeEventListener('popstate', handlePopState);
     }, [isWizardOpen, wizardStep]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // ─── LOCAL TEMPLATES (PLANTILLAS RECOMENDADAS) ───────────────────────────
-    const LOCAL_TEMPLATES = [
-        {
-            id: 'tpl_reserva_5',
-            nombre: 'Cita Completa',
-            descripcion: 'Completa 5 citas en nuestro Spa y obtén 150 puntos y un cupón del 10%.',
-            categoria: 'RESERVAS',
-            triggerEvent: 'BOOKING_COMPLETED',
-            cantidadMeta: 5,
-            icono: 'Calendar',
-            color: '#ec4899',
-            progresoTipo: 'ACUMULATIVO',
-            recompensasSeleccionadas: { puntos: true, cupon: true },
-            puntosRecompensa: 150,
-            cuponNombre: 'Descuento 10% Completa Citas',
-            cuponValor: 10,
-            cuponTipo: 'PORCENTAJE',
-            cuponVencimiento: 30,
-            estado: 'ACTIVA',
-            dificultad: 'NORMAL',
-            prioridad: 'NORMAL',
-            validacionTipo: 'AUTOMATICO',
-            visible: true,
-            repetible: false,
-            limiteUsuario: 1,
-            limiteGlobal: '',
-            condiciones: []
-        },
-        {
-            id: 'tpl_referido_3',
-            nombre: 'Trae un Amigo',
-            descripcion: 'Refiere a 3 amigos y gana un servicio de Masaje Express gratis.',
-            categoria: 'REFERIDOS',
-            triggerEvent: 'REFERRAL_COMPLETED',
-            cantidadMeta: 3,
-            icono: 'Users',
-            color: '#3b82f6',
-            progresoTipo: 'ACUMULATIVO',
-            recompensasSeleccionadas: { servicioGratis: true },
-            servicioGratisNombre: 'Masaje Express gratis',
-            estado: 'ACTIVA',
-            dificultad: 'DIFICIL',
-            prioridad: 'ALTA',
-            validacionTipo: 'AUTOMATICO',
-            visible: true,
-            repetible: false,
-            limiteUsuario: 1,
-            limiteGlobal: '',
-            condiciones: []
-        },
-        {
-            id: 'tpl_reseña',
-            nombre: 'Tu Opinión Vale Oro',
-            descripcion: 'Déjanos una reseña sobre tu experiencia en el Spa y obtén 100 puntos.',
-            categoria: 'RESEÑAS',
-            triggerEvent: 'REVIEW_CREATED',
-            cantidadMeta: 1,
-            icono: 'Star',
-            color: '#eab308',
-            progresoTipo: 'SIMPLE',
-            recompensasSeleccionadas: { puntos: true },
-            puntosRecompensa: 100,
-            estado: 'ACTIVA',
-            dificultad: 'FACIL',
-            prioridad: 'NORMAL',
-            validacionTipo: 'AUTOMATICO',
-            visible: true,
-            repetible: false,
-            limiteUsuario: 1,
-            limiteGlobal: '',
-            condiciones: []
-        },
-        {
-            id: 'tpl_perfil',
-            nombre: 'Completa tu Registro',
-            descripcion: 'Completa todos tus datos de perfil para mejorar nuestro servicio y obtén 50 puntos.',
-            categoria: 'PERFIL',
-            triggerEvent: 'PROFILE_COMPLETED',
-            cantidadMeta: 1,
-            icono: 'UserCheck',
-            color: '#06b6d4',
-            progresoTipo: 'SIMPLE',
-            recompensasSeleccionadas: { puntos: true },
-            puntosRecompensa: 50,
-            estado: 'ACTIVA',
-            dificultad: 'FACIL',
-            prioridad: 'BAJA',
-            validacionTipo: 'AUTOMATICO',
-            visible: true,
-            repetible: false,
-            limiteUsuario: 1,
-            limiteGlobal: '',
-            condiciones: []
-        },
-        {
-            id: 'tpl_compras',
-            nombre: 'Cliente Premium de Compras',
-            descripcion: 'Realiza 3 compras de productos o cursos en el Spa y obtén $15 de saldo Cashback.',
-            categoria: 'COMPRAS',
-            triggerEvent: 'PURCHASE_COMPLETED',
-            cantidadMeta: 3,
-            icono: 'ShoppingBag',
-            color: '#f43f5e',
-            progresoTipo: 'ACUMULATIVO',
-            recompensasSeleccionadas: { cashback: true },
-            cashbackMonto: 15,
-            estado: 'ACTIVA',
-            dificultad: 'NORMAL',
-            prioridad: 'NORMAL',
-            validacionTipo: 'AUTOMATICO',
-            visible: true,
-            repetible: false,
-            limiteUsuario: 1,
-            limiteGlobal: '',
-            condiciones: []
-        },
-        {
-            id: 'tpl_cumple',
-            nombre: 'Regalo de Cumpleaños VIP',
-            descripcion: 'Recibe un cupón de 15% de descuento el mes de tu cumpleaños.',
-            categoria: 'CUMPLEAÑOS',
-            triggerEvent: 'CUMPLEANOS',
-            cantidadMeta: 1,
-            icono: 'Cake',
-            color: '#10b981',
-            progresoTipo: 'SIMPLE',
-            recompensasSeleccionadas: { cupon: true },
-            cuponNombre: 'Cupón Cumpleaños VIP',
-            cuponValor: 15,
-            cuponTipo: 'PORCENTAJE',
-            cuponVencimiento: 30,
-            estado: 'ACTIVA',
-            dificultad: 'FACIL',
-            prioridad: 'NORMAL',
-            validacionTipo: 'AUTOMATICO',
-            visible: true,
-            repetible: false,
-            limiteUsuario: 1,
-            limiteGlobal: '',
-            condiciones: []
-        }
-    ];
-
     // ─── NATURAL LANGUAGE PARSER LOCAL (IA) ──────────────────────────────────
     const parseMisionWithIA = (texto: string, services: any[]) => {
         const text = texto.toLowerCase();
@@ -686,7 +2052,7 @@ export default function QuestDashboard() {
         const condiciones: any[] = [];
 
         // 1. Detección de Categoría y Evento
-        if (text.includes('reserva') || text.includes('cita') || text.includes('agenda') || text.includes('visita')) {
+        if (text.includes('reserva') || text.includes('cita') || text.includes('agenda') || text.includes('visita') || text.includes('partido') || text.includes('cancha') || text.includes('padel') || text.includes('pádel') || text.includes('futbol') || text.includes('fútbol') || text.includes('turno') || text.includes('lavado') || text.includes('calzado') || text.includes('sneaker') || text.includes('consulta') || text.includes('clase') || text.includes('entrenamiento') || text.includes('corte')) {
             categoria = 'RESERVAS';
             icono = 'Calendar';
             color = '#ec4899';
@@ -2017,9 +3383,13 @@ export default function QuestDashboard() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-slate-800 flex items-center gap-2">
-                        <Trophy className="text-pink-500 animate-pulse" /> Club de Beneficios
+                        <Trophy className="text-pink-500 animate-pulse" /> {activeVertical === 'GIMNASIO' ? 'Club de Beneficios & Retos Fitness' : 'Club de Beneficios'}
                     </h1>
-                    <p className="text-slate-500 font-medium mt-1">Centro de retos, referidos y fidelización unificado de Citiox.</p>
+                    <p className="text-slate-500 font-medium mt-1">
+                        {activeVertical === 'GIMNASIO'
+                            ? 'Fidelización de socios mediante retos de asistencia con QR, constancia semanal y premios deportivos.'
+                            : 'Centro de retos, referidos y fidelización unificado de Citiox.'}
+                    </p>
                 </div>
                 <div className="flex gap-3">
                     <button
@@ -2039,7 +3409,7 @@ export default function QuestDashboard() {
                             boxShadow: `0 10px 15px -3px ${primaryColor}33`
                         }}
                     >
-                        <Plus size={16} /> Crear Misión / Campaña
+                        <Plus size={16} /> {activeVertical === 'GIMNASIO' ? 'Crear Reto Fitness' : 'Crear Misión / Campaña'}
                     </button>
                 </div>
             </div>
@@ -2085,7 +3455,9 @@ export default function QuestDashboard() {
                                 <div className="bg-white p-5 rounded-2xl border border-slate-150 shadow-sm flex items-center gap-4">
                                     <div className="p-3 bg-blue-50 text-blue-600 rounded-xl"><Users size={24} /></div>
                                     <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Clientes Activos</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                            {activeVertical === 'GIMNASIO' ? 'Socios Activos' : 'Clientes Activos'}
+                                        </p>
                                         <h4 className="text-2xl font-black text-slate-800">{stats.totalParticipantes}</h4>
                                     </div>
                                 </div>
@@ -2099,7 +3471,9 @@ export default function QuestDashboard() {
                                 <div className="bg-white p-5 rounded-2xl border border-slate-150 shadow-sm flex items-center gap-4">
                                     <div className="p-3 bg-green-50 text-green-600 rounded-xl"><CheckCircle2 size={24} /></div>
                                     <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Misiones Completadas</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                            {activeVertical === 'GIMNASIO' ? 'Retos Superados' : 'Misiones Completadas'}
+                                        </p>
                                         <h4 className="text-2xl font-black text-slate-800">{stats.completadas}</h4>
                                     </div>
                                 </div>
@@ -2120,11 +3494,15 @@ export default function QuestDashboard() {
                                     </h3>
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Reservas Adicionales Generadas</span>
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                                {activeVertical === 'GIMNASIO' ? 'Asistencias & Check-ins Premiados' : 'Reservas Adicionales Generadas'}
+                                            </span>
                                             <span className="text-xs font-black text-slate-800">{stats.reservasGeneradas}</span>
                                         </div>
                                         <div className="flex justify-between items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Clientes Recomendados (Referidos)</span>
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                                {activeVertical === 'GIMNASIO' ? 'Nuevos Socios Referidos (Gym Bros)' : 'Clientes Recomendados (Referidos)'}
+                                            </span>
                                             <span className="text-xs font-black text-slate-800">{stats.referidosValidos}</span>
                                         </div>
                                         <div className="flex justify-between items-center p-3.5 bg-slate-50 rounded-xl border border-slate-100">
@@ -2218,8 +3596,8 @@ export default function QuestDashboard() {
                                                                 <Award size={18} />
                                                             </div>
                                                             <div>
-                                                                <h4 className="text-xs font-black text-slate-850 uppercase tracking-wider">{quest.nombre}</h4>
-                                                                <p className="text-[9px] text-slate-400 font-semibold uppercase mt-0.5">Trigger: {quest.triggerEvent} (Meta: {quest.cantidadMeta})</p>
+                                                                <h4 className="text-xs font-black text-slate-850 uppercase tracking-wider">{formatQuestTitle(quest.nombre, activeVertical)}</h4>
+                                                                <p className="text-[9px] text-slate-400 font-semibold uppercase mt-0.5">Trigger: {formatTriggerBadge(quest.triggerEvent, activeVertical)} (Meta: {quest.cantidadMeta})</p>
                                                             </div>
                                                         </div>
                                                         <div className="flex gap-2">
@@ -3218,7 +4596,17 @@ export default function QuestDashboard() {
 
                                         <div className="space-y-4">
                                             <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
-                                                Describe lo que quieres conseguir. Por ejemplo: <i>"Misión de reservas para que completen 5 masajes relax los viernes, den 100 puntos y un cupón de 10% de descuento con prioridad destacada"</i>.
+                                                Describe lo que quieres conseguir. Por ejemplo: <i>{
+                                                    activeVertical === 'CANCHAS' ? '"Misión para que jueguen 5 partidos en las canchas los fines de semana, ganen 150 puntos y 1 hora de alquiler gratis..."' :
+                                                    activeVertical === 'SHOE_CARE' ? '"Misión para que completen 3 lavados de sneakers o calzado, ganen 100 puntos y un cupón del 10%..."' :
+                                                    activeVertical === 'RESTAURANTE' ? '"Misión para que realicen 5 visitas o pedidos al restaurante, ganen 150 puntos y un postre gratis..."' :
+                                                    activeVertical === 'DENTAL' ? '"Misión para que asistan a 3 revisiones preventivas, ganen 150 puntos y profilaxis gratis..."' :
+                                                    activeVertical === 'GIMNASIO' ? '"Misión para que completen 10 entrenamientos en el mes, ganen 150 puntos y pase libre..."' :
+                                                    activeVertical === 'BARBERIA' ? '"Misión para que agenden 5 cortes de cabello, ganen 150 puntos y perfilado gratis..."' :
+                                                    activeVertical === 'TIENDA' ? '"Misión para que completen 5 compras en la tienda, ganen 150 puntos y cupón del 10%..."' :
+                                                    activeVertical === 'SPA' ? '"Misión de reservas para que completen 5 masajes relax los viernes, den 100 puntos y un cupón de 10% de descuento..."' :
+                                                    '"Misión de fidelidad para que completen 5 reservas o visitas, ganen 150 puntos y un cupón del 10%..."'
+                                                }</i>.
                                             </p>
                                             <textarea
                                                 value={iaInputText}
@@ -3926,7 +5314,7 @@ export default function QuestDashboard() {
                                             {[
                                                 { id: 'AUTOMATICO', label: 'Validación Automática', desc: 'El motor de triggers calcula en tiempo real a través de las APIs (Reservas completadas o Reseñas).' },
                                                 { id: 'CLIENTE', label: 'El Cliente Confirma', desc: 'El cliente sube un comprobante o pulsa completar y queda pendiente de validación en recepción.' },
-                                                { id: 'ADMINISTRADOR', label: 'Aprobación del Staff', desc: 'El personal del spa aprueba manualmente el progreso de la misión en el panel administrativo.' }
+                                                { id: 'ADMINISTRADOR', label: 'Aprobación del Staff', desc: 'El personal de tu negocio aprueba manualmente el progreso de la misión en el panel administrativo.' }
                                             ].map(opt => (
                                                 <button
                                                     key={opt.id}

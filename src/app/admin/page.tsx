@@ -35,28 +35,66 @@ export default async function AdminDashboard() {
 
     const negocioObj = await prisma.negocio.findUnique({
         where: { id: negocioId },
-        select: { id: true, nombre: true, slug: true, colorPrimario: true, tipoNegocio: true, configuracion: true }
+        select: { 
+            id: true, 
+            nombre: true, 
+            slug: true, 
+            colorPrimario: true, 
+            tipoNegocio: true, 
+            configuracion: true,
+            Service: {
+                select: {
+                    id: true,
+                    nombre: true,
+                    precio: true,
+                    duracion: true,
+                    extraInfo: true
+                }
+            }
+        }
     });
 
-    const activeType = negocioObj?.tipoNegocio || tipoNegocio;
+    const rawType = (negocioObj?.tipoNegocio || tipoNegocio || '').toUpperCase().trim();
 
-    if (activeType === 'SHOE_CARE' || activeType === 'ordenes-servicio') {
+    if (rawType === 'SHOE_CARE' || rawType === 'ORDENES-SERVICIO') {
         const { default: ShoeCareBackoffice } = await import('@/modules/shoe-care/components/ShoeCareBackoffice');
-        return <ShoeCareBackoffice negocio={negocioObj} />;
+        return <ShoeCareBackoffice negocio={{ ...negocioObj, services: (negocioObj as any)?.Service || [] }} />;
     }
 
-    if (activeType === 'TIENDA' || activeType === 'STORE') {
+    if (['RESTAURANTE', 'RESTAURANT', 'BAR', 'GASTRONOMIA', 'COMIDA'].includes(rawType)) {
+        const { default: RestaurantDashboard } = await import('@/components/admin/RestaurantDashboard');
+        return <RestaurantDashboard negocioId={negocioId} role={role} />;
+    }
+
+    if (rawType === 'TIENDA' || rawType === 'STORE') {
         const { default: StoreDashboard } = await import('@/modules/store/components/StoreDashboard');
         return <StoreDashboard negocioId={negocioId} role={role} />;
     }
 
-    if (activeType === 'PRODUCTOS' || activeType === 'RESTAURANT') {
+    if (rawType === 'PRODUCTOS') {
         return <ProductsDashboard negocioId={negocioId} role={role} />;
     }
 
-    if (activeType === 'SPORTS_COURTS') {
+    if (rawType === 'SPORTS_COURTS' || rawType === 'CANCHAS' || rawType === 'SPORTS') {
         const { default: CanchaAdminDashboard } = await import('@/modules/sports-courts/components/CanchaAdminDashboard');
         return <CanchaAdminDashboard negocio={negocioObj} />;
+    }
+
+    const { isDentalBusiness } = await import('@/modules/dental/utils/dentalHelper');
+    if (isDentalBusiness(negocioObj)) {
+        const { default: DentalAdminDashboard } = await import('@/modules/dental/components/admin/DentalAdminDashboard');
+        return (
+            <DentalAdminDashboard 
+                negocioNombre={negocioObj?.nombre} 
+                primaryColor={negocioObj?.colorPrimario || '#0284c7'} 
+            />
+        );
+    }
+
+    const { isGymBusiness } = await import('@/modules/gym/utils/gymHelper');
+    if (isGymBusiness(negocioObj) || ['GIMNASIO', 'GYM', 'FITNESS'].includes(rawType)) {
+        const { default: GymAdminDashboard } = await import('@/modules/gym/components/GymAdminDashboard');
+        return <GymAdminDashboard businessSlug={negocioObj?.slug} negocioNombre={negocioObj?.nombre} />;
     }
 
     const isStaff = role === 'STAFF' || role === 'PROFESIONAL';
@@ -75,7 +113,7 @@ export default async function AdminDashboard() {
         ...(isStaff && staffId ? { staffId } : {})
     };
 
-    const [citasHoy, citasMes, ingresosMes, totalClientes, negocioData, servicesResult, planFeatures, loyaltyPendingCount, referralPendingCount] = await Promise.all([
+    const [citasHoy, citasMes, ingresosMes, totalClientes, negocioData, servicesResult, planFeatures, loyaltyPendingCount, referralPendingCount, staffCount] = await Promise.all([
         prisma.appointment.count({
             where: {
                 ...commonFilter,
@@ -111,6 +149,7 @@ export default async function AdminDashboard() {
                 configuracion: true,
                 slug: true,
                 colorPrimario: true,
+                tipoNegocio: true,
                 Suscripcion: {
                     select: {
                         estado: true,
@@ -136,7 +175,8 @@ export default async function AdminDashboard() {
                 negocioId,
                 estado: { in: ['PENDIENTE_ENTREGA', 'SOLICITADO', 'LISTO_PARA_RETIRAR'] }
             }
-        })
+        }),
+        (prisma as any).staff ? (prisma as any).staff.count({ where: { businessId: negocioId } }).catch(() => 0) : Promise.resolve(0)
     ]);
 
     const pendingDeliveriesCount = (loyaltyPendingCount || 0) + (referralPendingCount || 0);
@@ -440,6 +480,11 @@ export default async function AdminDashboard() {
                                 estado={planEstado}
                                 daysLeft={daysLeft}
                                 features={featuresData as any}
+                                usage={{
+                                    appointmentsMonthly: citasMes,
+                                    professionals: staffCount || 1
+                                }}
+                                tipoNegocio={negocioData?.tipoNegocio || 'RESERVA'}
                             />
                         )}
                         <div className="relative rounded-[3.5rem] p-10 bg-slate-900 text-white shadow-2xl overflow-hidden group">

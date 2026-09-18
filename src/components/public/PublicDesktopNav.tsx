@@ -99,12 +99,45 @@ export default function PublicDesktopNav({
     const canServices = hasModule(tipoNegocio, 'SERVICES');
     const isShoeCare = tipoNegocio === 'SHOE_CARE' || slug.includes('lavado') || slug.includes('sneaker');
 
-    const navItems = canOrders ? [
+    const isGym = tipoNegocio === 'GIMNASIO' || tipoNegocio === 'GYM' || tipoNegocio === 'FITNESS' || slug.includes('gym') || slug.includes('fitness') || slug.includes('vortex');
+
+    const navItems = isGym ? [
         {
             label: 'Inicio',
             href: `/${slug}`,
             icon: Home,
-            active: activeTab === 'inicio'
+            active: pathname === `/${slug}`
+        },
+        {
+            label: 'Membresías',
+            href: `/${slug}#planes`,
+            icon: Tag,
+            active: pathname.includes('/mi-membresia')
+        },
+        {
+            label: 'Mi Carnet QR',
+            href: `/${slug}/mi-qr`,
+            icon: User,
+            active: pathname.includes('/mi-qr')
+        },
+        ...((isLoyaltyEnabled && hasModule(tipoNegocio, 'LOYALTY')) ? [{
+            label: 'Premios',
+            href: `/${slug}/misiones`,
+            icon: Gift,
+            active: pathname.includes('/referidos') || pathname.includes('/misiones')
+        }] : []),
+        {
+            label: 'Perfil',
+            href: `/${slug}/perfil`,
+            icon: User,
+            active: pathname.includes('/perfil')
+        }
+    ] : canOrders ? [
+        {
+            label: 'Inicio',
+            href: `/${slug}`,
+            icon: Home,
+            active: activeTab === 'inicio' && pathname === `/${slug}`
         },
         {
             label: 'Ofertas',
@@ -116,7 +149,7 @@ export default function PublicDesktopNav({
             label: isShoeCare ? 'Mis Órdenes' : 'Mis Pedidos',
             href: `/${slug}/pedidos`,
             icon: PackageCheck,
-            active: activeTab === 'pedidos'
+            active: activeTab === 'pedidos' || pathname.includes('/pedidos')
         },
         {
             label: 'Mi Cuenta',
@@ -163,15 +196,27 @@ export default function PublicDesktopNav({
         }
     ];
 
-    const buttonText = canOrders 
+    const buttonText = isGym
+        ? 'Ver Membresías'
+        : canOrders 
         ? 'Ver Catálogo' 
         : (hasModule(tipoNegocio, 'RESERVATIONS') ? 'Reservar Cancha' : 'Reservar Cita');
 
-    const buttonHref = canOrders 
+    const buttonHref = isGym
+        ? `/${slug}#planes`
+        : canOrders 
         ? `/${slug}#catalogo` 
         : `/${slug}#servicios`;
 
     const handleCatalogClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        if (isGym && pathname === `/${slug}`) {
+            const el = document.getElementById('planes');
+            if (el) {
+                e.preventDefault();
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            return;
+        }
         if (canOrders && pathname === `/${slug}`) {
             const el = document.getElementById('catalogo') || document.getElementById('menu') || document.getElementById('productos');
             if (el) {

@@ -386,7 +386,7 @@ export default function CustomerCartDrawer({
                 </div>
                 <div>
                   <h3 className="font-black text-slate-800 text-lg">Tu carrito está vacío</h3>
-                  <p className="text-xs text-slate-500 mt-1 font-medium">Agrega tus platillos favoritos del menú</p>
+                  <p className="text-xs text-slate-500 mt-1 font-medium">Agrega tus productos favoritos del catálogo</p>
                 </div>
                 <button
                   type="button"
@@ -394,15 +394,15 @@ export default function CustomerCartDrawer({
                   className="px-8 py-3 rounded-2xl font-black text-xs text-white shadow-lg active:scale-95 transition-all cursor-pointer uppercase tracking-wider"
                   style={{ backgroundColor: primaryColor }}
                 >
-                  Explorar Menú
+                  Explorar Catálogo
                 </button>
               </div>
             ) : (
               <>
-                {/* CABECERA PLATILLOS SELECCIONADOS */}
+                {/* CABECERA PRODUCTOS SELECCIONADOS */}
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
-                    PLATILLOS SELECCIONADOS ({totalItemsCount})
+                    PRODUCTOS SELECCIONADOS ({totalItemsCount})
                   </span>
                   <button
                     type="button"

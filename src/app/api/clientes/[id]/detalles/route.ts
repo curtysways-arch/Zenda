@@ -26,7 +26,7 @@ export async function GET(
         }
 
         // 2. Intentar buscar el Usuario correspondiente por teléfono
-        const cleanPhone = cliente.telefono.replace(/\D/g, '');
+        const cleanPhone = (cliente.telefono || '').replace(/\D/g, '');
         const localNoZero = cleanPhone.startsWith('593') ? cleanPhone.slice(3) : cleanPhone; // ejemplo Ecuador
 
         const usuario = await prisma.usuario.findFirst({
@@ -82,20 +82,124 @@ export async function GET(
             });
             loyaltyData.regalos = redemptions as any;
 
-            // Participación de Misiones (QuestProgress)
-            const misiones = await prisma.questProgress.findMany({
-                where: { 
+            // Participación de Misiones (BusinessMissionProgress & BusinessMission)
+            const businessMissions = await prisma.businessMission.findMany({
+                where: {
+                    negocioId,
+                    status: 'ACTIVE',
+                    MissionDefinition: {
+                        status: 'PUBLISHED'
+                    }
+                },
+                include: {
+                    MissionDefinition: true
+                }
+            });
+
+            const progressList = await prisma.businessMissionProgress.findMany({
+                where: {
                     userId,
-                    Quest: {
+                    BusinessMission: {
                         negocioId
                     }
                 },
-                include: { 
-                    Quest: true
+                include: {
+                    BusinessMission: {
+                        include: {
+                            MissionDefinition: true
+                        }
+                    }
                 },
                 orderBy: { updatedAt: 'desc' }
             });
-            loyaltyData.misiones = misiones as any;
+
+            const progressMap = new Map<string, typeof progressList[0]>();
+            for (const p of progressList) {
+                progressMap.set(p.businessMissionId, p);
+            }
+
+            const misionesResultado: any[] = [];
+
+            // 1. Misiones activas del negocio
+            for (const bm of businessMissions) {
+                const def = bm.MissionDefinition;
+                const p = progressMap.get(bm.id);
+                const actual = p ? p.progresoActual : 0;
+                const meta = p?.progresoRequerido || def.cantidadMeta || 1;
+                const estado = p ? (p.estado === 'RECOMPENSADA' ? 'RECOMPENSADA' : p.estado) : 'EN_PROGRESO';
+
+                misionesResultado.push({
+                    id: p?.id || `bm-${bm.id}`,
+                    businessMissionId: bm.id,
+                    progresoActual: actual,
+                    progresoRequerido: meta,
+                    estado,
+                    recompensaDada: p?.recompensaDada || false,
+                    fechaCompletada: p?.fechaCompletada || null,
+                    updatedAt: p?.updatedAt || bm.createdAt,
+                    Quest: {
+                        id: bm.id,
+                        nombre: def.nombre,
+                        descripcion: def.descripcion || '',
+                        cantidadMeta: meta,
+                        categoria: def.categoria,
+                        icono: (def as any)?.icono || 'Award',
+                        imagenUrl: def.imagenUrl
+                    }
+                });
+            }
+
+            // 2. Misiones con progreso previo que quizás ya no están activas en el negocio
+            for (const p of progressList) {
+                if (!misionesResultado.some(m => m.businessMissionId === p.businessMissionId)) {
+                    const def = p.BusinessMission?.MissionDefinition;
+                    const meta = p.progresoRequerido || def?.cantidadMeta || 1;
+                    misionesResultado.push({
+                        id: p.id,
+                        businessMissionId: p.businessMissionId,
+                        progresoActual: p.progresoActual,
+                        progresoRequerido: meta,
+                        estado: p.estado,
+                        recompensaDada: p.recompensaDada,
+                        fechaCompletada: p.fechaCompletada,
+                        updatedAt: p.updatedAt,
+                        Quest: {
+                            id: p.businessMissionId,
+                            nombre: def?.nombre || 'Misión',
+                            descripcion: def?.descripcion || '',
+                            cantidadMeta: meta,
+                            categoria: def?.categoria,
+                            icono: (def as any)?.icono || 'Award',
+                            imagenUrl: def?.imagenUrl
+                        }
+                    });
+                }
+            }
+
+            // 3. Fallback a QuestProgress legacy
+            const legacyProgress = await prisma.questProgress.findMany({
+                where: { 
+                    userId,
+                    Quest: { negocioId }
+                },
+                include: { Quest: true }
+            });
+            for (const lp of legacyProgress) {
+                misionesResultado.push(lp);
+            }
+
+            // Ordenar: primero EN_PROGRESO con avance > 0, luego el resto
+            misionesResultado.sort((a, b) => {
+                const getScore = (m: any) => {
+                    if (m.estado === 'EN_PROGRESO' && m.progresoActual > 0) return 3;
+                    if (m.estado === 'EN_PROGRESO') return 2;
+                    if (m.estado === 'COMPLETADA' || m.estado === 'RECLAMADA' || m.estado === 'RECOMPENSADA') return 1;
+                    return 0;
+                };
+                return getScore(b) - getScore(a);
+            });
+
+            loyaltyData.misiones = misionesResultado as any;
         }
 
         return NextResponse.json({

@@ -17,6 +17,11 @@ export interface CreateBranchInput {
   email?: string;
   mapUrl?: string;
   imagenUrl?: string;
+  horario?: string;
+  tieneParqueadero?: boolean;
+  tieneTransporte?: boolean;
+  tieneZonaSegura?: boolean;
+  tieneAccesoFacil?: boolean;
   isDefault?: boolean;
 }
 
@@ -29,6 +34,11 @@ export interface UpdateBranchInput {
   email?: string;
   mapUrl?: string;
   imagenUrl?: string;
+  horario?: string;
+  tieneParqueadero?: boolean;
+  tieneTransporte?: boolean;
+  tieneZonaSegura?: boolean;
+  tieneAccesoFacil?: boolean;
   isDefault?: boolean;
   active?: boolean;
 }
@@ -133,12 +143,17 @@ export class BranchService {
         });
       }
 
-      // Consolidar settings adicionales (city, email, mapUrl, imagenUrl)
+      // Consolidar settings adicionales (city, email, mapUrl, imagenUrl, horario, características)
       const settingsData: Record<string, any> = {};
       if (input.city) settingsData.city = input.city.trim();
       if (input.email) settingsData.email = input.email.trim();
       if (input.mapUrl) settingsData.mapUrl = input.mapUrl.trim();
       if (input.imagenUrl) settingsData.imagenUrl = input.imagenUrl.trim();
+      if (input.horario) settingsData.horario = input.horario.trim();
+      if (input.tieneParqueadero !== undefined) settingsData.tieneParqueadero = Boolean(input.tieneParqueadero);
+      if (input.tieneTransporte !== undefined) settingsData.tieneTransporte = Boolean(input.tieneTransporte);
+      if (input.tieneZonaSegura !== undefined) settingsData.tieneZonaSegura = Boolean(input.tieneZonaSegura);
+      if (input.tieneAccesoFacil !== undefined) settingsData.tieneAccesoFacil = Boolean(input.tieneAccesoFacil);
 
       // Crear la nueva sucursal
       const newBranch = await tx.branch.create({
@@ -154,6 +169,49 @@ export class BranchService {
           settings: Object.keys(settingsData).length > 0 ? settingsData : undefined
         }
       });
+
+      // Sincronizar con modelo Ubicacion para retrocompatibilidad con landings/canchas/servicios
+      try {
+        const ubiExisting = await tx.ubicacion.findFirst({
+          where: { negocioId: businessId, nombre: input.name.trim() }
+        });
+        if (ubiExisting) {
+          await tx.ubicacion.update({
+            where: { id: ubiExisting.id },
+            data: {
+              direccion: input.address?.trim() || null,
+              mapUrl: input.mapUrl?.trim() || null,
+              telefono: input.phone?.trim() || null,
+              horario: input.horario?.trim() || null,
+              imagenUrl: input.imagenUrl?.trim() || null,
+              tieneParqueadero: Boolean(input.tieneParqueadero),
+              tieneTransporte: Boolean(input.tieneTransporte),
+              tieneZonaSegura: Boolean(input.tieneZonaSegura),
+              tieneAccesoFacil: Boolean(input.tieneAccesoFacil),
+            }
+          });
+        } else {
+          await tx.ubicacion.create({
+            data: {
+              id: `ubi-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+              negocioId: businessId,
+              nombre: input.name.trim(),
+              direccion: input.address?.trim() || null,
+              mapUrl: input.mapUrl?.trim() || null,
+              telefono: input.phone?.trim() || null,
+              horario: input.horario?.trim() || null,
+              imagenUrl: input.imagenUrl?.trim() || null,
+              tieneParqueadero: Boolean(input.tieneParqueadero),
+              tieneTransporte: Boolean(input.tieneTransporte),
+              tieneZonaSegura: Boolean(input.tieneZonaSegura),
+              tieneAccesoFacil: Boolean(input.tieneAccesoFacil),
+              updatedAt: new Date()
+            }
+          });
+        }
+      } catch (errSync) {
+        console.warn('[BRANCH_UBICACION_SYNC_CREATE_WARN]', errSync);
+      }
 
       // Crear automáticamente la caja registradora inicial de la sede
       await tx.cashRegister.create({
@@ -234,8 +292,13 @@ export class BranchService {
       if (input.email !== undefined) existingSettings.email = input.email?.trim() || null;
       if (input.mapUrl !== undefined) existingSettings.mapUrl = input.mapUrl?.trim() || null;
       if (input.imagenUrl !== undefined) existingSettings.imagenUrl = input.imagenUrl?.trim() || null;
+      if (input.horario !== undefined) existingSettings.horario = input.horario?.trim() || null;
+      if (input.tieneParqueadero !== undefined) existingSettings.tieneParqueadero = Boolean(input.tieneParqueadero);
+      if (input.tieneTransporte !== undefined) existingSettings.tieneTransporte = Boolean(input.tieneTransporte);
+      if (input.tieneZonaSegura !== undefined) existingSettings.tieneZonaSegura = Boolean(input.tieneZonaSegura);
+      if (input.tieneAccesoFacil !== undefined) existingSettings.tieneAccesoFacil = Boolean(input.tieneAccesoFacil);
 
-      return tx.branch.update({
+      const updatedBranch = await tx.branch.update({
         where: { id: branchId },
         data: {
           ...(input.name !== undefined ? { name: input.name.trim() } : {}),
@@ -247,6 +310,34 @@ export class BranchService {
           settings: existingSettings
         }
       });
+
+      // Sincronizar con modelo Ubicacion
+      try {
+        const ubiExisting = await tx.ubicacion.findFirst({
+          where: { negocioId: businessId, nombre: existing.name }
+        });
+        if (ubiExisting) {
+          await tx.ubicacion.update({
+            where: { id: ubiExisting.id },
+            data: {
+              nombre: input.name ? input.name.trim() : ubiExisting.nombre,
+              direccion: input.address !== undefined ? (input.address?.trim() || null) : ubiExisting.direccion,
+              mapUrl: input.mapUrl !== undefined ? (input.mapUrl?.trim() || null) : ubiExisting.mapUrl,
+              telefono: input.phone !== undefined ? (input.phone?.trim() || null) : ubiExisting.telefono,
+              horario: input.horario !== undefined ? (input.horario?.trim() || null) : ubiExisting.horario,
+              imagenUrl: input.imagenUrl !== undefined ? (input.imagenUrl?.trim() || null) : ubiExisting.imagenUrl,
+              tieneParqueadero: input.tieneParqueadero !== undefined ? Boolean(input.tieneParqueadero) : ubiExisting.tieneParqueadero,
+              tieneTransporte: input.tieneTransporte !== undefined ? Boolean(input.tieneTransporte) : ubiExisting.tieneTransporte,
+              tieneZonaSegura: input.tieneZonaSegura !== undefined ? Boolean(input.tieneZonaSegura) : ubiExisting.tieneZonaSegura,
+              tieneAccesoFacil: input.tieneAccesoFacil !== undefined ? Boolean(input.tieneAccesoFacil) : ubiExisting.tieneAccesoFacil,
+            }
+          });
+        }
+      } catch (errSync) {
+        console.warn('[BRANCH_UBICACION_SYNC_UPDATE_WARN]', errSync);
+      }
+
+      return updatedBranch;
     });
   }
 

@@ -27,6 +27,7 @@ export interface AddonAvailabilityDTO {
 export interface PurchaseAddonParams {
   businessId: string;
   addonCodeOrId: string;
+  planId?: string;
   requestedQuantity?: number;
   metodoPago?: string;
   referencia?: string;
@@ -132,7 +133,7 @@ export const addonService = {
     const sub = business.Suscripcion;
     const plan = sub?.Plan;
     const familyCode = business.BusinessType?.planFamily?.code;
-    const activeModuleCodes = new Set(plan?.planEntitlements.map(pe => pe.module.code) || []);
+    const activeModuleCodes = new Set(plan?.planEntitlements?.map(pe => pe.module?.code).filter(Boolean) || []);
     if (plan?.features) {
       const legacyCaps = LegacyCompatibilityResolver.resolveLegacyCapabilities(plan.features);
       for (const [key, val] of Object.entries(legacyCaps)) {
@@ -266,17 +267,38 @@ export const addonService = {
       throw new Error('La cantidad debe ser al menos 1');
     }
 
-    const business = await prisma.negocio.findUnique({
+    let business = await prisma.negocio.findUnique({
       where: { id: businessId },
       include: {
         Suscripcion: {
-          include: { subscriptionAddons: true }
+          include: { subscriptionAddons: true, Plan: true }
         }
       }
     });
 
+    if (!business) {
+      throw new Error('Negocio no encontrado');
+    }
+
+    // Auto-healing canónico: Si el negocio aún no tiene registro en Suscripcion,
+    // se le provisiona automáticamente su suscripción base para no bloquear la compra de Add-ons
+    if (!business.Suscripcion) {
+      console.log(`[addonService] Negocio ${businessId} no tenía suscripción previa. Auto-provisionando suscripción base...`);
+      const { planService } = await import('@/lib/services/planService');
+      await planService.assignDefaultPlan(businessId);
+      
+      business = await prisma.negocio.findUnique({
+        where: { id: businessId },
+        include: {
+          Suscripcion: {
+            include: { subscriptionAddons: true, Plan: true }
+          }
+        }
+      });
+    }
+
     if (!business || !business.Suscripcion) {
-      throw new Error('Suscripción activa no encontrada para el negocio');
+      throw new Error('No se pudo inicializar la suscripción para este negocio');
     }
 
     const sub = business.Suscripcion;
@@ -293,6 +315,25 @@ export const addonService = {
 
     if (!addon) {
       throw new Error('Add-on no encontrado o inactivo comercialmente');
+    }
+
+    // Determinar si el negocio tiene un plan comercial activo de pago
+    const now = new Date();
+    const isExpired = !sub.fechaFin || new Date(sub.fechaFin) < now || ['expired', 'vencida', 'suspendida', 'cancelada'].includes((sub.estado || '').toLowerCase());
+    const isFreePlan = !sub.Plan || Boolean(sub.Plan.isFree) || sub.Plan.price === 0;
+    const hasActivePaidPlan = !isExpired && !isFreePlan;
+
+    let basePlan: any = null;
+    if (!hasActivePaidPlan) {
+      if (!params.planId) {
+        throw new Error('Para contratar este Add-on debes seleccionar un plan base de suscripción comercial.');
+      }
+      basePlan = await prisma.plan.findUnique({
+        where: { id: params.planId }
+      });
+      if (!basePlan || !basePlan.activo || basePlan.isFree) {
+        throw new Error('El plan base seleccionado no es válido o está inactivo.');
+      }
     }
 
     // Comprobar cantidad máxima permitida
@@ -320,12 +361,15 @@ export const addonService = {
       }
     }
 
-    const now = new Date();
     const finalQuantity = addon.stackable ? requestedQuantity : 1;
     const priceContracted = addon.priceMonthly; // Fijado server-side desde el catálogo
 
-    // Cálculo canónico de prorrateo
+    // Cálculo canónico de prorrateo si tiene plan activo; si es combo, cobra plan + add-on mensual
     const proration = calculateAddonProration(sub, priceContracted, finalQuantity);
+    const addonTotalAmount = Number((priceContracted * finalQuantity).toFixed(2));
+    const totalAmountToPay = hasActivePaidPlan 
+      ? proration.proratedAmount 
+      : Number((Number(basePlan.price) + addonTotalAmount).toFixed(2));
 
     let subscriptionAddon: SubscriptionAddon;
 
@@ -362,7 +406,9 @@ export const addonService = {
           statusBefore,
           statusAfter: 'PENDING',
           performedBy,
-          reason: `Solicitud de compra/reactivación pendiente de pago (Monto prorrateado: $${proration.proratedAmount})`
+          reason: hasActivePaidPlan
+            ? `Solicitud de reactivación pendiente de pago (Monto prorrateado: $${totalAmountToPay})`
+            : `Solicitud combo (Plan ${basePlan.name} + Add-on ${addon.name}) por $${totalAmountToPay}`
         }
       });
     } else {
@@ -393,39 +439,56 @@ export const addonService = {
           statusBefore: null,
           statusAfter: 'PENDING',
           performedBy,
-          reason: `Contratación inicial de add-on pendiente de pago (Monto prorrateado: $${proration.proratedAmount})`
+          reason: hasActivePaidPlan
+            ? `Contratación inicial de add-on pendiente de pago (Monto prorrateado: $${totalAmountToPay})`
+            : `Contratación inicial combo (Plan ${basePlan.name} + Add-on ${addon.name}) por $${totalAmountToPay}`
+        }
+      });
+    }
+
+    // Si es combo, marcar la suscripción con el plan solicitado
+    if (!hasActivePaidPlan && basePlan) {
+      await prisma.suscripcion.update({
+        where: { id: sub.id },
+        data: {
+          solicitudPlanId: basePlan.id,
+          pagoPendiente: true,
+          metodoPago: metodoPago
         }
       });
     }
 
     // Crear registro de cobro pendiente en Payment
+    const paymentPlanId = hasActivePaidPlan 
+      ? `ADDON:${addon.id}` 
+      : `COMBO:${basePlan.id}:${addon.id}`;
+
     const payment = await prisma.payment.create({
       data: {
         id: (await import('crypto')).randomUUID(),
         negocio_id: business.id,
-        plan_id: `ADDON:${addon.id}`, // Identifica el pago como cobro de Add-on
-        monto: proration.proratedAmount,
+        plan_id: paymentPlanId,
+        monto: totalAmountToPay,
         metodo_pago: metodoPago,
-        referencia: referencia || `ADDON_${addon.code}_${Date.now()}`,
+        referencia: referencia || (hasActivePaidPlan ? `ADDON_${addon.code}_${Date.now()}` : `COMBO_${basePlan.name}_${addon.code}_${Date.now()}`),
         comprobante: comprobanteUrl || null,
         estado_pago: 'pending'
       }
     });
 
-    // Notificar por WhatsApp al Super Admin si está configurado
+    // Notificar por WhatsApp al Super Admin
     try {
-      const adminConfig = await prisma.globalConfig.findUnique({
-        where: { clave: 'NUMERO_WHATSAPP_ADMIN' }
+      const { notifyAdminAddonEvent } = await import('@/lib/adminNotificationHelper');
+      await notifyAdminAddonEvent({
+        eventType: 'SOLICITADO',
+        businessName: business.nombre,
+        addonName: hasActivePaidPlan ? addon.name : `${addon.name} + Plan ${basePlan.name} (COMBO)`,
+        addonCode: addon.code,
+        quantity: finalQuantity,
+        amount: totalAmountToPay,
+        paymentMethod: metodoPago,
+        reference: referencia
       });
-      if (adminConfig?.valor) {
-        const { notificationService } = await import('@/lib/notifications');
-        const waMsg = `🚨 *Nueva Solicitud de Add-on* 🧩\n\nNegocio: *${business.nombre}*\nAdd-on: *${addon.name}* (${addon.code})\nCantidad: *${finalQuantity}*\nMonto a pagar: *$${proration.proratedAmount.toFixed(2)}*\nMétodo: *${metodoPago}*\nReferencia: *${referencia || 'N/A'}*\n\n📲 *Revisa y aprueba el pago en:* \n${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/superadmin/pagos`;
-        await notificationService.provider.sendMessage({
-          to: adminConfig.valor.replace(/\D/g, ''),
-          message: waMsg,
-          template: 'solicitud_addon_admin'
-        });
-      }
     } catch (err) {
       console.error('Error enviando WhatsApp de add-on al admin:', err);
     }
@@ -433,7 +496,12 @@ export const addonService = {
     return {
       subscriptionAddon,
       payment,
-      proration
+      proration: {
+        ...proration,
+        totalAmount: totalAmountToPay,
+        isCombo: !hasActivePaidPlan,
+        basePlan: basePlan ? { id: basePlan.id, name: basePlan.name, price: basePlan.price } : null
+      }
     };
   },
 
@@ -452,9 +520,19 @@ export const addonService = {
       throw new Error('Registro de pago no encontrado');
     }
 
-    const addonId = payment.plan_id.startsWith('ADDON:')
-      ? payment.plan_id.replace('ADDON:', '')
-      : payment.plan_id;
+    const isCombo = payment.plan_id.startsWith('COMBO:');
+    let comboPlanId: string | null = null;
+    let addonId: string;
+
+    if (isCombo) {
+      const parts = payment.plan_id.split(':');
+      comboPlanId = parts[1];
+      addonId = parts[2];
+    } else if (payment.plan_id.startsWith('ADDON:')) {
+      addonId = payment.plan_id.replace('ADDON:', '');
+    } else {
+      addonId = payment.plan_id;
+    }
 
     const addon = await prisma.addon.findUnique({
       where: { id: addonId }
@@ -462,6 +540,13 @@ export const addonService = {
 
     if (!addon) {
       throw new Error('Add-on asociado al pago no encontrado');
+    }
+
+    let comboPlan: any = null;
+    if (comboPlanId) {
+      comboPlan = await prisma.plan.findUnique({
+        where: { id: comboPlanId }
+      });
     }
 
     const sub = await prisma.suscripcion.findUnique({
@@ -494,6 +579,16 @@ export const addonService = {
         data: { estado_pago: 'rejected' }
       });
 
+      if (isCombo) {
+        await prisma.suscripcion.update({
+          where: { id: sub.id },
+          data: {
+            solicitudPlanId: null,
+            pagoPendiente: false
+          }
+        });
+      }
+
       const updatedContract = await prisma.subscriptionAddon.update({
         where: { id: contract.id },
         data: {
@@ -517,7 +612,9 @@ export const addonService = {
           statusBefore: contract.status,
           statusAfter: 'CANCELLED',
           performedBy,
-          reason: 'Comprobante de pago rechazado por Superadmin'
+          reason: isCombo 
+            ? 'Comprobante combo (Plan + Add-on) rechazado por Superadmin'
+            : 'Comprobante de pago rechazado por Superadmin'
         }
       });
 
@@ -525,25 +622,58 @@ export const addonService = {
       if (payment.Negocio?.whatsapp) {
         try {
           const { notificationService } = await import('@/lib/notifications');
-          const waMsg = `❌ *Comprobante de Add-on Rechazado* ⚠️\n\nHola, tu comprobante para el módulo *${addon.name}* ha sido rechazado.\n\nPor favor, verifica los datos del pago y vuelve a subir tu comprobante desde tu panel administrativo:\n${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/admin/plan`;
+          const conceptoRechazo = isCombo 
+            ? `el Plan *${comboPlan?.name || 'Base'}* y el módulo *${addon.name}*`
+            : `el módulo *${addon.name}*`;
+          const waMsg = `❌ *Comprobante de Pago Rechazado* ⚠️\n\nHola, tu comprobante para ${conceptoRechazo} ha sido rechazado.\n\nPor favor, verifica los datos del pago y vuelve a subir tu comprobante desde tu panel administrativo:\n${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/admin/plan`;
           await notificationService.provider.sendMessage({
             to: payment.Negocio.whatsapp.replace(/\D/g, ''),
             message: waMsg,
             template: 'rechazo_addon'
           });
         } catch (err) {
-          console.error('Error enviando WhatsApp de rechazo de add-on:', err);
+          console.error('Error enviando WhatsApp de rechazo:', err);
         }
       }
 
       return updatedContract;
     }
 
-    // APROBADO: Activar contrato
+    // APROBADO: Activar contrato y si es combo, activar plan base
     await prisma.payment.update({
       where: { id: payment.id },
       data: { estado_pago: 'approved' }
     });
+
+    if (isCombo && comboPlanId) {
+      const { getBusinessTimeZone, getSubscriptionDates } = await import('@/lib/dateUtils');
+      const timeZone = getBusinessTimeZone(payment.Negocio?.configuracion);
+      const { endDate } = getSubscriptionDates(timeZone, { durationMonths: 1, baseDate: now });
+
+      await prisma.suscripcion.update({
+        where: { id: sub.id },
+        data: {
+          planId: comboPlanId,
+          estado: 'active',
+          solicitudPlanId: null,
+          pagoPendiente: false,
+          fechaInicio: now,
+          fechaFin: endDate
+        }
+      });
+
+      const { default: crypto } = await import('crypto');
+      await prisma.subscriptionHistory.create({
+        data: {
+          id: crypto.randomUUID(),
+          negocio_id: payment.negocio_id,
+          plan_anterior_id: sub.planId,
+          plan_nuevo_id: comboPlanId,
+          tipo_cambio: 'upgrade_combo',
+          admin_id: performedBy
+        }
+      });
+    }
 
     const updatedContract = await prisma.subscriptionAddon.update({
       where: { id: contract.id },
@@ -571,7 +701,9 @@ export const addonService = {
         statusBefore: contract.status,
         statusAfter: 'ACTIVE',
         performedBy,
-        reason: 'Pago aprobado por Superadmin - Add-on activado canónicamente'
+        reason: isCombo 
+          ? 'Pago combo (Plan + Add-on) aprobado por Superadmin'
+          : 'Pago aprobado por Superadmin - Add-on activado canónicamente'
       }
     });
 
@@ -579,15 +711,34 @@ export const addonService = {
     if (payment.Negocio?.whatsapp) {
       try {
         const { notificationService } = await import('@/lib/notifications');
-        const waMsg = `🎉 *¡Módulo Add-on Activado con Éxito!* ✅\n\nHola, tu pago para el módulo *${addon.name}* ha sido verificado y activado correctamente en *${payment.Negocio.nombre}*.\n\nYa puedes disfrutar de todas sus funcionalidades desde tu panel de control:\n${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/admin/plan`;
+        const waMsg = isCombo 
+          ? `🎉 *¡Plan Comercial y Módulo Activados con Éxito!* ✅\n\nHola, tu pago para el *Plan ${comboPlan?.name || 'Base'}* y el módulo *${addon.name}* ha sido verificado y activado correctamente en *${payment.Negocio.nombre}*.\n\nYa puedes disfrutar de todas sus funciones sin límites desde tu panel:\n${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/admin/plan`
+          : `🎉 *¡Módulo Add-on Activado con Éxito!* ✅\n\nHola, tu pago para el módulo *${addon.name}* ha sido verificado y activado correctamente en *${payment.Negocio.nombre}*.\n\nYa puedes disfrutar de todas sus funcionalidades desde tu panel de control:\n${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/admin/plan`;
         await notificationService.provider.sendMessage({
           to: payment.Negocio.whatsapp.replace(/\D/g, ''),
           message: waMsg,
           template: 'activacion_addon'
         });
       } catch (err) {
-        console.error('Error enviando WhatsApp de aprobación de add-on:', err);
+        console.error('Error enviando WhatsApp de aprobación:', err);
       }
+    }
+
+    // Notificar también al Super Admin por WhatsApp
+    try {
+      const { notifyAdminAddonEvent } = await import('@/lib/adminNotificationHelper');
+      await notifyAdminAddonEvent({
+        eventType: 'ACTIVADO',
+        businessName: payment.Negocio?.nombre || 'Negocio',
+        addonName: isCombo ? `${addon.name} + Plan ${comboPlan?.name} (COMBO)` : addon.name,
+        addonCode: addon.code,
+        quantity: contract.quantity,
+        amount: Number(payment.monto),
+        paymentMethod: payment.metodo_pago,
+        reference: payment.referencia || undefined
+      });
+    } catch (adminWaErr) {
+      console.error('Error notificando al admin por activación:', adminWaErr);
     }
 
     return updatedContract;

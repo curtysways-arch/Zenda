@@ -3,6 +3,7 @@
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import { revalidatePath } from 'next/cache';
 import { notificationService } from '@/lib/notifications';
 
@@ -24,9 +25,12 @@ export type CreatePromotionInput = {
     tipoPromo?: string | null;
 };
 
-// Obtener la sesión para admin
-async function checkAuth() {
-    const session = await getServerSession(authOptions);
+// Obtener la sesión para admin (soporta delegación y fallback a getServerSession)
+async function checkAuth(targetNegocioId?: string) {
+    if (targetNegocioId) {
+        return { session: null, negocioId: targetNegocioId };
+    }
+    const session = await getEffectiveAdminSession();
     if (!session || !session.user) {
         throw new Error("No autenticado");
     }
@@ -37,8 +41,8 @@ async function checkAuth() {
     return { session, negocioId };
 }
 
-export async function getPromotions() {
-    const { negocioId } = await checkAuth();
+export async function getPromotions(targetNegocioId?: string) {
+    const { negocioId } = await checkAuth(targetNegocioId);
 
     // 1. Buscar promociones activas que ya expiraron por fecha
     const expiredPromos = await prisma.promotion.findMany({

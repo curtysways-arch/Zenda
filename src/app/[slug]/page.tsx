@@ -9,7 +9,7 @@ import Script from 'next/script';
 import prisma from '@/lib/prisma';
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { MapPin, Search, Star, Zap, Clock, ChevronRight, ArrowUpRight, ArrowLeftRight, Wifi, Car, Coffee, Shirt, ShoppingBag, Phone, Globe, Mail, Send, Trophy, Home, Calendar, User, Users, Swords, Instagram, Facebook, FileText, Dribbble, Rocket, MessageCircle, Sparkles, Scissors, ChevronLeft, Bell, CheckCircle, Compass, Image as ImageIcon, Plus, Bus, ShieldCheck, Accessibility, Maximize, Locate } from 'lucide-react';
+import { MapPin, Search, Star, Zap, Clock, ChevronRight, ArrowUpRight, ArrowLeftRight, Wifi, Car, Coffee, Shirt, ShoppingBag, Phone, Globe, Mail, Send, Trophy, Home, Calendar, User, Users, Swords, Instagram, Facebook, FileText, Dribbble, Rocket, MessageCircle, Sparkles, Scissors, ChevronLeft, Bell, CheckCircle, Compass, Image as ImageIcon, Plus, Bus, ShieldCheck, Accessibility, Maximize, Locate, QrCode, Dumbbell } from 'lucide-react';
 import HeroCarousel from '@/components/HeroCarousel';
 import NewsletterForm from '@/components/NewsletterForm';
 import NextAppointmentBanner from '@/components/public/NextAppointmentBanner';
@@ -18,6 +18,7 @@ import ReviewsCarousel from '@/components/public/ReviewsCarousel';
 import NotificationBell from '@/components/public/NotificationBell';
 import { NotificationService } from '@/lib/notifications/notificationService';
 import HomeServicesClient from './HomeServicesClient';
+import HomeMembershipPlansClient from './HomeMembershipPlansClient';
 import ProductsStoreClient from '@/components/public/ProductsStoreClient';
 import PublicProductsBoutiqueSection from '@/components/public/PublicProductsBoutiqueSection';
 import { ModuleResolver } from '@/lib/modules/ModuleResolver';
@@ -45,6 +46,43 @@ export default async function PublicNegocioPage({
 
     const restConfig = (negocio.configuracion as any) || {};
     const blueprintId = restConfig.blueprintId;
+
+    const { isDentalBusiness } = await import('@/modules/dental/utils/dentalHelper');
+    if (isDentalBusiness(negocio)) {
+        let dentalServices: any[] = [];
+        let dentalStaff: any[] = [];
+        let dentalResults: any[] = [];
+        try {
+            const [srvs, stf, res] = await Promise.all([
+                prisma.service.findMany({
+                    where: { negocioId: negocio.id, estaActivo: true },
+                    orderBy: { nombre: 'asc' }
+                }),
+                prisma.staff.findMany({
+                    where: { businessId: negocio.id, active: true },
+                    orderBy: { name: 'asc' }
+                }),
+                prisma.resultado.findMany({
+                    where: { businessId: negocio.id },
+                    orderBy: { id: 'desc' }
+                })
+            ]);
+            dentalServices = srvs;
+            dentalStaff = stf;
+            dentalResults = res;
+        } catch (_) {}
+
+        const { default: DentalLanding } = await import('@/modules/dental/components/DentalLanding');
+        return (
+            <DentalLanding
+                negocio={negocio}
+                services={dentalServices}
+                staff={dentalStaff}
+                results={dentalResults}
+            />
+        );
+    }
+
     const isRestaurantModule = 
         blueprintId === 'RESTAURANT' ||
         negocio.tipoNegocio === 'RESTAURANTE' ||
@@ -87,6 +125,32 @@ export default async function PublicNegocioPage({
         );
     }
 
+    const isGymModule =
+        blueprintId === 'GYM' ||
+        blueprintId === 'GIMNASIO' ||
+        blueprintId === 'FITNESS' ||
+        negocio.tipoNegocio === 'GIMNASIO' ||
+        negocio.tipoNegocio === 'GYM' ||
+        negocio.tipoNegocio === 'FITNESS' ||
+        restConfig.tipoNegocio === 'GIMNASIO' ||
+        restConfig.tipoNegocio === 'GYM' ||
+        restConfig.tipoNegocio === 'FITNESS' ||
+        slug.includes('gym') ||
+        slug.includes('fitness') ||
+        slug.includes('vortex');
+
+    let membershipPlans: any[] = [];
+    if (isGymModule) {
+        try {
+            membershipPlans = await (prisma as any).membershipPlan.findMany({
+                where: { businessId: negocio.id, active: true },
+                orderBy: { displayOrder: 'asc' }
+            });
+        } catch (e) {
+            console.error('[slug/page] Error loading membership plans:', e);
+        }
+    }
+
     const isStoreModule =
         blueprintId === 'STORE' ||
         negocio.tipoNegocio === 'TIENDA' ||
@@ -100,9 +164,10 @@ export default async function PublicNegocioPage({
         let initialProducts: any[] = [];
         let initialCategories: any[] = [];
         let initialHeroContent: any = { hero: [], highlights: [] };
+        let initialPromotions: any[] = [];
         try {
             const { resolveLandingContent } = await import('@/lib/landingContentResolver');
-            const [prods, cats, landingContent] = await Promise.all([
+            const [prods, cats, landingContent, promosDb] = await Promise.all([
                 (prisma as any).producto.findMany({
                     where: { negocioId: negocio.id },
                     orderBy: { orden: 'asc' },
@@ -112,11 +177,20 @@ export default async function PublicNegocioPage({
                     where: { negocioId: negocio.id, activo: true },
                     orderBy: { orden: 'asc' }
                 }),
-                resolveLandingContent(negocio.id)
+                resolveLandingContent(negocio.id),
+                (prisma as any).promotion.findMany({
+                    where: {
+                        businessId: negocio.id,
+                        estado: { in: ['activa', 'activo', 'ACTIVA', 'ACTIVO', 'publicado', 'publicada'] }
+                    },
+                    orderBy: { createdAt: 'desc' },
+                    include: { PromotionToService: true }
+                }).catch(() => [])
             ]);
             initialProducts = prods;
             initialCategories = cats;
             initialHeroContent = landingContent;
+            initialPromotions = promosDb || [];
         } catch (_) {}
 
         const { default: StoreLanding } = await import('@/modules/store/components/StoreLanding');
@@ -126,6 +200,7 @@ export default async function PublicNegocioPage({
                 initialProducts={initialProducts}
                 initialCategories={initialCategories}
                 initialHeroContent={initialHeroContent}
+                initialPromotions={initialPromotions}
             />
         );
     }
@@ -238,8 +313,50 @@ export default async function PublicNegocioPage({
             }));
         } catch (_) {}
 
+        let coursesModuleEnabled = false;
+        try {
+            const planRows: any[] = await prisma.$queryRawUnsafe(`SELECT p.courses_module FROM Plan p INNER JOIN Suscripcion s ON s.planId = p.id WHERE s.negocioId = '${negocio.id}' AND s.estado IN ('active', 'trial', 'ACTIVA', 'activa') LIMIT 1`);
+            if (planRows && planRows.length > 0) {
+                coursesModuleEnabled = planRows[0].courses_module === 1 || planRows[0].courses_module === true;
+            }
+        } catch (e) {
+            console.error("[DEBUG] Error checking courses module for courts:", e);
+        }
+
+        let cursosActivos: any[] = [];
+        if (coursesModuleEnabled) {
+            try {
+                const rawCursos = await (prisma as any).course.findMany({
+                    where: { businessId: negocio.id, status: 'active' },
+                    include: {
+                        CourseSchedule: { include: { Service: { select: { nombre: true } } } },
+                        _count: { select: { CourseEnrollment: { where: { status: 'approved' } } } }
+                    },
+                    orderBy: { createdAt: 'desc' }
+                });
+                cursosActivos = rawCursos.map((c: any) => ({
+                    ...c,
+                    schedules: c.CourseSchedule?.map((cs: any) => ({
+                        ...cs,
+                        service: cs.Service
+                    })) || [],
+                    _count: {
+                        enrollments: c._count?.CourseEnrollment || 0
+                    }
+                }));
+            } catch (_) {}
+        }
+
         const { default: CanchaPublicLanding } = await import('@/modules/sports-courts/components/CanchaPublicLanding');
-        return <CanchaPublicLanding negocio={negocio} canchas={negocio.services || []} paginasPersonalizadas={paginasCanchas} />;
+        return (
+            <CanchaPublicLanding
+                negocio={negocio}
+                canchas={negocio.services || []}
+                paginasPersonalizadas={paginasCanchas}
+                cursos={cursosActivos}
+                hasCoursesModule={coursesModuleEnabled}
+            />
+        );
     }
 
     
@@ -473,7 +590,10 @@ export default async function PublicNegocioPage({
     );
 
     const rawPromocionesActivas = await (prisma as any).promotion.findMany({
-        where: { businessId: negocio.id, estado: 'activa', fechaInicio: { lte: new Date() }, fechaFin: { gte: new Date() } },
+        where: {
+            businessId: negocio.id,
+            estado: { in: ['activa', 'activo', 'ACTIVA', 'ACTIVO', 'publicado', 'publicada'] }
+        },
         include: { PromotionToService: { include: { Service: true } } },
         orderBy: { createdAt: 'desc' }
     });
@@ -585,7 +705,10 @@ export default async function PublicNegocioPage({
     const businessImage = displayImages[0];
     
     const paginasPersonalizadas = await prisma.page.findMany({
-        where: { businessId: negocio.id, status: 'published' },
+        where: { 
+            businessId: negocio.id, 
+            status: { in: ['published', 'PUBLISHED'] } 
+        },
         orderBy: { createdAt: 'asc' }
     });
     
@@ -882,19 +1005,19 @@ export default async function PublicNegocioPage({
                         <span className="text-[11px] font-black text-slate-800 mt-1">{promedioOpiniones.toFixed(1)}/5</span>
                         <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Opiniones</span>
                     </button>
-                    {/* Clientes */}
+                    {/* Clientes / Socios */}
                     <button id="btn-fidelizacion" className="flex flex-col items-center text-center border-l border-slate-100 cursor-pointer active:scale-95 transition-transform outline-none bg-transparent border-0 p-0 w-full">
                         <Users size={16} style={{ color: primaryColor }} />
                         <span className="text-[11px] font-black text-slate-800 mt-1">
                             {totalClientes === 0 ? '0' : totalClientes > 999 ? `${(totalClientes / 1000).toFixed(1)}k` : totalClientes}
                         </span>
-                        <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Felices</span>
+                        <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{isGymModule ? 'Socios' : 'Felices'}</span>
                     </button>
-                    {/* Servicios */}
-                    <a href="#servicios-seccion" className="flex flex-col items-center text-center border-l border-slate-100 cursor-pointer active:scale-95 transition-transform outline-none no-underline">
+                    {/* Servicios / Planes */}
+                    <a href={isGymModule ? "#planes" : "#servicios-seccion"} className="flex flex-col items-center text-center border-l border-slate-100 cursor-pointer active:scale-95 transition-transform outline-none no-underline">
                         <Sparkles size={16} style={{ color: primaryColor }} />
-                        <span className="text-[11px] font-black text-slate-800 mt-1">{filteredCanchas.length}+</span>
-                        <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Servicios</span>
+                        <span className="text-[11px] font-black text-slate-800 mt-1">{isGymModule ? `${membershipPlans.length}+` : `${filteredCanchas.length}+`}</span>
+                        <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{isGymModule ? 'Planes' : 'Servicios'}</span>
                     </a>
                     {/* Ubicación */}
                     <a href="#ubicacion" className="flex flex-col items-center text-center border-l border-slate-100 cursor-pointer active:scale-95 transition-transform outline-none no-underline">
@@ -904,6 +1027,40 @@ export default async function PublicNegocioPage({
                     </a>
                 </div>
             </section>
+
+            {/* BANNER ACCESO SOCIO GYM */}
+            {isGymModule && (
+                <section className="px-6 mb-6">
+                    <Link
+                        href={`/${slug}/mi-gym`}
+                        className="group relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-850 to-slate-950 p-4 border border-slate-800 shadow-xl flex items-center justify-between transition-all active:scale-[0.98] hover:border-emerald-500/40"
+                    >
+                        <div className="flex items-center gap-3.5">
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-black shrink-0 border border-emerald-500/20 group-hover:scale-105 transition-transform">
+                                <QrCode className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">
+                                        Portal del Socio
+                                    </span>
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                                </div>
+                                <h3 className="font-black text-sm text-white mt-0.5">
+                                    ¿Ya eres socio? Entra a Mi Gym
+                                </h3>
+                                <p className="text-[11px] text-slate-400">
+                                    Credencial QR, asistencias y rutinas
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="p-2.5 rounded-xl bg-white/10 text-white group-hover:bg-emerald-500 transition-colors shrink-0">
+                            <ChevronRight className="w-4 h-4" />
+                        </div>
+                    </Link>
+                </section>
+            )}
 
             {/* 3. MENSAJE DE BIENVENIDA */}
             {negocio.mensajeBienvenida && (
@@ -929,15 +1086,26 @@ export default async function PublicNegocioPage({
                 </section>
             )}
 
-            {/* 5. NUEVOS SERVICIOS (Rediseñados con tags dinámicos y Ver detalles + Favoritos Reactivos) */}
-            <section id="servicios-seccion">
-                <HomeServicesClient 
-                    filteredCanchas={filteredCanchas}
+            {/* 5. SERVICIOS O PLANES DE MEMBRESÍA */}
+            {isGymModule ? (
+                <HomeMembershipPlansClient 
+                    plans={membershipPlans}
                     slug={slug}
                     primaryColor={primaryColor}
                     textColor={textColor}
+                    whatsapp={negocio.whatsapp}
+                    businessName={negocio.nombre}
                 />
-            </section>
+            ) : (
+                <section id="servicios-seccion">
+                    <HomeServicesClient 
+                        filteredCanchas={filteredCanchas}
+                        slug={slug}
+                        primaryColor={primaryColor}
+                        textColor={textColor}
+                    />
+                </section>
+            )}
 
             {/* CURSOS Y TALLERES */}
             {coursesModuleEnabled && cursosActivos.length > 0 && (
@@ -1065,12 +1233,14 @@ export default async function PublicNegocioPage({
                                             <ArrowUpRight size={20} />
                                         </div>
  
-                                        <span className="text-[8px] font-black uppercase tracking-widest mb-2 block" style={{ color: primaryColor }}>Especial Spa</span>
+                                        <span className="text-[8px] font-black uppercase tracking-widest mb-2 block" style={{ color: primaryColor }}>
+                                            {isGymModule ? 'Instalaciones & Más' : 'Especial'}
+                                        </span>
                                         <h4 className="text-xl font-black leading-tight mb-2 transition-colors text-slate-900">
                                             {page.title}
                                         </h4>
                                         <p className="text-xs font-semibold text-slate-400 leading-relaxed mb-4 max-w-md line-clamp-2">
-                                            Sumérgete en los detalles de nuestra filosofía de bienestar, rituales exclusivos y la esencia que nos hace únicos.
+                                            {page.contentHtml ? page.contentHtml.replace(/<[^>]*>?/gm, '').slice(0, 150) : (isGymModule ? 'Conoce más sobre nuestro centro de entrenamiento, áreas y comunidad.' : 'Sumérgete en los detalles y rituales exclusivos que nos hacen únicos.')}
                                         </p>
                                         
                                         <div className="flex items-center gap-3">

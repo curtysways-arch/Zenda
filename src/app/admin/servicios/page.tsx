@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus, Scissors, Users, CheckCircle2, ChevronRight, Loader2, Clock } from 'lucide-react';
+import { Plus, Scissors, Users, CheckCircle2, ChevronRight, Loader2, Clock, UploadCloud, FileSpreadsheet } from 'lucide-react';
 import ServiceForm from '@/components/admin/ServiceForm';
+import ServiceImportModal from '@/components/admin/ServiceImportModal';
 import { useSession } from 'next-auth/react';
 import MobileServices from '@/components/admin/mobile/MobileServices';
 import { getImageUrl } from '@/lib/utils';
@@ -10,6 +11,7 @@ import { getImageUrl } from '@/lib/utils';
 export default function ServicesAdminPage() {
     const { data: session } = useSession();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [services, setServices] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedService, setSelectedService] = useState<any>(null);
@@ -20,8 +22,7 @@ export default function ServicesAdminPage() {
             return;
         }
         try {
-            const negocioId = (session.user as any).negocioId;
-            const res = await fetch(`/api/services?negocioId=${negocioId}`);
+            const res = await fetch('/api/services');
             if (res.ok) {
                 const data = await res.json();
                 setServices(Array.isArray(data) ? data : []);
@@ -75,6 +76,7 @@ export default function ServicesAdminPage() {
                         setIsModalOpen(true);
                     }}
                     onEdit={handleEdit}
+                    onImport={() => setIsImportModalOpen(true)}
                 />
             </div>
 
@@ -94,17 +96,28 @@ export default function ServicesAdminPage() {
                         <h1 className="text-3xl font-black text-gray-900 tracking-tight">Mis Servicios</h1>
                         <p className="text-gray-500 font-medium text-sm">Gestiona tus servicios de limpieza, restauración y tratamientos.</p>
                     </div>
-                    <button
-                        onClick={() => {
-                            setSelectedService(null);
-                            setIsModalOpen(true);
-                        }}
-                        className="flex items-center gap-2 text-white px-6 py-3 rounded-2xl font-black transition-all duration-300 shadow-xl shadow-gray-200"
-                        style={{ backgroundColor: 'var(--primary-color)' }}
-                    >
-                        <Plus size={20} />
-                        NUEVO SERVICIO
-                    </button>
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <button
+                            type="button"
+                            onClick={() => setIsImportModalOpen(true)}
+                            className="flex items-center gap-2 bg-white hover:bg-sky-50 text-sky-800 border border-sky-200 px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all duration-300 shadow-sm hover:shadow-md"
+                            title="Subir archivo Excel o CSV para importar servicios masivamente"
+                        >
+                            <UploadCloud size={18} className="text-sky-600" />
+                            Importar Servicios
+                        </button>
+                        <button
+                            onClick={() => {
+                                setSelectedService(null);
+                                setIsModalOpen(true);
+                            }}
+                            className="flex items-center gap-2 text-white px-6 py-3 rounded-2xl font-black transition-all duration-300 shadow-xl shadow-gray-200"
+                            style={{ backgroundColor: 'var(--primary-color)' }}
+                        >
+                            <Plus size={20} />
+                            NUEVO SERVICIO
+                        </button>
+                    </div>
                 </div>
 
                 {services.length === 0 ? (
@@ -116,13 +129,22 @@ export default function ServicesAdminPage() {
                             <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">No tienes servicios registrados</h3>
                             <p className="text-gray-500 max-w-xs mx-auto">Comienza agregando tu primer servicio para recibir citas.</p>
                         </div>
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="font-black text-xs uppercase tracking-widest transition"
-                            style={{ color: 'var(--primary-color)' }}
-                        >
-                            Registrar primer servicio
-                        </button>
+                        <div className="flex items-center gap-3 flex-wrap justify-center pt-2">
+                            <button
+                                onClick={() => setIsModalOpen(true)}
+                                className="font-black text-xs uppercase tracking-widest px-6 py-3 rounded-2xl text-white transition shadow-md"
+                                style={{ backgroundColor: 'var(--primary-color)' }}
+                            >
+                                Registrar primer servicio
+                            </button>
+                            <button
+                                onClick={() => setIsImportModalOpen(true)}
+                                className="font-black text-xs uppercase tracking-widest px-6 py-3 rounded-2xl border border-sky-200 text-sky-700 bg-sky-50 hover:bg-sky-100 transition flex items-center gap-2"
+                            >
+                                <UploadCloud size={16} />
+                                Importar desde Excel / CSV
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -207,6 +229,16 @@ export default function ServicesAdminPage() {
                     </div>
                 )}
             </div>
+
+            {/* Modal de Importación Masiva de Servicios */}
+            <ServiceImportModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                onSuccess={() => {
+                    fetchServices();
+                }}
+                primaryColor={primaryColor}
+            />
         </>
     );
 }

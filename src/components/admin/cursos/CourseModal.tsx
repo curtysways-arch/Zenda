@@ -38,6 +38,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
     const [schedules, setSchedules] = useState<any[]>([]);
     const [canchas, setCanchas] = useState<any[]>([]);
     const [instructors, setInstructors] = useState<any[]>([]);
+    const [isSpa, setIsSpa] = useState(true);
     const [newSchedule, setNewSchedule] = useState({
         day_of_week: '1',
         start_time: '14:00',
@@ -46,6 +47,18 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
     });
 
     useEffect(() => {
+        // Detectar tipo de negocio
+        fetch('/api/negocio')
+            .then(res => res.ok ? res.json() : null)
+            .then(b => {
+                if (b?.tipo) {
+                    const t = b.tipo.toLowerCase();
+                    const isSport = ['futbol', 'canchas', 'padel', 'tenis', 'deport'].some(k => t.includes(k));
+                    setIsSpa(!isSport);
+                }
+            })
+            .catch(() => {});
+
         if (course) {
             setFormData({
                 name: course.name || '',
@@ -84,6 +97,20 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
 
     const fetchCanchas = async () => {
         try {
+            // Intentar primero con /api/services para negocios de servicios/spa
+            const resServ = await fetch('/api/services');
+            if (resServ.ok) {
+                const data = await resServ.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    const mapped = data.map((s: any) => ({ id: s.id, nombre: s.nombre }));
+                    setCanchas(mapped);
+                    if (!newSchedule.courtId && mapped.length > 0) {
+                        setNewSchedule(prev => ({ ...prev, courtId: mapped[0].id }));
+                    }
+                    return;
+                }
+            }
+
             const res = await fetch('/api/canchas');
             if (res.ok) {
                 const data = await res.json();
@@ -93,7 +120,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                 }
             }
         } catch (error) {
-            console.error("Error fetching canchas", error);
+            console.error("Error fetching canchas/servicios", error);
         }
     };
 
@@ -212,9 +239,9 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                 <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
                     <div>
                         <h2 className="text-3xl font-black text-gray-900 tracking-tight uppercase flex items-center gap-3">
-                            {isEdit ? 'Editar Curso' : 'Crear Nuevo Curso'}
+                            {isEdit ? (isSpa ? 'Editar Curso o Taller' : 'Editar Curso') : (isSpa ? 'Crear Curso o Masterclass' : 'Crear Nuevo Curso')}
                         </h2>
-                        <p className="text-gray-400 font-bold italic text-sm">Paso {step}: {step === 1 ? 'Información Básica' : step === 2 ? 'Contenido Detallado' : 'Configuración de Horarios'}</p>
+                        <p className="text-gray-400 font-bold italic text-sm">Paso {step}: {step === 1 ? 'Información General' : step === 2 ? (isSpa ? 'Temario y Requisitos' : 'Contenido Detallado') : (isSpa ? 'Horarios y Cabinas / Espacios' : 'Configuración de Horarios')}</p>
                     </div>
                     <button type="button" onClick={onClose} className="p-3 hover:bg-gray-100 rounded-full transition-all relative z-10 group">
                         <X size={24} className="text-gray-400 group-hover:text-gray-900 transition-colors" />
@@ -237,7 +264,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                         onClick={() => setStep(2)}
                         className={`pb-4 px-2 text-[10px] font-black uppercase tracking-widest transition-all relative flex items-center gap-2 ${step === 2 ? 'text-emerald-600' : 'text-gray-400'} disabled:opacity-30`}
                     >
-                        <FileText size={14} /> 2. Contenido
+                        <FileText size={14} /> 2. {isSpa ? 'Temario' : 'Contenido'}
                         {step === 2 && <div className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-600 rounded-full" />}
                     </button>
                     <button
@@ -264,13 +291,13 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                             <div className="space-y-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 ml-1">
-                                        Nombre del Curso
+                                        {isSpa ? 'Nombre del Curso / Taller / Masterclass' : 'Nombre del Curso'}
                                     </label>
                                     <input
                                         required
                                         type="text"
                                         className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700 shadow-sm"
-                                        placeholder="Ej: Escuela de Fútbol Verano"
+                                        placeholder={isSpa ? 'Ej: Masterclass Uñas Acrílicas, Taller de Cejas o Yoga' : 'Ej: Escuela de Fútbol Verano'}
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     />
@@ -278,7 +305,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
 
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 ml-1">
-                                        Imagen del Curso (URL)
+                                        Imagen de Portada (URL)
                                     </label>
                                     <input
                                         type="url"
@@ -299,7 +326,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                     <textarea
                                         rows={3}
                                         className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-medium text-gray-700 shadow-sm resize-none"
-                                        placeholder="Una breve descripción para la tarjeta del curso..."
+                                        placeholder={isSpa ? 'Una breve descripción para la tarjeta del curso o taller...' : 'Una breve descripción para la tarjeta del curso...'}
                                         value={formData.description}
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     />
@@ -309,20 +336,22 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                             <div className="space-y-6">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Asignar Profesor</label>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                                            {isSpa ? 'Instructor / Especialista' : 'Asignar Profesor'}
+                                        </label>
                                         <select
                                             className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700"
                                             value={formData.instructor_id}
                                             onChange={(e) => setFormData({ ...formData, instructor_id: e.target.value })}
                                         >
-                                            <option value="">Seleccionar Profesor...</option>
+                                            <option value="">{isSpa ? 'Seleccionar Especialista...' : 'Seleccionar Profesor...'}</option>
                                             {instructors.map(prof => (
-                                                <option key={prof.id} value={prof.id}>{prof.nombre} ({prof.phone || prof.telefono})</option>
+                                                <option key={prof.id} value={prof.id}>{prof.nombre} ({prof.phone || prof.telefono || prof.email || 'Staff'})</option>
                                             ))}
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Inversión ($)</label>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Inversión / Precio ($)</label>
                                         <input
                                             type="number"
                                             className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700"
@@ -339,7 +368,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                         <input
                                             type="number"
                                             className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700 shadow-sm"
-                                            placeholder="Ej: 5"
+                                            placeholder={isSpa ? 'Ej: 16 (opcional)' : 'Ej: 5'}
                                             value={formData.min_age}
                                             onChange={(e) => setFormData({ ...formData, min_age: e.target.value })}
                                         />
@@ -351,7 +380,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                         <input
                                             type="number"
                                             className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700 shadow-sm"
-                                            placeholder="Ej: 15"
+                                            placeholder={isSpa ? 'Sin límite' : 'Ej: 15'}
                                             value={formData.max_age}
                                             onChange={(e) => setFormData({ ...formData, max_age: e.target.value })}
                                         />
@@ -379,7 +408,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cupo</label>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cupos Disponibles</label>
                                         <input
                                             type="number"
                                             className="w-full p-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-black text-gray-700"
@@ -405,14 +434,14 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
                             <div className="flex items-center justify-between mb-2">
                                 <label className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                                    <FileText size={16} className="text-emerald-500" /> Contenido del Curso
+                                    <FileText size={16} className="text-emerald-500" /> {isSpa ? 'Temario, Requisitos y Beneficios del Curso' : 'Contenido del Curso'}
                                 </label>
-                                <span className="text-[10px] font-bold text-gray-400 italic">Este contenido se mostrará en la página del curso.</span>
+                                <span className="text-[10px] font-bold text-gray-400 italic">Este contenido se mostrará al alumno o interesado.</span>
                             </div>
                             <textarea
                                 rows={12}
                                 className="w-full p-6 bg-gray-50 border border-gray-200 rounded-[2rem] focus:bg-white focus:border-emerald-500 outline-none transition-all text-sm font-medium text-gray-800 shadow-inner"
-                                placeholder="Escribe el programa completo, requisitos, objetivos y beneficios del curso..."
+                                placeholder={isSpa ? 'Escribe el temario del taller o masterclass (ej: materiales incluidos, kits, técnicas, certificación de uñas/cejas/yoga)...' : 'Escribe el programa completo, requisitos, objetivos y beneficios del curso...'}
                                 value={formData.content}
                                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                             />
@@ -421,7 +450,7 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                         <div className="space-y-10 animate-in slide-in-from-right-4 duration-500 text-left">
                              <div className="bg-emerald-50 p-8 rounded-[2.5rem] border border-emerald-100/50 space-y-6">
                                 <h4 className="font-black text-emerald-800 text-sm uppercase tracking-tight flex items-center gap-2">
-                                    <Plus size={18} /> Agregar Sesión de Entrenamiento
+                                    <Plus size={18} /> {isSpa ? 'Agregar Horario / Sesión del Curso' : 'Agregar Sesión de Entrenamiento'}
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                                     <div className="space-y-2">
@@ -435,12 +464,17 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[9px] font-black text-emerald-700/50 uppercase tracking-widest ml-1">Cancha</label>
+                                        <label className="text-[9px] font-black text-emerald-700/50 uppercase tracking-widest ml-1">
+                                            {isSpa ? 'Cabina / Espacio / Sala' : 'Cancha'}
+                                        </label>
                                         <select
                                             value={newSchedule.courtId}
                                             onChange={(e) => setNewSchedule({ ...newSchedule, courtId: e.target.value })}
                                             className="w-full p-4 bg-white border-transparent rounded-2xl text-xs font-black text-emerald-900 shadow-sm"
                                         >
+                                            {canchas.length === 0 && (
+                                                <option value="">{isSpa ? 'Cabina / Salón Principal' : 'General'}</option>
+                                            )}
                                             {canchas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
                                         </select>
                                     </div>
@@ -465,7 +499,9 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                 {schedules.length === 0 ? (
                                     <div className="p-12 text-center border-2 border-dashed border-gray-100 rounded-[2.5rem]">
                                         <Clock className="mx-auto text-gray-200 mb-2" size={32} />
-                                        <p className="text-gray-400 font-bold text-sm">No has agendado sesiones para este curso.</p>
+                                        <p className="text-gray-400 font-bold text-sm">
+                                            {isSpa ? 'No has programado sesiones para este curso o taller.' : 'No has agendado sesiones para este curso.'}
+                                        </p>
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -475,7 +511,9 @@ export default function CourseModal({ isOpen, onClose, onSuccess, course }: Cour
                                                     <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 font-black text-xs"> {days.find(d => d.id === s.day_of_week?.toString())?.label.substring(0, 3)} </div>
                                                     <div>
                                                         <p className="text-sm font-black text-gray-900 tracking-tight">{s.start_time} - {s.end_time}</p>
-                                                        <p className="text-[10px] font-bold text-gray-400 italic">Cancha: {s.court?.nombre || 'General'}</p>
+                                                        <p className="text-[10px] font-bold text-gray-400 italic">
+                                                            {isSpa ? 'Espacio' : 'Cancha'}: {s.court?.nombre || (isSpa ? 'Cabina / Espacio Principal' : 'General')}
+                                                        </p>
                                                     </div>
                                                 </div>
                                                 <button type="button" onClick={() => handleDeleteSchedule(s.id)} className="p-3 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"> <Trash2 size={16} /> </button>

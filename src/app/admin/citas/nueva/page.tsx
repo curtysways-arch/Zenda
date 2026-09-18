@@ -46,9 +46,9 @@ function ReservaNuevaForm() {
         duracion: '1',
         serviceId: '',
         staffId: '',
-        clienteNombre: '',
-        clienteTelefono: '',
-        comentarios: '',
+        clienteNombre: searchParams.get('clienteNombre') || searchParams.get('nombre') || '',
+        clienteTelefono: searchParams.get('clienteTelefono') || searchParams.get('telefono') || '',
+        comentarios: searchParams.get('comentarios') || '',
     });
 
     const [codigoPais, setCodigoPais] = useState('+593');

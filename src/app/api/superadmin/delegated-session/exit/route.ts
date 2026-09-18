@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             success: true,
-            redirectUrl: '/superadmin',
+            redirectUrl: '/superadmin/negocios',
         });
     } catch (error: any) {
         console.error('Error al salir de la sesión delegada:', error);

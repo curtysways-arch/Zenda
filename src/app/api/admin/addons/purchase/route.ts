@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { addonCodeOrId, quantity, metodoPago, referencia, comprobanteUrl } = body;
+    const { addonCodeOrId, quantity, planId, metodoPago, referencia, comprobanteUrl } = body;
 
     if (!addonCodeOrId) {
       return NextResponse.json({ error: 'Se requiere addonCodeOrId' }, { status: 400 });
@@ -26,6 +26,7 @@ export async function POST(req: Request) {
     const result = await addonService.purchaseAddon({
       businessId,
       addonCodeOrId,
+      planId,
       requestedQuantity: quantity ? parseInt(quantity, 10) : 1,
       metodoPago: metodoPago || 'TRANSFERENCIA',
       referencia,

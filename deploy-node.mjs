@@ -1,31 +1,138 @@
 import { Client } from "ssh2";
 import path from "path";
+import fs from "fs";
 
 const VPS = "157.173.203.174";
 const USER = "root";
 const PASS = "Elmassuelto005624";
 const REMOTE_BASE = "/opt/Zenda";
 
-const files = [
+// Carpetas que deben sincronizarse recursivamente (directorios y archivos)
+const syncFolderRoots = [
+  // Módulo Gimnasio Completo
+  "src/modules/gym",
+  "src/app/admin/accesos",
+  "src/app/admin/asistencias",
+  "src/app/admin/membresias",
+  "src/app/admin/socios",
+  "src/app/[slug]/mi-gym",
+  "src/app/api/admin/gym",
+  "src/app/api/[slug]/gym",
+
+  // Módulo Dental Completo
+  "src/modules/dental",
+  "src/app/admin/pacientes",
+  "src/app/admin/historia-clinica",
+  "src/app/admin/tratamientos",
+  "src/app/admin/documentos",
+  "src/app/api/admin/dental"
+];
+
+// Archivos individuales adicionales
+const manualFiles = [
+  "public/logo-citiox.png",
+  "src/app/page.tsx",
+  "src/app/admin/page.tsx",
+  "src/app/[slug]/page.tsx",
+  "src/app/[slug]/HomeMembershipPlansClient.tsx",
+  "prisma/schema.prisma",
+  "src/scripts/seed_plan_families.ts",
+  "src/components/admin/AdminSidebar.tsx",
+  "src/components/public/PublicMobileNav.tsx",
+  "src/core/capabilities/types.ts",
+  "src/core/modules/types.ts",
+  "src/core/modules/registry.ts",
+  "src/core/modules/resolveModuleDependencies.ts",
+  "src/core/blueprints/BlueprintManifests.ts",
+  "src/core/branch/BranchService.ts",
+  "src/core/entitlements/EntitlementsService.ts",
+  "src/core/provisioning/ProvisioningEngine.ts",
+  "src/core/runtime/LegacyRuntimeAdapter.ts",
+  "src/core/subscription/SubscriptionEngine.ts",
+  "src/core/templates/templatesRegistry.ts",
+  "src/lib/landingContentResolver.ts",
+  "src/lib/delegatedAuth.ts",
+  "src/lib/growth/eventBus.ts",
+  "src/lib/services/addonService.ts",
+  "src/lib/services/subscriptionService.ts",
   "src/app/admin/misiones-citiox/page.tsx",
   "src/app/api/admin/misiones-globales/route.ts",
   "src/lib/growth/globalMissionEngine.ts",
-  "src/app/page.tsx"
+  "src/components/superadmin/MisionesUnificadasClient.tsx",
+  "src/app/api/public/[slug]/misiones/route.ts",
+  "src/app/api/admin/misiones/route.ts",
+  "src/app/api/admin/misiones/participants/route.ts",
+  "src/app/api/negocio/route.ts",
+  "src/app/admin/misiones/page.tsx",
+  "src/lib/growth/rewardDispatcher.ts",
+  "src/app/api/superadmin/rewards/route.ts",
+  "src/app/api/superadmin/rewards/[id]/route.ts",
+  "src/scripts/seed_gym_benefits.ts",
+  "src/scripts/seed_gym_canonical.ts"
 ];
+
+function collectAllFilesAndDirs(roots, extraFiles) {
+  const allFiles = new Set();
+  const allDirs = new Set();
+
+  function scan(currentDir) {
+    if (!fs.existsSync(currentDir)) return;
+    const entries = fs.readdirSync(currentDir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(currentDir, entry.name);
+      const relative = fullPath.replace(/\\/g, '/');
+      if (entry.isDirectory()) {
+        allDirs.add(relative);
+        scan(fullPath);
+      } else if (entry.isFile()) {
+        allFiles.add(relative);
+        allDirs.add(path.dirname(relative).replace(/\\/g, '/'));
+      }
+    }
+  }
+
+  for (const root of roots) {
+    allDirs.add(root);
+    scan(root);
+  }
+
+  for (const file of extraFiles) {
+    if (fs.existsSync(file)) {
+      allFiles.add(file.replace(/\\/g, '/'));
+      allDirs.add(path.dirname(file).replace(/\\/g, '/'));
+    }
+  }
+
+  return {
+    files: Array.from(allFiles),
+    dirs: Array.from(allDirs)
+  };
+}
+
+const { files, dirs: directories } = collectAllFilesAndDirs(syncFolderRoots, manualFiles);
 
 function uploadFile(sftp, localPath, remotePath) {
   return new Promise((resolve, reject) => {
     const localFull = path.resolve(localPath.replace(/\//g, path.sep));
+    if (!fs.existsSync(localFull)) {
+      console.warn(`  ⚠️ SKIP  ${localPath} (no existe localmente)`);
+      return resolve();
+    }
     sftp.fastPut(localFull, remotePath, (err) => {
-      if (err) { console.log(`  ERROR ${localPath}: ${err.message}`); reject(err); }
-      else { console.log(`  OK    ${localPath}`); resolve(); }
+      if (err) { 
+        console.error(`  ❌ ERROR ${localPath}: ${err.message}`); 
+        reject(err); 
+      } else { 
+        console.log(`  ✅ OK    ${localPath}`); 
+        resolve(); 
+      }
     });
   });
 }
 
 function execCommand(conn, cmd, label) {
   return new Promise((resolve, reject) => {
-    console.log(`\n>> ${label || cmd}`);
+    console.log(`\n>> 🚀 ${label || cmd}`);
     conn.exec(cmd, (err, stream) => {
       if (err) return reject(err);
       let out = "";
@@ -41,27 +148,52 @@ function execCommand(conn, cmd, label) {
 
 const conn = new Client();
 conn.on("ready", async () => {
-  console.log("\n Conectado al VPS. Subiendo archivos...\n");
-  
+  console.log("\n⚡ Conectado al VPS (157.173.203.174)...");
+
+  // 1. Crear directorios remotos
+  console.log(`\n📁 Asegurando ${directories.length} directorios destino en el VPS...`);
+  const mkdirCmd = directories.map(d => `mkdir -p "${REMOTE_BASE}/${d}"`).join(" && ");
+  await execCommand(conn, mkdirCmd, "Crear carpetas en el VPS");
+
+  // 2. Subir archivos
+  console.log(`\n📤 Subiendo ${files.length} archivos al VPS...\n`);
   await new Promise((resolve, reject) => {
     conn.sftp(async (err, sftp) => {
       if (err) return reject(err);
-      for (const file of files) {
-        const remotePath = `${REMOTE_BASE}/${file}`;
-        await uploadFile(sftp, file, remotePath).catch((e) => {
-          console.error("Error subiendo", file, e);
-        });
+      try {
+        for (const file of files) {
+          const remotePath = `${REMOTE_BASE}/${file}`;
+          await uploadFile(sftp, file, remotePath);
+        }
+        resolve();
+      } catch (uploadErr) {
+        reject(uploadErr);
       }
-      resolve();
     });
   });
 
-  console.log("\n Limpiando cache y construyendo la aplicacion (npm run build)...");
-  await execCommand(conn, `cd ${REMOTE_BASE} && rm -rf .next && npm run build`, "Clean build").catch(e => {
-    console.error("Error en build:", e.message);
-  });
+  // 3. Sincronizar Base de Datos con Prisma
+  console.log("\n🗄️ Sincronizando esquema de base de datos en VPS (npx prisma db push)...");
+  await execCommand(conn, `cd ${REMOTE_BASE} && npx prisma db push --accept-data-loss`, "Prisma DB Push");
 
-  await execCommand(conn, "pm2 restart zenda-app", "pm2 restart zenda-app");
-  console.log("\n Despliegue completado con exito!");
+  // 3.5. Generar tipos del cliente Prisma
+  console.log("\n📦 Generando cliente de Prisma en VPS (npx prisma generate)...");
+  await execCommand(conn, `cd ${REMOTE_BASE} && npx prisma generate`, "Prisma Generate");
+
+  // 4. Ejecutar el seed canónico de familias y planes en VPS (opcional/tolerante a fallos)
+  console.log("\n🌱 Ejecutando seed canónico de planes...");
+  await execCommand(conn, `cd ${REMOTE_BASE} && (npx tsx src/scripts/seed_plan_families.ts || true)`, "Seed Canónico de Planes");
+  await execCommand(conn, `cd ${REMOTE_BASE} && (npx tsx src/scripts/seed_gym_benefits.ts || true)`, "Seed Beneficios Gimnasio");
+  await execCommand(conn, `cd ${REMOTE_BASE} && (npx tsx src/scripts/seed_gym_canonical.ts || true)`, "Seed Gimnasio Canónico");
+
+  // 5. Build de producción Next.js
+  console.log("\n🏗️ Compilando aplicación Next.js en VPS (npm run build)...");
+  await execCommand(conn, `cd ${REMOTE_BASE} && rm -rf .next && npm run build`, "Next.js Clean Build");
+
+  // 6. Reiniciar PM2
+  console.log("\n🔄 Reiniciando proceso PM2 zenda-app...");
+  await execCommand(conn, "pm2 restart zenda-app && pm2 status zenda-app", "PM2 Restart");
+
+  console.log("\n🎉 ¡Despliegue y configuración completados con éxito!");
   conn.end();
 }).connect({ host: VPS, port: 22, username: USER, password: PASS });

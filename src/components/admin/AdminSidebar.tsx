@@ -11,7 +11,8 @@ import {
   LayoutDashboard, CalendarDays, Dribbble, Sparkles, Settings, Users, LogOut,
   MessageSquare, Building2, BarChart3, Trophy, Tags, Lock, Layout, Package,
   GraduationCap, Contact, Scissors, Store, ShieldCheck, Bell, Briefcase, Utensils,
-  Truck, Wallet, CreditCard, ClipboardList, Bike, LucideIcon, X
+  Truck, Wallet, CreditCard, ClipboardList, Bike, LucideIcon, X, FileSpreadsheet,
+  Globe, ExternalLink, Code2, Dumbbell, Scan, CalendarCheck
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -45,16 +46,26 @@ interface MenuItem {
 
 export default function AdminSidebar({ 
   primaryColor = '#0ea5e9',
-  initialBusinessName
+  initialBusinessName,
+  initialSlug
 }: { 
   primaryColor?: string;
   initialBusinessName?: string;
+  initialSlug?: string;
 }) {
   const { confirm } = useConfirm();
   const pathname = usePathname();
   const { data: session } = useSession();
   const userObj = session?.user as any;
   const role = userObj?.isDelegated ? 'SUPERADMIN' : (userObj?.role || 'STAFF');
+  const isRealSuperAdmin = Boolean(
+    role === 'SUPERADMIN' || 
+    role === 'SUPER_ADMIN' || 
+    userObj?.isAdminUser === true || 
+    userObj?.isDelegated === true ||
+    userObj?.role === 'SUPERADMIN' ||
+    userObj?.role === 'SUPER_ADMIN'
+  );
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -79,7 +90,10 @@ export default function AdminSidebar({
     promotions: true
   });
   const [businessName, setBusinessName] = useState<string>(initialBusinessName || '');
+  const [businessSlug, setBusinessSlug] = useState<string>(initialSlug || '');
   const [isRestaurantBiz, setIsRestaurantBiz] = useState<boolean>(false);
+  const [isDentalBiz, setIsDentalBiz] = useState<boolean>(false);
+  const [isGymBiz, setIsGymBiz] = useState<boolean>(false);
 
   // Cargar capacidades activas del negocio dinámicamente mediante EntitlementsService
   useEffect(() => {
@@ -104,6 +118,9 @@ export default function AdminSidebar({
           if (data.nombre) {
             setBusinessName(data.nombre);
           }
+          if (data.slug) {
+            setBusinessSlug(data.slug);
+          }
           let cfg: any = {};
           if (typeof data.configuracion === 'string') {
             try { cfg = JSON.parse(data.configuracion); } catch { cfg = {}; }
@@ -115,15 +132,35 @@ export default function AdminSidebar({
           const slugUpper = (data.slug || '').toUpperCase();
           const nameUpper = (data.nombre || businessName || '').toUpperCase();
 
+          const isGym = tipoUpper === 'GIMNASIO' || tipoUpper === 'GYM' || tipoUpper === 'FITNESS' ||
+            (cfg.tipoNegocio || '').toUpperCase().includes('GIMNASIO') ||
+            (cfg.tipoNegocio || '').toUpperCase().includes('GYM') ||
+            (cfg.blueprintId || '').toUpperCase() === 'GYM' ||
+            (cfg.blueprintId || '').toUpperCase() === 'GIMNASIO' ||
+            slugUpper.includes('GYM') || slugUpper.includes('GIMNASIO') || slugUpper.includes('FITNESS') ||
+            nameUpper.includes('GYM') || nameUpper.includes('GIMNASIO') || nameUpper.includes('FITNESS') ||
+            Boolean(effectiveCaps.MEMBERSHIPS ?? caps.memberships);
+          setIsGymBiz(isGym);
+
           const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT' || tipoUpper === 'BAR' ||
             nameUpper.includes('PARRILLA') || nameUpper.includes('RESTAURANTE') || nameUpper.includes('GASTRONOMIA') || nameUpper.includes('BURGER') || nameUpper.includes('PIZZA') || nameUpper.includes('TACO');
           setIsRestaurantBiz(isRestaurant);
+
+          const isDental = tipoUpper === 'ODONTOLOGIA' || tipoUpper === 'DENTAL' || tipoUpper === 'DENTISTA' ||
+            (cfg.tipoNegocio || '').toUpperCase().includes('ODONTOL') ||
+            (cfg.tipoNegocio || '').toUpperCase().includes('DENTAL') ||
+            (cfg.tipoNegocio || '').toUpperCase().includes('DENTISTA') ||
+            (cfg.blueprintId || '').toUpperCase() === 'DENTAL' ||
+            (cfg.blueprintId || '').toUpperCase() === 'DENTISTA' ||
+            slugUpper.includes('DENTAL') || slugUpper.includes('ODONTOLOG') || slugUpper.includes('DENTISTA') ||
+            nameUpper.includes('DENTAL') || nameUpper.includes('ODONTOLOG') || nameUpper.includes('DENTISTA');
+          setIsDentalBiz(isDental);
           const isPinchos = tipoUpper === 'PINCHOS' || slugUpper === 'PINCHOS';
           const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || 
             slugUpper.includes('CANCHA') || slugUpper.includes('CAMPEONES') || 
             nameUpper.includes('CANCHA') || nameUpper.includes('COMPLEJO') || 
             nameUpper.includes('CAMPEONES') || nameUpper.includes('PADEL') || nameUpper.includes('SINTETICA');
-          const isServiceBiz = !isRestaurant && !isPinchos && !isCanchas && (
+          const isServiceBiz = !isRestaurant && !isPinchos && !isCanchas && !isGym && (
             tipoUpper === 'SPA' ||
             tipoUpper === 'CENTRO_ESTETICA' ||
             tipoUpper === 'PELUQUERIA' ||
@@ -143,7 +180,7 @@ export default function AdminSidebar({
             nameUpper.includes('PELUQUERIA') ||
             nameUpper.includes('BARBERIA')
           );
-          const isStore = !isRestaurant && !isPinchos && !isCanchas && !isServiceBiz;
+          const isStore = !isRestaurant && !isPinchos && !isCanchas && !isGym && !isServiceBiz;
           const hasEcommerce = Boolean(effectiveCaps.ECOMMERCE ?? effectiveCaps.ecommerce ?? caps.ecommerce ?? caps.orders);
 
           // Entitlements efectivos estrictos por vertical
@@ -154,11 +191,11 @@ export default function AdminSidebar({
             kitchen: Boolean((effectiveCaps.KITCHEN ?? effectiveCaps.kitchen) || isRestaurant || isPinchos || caps.kitchen),
             delivery: Boolean((effectiveCaps.DELIVERY ?? effectiveCaps.delivery) ?? (isServiceBiz ? caps.delivery === true : (isRestaurant || isPinchos || isStore))),
             dispatch: Boolean(effectiveCaps.DISPATCH ?? effectiveCaps.dispatch ?? caps.dispatch ?? isRestaurant),
-            appointments: Boolean(effectiveCaps.APPOINTMENTS ?? effectiveCaps.appointments ?? (isServiceBiz || isCanchas || tipoUpper === 'RESERVA')),
-            courts: Boolean(effectiveCaps.COURTS ?? effectiveCaps.courts ?? caps.courts ?? isCanchas),
-            services: Boolean(effectiveCaps.SERVICES ?? effectiveCaps.services ?? (isServiceBiz || Boolean(caps.services))),
+            appointments: !isRestaurant && !isStore && Boolean(effectiveCaps.APPOINTMENTS ?? effectiveCaps.appointments ?? (isServiceBiz || isCanchas || tipoUpper === 'RESERVA')),
+            courts: !isServiceBiz && !isRestaurant && !isStore && Boolean(effectiveCaps.COURTS ?? effectiveCaps.courts ?? caps.courts ?? isCanchas),
+            services: !isRestaurant && !isStore && !isCanchas && Boolean(isServiceBiz || effectiveCaps.SERVICES || effectiveCaps.services || caps.services),
             promotions: true,
-            courses: Boolean(effectiveCaps.COURSES ?? effectiveCaps.courses ?? caps.courses ?? isCanchas ?? true),
+            courses: !isRestaurant && !isPinchos && Boolean(effectiveCaps.COURSES ?? effectiveCaps.courses ?? caps.courses),
             loyalty: Boolean(effectiveCaps.LOYALTY ?? effectiveCaps.loyalty ?? caps.loyalty ?? isPinchos),
             inventory: Boolean((effectiveCaps.INVENTORY ?? effectiveCaps.inventory) ?? (hasEcommerce || caps.inventory)),
             communications: Boolean(
@@ -168,7 +205,13 @@ export default function AdminSidebar({
               caps.communications ||
               caps.whatsapp_campaigns
             ),
-            payments: Boolean(effectiveCaps.PAYMENTS ?? effectiveCaps.payments ?? !isServiceBiz)
+            payments: Boolean(effectiveCaps.PAYMENTS ?? effectiveCaps.payments ?? !isServiceBiz),
+            clinical_records: Boolean(
+              effectiveCaps.CLINICAL_RECORDS ?? 
+              effectiveCaps.clinical_records ?? 
+              caps.clinical_records ?? 
+              caps.CLINICAL_RECORDS
+            )
           };
 
           setCapabilities(normalizedCaps);
@@ -217,7 +260,15 @@ export default function AdminSidebar({
     } else if (isRestaurantBiz && capabilities.orders) {
       items.push({ name: 'Comandas', href: '/admin/cocina', icon: Utensils, section: 'GESTIÓN OPERATIVA', isLocked: true, lockedBadge: 'Pro' });
     }
-    if (capabilities.appointments) {
+    // Gym Capabilities
+    if (isGymBiz || capabilities.memberships || capabilities.access || capabilities.attendance) {
+      items.push({ name: 'Control de Acceso', href: '/admin/accesos', icon: Scan, section: 'GESTIÓN OPERATIVA' });
+      items.push({ name: 'Asistencias', href: '/admin/asistencias', icon: CalendarCheck, section: 'GESTIÓN OPERATIVA' });
+      items.push({ name: 'Socios', href: '/admin/socios', icon: Users, section: 'GESTIÓN OPERATIVA' });
+      items.push({ name: 'Membresías', href: '/admin/membresias', icon: CreditCard, section: 'GESTIÓN OPERATIVA' });
+    }
+
+    if (capabilities.appointments && !isGymBiz) {
       items.push({ 
         name: capabilities.courts ? 'Reservas / Agenda' : 'Agenda / Citas', 
         href: '/admin/citas', 
@@ -225,7 +276,7 @@ export default function AdminSidebar({
         section: 'GESTIÓN OPERATIVA' 
       });
     }
-    if (capabilities.services && !capabilities.courts) {
+    if (capabilities.services && !capabilities.courts && !isGymBiz) {
       items.push({ name: 'Servicios', href: '/admin/servicios', icon: Scissors, section: 'GESTIÓN OPERATIVA', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     }
     if (capabilities.courts) {
@@ -250,8 +301,15 @@ export default function AdminSidebar({
     }
     if (capabilities.courses) {
       items.push({ name: 'Cursos & Academia', href: '/admin/cursos', icon: GraduationCap, section: 'MARKETING' });
-    } else if (capabilities.courts) {
-      items.push({ name: 'Cursos & Academia', href: '/admin/cursos', icon: GraduationCap, section: 'MARKETING', isLocked: true, lockedBadge: 'Academia' });
+    } else if (!isRestaurantBiz) {
+      items.push({ 
+        name: 'Cursos & Academia', 
+        href: '/admin/cursos', 
+        icon: GraduationCap, 
+        section: 'MARKETING', 
+        isLocked: true, 
+        lockedBadge: capabilities.courts ? 'Academia' : 'Pro' 
+      });
     }
     if (capabilities.loyalty) {
       items.push({ name: 'Club de Beneficios', href: '/admin/misiones', icon: Trophy, section: 'MARKETING' });
@@ -292,8 +350,110 @@ export default function AdminSidebar({
     items.push({ name: 'Mi Plan', href: '/admin/plan', icon: Sparkles, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
     items.push({ name: 'Super Panel', href: '/superadmin', icon: ShieldCheck, section: 'CONFIGURACIÓN', roles: ['SUPERADMIN'] });
 
-    const isRealSuperAdmin = role === 'SUPERADMIN' || role === 'SUPER_ADMIN' || userObj?.isAdminUser === true || userObj?.isDelegated === true;
     const allowedModules: string[] | null = userObj?.allowedModules || null;
+
+    if (isDentalBiz) {
+      const dentalItems: MenuItem[] = [
+        // ── GESTIÓN CLÍNICA ──
+        { name: 'Inicio', href: '/admin', icon: LayoutDashboard, section: 'GESTIÓN CLÍNICA' },
+        { name: 'Pacientes', href: '/admin/pacientes', icon: Contact, section: 'GESTIÓN CLÍNICA' },
+        { name: 'Citas', href: '/admin/citas', icon: CalendarDays, section: 'GESTIÓN CLÍNICA' },
+        { 
+          name: 'Historia Clínica', 
+          href: '/admin/historia-clinica', 
+          icon: FileSpreadsheet, 
+          section: 'GESTIÓN CLÍNICA',
+          isLocked: !capabilities.clinical_records && !isRealSuperAdmin,
+          lockedBadge: 'Crecimiento'
+        },
+        { 
+          name: 'Tratamientos', 
+          href: '/admin/tratamientos', 
+          icon: Sparkles, 
+          section: 'GESTIÓN CLÍNICA',
+          isLocked: !capabilities.clinical_records && !isRealSuperAdmin,
+          lockedBadge: 'Crecimiento'
+        },
+        { 
+          name: 'Documentos', 
+          href: '/admin/documentos', 
+          icon: Layout, 
+          section: 'GESTIÓN CLÍNICA',
+          isLocked: !capabilities.clinical_records && !isRealSuperAdmin,
+          lockedBadge: 'Crecimiento'
+        },
+
+        // ── CATÁLOGO ──
+        { name: 'Servicios & Tarifario', href: '/admin/servicios', icon: Scissors, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Productos', href: '/admin/productos', icon: Sparkles, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Inventario', href: '/admin/inventario', icon: Package, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Categorías', href: '/admin/categorias', icon: Tags, section: 'CATÁLOGO', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+
+        // ── MARKETING & CRECIMIENTO ──
+        { name: 'Club de Beneficios', href: '/admin/misiones', icon: Trophy, section: 'MARKETING' },
+        { name: 'Hero y Destacados', href: '/admin/hero-destacados', icon: Sparkles, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Comunicaciones', href: '/admin/comunicacion', icon: MessageSquare, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Páginas', href: '/admin/paginas', icon: Layout, section: 'MARKETING' },
+
+        // ── ADMINISTRACIÓN ──
+        { name: 'Doctores & Staff', href: '/admin/usuarios', icon: Users, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Caja & Finanzas', href: '/admin/caja', icon: Wallet, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Reportes', href: '/admin/reportes', icon: BarChart3, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+
+        // ── CONFIGURACIÓN ──
+        { name: 'Configuración', href: '/admin/config', icon: Settings, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Sucursales', href: '/admin/sucursales', icon: Store, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN', 'OWNER'] },
+        { name: 'Métodos de Pago', href: '/admin/metodos-pago', icon: CreditCard, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Perfil de Negocio', href: '/admin/perfil', icon: Building2, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Mi Plan', href: '/admin/plan', icon: Sparkles, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Super Panel', href: '/superadmin', icon: ShieldCheck, section: 'CONFIGURACIÓN', roles: ['SUPERADMIN'] }
+      ];
+
+      return dentalItems.filter(item => {
+        if (item.href === '/superadmin') return isRealSuperAdmin;
+        return true;
+      });
+    }
+
+    if (isGymBiz) {
+      const gymItems: MenuItem[] = [
+        // ── CONTROL DE ACCESOS & SOCIOS ──
+        { name: 'Inicio', href: '/admin', icon: LayoutDashboard, section: 'CONTROL DE ACCESO & SOCIOS' },
+        { name: 'Torno & Accesos', href: '/admin/accesos', icon: Scan, section: 'CONTROL DE ACCESO & SOCIOS' },
+        { name: 'Socios', href: '/admin/socios', icon: Contact, section: 'CONTROL DE ACCESO & SOCIOS', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Membresías', href: '/admin/membresias', icon: CreditCard, section: 'CONTROL DE ACCESO & SOCIOS', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Planes & Tarifas', href: '/admin/membresias/planes', icon: Tags, section: 'CONTROL DE ACCESO & SOCIOS', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Asistencias', href: '/admin/asistencias', icon: CalendarCheck, section: 'CONTROL DE ACCESO & SOCIOS' },
+
+        // ── GESTIÓN FINANCIERA ──
+        { name: 'Caja & Finanzas', href: '/admin/caja', icon: Wallet, section: 'GESTIÓN FINANCIERA', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+
+        // ── MARKETING & COMUNIDAD ──
+        { name: 'Club de Beneficios', href: '/admin/misiones', icon: Trophy, section: 'MARKETING' },
+        { name: 'Hero y Destacados', href: '/admin/hero-destacados', icon: Sparkles, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Promociones', href: '/admin/promociones', icon: Tags, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Comunicaciones', href: '/admin/comunicacion', icon: MessageSquare, section: 'MARKETING', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Páginas', href: '/admin/paginas', icon: Layout, section: 'MARKETING' },
+
+        // ── ADMINISTRACIÓN ──
+        { name: 'Entrenadores & Staff', href: '/admin/usuarios', icon: Users, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Reportes', href: '/admin/reportes', icon: BarChart3, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+
+        // ── CONFIGURACIÓN ──
+        { name: 'Configuración', href: '/admin/config', icon: Settings, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Sucursales', href: '/admin/sucursales', icon: Store, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN', 'OWNER'] },
+        { name: 'Métodos de Pago', href: '/admin/metodos-pago', icon: CreditCard, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Perfil del Gimnasio', href: '/admin/perfil', icon: Building2, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Mi Plan', href: '/admin/plan', icon: Sparkles, section: 'CONFIGURACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Super Panel', href: '/superadmin', icon: ShieldCheck, section: 'CONFIGURACIÓN', roles: ['SUPERADMIN'] }
+      ];
+
+      return gymItems.filter(item => {
+        if (item.href === '/superadmin') return isRealSuperAdmin;
+        return true;
+      });
+    }
 
     return items.filter(item => {
       if (item.href === '/superadmin') {
@@ -323,7 +483,11 @@ export default function AdminSidebar({
           if (cleanCode === 'staff' || cleanCode === 'especialistas') return item.href === '/admin/staff' || item.href === '/admin/usuarios';
           if (cleanCode === 'canchas' || cleanCode === 'courts') return item.href === '/admin/canchas';
           if (cleanCode === 'bloqueos') return item.href === '/admin/bloqueos';
-          if (cleanCode === 'clientes' || cleanCode === 'customers') return item.href === '/admin/clientes';
+          if (cleanCode === 'clientes' || cleanCode === 'customers') return item.href === '/admin/clientes' || item.href === '/admin/socios';
+          if (cleanCode === 'socios' || cleanCode === 'members') return item.href === '/admin/socios';
+          if (cleanCode === 'membresias' || cleanCode === 'memberships') return item.href === '/admin/membresias' || item.href === '/admin/membresias/planes';
+          if (cleanCode === 'accesos' || cleanCode === 'access') return item.href === '/admin/accesos';
+          if (cleanCode === 'asistencias' || cleanCode === 'attendance') return item.href === '/admin/asistencias';
           if (cleanCode === 'usuarios') return item.href === '/admin/usuarios';
           if (cleanCode === 'reportes' || cleanCode === 'reports') return item.href === '/admin/reportes';
           if (cleanCode === 'comunicacion' || cleanCode === 'comunicaciones' || cleanCode === 'communications') return item.href === '/admin/comunicacion';
@@ -348,7 +512,22 @@ export default function AdminSidebar({
     return acc;
   }, {} as Record<string, MenuItem[]>);
 
-  const sectionsOrder = ['GESTIÓN OPERATIVA', 'CATÁLOGO', 'MARKETING', 'ADMINISTRACIÓN', 'CONFIGURACIÓN'];
+  const baseOrder = [
+    'CONTROL DE ACCESO & SOCIOS',
+    'GESTIÓN OPERATIVA',
+    'GESTIÓN CLÍNICA',
+    'GESTIÓN FINANCIERA',
+    'CATÁLOGO',
+    'MARKETING',
+    'ADMINISTRACIÓN',
+    'CONFIGURACIÓN'
+  ];
+  const allSections = Object.keys(grouped);
+  const extraSections = allSections.filter(s => !baseOrder.includes(s));
+  const sectionsOrder = [
+    ...baseOrder.filter(s => allSections.includes(s)),
+    ...extraSections
+  ];
 
   const handleLogout = async () => {
     const isConfirmed = await confirm('¿Estás seguro de que deseas salir del panel de administración?', {
@@ -380,8 +559,8 @@ export default function AdminSidebar({
         )}
       >
         {/* Cabecera del Panel */}
-        <div className="h-16 px-5 border-b border-slate-100 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="h-16 px-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <div 
               style={{ backgroundColor: primaryColor }} 
               className="w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-md font-bold text-sm shrink-0"
@@ -397,10 +576,24 @@ export default function AdminSidebar({
               </p>
             </div>
           </div>
+
+          {/* Micro-botón de acceso rápido al landing en header */}
+          {(businessSlug || (session?.user as any)?.slug) && (
+            <a
+              href={`/${businessSlug || (session?.user as any)?.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="size-8 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200/80 hover:border-emerald-300 flex items-center justify-center text-slate-400 hover:text-emerald-600 transition-all shrink-0 ml-1 group"
+              title="Abrir landing en nueva pestaña"
+            >
+              <ExternalLink size={14} className="group-hover:scale-110 transition-transform" />
+            </a>
+          )}
+
           <button 
             type="button"
             onClick={() => setIsOpen(false)}
-            className="md:hidden size-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 cursor-pointer shrink-0 ml-2"
+            className="md:hidden size-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 cursor-pointer shrink-0 ml-1.5"
             aria-label="Cerrar Menú"
           >
             <X size={18} />
@@ -410,8 +603,44 @@ export default function AdminSidebar({
         {/* Selector de Sucursal Universal con Soporte Multi-Sede */}
         <BranchSelector primaryColor={primaryColor} userRole={role} />
 
+        {/* ── BOTÓN DE ACCESO RÁPIDO AL LANDING (LUGAR ESTRATÉGICO E INTUITIVO) ── */}
+        {(businessSlug || (session?.user as any)?.slug) && (
+          <div className="px-3 pt-2 pb-1 shrink-0">
+            <a
+              href={`/${businessSlug || (session?.user as any)?.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/5 hover:from-emerald-500/20 hover:to-teal-500/20 border border-emerald-500/25 hover:border-emerald-500/40 text-emerald-950 transition-all group shadow-2xs hover:shadow-xs"
+              title="Ver mi Landing (página pública para tus clientes)"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="size-7 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+                  <Globe size={14} />
+                </div>
+                <div className="min-w-0 text-left">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-black tracking-tight text-emerald-950">
+                      Ver mi Landing
+                    </span>
+                    <span className="relative flex h-1.5 w-1.5 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-emerald-700/90 font-semibold truncate leading-tight">
+                    citiox.com/{businessSlug || (session?.user as any)?.slug}
+                  </p>
+                </div>
+              </div>
+              <div className="size-6 rounded-lg bg-white/90 border border-emerald-200/80 flex items-center justify-center text-emerald-700 group-hover:text-emerald-900 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-1.5 shadow-2xs">
+                <ExternalLink size={12} />
+              </div>
+            </a>
+          </div>
+        )}
+
         {/* Links de Navegación por Secciones */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin scrollbar-thumb-slate-200">
+        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-6 scrollbar-thin scrollbar-thumb-slate-200">
           {sectionsOrder.map((secKey) => {
             const secItems = grouped[secKey];
             if (!secItems || secItems.length === 0) return null;
@@ -427,7 +656,7 @@ export default function AdminSidebar({
 
                   return (
                     <Link
-                      key={item.href}
+                      key={`${secKey}-${item.href}-${item.name}`}
                       href={item.href}
                       onClick={() => setIsOpen(false)}
                       className={cn(

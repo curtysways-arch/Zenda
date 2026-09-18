@@ -58,23 +58,19 @@ export async function POST(req: Request) {
             { type: 'PLAN_REQUEST', businessId: negocioId }
         );
 
-        // 2. Mensaje de WhatsApp al SuperAdmin (opcional si está configurado)
-        const adminPhone = globalConfig?.valor;
-        if (adminPhone) {
-            const message = `🔔 *Nueva Solicitud de Suscripción*\n\n🏘 *Negocio:* ${negocio.nombre}\n📋 *Plan:* ${planSolicitado.name} [${periodo.toUpperCase()}]\n💳 *Método:* ${metodoPago}\n\n⚠️ Revisar el panel de SuperAdmin para validar el pago.`;
-            
-            // Intentar enviar mensaje de WhatsApp vía connector (lib/notifications lo maneja)
-            // Usamos notificationService.provider que por defecto llama a sendWhatsAppMessage
-            try {
-                // @ts-ignore
-                await notificationService.provider.sendMessage({
-                    to: adminPhone,
-                    message,
-                    template: 'subscription_request'
-                });
-            } catch (error) {
-                console.error('Error enviando WhatsApp al admin:', error);
-            }
+        // 2. Mensaje de WhatsApp al SuperAdmin
+        try {
+            const { notifyAdminPlanEvent } = await import('@/lib/adminNotificationHelper');
+            await notifyAdminPlanEvent({
+                eventType: 'SOLICITADO',
+                businessName: negocio?.nombre || 'Negocio',
+                planName: planSolicitado.name,
+                period: periodo,
+                paymentMethod: metodoPago,
+                amount: planSolicitado.price
+            });
+        } catch (error) {
+            console.error('Error enviando WhatsApp al admin por solicitud de plan:', error);
         }
 
         return NextResponse.json({ success: true });

@@ -31,6 +31,7 @@ export async function POST(request: Request) {
         tipo: tipo as RewardCatalogType,
         handler: handler || 'wallet',
         config: config || {},
+        valor: config || {},
         activo: true,
         activa: true
       }

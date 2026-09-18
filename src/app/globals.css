@@ -132,7 +132,7 @@ input, select, textarea {
     padding: 0.75rem 1rem;
     transition: all 0.2s;
     background: rgba(0, 0, 0, 0.02);
-    color: inherit;
+    color: #0f172a;
 }
 
 .dark input, .dark select, .dark textarea {
@@ -255,10 +255,10 @@ input:focus {
     color: #94a3b8 !important;
 }
 
-.light-theme h1, 
-.light-theme h2, 
-.light-theme h3, 
-.light-theme h4 {
+.light-theme h1:not(.text-white):not([class*="text-white"]):not([class*="!text-white"]), 
+.light-theme h2:not(.text-white):not([class*="text-white"]):not([class*="!text-white"]), 
+.light-theme h3:not(.text-white):not([class*="text-white"]):not([class*="!text-white"]), 
+.light-theme h4:not(.text-white):not([class*="text-white"]):not([class*="!text-white"]) {
     color: #0f172a !important;
 }
 /* SuperAdmin & Admin App Experience Utilities */

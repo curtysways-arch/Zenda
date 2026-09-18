@@ -54,6 +54,7 @@ export async function POST(req: Request) {
             // 1. Update Negocio details
             const dataToUpdate: any = {
                 nombre: nombre || currentNegocio.nombre,
+                tipoNegocio: tipoNegocio || (currentNegocio as any).tipoNegocio || updatedConfig.tipoNegocio,
                 configuracion: updatedConfig
             };
 
@@ -72,9 +73,10 @@ export async function POST(req: Request) {
             });
 
             // 1.5. Instalar automáticamente la plantilla predeterminada del sector seleccionado
-            if (tipoNegocio) {
+            const effectiveTipo = tipoNegocio || (currentNegocio as any).tipoNegocio || updatedConfig.tipoNegocio;
+            if (effectiveTipo) {
                 try {
-                    await TemplateService.installDefaultTemplateForBusiness(negocioId, tipoNegocio, tx);
+                    await TemplateService.installDefaultTemplateForBusiness(negocioId, effectiveTipo, tx);
                 } catch (templateErr: any) {
                     console.error('[Onboarding] Error al instalar plantilla automática:', templateErr.message);
                 }
@@ -101,7 +103,7 @@ export async function POST(req: Request) {
                 console.error('[Onboarding] Error al auto-instalar misiones globales:', err.message);
             }
 
-            // 2. Create first service if provided
+            // 2. Create first service / product if provided
             if (servicioNombre) {
                 // Determine duration in minutes
                 let duracionMinutos = parseInt(servicioDuracion);
@@ -127,6 +129,28 @@ export async function POST(req: Request) {
                 }
 
                 await tx.service.create({ data: serviceData });
+
+                // Si el negocio es Restaurante o Tienda, crear también en la tabla Producto para su catálogo y menú
+                const typeUpper = (effectiveTipo || '').toUpperCase();
+                const isRestaurantOrStore = ['RESTAURANTE', 'GASTRONOMIA', 'BAR', 'TIENDA', 'ECOMMERCE', 'BURGER', 'PIZZA'].includes(typeUpper);
+
+                if (isRestaurantOrStore) {
+                    try {
+                        await (tx as any).producto.create({
+                            data: {
+                                nombre: servicioNombre,
+                                descripcion: servicioDescripcion || null,
+                                precio: isNaN(price) ? 0 : price,
+                                imagenUrl: servicioImageUrl || null,
+                                activo: true,
+                                negocioId: negocioId,
+                                updatedAt: new Date()
+                            }
+                        });
+                    } catch (prodErr: any) {
+                        console.error('[Onboarding] Error al crear producto inicial para restaurante/tienda:', prodErr);
+                    }
+                }
 
                 // If image was provided via URL (legacy or new), also save as Imagen record
                 if (servicioImageUrl && !servicioImageMediaId) {

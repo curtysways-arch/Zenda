@@ -17,8 +17,10 @@ export async function POST(req: Request) {
         const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
         if (!payment) return NextResponse.json({ error: 'Pago no encontrado' }, { status: 404 });
 
-        // Detectar si el cobro corresponde a un Add-on en lugar de un Plan
+        // Detectar si el cobro corresponde a un Add-on o Combo (Plan + Add-on)
+        const isComboPayment = payment.plan_id.startsWith('COMBO:');
         const isAddonPayment = payment.plan_id.startsWith('ADDON:') || 
+                               isComboPayment ||
                                Boolean(await prisma.addon.findUnique({ where: { id: payment.plan_id } }));
 
         if (isAddonPayment) {
@@ -31,7 +33,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ 
                 success: true, 
                 status: approved ? 'approved' : 'rejected',
-                isAddon: true,
+                isAddon: !isComboPayment,
+                isCombo: isComboPayment,
                 contract: result 
             });
         }
@@ -143,6 +146,20 @@ export async function POST(req: Request) {
                     nuevaFechaFin,
                     false
                 );
+                // Notificar también al Super Admin por WhatsApp
+                try {
+                    const { notifyAdminPlanEvent } = await import('@/lib/adminNotificationHelper');
+                    await notifyAdminPlanEvent({
+                        eventType: 'ACTIVADO',
+                        businessName: negocio?.nombre || 'Negocio',
+                        planName: plan?.name || 'Plan',
+                        paymentMethod: payment.metodo_pago || 'TRANSFERENCIA',
+                        amount: Number(payment.monto),
+                        reference: payment.referencia || 'APROBACIÓN'
+                    });
+                } catch (adminWaErr) {
+                    console.error('Error notificando al admin por plan activado:', adminWaErr);
+                }
             }
         } catch (err) {
             console.error('Error enviando WhatsApp de aprobacion:', err);

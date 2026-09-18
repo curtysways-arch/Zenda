@@ -1,6 +1,6 @@
 'use client';
 
-import { Sparkles, Bell, User, LogOut, QrCode, Share2, Copy, Check, ExternalLink, X, CalendarDays, MessageSquare, Menu } from 'lucide-react';
+import { Sparkles, Bell, User, LogOut, QrCode, Share2, Copy, Check, ExternalLink, X, CalendarDays, MessageSquare, Menu, Globe } from 'lucide-react';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { useConfirm } from '@/components/admin/ConfirmContext';
@@ -10,6 +10,7 @@ interface TopBarProps {
     primaryColor: string;
     title?: string;
     negocioNombre?: string;
+    slug?: string;
 }
 
 const ZendaLogo = ({ size = 24, className = "", style = {} }: { size?: number; className?: string; style?: React.CSSProperties }) => (
@@ -47,7 +48,7 @@ const ZendaLogo = ({ size = 24, className = "", style = {} }: { size?: number; c
     </svg>
 );
 
-export default function MobileTopBar({ primaryColor, title = 'ADMIN', negocioNombre }: TopBarProps) {
+export default function MobileTopBar({ primaryColor, title = 'ADMIN', negocioNombre, slug }: TopBarProps) {
     const { confirm } = useConfirm();
     const { data: session } = useSession();
     const [showMenu, setShowMenu] = useState(false);
@@ -70,12 +71,12 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN', negocioNom
     };
 
     useEffect(() => {
-        // Construir URL pública del negocio a partir de la sesión
-        const slug = (session?.user as any)?.slug;
-        if (slug && typeof window !== 'undefined') {
-            setShareUrl(`${window.location.origin}/${slug}`);
+        // Construir URL pública del negocio a partir de la prop o sesión
+        const effectiveSlug = slug || (session?.user as any)?.slug;
+        if (effectiveSlug && typeof window !== 'undefined') {
+            setShareUrl(`${window.location.origin}/${effectiveSlug}`);
         }
-    }, [session]);
+    }, [session, slug]);
 
     useEffect(() => {
         checkNotifications();
@@ -137,6 +138,21 @@ export default function MobileTopBar({ primaryColor, title = 'ADMIN', negocioNom
                 </div>
  
                 <div className="flex items-center gap-1.5 shrink-0">
+                    {/* Botón Acceso Rápido al Landing */}
+                    {shareUrl && (
+                        <a 
+                            href={shareUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="h-8.5 px-2.5 flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/80 rounded-full text-emerald-800 transition-all active:scale-95 shadow-2xs group"
+                            title="Ver mi Landing en una nueva pestaña"
+                        >
+                            <Globe size={13} className="text-emerald-600 shrink-0 group-hover:rotate-12 transition-transform" />
+                            <span className="text-[10px] font-black uppercase tracking-wider">Ver Web</span>
+                            <ExternalLink size={10} className="text-emerald-600/70 shrink-0" />
+                        </a>
+                    )}
+
                     {/* Botón QR / Compartir */}
                     <button 
                         onClick={() => setShowShare(true)}

@@ -23,11 +23,24 @@ export async function processGrowthEventLog(logId: string): Promise<void> {
             ? JSON.parse(eventLog.payload) 
             : eventLog.payload;
 
-        // 2. Buscar todas las misiones activas asociadas al evento trigger de este negocio
+        // 2. Buscar todas las misiones activas asociadas al evento trigger (incluyendo sinónimos)
+        const matchingEventTypes = [eventType];
+        if (eventType === 'APPOINTMENT_COMPLETED' || eventType === 'BOOKING_COMPLETED') {
+          matchingEventTypes.push('APPOINTMENT_COMPLETED', 'BOOKING_COMPLETED');
+        } else if (eventType === 'RESERVATION_COMPLETED') {
+          matchingEventTypes.push('RESERVATION_COMPLETED', 'BOOKING_COMPLETED', 'APPOINTMENT_COMPLETED');
+        } else if (eventType === 'LAUNDRY_ORDER_COMPLETED') {
+          matchingEventTypes.push('LAUNDRY_ORDER_COMPLETED', 'ORDER_COMPLETED');
+        } else if (eventType === 'ORDER_COMPLETED') {
+          matchingEventTypes.push('ORDER_COMPLETED', 'PURCHASE_COMPLETED');
+        } else if (eventType === 'GYM_ATTENDANCE' || eventType === 'CHECKIN') {
+          matchingEventTypes.push('GYM_ATTENDANCE', 'CHECKIN', 'CLASS_ATTENDED');
+        }
+
         const activeQuests = await prisma.quest.findMany({
             where: {
                 negocioId,
-                triggerEvent: eventType,
+                triggerEvent: { in: Array.from(new Set(matchingEventTypes)) },
                 activa: true
             }
         });
@@ -85,6 +98,18 @@ export async function processGrowthEventLog(logId: string): Promise<void> {
 
                 // E. Misión elegible -> Transacción de progreso para evitar condiciones de carrera (race conditions)
                 await prisma.$transaction(async (tx) => {
+                    // Verificación de idempotencia por entityId
+                    if (payload.entityId) {
+                        const alreadyProcessed = await tx.questParticipant.findFirst({
+                            where: {
+                                questId: quest.id,
+                                userId,
+                                detalles: { contains: payload.entityId }
+                            }
+                        });
+                        if (alreadyProcessed) return;
+                    }
+
                     // Buscar o crear progreso
                     let progress = await tx.questProgress.findUnique({
                         where: { questId_userId: { questId: quest.id, userId } }

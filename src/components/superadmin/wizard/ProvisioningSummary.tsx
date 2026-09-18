@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import { SUBSCRIPTION_PLANS, SUBSCRIPTION_ADDONS } from '@/core/subscription/plans';
+import { getTemplateManifest } from '@/core/templates/templatesRegistry';
 import { CheckCircle2, ShieldCheck, Layers, Box, Sparkles, Download, ArrowLeft, Loader2, Save } from 'lucide-react';
 
 interface ProvisioningSummaryProps {
   payload: any;
+  selectedPlanObj?: { id: string; name: string; price: number; description?: string };
   saveAsTemplate: boolean;
   templateName: string;
   onToggleSaveTemplate: (val: boolean) => void;
@@ -17,6 +19,7 @@ interface ProvisioningSummaryProps {
 
 export default function ProvisioningSummary({
   payload,
+  selectedPlanObj,
   saveAsTemplate,
   templateName,
   onToggleSaveTemplate,
@@ -25,10 +28,13 @@ export default function ProvisioningSummary({
   onPrev,
   loading
 }: ProvisioningSummaryProps) {
-  const plan = SUBSCRIPTION_PLANS[payload.planId as keyof typeof SUBSCRIPTION_PLANS] || SUBSCRIPTION_PLANS.FREE;
+  const fallbackPlan = SUBSCRIPTION_PLANS[payload.planId as keyof typeof SUBSCRIPTION_PLANS] || SUBSCRIPTION_PLANS.FREE;
+  const template = getTemplateManifest(payload.blueprintId);
+  
+  const planName = selectedPlanObj?.name || fallbackPlan.name || payload.planId;
+  const basePrice = selectedPlanObj ? Number(selectedPlanObj.price) : (fallbackPlan.priceMonthly || 0);
   
   // Calcular precio total
-  let basePrice = plan.priceMonthly;
   let addonsPrice = 0;
   for (const addonId of payload.selectedAddons || []) {
     const addon = SUBSCRIPTION_ADDONS[addonId];
@@ -73,13 +79,13 @@ export default function ProvisioningSummary({
           </div>
 
           <div className="space-y-2 text-xs text-slate-300">
-            <div className="flex justify-between">
-              <span className="text-slate-400">Blueprint:</span>
-              <span className="font-bold text-white uppercase">{payload.blueprintId}</span>
+            <div className="flex justify-between items-center gap-2">
+              <span className="text-slate-400 shrink-0">Blueprint:</span>
+              <span className="font-bold text-white text-right text-xs truncate">{template?.name || payload.blueprintId}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Plan Seleccionado:</span>
-              <span className="font-black text-emerald-400">{plan.name}</span>
+              <span className="font-black text-emerald-400">{planName}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Admin Email:</span>

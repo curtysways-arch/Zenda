@@ -116,9 +116,6 @@ export async function getDelegatedSession(): Promise<{
 export async function getEffectiveAdminSession() {
     const session = await getServerSession(authOptions);
     const user = session?.user as any;
-    if (user?.negocioId) {
-        return session;
-    }
 
     const delegated = await getDelegatedSession();
     if (delegated.isValid && delegated.payload) {

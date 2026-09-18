@@ -31,7 +31,19 @@ import {
   Instagram,
   Facebook,
   Trophy,
-  User
+  User,
+  ShoppingBag,
+  Tag,
+  Gift,
+  Percent,
+  Copy,
+  CheckCheck,
+  Flame,
+  Package,
+  ExternalLink,
+  Search,
+  SlidersHorizontal,
+  Heart
 } from 'lucide-react';
 import MapSelectionModal from '@/components/public/MapSelectionModal';
 import CoverageMapPublic from '@/components/public/CoverageMapPublic';
@@ -39,6 +51,8 @@ import PublicMobileNav from '@/components/public/PublicMobileNav';
 import PhoneInput from '@/components/ui/PhoneInput';
 import { isPointInPolygon } from '@/lib/geoUtils';
 import UniversalServiceRequestModal from '@/components/public/UniversalServiceRequestModal';
+import { CartProvider, useCart } from '@/core/context/CartContext';
+import CustomerCartDrawer from '@/components/public/CustomerCartDrawer';
 
 interface ShoeCareLandingProps {
   negocio: any;
@@ -127,7 +141,16 @@ const FAQS = [
   { q: '¿Toman fotos del proceso?', a: 'Sí, fotografiamos tus zapatos al recibirlos y al finalizar para enviarte el estado Antes/Después.' }
 ];
 
-export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonalizadas = [] }: ShoeCareLandingProps) {
+export default function ShoeCareLanding(props: ShoeCareLandingProps) {
+  const defaultDeliveryCost = Number((props.negocio?.configuracion as any)?.costoEnvio) || 2.00;
+  return (
+    <CartProvider businessId={props.negocio?.id || 'sneaker-wash-id'} defaultDeliveryCost={defaultDeliveryCost}>
+      <ShoeCareLandingInner {...props} />
+    </CartProvider>
+  );
+}
+
+function ShoeCareLandingInner({ negocio, reviews = [], paginasPersonalizadas = [] }: ShoeCareLandingProps) {
   const [isMounted, setIsMounted] = useState(false);
   // Páginas: inicialmente las del servidor (pueden ser vacías si Prisma falla), se recargan desde API pública al montar
   const [paginas, setPaginas] = useState<any[]>(paginasPersonalizadas);
@@ -146,6 +169,27 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
   const [lookupStep, setLookupStep] = useState<'PHONE' | 'OTP' | 'ORDERS'>('PHONE');
   const [otpCode, setOtpCode] = useState('');
 
+  // Carrito de compras integrado (E-Commerce Store Phase)
+  const { addToCart, totalItemsCount, isCartOpen, setIsCartOpen, getItemQuantity } = useCart();
+  const [productSearchQuery, setProductSearchQuery] = useState('');
+  const [favorites, setFavorites] = useState<Record<string, boolean>>({});
+
+  const toggleFavorite = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFavorites(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  // Estado para Tienda de Productos y Promociones
+  const [dbProducts, setDbProducts] = useState<any[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [dbPromotions, setDbPromotions] = useState<any[]>([]);
+  const [loadingPromotions, setLoadingPromotions] = useState(false);
+  const [selectedProductDetail, setSelectedProductDetail] = useState<any | null>(null);
+  const [selectedPromotionDetail, setSelectedPromotionDetail] = useState<any | null>(null);
+  const [promoQty, setPromoQty] = useState<number>(1);
+  const [copiedPromoCode, setCopiedPromoCode] = useState<string | null>(null);
+  const [productCategoryFilter, setProductCategoryFilter] = useState<string>('TODOS');
+
   // Montar y cargar páginas desde API pública si el servidor no las entregó
   useEffect(() => {
     setIsMounted(true);
@@ -158,6 +202,26 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
           }
         })
         .catch(() => {});
+
+      // Cargar productos de la tienda
+      setLoadingProducts(true);
+      fetch(`/api/shoe-care/inventory?businessId=${negocio.id}`)
+        .then(r => r.ok ? r.json() : [])
+        .then(data => {
+          if (Array.isArray(data)) setDbProducts(data);
+        })
+        .catch(() => {})
+        .finally(() => setLoadingProducts(false));
+
+      // Cargar promociones activas
+      setLoadingPromotions(true);
+      fetch(`/api/shoe-care/promotions?negocioId=${negocio.id}`)
+        .then(r => r.ok ? r.json() : [])
+        .then(data => {
+          if (Array.isArray(data)) setDbPromotions(data);
+        })
+        .catch(() => {})
+        .finally(() => setLoadingPromotions(false));
     }
 
     // Detectar si el usuario viene de la lista de servicios con ?service=...
@@ -305,6 +369,305 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
       }))
     : SERVICIOS_CATALOGO;
 
+  // Promociones canónicas de alta conversión con compra directa al carrito (idéntico al módulo de tienda)
+  const CANONICAL_PROMOTIONS = [
+    {
+      id: 'promo-combo-sneakers',
+      codigo: 'COMBOSNEAKERNY',
+      titulo: 'Combo Sneakers Court + Gorra NY',
+      descripcion: 'Pack Streetwear Calzado + Accesorio: Sneakers Urban Court Low + Gorra NY Vintage Fitted.',
+      badge: 'COMBO 2x1',
+      precioPromo: 59.90,
+      precioAnterior: 104.40,
+      imagenUrl: 'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=600&q=80',
+      porcentajeReservado: 85,
+      disponibilidadTexto: 'Quedan pocas unidades',
+      color: 'from-purple-600 via-indigo-600 to-pink-600',
+      tagColor: 'bg-purple-100 text-purple-700',
+      incluye: [
+        'Sneakers Urban Court Low edición especial',
+        'Gorra NY Vintage Fitted estructurada con bordado 3D',
+        'Caja protectora de colección + stickers exclusivos'
+      ],
+      caracteristicas: [
+        'Ahorro directo de $44.50 USD en el paquete',
+        'Garantía de originalidad y satisfacción 100%',
+        'Entrega inmediata a domicilio o retiro en taller'
+      ]
+    },
+    {
+      id: 'promo-gorra-fitted',
+      codigo: 'GORRANYFITTED',
+      titulo: 'Gorra NY Fitted Streetwear',
+      descripcion: 'El accesorio perfecto para tus sneakers ahora con descuento exclusivo por compra en línea.',
+      badge: 'TOP VENTA',
+      precioPromo: 16.90,
+      precioAnterior: 24.50,
+      imagenUrl: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80',
+      porcentajeReservado: 90,
+      disponibilidadTexto: 'Quedan pocas unidades',
+      color: 'from-amber-600 via-orange-600 to-rose-600',
+      tagColor: 'bg-amber-100 text-amber-700',
+      incluye: [
+        'Gorra New York Fitted estructurada 100% algodón',
+        'Bordado frontal en relieve de alta definición',
+        'Visera rígida curva pre-formada con ajuste ergonómico'
+      ],
+      caracteristicas: [
+        '31% de descuento por tiempo limitado',
+        'Material transpirable con banda absorbente interna',
+        'Ideal para combinar con cualquier sneaker'
+      ]
+    },
+    {
+      id: 'promo-pack-limpieza',
+      codigo: 'PACKCAREPRO',
+      titulo: 'Kit Completo Sneaker Care Pro',
+      descripcion: 'Espuma activa + Impermeabilizante nano + Cepillo suave de cerdas naturales con 35% de ahorro.',
+      badge: 'AHORRA 35%',
+      precioPromo: 24.90,
+      precioAnterior: 38.50,
+      imagenUrl: 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=600&q=80',
+      porcentajeReservado: 75,
+      disponibilidadTexto: 'Alta demanda hoy',
+      color: 'from-emerald-600 via-teal-600 to-cyan-600',
+      tagColor: 'bg-emerald-100 text-emerald-700',
+      incluye: [
+        '1x Espuma Limpiadora Bubble Clean (250ml)',
+        '1x Impermeabilizante Nano Protector (200ml)',
+        '1x Cepillo de Cerdas Suaves de Cerdo natural',
+        '1x Toalla de Microfibra de secado rápido'
+      ],
+      caracteristicas: [
+        'Kit todo en uno para el cuidado completo de hasta 30 pares',
+        'Fórmula segura para cuero, lona, nobuk, gamuza y malla',
+        'Protección invisible que repele agua, manchas y líquidos'
+      ]
+    }
+  ];
+
+  // Productos canónicos profesionales de Sneaker Care
+  const CANONICAL_PRODUCTS = [
+    {
+      id: 'prod-foam-cleaner',
+      nombre: 'Espuma Limpiadora Bubble Clean (250ml)',
+      descripcion: 'Fórmula activa de limpieza instantánea y secado ultra rápido. Segura en malla, cuero, lona y sintéticos.',
+      precio: 12.50,
+      categoria: { nombre: 'Limpieza' },
+      imagenUrl: 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=500&q=80',
+      stock: 25,
+      caracteristicas: ['Efecto espuma activa sin sumergir en agua', 'Protege el color original de los sneakers', 'Incluye aplicador ergonómico'],
+      isCanonical: true
+    },
+    {
+      id: 'prod-nano-protect',
+      nombre: 'Impermeabilizante Nano Protector (200ml)',
+      descripcion: 'Capa molecular invisible que repele agua, lluvia, café, salsas y suciedad extrema hasta por 4 semanas.',
+      precio: 14.00,
+      categoria: { nombre: 'Protección' },
+      imagenUrl: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500&q=80',
+      stock: 18,
+      caracteristicas: ['Fórmula nanotecnológica transpirable', 'Ideal para gamuza, nobuk, lona y cuero', 'No altera la textura ni el tono'],
+      isCanonical: true
+    },
+    {
+      id: 'prod-soft-brush',
+      nombre: 'Cepillo de Cerdas Suaves de Cerdo',
+      descripcion: 'Cerdas naturales extra suaves pensadas para limpiar telas premium, gamuza y nobuk sin raspar ni deshilachar.',
+      precio: 6.50,
+      categoria: { nombre: 'Accesorios' },
+      imagenUrl: 'https://images.unsplash.com/photo-1582588678413-dbf45f4823e9?w=500&q=80',
+      stock: 30,
+      caracteristicas: ['Mango de madera ergonómico barnizado', 'Cerdas 100% naturales libres de estática', 'Larga vida útil'],
+      isCanonical: true
+    },
+    {
+      id: 'prod-laces-pack',
+      nombre: 'Cordones Premium Reflectivos 3M (Par)',
+      descripcion: 'Laces de alta densidad con filamentos reflectivos para máxima visibilidad nocturna y estilo sneakerhead.',
+      precio: 5.00,
+      categoria: { nombre: 'Estilo' },
+      imagenUrl: 'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=500&q=80',
+      stock: 40,
+      caracteristicas: ['Punteras transparentes reforzadas', 'Longitud universal 120cm', 'Resistentes al lavado'],
+      isCanonical: true
+    }
+  ];
+
+  // Consolidar Promociones con soporte para carrito y combos
+  const displayPromotions = useMemo(() => {
+    const list = [...(dbPromotions || [])];
+    const formattedDb = list.map((p: any) => {
+      // Helper para extraer lista de items si viene en descripción o meta
+      let incluyeList: string[] = [];
+      if (p.incluye && Array.isArray(p.incluye) && p.incluye.length > 0) {
+        incluyeList = p.incluye;
+      } else if (p.meta?.items && Array.isArray(p.meta.items)) {
+        incluyeList = p.meta.items;
+      } else if (p.meta?.comboProducts && Array.isArray(p.meta.comboProducts)) {
+        incluyeList = p.meta.comboProducts.map((cp: any) => cp.nombre || cp.title);
+      } else {
+        const titleLower = (p.titulo || '').toLowerCase();
+        if (titleLower.includes('court') || (titleLower.includes('sneaker') && titleLower.includes('gorra'))) {
+          incluyeList = [
+            'Sneakers Urban Court Low edición especial',
+            'Gorra NY Vintage Fitted estructurada con bordado 3D',
+            'Caja protectora de colección + stickers exclusivos'
+          ];
+        } else if (titleLower.includes('kit') || titleLower.includes('care pro') || titleLower.includes('limpieza')) {
+          incluyeList = [
+            '1x Espuma Limpiadora Bubble Clean (250ml)',
+            '1x Impermeabilizante Nano Protector (200ml)',
+            '1x Cepillo de Cerdas Suaves de Cerdo natural',
+            '1x Toalla de Microfibra de secado rápido'
+          ];
+        } else if (titleLower.includes('gorra')) {
+          incluyeList = [
+            'Gorra New York Fitted estructurada 100% algodón',
+            'Bordado frontal en relieve de alta definición',
+            'Visera rígida curva pre-formada con ajuste ergonómico'
+          ];
+        } else if (p.descripcion && p.descripcion.includes('+')) {
+          incluyeList = p.descripcion.split('+').map((s: string) => s.trim()).filter(Boolean);
+        } else {
+          incluyeList = [
+            'Artículo original con certificación de calidad',
+            'Empaque de protección especial incluido',
+            'Garantía de satisfacción BubbleWash'
+          ];
+        }
+      }
+
+      let beneficiosList: string[] = [];
+      if (p.caracteristicas && Array.isArray(p.caracteristicas) && p.caracteristicas.length > 0) {
+        beneficiosList = p.caracteristicas;
+      } else {
+        const titleLower = (p.titulo || '').toLowerCase();
+        if (titleLower.includes('court') || titleLower.includes('sneaker')) {
+          beneficiosList = [
+            'Ahorro directo garantizado frente al precio de lista',
+            'Materiales premium de alta resistencia y durabilidad',
+            'Envío a domicilio o retiro inmediato en taller'
+          ];
+        } else if (titleLower.includes('kit') || titleLower.includes('care pro') || titleLower.includes('limpieza')) {
+          beneficiosList = [
+            'Rinde para el cuidado y protección de hasta 30 pares',
+            'Fórmula segura para cuero, lona, nobuk, gamuza y malla',
+            'Repele agua, manchas y líquidos por hasta 4 semanas'
+          ];
+        } else if (titleLower.includes('gorra')) {
+          beneficiosList = [
+            'Descuento exclusivo por tiempo limitado',
+            'Banda absorbente interna y diseño transpirable',
+            'Combinación perfecta para tus mejores sneakers'
+          ];
+        } else {
+          beneficiosList = [
+            'Oferta por tiempo limitado sujeta a disponibilidad',
+            'Garantía de satisfacción y entrega inmediata'
+          ];
+        }
+      }
+
+      return {
+        id: p.id,
+        codigo: p.codigo,
+        valor: p.valor,
+        tipo: p.tipo || 'PORCENTAJE',
+        titulo: p.titulo || p.descripcion || `Cupón ${p.codigo}`,
+        descripcion: p.descripcion || (p.tipo === 'PORCENTAJE' 
+          ? `Obtén un ${p.valor}% de descuento en tu orden con este cupón exclusivo.`
+          : `Ahorra $${p.valor} USD en tu servicio con este cupón.`),
+        badge: p.badge || (p.tipo === 'PORCENTAJE' ? `${p.valor}% OFF` : (p.tipoPromo === 'COMBO' ? 'COMBO 2x1' : 'OFERTA')),
+        precioPromo: Number(p.precioPromo || (p.tipo === 'FIJO' ? p.valor : 19.99)),
+        precioAnterior: p.precioAnterior ? Number(p.precioAnterior) : 29.99,
+        porcentajeReservado: p.porcentajeReservado || 80,
+        disponibilidadTexto: p.disponibilidadTexto || 'Quedan pocas unidades',
+        imagenUrl: p.imagenUrl || 'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=600&q=80',
+        color: p.color || 'from-purple-700 via-indigo-700 to-pink-700',
+        tagColor: p.tagColor || 'bg-purple-100 text-purple-700',
+        incluye: incluyeList,
+        caracteristicas: beneficiosList
+      };
+    });
+
+    const existingCodes = new Set(formattedDb.map(d => d.codigo));
+    const complementary = CANONICAL_PROMOTIONS.filter(c => !existingCodes.has(c.codigo));
+    return [...formattedDb, ...complementary].slice(0, 4);
+  }, [dbPromotions]);
+
+  // Consolidar Productos con búsqueda de texto y filtrado de categorías
+  const displayProducts = useMemo(() => {
+    const list = [...(dbProducts || [])];
+    const formattedDb = list.map((p: any) => ({
+      id: p.id,
+      nombre: p.nombre,
+      descripcion: p.descripcion || 'Producto profesional para el cuidado y mantenimiento de calzado.',
+      precio: Number(p.precio || 0),
+      categoria: p.categoria || { nombre: 'General' },
+      imagenUrl: p.imagenUrl || p.imagen || 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=500&q=80',
+      stock: p.stock ?? 10,
+      rating: 4.8,
+      caracteristicas: p.extraInfo?.caracteristicas || ['Producto de calidad garantizada', 'Apto para todo tipo de calzado'],
+      isCanonical: false
+    }));
+
+    const existingNames = new Set(formattedDb.map(p => p.nombre.toLowerCase().trim()));
+    const complementary = CANONICAL_PRODUCTS.filter(c => !existingNames.has(c.nombre.toLowerCase().trim())).map(c => ({
+      ...c,
+      rating: c.id.includes('foam') ? 4.9 : 4.8
+    }));
+    let merged = [...formattedDb, ...complementary];
+
+    // Filtro por categoría
+    if (productCategoryFilter !== 'TODOS') {
+      merged = merged.filter(p => (p.categoria?.nombre || '').toUpperCase() === productCategoryFilter.toUpperCase());
+    }
+
+    // Filtro por búsqueda de texto
+    if (productSearchQuery.trim()) {
+      const q = productSearchQuery.toLowerCase().trim();
+      merged = merged.filter(p => 
+        p.nombre.toLowerCase().includes(q) || 
+        (p.descripcion && p.descripcion.toLowerCase().includes(q)) ||
+        (p.categoria?.nombre && p.categoria.nombre.toLowerCase().includes(q))
+      );
+    }
+
+    return merged;
+  }, [dbProducts, productCategoryFilter, productSearchQuery]);
+
+  const handleCopyPromo = (code: string) => {
+    if (typeof navigator !== 'undefined') {
+      navigator.clipboard.writeText(code);
+      setCopiedPromoCode(code);
+      setTimeout(() => setCopiedPromoCode(null), 2500);
+    }
+  };
+
+  const handleApplyPromoToOrder = (promo: any) => {
+    const code = promo.codigo || promo.id;
+    setForm(prev => ({
+      ...prev,
+      notas: prev.notas ? `${prev.notas} | Cupón aplicado: ${code}` : `Cupón aplicado: ${code}`
+    }));
+    setShowPickupModal(true);
+  };
+
+  const handleBuyProductWhatsApp = (prod: any) => {
+    const phone = formatWhatsAppPhone(whatsappNum || '593968118444');
+    const msg = encodeURIComponent(`¡Hola ${nombreNegocio}! 👋 Me interesa comprar el producto:\n\n🛍️ *${prod.nombre}*\n💰 Precio: $${Number(prod.precio).toFixed(2)} USD\n\n¿Tienen disponibilidad y cómo coordinamos el retiro o envío?`);
+    window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+  };
+
+  const handleAddProductToOrder = (prod: any) => {
+    setForm(prev => ({
+      ...prev,
+      notas: prev.notas ? `${prev.notas} | + Incluir producto de tienda: ${prod.nombre} ($${Number(prod.precio).toFixed(2)})` : `+ Incluir producto de tienda: ${prod.nombre} ($${Number(prod.precio).toFixed(2)})`
+    }));
+    setShowPickupModal(true);
+  };
+
   const getFormattedRetiroDate = () => {
     const today = new Date();
     let targetDate = new Date(today);
@@ -399,12 +762,64 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
           </span>
         </div>
 
-        <button
-          onClick={() => setShowPickupModal(true)}
-          className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs rounded-xl shadow-md shadow-purple-600/20 transition-all cursor-pointer"
-        >
-          Solicitar al local
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Botón Carrito de Compras (E-Commerce Store) */}
+          <button
+            type="button"
+            onClick={() => setIsCartOpen(true)}
+            className="relative px-3.5 py-2.5 rounded-xl font-black text-xs text-purple-950 bg-purple-100/80 hover:bg-purple-200/80 border border-purple-200 transition-all flex items-center gap-2 cursor-pointer shadow-xs"
+          >
+            <ShoppingBag className="w-4 h-4 text-purple-700" />
+            <span className="hidden sm:inline font-extrabold text-purple-900">Carrito</span>
+            {totalItemsCount > 0 && (
+              <span className="size-5 rounded-full bg-purple-600 text-white font-black text-[10px] flex items-center justify-center shadow-xs">
+                {totalItemsCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setShowPickupModal(true)}
+            className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs rounded-xl shadow-md shadow-purple-600/20 transition-all cursor-pointer"
+          >
+            Solicitar al local
+          </button>
+        </div>
+      </div>
+
+      {/* 🧭 BARRA DE NAVEGACIÓN RÁPIDA POR SECCIONES (Pills / Chips) */}
+      <div className="sticky top-2 z-30 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-3 pointer-events-none">
+        <div className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto py-1.5 px-2 bg-white/85 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-md shadow-slate-900/5 no-scrollbar">
+          <a
+            href="#servicios"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 hover:text-purple-700 hover:bg-purple-50 transition-colors whitespace-nowrap"
+          >
+            <Footprints size={14} className="text-purple-600" />
+            Servicios
+          </a>
+          <a
+            href="#promociones"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 hover:text-purple-700 hover:bg-purple-50 transition-colors whitespace-nowrap"
+          >
+            <Flame size={14} className="text-pink-500" />
+            Promociones
+            <span className="px-1.5 py-0.2 bg-pink-100 text-pink-700 text-[10px] font-black rounded-full">Top</span>
+          </a>
+          <a
+            href="#productos"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 hover:text-purple-700 hover:bg-purple-50 transition-colors whitespace-nowrap"
+          >
+            <ShoppingBag size={14} className="text-indigo-600" />
+            Tienda
+          </a>
+          <a
+            href="#como-funciona"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 hover:text-purple-700 hover:bg-purple-50 transition-colors whitespace-nowrap"
+          >
+            <Clock size={14} className="text-emerald-600" />
+            Cómo funciona
+          </a>
+        </div>
       </div>
 
       {/* 🚀 HERO SECTION */}
@@ -649,6 +1064,325 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
           <Info size={14} className="text-purple-600" />
           El precio final puede variar según el estado del calzado.
         </p>
+      </section>
+
+      {/* ── 3. SECCIÓN DE PROMOCIONES & COMBOS (DISEÑO EXACTO A LA TIENDA DE LA REFERENCIA) ── */}
+      {displayPromotions.length > 0 && (
+        <section id="promociones" className="max-w-7xl mx-auto px-4 sm:px-6 mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-cyan-50 border border-cyan-200/80 text-cyan-700 font-extrabold text-[10px] uppercase tracking-wider shadow-2xs flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-cyan-500" /> OFERTAS DE TEMPORADA
+              </span>
+              <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-tight">
+                Promociones & Combos
+              </h3>
+            </div>
+            <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full flex items-center gap-1 border border-slate-200/60">
+              <Clock className="w-3 h-3 text-slate-400" /> Tiempo Limitado
+            </span>
+          </div>
+
+          {/* Carrusel Horizontal de Promociones (Idéntico a la Captura) */}
+          <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
+            {displayPromotions.map((promo: any) => (
+              <div
+                key={promo.id}
+                onClick={() => {
+                  setPromoQty(1);
+                  setSelectedPromotionDetail(promo);
+                }}
+                className="min-w-[260px] max-w-[280px] bg-white border border-slate-200/80 rounded-3xl p-3 shadow-2xs space-y-2.5 shrink-0 flex flex-col justify-between group hover:shadow-xl hover:border-cyan-200 transition-all duration-300 cursor-pointer relative overflow-hidden text-left"
+              >
+                <div className="space-y-2">
+                  {/* Foto de la Promo con Badges Limpios */}
+                  <div className="relative h-32 w-full rounded-2xl overflow-hidden bg-slate-100">
+                    <img
+                      src={promo.imagenUrl}
+                      alt={promo.titulo}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-xl bg-slate-950/85 text-white font-extrabold text-[9px] uppercase tracking-wider backdrop-blur-md shadow-xs">
+                      {promo.badge || 'PROMO'}
+                    </span>
+                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded-lg bg-white/90 text-slate-700 font-bold text-[9px] backdrop-blur-md border border-slate-200/60 shadow-2xs">
+                      ⏱️ 12h restantes
+                    </span>
+                  </div>
+
+                  <div>
+                    <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight line-clamp-1 group-hover:text-cyan-600 transition-colors">
+                      {promo.titulo}
+                    </h4>
+                    <p className="text-slate-500 text-[10px] font-medium leading-snug line-clamp-2 mt-0.5">
+                      {promo.descripcion}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Micro Barra de Disponibilidad (Idéntica a la Captura) */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[9px] font-bold">
+                    <span className="text-cyan-600">⚡ {promo.disponibilidadTexto || 'Quedan pocas unidades'}</span>
+                    <span className="text-slate-400">{promo.porcentajeReservado || 85}% reservado</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-cyan-500 rounded-full"
+                      style={{ width: `${promo.porcentajeReservado || 85}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Precios & Botón "PEDIR PROMO" */}
+                <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                  <div>
+                    <span className="text-sm sm:text-base font-black text-slate-900 block leading-tight">
+                      ${Number(promo.precioPromo || promo.valor || 19.99).toFixed(2)}
+                    </span>
+                    {promo.precioAnterior && (
+                      <span className="text-[10px] text-slate-400 line-through font-bold">
+                        ${Number(promo.precioAnterior).toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPromoQty(1);
+                      setSelectedPromotionDetail(promo);
+                    }}
+                    className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-[10px] uppercase rounded-xl shadow-xs cursor-pointer transition-all active:scale-95 flex items-center gap-1 shrink-0"
+                  >
+                    <ShoppingBag className="w-3 h-3 text-cyan-400" />
+                    <span>PEDIR PROMO</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── 4. BUSCADOR & BOTÓN FILTRAR & CATEGORÍAS (EXACTO A LA CAPTURA) ── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-4 space-y-2">
+        {/* Buscador + Botón Filtrar */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              value={productSearchQuery}
+              onChange={(e) => setProductSearchQuery(e.target.value)}
+              placeholder="Buscar por producto, descripción o SKU..."
+              className="w-full pl-10 pr-9 py-2.5 rounded-2xl bg-slate-100/80 border border-transparent text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-cyan-300 shadow-2xs transition-all font-medium"
+            />
+            {productSearchQuery && (
+              <button
+                type="button"
+                onClick={() => setProductSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setProductCategoryFilter('TODOS');
+              setProductSearchQuery('');
+            }}
+            className="px-3.5 py-2.5 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 font-extrabold text-xs rounded-2xl border border-cyan-100 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-2xs"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5 text-cyan-600" />
+            <span>Filtrar</span>
+          </button>
+        </div>
+
+        {/* Categorías Pills Horizontal Scroll con Iconos y Contadores */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
+          <button
+            type="button"
+            onClick={() => setProductCategoryFilter('TODOS')}
+            className={`px-3.5 py-2 rounded-2xl font-black shrink-0 transition-all flex items-center gap-1.5 cursor-pointer text-[11px] ${
+              productCategoryFilter === 'TODOS'
+                ? 'bg-cyan-500 text-white shadow-md'
+                : 'bg-white text-slate-700 border border-slate-100 hover:bg-slate-50'
+            }`}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span>Todos ({displayProducts.length})</span>
+          </button>
+
+          {[
+            { id: 'LIMPIEZA', nombre: 'Limpieza', icon: Sparkles },
+            { id: 'PROTECCIÓN', nombre: 'Protección', icon: ShieldCheck },
+            { id: 'ACCESORIOS', nombre: 'Accesorios', icon: Package },
+            { id: 'ESTILO', nombre: 'Estilo & Sneakers', icon: Footprints }
+          ].map((cat) => {
+            const isSelected = productCategoryFilter.toUpperCase() === cat.id.toUpperCase();
+            const count = displayProducts.filter(p => (p.categoria?.nombre || '').toUpperCase() === cat.id.toUpperCase()).length;
+            const CatIcon = cat.icon;
+
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setProductCategoryFilter(isSelected ? 'TODOS' : cat.id)}
+                className={`px-3.5 py-2 rounded-2xl font-extrabold shrink-0 transition-all flex items-center gap-1.5 cursor-pointer text-[11px] ${
+                  isSelected
+                    ? 'bg-cyan-500 text-white shadow-md'
+                    : 'bg-white text-slate-700 border border-slate-100 hover:bg-slate-50'
+                }`}
+              >
+                <CatIcon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
+                <span>{cat.nombre} {count > 0 ? `(${count})` : ''}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── 5. SECCIÓN PRODUCTOS DESTACADOS (TARJETAS EXACTAS A LA CAPTURA) ── */}
+      <section id="productos" className="max-w-7xl mx-auto px-4 sm:px-6 mt-4 mb-16">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm sm:text-base font-black text-slate-900 flex items-center gap-1.5 tracking-tight">
+            <Sparkles className="w-4 h-4 text-cyan-500" />
+            <span>Productos destacados</span>
+          </h2>
+          <button
+            type="button"
+            onClick={() => {
+              setProductCategoryFilter('TODOS');
+              setProductSearchQuery('');
+            }}
+            className="text-[11px] font-extrabold text-cyan-600 hover:text-cyan-700 cursor-pointer"
+          >
+            Ver todo
+          </button>
+        </div>
+
+        {displayProducts.length === 0 ? (
+          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80 shadow-2xs max-w-md mx-auto my-8">
+            <span className="text-5xl block mb-3">🔎</span>
+            <h3 className="font-extrabold text-slate-900 text-base">No se encontraron productos</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Intenta con otra palabra clave o limpia el filtro de categorías.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setProductSearchQuery('');
+                setProductCategoryFilter('TODOS');
+              }}
+              className="mt-4 px-4 py-2 rounded-xl text-xs font-bold text-cyan-600 bg-cyan-50 border border-cyan-200 cursor-pointer"
+            >
+              Restablecer Filtros
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+            {displayProducts.map((prod: any) => {
+              const inCartQty = getItemQuantity(prod.id);
+              const isFav = !!favorites[prod.id];
+              const isOutOfStock = prod.stock !== undefined && prod.stock <= 0;
+
+              return (
+                <div
+                  key={prod.id}
+                  onClick={() => setSelectedProductDetail(prod)}
+                  className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden flex flex-col justify-between hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer text-left shadow-2xs"
+                >
+                  {/* Imagen del Producto (Relación de Aspecto 4/5 Exacta a la Captura) */}
+                  <div className="relative w-full aspect-[4/5] bg-slate-100 overflow-hidden flex items-center justify-center p-0">
+                    <img
+                      src={prod.imagenUrl}
+                      alt={prod.nombre}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+
+                    {/* Badge Superior Izquierda: NUEVO / AGOTADO */}
+                    <div className="absolute top-3 left-3 z-20 flex flex-col gap-1">
+                      {isOutOfStock ? (
+                        <span className="px-2.5 py-1 rounded-xl text-[9px] font-black bg-rose-600 text-white shadow-xs uppercase tracking-wider">
+                          Agotado
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 rounded-xl text-[9px] font-black bg-slate-950 text-white shadow-xs uppercase tracking-wider">
+                          NUEVO
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Botón Favorito: Corazón Superior Derecha */}
+                    <button
+                      type="button"
+                      onClick={(e) => toggleFavorite(prod.id, e)}
+                      className="absolute top-3 right-3 z-20 size-8 rounded-full bg-slate-950/40 hover:bg-slate-950/70 text-white flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer"
+                    >
+                      <Heart className={`w-4 h-4 transition-colors ${isFav ? 'fill-rose-500 text-rose-500' : 'text-white'}`} />
+                    </button>
+
+                    {/* Badge Flotante Inferior: "1 en carrito" (Idéntico a la Captura) */}
+                    {inCartQty > 0 && (
+                      <span className="absolute bottom-3 right-3 z-20 px-2.5 py-1 rounded-full text-[10px] font-black text-white shadow-md bg-cyan-500 animate-pulse">
+                        {inCartQty} en carrito
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Info del Producto: Nombre, Precio & Rating */}
+                  <div className="p-3.5 sm:p-4 flex-1 flex flex-col justify-between space-y-2.5">
+                    <div>
+                      <h3 className="font-extrabold text-slate-900 text-xs sm:text-sm line-clamp-1 leading-snug group-hover:text-cyan-600 transition-colors">
+                        {prod.nombre}
+                      </h3>
+                    </div>
+
+                    {/* Precio & Rating */}
+                    <div className="pt-1 flex items-center justify-between gap-2">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-sm sm:text-base font-black text-slate-900">
+                          ${Number(prod.precio || 0).toFixed(2)}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1 text-[11px] font-black text-slate-500 shrink-0">
+                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        <span>{prod.rating || '4.8'}</span>
+                      </div>
+                    </div>
+
+                    {/* Botón Añadir al Carrito de la Tienda */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart({
+                          id: prod.id,
+                          nombre: prod.nombre,
+                          precio: Number(prod.precio || 0),
+                          imagenUrl: prod.imagenUrl,
+                          descripcion: prod.descripcion,
+                          categoriaId: prod.categoria?.id || prod.categoriaId
+                        }, 1);
+                        setIsCartOpen(true);
+                      }}
+                      className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-1"
+                    >
+                      <ShoppingBag size={13} className="text-cyan-400" />
+                      Agregar al carrito
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* 🌟 SECTION 4: ANTES Y DESPUÉS & ELEGIRNOS & RESEÑAS (DINÁMICO DESDE PÁGINAS DEL ADMIN Y RATINGS) */}
@@ -1001,11 +1735,15 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
         </div>
       )}
 
-      {/* 📦 MODAL DE SOLICITUD DE RETIRO / SERVICIO MULTI-ARTÍCULOS */}
+      {/* 📦 MODAL DE SOLICITUD DE RETIRO / SERVICIO MULTI-ARTÍCULOS (WIZARD 4 PASOS) */}
       <UniversalServiceRequestModal
         isOpen={showPickupModal}
-        onClose={() => setShowPickupModal(false)}
+        onClose={() => {
+          setShowPickupModal(false);
+          setForm(prev => ({ ...prev, notas: '' }));
+        }}
         negocio={negocio}
+        initialServiceName={form.notas?.startsWith('Servicio solicitado:') ? form.notas.replace('Servicio solicitado: ', '').trim() : undefined}
       />
 
       {/* 🌟 MODAL DETALLE DE SERVICIO */}
@@ -1255,6 +1993,271 @@ export default function ShoeCareLanding({ negocio, reviews = [], paginasPersonal
         initialLat={coords.lat}
         initialLng={coords.lng}
         onConfirmLocation={handleConfirmLocationOnMap}
+      />
+
+      {/* 🛍️ MODAL INTERACTIVO DETALLE DE PRODUCTO */}
+      {selectedProductDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-100 flex flex-col max-h-[90vh]">
+            <div className="relative h-64 sm:h-72 w-full bg-slate-100 shrink-0">
+              <img
+                src={selectedProductDetail.imagenUrl || selectedProductDetail.imagen || 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=600&q=80'}
+                alt={selectedProductDetail.nombre}
+                className="w-full h-full object-cover"
+              />
+              <button
+                onClick={() => setSelectedProductDetail(null)}
+                className="absolute top-4 right-4 w-9 h-9 bg-white/90 hover:bg-white text-slate-700 rounded-full flex items-center justify-center shadow-md transition-all cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+              <div className="absolute bottom-4 left-4">
+                <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-purple-600 text-white shadow-md">
+                  {selectedProductDetail.categoria?.nombre || 'Sneaker Care'}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4">
+              <div>
+                <h3 className="text-xl font-black text-slate-900 leading-snug">
+                  {selectedProductDetail.nombre}
+                </h3>
+                <div className="flex items-baseline gap-2 mt-2">
+                  <span className="text-3xl font-black text-purple-600 font-mono">
+                    ${Number(selectedProductDetail.precio).toFixed(2)}
+                  </span>
+                  <span className="text-xs font-bold text-slate-500">USD</span>
+                </div>
+              </div>
+
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {selectedProductDetail.descripcion}
+              </p>
+
+              {selectedProductDetail.caracteristicas && selectedProductDetail.caracteristicas.length > 0 && (
+                <div className="space-y-2 pt-3 border-t border-slate-100">
+                  <span className="text-xs font-black text-slate-800 uppercase tracking-wider">Beneficios clave</span>
+                  <ul className="space-y-1.5">
+                    {selectedProductDetail.caracteristicas.map((item: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2 text-xs text-slate-600">
+                        <CheckCircle2 size={15} className="text-emerald-500 shrink-0 mt-0.5" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="pt-4 flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const prod = selectedProductDetail;
+                    setSelectedProductDetail(null);
+                    addToCart({
+                      id: prod.id,
+                      nombre: prod.nombre,
+                      precio: Number(prod.precio || 0),
+                      imagenUrl: prod.imagenUrl,
+                      descripcion: prod.descripcion,
+                      categoriaId: prod.categoria?.id || prod.categoriaId
+                    }, 1);
+                    setIsCartOpen(true);
+                  }}
+                  className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white font-black text-sm rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-98"
+                >
+                  <ShoppingBag size={18} className="text-cyan-400" />
+                  <span>Agregar al carrito</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🏷️ MODAL INTERACTIVO DETALLE DE PROMOCIÓN / COMBO */}
+      {selectedPromotionDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-100 flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
+            {/* Foto de la Promo con Badges */}
+            <div className="relative h-60 sm:h-72 w-full bg-slate-100 shrink-0">
+              <img
+                src={selectedPromotionDetail.imagenUrl}
+                alt={selectedPromotionDetail.titulo}
+                className="w-full h-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => setSelectedPromotionDetail(null)}
+                className="absolute top-4 right-4 w-9 h-9 bg-white/90 hover:bg-white text-slate-700 rounded-full flex items-center justify-center shadow-md transition-all cursor-pointer z-10"
+              >
+                <X size={18} />
+              </button>
+
+              <div className="absolute top-4 left-4 flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-slate-950/85 text-white shadow-md backdrop-blur-md">
+                  {selectedPromotionDetail.badge || 'COMBO 2x1'}
+                </span>
+                <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/90 text-slate-800 shadow-sm border border-slate-200/60 backdrop-blur-md">
+                  ⏱️ 12h restantes
+                </span>
+              </div>
+
+              <div className="absolute bottom-4 left-4">
+                <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-cyan-600 text-white shadow-md flex items-center gap-1.5">
+                  <Sparkles size={13} />
+                  Promoción Especial
+                </span>
+              </div>
+            </div>
+
+            {/* Contenido con Scroll */}
+            <div className="p-6 overflow-y-auto space-y-4">
+              <div>
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-snug">
+                  {selectedPromotionDetail.titulo}
+                </h3>
+
+                <div className="flex items-baseline gap-3 mt-2 flex-wrap">
+                  <span className="text-3xl font-black text-slate-900 font-mono">
+                    ${Number(selectedPromotionDetail.precioPromo || selectedPromotionDetail.valor || 19.99).toFixed(2)}
+                  </span>
+                  <span className="text-xs font-bold text-slate-500">USD</span>
+
+                  {selectedPromotionDetail.precioAnterior && (
+                    <span className="text-sm font-bold text-slate-400 line-through">
+                      ${Number(selectedPromotionDetail.precioAnterior).toFixed(2)}
+                    </span>
+                  )}
+
+                  {selectedPromotionDetail.precioAnterior && Number(selectedPromotionDetail.precioAnterior) > Number(selectedPromotionDetail.precioPromo || selectedPromotionDetail.valor || 0) && (
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200">
+                      Ahorras ${(Number(selectedPromotionDetail.precioAnterior) - Number(selectedPromotionDetail.precioPromo || selectedPromotionDetail.valor)).toFixed(2)} USD
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Barra de Disponibilidad / Urgencia */}
+              <div className="bg-cyan-50/60 border border-cyan-100 rounded-2xl p-3 space-y-1.5">
+                <div className="flex items-center justify-between text-[11px] font-bold">
+                  <span className="text-cyan-700 flex items-center gap-1">
+                    <Flame size={14} className="text-cyan-600" />
+                    {selectedPromotionDetail.disponibilidadTexto || 'Quedan pocas unidades disponibles'}
+                  </span>
+                  <span className="text-slate-500">{selectedPromotionDetail.porcentajeReservado || 85}% reservado</span>
+                </div>
+                <div className="h-2 w-full bg-cyan-200/50 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-cyan-500 rounded-full transition-all duration-500"
+                    style={{ width: `${selectedPromotionDetail.porcentajeReservado || 85}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Descripción */}
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+                {selectedPromotionDetail.descripcion}
+              </p>
+
+              {/* Contenido que incluye el combo */}
+              {selectedPromotionDetail.incluye && selectedPromotionDetail.incluye.length > 0 && (
+                <div className="space-y-2.5 pt-2 border-t border-slate-100">
+                  <span className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <Package size={15} className="text-cyan-600" />
+                    ¿Qué incluye este combo?
+                  </span>
+                  <div className="space-y-1.5">
+                    {selectedPromotionDetail.incluye.map((item: string, idx: number) => (
+                      <div key={idx} className="flex items-start gap-2 text-xs text-slate-700 font-medium bg-slate-50 p-2 rounded-xl border border-slate-100">
+                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Beneficios & Garantía */}
+              {selectedPromotionDetail.caracteristicas && selectedPromotionDetail.caracteristicas.length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <span className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <ShieldCheck size={15} className="text-purple-600" />
+                    Beneficios & Garantía
+                  </span>
+                  <ul className="space-y-1">
+                    {selectedPromotionDetail.caracteristicas.map((item: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2 text-xs text-slate-600">
+                        <Check size={14} className="text-purple-600 shrink-0 mt-0.5" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Selector de Cantidad */}
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">Cantidad:</span>
+                <div className="flex items-center gap-3 bg-slate-100 rounded-2xl p-1 border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => setPromoQty(Math.max(1, promoQty - 1))}
+                    className="w-8 h-8 rounded-xl bg-white hover:bg-slate-200 text-slate-800 font-black flex items-center justify-center shadow-xs transition-all cursor-pointer"
+                  >
+                    -
+                  </button>
+                  <span className="w-6 text-center font-black text-sm text-slate-900 font-mono">
+                    {promoQty}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPromoQty(promoQty + 1)}
+                    className="w-8 h-8 rounded-xl bg-white hover:bg-slate-200 text-slate-800 font-black flex items-center justify-center shadow-xs transition-all cursor-pointer"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              {/* Botones de Acción */}
+              <div className="pt-3 flex flex-col sm:flex-row gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const promo = selectedPromotionDetail;
+                    setSelectedPromotionDetail(null);
+                    addToCart({
+                      id: promo.id,
+                      nombre: promo.titulo,
+                      precio: Number(promo.precioPromo || promo.valor || 19.99),
+                      imagenUrl: promo.imagenUrl,
+                      descripcion: promo.descripcion,
+                      categoriaId: 'promociones'
+                    }, promoQty);
+                    setIsCartOpen(true);
+                  }}
+                  className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-98"
+                >
+                  <ShoppingBag size={18} className="text-cyan-400" />
+                  <span>
+                    Agregar al Carrito • ${(Number(selectedPromotionDetail.precioPromo || selectedPromotionDetail.valor || 19.99) * promoQty).toFixed(2)}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🛒 DRAWER DE CHECKOUT Y CARRITO DE COMPRA (E-COMMERCE REAL) */}
+      <CustomerCartDrawer
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        primaryColor="#06b6d4"
+        slug={negocio?.slug || 'lavado'}
+        businessName={negocio?.nombre || 'BubbleWash'}
       />
 
       {/* 📱 BARRA DE NAVEGACIÓN INFERIOR DE LA PLATAFORMA */}

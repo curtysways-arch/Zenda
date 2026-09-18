@@ -172,13 +172,27 @@ export class BusinessMissionService {
     eventType: string,
     payload: any
   ) {
+    // 1. Resolver sinónimos de eventos de negocio para interoperabilidad universal
+    const matchingEventTypes = [eventType];
+    if (eventType === 'APPOINTMENT_COMPLETED' || eventType === 'BOOKING_COMPLETED') {
+      matchingEventTypes.push('APPOINTMENT_COMPLETED', 'BOOKING_COMPLETED');
+    } else if (eventType === 'RESERVATION_COMPLETED') {
+      matchingEventTypes.push('RESERVATION_COMPLETED', 'BOOKING_COMPLETED', 'APPOINTMENT_COMPLETED');
+    } else if (eventType === 'LAUNDRY_ORDER_COMPLETED') {
+      matchingEventTypes.push('LAUNDRY_ORDER_COMPLETED', 'ORDER_COMPLETED');
+    } else if (eventType === 'ORDER_COMPLETED') {
+      matchingEventTypes.push('ORDER_COMPLETED', 'PURCHASE_COMPLETED');
+    } else if (eventType === 'GYM_ATTENDANCE' || eventType === 'CHECKIN') {
+      matchingEventTypes.push('GYM_ATTENDANCE', 'CHECKIN', 'CLASS_ATTENDED');
+    }
+
     // Resolver misiones activas del negocio que escuchan este evento
     const activeMissions = await prisma.businessMission.findMany({
       where: {
         negocioId,
         status: 'ACTIVE',
         MissionDefinition: {
-          triggerEvent: eventType,
+          triggerEvent: { in: Array.from(new Set(matchingEventTypes)) },
           status: 'PUBLISHED',
         },
       },
@@ -195,14 +209,47 @@ export class BusinessMissionService {
       try {
         const def = bm.MissionDefinition;
 
-        // Evaluar condicionesExtra si existen (reutiliza ConditionEvaluator existente)
+        // 2. Evaluar condiciones estructuradas si existen
         if (def.condicionesExtra) {
           const { RuleCompiler, ConditionEvaluator } = await import('@/lib/growth/missionEngine');
           const compiled = RuleCompiler.compile(def.condicionesExtra);
           if (!ConditionEvaluator.evaluate(payload, compiled)) continue;
         }
 
+        // 3. Determinar incremento según tipo de agregación (COUNT | QUANTITY | AMOUNT)
+        const config = (def.config as any) || {};
+        const condExtra = (def.condicionesExtra as any) || {};
+        const aggregation = config.aggregation || condExtra.aggregation || 'COUNT';
+
+        let increment = 1;
+        if (aggregation === 'AMOUNT') {
+          const rawAmount = payload.monto !== undefined ? payload.monto : (payload.total !== undefined ? payload.total : 1);
+          increment = Math.max(1, Math.round(Number(rawAmount)));
+        } else if (aggregation === 'QUANTITY') {
+          const rawQty = payload.cantidad !== undefined ? payload.cantidad : (payload.itemsCount !== undefined ? payload.itemsCount : 1);
+          increment = Math.max(1, Math.round(Number(rawQty)));
+        } else {
+          increment = 1; // COUNT
+        }
+
+        let completionEventToPublish: any = null;
+        let businessRewardEventToPublish: any = null;
+
         await prisma.$transaction(async (tx) => {
+          // 4. Idempotencia a nivel de transacción: verificar si entityId ya impactó esta misión
+          if (payload.entityId) {
+            const alreadyProcessed = await tx.domainEvent.findFirst({
+              where: {
+                aggregate: 'BUSINESS_MISSION_PROGRESS',
+                aggregateId: `${bm.id}_${userId}_${payload.entityId}`
+              }
+            });
+            if (alreadyProcessed) {
+              console.log(`[BusinessMissionService] ℹ️ Entidad ${payload.entityId} ya procesada para misión ${bm.id}`);
+              return;
+            }
+          }
+
           // Buscar o crear progreso
           let progress = await tx.businessMissionProgress.findUnique({
             where: { businessMissionId_userId: { businessMissionId: bm.id, userId } },
@@ -222,7 +269,7 @@ export class BusinessMissionService {
 
           if (progress.estado === 'COMPLETADA' || progress.estado === 'RECOMPENSADA') return;
 
-          const nuevoProgreso = progress.progresoActual + 1;
+          const nuevoProgreso = progress.progresoActual + increment;
           const completada = nuevoProgreso >= def.cantidadMeta;
 
           await tx.businessMissionProgress.update({
@@ -233,6 +280,27 @@ export class BusinessMissionService {
               fechaCompletada: completada ? new Date() : null,
             },
           });
+
+          // Registrar en DomainEvent para trazabilidad e idempotencia
+          if (payload.entityId) {
+            await tx.domainEvent.create({
+              data: {
+                aggregate: 'BUSINESS_MISSION_PROGRESS',
+                aggregateId: `${bm.id}_${userId}_${payload.entityId}`,
+                eventType: completada ? 'MISSION_COMPLETED' : 'PROGRESS_INCREMENTED',
+                payload: {
+                  businessMissionId: bm.id,
+                  userId,
+                  entityId: payload.entityId,
+                  increment,
+                  nuevoProgreso,
+                  completada
+                },
+                status: 'PROCESSED',
+                processedAt: new Date()
+              }
+            });
+          }
 
           if (completada) {
             console.log(`[BusinessMissionService] 🎉 Misión completada: ${def.nombre} para usuario ${userId}`);
@@ -265,7 +333,10 @@ export class BusinessMissionService {
                 'USUARIO',
                 {
                   tipo: rc.rewardType,
-                  valor: rc,
+                  valor: {
+                    ...rc,
+                    negocioId: bm.negocioId,
+                  },
                 },
                 `Premio del negocio: ${def.nombre}`,
                 bm.id,
@@ -278,12 +349,12 @@ export class BusinessMissionService {
                 data: { recompensaDada: true, estado: 'RECOMPENSADA' },
               });
 
-              await publishDomainEvent('BUSINESS_MISSION', bm.id, 'BUSINESS_REWARD_GRANTED', {
+              businessRewardEventToPublish = {
                 userId,
                 negocioId,
                 missionDefinitionId: def.id,
                 rewardType: rc.rewardType,
-              });
+              };
             } else {
               await tx.businessMissionProgress.update({
                 where: { id: progress.id },
@@ -291,15 +362,23 @@ export class BusinessMissionService {
               });
             }
 
-            // 3. Emitir QUEST_COMPLETED al DomainEvent store
-            await publishDomainEvent('BUSINESS_MISSION', bm.id, 'QUEST_COMPLETED', {
+            // 3. Preparar evento QUEST_COMPLETED para emisión posterior a la transacción
+            completionEventToPublish = {
               userId,
               negocioId,
               missionName: def.nombre,
               missionDefinitionId: def.id,
-            });
+            };
           }
         });
+
+        // Emisión asíncrona de eventos de dominio fuera de la transacción atómica
+        if (businessRewardEventToPublish) {
+          await publishDomainEvent('BUSINESS_MISSION', bm.id, 'BUSINESS_REWARD_GRANTED', businessRewardEventToPublish);
+        }
+        if (completionEventToPublish) {
+          await publishDomainEvent('BUSINESS_MISSION', bm.id, 'QUEST_COMPLETED', completionEventToPublish);
+        }
       } catch (err: any) {
         console.error(`[BusinessMissionService] Error procesando BusinessMission ${bm.id}:`, err.message);
         await publishDomainEvent('BUSINESS_MISSION', bm.id, 'GLOBAL_REWARD_FAILED', {

@@ -28,6 +28,12 @@ export type GrowthEventType =
   | 'LOYALTY_ENABLED'
   | 'APP_DOWNLOADED'
   | 'RESERVATION_COMPLETED'
+  | 'APPOINTMENT_COMPLETED'
+  | 'LAUNDRY_ORDER_COMPLETED'
+  | 'ORDER_COMPLETED'
+  | 'GYM_ATTENDANCE'
+  | 'CLASS_ATTENDED'
+  | 'MEMBERSHIP_PURCHASED'
   | 'QUEST_COMPLETED'
   | 'CAMPAIGN_COMPLETED'
   | 'XP_GAINED'
@@ -52,9 +58,94 @@ export type GrowthEventType =
   | 'BUSINESS_REWARD_SELECTED'
   | 'BUSINESS_REWARD_GRANTED';
 
+export interface BusinessEventInput {
+  negocioId: string;
+  userId: string;
+  eventType: GrowthEventType | string;
+  entityId: string;
+  monto?: number;
+  cantidad?: number;
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Publica un evento canónico de negocio al motor universal de misiones y recompensas.
+ * Aplica deduplicación e idempotencia por (negocioId, eventType, entityId).
+ */
+export async function publishBusinessEvent(input: BusinessEventInput): Promise<void> {
+  const { negocioId, userId, eventType, entityId, monto, cantidad, metadata = {} } = input;
+
+  try {
+    console.log(`[EventBus] Publicando evento canónico: ${eventType} para usuario: ${userId} en negocio: ${negocioId} (Entidad: ${entityId})`);
+
+    const payload = {
+      entityId,
+      monto: monto !== undefined ? Number(monto) : undefined,
+      cantidad: cantidad !== undefined ? Number(cantidad) : 1,
+      idempotencyKey: `${negocioId}_${eventType}_${entityId}`,
+      ...metadata
+    };
+
+    // 1. Verificación de idempotencia en QuestEventLog
+    if (entityId) {
+      const recentLogs = await prisma.questEventLog.findMany({
+        where: {
+          negocioId,
+          eventType,
+          procesado: true
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 20
+      });
+
+      const existing = recentLogs.find(l => {
+        const pStr = typeof l.payload === 'string' ? l.payload : JSON.stringify(l.payload);
+        return pStr.includes(entityId);
+      });
+
+      if (existing) {
+        console.log(`[EventBus] ℹ️ Evento duplicado ignorado por idempotencia: ${eventType} (${entityId})`);
+        return;
+      }
+    }
+
+    // 2. Persistir el evento para auditoría
+    const log = await prisma.questEventLog.create({
+      data: {
+        negocioId,
+        userId,
+        eventType,
+        payload: JSON.stringify(payload)
+      }
+    });
+
+    // 3. Disparar procesamiento asíncrono no bloqueante
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://127.0.0.1:3000';
+    fetch(`${baseUrl}/api/admin/misiones/process`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ logId: log.id })
+    }).catch(err => {
+      console.error('[EventBus] Error disparando el worker de misiones:', err.message);
+    });
+
+    // 4. Registrar también en el Event Store de Dominio
+    await publishDomainEvent(
+      'BUSINESS_EVENT',
+      `${negocioId}_${entityId}`,
+      eventType,
+      payload
+    );
+
+  } catch (err: any) {
+    console.error(`[EventBus] Error publicando evento canónico ${eventType}:`, err.message);
+  }
+}
+
 /**
  * Publica un evento de crecimiento de forma asíncrona no bloqueante.
  * Registra el evento en la BD y dispara el procesamiento en segundo plano.
+ * Mantiene compatibilidad hacia atrás total.
  */
 export async function publishGrowthEvent(
     negocioId: string, 
@@ -64,6 +155,20 @@ export async function publishGrowthEvent(
 ): Promise<void> {
     try {
         console.log(`[EventBus] Publicando evento: ${eventType} para usuario: ${userId} en negocio: ${negocioId}`);
+
+        // Si el payload contiene identificadores de entidad conocidos, enrutar a publishBusinessEvent
+        const entityId = payload?.entityId || payload?.appointmentId || payload?.orderId || payload?.pedidoId;
+        if (entityId) {
+            return await publishBusinessEvent({
+                negocioId,
+                userId,
+                eventType,
+                entityId,
+                monto: payload?.monto || payload?.total,
+                cantidad: payload?.cantidad || payload?.itemsCount || 1,
+                metadata: payload
+            });
+        }
 
         // 1. Persistir el evento para auditoría, re-evaluaciones futuras e IA
         const log = await prisma.questEventLog.create({

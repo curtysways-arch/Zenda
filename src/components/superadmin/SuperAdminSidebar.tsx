@@ -28,7 +28,9 @@ import {
     Briefcase,
     Tag,
     Sliders,
-    Truck
+    Truck,
+    BookOpen,
+    Layout
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -99,10 +101,11 @@ export default function SuperAdminSidebar() {
         { name: 'Niveles Citiox', href: '/superadmin/niveles', icon: Award },
         { name: 'Temporadas Citiox', href: '/superadmin/temporadas', icon: Calendar },
         { name: 'Cupones Citiox', href: '/superadmin/coupon-templates', icon: Tag },
-        { name: 'Marketplace', href: '/superadmin/plantillas', icon: Store },
+        { name: 'Plantillas', href: '/superadmin/plantillas', icon: Layout },
         { name: 'Equipo', href: '/superadmin/equipo', icon: UserCog },
         { name: 'Administradores', href: '/superadmin/administradores', icon: ShieldCheck },
         { name: 'PWA Preview', href: '/superadmin/pwa', icon: Smartphone },
+        { name: 'Guías de Ayuda', href: '/superadmin/guias', icon: BookOpen },
         { name: 'Configuración', href: '/superadmin/configuracion', icon: Settings },
     ];
 

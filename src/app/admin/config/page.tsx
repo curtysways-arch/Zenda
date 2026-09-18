@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MessageSquare, Save, Info, Loader2, CheckCircle2, RotateCcw, Plus, Trash2, MapPin, ExternalLink, Edit2, X, Car, Bus, ShieldCheck, Accessibility } from 'lucide-react';
+import Link from 'next/link';
+import { MessageSquare, Save, Info, Loader2, CheckCircle2, RotateCcw, Plus, Trash2, MapPin, ExternalLink, Edit2, X, Car, Bus, ShieldCheck, Accessibility, Store, ArrowRight } from 'lucide-react';
 import MobileBusiness from '@/components/admin/mobile/MobileBusiness';
 import FeatureGate from '@/components/ui/FeatureGate';
 import ImageUploader from '@/components/ui/ImageUploader';
@@ -9,6 +10,7 @@ import { useSession } from 'next-auth/react';
 import ProductsConfig from '@/components/admin/ProductsConfig';
 
 import { DEFAULT_CONFIGS } from '@/lib/constants/defaultConfigs';
+import BusinessLocationPicker from '@/components/admin/BusinessLocationPicker';
 
 export default function ConfigMensajesPage() {
     const { data: session } = useSession();
@@ -394,7 +396,32 @@ export default function ConfigMensajesPage() {
                     primaryColor={primaryColor}
                 />
 
-                <UbicacionesManager />
+                {/* Banner Sucursales / Ubicaciones */}
+                <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/40 overflow-hidden">
+                    <div className="p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                        <div className="flex items-start gap-4">
+                            <div className="p-4 bg-indigo-50 text-indigo-600 rounded-2xl border border-indigo-100/60 shrink-0">
+                                <Store size={28} />
+                            </div>
+                            <div>
+                                <h3 className="font-black text-gray-900 leading-tight uppercase tracking-tight text-lg">
+                                    Gestión de Sucursales y Ubicaciones
+                                </h3>
+                                <p className="text-gray-500 text-sm mt-1 max-w-xl">
+                                    Ahora puedes administrar todas tus sedes físicas, cajas registradoras, fotos de fachada, enlaces de Google Maps y características (parqueadero, transporte, zona segura, acceso fácil) desde el módulo centralizado de Sucursales.
+                                </p>
+                            </div>
+                        </div>
+
+                        <Link
+                            href="/admin/sucursales"
+                            className="inline-flex items-center gap-2 px-6 py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg transition-all active:scale-95 shrink-0"
+                        >
+                            Ir a Sucursales
+                            <ArrowRight size={16} />
+                        </Link>
+                    </div>
+                </div>
             </div>
         </>
     );
@@ -523,27 +550,19 @@ function DeliveryLogisticsConfigSection({ configs, onSaveConfig, primaryColor }:
             </div>
 
             {/* Coordenadas GPS del Local */}
-            <div className="pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Latitud GPS del Local</label>
-                    <input
-                        type="text"
-                        value={lat}
-                        onChange={(e) => setLat(e.target.value)}
-                        placeholder="-0.180653"
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-mono font-bold text-slate-900 outline-none"
-                    />
-                </div>
-                <div>
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Longitud GPS del Local</label>
-                    <input
-                        type="text"
-                        value={lng}
-                        onChange={(e) => setLng(e.target.value)}
-                        placeholder="-78.467838"
-                        className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-mono font-bold text-slate-900 outline-none"
-                    />
-                </div>
+            <div className="pt-4 border-t border-gray-100">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">
+                    Ubicación Geográfica del Local (Mapa GPS)
+                </label>
+                <BusinessLocationPicker
+                    lat={lat}
+                    lng={lng}
+                    primaryColor={primaryColor}
+                    onChange={(newLat, newLng) => {
+                        setLat(newLat);
+                        setLng(newLng);
+                    }}
+                />
             </div>
 
             <div className="flex justify-end pt-2">
@@ -562,400 +581,6 @@ function DeliveryLogisticsConfigSection({ configs, onSaveConfig, primaryColor }:
                     <Save size={16} />
                     Guardar Tarifas de Envío
                 </button>
-            </div>
-        </div>
-    );
-}
-
-
-
-function UbicacionesManager() {
-    const [ubicaciones, setUbicaciones] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    
-    const [nombre, setNombre] = useState("");
-    const [direccion, setDireccion] = useState("");
-    const [mapUrl, setMapUrl] = useState("");
-    const [telefono, setTelefono] = useState("");
-    const [horario, setHorario] = useState("");
-    const [imagenUrl, setImagenUrl] = useState("");
-    
-    // Características booleanas (Toggles)
-    const [tieneParqueadero, setTieneParqueadero] = useState(false);
-    const [tieneTransporte, setTieneTransporte] = useState(false);
-    const [tieneZonaSegura, setTieneZonaSegura] = useState(false);
-    const [tieneAccesoFacil, setTieneAccesoFacil] = useState(false);
-
-    const [adding, setAdding] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
-    const [editId, setEditId] = useState<string | null>(null);
- 
-    const fetchUbicaciones = async () => {
-        try {
-            const res = await fetch('/api/config/ubicaciones');
-            if (res.ok) setUbicaciones(await res.json());
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
-    };
- 
-    useEffect(() => { fetchUbicaciones(); }, []);
- 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError(null);
-        setSuccess(null);
- 
-        if (!nombre.trim()) {
-            setError("El nombre de la sede es obligatorio");
-            return;
-        }
- 
-        setAdding(true);
-        try {
-            const url = editId ? `/api/config/ubicaciones/${editId}` : '/api/config/ubicaciones';
-            const method = editId ? 'PATCH' : 'POST';
-            const res = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    nombre: nombre.trim(), 
-                    direccion: direccion.trim() || null, 
-                    mapUrl: mapUrl.trim() || null,
-                    telefono: telefono.trim() || null,
-                    horario: horario.trim() || null,
-                    imagenUrl: imagenUrl.trim() || null,
-                    tieneParqueadero,
-                    tieneTransporte,
-                    tieneZonaSegura,
-                    tieneAccesoFacil
-                }),
-            });
-            
-            const data = await res.json();
-            
-            if (res.ok) {
-                setSuccess(editId ? "Ubicación actualizada correctamente" : "Ubicación creada correctamente");
-                if (!editId) {
-                    setNombre("");
-                    setDireccion("");
-                    setMapUrl("");
-                    setTelefono("");
-                    setHorario("");
-                    setImagenUrl("");
-                    setTieneParqueadero(false);
-                    setTieneTransporte(false);
-                    setTieneZonaSegura(false);
-                    setTieneAccesoFacil(false);
-                }
-                fetchUbicaciones();
-                setTimeout(() => setSuccess(null), 3000);
-            } else {
-                setError(data.error || "Error al guardar los cambios");
-            }
-        } catch { 
-            setError("Error de conexión con el servidor"); 
-        } finally { 
-            setAdding(false); 
-        }
-    };
- 
-    const startEdit = (u: any) => {
-        setEditId(u.id);
-        setNombre(u.nombre);
-        setDireccion(u.direccion || "");
-        setMapUrl(u.mapUrl || "");
-        setTelefono(u.telefono || "");
-        setHorario(u.horario || "");
-        setImagenUrl(u.imagenUrl || "");
-        setTieneParqueadero(u.tieneParqueadero ?? false);
-        setTieneTransporte(u.tieneTransporte ?? false);
-        setTieneZonaSegura(u.tieneZonaSegura ?? false);
-        setTieneAccesoFacil(u.tieneAccesoFacil ?? false);
-        
-        const element = document.getElementById('ubicaciones-manager');
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    };
- 
-    const cancelEdit = () => {
-        setEditId(null);
-        setNombre("");
-        setDireccion("");
-        setMapUrl("");
-        setTelefono("");
-        setHorario("");
-        setImagenUrl("");
-        setTieneParqueadero(false);
-        setTieneTransporte(false);
-        setTieneZonaSegura(false);
-        setTieneAccesoFacil(false);
-    };
- 
-    const handleDelete = async (id: string) => {
-        if (!confirm('¿Eliminar esta ubicación?')) return;
-        try {
-            const res = await fetch(`/api/config/ubicaciones/${id}`, { method: 'DELETE' });
-            if (res.ok) fetchUbicaciones();
-        } catch (e) { console.error(e); }
-    };
-
-    return (
-        <div id="ubicaciones-manager" className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/40 overflow-hidden">
-            <div className="p-8 space-y-6">
-                <div className="space-y-1">
-                    <h3 className="font-black text-gray-900 leading-tight uppercase tracking-tight">Sucursales / Ubicaciones</h3>
-                    <p className="text-gray-400 text-sm">Gestiona las sucursales físicas de tu negocio.</p>
-                </div>
-
-                {error && (
-                    <div className="p-4 bg-red-50 border-2 border-red-100 rounded-2xl text-red-600 text-xs font-black flex items-center gap-2">
-                        <X size={16} /> {error}
-                    </div>
-                )}
-
-                {success && (
-                    <div className="p-4 border-2 rounded-2xl text-xs font-black flex items-center gap-2"
-                         style={{ backgroundColor: 'color-mix(in srgb, var(--primary-color), transparent 95%)', borderColor: 'color-mix(in srgb, var(--primary-color), transparent 90%)', color: 'var(--primary-color)' }}>
-                        <CheckCircle2 size={16} /> {success}
-                    </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-6 bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1 block">Nombre *</label>
-                            <input
-                                type="text" value={nombre}
-                                onChange={(e) => setNombre(e.target.value)}
-                                placeholder="Sucursal Centro..."
-                                className="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none focus:border-[var(--primary-color)] transition-colors text-sm font-bold text-gray-900"
-                            />
-                        </div>
-                        <div>
-                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1 block">Dirección</label>
-                            <input
-                                type="text" value={direccion}
-                                onChange={(e) => setDireccion(e.target.value)}
-                                placeholder="Av. Mariscal Sucre N54-127"
-                                className="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none focus:border-[var(--primary-color)] transition-colors text-sm font-bold text-gray-900"
-                            />
-                        </div>
-                        <div>
-                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1 block">Link Google Maps</label>
-                            <input
-                                type="text" value={mapUrl}
-                                onChange={(e) => setMapUrl(e.target.value)}
-                                placeholder="https://maps..."
-                                className="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none focus:border-[var(--primary-color)] transition-colors text-sm font-bold text-gray-900"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1 block">Teléfono de contacto</label>
-                            <input
-                                type="text" value={telefono}
-                                onChange={(e) => setTelefono(e.target.value)}
-                                placeholder="099 123 4567"
-                                className="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none focus:border-[var(--primary-color)] transition-colors text-sm font-bold text-gray-900"
-                            />
-                        </div>
-                        <div>
-                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1 block">Horario de Atención</label>
-                            <input
-                                type="text" value={horario}
-                                onChange={(e) => setHorario(e.target.value)}
-                                placeholder="Lun - Dom 8:00 AM - 11:00 PM"
-                                className="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl outline-none focus:border-[var(--primary-color)] transition-colors text-sm font-bold text-gray-900"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Imagen de Fachada / Local */}
-                    <div className="p-4 bg-white rounded-2xl border border-gray-100/60">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">Imagen de la Fachada (Opcional)</label>
-                        <ImageUploader 
-                            category="page"
-                            currentUrl={imagenUrl}
-                            onUploadSuccess={(media) => setImagenUrl(media.url)}
-                            onRemove={() => setImagenUrl('')}
-                            label="Subir foto de la sucursal"
-                            aspect="landscape"
-                        />
-                    </div>
-
-                    {/* Características de la ubicación con Toggles */}
-                    <div className="space-y-3">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block">Características de la Ubicación</label>
-                        
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {/* Toggle Parqueadero */}
-                            <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-150 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-pink-50 text-pink-500 rounded-xl border border-pink-100/50">
-                                        <Car size={16} />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-bold text-gray-800">Parqueadero Disponible</p>
-                                        <p className="text-[9px] text-gray-400 font-medium">Estacionamiento propio o convenio</p>
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setTieneParqueadero(!tieneParqueadero)}
-                                    className={`w-11 h-6 rounded-full transition-all duration-300 relative border border-transparent ${tieneParqueadero ? 'bg-pink-500' : 'bg-gray-200'}`}
-                                >
-                                    <div className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full transition-all duration-300 shadow-sm ${tieneParqueadero ? 'left-5.5' : 'left-0.5'}`} />
-                                </button>
-                            </div>
-
-                            {/* Toggle Transporte */}
-                            <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-150 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-indigo-50 text-indigo-500 rounded-xl border border-indigo-100/50">
-                                        <Bus size={16} />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-bold text-gray-800">Transporte Cercano</p>
-                                        <p className="text-[9px] text-gray-400 font-medium">Paradas de bus o metro a pocos metros</p>
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setTieneTransporte(!tieneTransporte)}
-                                    className={`w-11 h-6 rounded-full transition-all duration-300 relative border border-transparent ${tieneTransporte ? 'bg-pink-500' : 'bg-gray-200'}`}
-                                >
-                                    <div className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full transition-all duration-300 shadow-sm ${tieneTransporte ? 'left-5.5' : 'left-0.5'}`} />
-                                </button>
-                            </div>
-
-                            {/* Toggle Zona Segura */}
-                            <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-150 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-emerald-50 text-emerald-500 rounded-xl border border-emerald-100/50">
-                                        <ShieldCheck size={16} />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-bold text-gray-800">Zona Segura</p>
-                                        <p className="text-[9px] text-gray-400 font-medium">Sector vigilado, seguro y bien iluminado</p>
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setTieneZonaSegura(!tieneZonaSegura)}
-                                    className={`w-11 h-6 rounded-full transition-all duration-300 relative border border-transparent ${tieneZonaSegura ? 'bg-pink-500' : 'bg-gray-200'}`}
-                                >
-                                    <div className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full transition-all duration-300 shadow-sm ${tieneZonaSegura ? 'left-5.5' : 'left-0.5'}`} />
-                                </button>
-                            </div>
-
-                            {/* Toggle Acceso Fácil */}
-                            <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-150 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-amber-50 text-amber-500 rounded-xl border border-amber-100/50">
-                                        <Accessibility size={16} />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-bold text-gray-800">Acceso Fácil</p>
-                                        <p className="text-[9px] text-gray-400 font-medium">Rampas de acceso, planta baja o ascensor</p>
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setTieneAccesoFacil(!tieneAccesoFacil)}
-                                    className={`w-11 h-6 rounded-full transition-all duration-300 relative border border-transparent ${tieneAccesoFacil ? 'bg-pink-500' : 'bg-gray-200'}`}
-                                >
-                                    <div className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full transition-all duration-300 shadow-sm ${tieneAccesoFacil ? 'left-5.5' : 'left-0.5'}`} />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex justify-end gap-2 pt-2">
-                        {editId && (
-                            <button type="button" onClick={cancelEdit} className="px-6 py-3 text-gray-400 font-bold uppercase text-[10px] hover:text-gray-600 transition-colors">Cancelar</button>
-                        )}
-                        <button type="submit" disabled={adding}
-                            className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg disabled:opacity-50 active:scale-[0.99] transition-all"
-                        >
-                            {editId ? 'Guardar Cambios' : 'Agregar Sucursal'}
-                        </button>
-                    </div>
-                </form>
- 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {ubicaciones.map((u: any) => (
-                        <div key={u.id} className="bg-white rounded-3xl border border-gray-150 overflow-hidden shadow-sm hover:shadow-md transition relative flex flex-col justify-between">
-                            {/* Fachada si existe */}
-                            {u.imagenUrl ? (
-                                <div className="w-full h-32 relative overflow-hidden bg-slate-100">
-                                    <img 
-                                        src={u.imagenUrl} 
-                                        alt={u.nombre}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                            ) : (
-                                <div className="w-full h-12 bg-slate-50 border-b border-slate-100" />
-                            )}
-                            
-                            <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <span className="font-black text-slate-800 uppercase text-sm tracking-tight block">{u.nombre}</span>
-                                            {u.direccion && <p className="text-[10px] text-gray-400 font-semibold">{u.direccion}</p>}
-                                        </div>
-                                        <div className="flex gap-1">
-                                            <button onClick={() => startEdit(u)} className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-full transition"><Edit2 size={13} /></button>
-                                            <button onClick={() => handleDelete(u.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition"><Trash2 size={13} /></button>
-                                        </div>
-                                    </div>
-                                    
-                                    {(u.telefono || u.horario) && (
-                                        <div className="pt-2 border-t border-slate-100 text-[9px] text-slate-400 font-bold space-y-1">
-                                            {u.telefono && <p>📞 {u.telefono}</p>}
-                                            {u.horario && <p>⏰ {u.horario}</p>}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Chips de características configuradas */}
-                                <div className="flex flex-wrap gap-1.5 pt-3 border-t border-slate-100">
-                                    {u.tieneParqueadero && (
-                                        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-pink-50 text-pink-600 text-[8px] font-black uppercase">
-                                            <Car size={8} /> Parqueadero
-                                        </span>
-                                    )}
-                                    {u.tieneTransporte && (
-                                        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[8px] font-black uppercase">
-                                            <Bus size={8} /> Transporte
-                                        </span>
-                                    )}
-                                    {u.tieneZonaSegura && (
-                                        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase">
-                                            <ShieldCheck size={8} /> Segura
-                                        </span>
-                                    )}
-                                    {u.tieneAccesoFacil && (
-                                        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[8px] font-black uppercase">
-                                            <Accessibility size={8} /> Acceso
-                                        </span>
-                                    )}
-                                    {!u.tieneParqueadero && !u.tieneTransporte && !u.tieneZonaSegura && !u.tieneAccesoFacil && (
-                                        <span className="text-[8px] text-slate-300 font-bold italic">Sin características definidas</span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
             </div>
         </div>
     );

@@ -35,16 +35,16 @@ export default function NegocioActions({ negocio, onEdit }: NegocioActionsProps)
             });
             if (res.ok) {
                 const data = await res.json();
-                router.push(data.redirectUrl || "/admin");
-                router.refresh();
+                const targetUrl = data.redirectUrl || "/admin";
+                window.open(targetUrl, "_blank");
             } else {
                 const data = await res.json().catch(() => ({}));
                 alert(data.error || "Error al acceder al admin del negocio");
-                setEnteringAdmin(false);
             }
         } catch (err: any) {
             console.error(err);
             alert(err?.message || "Error al conectar con el servidor");
+        } finally {
             setEnteringAdmin(false);
         }
     };

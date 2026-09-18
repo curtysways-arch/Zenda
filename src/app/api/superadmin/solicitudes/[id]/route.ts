@@ -81,6 +81,42 @@ export async function PATCH(
                 }
             });
 
+            // Si había Add-ons pendientes de pago (Combo), activarlos
+            try {
+                const pendingAddons = await prisma.subscriptionAddon.findMany({
+                    where: { subscriptionId: id, status: 'PENDING' }
+                });
+                for (const item of pendingAddons) {
+                    await prisma.subscriptionAddon.update({
+                        where: { id: item.id },
+                        data: {
+                            status: 'ACTIVE',
+                            startedAt: startDate,
+                            updatedAt: new Date()
+                        }
+                    });
+                    await prisma.subscriptionAddonHistory.create({
+                        data: {
+                            businessId: sub.negocioId,
+                            subscriptionId: id,
+                            addonId: item.addonId,
+                            subscriptionAddonId: item.id,
+                            action: 'ACTIVATED',
+                            quantityBefore: item.quantity,
+                            quantityAfter: item.quantity,
+                            priceBefore: item.priceContracted,
+                            priceAfter: item.priceContracted,
+                            statusBefore: 'PENDING',
+                            statusAfter: 'ACTIVE',
+                            performedBy: 'SUPERADMIN',
+                            reason: 'Combo Plan + Add-on aprobado desde Solicitudes'
+                        }
+                    });
+                }
+            } catch (addonErr) {
+                console.error('Error activando add-ons pendientes en solicitud:', addonErr);
+            }
+
             // Registrar el Pago en el historial
             try {
                 const { pagoReferencia, pagoMonto, pagoNotas } = body;
@@ -159,6 +195,22 @@ export async function PATCH(
                         isAnnual
                     );
                 }
+
+                // Notificar al Super Admin de la activación del plan
+                try {
+                    const { notifyAdminPlanEvent } = await import('@/lib/adminNotificationHelper');
+                    await notifyAdminPlanEvent({
+                        eventType: 'ACTIVADO',
+                        businessName: sub.negocio.nombre,
+                        planName: nuevoPlan?.name || 'Plan',
+                        period: isAnnual ? 'Anual' : 'Mensual',
+                        paymentMethod: sub.metodoPago || 'TRANSFERENCIA',
+                        amount: body.pagoMonto ? parseFloat(body.pagoMonto) : undefined,
+                        reference: body.pagoReferencia || 'APROBACIÓN'
+                    });
+                } catch (adminWaErr) {
+                    console.error('Error notificando al admin por plan activado:', adminWaErr);
+                }
             } catch (e) {
                 console.error('Error notificando aprobación:', e);
             }
@@ -179,6 +231,20 @@ export async function PATCH(
                     // Estado vuelve al anterior (trial o el que estaba)
                 }
             });
+
+            // Si había Add-ons pendientes asociados, cancelarlos
+            try {
+                await prisma.subscriptionAddon.updateMany({
+                    where: { subscriptionId: id, status: 'PENDING' },
+                    data: {
+                        status: 'CANCELLED',
+                        cancelledAt: new Date(),
+                        updatedAt: new Date()
+                    }
+                });
+            } catch (addonErr) {
+                console.error('Error cancelando add-ons pendientes en rechazo:', addonErr);
+            }
 
             // Notificar al negocio
             try {

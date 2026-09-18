@@ -39,15 +39,63 @@ export default function RegisterForm() {
 
     const tipoLabels: Record<string, { label: string; icon: string }> = {
         RESTAURANTE: { label: "Restaurante & Gastronomía", icon: "🍔" },
+        GASTRONOMIA: { label: "Restaurante & Gastronomía", icon: "🍔" },
         TIENDA: { label: "Tienda & Comercio", icon: "🛍️" },
+        ECOMMERCE: { label: "Tienda Online & Comercio", icon: "🛍️" },
         SHOE_CARE: { label: "Lavandería & Cuidado de Calzado", icon: "🧺" },
         LAVANDERIA: { label: "Lavandería & Cuidado de Calzado", icon: "🧺" },
         SPORTS_COURTS: { label: "Canchas & Clubes Deportivos", icon: "⚽" },
         CANCHAS: { label: "Canchas & Clubes Deportivos", icon: "⚽" },
-        SPA: { label: "Citas & Servicios Profesionales", icon: "💇" },
-        SERVICIOS: { label: "Citas & Servicios Profesionales", icon: "💇" },
+        SPA: { label: "Spa & Bienestar", icon: "💆" },
+        PELUQUERIA: { label: "Peluquería & Salón", icon: "💇" },
+        BARBERIA: { label: "Barbería", icon: "💈" },
+        CENTRO_ESTETICA: { label: "Centro de Estética", icon: "✨" },
+        SERVICIOS: { label: "Citas & Servicios Profesionales", icon: "📅" },
+        RESERVA: { label: "Citas & Reservas", icon: "📅" },
     };
     const currentTipoInfo = tipoParam ? tipoLabels[tipoParam] || { label: tipoParam, icon: "✨" } : null;
+
+    const tipoPlaceholders: Record<string, string> = {
+        RESTAURANTE: "Nombre de tu Restaurante",
+        GASTRONOMIA: "Nombre de tu Restaurante",
+        BAR: "Nombre de tu Bar o Restaurante",
+        TIENDA: "Nombre de tu Tienda o Comercio",
+        ECOMMERCE: "Nombre de tu Tienda Online",
+        SHOE_CARE: "Nombre de tu Lavandería o Taller",
+        LAVANDERIA: "Nombre de tu Lavandería",
+        SPORTS_COURTS: "Nombre de tu Complejo Deportivo",
+        CANCHAS: "Nombre de tu Complejo Deportivo",
+        SPA: "Nombre de tu Spa o Centro de Estética",
+        PELUQUERIA: "Nombre de tu Peluquería o Salón",
+        BARBERIA: "Nombre de tu Barbería",
+        CENTRO_ESTETICA: "Nombre de tu Centro de Estética",
+        SERVICIOS: "Nombre de tu Negocio de Servicios",
+        RESERVA: "Nombre de tu Negocio"
+    };
+
+    const businessNamePlaceholder = (tipoParam && tipoPlaceholders[tipoParam]) ||
+        (currentTipoInfo ? `Nombre de tu ${currentTipoInfo.label.split('&')[0].trim()}` : "Nombre de tu Negocio");
+
+    const tipoTitles: Record<string, string> = {
+        RESTAURANTE: "Crea tu Restaurante",
+        GASTRONOMIA: "Crea tu Restaurante",
+        BAR: "Crea tu Bar o Restaurante",
+        TIENDA: "Crea tu Tienda en Línea",
+        ECOMMERCE: "Crea tu Tienda en Línea",
+        SHOE_CARE: "Crea tu Lavandería o Cuidado de Calzado",
+        LAVANDERIA: "Crea tu Lavandería",
+        SPORTS_COURTS: "Crea tu Complejo Deportivo",
+        CANCHAS: "Crea tu Complejo Deportivo",
+        SPA: "Crea tu Spa o Estética",
+        PELUQUERIA: "Crea tu Peluquería o Salón",
+        BARBERIA: "Crea tu Barbería",
+        CENTRO_ESTETICA: "Crea tu Centro de Estética",
+        SERVICIOS: "Crea tu Negocio de Servicios",
+        RESERVA: "Crea tu Negocio de Citas"
+    };
+
+    const pageTitle = (tipoParam && tipoTitles[tipoParam]) ||
+        (currentTipoInfo ? `Crea tu ${currentTipoInfo.label.split('&')[0].trim()}` : 'Crea tu negocio en línea');
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({
@@ -134,7 +182,7 @@ export default function RegisterForm() {
                     )}
 
                     <h2 className="text-3xl font-black text-gray-900 tracking-tight text-center">
-                        {currentTipoInfo ? `Crea tu ${currentTipoInfo.label.split('&')[0].trim()}` : 'Crea tu negocio en línea'}
+                        {pageTitle}
                     </h2>
                     <p className="mt-2 text-sm text-gray-400 font-medium text-center">
                         Comienza tu app y presencia digital en pocos minutos
@@ -204,7 +252,7 @@ export default function RegisterForm() {
                                             type="text"
                                             name="negocioNombre"
                                             required
-                                            placeholder="Nombre de tu Spa o Estética"
+                                            placeholder={businessNamePlaceholder}
                                             className="block w-full h-full py-4 !bg-transparent !border-none !shadow-none focus:outline-none focus:ring-0 !text-gray-900 placeholder-gray-400 font-bold"
                                             value={formData.negocioNombre}
                                             onChange={handleChange}

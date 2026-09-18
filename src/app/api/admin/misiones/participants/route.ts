@@ -3,22 +3,26 @@ import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { executeRewardActions } from '@/lib/growth/rewardEngine';
+import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 
 export async function GET(request: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         const userId = (session?.user as any)?.id;
 
         if (!userId) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        const user = await prisma.usuario.findUnique({
-            where: { id: userId },
-            select: { negocioId: true }
-        });
+        let negocioId = (session?.user as any)?.negocioId;
+        if (!negocioId) {
+            const user = await prisma.usuario.findUnique({
+                where: { id: userId },
+                select: { negocioId: true }
+            });
+            negocioId = user?.negocioId;
+        }
 
-        const negocioId = user?.negocioId;
         if (!negocioId) {
             return NextResponse.json({ error: 'Negocio no configurado' }, { status: 400 });
         }
@@ -78,19 +82,22 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getEffectiveAdminSession();
         const userId = (session?.user as any)?.id;
 
         if (!userId) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        const user = await prisma.usuario.findUnique({
-            where: { id: userId },
-            select: { negocioId: true }
-        });
+        let negocioId = (session?.user as any)?.negocioId;
+        if (!negocioId) {
+            const user = await prisma.usuario.findUnique({
+                where: { id: userId },
+                select: { negocioId: true }
+            });
+            negocioId = user?.negocioId;
+        }
 
-        const negocioId = user?.negocioId;
         if (!negocioId) {
             return NextResponse.json({ error: 'Negocio no configurado' }, { status: 400 });
         }

@@ -22,7 +22,7 @@ export async function GET() {
 
         const negocio: any = await prisma.negocio.findUnique({
             where: { id: negocioId },
-            include: { Ubicacion: true }
+            include: { Ubicacion: true, BusinessType: true }
         });
 
         console.log('GET /api/negocio - Business found:', negocio ? negocio.nombre : 'NOT FOUND');

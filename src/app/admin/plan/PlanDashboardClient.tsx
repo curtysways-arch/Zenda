@@ -34,6 +34,7 @@ interface PlanDashboardClientProps {
     data: any;
     allPlans: any[];
     currentPlanId?: string | null;
+    hasActivePaidPlan?: boolean;
     businessName: string;
     businessId: string;
     tipoNegocio?: string;
@@ -45,6 +46,7 @@ export default function PlanDashboardClient({
     data,
     allPlans = [],
     currentPlanId,
+    hasActivePaidPlan,
     businessName,
     businessId,
     tipoNegocio = 'GENERAL',
@@ -62,6 +64,8 @@ export default function PlanDashboardClient({
         availableAddons: any[];
         activeSubscriptions: any[];
         pricingDetails: any;
+        hasActivePaidPlan?: boolean;
+        availablePlans?: any[];
     }>({ availableAddons: [], activeSubscriptions: [], pricingDetails: null });
     const [loadingAddons, setLoadingAddons] = useState(true);
     const [actionAddonCode, setActionAddonCode] = useState<string | null>(null);
@@ -76,7 +80,9 @@ export default function PlanDashboardClient({
                 setAddonsData({
                     availableAddons: json.availableAddons || [],
                     activeSubscriptions: json.activeSubscriptions || [],
-                    pricingDetails: json.pricingDetails || null
+                    pricingDetails: json.pricingDetails || null,
+                    hasActivePaidPlan: json.hasActivePaidPlan,
+                    availablePlans: json.availablePlans || []
                 });
             }
         } catch (e) {
@@ -825,6 +831,13 @@ export default function PlanDashboardClient({
                     startDate,
                     endDate
                 }}
+                hasActivePaidPlan={hasActivePaidPlan !== undefined ? hasActivePaidPlan : (addonsData.hasActivePaidPlan ?? true)}
+                availablePlans={(allPlans && allPlans.length > 0 ? allPlans : (addonsData.availablePlans || [])).map((p: any) => ({
+                    id: p.id,
+                    name: p.name,
+                    price: Number(p.price || 0),
+                    description: p.description
+                }))}
                 onSuccess={async () => {
                     await fetchAddonsData();
                     window.location.reload();

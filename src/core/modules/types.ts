@@ -13,6 +13,10 @@ export type BusinessModuleType =
   | 'SHOE_CARE'
   | 'LAUNDRY'
   | 'TECH_REPAIR'
+  | 'STORE'
+  | 'FAST_FOOD'
+  | 'ACADEMY'
+  | 'GYM'
   | 'CUSTOM';
 
 export interface ModuleNavigationItem {

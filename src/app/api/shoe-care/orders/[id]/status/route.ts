@@ -43,6 +43,49 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     console.log(`📱 [WhatsApp Notify] Orden #${updated.numeroPedido} cambió a estado: ${estado || pedido.estado}`);
 
+    // Emisión canónica al Motor Universal de Misiones Citiox
+    const finalState = estado || pedido.estado;
+    if (['ENTREGADO', 'FINALIZADO', 'COMPLETADO'].includes(finalState)) {
+      try {
+        let userId = (pedido as any).clienteId;
+        if (!userId && updated.telefonoCliente) {
+          const cleanPhone = updated.telefonoCliente.replace(/\D/g, '');
+          const user = await prisma.usuario.findFirst({
+            where: {
+              OR: [
+                { phone: updated.telefonoCliente },
+                { phone: cleanPhone },
+                { phone: `+${cleanPhone}` }
+              ]
+            }
+          });
+          if (user) userId = user.id;
+        }
+
+        if (userId) {
+          const { publishBusinessEvent } = await import('@/lib/growth/eventBus');
+          const extra = (updated.extraInfo as any) || {};
+          const cantidadPares = parseInt(String(extra.cantidadPares || 1), 10);
+          
+          await publishBusinessEvent({
+            negocioId: updated.negocioId,
+            userId,
+            eventType: 'LAUNDRY_ORDER_COMPLETED',
+            entityId: updated.id,
+            monto: updated.total || 0,
+            cantidad: cantidadPares,
+            metadata: {
+              numeroPedido: updated.numeroPedido,
+              servicioNombre: extra.servicioNombre,
+              modo: extra.modo || 'LOCAL'
+            }
+          });
+        }
+      } catch (growthErr: any) {
+        console.error('[ShoeCare] Error publicando evento de misiones:', growthErr.message);
+      }
+    }
+
     return NextResponse.json(updated);
   } catch (error: any) {
     console.error('Error actualizando estado de orden:', error);

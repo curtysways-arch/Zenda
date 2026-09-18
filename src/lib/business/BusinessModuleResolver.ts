@@ -3,7 +3,7 @@
  * Servicio centralizado para resolver módulos y características activas por tipo de negocio en Citiox.
  */
 
-export type BusinessTypeEnum = 'RESERVA' | 'PRODUCTOS' | 'SHOE_CARE' | 'SPORTS_COURTS' | 'ACADEMIA' | string;
+export type BusinessTypeEnum = 'RESERVA' | 'PRODUCTOS' | 'SHOE_CARE' | 'SPORTS_COURTS' | 'ACADEMIA' | 'GIMNASIO' | 'GYM' | string;
 
 export type BusinessModule = 
     | 'APPOINTMENTS' 
@@ -15,7 +15,10 @@ export type BusinessModule =
     | 'ACADEMIA'
     | 'SERVICES' 
     | 'LOYALTY' 
-    | 'COUPONS';
+    | 'COUPONS'
+    | 'MEMBERSHIPS'
+    | 'ACCESS'
+    | 'ATTENDANCE';
 
 const MODULES_BY_TYPE: Record<string, BusinessModule[]> = {
     RESERVA: ['APPOINTMENTS', 'SERVICES', 'LOYALTY', 'COUPONS'],
@@ -23,7 +26,9 @@ const MODULES_BY_TYPE: Record<string, BusinessModule[]> = {
     RESTAURANT: ['CATALOG', 'ORDERS', 'DELIVERY', 'LOYALTY', 'COUPONS'],  // alias de PRODUCTOS
     SHOE_CARE: ['ORDERS', 'DELIVERY', 'SERVICES', 'LOYALTY', 'COUPONS'],
     SPORTS_COURTS: ['RESERVATIONS', 'ACADEMY', 'ACADEMIA', 'LOYALTY', 'COUPONS'],
-    ACADEMIA: ['ACADEMY', 'ACADEMIA', 'COUPONS']
+    ACADEMIA: ['ACADEMY', 'ACADEMIA', 'COUPONS'],
+    GIMNASIO: ['MEMBERSHIPS', 'ACCESS', 'ATTENDANCE', 'LOYALTY', 'COUPONS'],
+    GYM: ['MEMBERSHIPS', 'ACCESS', 'ATTENDANCE', 'LOYALTY', 'COUPONS']
 };
 
 /**
@@ -42,6 +47,9 @@ export function resolveBusinessModules(tipoNegocio?: string | null): BusinessMod
     }
 
     // Heurísticas de fallback si tipoNegocio contiene palabras clave
+    if (normalizedType.includes('GYM') || normalizedType.includes('GIMNASIO') || normalizedType.includes('FITNESS')) {
+        return MODULES_BY_TYPE['GIMNASIO'];
+    }
     if (normalizedType.includes('PRODUCT') || normalizedType.includes('TIENDA') || normalizedType.includes('ECOMMERCE') || normalizedType.includes('COMIDA') || normalizedType.includes('RESTAUR') || normalizedType.includes('FOOD') || normalizedType.includes('DELIVERY')) {
         return MODULES_BY_TYPE['PRODUCTOS'];
     }

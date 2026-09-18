@@ -15,10 +15,19 @@ export async function GET() {
   }
 
   try {
-    const [negocio, promotions, products, services, categories] = await Promise.all([
+    const [negocio, promotions, products, services, categories, membershipPlans] = await Promise.all([
       prisma.negocio.findUnique({
         where: { id: negocioId },
-        select: { id: true, nombre: true, tipoNegocio: true, slug: true }
+        select: {
+          id: true,
+          nombre: true,
+          tipoNegocio: true,
+          slug: true,
+          heroTitulo: true,
+          heroSubtitulo: true,
+          colorPrimario: true,
+          configuracion: true
+        }
       }),
       (prisma as any).promotion.findMany({
         where: { businessId: negocioId },
@@ -39,7 +48,12 @@ export async function GET() {
         where: { negocioId },
         select: { id: true, nombre: true, activo: true },
         orderBy: { orden: 'asc' }
-      })
+      }),
+      (prisma as any).membershipPlan.findMany({
+        where: { businessId: negocioId, active: true },
+        select: { id: true, name: true, price: true, durationDays: true },
+        orderBy: { displayOrder: 'asc' }
+      }).catch(() => [])
     ]);
 
     return NextResponse.json({
@@ -47,7 +61,8 @@ export async function GET() {
       promotions,
       products,
       services,
-      categories
+      categories,
+      membershipPlans: membershipPlans || []
     });
   } catch (error: any) {
     console.error('[API_HERO_OPTIONS_ERROR]', error);

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
 import { getEffectiveAdminSession } from '@/lib/delegatedAuth';
 import { BranchService } from '@/core/branch/BranchService';
 import { BranchAccessService } from '@/core/branch/BranchAccessService';
@@ -23,15 +24,35 @@ export async function GET(req: Request) {
     await BranchAccessService.requireBusinessAccess(session.user as any, targetBizId);
 
     const includeInactive = searchParams.get('includeInactive') === 'true';
-    const [branches, limitCheck, entitlements] = await Promise.all([
+    const [branches, limitCheck, entitlements, ubicaciones] = await Promise.all([
       BranchService.listBranches(targetBizId, includeInactive),
       EntitlementsService.checkBranchLimit(targetBizId),
-      EntitlementsService.resolve(targetBizId)
+      EntitlementsService.resolve(targetBizId),
+      prisma.ubicacion.findMany({ where: { negocioId: targetBizId } }).catch(() => [])
     ]);
+
+    const ubicacionesByName = new Map<string, any>(
+      ubicaciones.map((u: any): [string, any] => [u.nombre.toLowerCase().trim(), u])
+    );
+
+    const enrichedBranches = branches.map((b: any) => {
+      const s = (b.settings && typeof b.settings === 'object') ? b.settings : {};
+      const ubi = ubicacionesByName.get(b.name.toLowerCase().trim());
+      return {
+        ...b,
+        horario: s.horario ?? ubi?.horario ?? null,
+        mapUrl: s.mapUrl ?? ubi?.mapUrl ?? null,
+        imagenUrl: s.imagenUrl ?? ubi?.imagenUrl ?? null,
+        tieneParqueadero: Boolean(s.tieneParqueadero ?? ubi?.tieneParqueadero),
+        tieneTransporte: Boolean(s.tieneTransporte ?? ubi?.tieneTransporte),
+        tieneZonaSegura: Boolean(s.tieneZonaSegura ?? ubi?.tieneZonaSegura),
+        tieneAccesoFacil: Boolean(s.tieneAccesoFacil ?? ubi?.tieneAccesoFacil),
+      };
+    });
 
     return NextResponse.json({
       success: true,
-      branches,
+      branches: enrichedBranches,
       limits: {
         active: limitCheck.current,
         limit: limitCheck.limit,
@@ -72,6 +93,11 @@ export async function POST(req: Request) {
       email: body.email,
       mapUrl: body.mapUrl,
       imagenUrl: body.imagenUrl,
+      horario: body.horario,
+      tieneParqueadero: body.tieneParqueadero,
+      tieneTransporte: body.tieneTransporte,
+      tieneZonaSegura: body.tieneZonaSegura,
+      tieneAccesoFacil: body.tieneAccesoFacil,
       isDefault: body.isDefault
     });
 

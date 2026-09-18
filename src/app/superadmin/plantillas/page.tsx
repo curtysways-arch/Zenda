@@ -1,63 +1,103 @@
 import prisma from '@/lib/prisma';
-import MarketplaceClient from '@/components/superadmin/MarketplaceClient';
+import PlantillasManagerClient from '@/components/superadmin/PlantillasManagerClient';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-    title: 'Marketplace de Plantillas · Citiox Superadmin',
-    description: 'Gestiona la Biblioteca Oficial de Plantillas del Marketplace Citiox',
+    title: 'Catálogo de Plantillas · Citiox Superadmin',
+    description: 'Gestiona las plantillas de Landing Pages y Paneles de Administración por tipo de negocio',
 };
 
-export default async function MarketplacePlantillasPage() {
-    // Cargar todas las plantillas con sus misiones para el render inicial (SSR)
-    const templatesRaw = await prisma.questTemplate.findMany({
+export default async function PlantillasPage() {
+    // 1. Cargar tipos de negocio activos
+    const businessTypesRaw = await prisma.businessType.findMany({
+        where: { active: true },
+        orderBy: { sortOrder: 'asc' }
+    });
+
+    // 2. Cargar plantillas de Landing
+    const landingTemplatesRaw = await prisma.businessLandingTemplate.findMany({
         include: {
-            Missions: {
-                orderBy: { createdAt: 'asc' }
+            businessType: {
+                select: { id: true, name: true, slug: true, color: true, icon: true }
             }
         },
         orderBy: [
-            { featured: 'desc' },
-            { installCount: 'desc' },
-            { createdAt: 'desc' },
+            { isDefault: 'desc' },
+            { sortOrder: 'asc' },
+            { createdAt: 'desc' }
         ]
     });
 
-    // Serializar para Next.js (fechas → strings)
-    const templates = templatesRaw.map(t => ({
-        id: t.id,
-        nombre: t.nombre,
-        descripcion: t.descripcion,
-        icono: t.icono,
-        color: t.color,
-        categorias: (t.categorias as string[]) || [],
-        tags: (t.tags as string[]) || [],
-        coupons: (t.coupons as any[]) || [],
-        rewards: (t.rewards as any[]) || [],
-        versionSemantica: t.versionSemantica || '1.0.0',
-        estado: t.estado,
-        origenTipo: t.origenTipo,
-        esPredeterminada: t.esPredeterminada,
-        featured: t.featured,
-        gratuito: t.gratuito,
-        precio: Number(t.precio) || 0,
-        installCount: t.installCount,
-        rating: Number(t.rating) || 5.0,
-        autor: t.autor || 'Citiox',
-        empresa: t.empresa || 'Citiox',
-        createdAt: t.createdAt.toISOString(),
-        updatedAt: t.updatedAt.toISOString(),
-        Missions: t.Missions.map(m => ({
-            id: m.id,
-            nombre: m.nombre,
-            descripcion: m.descripcion || '',
-            triggerEvent: m.triggerEvent,
-            difficulty: m.difficulty || 'MEDIUM',
-            xp: m.xp || 0,
-            cantidadMeta: m.cantidadMeta || 1,
-            acciones: (m.acciones as any[]) || [],
-        }))
+    // 3. Cargar plantillas de Admin
+    const adminTemplatesRaw = await prisma.businessAdminTemplate.findMany({
+        include: {
+            businessType: {
+                select: { id: true, name: true, slug: true, color: true, icon: true }
+            }
+        },
+        orderBy: [
+            { isDefault: 'desc' },
+            { sortOrder: 'asc' },
+            { createdAt: 'desc' }
+        ]
+    });
+
+    // Serializar fechas a strings para SSR seguro en Next.js
+    const businessTypes = businessTypesRaw.map(bt => ({
+        id: bt.id,
+        name: bt.name,
+        slug: bt.slug,
+        icon: bt.icon,
+        color: bt.color
     }));
 
-    return <MarketplaceClient initialTemplates={templates} />;
+    const landingTemplates = landingTemplatesRaw.map(lt => ({
+        id: lt.id,
+        businessTypeId: lt.businessTypeId,
+        name: lt.name,
+        slug: lt.slug,
+        description: lt.description,
+        component: lt.component,
+        previewImage: lt.previewImage,
+        version: lt.version,
+        active: lt.active,
+        isDefault: lt.isDefault,
+        sortOrder: lt.sortOrder,
+        businessType: {
+            id: lt.businessType.id,
+            name: lt.businessType.name,
+            slug: lt.businessType.slug,
+            color: lt.businessType.color,
+            icon: lt.businessType.icon
+        }
+    }));
+
+    const adminTemplates = adminTemplatesRaw.map(at => ({
+        id: at.id,
+        businessTypeId: at.businessTypeId,
+        name: at.name,
+        component: at.component,
+        layoutType: at.layoutType,
+        previewImage: at.previewImage,
+        version: at.version,
+        active: at.active,
+        isDefault: at.isDefault,
+        sortOrder: at.sortOrder,
+        businessType: {
+            id: at.businessType.id,
+            name: at.businessType.name,
+            slug: at.businessType.slug,
+            color: at.businessType.color,
+            icon: at.businessType.icon
+        }
+    }));
+
+    return (
+        <PlantillasManagerClient
+            initialBusinessTypes={businessTypes}
+            initialLandingTemplates={landingTemplates}
+            initialAdminTemplates={adminTemplates}
+        />
+    );
 }

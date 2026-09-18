@@ -317,7 +317,7 @@ export default function NegocioModal({ isOpen, onClose, negocio }: NegocioModalP
         }
 
         return createPortal(
-            <div className="fixed inset-0 z-[999999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[999999] bg-slate-950/85 backdrop-blur-md overflow-y-auto flex items-center justify-center p-2 sm:p-4">
                 <BusinessProvisioningWizard
                     onClose={onClose}
                     onSuccess={(info) => {
