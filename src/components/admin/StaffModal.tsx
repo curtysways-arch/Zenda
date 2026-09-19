@@ -10,9 +10,10 @@ interface StaffModalProps {
     onClose: () => void;
     staff?: any;
     onSuccess: () => void;
+    bizType?: 'gym' | 'dental' | 'spa' | 'general';
 }
 
-export default function StaffModal({ isOpen, onClose, staff, onSuccess }: StaffModalProps) {
+export default function StaffModal({ isOpen, onClose, staff, onSuccess, bizType = 'general' }: StaffModalProps) {
     const { data: session } = useSession();
     const [loading, setLoading] = useState(false);
     const [allServices, setAllServices] = useState<any[]>([]);
@@ -94,13 +95,35 @@ export default function StaffModal({ isOpen, onClose, staff, onSuccess }: StaffM
 
     if (!isOpen) return null;
 
+    const modalTitle = staff 
+        ? (bizType === 'dental' ? 'Editar Doctor / Especialista' : bizType === 'gym' ? 'Editar Entrenador / Coach' : 'Editar Profesional')
+        : (bizType === 'dental' ? 'Nuevo Doctor / Especialista' : bizType === 'gym' ? 'Nuevo Entrenador / Coach' : 'Nuevo Profesional');
+
+    const modalSub = bizType === 'dental' 
+        ? 'Cuerpo Médico & Especialistas Clínicos' 
+        : bizType === 'gym' 
+        ? 'Staff Técnico & Coaches de Sala' 
+        : 'Gestión de Profesionales';
+
+    const roleLabel = bizType === 'dental' 
+        ? 'Especialidad Odontológica' 
+        : bizType === 'gym' 
+        ? 'Disciplina / Especialidad' 
+        : 'Cargo / Especialidad';
+
+    const rolePlaceholder = bizType === 'dental'
+        ? 'Ej: Ortodoncista, Periodoncista, Cirujano Maxilofacial'
+        : bizType === 'gym'
+        ? 'Ej: Coach Crossfit, Instructor Spinning, Entrenador Personal'
+        : 'Ej: Masajista, Terapeuta, Estilista';
+
     return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
             <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-[3rem] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
                 <div className="p-8 bg-slate-900 text-white flex justify-between items-center">
                     <div>
-                        <h2 className="text-2xl font-black uppercase tracking-tighter italic">{staff ? 'Editar Profesional' : 'Nuevo Profesional'}</h2>
-                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">Gestión de Personal</p>
+                        <h2 className="text-2xl font-black uppercase tracking-tighter italic">{modalTitle}</h2>
+                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">{modalSub}</p>
                     </div>
                     <button onClick={onClose} className="p-3 hover:bg-white/10 rounded-2xl transition">
                         <X size={20} />
@@ -127,7 +150,7 @@ export default function StaffModal({ isOpen, onClose, staff, onSuccess }: StaffM
                         </div>
                         <div className="space-y-3">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <Briefcase size={12} /> Cargo / Especialidad
+                                <Briefcase size={12} /> {roleLabel}
                             </label>
                             <input 
                                 type="text"
@@ -135,7 +158,7 @@ export default function StaffModal({ isOpen, onClose, staff, onSuccess }: StaffM
                                 style={ { '--tw-border-opacity': '1' } as any }
                                 onFocus={(e) => e.target.style.borderColor = 'var(--primary-color)'}
                                 onBlur={(e) => e.target.style.borderColor = 'rgb(241, 245, 249)'}
-                                placeholder="Ej: Barbero Senior"
+                                placeholder={rolePlaceholder}
                                 value={role}
                                 onChange={e => setRole(e.target.value)}
                             />

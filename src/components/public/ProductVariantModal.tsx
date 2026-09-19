@@ -192,15 +192,14 @@ export default function ProductVariantModal({
   const handleShareProduct = useCallback(async () => {
     if (!product || typeof window === 'undefined') return;
 
-    const url = new URL(window.location.href);
-    url.searchParams.set('producto', product.id);
-    const shareUrl = url.toString();
+    // Construir una URL limpia sin parámetros residuales (como ?source=pwa u otros)
+    const shareUrl = `${window.location.origin}${window.location.pathname}?producto=${product.id}`;
 
     if (navigator.share) {
       try {
         await navigator.share({
           title: product.nombre,
-          text: `Echa un vistazo a ${product.nombre} en nuestra tienda:`,
+          text: `Echa un vistazo a ${product.nombre}:`,
           url: shareUrl,
         });
         return;

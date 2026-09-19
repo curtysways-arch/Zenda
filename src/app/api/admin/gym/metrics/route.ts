@@ -205,44 +205,91 @@ export async function GET() {
       { hour: '22:00', count: isZeroData ? 14 : 0, label: '10 PM' }
     ];
 
-    // Clases del día
-    const classesToday = isZeroData
-      ? [
-          {
-            id: 'cls-1',
-            title: 'CrossFit WOD & Potencia',
-            coach: 'Coach Alex Ríos',
-            time: '18:30 - 19:30',
-            room: 'Box Principal',
-            enrolled: 18,
-            capacity: 20,
-            status: 'EN_CURSO',
-            color: 'border-orange-500/40 text-orange-500'
-          },
-          {
-            id: 'cls-2',
-            title: 'Spinning Interval Extreme',
-            coach: 'Coach Paola Morales',
-            time: '19:45 - 20:30',
-            room: 'Sala Ciclo Indoor',
-            enrolled: 24,
-            capacity: 25,
-            status: 'PROXIMA',
-            color: 'border-emerald-500/40 text-emerald-500'
-          },
-          {
-            id: 'cls-3',
-            title: 'Funcional Hiit & Core',
-            coach: 'Coach Javier Ramos',
-            time: '20:45 - 21:30',
-            room: 'Zona Funcional',
-            enrolled: 14,
-            capacity: 18,
-            status: 'PROXIMA',
-            color: 'border-cyan-500/40 text-cyan-500'
+    // Clases del día (Consultar clases reales del negocio)
+    let classesToday: any[] = [];
+    try {
+      const dbClasses = await (prisma as any).gymClass.findMany({
+        where: { businessId: negocioId, active: true },
+        include: {
+          _count: {
+            select: {
+              bookings: {
+                where: {
+                  date: { gte: startOfToday },
+                  status: 'CONFIRMED'
+                }
+              }
+            }
           }
-        ]
-      : [];
+        },
+        orderBy: { startTime: 'asc' }
+      });
+
+      if (dbClasses && dbClasses.length > 0) {
+        const dayCodes = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
+        const currentDayCode = dayCodes[now.getDay()];
+
+        const matchingClasses = dbClasses.filter((c: any) => {
+          const days = (c.daysOfWeek || '').toUpperCase();
+          return days.includes(currentDayCode) || days.includes('TODOS');
+        });
+
+        // Si hay clases para hoy mostrar esas, sino mostrar las primeras clases activas
+        const activeToShow = matchingClasses.length > 0 ? matchingClasses : dbClasses.slice(0, 4);
+
+        classesToday = activeToShow.map((c: any) => ({
+          id: c.id,
+          title: c.name,
+          coach: `Coach ${c.coach}`,
+          time: `${c.startTime} (${c.durationMinutes} min)`,
+          room: c.room || 'Sala General',
+          enrolled: c._count?.bookings || 0,
+          capacity: c.capacity,
+          status: 'PROGRAMADA',
+          color: c.color ? `border-[${c.color}]/40 text-[${c.color}]` : 'border-orange-500/40 text-orange-500'
+        }));
+      }
+    } catch (classErr) {
+      console.warn('[API_GYM_METRICS] Error fetching real classes:', classErr);
+    }
+
+    if (classesToday.length === 0 && isZeroData) {
+      classesToday = [
+        {
+          id: 'cls-1',
+          title: 'CrossFit WOD & Potencia',
+          coach: 'Coach Alex Ríos',
+          time: '18:30 - 19:30',
+          room: 'Box Principal',
+          enrolled: 18,
+          capacity: 20,
+          status: 'EN_CURSO',
+          color: 'border-orange-500/40 text-orange-500'
+        },
+        {
+          id: 'cls-2',
+          title: 'Spinning Interval Extreme',
+          coach: 'Coach Paola Morales',
+          time: '19:45 - 20:30',
+          room: 'Sala Ciclo Indoor',
+          enrolled: 24,
+          capacity: 25,
+          status: 'PROXIMA',
+          color: 'border-emerald-500/40 text-emerald-500'
+        },
+        {
+          id: 'cls-3',
+          title: 'Funcional Hiit & Core',
+          coach: 'Coach Javier Ramos',
+          time: '20:45 - 21:30',
+          room: 'Zona Funcional',
+          enrolled: 14,
+          capacity: 18,
+          status: 'PROXIMA',
+          color: 'border-cyan-500/40 text-cyan-500'
+        }
+      ];
+    }
 
     // Alertas inteligentes
     const alerts: Array<{ type: 'warning' | 'success' | 'info'; text: string; actionText?: string; actionHref?: string }> = [];

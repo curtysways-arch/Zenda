@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -12,90 +12,114 @@ import {
   CheckCircle2, 
   Users, 
   Flame,
-  Calendar
+  Calendar,
+  Loader2,
+  Check
 } from 'lucide-react';
 
 interface GymClass {
   id: string;
   name: string;
-  trainer: string;
+  coach: string;
   category: string;
-  time: string;
-  duration: string;
-  room: string;
+  startTime: string;
+  durationMinutes: number;
+  room?: string;
   capacity: number;
   bookedCount: number;
+  daysOfWeek: string;
+  color?: string;
   isBooked?: boolean;
 }
-
-const INITIAL_CLASSES: GymClass[] = [
-  {
-    id: 'c1',
-    name: 'Spinning Power Ride',
-    trainer: 'Carlos Mendoza',
-    category: 'Cardio & Resistencia',
-    time: '07:00 AM',
-    duration: '45 min',
-    room: 'Sala Ciclo Indoor',
-    capacity: 20,
-    bookedCount: 16,
-    isBooked: false
-  },
-  {
-    id: 'c2',
-    name: 'Funcional HIIT & Fuerza',
-    trainer: 'Mariana Silva',
-    category: 'Acondicionamiento',
-    time: '08:30 AM',
-    duration: '50 min',
-    room: 'Zona Funcional Box',
-    capacity: 15,
-    bookedCount: 15,
-    isBooked: false
-  },
-  {
-    id: 'c3',
-    name: 'Yoga Vinyasa & Flexibilidad',
-    trainer: 'Elena Castro',
-    category: 'Mente & Cuerpo',
-    time: '18:00 PM',
-    duration: '60 min',
-    room: 'Estudio Zen',
-    capacity: 18,
-    bookedCount: 10,
-    isBooked: false
-  },
-  {
-    id: 'c4',
-    name: 'Cross Training & Levantamiento',
-    trainer: 'David Roca',
-    category: 'Potencia',
-    time: '19:15 PM',
-    duration: '55 min',
-    room: 'Box Central',
-    capacity: 16,
-    bookedCount: 12,
-    isBooked: false
-  }
-];
 
 export default function MiClasesPage() {
   const params = useParams();
   const slug = params.slug as string;
 
-  const [classes, setClasses] = useState<GymClass[]>(INITIAL_CLASSES);
-  const [selectedDay, setSelectedDay] = useState<'HOY' | 'MANANA'>('HOY');
+  const [classes, setClasses] = useState<GymClass[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedDay, setSelectedDay] = useState<'HOY' | 'MANANA' | 'TODOS'>('HOY');
+  const [bookingLoading, setBookingLoading] = useState<string | null>(null);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [errorToast, setErrorToast] = useState<string | null>(null);
+  const [memberPhone, setMemberPhone] = useState<string>('');
 
-  const toggleBooking = (classId: string) => {
-    setClasses(prev => prev.map(c => {
-      if (c.id !== classId) return c;
-      const isCurrentlyBooked = !!c.isBooked;
-      return {
-        ...c,
-        isBooked: !isCurrentlyBooked,
-        bookedCount: isCurrentlyBooked ? c.bookedCount - 1 : c.bookedCount + 1
-      };
-    }));
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const phone = localStorage.getItem(`${slug}_client_phone`) || localStorage.getItem('user_phone') || '';
+      setMemberPhone(phone);
+    }
+  }, [slug]);
+
+  const loadClasses = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/${slug}/gym/classes`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.classes)) {
+        setClasses(data.classes);
+      }
+    } catch (err) {
+      console.error('Error fetching classes:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (slug) {
+      loadClasses();
+    }
+  }, [slug]);
+
+  const handleBooking = async (cls: GymClass) => {
+    if (cls.isBooked) return;
+
+    let phone = memberPhone;
+    if (!phone && typeof window !== 'undefined') {
+      phone = window.prompt('Por favor ingresa tu número de teléfono de socio para registrar tu cupo:') || '';
+      if (phone.trim()) {
+        localStorage.setItem(`${slug}_client_phone`, phone.trim());
+        setMemberPhone(phone.trim());
+      } else {
+        return;
+      }
+    }
+
+    try {
+      setBookingLoading(cls.id);
+      setErrorToast(null);
+      const res = await fetch(`/api/${slug}/gym/classes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          classId: cls.id,
+          customerPhone: phone
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'No se pudo reservar el cupo');
+      }
+
+      setClasses(prev => prev.map(c => {
+        if (c.id !== cls.id) return c;
+        return {
+          ...c,
+          isBooked: true,
+          bookedCount: (c.bookedCount || 0) + 1
+        };
+      }));
+
+      setSuccessToast(`¡Cupo reservado para ${cls.name}! Te esperamos.`);
+      setTimeout(() => setSuccessToast(null), 4000);
+    } catch (err: any) {
+      setErrorToast(err.message || 'Error al procesar reserva');
+      setTimeout(() => setErrorToast(null), 4000);
+    } finally {
+      setBookingLoading(null);
+    }
   };
 
   return (
@@ -121,6 +145,20 @@ export default function MiClasesPage() {
         </p>
       </div>
 
+      {/* Toasts */}
+      {successToast && (
+        <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <span>{successToast}</span>
+        </div>
+      )}
+      {errorToast && (
+        <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+          <span className="shrink-0">⚠️</span>
+          <span>{errorToast}</span>
+        </div>
+      )}
+
       {/* Selector de Día */}
       <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
         <button
@@ -131,7 +169,7 @@ export default function MiClasesPage() {
               : 'text-slate-400 hover:text-slate-600'
           }`}
         >
-          Clases de Hoy
+          Hoy
         </button>
         <button
           onClick={() => setSelectedDay('MANANA')}
@@ -143,89 +181,140 @@ export default function MiClasesPage() {
         >
           Mañana
         </button>
+        <button
+          onClick={() => setSelectedDay('TODOS')}
+          className={`flex-1 py-2.5 text-xs font-black rounded-xl transition-all ${
+            selectedDay === 'TODOS'
+              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
+              : 'text-slate-400 hover:text-slate-600'
+          }`}
+        >
+          Todas
+        </button>
       </div>
 
       {/* Lista de Clases */}
-      <div className="space-y-4">
-        {classes.map((cls) => {
-          const availableSpots = Math.max(0, cls.capacity - cls.bookedCount);
-          const isFull = availableSpots === 0 && !cls.isBooked;
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-16">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mb-2" />
+          <p className="text-xs text-slate-400">Cargando horario de clases...</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {(() => {
+            const dayCodes = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
+            const todayIdx = new Date().getDay();
+            const todayCode = dayCodes[todayIdx];
+            const tomorrowCode = dayCodes[(todayIdx + 1) % 7];
 
-          return (
-            <div
-              key={cls.id}
-              className={`rounded-3xl p-5 border transition-all space-y-4 shadow-sm ${
-                cls.isBooked
-                  ? 'bg-emerald-500/5 border-emerald-500/40'
-                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">
-                    {cls.category}
-                  </span>
-                  <h3 className="text-lg font-black text-slate-900 dark:text-white">
-                    {cls.name}
-                  </h3>
-                </div>
+            const filtered = classes.filter((cls) => {
+              if (selectedDay === 'TODOS') return true;
+              const days = (cls.daysOfWeek || '').toUpperCase();
+              if (selectedDay === 'HOY') return days.includes(todayCode) || days.includes('TODOS');
+              if (selectedDay === 'MANANA') return days.includes(tomorrowCode) || days.includes('TODOS');
+              return true;
+            });
 
-                <div className="text-right shrink-0">
-                  <span className="text-base font-black text-slate-900 dark:text-white block font-mono">
-                    {cls.time}
-                  </span>
-                  <span className="text-[11px] text-slate-400 font-medium">
-                    {cls.duration}
-                  </span>
+            if (filtered.length === 0) {
+              return (
+                <div className="p-8 text-center rounded-3xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                  <Calendar className="w-10 h-10 text-slate-400 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                    No hay clases programadas para este día
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Revisa las clases de mañana o la programación semanal completa.
+                  </p>
                 </div>
-              </div>
+              );
+            }
 
-              <div className="grid grid-cols-2 gap-2 text-xs text-slate-500 dark:text-slate-400 pt-1">
-                <div className="flex items-center gap-2">
-                  <User className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="font-medium truncate">{cls.trainer}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="font-medium truncate">{cls.room}</span>
-                </div>
-              </div>
+            return filtered.map((cls) => {
+              const availableSpots = Math.max(0, cls.capacity - (cls.bookedCount || 0));
+              const isFull = availableSpots === 0 && !cls.isBooked;
 
-              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-1.5 text-xs">
-                  <Users className="w-3.5 h-3.5 text-slate-400" />
-                  <span className={isFull ? 'text-rose-500 font-bold' : 'text-slate-600 dark:text-slate-300 font-medium'}>
-                    {isFull ? 'Agotado' : `${availableSpots} cupos disponibles`}
-                  </span>
-                </div>
-
-                <button
-                  onClick={() => toggleBooking(cls.id)}
-                  disabled={isFull}
-                  className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+              return (
+                <div
+                  key={cls.id}
+                  className={`rounded-3xl p-5 border transition-all space-y-4 shadow-sm ${
                     cls.isBooked
-                      ? 'bg-emerald-500 text-white shadow-sm'
-                      : isFull
-                      ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
-                      : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 shadow'
+                      ? 'bg-emerald-500/5 border-emerald-500/40'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'
                   }`}
                 >
-                  {cls.isBooked ? (
-                    <>
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Reservado</span>
-                    </>
-                  ) : isFull ? (
-                    <span>Completo</span>
-                  ) : (
-                    <span>Reservar Cupo</span>
-                  )}
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">
+                        {cls.category || 'General'}
+                      </span>
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                        {cls.name}
+                      </h3>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="text-base font-black text-slate-900 dark:text-white block font-mono">
+                        {cls.startTime}
+                      </span>
+                      <span className="text-[11px] text-slate-400 font-medium">
+                        {cls.durationMinutes} min
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs text-slate-500 dark:text-slate-400 pt-1">
+                    <div className="flex items-center gap-2">
+                      <User className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="font-medium truncate">{cls.coach}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="font-medium truncate">{cls.room || 'Sala General'}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <Users className="w-3.5 h-3.5 text-slate-400" />
+                      <span className={isFull ? 'text-rose-500 font-bold' : 'text-slate-600 dark:text-slate-300 font-medium'}>
+                        {isFull ? 'Agotado' : `${availableSpots} cupos disponibles`}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => handleBooking(cls)}
+                      disabled={isFull || !!cls.isBooked || bookingLoading === cls.id}
+                      className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
+                        cls.isBooked
+                          ? 'bg-emerald-500 text-white shadow-sm'
+                          : isFull
+                          ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                          : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 shadow'
+                      }`}
+                    >
+                      {bookingLoading === cls.id ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Reservando...</span>
+                        </>
+                      ) : cls.isBooked ? (
+                        <>
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Reservado</span>
+                        </>
+                      ) : isFull ? (
+                        <span>Completo</span>
+                      ) : (
+                        <span>Reservar Cupo</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            });
+          })()}
+        </div>
+      )}
     </div>
   );
 }

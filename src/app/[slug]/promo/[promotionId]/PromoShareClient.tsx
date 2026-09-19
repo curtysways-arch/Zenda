@@ -239,12 +239,20 @@ export default function PromoShareClient({
 
 
                                  <div className="space-y-4 pt-6 border-t border-slate-50">
-                                    {!isExpirada && (
+                                    {isExpirada ? (
+                                        <Link
+                                            href={`/${slug}#servicios`}
+                                            className="w-full text-white font-black text-sm uppercase tracking-widest py-5 rounded-3xl flex items-center justify-center gap-3 transition-all shadow-xl active:scale-95 group bg-slate-800 hover:bg-slate-700 text-center"
+                                        >
+                                            <Navigation2 size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                            Promoción Finalizada — Ver Servicios
+                                        </Link>
+                                    ) : (
                                         <Link
                                             href={promotion.services && promotion.services.length > 0
                                                 ? `/${slug}/servicio/${promotion.services[0].id}`
                                                 : `/${slug}#servicios`}
-                                            className="w-full text-white font-black text-sm uppercase tracking-widest py-5 rounded-3xl flex items-center justify-center gap-3 transition-all shadow-xl active:scale-95 group"
+                                            className="w-full text-white font-black text-sm uppercase tracking-widest py-5 rounded-3xl flex items-center justify-center gap-3 transition-all shadow-xl active:scale-95 group text-center"
                                             style={{ backgroundColor: primaryColor }}
                                         >
                                             <Navigation2 size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />

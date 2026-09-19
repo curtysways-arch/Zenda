@@ -347,6 +347,83 @@ export async function seedGymCanonical() {
         console.log(`[Demo Member] Socio con membresía vencida creado: Andrea Rivas.`);
       }
     }
+
+    // 7. Crear Clases Canónicas para vortex-fitness
+    const demoClasses = [
+      {
+        name: 'CrossFit WOD & Potencia',
+        coach: 'Alex Ríos',
+        category: 'Fuerza',
+        room: 'Box Principal',
+        daysOfWeek: 'LUN,MIE,VIE',
+        startTime: '18:30',
+        durationMinutes: 60,
+        capacity: 20,
+        color: '#f97316',
+        description: 'Entrenamiento de alta intensidad enfocado en levantamiento, resistencia cardiovascular y fuerza funcional.'
+      },
+      {
+        name: 'Spinning Interval Extreme',
+        coach: 'Paola Morales',
+        category: 'Cardio',
+        room: 'Sala Ciclo Indoor',
+        daysOfWeek: 'LUN,MAR,MIE,JUE,VIE',
+        startTime: '19:45',
+        durationMinutes: 45,
+        capacity: 25,
+        color: '#10b981',
+        description: 'Cadencias intensas sobre bicicleta con música motivacional y medición de potencia.'
+      },
+      {
+        name: 'Funcional HIIT & Core',
+        coach: 'Javier Ramos',
+        category: 'Funcional',
+        room: 'Zona Funcional Box',
+        daysOfWeek: 'MAR,JUE,SAB',
+        startTime: '20:45',
+        durationMinutes: 50,
+        capacity: 18,
+        color: '#06b6d4',
+        description: 'Circuitos dinámicos metabólicos para quema calórica, agilidad y fortalecimiento del core.'
+      },
+      {
+        name: 'Yoga Power & Movilidad',
+        coach: 'Elena Castro',
+        category: 'Mente & Cuerpo',
+        room: 'Estudio Zen',
+        daysOfWeek: 'LUN,MIE,VIE',
+        startTime: '07:30',
+        durationMinutes: 55,
+        capacity: 15,
+        color: '#a855f7',
+        description: 'Fluidez postural, respiración consciente, elongación profunda y prevención de lesiones.'
+      }
+    ];
+
+    for (const dc of demoClasses) {
+      const existingClass = await (prisma as any).gymClass.findFirst({
+        where: { businessId: vortex.id, name: dc.name }
+      });
+      if (!existingClass) {
+        await (prisma as any).gymClass.create({
+          data: {
+            businessId: vortex.id,
+            name: dc.name,
+            coach: dc.coach,
+            category: dc.category,
+            room: dc.room,
+            daysOfWeek: dc.daysOfWeek,
+            startTime: dc.startTime,
+            durationMinutes: dc.durationMinutes,
+            capacity: dc.capacity,
+            color: dc.color,
+            description: dc.description,
+            active: true
+          }
+        });
+        console.log(`[Demo GymClass] Creada clase ${dc.name} para vortex-fitness.`);
+      }
+    }
   }
 
   console.log('--- [SEED CANONICAL GIMNASIO] Finalizado con éxito ---');

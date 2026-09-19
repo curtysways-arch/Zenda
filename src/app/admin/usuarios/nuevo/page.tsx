@@ -32,7 +32,10 @@ import {
     CheckSquare,
     Square,
     Layers,
-    Flame
+    Flame,
+    Scan,
+    Dumbbell,
+    CreditCard
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -50,11 +53,111 @@ interface SystemModuleDef {
     description: string;
     icon: any;
     color: string;
-    industries: ('restaurant' | 'spa' | 'canchas' | 'retail')[];
+    industries: ('restaurant' | 'spa' | 'canchas' | 'retail' | 'gym' | 'dental')[];
 }
 
 const ALL_SYSTEM_MODULES: SystemModuleDef[] = [
-    // Restaurante / Gastronomía
+    // ── GIMNASIO / FITNESS ──
+    {
+        id: "accesos",
+        label: "Control de Torno & Accesos",
+        description: "Validación de pases QR, apertura de torniquete y pantalla de acceso en vivo.",
+        icon: Scan,
+        color: "text-orange-600 bg-orange-50 border-orange-200",
+        industries: ['gym']
+    },
+    {
+        id: "asistencias",
+        label: "Asistencias en Sala",
+        description: "Registro de ingresos en vivo, conteo de aforo actual y permanencia de socios.",
+        icon: CalendarCheck,
+        color: "text-amber-600 bg-amber-50 border-amber-200",
+        industries: ['gym']
+    },
+    {
+        id: "clases",
+        label: "Clases Grupales & Horarios",
+        description: "Programación de clases dirigidas (Spinning, CrossFit, Yoga), cupos y coaches.",
+        icon: Calendar,
+        color: "text-rose-600 bg-rose-50 border-rose-200",
+        industries: ['gym']
+    },
+    {
+        id: "socios",
+        label: "Socios & Ficha de Atleta",
+        description: "Directorio de socios, estado de membresía, historial de visitas y contacto.",
+        icon: UsersIcon,
+        color: "text-cyan-600 bg-cyan-50 border-cyan-200",
+        industries: ['gym']
+    },
+    {
+        id: "membresias",
+        label: "Membresías & Planes",
+        description: "Venta de planes, control de vencimientos, renovaciones y congelamientos.",
+        icon: CreditCard,
+        color: "text-emerald-600 bg-emerald-50 border-emerald-200",
+        industries: ['gym']
+    },
+    {
+        id: "staff",
+        label: "Entrenadores & Coaches",
+        description: "Directorio de entrenadores, instructores de clase y horarios de servicio.",
+        icon: Dumbbell,
+        color: "text-indigo-600 bg-indigo-50 border-indigo-200",
+        industries: ['gym']
+    },
+    {
+        id: "misiones",
+        label: "Club de Beneficios",
+        description: "Misiones deportivas, puntos y canje de premios por asistencia y lealtad.",
+        icon: Flame,
+        color: "text-orange-600 bg-orange-50 border-orange-200",
+        industries: ['gym', 'spa', 'restaurant']
+    },
+
+    // ── DENTAL / ODONTOLOGÍA ──
+    {
+        id: "pacientes",
+        label: "Pacientes & Ficha Clínica",
+        description: "Registro de pacientes, datos de contacto, alergias y antecedentes médicos.",
+        icon: UsersIcon,
+        color: "text-sky-600 bg-sky-50 border-sky-200",
+        industries: ['dental']
+    },
+    {
+        id: "historia-clinica",
+        label: "Historia Clínica & Odontograma",
+        description: "Odontograma interactivo de piezas dentales, diagnósticos y evolución clínica.",
+        icon: ClipboardList,
+        color: "text-teal-600 bg-teal-50 border-teal-200",
+        industries: ['dental']
+    },
+    {
+        id: "tratamientos",
+        label: "Tratamientos & Presupuestos",
+        description: "Catálogo de procedimientos, planes de tratamiento, fases y presupuestos.",
+        icon: Layers,
+        color: "text-indigo-600 bg-indigo-50 border-indigo-200",
+        industries: ['dental']
+    },
+    {
+        id: "documentos",
+        label: "Documentos & Consentimientos",
+        description: "Consentimientos informados, recetas médicas y radiografías adjuntas.",
+        icon: ClipboardList,
+        color: "text-violet-600 bg-violet-50 border-violet-200",
+        industries: ['dental']
+    },
+    {
+        id: "staff",
+        label: "Doctores & Especialistas",
+        description: "Directorio de odontólogos, especialidades y asignación de sillón.",
+        icon: UsersIcon,
+        color: "text-blue-600 bg-blue-50 border-blue-200",
+        industries: ['dental']
+    },
+
+    // ── RESTAURANTE / GASTRONOMÍA ──
     {
         id: "cocina",
         label: "Cocina / Comandas (KDS)",
@@ -86,7 +189,7 @@ const ALL_SYSTEM_MODULES: SystemModuleDef[] = [
         description: "Calendario de reservas, citas y turnos de atención al cliente.",
         icon: Calendar,
         color: "text-sky-600 bg-sky-50 border-sky-200",
-        industries: ['spa', 'canchas']
+        industries: ['spa', 'canchas', 'dental']
     },
     {
         id: "servicios",
@@ -121,14 +224,14 @@ const ALL_SYSTEM_MODULES: SystemModuleDef[] = [
         color: "text-rose-600 bg-rose-50 border-rose-200",
         industries: ['canchas']
     },
-    // Universales
+    // Universales & Adaptados
     {
         id: "ventas",
         label: "Punto de Venta / Recepción (POS)",
-        description: "Cobro rápido de servicios, productos y emisión de comprobantes.",
+        description: "Cobro rápido de servicios, suscripciones, productos y comprobantes.",
         icon: ShoppingBag,
         color: "text-indigo-600 bg-indigo-50 border-indigo-200",
-        industries: ['restaurant', 'spa', 'canchas', 'retail']
+        industries: ['gym', 'restaurant', 'spa', 'canchas', 'retail']
     },
     {
         id: "caja",
@@ -136,7 +239,7 @@ const ALL_SYSTEM_MODULES: SystemModuleDef[] = [
         description: "Apertura y cierre de caja, registro de turnos y arqueo de dinero.",
         icon: Wallet,
         color: "text-teal-600 bg-teal-50 border-teal-200",
-        industries: ['restaurant', 'spa', 'canchas', 'retail']
+        industries: ['gym', 'dental', 'restaurant', 'spa', 'canchas', 'retail']
     },
     {
         id: "pedidos",
@@ -145,6 +248,14 @@ const ALL_SYSTEM_MODULES: SystemModuleDef[] = [
         icon: Bike,
         color: "text-blue-600 bg-blue-50 border-blue-200",
         industries: ['restaurant', 'retail', 'spa']
+    },
+    {
+        id: "productos",
+        label: "Suplementos & Tienda",
+        description: "Bebidas hidratantes, indumentaria deportiva y suplementación.",
+        icon: Package,
+        color: "text-orange-600 bg-orange-50 border-orange-200",
+        industries: ['gym']
     },
     {
         id: "productos",
@@ -160,7 +271,7 @@ const ALL_SYSTEM_MODULES: SystemModuleDef[] = [
         description: "Control de existencias e insumos utilizados.",
         icon: Layers,
         color: "text-cyan-600 bg-cyan-50 border-cyan-200",
-        industries: ['restaurant', 'spa', 'retail']
+        industries: ['gym', 'restaurant', 'spa', 'retail']
     },
     {
         id: "clientes",
@@ -176,7 +287,7 @@ const ALL_SYSTEM_MODULES: SystemModuleDef[] = [
         description: "Análisis de ingresos, métricas operativas y estadísticas.",
         icon: BarChart3,
         color: "text-slate-600 bg-slate-50 border-slate-200",
-        industries: ['restaurant', 'spa', 'canchas', 'retail']
+        industries: ['gym', 'dental', 'restaurant', 'spa', 'canchas', 'retail']
     },
     {
         id: "config",
@@ -184,7 +295,7 @@ const ALL_SYSTEM_MODULES: SystemModuleDef[] = [
         description: "Ajustes de sucursales, métodos de pago y datos de la empresa.",
         icon: Settings,
         color: "text-slate-700 bg-slate-100 border-slate-300",
-        industries: ['restaurant', 'spa', 'canchas', 'retail']
+        industries: ['gym', 'dental', 'restaurant', 'spa', 'canchas', 'retail']
     }
 ];
 
@@ -202,7 +313,7 @@ function UsuarioFormContent() {
     const [fetching, setFetching] = useState(isEdit);
     const [availableRoles, setAvailableRoles] = useState<any[]>([]);
     const [availableBranches, setAvailableBranches] = useState<BranchOption[]>([]);
-    const [industry, setIndustry] = useState<'restaurant' | 'spa' | 'canchas' | 'retail'>('spa');
+    const [industry, setIndustry] = useState<'restaurant' | 'spa' | 'canchas' | 'retail' | 'gym' | 'dental'>('spa');
 
     const [formData, setFormData] = useState({
         nombre: nameParam || "",
@@ -250,12 +361,33 @@ function UsuarioFormContent() {
                     const slugUpper = (negData.slug || '').toUpperCase();
                     const nameUpper = (negData.nombre || '').toUpperCase();
 
+                    let cfg: any = {};
+                    try {
+                        cfg = typeof negData.configuracion === 'string' ? JSON.parse(negData.configuracion) : (negData.configuracion || {});
+                    } catch { cfg = {}; }
+
+                    const isGym = tipoUpper === 'GIMNASIO' || tipoUpper === 'GYM' || tipoUpper === 'FITNESS' ||
+                        (cfg.blueprintId || '').toUpperCase() === 'GYM' || (cfg.blueprintId || '').toUpperCase() === 'GIMNASIO' ||
+                        (cfg.tipoNegocio || '').toUpperCase().includes('GYM') || (cfg.tipoNegocio || '').toUpperCase().includes('GIMNASIO') ||
+                        slugUpper.includes('GYM') || slugUpper.includes('GIMNASIO') || slugUpper.includes('FITNESS') ||
+                        nameUpper.includes('GYM') || nameUpper.includes('GIMNASIO') || nameUpper.includes('FITNESS');
+
+                    const isDental = tipoUpper === 'ODONTOLOGIA' || tipoUpper === 'DENTAL' || tipoUpper === 'DENTISTA' ||
+                        (cfg.blueprintId || '').toUpperCase() === 'DENTAL' || (cfg.blueprintId || '').toUpperCase() === 'DENTISTA' ||
+                        (cfg.tipoNegocio || '').toUpperCase().includes('DENTAL') || (cfg.tipoNegocio || '').toUpperCase().includes('ODONTOL') ||
+                        slugUpper.includes('DENTAL') || slugUpper.includes('ODONTOL') || slugUpper.includes('DENTISTA') ||
+                        nameUpper.includes('DENTAL') || nameUpper.includes('ODONTOL') || nameUpper.includes('DENTISTA');
+
                     const isRestaurant = tipoUpper === 'RESTAURANTE' || tipoUpper === 'GASTRONOMIA' || tipoUpper === 'RESTAURANT' ||
                         nameUpper.includes('PARRILLA') || nameUpper.includes('RESTAURANTE') || nameUpper.includes('GASTRONOMIA') || nameUpper.includes('BURGER') || nameUpper.includes('PIZZA') || nameUpper.includes('TACO');
                     const isPinchos = tipoUpper === 'PINCHOS' || slugUpper === 'PINCHOS';
                     const isCanchas = tipoUpper === 'SPORTS_COURTS' || tipoUpper === 'CANCHAS' || slugUpper.includes('CANCHA') || nameUpper.includes('CANCHA') || nameUpper.includes('COMPLEJO') || nameUpper.includes('PADEL');
 
-                    if (isRestaurant || isPinchos) {
+                    if (isGym) {
+                        setIndustry('gym');
+                    } else if (isDental) {
+                        setIndustry('dental');
+                    } else if (isRestaurant || isPinchos) {
                         setIndustry('restaurant');
                     } else if (isCanchas) {
                         setIndustry('canchas');
@@ -352,6 +484,22 @@ function UsuarioFormContent() {
             setFormData(prev => ({ ...prev, allowedModules: visibleModules.map(m => m.id) }));
         } else if (presetKey === 'ninguno') {
             setFormData(prev => ({ ...prev, allowedModules: [] }));
+        } else if (industry === 'gym') {
+            if (presetKey === 'recepcion') {
+                setFormData(prev => ({ ...prev, roles: ['RECEPCIONISTA'], allowedModules: ['accesos', 'asistencias', 'socios', 'ventas', 'caja', 'clases'] }));
+            } else if (presetKey === 'entrenador') {
+                setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['clases', 'asistencias', 'socios'] }));
+            } else if (presetKey === 'caja') {
+                setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['caja', 'ventas', 'membresias', 'productos'] }));
+            }
+        } else if (industry === 'dental') {
+            if (presetKey === 'recepcion') {
+                setFormData(prev => ({ ...prev, roles: ['RECEPCIONISTA'], allowedModules: ['citas', 'pacientes', 'caja', 'documentos'] }));
+            } else if (presetKey === 'doctor') {
+                setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['citas', 'pacientes', 'historia-clinica', 'tratamientos', 'documentos'] }));
+            } else if (presetKey === 'asistente') {
+                setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['citas', 'pacientes', 'documentos'] }));
+            }
         } else if (industry === 'spa') {
             if (presetKey === 'recepcion') {
                 setFormData(prev => ({ ...prev, roles: ['RECEPCIONISTA'], allowedModules: ['citas', 'clientes', 'caja', 'ventas'] }));
@@ -375,6 +523,12 @@ function UsuarioFormContent() {
                 setFormData(prev => ({ ...prev, roles: ['RECEPCIONISTA'], allowedModules: ['citas', 'clientes', 'caja', 'ventas'] }));
             } else if (presetKey === 'caja') {
                 setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['caja', 'ventas'] }));
+            }
+        } else if (industry === 'retail') {
+            if (presetKey === 'ventas') {
+                setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['ventas', 'productos', 'caja'] }));
+            } else if (presetKey === 'almacen') {
+                setFormData(prev => ({ ...prev, roles: ['STAFF'], allowedModules: ['inventario', 'productos', 'pedidos'] }));
             }
         }
     };
@@ -703,6 +857,58 @@ function UsuarioFormContent() {
                         <div className="flex flex-wrap items-center gap-2">
                             <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mr-1">Preajustes:</span>
                             
+                            {industry === 'gym' && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyPreset('recepcion')}
+                                        className="px-3 py-1.5 rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-900 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                    >
+                                        <Scan size={14} /> Recepcionista Torno
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyPreset('entrenador')}
+                                        className="px-3 py-1.5 rounded-xl bg-cyan-100 hover:bg-cyan-200 text-cyan-900 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                    >
+                                        <Dumbbell size={14} /> Coach / Entrenador
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyPreset('caja')}
+                                        className="px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-900 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                    >
+                                        <Wallet size={14} /> Caja / Membresías
+                                    </button>
+                                </>
+                            )}
+
+                            {industry === 'dental' && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyPreset('recepcion')}
+                                        className="px-3 py-1.5 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-900 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                    >
+                                        <Calendar size={14} /> Recepcionista Dental
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyPreset('doctor')}
+                                        className="px-3 py-1.5 rounded-xl bg-teal-100 hover:bg-teal-200 text-teal-900 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                    >
+                                        <Shield size={14} /> Odontólogo / Doctor
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => applyPreset('asistente')}
+                                        className="px-3 py-1.5 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-900 text-xs font-black transition-all flex items-center gap-1.5 active:scale-95"
+                                    >
+                                        <ClipboardList size={14} /> Asistente Dental
+                                    </button>
+                                </>
+                            )}
+
                             {industry === 'spa' && (
                                 <>
                                     <button

@@ -32,12 +32,14 @@ export default function StoreLanding({
   initialCategories = [],
   initialHeroContent = { hero: [], highlights: [] },
   initialPromotions = [],
+  initialSelectedProduct = null,
 }: {
   negocio: any;
   initialProducts?: DetailedProduct[];
   initialCategories?: Category[];
   initialHeroContent?: { hero: any[]; highlights: any[] };
   initialPromotions?: any[];
+  initialSelectedProduct?: DetailedProduct | null;
 }) {
   const defaultDeliveryCost = Number((negocio?.configuracion as any)?.costoEnvio) || 2.50;
 
@@ -49,6 +51,7 @@ export default function StoreLanding({
         initialCategories={initialCategories}
         initialHeroContent={initialHeroContent}
         initialPromotions={initialPromotions}
+        initialSelectedProduct={initialSelectedProduct}
       />
     </CartProvider>
   );
@@ -60,12 +63,14 @@ function StoreLandingContent({
   initialCategories = [],
   initialHeroContent = { hero: [], highlights: [] },
   initialPromotions = [],
+  initialSelectedProduct = null,
 }: {
   negocio: any;
   initialProducts?: DetailedProduct[];
   initialCategories?: Category[];
   initialHeroContent?: { hero: any[]; highlights: any[] };
   initialPromotions?: any[];
+  initialSelectedProduct?: DetailedProduct | null;
 }) {
   const primaryColor = negocio?.colorPrimario || '#06b6d4';
   const secondaryColor = negocio?.colorSecundario || '#0f172a';
@@ -74,8 +79,36 @@ function StoreLandingContent({
 
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
-  const [selectedProductForModal, setSelectedProductForModal] = useState<DetailedProduct | null>(null);
+  const [selectedProductForModal, setSelectedProductForModal] = useState<DetailedProduct | null>(initialSelectedProduct || null);
   const [isMapModalOpen, setIsMapModalOpen] = useState<boolean>(false);
+
+  // Deep linking: sincronizar y abrir automáticamente el modal del producto si viene ?producto=ID o ?p=ID
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetId = urlParams.get('producto') || urlParams.get('p');
+      if (!targetId) return;
+
+      if (selectedProductForModal && selectedProductForModal.id === targetId) return;
+
+      const found = initialProducts.find(p => p.id === targetId);
+      if (found) {
+        setSelectedProductForModal(found);
+      } else {
+        const slug = negocio?.slug || 'tienda';
+        fetch(`/api/public/${slug}/products/${targetId}`)
+          .then(res => res.ok ? res.json() : null)
+          .then(data => {
+            const prod = data?.product || data?.producto;
+            if (prod && prod.id) {
+              setSelectedProductForModal(prod);
+            }
+          })
+          .catch(() => {});
+      }
+    } catch (e) {}
+  }, [initialProducts, negocio?.slug, selectedProductForModal]);
 
   // Navegación por Pestañas (Inicio, Ofertas, Mis Pedidos, Mi Cuenta)
   const [activeTab, setActiveTab] = useState<'inicio' | 'ofertas' | 'pedidos' | 'cuenta'>('inicio');

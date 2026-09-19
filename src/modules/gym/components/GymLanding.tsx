@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Dumbbell, CheckCircle, ArrowRight, Shield, Zap, Flame, Award, 
-  Clock, MapPin, Phone, Star, Sparkles, User, Calendar, QrCode, X, ChevronRight, Check
+  Clock, MapPin, Phone, Star, Sparkles, User, Calendar, QrCode, X, ChevronRight, Check, Users
 } from 'lucide-react';
 
 interface GymLandingProps {
@@ -16,6 +16,9 @@ interface GymLandingProps {
 export default function GymLanding({ negocio, initialPlans = [], initialPromotions = [] }: GymLandingProps) {
   const [plans, setPlans] = useState<any[]>(initialPlans);
   const [loadingPlans, setLoadingPlans] = useState<boolean>(initialPlans.length === 0);
+  const [classes, setClasses] = useState<any[]>([]);
+  const [loadingClasses, setLoadingClasses] = useState<boolean>(true);
+  const [selectedDayFilter, setSelectedDayFilter] = useState<string>('TODOS');
   const [selectedPlan, setSelectedPlan] = useState<any | null>(null);
   const [checkoutModalOpen, setCheckoutModalOpen] = useState<boolean>(false);
   const [checkoutStep, setCheckoutStep] = useState<'form' | 'success'>('form');
@@ -99,6 +102,21 @@ export default function GymLanding({ negocio, initialPlans = [], initialPromotio
         .finally(() => setLoadingPlans(false));
     }
   }, [negocio?.slug, initialPlans.length]);
+
+  // Cargar clases grupales y horarios
+  useEffect(() => {
+    if (negocio?.slug) {
+      fetch(`/api/${negocio.slug}/gym/classes`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.classes) {
+            setClasses(data.classes);
+          }
+        })
+        .catch(err => console.error('Error fetching gym classes:', err))
+        .finally(() => setLoadingClasses(false));
+    }
+  }, [negocio?.slug]);
 
   const handleOpenCheckout = (plan: any) => {
     setSelectedPlan(plan);
@@ -330,7 +348,151 @@ export default function GymLanding({ negocio, initialPlans = [], initialPromotio
         )}
       </section>
 
-      {/* ── 3. BENEFICIOS E INSTALACIONES (100% CONFIGURABLE DESDE ADMIN) ─ */}
+      {/* ── 3. CLASES GRUPALES & HORARIOS (DINÁMICAS DESDE EL SISTEMA) ──── */}
+      <section id="clases" className="py-20 max-w-6xl mx-auto px-4 sm:px-6 scroll-mt-20">
+        <div className="text-center max-w-3xl mx-auto mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 text-orange-400 text-xs font-bold uppercase tracking-wider mb-3">
+            <Flame size={14} />
+            Entrenamiento Dirigido
+          </div>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-white mb-4">
+            CLASES & HORARIOS
+          </h2>
+          <p className="text-slate-400 text-sm sm:text-base">
+            Sesiones guiadas por coaches certificados incluidas o con aforo preferencial para miembros.
+          </p>
+
+          {/* Selector de Días */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-8">
+            {[
+              { key: 'TODOS', label: 'Todos' },
+              { key: 'LUN', label: 'Lunes' },
+              { key: 'MAR', label: 'Martes' },
+              { key: 'MIE', label: 'Miércoles' },
+              { key: 'JUE', label: 'Jueves' },
+              { key: 'VIE', label: 'Viernes' },
+              { key: 'SAB', label: 'Sábado' },
+              { key: 'DOM', label: 'Domingo' }
+            ].map((day) => (
+              <button
+                key={day.key}
+                onClick={() => setSelectedDayFilter(day.key)}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                  selectedDayFilter === day.key
+                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/25 scale-105'
+                    : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                {day.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {loadingClasses ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
+          </div>
+        ) : classes.length === 0 ? (
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center max-w-md mx-auto">
+            <Calendar className="mx-auto text-slate-600 mb-3" size={40} />
+            <p className="text-slate-300 font-semibold">Horarios de clases en preparación</p>
+            <p className="text-slate-500 text-xs mt-1">El gimnasio publicará sus próximas clases grupales muy pronto.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {classes
+              .filter((c) => {
+                if (selectedDayFilter === 'TODOS') return true;
+                const days = (c.daysOfWeek || '').toUpperCase();
+                return days.includes(selectedDayFilter);
+              })
+              .map((c) => {
+                const daysArray = (c.daysOfWeek || '').split(',').map((d: string) => d.trim()).filter(Boolean);
+                return (
+                  <div
+                    key={c.id}
+                    className="flex flex-col justify-between p-6 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-orange-500/40 transition-all shadow-xl group hover:-translate-y-1"
+                  >
+                    <div>
+                      {/* Categoría y Aforo */}
+                      <div className="flex items-center justify-between gap-2 mb-4">
+                        <span 
+                          className="px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider"
+                          style={{
+                            backgroundColor: `${c.color || '#ea580c'}22`,
+                            color: c.color || '#ea580c',
+                            border: `1px solid ${c.color || '#ea580c'}44`
+                          }}
+                        >
+                          {c.category || 'General'}
+                        </span>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                          <Users size={14} className="text-slate-500" />
+                          <span>{c.capacity} cupos max</span>
+                        </div>
+                      </div>
+
+                      {/* Nombre y Descripción */}
+                      <h3 className="text-xl font-black uppercase text-white group-hover:text-orange-400 transition-colors">
+                        {c.name}
+                      </h3>
+                      {c.description && (
+                        <p className="text-xs text-slate-400 mt-2 line-clamp-2 leading-relaxed">
+                          {c.description}
+                        </p>
+                      )}
+
+                      {/* Meta Datos (Coach, Horario, Sala) */}
+                      <div className="mt-5 space-y-2.5 pt-4 border-t border-slate-800/80">
+                        <div className="flex items-center gap-2 text-xs text-slate-300">
+                          <Clock size={14} className="text-orange-400 shrink-0" />
+                          <span className="font-bold text-white">{c.startTime}</span>
+                          <span className="text-slate-500">({c.durationMinutes} minutos)</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-300">
+                          <User size={14} className="text-orange-400 shrink-0" />
+                          <span>Coach: <strong className="text-white">{c.coach}</strong></span>
+                        </div>
+                        {c.room && (
+                          <div className="flex items-center gap-2 text-xs text-slate-300">
+                            <MapPin size={14} className="text-orange-400 shrink-0" />
+                            <span>{c.room}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Días en que se dicta */}
+                      <div className="flex flex-wrap gap-1.5 mt-4">
+                        {daysArray.map((day: string, idx: number) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 text-[10px] font-mono font-bold text-slate-300"
+                          >
+                            {day}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Botón Acción */}
+                    <div className="mt-6 pt-4 border-t border-slate-800">
+                      <Link
+                        href={`/${negocio.slug}/mi-gym/clases`}
+                        className="w-full py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-800 hover:bg-orange-500 text-white transition-all flex items-center justify-center gap-2 text-center group-hover:bg-orange-500"
+                      >
+                        <span>Reservar en App de Socio</span>
+                        <ArrowRight size={14} />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        )}
+      </section>
+
+      {/* ── 4. BENEFICIOS E INSTALACIONES (100% CONFIGURABLE DESDE ADMIN) ─ */}
       <section id="instalaciones" className="py-20 bg-slate-900/40 border-y border-slate-800/80 scroll-mt-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">

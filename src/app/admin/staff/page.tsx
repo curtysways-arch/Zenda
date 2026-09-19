@@ -44,6 +44,25 @@ function StaffContent() {
     const [selectedStaff, setSelectedStaff] = useState<StaffMember | undefined>();
     const [scheduleOpenFor, setScheduleOpenFor] = useState<StaffMember | undefined>();
     const [primaryColor, setPrimaryColor] = useState('#0ea5e9');
+    const [bizType, setBizType] = useState<'gym' | 'dental' | 'spa' | 'general'>('general');
+
+    useEffect(() => {
+        fetch('/api/negocio')
+            .then(res => res.json())
+            .then(data => {
+                const tipoUpper = (data.tipoNegocio || '').toUpperCase();
+                const slugUpper = (data.slug || '').toUpperCase();
+                const nameUpper = (data.nombre || '').toUpperCase();
+                if (tipoUpper === 'GIMNASIO' || tipoUpper === 'GYM' || tipoUpper === 'FITNESS' || slugUpper.includes('GYM') || nameUpper.includes('GYM') || nameUpper.includes('FITNESS')) {
+                    setBizType('gym');
+                } else if (tipoUpper === 'ODONTOLOGIA' || tipoUpper === 'DENTAL' || tipoUpper === 'DENTISTA' || slugUpper.includes('DENTAL') || nameUpper.includes('DENTAL')) {
+                    setBizType('dental');
+                } else if (tipoUpper === 'SPA' || tipoUpper === 'CENTRO_ESTETICA' || tipoUpper === 'PELUQUERIA') {
+                    setBizType('spa');
+                }
+            })
+            .catch(() => {});
+    }, []);
 
     const fetchStaff = async () => {
         if (!session?.user) return;
@@ -111,7 +130,8 @@ function StaffContent() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("¿Seguro que quieres eliminar a este profesional?")) return;
+        const itemLabel = bizType === 'gym' ? 'entrenador' : bizType === 'dental' ? 'doctor' : 'profesional';
+        if (!confirm(`¿Seguro que quieres eliminar a este ${itemLabel}?`)) return;
         try {
             const res = await fetch(`/api/staff/${id}`, { method: "DELETE" });
             if (res.ok) {
@@ -136,7 +156,9 @@ function StaffContent() {
         return (
             <div className="flex flex-col items-center justify-center py-40 gap-4">
                 <Loader2 className="animate-spin" size={48} style={{ color: primaryColor }} />
-                <p className="text-slate-400 font-black uppercase tracking-widest animate-pulse">Cargando Staff...</p>
+                <p className="text-slate-400 font-black uppercase tracking-widest animate-pulse">
+                    {bizType === 'gym' ? 'Cargando Entrenadores...' : bizType === 'dental' ? 'Cargando Doctores...' : 'Cargando Staff...'}
+                </p>
             </div>
         );
     }
@@ -161,9 +183,15 @@ function StaffContent() {
                     <div>
                         <h1 className="text-4xl font-black text-slate-900 uppercase tracking-tighter flex items-center gap-3">
                             <Users size={36} style={{ color: primaryColor }} />
-                            Gestión de Staff
+                            {bizType === 'gym' ? 'Entrenadores & Coaches' : bizType === 'dental' ? 'Doctores & Especialistas' : 'Gestión de Staff'}
                         </h1>
-                        <p className="text-slate-600 font-medium">Administra a los profesionales y sus horarios de atención.</p>
+                        <p className="text-slate-600 font-medium">
+                            {bizType === 'gym' 
+                                ? 'Administra a los entrenadores, instructores y sus horarios de clases.' 
+                                : bizType === 'dental'
+                                ? 'Administra a los odontólogos y especialistas de la clínica dental.'
+                                : 'Administra a los profesionales y sus horarios de atención.'}
+                        </p>
                     </div>
 
                     <button 
@@ -171,7 +199,7 @@ function StaffContent() {
                         className="flex items-center gap-2 text-white font-black px-6 py-4 rounded-[2rem] shadow-xl transition-all active:scale-95 uppercase tracking-widest text-xs cursor-pointer"
                         style={{ backgroundColor: primaryColor }}
                     >
-                        <Plus size={18} /> Nuevo Profesional / Repartidor
+                        <Plus size={18} /> {bizType === 'gym' ? 'Nuevo Entrenador / Coach' : bizType === 'dental' ? 'Nuevo Doctor / Especialista' : 'Nuevo Profesional / Repartidor'}
                     </button>
                 </div>
 
@@ -273,6 +301,7 @@ function StaffContent() {
                             onClose={() => setIsModalOpen(false)}
                             staff={selectedStaff}
                             onSuccess={fetchStaff}
+                            bizType={bizType}
                         />
                     </div>
                 )}
@@ -295,6 +324,7 @@ function StaffContent() {
                         onClose={() => setIsModalOpen(false)}
                         staff={selectedStaff}
                         onSuccess={fetchStaff}
+                        bizType={bizType}
                     />
                 )}
                 {scheduleOpenFor && (

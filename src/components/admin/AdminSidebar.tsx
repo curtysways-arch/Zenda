@@ -264,6 +264,7 @@ export default function AdminSidebar({
     if (isGymBiz || capabilities.memberships || capabilities.access || capabilities.attendance) {
       items.push({ name: 'Control de Acceso', href: '/admin/accesos', icon: Scan, section: 'GESTIÓN OPERATIVA' });
       items.push({ name: 'Asistencias', href: '/admin/asistencias', icon: CalendarCheck, section: 'GESTIÓN OPERATIVA' });
+      items.push({ name: 'Clases & Horarios', href: '/admin/clases', icon: CalendarDays, section: 'GESTIÓN OPERATIVA' });
       items.push({ name: 'Socios', href: '/admin/socios', icon: Users, section: 'GESTIÓN OPERATIVA' });
       items.push({ name: 'Membresías', href: '/admin/membresias', icon: CreditCard, section: 'GESTIÓN OPERATIVA' });
     }
@@ -275,6 +276,15 @@ export default function AdminSidebar({
         icon: CalendarDays, 
         section: 'GESTIÓN OPERATIVA' 
       });
+      if (!capabilities.courts) {
+        items.push({ 
+          name: 'Profesionales', 
+          href: '/admin/staff', 
+          icon: Users, 
+          section: 'GESTIÓN OPERATIVA',
+          roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN']
+        });
+      }
     }
     if (capabilities.services && !capabilities.courts && !isGymBiz) {
       items.push({ name: 'Servicios', href: '/admin/servicios', icon: Scissors, section: 'GESTIÓN OPERATIVA', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] });
@@ -327,9 +337,9 @@ export default function AdminSidebar({
       roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] 
     });
     items.push({ 
-      name: capabilities.courts ? 'Personal & Acceso' : 'Personal & Equipo', 
+      name: capabilities.courts ? 'Personal & Acceso' : 'Personal & Accesos', 
       href: '/admin/usuarios', 
-      icon: Users, 
+      icon: ShieldCheck, 
       section: 'ADMINISTRACIÓN', 
       roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] 
     });
@@ -357,7 +367,8 @@ export default function AdminSidebar({
         // ── GESTIÓN CLÍNICA ──
         { name: 'Inicio', href: '/admin', icon: LayoutDashboard, section: 'GESTIÓN CLÍNICA' },
         { name: 'Pacientes', href: '/admin/pacientes', icon: Contact, section: 'GESTIÓN CLÍNICA' },
-        { name: 'Citas', href: '/admin/citas', icon: CalendarDays, section: 'GESTIÓN CLÍNICA' },
+        { name: 'Citas & Agenda', href: '/admin/citas', icon: CalendarDays, section: 'GESTIÓN CLÍNICA' },
+        { name: 'Doctores & Especialistas', href: '/admin/staff', icon: Users, section: 'GESTIÓN CLÍNICA' },
         { 
           name: 'Historia Clínica', 
           href: '/admin/historia-clinica', 
@@ -397,7 +408,7 @@ export default function AdminSidebar({
         { name: 'Páginas', href: '/admin/paginas', icon: Layout, section: 'MARKETING' },
 
         // ── ADMINISTRACIÓN ──
-        { name: 'Doctores & Staff', href: '/admin/usuarios', icon: Users, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Personal & Accesos', href: '/admin/usuarios', icon: ShieldCheck, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Caja & Finanzas', href: '/admin/caja', icon: Wallet, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Reportes', href: '/admin/reportes', icon: BarChart3, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
 
@@ -412,7 +423,35 @@ export default function AdminSidebar({
 
       return dentalItems.filter(item => {
         if (item.href === '/superadmin') return isRealSuperAdmin;
-        return true;
+
+        if (!isRealSuperAdmin && allowedModules && Array.isArray(allowedModules) && allowedModules.length > 0 && !allowedModules.includes('*')) {
+          if (item.href === '/admin') return allowedModules.length > 1;
+
+          const isModuleAllowed = allowedModules.some(modCode => {
+            if (!modCode || typeof modCode !== 'string') return false;
+            const cleanCode = modCode.toLowerCase().trim();
+            if (cleanCode === 'pacientes' || cleanCode === 'patients') return item.href === '/admin/pacientes';
+            if (cleanCode === 'citas' || cleanCode === 'agenda' || cleanCode === 'appointments') return item.href === '/admin/citas';
+            if (cleanCode === 'staff' || cleanCode === 'doctores' || cleanCode === 'especialistas') return item.href === '/admin/staff';
+            if (cleanCode === 'historia-clinica' || cleanCode === 'clinical_records') return item.href === '/admin/historia-clinica';
+            if (cleanCode === 'tratamientos' || cleanCode === 'treatments') return item.href === '/admin/tratamientos';
+            if (cleanCode === 'documentos' || cleanCode === 'documents') return item.href === '/admin/documentos';
+            if (cleanCode === 'servicios' || cleanCode === 'services') return item.href === '/admin/servicios';
+            if (cleanCode === 'productos' || cleanCode === 'products') return item.href === '/admin/productos' || item.href === '/admin/inventario' || item.href === '/admin/categorias';
+            if (cleanCode === 'usuarios' || cleanCode === 'personal') return item.href === '/admin/usuarios';
+            if (cleanCode === 'caja' || cleanCode === 'cash') return item.href === '/admin/caja';
+            if (cleanCode === 'reportes' || cleanCode === 'reports') return item.href === '/admin/reportes';
+            if (cleanCode === 'misiones' || cleanCode === 'beneficios') return item.href === '/admin/misiones';
+            if (cleanCode === 'config' || cleanCode === 'settings') return item.href.startsWith('/admin/config') || item.href === '/admin/sucursales' || item.href === '/admin/metodos-pago' || item.href === '/admin/perfil';
+            return item.href.includes(cleanCode);
+          });
+
+          if (!isModuleAllowed) return false;
+        }
+
+        if (!item.roles) return true;
+        if (isRealSuperAdmin) return true;
+        return item.roles.some(r => r === role || r === 'ADMIN' || r === 'ADMIN_NEGOCIO');
       });
     }
 
@@ -421,10 +460,11 @@ export default function AdminSidebar({
         // ── CONTROL DE ACCESOS & SOCIOS ──
         { name: 'Inicio', href: '/admin', icon: LayoutDashboard, section: 'CONTROL DE ACCESO & SOCIOS' },
         { name: 'Torno & Accesos', href: '/admin/accesos', icon: Scan, section: 'CONTROL DE ACCESO & SOCIOS' },
+        { name: 'Asistencias', href: '/admin/asistencias', icon: CalendarCheck, section: 'CONTROL DE ACCESO & SOCIOS' },
+        { name: 'Clases & Horarios', href: '/admin/clases', icon: CalendarDays, section: 'CONTROL DE ACCESO & SOCIOS' },
         { name: 'Socios', href: '/admin/socios', icon: Contact, section: 'CONTROL DE ACCESO & SOCIOS', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Membresías', href: '/admin/membresias', icon: CreditCard, section: 'CONTROL DE ACCESO & SOCIOS', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Planes & Tarifas', href: '/admin/membresias/planes', icon: Tags, section: 'CONTROL DE ACCESO & SOCIOS', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
-        { name: 'Asistencias', href: '/admin/asistencias', icon: CalendarCheck, section: 'CONTROL DE ACCESO & SOCIOS' },
 
         // ── GESTIÓN FINANCIERA ──
         { name: 'Caja & Finanzas', href: '/admin/caja', icon: Wallet, section: 'GESTIÓN FINANCIERA', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
@@ -437,7 +477,8 @@ export default function AdminSidebar({
         { name: 'Páginas', href: '/admin/paginas', icon: Layout, section: 'MARKETING' },
 
         // ── ADMINISTRACIÓN ──
-        { name: 'Entrenadores & Staff', href: '/admin/usuarios', icon: Users, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Entrenadores & Coaches', href: '/admin/staff', icon: Users, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
+        { name: 'Personal & Accesos', href: '/admin/usuarios', icon: ShieldCheck, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
         { name: 'Reportes', href: '/admin/reportes', icon: BarChart3, section: 'ADMINISTRACIÓN', roles: ['ADMIN', 'ADMIN_NEGOCIO', 'SUPERADMIN'] },
 
         // ── CONFIGURACIÓN ──
@@ -451,7 +492,34 @@ export default function AdminSidebar({
 
       return gymItems.filter(item => {
         if (item.href === '/superadmin') return isRealSuperAdmin;
-        return true;
+
+        if (!isRealSuperAdmin && allowedModules && Array.isArray(allowedModules) && allowedModules.length > 0 && !allowedModules.includes('*')) {
+          if (item.href === '/admin') return allowedModules.length > 1;
+
+          const isModuleAllowed = allowedModules.some(modCode => {
+            if (!modCode || typeof modCode !== 'string') return false;
+            const cleanCode = modCode.toLowerCase().trim();
+            if (cleanCode === 'accesos' || cleanCode === 'access') return item.href === '/admin/accesos';
+            if (cleanCode === 'asistencias' || cleanCode === 'attendance') return item.href === '/admin/asistencias';
+            if (cleanCode === 'clases' || cleanCode === 'classes') return item.href === '/admin/clases';
+            if (cleanCode === 'socios' || cleanCode === 'members') return item.href === '/admin/socios';
+            if (cleanCode === 'membresias' || cleanCode === 'memberships') return item.href.startsWith('/admin/membresias');
+            if (cleanCode === 'staff' || cleanCode === 'entrenadores' || cleanCode === 'coaches') return item.href === '/admin/staff';
+            if (cleanCode === 'usuarios' || cleanCode === 'personal') return item.href === '/admin/usuarios';
+            if (cleanCode === 'caja' || cleanCode === 'cash') return item.href === '/admin/caja';
+            if (cleanCode === 'ventas' || cleanCode === 'pos') return item.href === '/admin/ventas';
+            if (cleanCode === 'misiones' || cleanCode === 'beneficios') return item.href === '/admin/misiones';
+            if (cleanCode === 'reportes' || cleanCode === 'reports') return item.href === '/admin/reportes';
+            if (cleanCode === 'config' || cleanCode === 'settings') return item.href.startsWith('/admin/config') || item.href === '/admin/sucursales' || item.href === '/admin/metodos-pago' || item.href === '/admin/perfil';
+            return item.href.includes(cleanCode);
+          });
+
+          if (!isModuleAllowed) return false;
+        }
+
+        if (!item.roles) return true;
+        if (isRealSuperAdmin) return true;
+        return item.roles.some(r => r === role || r === 'ADMIN' || r === 'ADMIN_NEGOCIO');
       });
     }
 

@@ -181,18 +181,31 @@ export default function HeroDestacadosPage() {
       }
     }
 
+    const heroToSave = { ...editingHero };
+    if (heroToSave.buttonEnabled) {
+      if (heroToSave.actionType === 'PROMOTION' && !heroToSave.actionValue && heroToSave.sourceId) {
+        heroToSave.actionValue = heroToSave.sourceId;
+      }
+      if (heroToSave.actionType === 'PRODUCT' && !heroToSave.actionValue && heroToSave.sourceId) {
+        heroToSave.actionValue = heroToSave.sourceId;
+      }
+      if (heroToSave.actionType === 'SERVICE' && !heroToSave.actionValue && heroToSave.sourceId) {
+        heroToSave.actionValue = heroToSave.sourceId;
+      }
+    }
+
     setSaving(true);
     try {
-      const isNew = !editingHero.id;
+      const isNew = !heroToSave.id;
       const url = isNew
         ? '/api/admin/hero-destacados/hero'
-        : `/api/admin/hero-destacados/hero/${editingHero.id}`;
+        : `/api/admin/hero-destacados/hero/${heroToSave.id}`;
       const method = isNew ? 'POST' : 'PATCH';
 
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingHero)
+        body: JSON.stringify(heroToSave)
       });
 
       if (res.ok) {
@@ -1045,7 +1058,9 @@ export default function HeroDestacadosPage() {
                   >
                     <option value="">-- Seleccionar de la lista --</option>
                     {editingHero.type === 'PROMOTION' && options.promotions.map(p => (
-                      <option key={p.id} value={p.id}>{p.titulo} (${p.precioPromo})</option>
+                      <option key={p.id} value={p.id}>
+                        {p.titulo} (${p.precioPromo}) {p.estado !== 'activa' ? `[${p.estado?.toUpperCase() || 'INACTIVA'}]` : ''}
+                      </option>
                     ))}
                     {editingHero.type === 'PRODUCT' && options.products.map(p => (
                       <option key={p.id} value={p.id}>{p.nombre} (${p.precio})</option>
@@ -1054,6 +1069,20 @@ export default function HeroDestacadosPage() {
                       <option key={s.id} value={s.id}>{s.nombre} (${s.precio || '0'})</option>
                     ))}
                   </select>
+                  {editingHero.type === 'PROMOTION' && editingHero.sourceId && (() => {
+                    const selPromo = options.promotions.find(p => p.id === editingHero.sourceId);
+                    if (selPromo && selPromo.estado !== 'activa') {
+                      return (
+                        <div className="bg-amber-50 border border-amber-200 p-3 rounded-2xl flex items-center gap-2 mt-2">
+                          <AlertCircle size={15} className="text-amber-600 shrink-0" />
+                          <p className="text-[11px] font-bold text-amber-800">
+                            Aviso: Esta promoción está en estado <strong>{selPromo.estado?.toUpperCase() || 'INACTIVA'}</strong>. Para que tus clientes puedan verla y reservarla normalmente, actívala en Administración &gt; Promociones.
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               )}
 
@@ -1166,7 +1195,9 @@ export default function HeroDestacadosPage() {
                           >
                             <option value="">-- Toda la sección de Promociones --</option>
                             {options.promotions.map(p => (
-                              <option key={p.id} value={p.id}>🎯 {p.titulo} (${p.precioPromo})</option>
+                              <option key={p.id} value={p.id}>
+                                🎯 {p.titulo} (${p.precioPromo}) {p.estado !== 'activa' ? `[${p.estado?.toUpperCase() || 'INACTIVA'}]` : ''}
+                              </option>
                             ))}
                           </select>
                         ) : editingHero.actionType === 'PRODUCT' ? (

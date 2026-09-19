@@ -126,13 +126,15 @@ export default function UniversalHeroCarousel({
 
     // 3. Ir a Promoción / Promociones
     if (action === 'PROMOTION' || action === 'VIEW_PROMO') {
-      if (val) return `/${slug}/promo/${val}`;
+      const promoId = val || (activeItem as any)?.sourceId;
+      if (promoId) return `/${slug}/promo/${promoId}`;
       return `/${slug}#promociones`;
     }
 
     // 4. Ir a Producto / Productos
     if (action === 'PRODUCT' || action === 'VIEW_PRODUCT' || action === 'ALL_PRODUCTS') {
-      if (val) return `/${slug}#producto-${val}`;
+      const prodId = val || (activeItem as any)?.sourceId;
+      if (prodId) return `/${slug}#producto-${prodId}`;
       return `/${slug}#productos`;
     }
 
@@ -146,7 +148,8 @@ export default function UniversalHeroCarousel({
     if (action === 'SERVICE' || action === 'BOOK_SERVICE') {
       if (isStore) return `/${slug}#productos`;
       if (isGym) return `/${slug}#planes`;
-      if (val) return `/${slug}/servicio/${val}`;
+      const srvId = val || (activeItem as any)?.sourceId;
+      if (srvId) return `/${slug}/servicio/${srvId}`;
       return `/${slug}/servicios`;
     }
 
@@ -181,6 +184,25 @@ export default function UniversalHeroCarousel({
 
   const buttonHref = getButtonHref();
   const isExternalUrl = buttonHref.startsWith('http://') || buttonHref.startsWith('https://');
+
+  const handleButtonClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (buttonHref.includes('#promociones')) {
+      const promoElem = document.getElementById('promociones');
+      if (!promoElem) {
+        e.preventDefault();
+        const fallbackElem = 
+          document.getElementById('servicios') || 
+          document.getElementById('productos') || 
+          document.getElementById('planes') ||
+          document.getElementById('canchas');
+        if (fallbackElem) {
+          fallbackElem.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          window.location.href = isStore ? `/${slug}#productos` : isGym ? `/${slug}#planes` : `/${slug}/servicios`;
+        }
+      }
+    }
+  };
 
   return (
     <div className="relative w-full aspect-[16/13] xs:aspect-[16/11] sm:aspect-[16/10] max-h-[380px] rounded-[2.5rem] overflow-hidden shadow-sm border border-slate-100/50 group">
@@ -269,6 +291,7 @@ export default function UniversalHeroCarousel({
                   href={buttonHref}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={handleButtonClick}
                   className="inline-flex items-center justify-center gap-2 px-7 py-2.5 text-white rounded-full font-black text-[9px] xs:text-[10px] uppercase tracking-widest shadow-lg hover:brightness-110 active:scale-95 transition-all mx-auto"
                   style={{
                     backgroundColor: primaryColor,
@@ -281,6 +304,7 @@ export default function UniversalHeroCarousel({
               ) : (
                 <Link
                   href={buttonHref}
+                  onClick={handleButtonClick}
                   className="inline-flex items-center justify-center gap-2 px-7 py-2.5 text-white rounded-full font-black text-[9px] xs:text-[10px] uppercase tracking-widest shadow-lg hover:brightness-110 active:scale-95 transition-all mx-auto"
                   style={{
                     backgroundColor: primaryColor,

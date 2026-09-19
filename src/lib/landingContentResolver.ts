@@ -451,7 +451,9 @@ export async function resolveLandingContent(businessId: string): Promise<Landing
         enabled: item.buttonEnabled,
         text: item.buttonEnabled ? item.buttonText : null,
         actionType: item.buttonEnabled ? item.actionType : 'NONE',
-        actionValue: item.buttonEnabled ? item.actionValue : null
+        actionValue: item.buttonEnabled 
+          ? (item.actionValue || (item.actionType === 'PROMOTION' || item.type === 'PROMOTION' ? item.sourceId : (item.actionType === 'PRODUCT' || item.type === 'PRODUCT' ? item.sourceId : (item.actionType === 'SERVICE' || item.type === 'SERVICE' ? item.sourceId : null))))
+          : null
       },
       position: item.position,
       priority: item.priority

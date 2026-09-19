@@ -11,6 +11,7 @@ const REMOTE_BASE = "/opt/Zenda";
 const syncFolderRoots = [
   // Módulo Gimnasio Completo
   "src/modules/gym",
+  "src/app/admin/clases",
   "src/app/admin/accesos",
   "src/app/admin/asistencias",
   "src/app/admin/membresias",
@@ -25,7 +26,11 @@ const syncFolderRoots = [
   "src/app/admin/historia-clinica",
   "src/app/admin/tratamientos",
   "src/app/admin/documentos",
-  "src/app/api/admin/dental"
+  "src/app/api/admin/dental",
+
+  // Módulo Productos y Tienda
+  "src/app/[slug]/producto",
+  "src/app/api/public/[slug]/products"
 ];
 
 // Archivos individuales adicionales
@@ -68,7 +73,16 @@ const manualFiles = [
   "src/app/api/superadmin/rewards/route.ts",
   "src/app/api/superadmin/rewards/[id]/route.ts",
   "src/scripts/seed_gym_benefits.ts",
-  "src/scripts/seed_gym_canonical.ts"
+  "src/scripts/seed_gym_canonical.ts",
+  "src/app/admin/usuarios/nuevo/page.tsx",
+  "src/app/admin/staff/page.tsx",
+  "src/components/admin/StaffModal.tsx",
+  "src/components/public/ProductVariantModal.tsx",
+  "src/components/public/PublicProductsBoutiqueSection.tsx",
+  "src/modules/store/components/StoreLanding.tsx",
+  "src/components/public/UniversalHeroCarousel.tsx",
+  "src/app/admin/hero-destacados/page.tsx",
+  "src/app/[slug]/promo/[promotionId]/PromoShareClient.tsx"
 ];
 
 function collectAllFilesAndDirs(roots, extraFiles) {
@@ -196,4 +210,18 @@ conn.on("ready", async () => {
 
   console.log("\n🎉 ¡Despliegue y configuración completados con éxito!");
   conn.end();
-}).connect({ host: VPS, port: 22, username: USER, password: PASS });
+});
+
+conn.on("error", (err) => {
+  console.error("❌ SSH Client Error:", err.message);
+});
+
+conn.connect({
+  host: VPS,
+  port: 22,
+  username: USER,
+  password: PASS,
+  keepaliveInterval: 10000,
+  keepaliveCountMax: 3,
+  readyTimeout: 30000
+});

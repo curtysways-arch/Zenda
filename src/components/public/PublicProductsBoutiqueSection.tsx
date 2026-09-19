@@ -13,6 +13,7 @@ interface PublicProductsBoutiqueSectionProps {
   negocio: any;
   slug: string;
   primaryColor?: string;
+  initialSelectedProduct?: DetailedProduct | null;
 }
 
 export default function PublicProductsBoutiqueSection({
@@ -20,6 +21,7 @@ export default function PublicProductsBoutiqueSection({
   negocio,
   slug,
   primaryColor = '#ec4899',
+  initialSelectedProduct = null,
 }: PublicProductsBoutiqueSectionProps) {
   if (!productos || productos.length === 0) return null;
 
@@ -32,6 +34,7 @@ export default function PublicProductsBoutiqueSection({
         negocio={negocio}
         slug={slug}
         primaryColor={primaryColor}
+        initialSelectedProduct={initialSelectedProduct}
       />
     </CartProvider>
   );
@@ -42,11 +45,39 @@ function PublicProductsBoutiqueContent({
   negocio,
   slug,
   primaryColor = '#ec4899',
+  initialSelectedProduct = null,
 }: PublicProductsBoutiqueSectionProps) {
   const { totalItemsCount, total, isCartOpen, setIsCartOpen, addToCart } = useCart();
   const [selectedCategory, setSelectedCategory] = useState<string>('TODOS');
-  const [selectedProductForModal, setSelectedProductForModal] = useState<DetailedProduct | null>(null);
+  const [selectedProductForModal, setSelectedProductForModal] = useState<DetailedProduct | null>(initialSelectedProduct || null);
   const [addedNoticeId, setAddedNoticeId] = useState<string | null>(null);
+
+  // Deep linking: sincronizar y abrir automáticamente el modal del producto si viene ?producto=ID o ?p=ID
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetId = urlParams.get('producto') || urlParams.get('p');
+      if (!targetId) return;
+
+      if (selectedProductForModal && selectedProductForModal.id === targetId) return;
+
+      const found = productos.find(p => p.id === targetId);
+      if (found) {
+        setSelectedProductForModal(found);
+      } else {
+        fetch(`/api/public/${slug}/products/${targetId}`)
+          .then(res => res.ok ? res.json() : null)
+          .then(data => {
+            const prod = data?.product || data?.producto;
+            if (prod && prod.id) {
+              setSelectedProductForModal(prod);
+            }
+          })
+          .catch(() => {});
+      }
+    } catch (e) {}
+  }, [productos, slug, selectedProductForModal]);
 
   // Extraer categorías únicas de los productos
   const categories = useMemo(() => {

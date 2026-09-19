@@ -24,9 +24,161 @@ import PublicProductsBoutiqueSection from '@/components/public/PublicProductsBou
 import { ModuleResolver } from '@/lib/modules/ModuleResolver';
 import { resolveLandingContent } from '@/lib/landingContentResolver';
 import UniversalHeroCarousel from '@/components/public/UniversalHeroCarousel';
+import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+export async function generateMetadata({
+    params,
+    searchParams,
+}: {
+    params: Promise<{ slug: string }>;
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}): Promise<Metadata> {
+    const { slug } = await params;
+    const resolvedSearchParams = await searchParams;
+    const productId = typeof resolvedSearchParams?.producto === 'string'
+        ? resolvedSearchParams.producto
+        : (typeof resolvedSearchParams?.p === 'string' ? resolvedSearchParams.p : null);
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://citiox.com';
+
+    if (productId) {
+        try {
+            const producto = await (prisma as any).producto.findFirst({
+                where: {
+                    id: productId,
+                    activo: true,
+                },
+                include: {
+                    negocio: {
+                        select: {
+                            nombre: true,
+                            slug: true,
+                            logoUrl: true,
+                            heroSubtitulo: true,
+                        }
+                    },
+                    variantes: {
+                        where: { activo: true }
+                    },
+                }
+            });
+
+            if (producto) {
+                const businessName = producto.negocio?.nombre || 'CitiOx';
+                const formattedPrice = Number(producto.precio || 0).toLocaleString('es-DO', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                });
+                const title = `${producto.nombre} - $${formattedPrice} | ${businessName}`;
+                const description = producto.descripcion
+                    ? producto.descripcion.trim().slice(0, 160)
+                    : `Descubre ${producto.nombre} en ${businessName}. ¡Compra online con entrega y garantía!`;
+
+                let rawImg = producto.imagenUrl;
+                if (!rawImg && producto.extraInfo && typeof producto.extraInfo === 'object') {
+                    const extra = producto.extraInfo as any;
+                    if (Array.isArray(extra.imagenes) && extra.imagenes[0]) {
+                        rawImg = extra.imagenes[0];
+                    }
+                }
+                if (!rawImg && producto.variantes && producto.variantes.length > 0) {
+                    const variantWithImg = producto.variantes.find((v: any) => v.imagenUrl);
+                    if (variantWithImg) rawImg = variantWithImg.imagenUrl;
+                }
+                if (!rawImg) {
+                    rawImg = producto.negocio?.logoUrl || '/icon.png';
+                }
+
+                const absoluteImageUrl = rawImg.startsWith('http')
+                    ? rawImg
+                    : `${baseUrl.replace(/\/$/, '')}${rawImg.startsWith('/') ? '' : '/'}${rawImg}`;
+
+                const canonicalUrl = `${baseUrl.replace(/\/$/, '')}/${slug}?producto=${producto.id}`;
+
+                return {
+                    metadataBase: new URL(baseUrl),
+                    title,
+                    description,
+                    openGraph: {
+                        title,
+                        description,
+                        url: canonicalUrl,
+                        siteName: businessName,
+                        images: [
+                            {
+                                url: absoluteImageUrl,
+                                width: 800,
+                                height: 800,
+                                alt: producto.nombre,
+                            }
+                        ],
+                        type: 'website',
+                    },
+                    twitter: {
+                        card: 'summary_large_image',
+                        title,
+                        description,
+                        images: [absoluteImageUrl],
+                    },
+                    alternates: {
+                        canonical: canonicalUrl,
+                    }
+                };
+            }
+        } catch (e) {
+            console.error('[generateMetadata] Error fetching product metadata:', e);
+        }
+    }
+
+    // Fallback general al negocio
+    const negocio = await getNegocioBySlug(slug);
+    if (!negocio) {
+        return {
+            title: 'CitiOx - Reserva y Tienda Online',
+            manifest: `/api/pwa/manifest?slug=${slug}`
+        };
+    }
+
+    const title = `${negocio.nombre} | CitiOx`;
+    const description = negocio.heroSubtitulo || "Gestiona citas, clientes y servicios con CitiOx.";
+    const ogImage = negocio.bannerUrl || negocio.logoUrl || '/icon.png';
+    const absoluteOgImage = ogImage.startsWith('http')
+        ? ogImage
+        : `${baseUrl.replace(/\/$/, '')}${ogImage.startsWith('/') ? '' : '/'}${ogImage}`;
+
+    return {
+        metadataBase: new URL(baseUrl),
+        title,
+        description,
+        icons: {
+            icon: negocio.logoUrl ? `${negocio.logoUrl}` : "/icon.png"
+        },
+        openGraph: {
+            title,
+            description,
+            images: [
+                {
+                    url: absoluteOgImage,
+                    width: 1200,
+                    height: 630,
+                    alt: negocio.nombre
+                }
+            ],
+            type: 'website',
+            siteName: negocio.nombre
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title,
+            description,
+            images: [absoluteOgImage],
+        },
+        manifest: `/api/pwa/manifest?slug=${slug}`
+    };
+}
 
 export default async function PublicNegocioPage({
     params,
@@ -38,10 +190,24 @@ export default async function PublicNegocioPage({
     const { slug } = await params;
     const resolvedSearchParams = await searchParams;
     const query = typeof resolvedSearchParams?.q === 'string' ? resolvedSearchParams.q.toLowerCase() : '';
+    const targetProductId = typeof resolvedSearchParams?.producto === 'string'
+        ? resolvedSearchParams.producto
+        : (typeof resolvedSearchParams?.p === 'string' ? resolvedSearchParams.p : null);
+
     const negocio = await getNegocioBySlug(slug);
 
     if (!negocio) {
         notFound();
+    }
+
+    let initialSelectedProduct: any = null;
+    if (targetProductId) {
+        try {
+            initialSelectedProduct = await (prisma as any).producto.findFirst({
+                where: { id: targetProductId, negocioId: negocio.id, activo: true },
+                include: { categoria: true, variantes: true }
+            });
+        } catch (_) {}
     }
 
     const restConfig = (negocio.configuracion as any) || {};
@@ -194,6 +360,9 @@ export default async function PublicNegocioPage({
         } catch (_) {}
 
         const { default: StoreLanding } = await import('@/modules/store/components/StoreLanding');
+        if (initialSelectedProduct && !initialProducts.some((p: any) => p.id === initialSelectedProduct.id)) {
+            initialProducts.unshift(initialSelectedProduct);
+        }
         return (
             <StoreLanding
                 negocio={negocio}
@@ -201,6 +370,7 @@ export default async function PublicNegocioPage({
                 initialCategories={initialCategories}
                 initialHeroContent={initialHeroContent}
                 initialPromotions={initialPromotions}
+                initialSelectedProduct={initialSelectedProduct}
             />
         );
     }
@@ -1175,12 +1345,17 @@ export default async function PublicNegocioPage({
             )}
 
             {/* 6B. PRODUCTOS (Ubicados debajo de Resultados Reales) */}
-            {rawProductosActivos.length > 0 && (
+            {(rawProductosActivos.length > 0 || initialSelectedProduct) && (
                 <PublicProductsBoutiqueSection 
-                    productos={rawProductosActivos}
+                    productos={
+                        initialSelectedProduct && !rawProductosActivos.some((p: any) => p.id === initialSelectedProduct.id)
+                            ? [initialSelectedProduct, ...rawProductosActivos]
+                            : rawProductosActivos
+                    }
                     negocio={negocio}
                     slug={slug}
                     primaryColor={primaryColor}
+                    initialSelectedProduct={initialSelectedProduct}
                 />
             )}
 
