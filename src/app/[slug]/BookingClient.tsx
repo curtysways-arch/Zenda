@@ -2,12 +2,13 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import BookingCalendar from '@/components/BookingCalendar';
-import { Check, Clock, Plus, Sparkles, User, Users, ChevronRight, ArrowLeft, Calendar, Loader2, Scissors } from 'lucide-react';
+import { Check, Clock, Plus, Sparkles, User, Users, ChevronRight, ChevronDown, ArrowLeft, ArrowRight, Calendar, Loader2, Scissors } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useSession } from 'next-auth/react';
 import PhoneInput from '@/components/ui/PhoneInput';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 interface BookingClientProps {
     negocio: any;
@@ -42,8 +43,12 @@ export default function BookingClient({
     const availableStaff = useMemo(() => staff.filter(s => s.active !== false), [staff]);
     
     const [selectedStaffId, setSelectedStaffId] = useState<string | undefined>(
-        urlStaffId && availableStaff.some(s => s.id === urlStaffId) ? urlStaffId : (availableStaff.length === 1 ? availableStaff[0].id : undefined)
+        urlStaffId && availableStaff.some(s => s.id === urlStaffId) 
+            ? urlStaffId 
+            : (availableStaff.length > 0 ? availableStaff[0].id : undefined)
     );
+    const [showStaffDropdown, setShowStaffDropdown] = useState(false);
+    const [showExtraServices, setShowExtraServices] = useState(false);
     
     const [selectedBooking, setSelectedBooking] = useState<any>(null);
     const [formData, setFormData] = useState({ nombre: '', telefono: '', comentarios: '' });
@@ -862,157 +867,206 @@ const resolveSlotPromotion = (
                 }
             `}} />
             {/* --primary ya está definido por el layout server-side */}
-            <div className="space-y-5 px-2">
-                <div className="flex items-center gap-2 px-1">
-                    <Sparkles size={12} style={{ color: primaryColor }} /> 
-                    <h3 className="text-[11px] font-black tracking-widest text-gray-900 uppercase italic">1. Servicios</h3>
-                </div>
-                
-                <div className="space-y-3">
-                    {/* Servicios Seleccionados */}
-                    {allServices.filter(s => isSelected(s.id)).map((service: any) => {
-                        const esGratis = freeServices.some((fs: any) => fs.serviceId === service.id && fs.estado === 'DISPONIBLE');
-                        return (
-                            <div key={service.id} className="flex items-center justify-between p-5 rounded-[2rem] border border-gray-100 bg-white shadow-sm ring-1 ring-gray-100 animate-in zoom-in-95 duration-300">
-                                <div className="flex items-center gap-4">
-                                    <button 
-                                        onClick={() => toggleService(service.id)}
-                                        className="size-12 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform active:scale-90" 
-                                        style={{ backgroundColor: primaryColor }}
-                                    >
-                                        <Check size={20} strokeWidth={3} />
-                                    </button>
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-base font-black text-gray-900 leading-none">{service.nombre}</p>
-                                            {esGratis && (
-                                                <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 bg-emerald-550 text-white rounded-md shadow-sm">
-                                                    🎁 Gratis
-                                                </span>
-                                            )}
+            {/* Si no hay initialServiceId, o si el usuario quiere añadir servicios extras */}
+            {(!initialServiceId || showExtraServices) && (
+                <div className="space-y-5 px-2">
+                    <div className="flex items-center gap-2 px-1">
+                        <Sparkles size={12} style={{ color: primaryColor }} /> 
+                        <h3 className="text-[11px] font-black tracking-widest text-gray-900 uppercase italic">1. Servicios</h3>
+                    </div>
+                    
+                    <div className="space-y-3">
+                        {allServices.filter(s => isSelected(s.id)).map((service: any) => {
+                            const esGratis = freeServices.some((fs: any) => fs.serviceId === service.id && fs.estado === 'DISPONIBLE');
+                            return (
+                                <div key={service.id} className="flex items-center justify-between p-5 rounded-[2rem] border border-gray-100 bg-white shadow-sm ring-1 ring-gray-100 animate-in zoom-in-95 duration-300">
+                                    <div className="flex items-center gap-4">
+                                        <button 
+                                            onClick={() => toggleService(service.id)}
+                                            className="size-12 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform active:scale-90" 
+                                            style={{ backgroundColor: primaryColor }}
+                                        >
+                                            <Check size={20} strokeWidth={3} />
+                                        </button>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-base font-black text-gray-900 leading-none">{service.nombre}</p>
+                                                {esGratis && (
+                                                    <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 bg-emerald-550 text-white rounded-md shadow-sm">
+                                                        🎁 Gratis
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase">{service.duracion} min</p>
                                         </div>
-                                        <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase">{service.duracion} min</p>
                                     </div>
-                                </div>
-                                {showPrices && (() => {
-                                    const promo = resolveSlotPromotion(
-                                        selectedBooking?.hour || "00:00", 
-                                        selectedBooking?.date || new Date(), 
-                                        service, 
-                                        negocio.automaticDiscount
-                                    );
-                                    if (promo.source === 'free_service' || promo.price === 0) {
+                                    {showPrices && (() => {
+                                        const promo = resolveSlotPromotion(
+                                            selectedBooking?.hour || "00:00", 
+                                            selectedBooking?.date || new Date(), 
+                                            service, 
+                                            negocio.automaticDiscount
+                                        );
+                                        if (promo.source === 'free_service' || promo.price === 0) {
+                                            return (
+                                                <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100 uppercase tracking-widest font-mono shrink-0">
+                                                    GRATIS
+                                                </span>
+                                            );
+                                        }
                                         return (
-                                            <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100 uppercase tracking-widest font-mono shrink-0">
-                                                GRATIS
+                                            <span className="text-xl font-black text-gray-900">
+                                                ${promo.price.toFixed(2)}
                                             </span>
                                         );
-                                    }
-                                    return (
-                                        <span className="text-xl font-black text-gray-900">
-                                            ${promo.price.toFixed(2)}
-                                        </span>
-                                    );
-                                })()}
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* Aviso de Servicio Gratis */}
-                {allServices.filter(s => isSelected(s.id)).some(s => freeServices.some((fs: any) => fs.serviceId === s.id && fs.estado === 'DISPONIBLE')) && (
-                    <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-3xl flex items-center gap-3 animate-in fade-in duration-300 ml-1">
-                        <Sparkles className="text-emerald-600 size-4 shrink-0" />
-                        <p className="text-[10px] font-black text-emerald-800 uppercase tracking-wider leading-none">
-                            Tienes un servicio gratis disponible.
-                        </p>
-                    </div>
-                )}
-
-                {/* Recomendados para añadir */}
-                {otherServices.filter(s => !isSelected(s.id)).length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-gray-100/50">
-                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 ml-2">¿Complementas tu experiencia?</p>
-                        <div className="flex gap-3 overflow-x-auto pb-4 hide-scrollbar px-1">
-                            {otherServices.filter(s => !isSelected(s.id)).map((s: any) => (
-                                <button
-                                    key={s.id}
-                                    onClick={() => toggleService(s.id)}
-                                    className="flex-shrink-0 w-36 aspect-[4/3] p-4 rounded-[2rem] border border-gray-100 bg-white hover:border-primary/30 transition-all flex flex-col justify-between text-left group shadow-sm"
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div className="size-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-white group-hover:shadow-sm transition-all"
-                                             style={{ color: isSelected(s.id) ? 'white' : undefined, backgroundColor: isSelected(s.id) ? primaryColor : undefined }}>
-                                             <Plus size={16} strokeWidth={3} style={{ color: isSelected(s.id) ? 'white' : undefined }} />
-                                         </div>
-                                        {showPrices && (
-                                            freeServices.some((fs: any) => fs.serviceId === s.id && fs.estado === 'DISPONIBLE') ? (
-                                                <span className="text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 bg-emerald-500 text-white rounded-md">
-                                                    🎁 Gratis
-                                                </span>
-                                            ) : (
-                                                <span className="text-[11px] font-black text-gray-900">${s.precio}</span>
-                                            )
-                                        )}
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-black leading-tight uppercase text-gray-900 line-clamp-2">{s.nombre}</p>
-                                        <p className="text-[8px] font-bold text-gray-400 uppercase mt-1">{s.duracion} min</p>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
-            {availableStaff.length > 0 ? (
-                <div id="booking-professional" className={`space-y-5 transition-all duration-500 rounded-3xl ${shakeProfessional ? 'animate-calendar-shake ring-4 ring-pink-500/50' : ''}`}>
-                    <div className="flex items-center gap-2 px-3"><User size={12} style={{ color: primaryColor }} /> <h3 className="text-[11px] font-black tracking-widest text-gray-900 uppercase italic">2. Profesional</h3></div>
-                    <div className="flex gap-4 overflow-x-auto pt-2 pb-4 px-3 hide-scrollbar">
-                        {availableStaff.map((member) => (
-                            <button key={member.id} onClick={() => handleSelectStaff(member.id)} className={`flex-shrink-0 flex flex-col items-center gap-3 p-5 rounded-[2.5rem] border transition-all min-w-[130px] ${selectedStaffId === member.id ? 'bg-gray-50 border-primary/20 scale-105 shadow-sm' : 'bg-white border-gray-100'}`}>
-                                <div className="size-18 rounded-full overflow-hidden border-2 shadow-sm" style={{ borderColor: selectedStaffId === member.id ? primaryColor : 'white' }}>
-                                    {(member.imageMedia || member.avatar) 
-                                        ? <img src={(member.imageMedia as any)?.url ?? member.avatar} className="w-full h-full object-cover" /> 
-                                        : <div className="w-full h-full bg-gray-100 flex items-center justify-center font-black text-gray-400">{member.name[0]}</div>}
+                                    })()}
                                 </div>
-                                <p className="text-xs font-black text-gray-900">{member.name}</p>
-                            </button>
-                        ))}
+                            );
+                        })}
                     </div>
-                </div>
-            ) : (
-                <div className="px-3 py-4 bg-amber-50 rounded-3xl border border-amber-100 flex items-center gap-3">
-                    <Users size={16} className="text-amber-500" />
-                    <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest leading-tight">No hay profesionales disponibles para este servicio hoy.</p>
+
+                    {/* Recomendados para añadir */}
+                    {otherServices.filter(s => !isSelected(s.id)).length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-gray-100/50">
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 ml-2">¿Complementas tu experiencia?</p>
+                            <div className="flex gap-3 overflow-x-auto pb-4 hide-scrollbar px-1">
+                                {otherServices.filter(s => !isSelected(s.id)).map((s: any) => (
+                                    <button
+                                        key={s.id}
+                                        onClick={() => toggleService(s.id)}
+                                        className="flex-shrink-0 w-36 aspect-[4/3] p-4 rounded-[2rem] border border-gray-100 bg-white hover:border-primary/30 transition-all flex flex-col justify-between text-left group shadow-sm"
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <div className="size-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-white group-hover:shadow-sm transition-all"
+                                                 style={{ color: isSelected(s.id) ? 'white' : undefined, backgroundColor: isSelected(s.id) ? primaryColor : undefined }}>
+                                                 <Plus size={16} strokeWidth={3} style={{ color: isSelected(s.id) ? 'white' : undefined }} />
+                                             </div>
+                                            {showPrices && (
+                                                freeServices.some((fs: any) => fs.serviceId === s.id && fs.estado === 'DISPONIBLE') ? (
+                                                    <span className="text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 bg-emerald-500 text-white rounded-md">
+                                                        🎁 Gratis
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[11px] font-black text-gray-900">${s.precio}</span>
+                                                )
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black leading-tight uppercase text-gray-900 line-clamp-2">{s.nombre}</p>
+                                            <p className="text-[8px] font-bold text-gray-400 uppercase mt-1">{s.duracion} min</p>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
-            <div id="booking-calendar" className={`relative space-y-4 px-2 transition-all duration-500 rounded-3xl ${shakeCalendar ? 'animate-calendar-shake ring-4 ring-pink-500/50' : ''}`}>
-                {/* Overlay Bloqueador */}
-                {(!selectedStaffId) && (
+
+            {/* Selector de Profesional estilo Pill (como en la referencia) */}
+            {availableStaff.length > 0 && (
+                <div id="booking-professional" className={`relative z-30 px-2 space-y-2 ${shakeProfessional ? 'animate-calendar-shake ring-4 ring-pink-500/50 rounded-full' : ''}`}>
+                    <div className="relative inline-block">
+                        <button
+                            type="button"
+                            onClick={() => setShowStaffDropdown(!showStaffDropdown)}
+                            className="inline-flex items-center gap-2.5 px-4 py-2.5 bg-white rounded-full border border-slate-200/90 shadow-sm text-slate-800 font-bold text-sm cursor-pointer hover:bg-slate-50 transition-all active:scale-95"
+                        >
+                            <User size={16} className="text-slate-700" />
+                            <span className="text-xs sm:text-sm font-black text-slate-900">
+                                {availableStaff.find(s => s.id === selectedStaffId)?.name || 'Cualquier profesional'}
+                            </span>
+                            <ChevronDown size={15} className={cn("text-slate-500 transition-transform", showStaffDropdown && "rotate-180")} />
+                        </button>
+
+                        {/* Dropdown de profesionales si hay más de 1 */}
+                        {showStaffDropdown && (
+                            <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3 py-1.5">Profesionales</p>
+                                <div className="space-y-1">
+                                    {availableStaff.map((member) => (
+                                        <button
+                                            key={member.id}
+                                            type="button"
+                                            onClick={() => {
+                                                handleSelectStaff(member.id);
+                                                setShowStaffDropdown(false);
+                                            }}
+                                            className={cn(
+                                                "w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all cursor-pointer",
+                                                selectedStaffId === member.id ? "bg-slate-50 font-black" : "hover:bg-slate-50"
+                                            )}
+                                        >
+                                            <div className="size-8 rounded-full overflow-hidden bg-slate-100 shrink-0 border" style={{ borderColor: selectedStaffId === member.id ? primaryColor : 'transparent' }}>
+                                                {(member.imageMedia || member.avatar) 
+                                                    ? <img src={(member.imageMedia as any)?.url ?? member.avatar} className="w-full h-full object-cover" /> 
+                                                    : <div className="w-full h-full flex items-center justify-center text-xs font-black text-slate-500">{member.name[0]}</div>}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-black text-slate-900 truncate">{member.name}</p>
+                                                {member.role && <p className="text-[10px] text-slate-400 font-semibold truncate">{member.role}</p>}
+                                            </div>
+                                            {selectedStaffId === member.id && <Check size={14} style={{ color: primaryColor }} />}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {initialServiceId && otherServices.length > 1 && (
+                        <div className="pt-1">
+                            <button
+                                type="button"
+                                onClick={() => setShowExtraServices(!showExtraServices)}
+                                className="text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-700 transition-colors inline-flex items-center gap-1"
+                            >
+                                <span>{showExtraServices ? '− Ocultar servicios extras' : '+ ¿Añadir otro servicio?'}</span>
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Paso 3: Horario con Calendario */}
+            <div id="booking-calendar" className={`relative space-y-4 px-2 transition-all duration-500 ${shakeCalendar ? 'animate-calendar-shake ring-4 ring-pink-500/50 rounded-3xl' : ''}`}>
+                {/* Overlay si no hay profesional seleccionado */}
+                {!selectedStaffId && availableStaff.length > 0 && (
                     <div 
-                        className="absolute inset-0 z-50 flex items-center justify-center bg-white/40 backdrop-blur-[1px] rounded-3xl cursor-not-allowed"
+                        className="absolute inset-0 z-40 flex items-center justify-center bg-white/50 backdrop-blur-[1px] rounded-3xl cursor-not-allowed"
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
+                            setShowStaffDropdown(true);
                         }}
                     >
-                        <div className="bg-white/90 px-4 py-2 rounded-full shadow-sm border border-gray-100 flex items-center gap-2">
+                        <div className="bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100 flex items-center gap-2">
                             <User size={12} className="text-gray-400" />
-                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Selecciona un profesional primero</span>
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Selecciona un profesional</span>
                         </div>
                     </div>
                 )}
                 
-                <div className={`space-y-4 transition-all duration-500 ${(!selectedStaffId) ? 'opacity-30 grayscale-[0.5] pointer-events-none' : ''}`}>
-                    <div className="flex items-center gap-2 px-1"><Clock size={12} style={{ color: primaryColor }} /> <h3 className="text-[11px] font-black tracking-widest text-gray-900 uppercase italic">3. Horario</h3></div>
+                <div className={`space-y-4 transition-all duration-500 ${!selectedStaffId && availableStaff.length > 0 ? 'opacity-30 grayscale-[0.5] pointer-events-none' : ''}`}>
+                    {/* Header Paso 3 según diseño de referencia */}
+                    <div className="flex items-center gap-3 px-1">
+                        <div 
+                            className="size-7 rounded-full border-2 flex items-center justify-center shrink-0" 
+                            style={{ borderColor: primaryColor, color: primaryColor }}
+                        >
+                            <Clock size={15} strokeWidth={2.5} />
+                        </div>
+                        <div>
+                            <h3 className="text-base sm:text-lg font-black tracking-wide text-slate-900 uppercase leading-tight">3. HORARIO</h3>
+                            <p className="text-xs sm:text-sm font-semibold text-slate-500 leading-tight">Selecciona la fecha y el horario que prefieras</p>
+                        </div>
+                    </div>
+
                     <BookingCalendar 
                         canchas={[
-                            // Los servicios seleccionados primero para que el motor use el correcto
                             ...negocio.services
                                 .filter((s: any) => selectedServiceIds.includes(s.id))
                                 .map((s: any) => ({ ...s, precioHora: s.precio })),
-                            // Resto de servicios
                             ...negocio.services
                                 .filter((s: any) => !selectedServiceIds.includes(s.id))
                                 .map((s: any) => ({ ...s, precioHora: s.precio })),
@@ -1025,53 +1079,23 @@ const resolveSlotPromotion = (
                         showPrices={showPrices}
                         automaticDiscount={negocio.automaticDiscount}
                         diasAtencion={parsedConfig?.diasAtencion}
+                        primaryColor={primaryColor}
                     />
                 </div>
             </div>
-            <div className="fixed bottom-2 left-2 right-2 z-[300] max-w-lg mx-auto">
-                <div className="bg-white rounded-[2.2rem] p-5 shadow-xl border border-gray-100 flex flex-col gap-5">
-                    <div className="flex justify-between items-start px-2">
-                        <div className="flex flex-col">
-                            <span className="text-[9px] font-black text-gray-400 uppercase mb-1">{selectedBooking ? 'FECHA Y HORA' : (showPrices ? 'TOTAL' : 'SERVICIO')}</span>
-                            <div className="text-3xl font-black text-gray-900 leading-none">
-                                {selectedBooking ? (
-                                    <div className="flex flex-col items-start">
-                                        <div className="flex items-center gap-2">
-                                            <span>{selectedBooking.hour}</span>
-                                            <span className="text-[10px] text-gray-400 font-bold uppercase">HS</span>
-                                        </div>
-                                        <span className="text-[10px] font-black text-primary uppercase italic mt-1" style={{ color: primaryColor }}>
-                                            {format(selectedBooking.date, "EEE d 'de' MMM", { locale: es })}
-                                        </span>
-                                    </div>
-                                ) : (showPrices ? `$${totalPrecioInitial.toFixed(2)}` : 'SPA')}
-                            </div>
+
+            {/* Barra Flotante Inferior estilo Card Píldora (como en la referencia) */}
+            <div className="fixed bottom-3 left-3 right-3 sm:left-4 sm:right-4 z-[300] max-w-lg mx-auto">
+                <div className="bg-white rounded-full p-2.5 sm:p-3 shadow-[0_15px_40px_rgba(0,0,0,0.12)] border border-slate-150 flex items-center justify-between">
+                    <div className="flex flex-col pl-4 sm:pl-5">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">TOTAL</span>
+                        <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none">
+                            ${(selectedBooking ? selectedBooking.precio : totalPrecioInitial).toFixed(2)}
                         </div>
-                        {showPrices && selectedBooking && (
-                            <div className="text-right flex flex-col items-end justify-end">
-                                <span className="text-[9px] font-black text-gray-400 uppercase mb-1">
-                                    {selectedBooking.tipoPromo === '2x1' ? 'PROMO 2x1' : (selectedBooking.tipoPromo === '3x1' ? 'PROMO 3x1' : 'TOTAL')}
-                                </span>
-                                <div className="flex items-baseline gap-2">
-                                    {(selectedBooking.tipoPromo === '2x1' || selectedBooking.tipoPromo === '3x1') && (
-                                        <span className="text-xs text-gray-400 line-through font-bold">
-                                            ${((selectedBooking.precio || 0) * (selectedBooking.tipoPromo === '2x1' ? 2 : 3)).toFixed(2)}
-                                        </span>
-                                    )}
-                                    {selectedBooking.precio === 0 ? (
-                                        <span className="text-2xl font-black text-emerald-650 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-100 uppercase tracking-widest font-mono">
-                                            GRATIS
-                                        </span>
-                                    ) : (
-                                        <span className="text-3xl font-black text-gray-900 leading-none">
-                                            ${selectedBooking.precio.toFixed(2)}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        )}
                     </div>
+                    <div className="h-8 w-px bg-slate-200 mx-3 sm:mx-4 shrink-0" />
                     <button 
+                        type="button"
                         onClick={() => { 
                             if (selectedServiceIds.length === 0) {
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1080,30 +1104,28 @@ const resolveSlotPromotion = (
                             if (!selectedStaffId && availableStaff.length > 0) {
                                 setShakeProfessional(true);
                                 setTimeout(() => setShakeProfessional(false), 800);
+                                setShowStaffDropdown(true);
                                 const element = document.getElementById('booking-professional');
                                 if (element) {
-                                    const y = element.getBoundingClientRect().top + window.scrollY - 100;
-                                    window.scrollTo({ top: y, behavior: 'smooth' });
+                                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                 }
                             } else if (!selectedBooking) {
                                 setShakeCalendar(true);
                                 setTimeout(() => setShakeCalendar(false), 800);
                                 const element = document.getElementById('booking-calendar');
                                 if (element) {
-                                    const y = element.getBoundingClientRect().top + window.scrollY - 100;
-                                    window.scrollTo({ top: y, behavior: 'smooth' });
+                                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                 }
                             } else {
                                 setView('checkout');
                                 window.scrollTo(0,0);
                             } 
                         }} 
-                        className={`w-full h-16 text-white rounded-[1.6rem] font-black text-[13px] tracking-widest flex items-center justify-center gap-3 transition-all ${selectedServiceIds.length === 0 ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`} 
-                        style={{ backgroundColor: selectedServiceIds.length === 0 ? '#d1d5db' : primaryColor }}
-                        disabled={selectedServiceIds.length === 0}
+                        className="flex-1 py-3.5 sm:py-4 px-6 rounded-full font-black text-xs sm:text-sm tracking-wider uppercase text-white flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all cursor-pointer" 
+                        style={{ backgroundColor: primaryColor }}
                     >
-                        <span>{selectedServiceIds.length === 0 ? 'ELIGE UN SERVICIO' : (selectedBooking ? 'CONFIRMAR' : 'ELEGIR HORA')}</span>
-                        {selectedServiceIds.length > 0 && <Check size={18} />}
+                        <span>{selectedBooking ? 'CONFIRMAR CITA' : 'ELEGIR HORA'}</span>
+                        <ArrowRight size={16} strokeWidth={3} />
                     </button>
                 </div>
             </div>

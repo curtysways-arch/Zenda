@@ -65,9 +65,8 @@ export default function LoginPage() {
                     style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }}
                 />
 
-                <div className="relative z-10 flex items-center gap-4">
-                    <img src="/logo-citiox.png" alt="CitiOx" className="h-12 w-auto object-contain" />
-                    <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-cyan-400 via-sky-400 to-purple-500 bg-clip-text text-transparent italic">CitiOx</span>
+                <div className="relative z-10 flex items-center">
+                    <img src="/citiox-logo-horizontal.png" alt="CitiOx" className="h-14 w-auto object-contain" />
                 </div>
 
                 <div className="relative z-10 space-y-8">
@@ -119,7 +118,7 @@ export default function LoginPage() {
                             <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-[2rem] blur-xl opacity-30 scale-110" />
                             <div className="relative w-28 h-28 bg-white rounded-[2rem] shadow-2xl shadow-cyan-100 border border-slate-100 flex items-center justify-center p-3 overflow-hidden">
                                 <img
-                                    src="/logo-citiox.png"
+                                    src="/citiox-icon.png"
                                     alt="CitiOx Logo"
                                     className="w-full h-full object-contain"
                                 />

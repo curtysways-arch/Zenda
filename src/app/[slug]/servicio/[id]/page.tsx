@@ -252,122 +252,73 @@ export default async function CanchaDetailPage({
                 </div>
             )}
 
-            {/* STICKY TOP HEADER - NATIVE STYLE */}
-            <header className="sticky top-0 z-[100] h-16 flex items-center bg-neutral-custom/80 backdrop-blur-xl border-b border-gray-200">
-                <div className="max-w-xl mx-auto w-full px-4 flex items-center justify-between mt-2">
-                    <div className="flex items-center gap-3">
+            {/* HEADER CURVADO CON DEGRADADO DINÁMICO (SEGÚN REFERENCIA) */}
+            <header 
+                className="relative z-30 pt-6 pb-7 px-5 rounded-b-[2rem] sm:rounded-b-[2.5rem] shadow-lg overflow-hidden text-white"
+                style={{ 
+                    background: `linear-gradient(135deg, ${primaryColor}, color-mix(in srgb, ${primaryColor} 75%, black 25%))` 
+                }}
+            >
+                {/* Patrón de fondo sutil orgánico */}
+                <div className="absolute inset-0 opacity-10 pointer-events-none mix-blend-overlay">
+                    <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <path d="M0 0 C 40 20, 60 40, 100 0 Z" fill="white" />
+                        <circle cx="90" cy="20" r="30" fill="white" />
+                    </svg>
+                </div>
+
+                <div className="max-w-xl mx-auto flex items-center justify-between gap-3 relative z-10">
+                    <div className="flex items-center gap-3.5 min-w-0">
+                        {/* Botón Volver */}
                         <Link
                             href={`/${slug}`}
-                            className="size-10 rounded-full bg-white active:bg-gray-100 flex items-center justify-center transition-all border border-gray-200 shadow-sm text-gray-700 hover:text-gray-900 hover:scale-105"
+                            className="size-10 rounded-full bg-white/20 hover:bg-white/30 active:scale-95 flex items-center justify-center transition-all backdrop-blur-sm text-white shrink-0"
                         >
-                            <ChevronLeft size={20} strokeWidth={2.5} />
+                            <ChevronLeft size={22} strokeWidth={2.5} />
                         </Link>
-                        <div className="flex flex-col">
-                            <span className="text-[8px] font-black uppercase tracking-widest leading-none mb-0.5 text-gray-400">{negocio.nombre}</span>
-                            <h1 className="font-black text-[14px] text-gray-900 uppercase tracking-tighter leading-none">{cancha.nombre}</h1>
+
+                        {/* Logo Circular */}
+                        <div className="size-12 sm:size-13 rounded-full bg-white flex items-center justify-center shadow-md shrink-0 p-1">
+                            {negocio.logoUrl ? (
+                                <img 
+                                    src={negocio.logoUrl} 
+                                    alt={negocio.nombre} 
+                                    className="size-full object-contain rounded-full" 
+                                />
+                            ) : (
+                                <Sparkles size={24} style={{ color: primaryColor }} />
+                            )}
+                        </div>
+
+                        {/* Nombre del Negocio y Servicio */}
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.22em] text-white/90 leading-tight truncate">
+                                {negocio.nombre}
+                            </span>
+                            <h1 className="text-lg sm:text-xl font-black text-white leading-snug tracking-tight truncate">
+                                {cancha.nombre}
+                            </h1>
                         </div>
                     </div>
                 </div>
             </header>
 
-            <main className="max-w-xl mx-auto pb-10 overflow-x-hidden">
-                
-                {/* HERO CAROUSEL - COMPACT & PREMIUM */}
-                <div className="px-4 pt-4">
-                    <div className="relative aspect-[16/10] rounded-3xl overflow-hidden shadow-lg border border-gray-100">
-                        <HeroCarousel images={imagesToUse} opacityActive="opacity-100" />
-                        
-                        {/* Status Label Overlay */}
-                        <div className="absolute top-4 left-4 z-20">
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-full border border-gray-200 shadow-sm">
-                                <div className="size-2 rounded-full bg-tertiary animate-pulse" />
-                                <span className="text-[9px] font-black text-gray-900 uppercase tracking-widest">Disponible</span>
-                            </div>
-                        </div>
+            <main className="max-w-xl mx-auto px-4 pt-4 pb-28 overflow-x-hidden">
+                {/* CSS Hack para ocultar la barra global en esta página y dar espacio al nuevo botón */}
+                <style dangerouslySetInnerHTML={{ __html: `
+                    nav.fixed.bottom-0 { display: none !important; }
+                ` }} />
 
-                        {/* Type Label Overlay */}
-                        <div className="absolute bottom-4 left-4 z-20">
-                             <div className="px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-xl border border-white/10">
-                                <span className="text-[9px] font-black text-white italic uppercase tracking-widest">{cancha.tipo}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="p-6 space-y-8">
-                    {/* STATS STRIP - NATIVE GRID */}
-                    <div className="grid grid-cols-2 gap-3">
-                        {/* Price Píldora */}
-                        {negocio.mostrarPrecios !== false && (
-                            <div className="col-span-1 bg-card-dynamic rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
-                                <div className="absolute -top-4 -right-4 size-16 bg-emerald-50 rounded-full blur-2xl group-hover:bg-emerald-100 transition-colors" />
-                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Precio</span>
-                                <div className="flex items-baseline gap-1.5 z-10">
-                                    <span className="text-4xl font-black tracking-tighter text-header-dynamic">
-                                        ${cancha.promocion ? Number(cancha.promocion.precioPromo) : Number(cancha.precio || 0)}
-                                    </span>
-                                    {cancha.promocion && <span className="text-xl font-black line-through text-gray-400 ml-1">${Number(cancha.precioBase)}</span>}
-                                </div>
-                                {cancha.promocion && (
-                                    (cancha.promocion.diasValidos && cancha.promocion.diasValidos.split(',').length < 7) || 
-                                    cancha.promocion.horaInicioValida || 
-                                    cancha.promocion.horaFinValida
-                                ) && (
-                                    <div className="flex items-center gap-1 mt-1">
-                                        <div className="size-1.5 rounded-full bg-amber-400 animate-pulse" />
-                                        <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest">Horario Especial</span>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Duración Píldora */}
-                        <div className="col-span-1 bg-card-dynamic rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group shadow-sm hover:shadow-md transition-all">
-                           <div className="absolute -top-4 -right-4 size-16 bg-purple-50 rounded-full blur-2xl group-hover:bg-purple-100 transition-colors" />
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Duración</span>
-                            <div className="flex items-center gap-2 z-10">
-                                <Timer size={18} className="text-purple-500" />
-                                <span className="text-2xl font-black uppercase tracking-tighter text-header-dynamic">{cancha.duracion || 60} MIN</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* DESCRIPCIÓN DEL SERVICIO */}
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2 px-1">
-                            <div className="bg-tertiary/10 p-1.5 rounded-lg flex items-center justify-center">
-                                <Sparkles size={12} className="text-tertiary" />
-                            </div>
-                             <h3 className="text-[11px] font-black tracking-widest uppercase italic text-header-dynamic">
-                                 Descripción
-                             </h3>
-                        </div>
-                        <div className="bg-card-dynamic shadow-sm p-6 rounded-3xl">
-                            <p className="text-sm font-semibold leading-relaxed text-slate-500">
-                                {cancha.descripcion || 'Vive una experiencia única de bienestar y cuidado personal con nuestro equipo de expertos.'}
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* BOOKING SECTION - THE HEART */}
-                    <section id="reservar" className="space-y-6 pt-2">
-                        {/* CSS Hack para ocultar la barra global en esta página y dar espacio al nuevo botón */}
-                        <style dangerouslySetInnerHTML={{ __html: `
-                            nav.fixed.bottom-0 { display: none !important; }
-                        ` }} />
-                        
-                        <BookingClient
-                            negocio={negocio}
-                            slug={slug}
-                            staff={staffHabilitado}
-                            initialServiceId={cancha.id}
-                            allServices={negocio.services || []}
-                        />
-                    </section>
-                    
-
-
-                </div>
+                {/* BOOKING SECTION - COMPONENTE PRINCIPAL CON NUEVO DISEÑO */}
+                <section id="reservar" className="space-y-4">
+                    <BookingClient
+                        negocio={negocio}
+                        slug={slug}
+                        staff={staffHabilitado}
+                        initialServiceId={cancha.id}
+                        allServices={negocio.services || []}
+                    />
+                </section>
             </main>
         </div>
     );

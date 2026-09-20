@@ -90,7 +90,7 @@ export default function OlvidePasswordPage() {
                     <div className="relative">
                         <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-[1.8rem] blur-xl opacity-30 scale-110" />
                         <div className="relative w-20 h-20 bg-white rounded-[1.8rem] shadow-xl shadow-cyan-100 border border-slate-100 flex items-center justify-center p-2.5 overflow-hidden">
-                            <img src="/logo-citiox.png" alt="CitiOx Logo" className="w-full h-full object-contain" />
+                            <img src="/citiox-icon.png" alt="CitiOx Logo" className="w-full h-full object-contain" />
                         </div>
                     </div>
                     <div className="text-center">

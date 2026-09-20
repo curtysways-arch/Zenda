@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { format, addDays, startOfWeek, addWeeks, subWeeks, isSameDay, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Clock, Zap, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Zap, Check, Calendar } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -37,6 +37,7 @@ interface CalendarProps {
     automaticDiscount?: any;
     diasAtencion?: number[];
     darkMode?: boolean;
+    primaryColor?: string;
 }
 
 const DURACIONES = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8];
@@ -51,7 +52,8 @@ export default function BookingCalendar({
     showPrices = true,
     automaticDiscount,
     diasAtencion,
-    darkMode = true
+    darkMode = true,
+    primaryColor = '#ec4899'
 }: CalendarProps) {
     const [clientToday, setClientToday] = useState<Date | null>(null);
     const [currentWeek, setCurrentWeek] = useState(new Date());
@@ -337,9 +339,14 @@ export default function BookingCalendar({
     const currentServiceForPromo = canchas.find(c => c.id === selectedCanchaId) || canchas[0];
     const selectedSlotPromo = selectedHour ? resolveSlotPromotion(selectedHour, selectedDate || new Date(), currentServiceForPromo, automaticDiscount) : { discountPercent: 0 };
 
+    const maxDiscount = hoursToRender.reduce((max, h) => {
+        const p = resolveSlotPromotion(h, selectedDate || new Date(), currentServiceForPromo, automaticDiscount);
+        return Math.max(max, p.hasPromotion ? p.discountPercent : 0);
+    }, 0);
+
     if (darkMode) {
         return (
-            <div className="animate-in fade-in duration-700 bg-[#11141d] rounded-[2.5rem] p-6 sm:p-8 w-full max-w-xl mx-auto shadow-2xl relative border border-white/5 space-y-8 text-white text-left">
+            <div className="animate-in fade-in duration-700 w-full max-w-xl mx-auto space-y-6 text-left">
                 {/* Cancha Selector */}
                 {canchas.length > 1 && !staffId && (
                     <div className="flex flex-col space-y-4">
@@ -350,10 +357,11 @@ export default function BookingCalendar({
                                     type="button"
                                     key={cancha.id}
                                     onClick={() => handleCanchaSelect(cancha.id)}
+                                    style={selectedCanchaId === cancha.id ? { backgroundColor: primaryColor } : undefined}
                                     className={cn(
                                         "flex-shrink-0 px-6 py-3 rounded-xl text-xs font-black whitespace-nowrap transition-all duration-300 cursor-pointer",
                                         selectedCanchaId === cancha.id
-                                            ? "bg-emerald-500 text-white shadow-xl shadow-emerald-500/20"
+                                            ? "text-white shadow-xl"
                                             : "text-slate-500 hover:text-white"
                                     )}
                                 >
@@ -365,16 +373,21 @@ export default function BookingCalendar({
                     </div>
                 )}
 
-                {/* Date Selection Grid */}
-                <div className="flex flex-col space-y-6">
+                {/* Date Selection Grid - Dark Card Container */}
+                <div className="bg-[#0c1322] border border-white/5 rounded-[2rem] p-4 sm:p-5 text-white shadow-xl space-y-4">
                     <div className="flex items-center justify-between">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">FECHA DE JUEGO</label>
-                        <div className="flex gap-4">
+                        <div className="flex items-center gap-2">
+                            <Calendar size={18} strokeWidth={2.5} className="text-white/80" />
+                            <label className="text-[11px] font-black text-white/90 uppercase tracking-[0.2em]">
+                                {staffId ? 'FECHA DE RESERVA' : 'FECHA DE JUEGO'}
+                            </label>
+                        </div>
+                        <div className="flex gap-2">
                             <button
                                 type="button"
                                 disabled={isPastWeek}
                                 onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}
-                                className="text-slate-500 hover:text-white transition-colors disabled:opacity-20 cursor-pointer"
+                                className="size-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300 hover:text-white transition-colors disabled:opacity-20 cursor-pointer"
                             >
                                 <ChevronLeft size={16} strokeWidth={3} />
                             </button>
@@ -382,7 +395,7 @@ export default function BookingCalendar({
                             <button
                                 type="button"
                                 onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}
-                                className="text-slate-500 hover:text-white transition-colors cursor-pointer"
+                                className="size-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300 hover:text-white transition-colors cursor-pointer"
                             >
                                 <ChevronRight size={16} strokeWidth={3} />
                             </button>
@@ -393,41 +406,41 @@ export default function BookingCalendar({
                         {weekDays.map((day) => {
                             const isSelected = selectedDate && isSameDay(day, selectedDate);
                             const isPast = clientToday ? day < startOfDay(clientToday) : false;
+                            const dayOfWeek = day.getDay();
+                            const isClosed = diasAtencion ? !diasAtencion.includes(dayOfWeek) : false;
+                            const isDisabled = isPast || isClosed;
 
                             return (
                                 <button
                                     type="button"
                                     key={day.toISOString()}
-                                    onClick={() => !isPast && handleDateSelect(day)}
-                                    disabled={isPast}
+                                    onClick={() => !isDisabled && handleDateSelect(day)}
+                                    disabled={isDisabled}
+                                    style={isSelected ? { backgroundColor: primaryColor, borderColor: '#ffffff' } : undefined}
                                     className={cn(
-                                        "w-full pt-4 pb-3 rounded-2xl flex flex-col items-center justify-center transition-all border-2 relative cursor-pointer",
+                                        "w-full pt-3.5 pb-3 rounded-2xl flex flex-col items-center justify-center transition-all border-2 relative cursor-pointer",
                                         isSelected
-                                            ? "bg-emerald-500/10 border-emerald-500"
-                                            : isPast
-                                                ? "bg-[#141720] border-transparent opacity-30 cursor-not-allowed"
-                                                : "bg-[#1a1d24] border-transparent hover:border-emerald-500/50 hover:bg-[#1f222a]"
+                                            ? "border-white shadow-lg text-white"
+                                            : isDisabled
+                                                ? "bg-[#101726] border-transparent opacity-30 cursor-not-allowed"
+                                                : "bg-[#182234] border-transparent hover:border-slate-500/50 hover:bg-[#1f2c42]"
                                     )}
                                 >
-                                    <span className={cn("text-[9px] sm:text-[10px] font-black uppercase mb-1 tracking-widest", isSelected ? "text-emerald-500" : "text-slate-500")}>
+                                    <span className={cn("text-[10px] font-black uppercase mb-1 tracking-wider", isSelected ? "text-white" : "text-slate-400")}>
                                          {format(day, 'eee', { locale: es }).substring(0, 3)}
                                     </span>
-                                    <span className={cn("text-[20px] sm:text-[24px] font-black leading-none", isSelected ? "text-white" : "text-slate-400")}>
+                                    <span className={cn("text-[19px] sm:text-[22px] font-black leading-none", isSelected ? "text-white" : "text-white")}>
                                         {format(day, 'd')}
                                     </span>
                                 </button>
                             );
                         })}
                     </div>
-                    
-                    <div className="relative h-px w-full bg-white/5">
-                        <div className="absolute top-0 left-0 h-px w-32 bg-slate-500/50" />
-                    </div>
                 </div>
 
                 {/* Duración Selector */}
                 {duracionFija === undefined && (
-                    <div className="flex flex-col space-y-6">
+                    <div className="flex flex-col space-y-4">
                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">TIEMPO DE JUEGO</label>
                         <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
                             {DURACIONES.map((d) => (
@@ -435,37 +448,51 @@ export default function BookingCalendar({
                                     type="button"
                                     key={d}
                                     onClick={() => handleDuracionSelect(d)}
+                                    style={selectedDuracion === d ? { backgroundColor: primaryColor } : undefined}
                                     className={cn(
-                                        "flex-shrink-0 w-20 h-16 rounded-2xl text-[15px] font-black transition-all flex items-center justify-center cursor-pointer",
+                                        "flex-shrink-0 w-20 h-14 rounded-2xl text-[15px] font-black transition-all flex items-center justify-center cursor-pointer shadow-sm",
                                         selectedDuracion === d
-                                            ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                                            : "bg-[#1a1d24] text-slate-500 hover:text-white"
+                                            ? "text-white shadow-lg"
+                                            : "bg-white border border-slate-200 text-slate-600 hover:border-slate-300"
                                     )}
                                 >
                                     {d % 1 === 0 ? `${d}h` : `${d}h`}
                                 </button>
                             ))}
                         </div>
-                        
-                        <div className="relative h-px w-full bg-white/5">
-                            <div className="absolute top-0 left-0 h-px w-32 bg-slate-500/50" />
-                        </div>
                     </div>
                 )}
 
                 {/* Time Selection Grid */}
-                <div className="flex flex-col space-y-6">
-                    <div className="flex items-center justify-between">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">HORARIOS DISPONIBLES</label>
-                        {loadingBusy && (
+                <div className="flex flex-col space-y-4">
+                    <div className="flex items-center justify-between px-1">
+                        <div className="flex items-center gap-2">
+                            <Clock size={18} strokeWidth={2.5} className="text-slate-900" />
+                            <label className="text-sm sm:text-base font-black text-slate-900 uppercase tracking-wider">
+                                HORARIOS DISPONIBLES
+                            </label>
+                        </div>
+                        {maxDiscount > 0 ? (
                             <div className="flex items-center gap-1.5">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                <span className="text-[9px] font-bold text-emerald-500 italic">Actualizando...</span>
+                                <span 
+                                    className="px-2 py-0.5 rounded-full text-[10px] font-black text-white flex items-center gap-0.5 shadow-sm"
+                                    style={{ backgroundColor: primaryColor }}
+                                >
+                                    ⚡ -{maxDiscount}%
+                                </span>
+                                <span className="text-[11px] font-bold" style={{ color: primaryColor }}>
+                                    Precio con descuento
+                                </span>
                             </div>
-                        )}
+                        ) : loadingBusy ? (
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: primaryColor }} />
+                                <span className="text-[10px] font-bold italic" style={{ color: primaryColor }}>Actualizando...</span>
+                            </div>
+                        ) : null}
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
                         {hoursToRender.map((hour) => {
                             const busySlot = getBusySlot(hour);
                             const available = isRangeAvailable(hour);
@@ -483,45 +510,57 @@ export default function BookingCalendar({
                                     key={hour}
                                     disabled={!available}
                                     onClick={() => handleHourSelect(hour)}
+                                    style={isSelected ? { backgroundColor: primaryColor, borderColor: primaryColor } : undefined}
                                     className={cn(
-                                        "relative h-14 rounded-3xl text-[14px] font-black tracking-wider transition-all border flex flex-col items-center justify-center overflow-hidden cursor-pointer",
+                                        "relative min-h-[64px] rounded-2xl text-[14px] sm:text-[15px] font-black tracking-wider transition-all border flex flex-col items-center justify-center overflow-hidden cursor-pointer",
                                         isSelected
-                                            ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                                            ? "text-white shadow-md border-2"
                                             : inRange
-                                                ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400"
+                                                ? "bg-pink-50 border-pink-200 text-pink-600"
                                                 : isPending
-                                                    ? "bg-amber-500/5 border-amber-500/30 text-amber-500/60"
+                                                    ? "bg-amber-50 border-amber-200 text-amber-500/80"
                                                     : available
-                                                        ? "bg-[#1a1d24] border-transparent text-slate-400 hover:border-emerald-500/50 hover:text-white"
-                                                        : "bg-[#141720] border-transparent text-slate-600/50 cursor-not-allowed"
+                                                        ? "bg-white border-slate-200/90 text-slate-900 hover:border-slate-300 shadow-sm hover:shadow"
+                                                        : "bg-slate-100/60 border-slate-100 text-slate-350 line-through cursor-not-allowed"
                                     )}
                                 >
                                     {promo.hasPromotion && available && (
-                                        <div className="absolute top-0 right-0 bg-gradient-to-bl from-amber-400 to-orange-500 text-white text-[10px] pl-2 pr-3 py-0.5 rounded-bl-[14px] z-20 font-black flex items-center gap-0.5 shadow-sm">
-                                            <Zap size={10} fill="currentColor" className="text-white drop-shadow-sm" />
-                                            <span className="drop-shadow-sm">{promo.labelText}</span>
+                                        <div 
+                                            className={cn(
+                                                "absolute top-2 right-2 text-[10px] font-black flex items-center gap-0.5 px-1.5 py-0.5 rounded-full shadow-sm",
+                                                isSelected ? "bg-white" : ""
+                                            )}
+                                            style={{
+                                                color: primaryColor,
+                                                backgroundColor: isSelected ? '#ffffff' : `color-mix(in srgb, ${primaryColor} 12%, white 88%)`
+                                            }}
+                                        >
+                                            <span>⚡</span>
+                                            <span>{promo.labelText}</span>
                                         </div>
                                     )}
                                     
-                                    <span className={cn(
-                                        isPending ? "text-[12px] mb-0.5" : "",
-                                        isSelected ? "text-white font-black text-sm z-10 opacity-100" : ""
-                                    )}>
-                                        {hour}
-                                    </span>
+                                    <div className="flex items-center gap-1.5">
+                                        {isSelected && <Check size={16} strokeWidth={3.5} className="text-white shrink-0" />}
+                                        <span className={cn(
+                                            "leading-none font-black text-base sm:text-lg",
+                                            isPending ? "text-[12px] mb-0.5" : "",
+                                            isSelected ? "text-white" : !available ? "text-slate-400/60 line-through" : "text-slate-900"
+                                        )}>
+                                            {hour}
+                                        </span>
+                                    </div>
                                     
                                     {isPending && (
-                                        <div className="flex flex-col items-center">
-                                            <span className="text-[7px] font-black uppercase tracking-widest animate-pulse text-amber-500">PENDIENTE</span>
-                                        </div>
+                                        <span className="text-[7px] font-black uppercase tracking-widest animate-pulse text-amber-500 mt-1">PENDIENTE</span>
                                     )}
 
                                     {!available && !isPending && !isBlocked && hour < format(new Date(), 'HH:mm') && isSameDay(selectedDate!, new Date()) && (
-                                        <span className="text-[6px] font-black text-slate-700 uppercase tracking-widest">PASADO</span>
+                                        <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest mt-0.5">PASADO</span>
                                     )}
                                     
                                     {isBlocked && (
-                                        <span className="text-[6px] font-black text-rose-500/40 uppercase tracking-widest">BLOQUEADO</span>
+                                        <span className="text-[7px] font-black text-rose-500/60 uppercase tracking-widest mt-0.5">BLOQUEADO</span>
                                     )}
                                 </button>
                             );
@@ -534,11 +573,14 @@ export default function BookingCalendar({
                     )}
                 </div>
 
-                {/* Resumen y Confirmar Card (Igual a Cancha) */}
-                {selectedHour && selectedCancha && (
-                    <div className="mt-8 bg-[#11141d] border border-white/5 rounded-[2rem] p-5 sm:p-6 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 shadow-2xl">
+                {/* Resumen y Confirmar Card (Para canchas deportivas cuando no hay staffId) */}
+                {!staffId && selectedHour && selectedCancha && (
+                    <div className="mt-8 bg-[#0c1322] border border-white/5 rounded-[2rem] p-5 sm:p-6 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 shadow-2xl">
                         <div className="flex gap-4 items-center">
-                            <div className="size-16 bg-emerald-500 rounded-[1.5rem] flex items-center justify-center text-white shadow-xl shadow-emerald-500/20 shrink-0">
+                            <div 
+                                className="size-16 rounded-[1.5rem] flex items-center justify-center text-white shadow-xl shrink-0"
+                                style={{ backgroundColor: primaryColor }}
+                            >
                                 <Clock size={28} strokeWidth={2.5} />
                             </div>
                             <div className="flex flex-col min-w-0">
@@ -546,7 +588,10 @@ export default function BookingCalendar({
                                     <h4 className="text-[13px] font-black text-white uppercase tracking-wider truncate">
                                         {selectedCancha.nombre.length > 10 ? selectedCancha.nombre.substring(0, 10) + '...' : selectedCancha.nombre}
                                     </h4>
-                                    <span className="text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex-shrink-0">
+                                    <span 
+                                        className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex-shrink-0"
+                                        style={{ color: primaryColor, backgroundColor: `color-mix(in srgb, ${primaryColor} 15%, transparent)` }}
+                                    >
                                         {selectedDuracion} HORA{selectedDuracion !== 1 ? 'S' : ''}
                                     </span>
                                 </div>
@@ -578,7 +623,8 @@ export default function BookingCalendar({
                             <button
                                 type="button"
                                 onClick={handleConfirm}
-                                className="bg-emerald-500 active:bg-emerald-600 text-white h-[60px] px-6 sm:px-8 rounded-2xl font-black text-[10px] tracking-[0.2em] transition-all shadow-xl shadow-emerald-500/20 flex items-center gap-3 uppercase shrink-0 cursor-pointer"
+                                className="text-white h-[60px] px-6 sm:px-8 rounded-2xl font-black text-[10px] tracking-[0.2em] transition-all shadow-xl flex items-center gap-3 uppercase shrink-0 cursor-pointer active:scale-95"
+                                style={{ backgroundColor: primaryColor }}
                             >
                                 <span className="text-left leading-tight">RESERVAR<br/>AHORA</span>
                                 <Check size={16} strokeWidth={3} />

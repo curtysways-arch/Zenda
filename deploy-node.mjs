@@ -83,7 +83,21 @@ const manualFiles = [
   "src/components/public/UniversalHeroCarousel.tsx",
   "src/app/admin/hero-destacados/page.tsx",
   "src/app/[slug]/promo/[promotionId]/PromoShareClient.tsx",
-  "src/components/public/HeroMobileDemoViewer.tsx"
+  "src/components/public/HeroMobileDemoViewer.tsx",
+  "src/components/BookingCalendar.tsx",
+  "src/app/[slug]/BookingClient.tsx",
+  "src/app/[slug]/servicio/[id]/page.tsx",
+  "public/citiox-icon.png",
+  "public/citiox-logo-horizontal.png",
+  "public/citiox-logo-trimmed.png",
+  "src/app/login/page.tsx",
+  "src/app/register/page.tsx",
+  "src/app/olvide-password/page.tsx",
+  "src/app/restaurantes/page.tsx",
+  "src/app/tiendas/page.tsx",
+  "src/app/canchas/page.tsx",
+  "src/app/lavanderias/page.tsx",
+  "src/app/servicios/page.tsx"
 ];
 
 function collectAllFilesAndDirs(roots, extraFiles) {

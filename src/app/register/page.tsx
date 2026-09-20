@@ -14,16 +14,8 @@ export default function RegisterPage() {
 
             {/* Header */}
             <header className="pt-8 px-6 flex justify-between items-center relative z-10 w-full max-w-4xl mx-auto">
-                <a href="/" className="flex items-center gap-3 group">
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-2xl blur-lg opacity-30 scale-110" />
-                        <div className="relative w-11 h-11 bg-white rounded-2xl shadow-lg border border-slate-100 flex items-center justify-center p-1.5 overflow-hidden">
-                            <img src="/logo-citiox.png" alt="CitiOx" className="w-full h-full object-contain" />
-                        </div>
-                    </div>
-                    <span className="text-xl font-black tracking-tight bg-gradient-to-r from-cyan-500 via-sky-500 to-purple-600 bg-clip-text text-transparent italic">
-                        CitiOx
-                    </span>
+                <a href="/" className="flex items-center group transition-transform hover:scale-105">
+                    <img src="/citiox-logo-horizontal.png" alt="Citiox" className="h-11 w-auto object-contain" />
                 </a>
                 <a
                     href="/"

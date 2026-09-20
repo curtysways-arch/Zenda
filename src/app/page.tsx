@@ -45,12 +45,12 @@ const ToothIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
     </svg>
 );
 
-const CitioxBrandLogo = ({ className = "" }: { className?: string }) => (
-    <div className={`flex items-center gap-2.5 ${className}`}>
+const CitioxBrandLogo = ({ className = "h-11 sm:h-12 w-auto" }: { className?: string }) => (
+    <div className="flex items-center">
         <img 
-            src="/logo-citiox.png" 
+            src="/citiox-logo-horizontal.png" 
             alt="Citiox" 
-            className="h-10 w-auto object-contain select-none" 
+            className={`object-contain select-none ${className}`} 
         />
     </div>
 );
@@ -65,8 +65,8 @@ export default function LandingPage() {
                 <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
                     
                     {/* Brand Logo */}
-                    <Link href="/" className="group flex items-center">
-                        <CitioxBrandLogo />
+                    <Link href="/" className="group flex items-center transition-transform hover:scale-105">
+                        <CitioxBrandLogo className="h-10 sm:h-12 w-auto" />
                     </Link>
                     
                     {/* Menú de Enlaces */}
@@ -117,10 +117,10 @@ export default function LandingPage() {
                 <div className="absolute top-10 left-1/3 w-[300px] h-[300px] bg-blue-100/30 rounded-full blur-2xl -z-10 pointer-events-none" />
 
                 <div className="max-w-7xl mx-auto px-6">
-                    <div className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-8">
+                    <div className="flex flex-col lg:flex-row items-center justify-start gap-8 lg:gap-8 xl:gap-10">
                         
                         {/* Columna Izquierda: Mensaje y CTA */}
-                        <div className="w-full lg:w-[440px] xl:w-[490px] shrink-0 space-y-6 text-center lg:text-left z-20 flex flex-col items-center lg:items-start">
+                        <div className="w-full lg:w-[420px] xl:w-[460px] shrink-0 space-y-6 text-center lg:text-left z-20 flex flex-col items-center lg:items-start">
                             
                             {/* Tag Badge */}
                             <div className="inline-flex items-center px-3.5 py-1.5 rounded-full bg-[#E8F1FF] text-[#0066FF] text-[11px] font-black uppercase tracking-wider">
@@ -172,7 +172,7 @@ export default function LandingPage() {
                         </div>
 
                         {/* Columna Derecha: Mockups Realistas (Móvil y Desktop diferenciados) */}
-                        <div className="w-full flex-1 flex justify-center lg:justify-end items-center overflow-visible">
+                        <div className="w-full flex-1 flex justify-center lg:justify-start items-center overflow-visible">
                             
                             {/* ─── VISTA MÓVIL: LAS 2 DEMOS QUE LE GUSTABAN (Gimnasio & Dentista - Sin Lavandería) ─── */}
                             <div className="lg:hidden w-full flex justify-center items-center py-4">
@@ -244,12 +244,12 @@ export default function LandingPage() {
                                 </div>
                             </div>
 
-                            {/* ─── VISTA DESKTOP: LOS 4 TELÉFONOS (Restaurante, Gimnasio, Dentista, Tienda) CON ESCALADO ANCLADO A LA DERECHA ─── */}
-                            <div className="hidden lg:flex w-full justify-end items-center select-none overflow-visible">
-                                <div className="relative flex items-center justify-end -space-x-8 xl:-space-x-10 scale-[0.78] lg:scale-[0.80] xl:scale-[0.92] 2xl:scale-100 origin-right transition-transform">
+                            {/* ─── VISTA DESKTOP: LOS 4 TELÉFONOS DESBORDÁNDOSE POR LA DERECHA (BLEED-OFF-SCREEN) ─── */}
+                            <div className="hidden lg:flex w-full justify-start items-center select-none overflow-visible lg:pl-1 xl:pl-3">
+                                <div className="relative flex items-center -space-x-7 lg:-space-x-8 xl:-space-x-9 shrink-0">
                                     
                                     {/* TELÉFONO 1: LA PARRILLA (Restaurante Demo en Vivo) */}
-                                    <div className="w-[170px] xl:w-[190px] h-[365px] xl:h-[410px] bg-white rounded-[2.3rem] xl:rounded-[2.5rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform -rotate-6 translate-y-6 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-10 group/phone1">
+                                    <div className="w-[185px] xl:w-[210px] h-[390px] xl:h-[440px] bg-white rounded-[2.4rem] xl:rounded-[2.7rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform -rotate-6 translate-y-6 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-10 group/phone1">
                                         <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
                                             <div className="w-12 xl:w-14 h-3 bg-slate-900 rounded-full mx-auto" />
                                             <a 
@@ -270,14 +270,14 @@ export default function LandingPage() {
                                             <iframe 
                                                 src="/parrilla-citiox-demo" 
                                                 title="La Parrilla Demo"
-                                                className="w-[375px] h-[780px] origin-top-left scale-[0.45] xl:scale-[0.51] border-0 select-none pointer-events-auto"
+                                                className="w-[375px] h-[780px] origin-top-left scale-[0.49] xl:scale-[0.55] border-0 select-none pointer-events-auto"
                                                 loading="lazy"
                                             />
                                         </div>
                                     </div>
 
                                     {/* TELÉFONO 2: FITZONE / VORTEX (Gimnasio Demo en Vivo - Central) */}
-                                    <div className="w-[190px] xl:w-[215px] h-[405px] xl:h-[455px] bg-white rounded-[2.5rem] xl:rounded-[2.8rem] p-2 shadow-2xl shadow-blue-500/25 border-[6px] border-slate-950 shrink-0 z-30 transform hover:scale-105 hover:z-40 transition-all duration-300 group/phone2">
+                                    <div className="w-[205px] xl:w-[235px] h-[430px] xl:h-[485px] bg-white rounded-[2.6rem] xl:rounded-[2.9rem] p-2 shadow-2xl shadow-blue-500/25 border-[6px] border-slate-950 shrink-0 z-30 transform hover:scale-105 hover:z-40 transition-all duration-300 group/phone2">
                                         <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
                                             <div className="w-16 xl:w-18 h-3.5 bg-slate-950 rounded-full mx-auto flex items-center justify-center">
                                                 <div className="size-1.5 rounded-full bg-slate-800 ml-auto mr-1.5" />
@@ -300,14 +300,14 @@ export default function LandingPage() {
                                             <iframe 
                                                 src="/vortex-fitness" 
                                                 title="FitZone Vortex Demo"
-                                                className="w-[390px] h-[800px] origin-top-left scale-[0.49] xl:scale-[0.55] border-0 select-none pointer-events-auto"
+                                                className="w-[390px] h-[800px] origin-top-left scale-[0.53] xl:scale-[0.60] border-0 select-none pointer-events-auto"
                                                 loading="lazy"
                                             />
                                         </div>
                                     </div>
 
                                     {/* TELÉFONO 3: DENTAL CHIP (Clínica Dental Demo en Vivo - Reemplazó Lavandería) */}
-                                    <div className="w-[175px] xl:w-[195px] h-[375px] xl:h-[420px] bg-white rounded-[2.4rem] xl:rounded-[2.6rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform rotate-3 translate-y-4 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-20 group/phone3">
+                                    <div className="w-[190px] xl:w-[215px] h-[400px] xl:h-[450px] bg-white rounded-[2.4rem] xl:rounded-[2.7rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform rotate-3 translate-y-4 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-20 group/phone3">
                                         <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
                                             <div className="w-12 xl:w-14 h-3 bg-slate-900 rounded-full mx-auto" />
                                             <a 
@@ -328,14 +328,14 @@ export default function LandingPage() {
                                             <iframe 
                                                 src="/dental-chip" 
                                                 title="Dental Chip Demo"
-                                                className="w-[375px] h-[780px] origin-top-left scale-[0.46] xl:scale-[0.51] border-0 select-none pointer-events-auto"
+                                                className="w-[375px] h-[780px] origin-top-left scale-[0.50] xl:scale-[0.56] border-0 select-none pointer-events-auto"
                                                 loading="lazy"
                                             />
                                         </div>
                                     </div>
 
-                                    {/* TELÉFONO 4: MI TIENDA (E-commerce Retail Demo en Vivo) */}
-                                    <div className="w-[165px] xl:w-[185px] h-[355px] xl:h-[395px] bg-white rounded-[2.2rem] xl:rounded-[2.4rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform rotate-8 translate-y-8 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-10 group/phone4">
+                                    {/* TELÉFONO 4: MI TIENDA (E-commerce Retail Demo en Vivo - Se asoma y desborda por la derecha) */}
+                                    <div className="w-[180px] xl:w-[205px] h-[380px] xl:h-[430px] bg-white rounded-[2.3rem] xl:rounded-[2.6rem] p-2 shadow-2xl shadow-slate-900/10 border-[5px] border-slate-900/90 shrink-0 transform rotate-8 translate-y-8 hover:rotate-0 hover:scale-105 hover:z-40 transition-all duration-300 z-10 group/phone4">
                                         <div className="relative flex items-center justify-between px-2 mb-1.5 pt-0.5">
                                             <div className="w-10 xl:w-12 h-2.5 bg-slate-900 rounded-full mx-auto" />
                                             <a 
@@ -356,7 +356,7 @@ export default function LandingPage() {
                                             <iframe 
                                                 src="/tienda" 
                                                 title="Citiox Store Demo"
-                                                className="w-[375px] h-[780px] origin-top-left scale-[0.43] xl:scale-[0.49] border-0 select-none pointer-events-auto"
+                                                className="w-[375px] h-[780px] origin-top-left scale-[0.47] xl:scale-[0.53] border-0 select-none pointer-events-auto"
                                                 loading="lazy"
                                             />
                                         </div>
@@ -994,83 +994,118 @@ export default function LandingPage() {
             </section>
 
             {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* 7. FOOTER CANÓNICO                                              */}
+            {/* 6. FOOTER PRINCIPAL (OPTIMIZADO PARA MÓVIL Y DESKTOP)           */}
             {/* ═══════════════════════════════════════════════════════════════ */}
-            <footer className="pt-16 pb-12 bg-white border-t border-slate-100 text-slate-500 text-xs">
+            <footer className="bg-white border-t border-slate-200/80 pt-16 pb-12 overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6">
                     
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-slate-100">
-                        
-                        {/* Logo y Slogan */}
-                        <div className="md:col-span-5 space-y-3 text-left">
-                            <CitioxBrandLogo />
-                            <p className="text-xs text-slate-400 font-medium max-w-sm">
-                                Tu negocio. Tu propia app.
-                            </p>
-                        </div>
+                    {/* Sección Superior del Footer */}
+                    <div className="pb-12 border-b border-slate-100">
+                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-10">
+                            
+                            {/* Marca Citiox y Propuesta de Valor */}
+                            <div className="space-y-4 max-w-sm text-left">
+                                <Link href="/" className="inline-block transition-transform hover:scale-105">
+                                    <CitioxBrandLogo className="h-12 sm:h-14 w-auto" />
+                                </Link>
+                                <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                                    La plataforma todo-en-uno para crear la app de tu negocio, vender productos, agendar citas y fidelizar clientes en minutos.
+                                </p>
+                                
+                                {/* Badges de Confianza */}
+                                <div className="flex flex-wrap gap-2 pt-1 text-[11px] font-bold text-slate-600">
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700">
+                                        <Check size={12} className="text-[#0066FF] stroke-[3]" /> Sin comisiones ocultas
+                                    </span>
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700">
+                                        <Check size={12} className="text-[#0066FF] stroke-[3]" /> En minutos
+                                    </span>
+                                </div>
+                            </div>
 
-                        {/* Columna: Soluciones */}
-                        <div className="md:col-span-3 space-y-2 text-left">
-                            <h5 className="font-extrabold text-slate-900 text-xs">Soluciones</h5>
-                            <ul className="space-y-1.5 text-xs text-slate-500 font-medium">
-                                <li><Link href="/register?tipo=servicios" className="hover:text-[#0066FF] transition-colors">Servicios</Link></li>
-                                <li><Link href="/register?tipo=restaurante" className="hover:text-[#0066FF] transition-colors">Restaurantes</Link></li>
-                                <li><Link href="/register?tipo=tienda" className="hover:text-[#0066FF] transition-colors">Tiendas</Link></li>
-                                <li><Link href="/register?tipo=canchas" className="hover:text-[#0066FF] transition-colors">Canchas</Link></li>
-                                <li><Link href="/register?tipo=lavanderia" className="hover:text-[#0066FF] transition-colors">Lavanderías</Link></li>
-                                <li><Link href="/register?tipo=gimnasio" className="hover:text-[#0066FF] transition-colors">Gimnasios</Link></li>
-                                <li><Link href="/register?tipo=dentista" className="hover:text-[#0066FF] transition-colors">Clínicas</Link></li>
-                                <li><Link href="/register" className="hover:text-[#0066FF] transition-colors">Otros negocios</Link></li>
-                            </ul>
-                        </div>
+                            {/* Grid de Enlaces: 2 Columnas en Móvil, 3 Columnas en Desktop */}
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 md:gap-12 text-left flex-1 max-w-xl">
+                                
+                                {/* Columna 1: Soluciones */}
+                                <div className="space-y-3">
+                                    <h5 className="font-black text-slate-900 text-xs tracking-wider uppercase">
+                                        Soluciones
+                                    </h5>
+                                    <ul className="space-y-2 text-xs font-semibold text-slate-600">
+                                        <li><Link href="/restaurantes" className="hover:text-[#0066FF] transition-colors flex items-center gap-1.5"><span>🍔</span> Restaurantes</Link></li>
+                                        <li><Link href="/tiendas" className="hover:text-[#0066FF] transition-colors flex items-center gap-1.5"><span>🛍️</span> Tiendas & Retail</Link></li>
+                                        <li><Link href="/canchas" className="hover:text-[#0066FF] transition-colors flex items-center gap-1.5"><span>⚽</span> Canchas Deportivas</Link></li>
+                                        <li><Link href="/register?tipo=gimnasio" className="hover:text-[#0066FF] transition-colors flex items-center gap-1.5"><span>💪</span> Gimnasios</Link></li>
+                                        <li><Link href="/register?tipo=dentista" className="hover:text-[#0066FF] transition-colors flex items-center gap-1.5"><span>🦷</span> Clínicas & Dentistas</Link></li>
+                                        <li><Link href="/lavanderias" className="hover:text-[#0066FF] transition-colors flex items-center gap-1.5"><span>🧺</span> Lavanderías</Link></li>
+                                        <li><Link href="/servicios" className="hover:text-[#0066FF] transition-colors flex items-center gap-1.5"><span>✨</span> Servicios & Spa</Link></li>
+                                    </ul>
+                                </div>
 
-                        {/* Columna: Empresa */}
-                        <div className="md:col-span-2 space-y-2 text-left">
-                            <h5 className="font-extrabold text-slate-900 text-xs">Empresa</h5>
-                            <ul className="space-y-1.5 text-xs text-slate-500 font-medium">
-                                <li><a href="#" className="hover:text-[#0066FF] transition-colors">Nosotros</a></li>
-                                <li><a href="#" className="hover:text-[#0066FF] transition-colors">Contacto</a></li>
-                                <li><Link href="/admin/plan" className="hover:text-[#0066FF] transition-colors">Precios</Link></li>
-                                <li><a href="#" className="hover:text-[#0066FF] transition-colors">Ayuda</a></li>
-                            </ul>
-                        </div>
+                                {/* Columna 2: Empresa */}
+                                <div className="space-y-3">
+                                    <h5 className="font-black text-slate-900 text-xs tracking-wider uppercase">
+                                        Empresa
+                                    </h5>
+                                    <ul className="space-y-2 text-xs font-semibold text-slate-600">
+                                        <li><a href="#como-funciona" className="hover:text-[#0066FF] transition-colors">Cómo funciona</a></li>
+                                        <li><Link href="/admin/plan" className="hover:text-[#0066FF] transition-colors">Planes y Precios</Link></li>
+                                        <li><Link href="/register" className="hover:text-[#0066FF] transition-colors">Crear mi app gratis</Link></li>
+                                        <li><Link href="/login" className="hover:text-[#0066FF] transition-colors">Iniciar sesión</Link></li>
+                                        <li><a href="https://wa.me/" target="_blank" rel="noopener noreferrer" className="hover:text-[#0066FF] transition-colors">Soporte WhatsApp</a></li>
+                                    </ul>
+                                </div>
 
-                        {/* Columna: Legal */}
-                        <div className="md:col-span-2 space-y-2 text-left">
-                            <h5 className="font-extrabold text-slate-900 text-xs">Legal</h5>
-                            <ul className="space-y-1.5 text-xs text-slate-500 font-medium">
-                                <li><Link href="/terminos" className="hover:text-[#0066FF] transition-colors">Términos</Link></li>
-                                <li><Link href="/privacidad" className="hover:text-[#0066FF] transition-colors">Privacidad</Link></li>
-                            </ul>
-                        </div>
+                                {/* Columna 3: Legal (ocupa las 2 columnas en pantallas ultra-pequeñas o columna propia) */}
+                                <div className="space-y-3 col-span-2 sm:col-span-1">
+                                    <h5 className="font-black text-slate-900 text-xs tracking-wider uppercase">
+                                        Legal & Seguridad
+                                    </h5>
+                                    <ul className="space-y-2 text-xs font-semibold text-slate-600">
+                                        <li><Link href="/terminos" className="hover:text-[#0066FF] transition-colors">Términos de servicio</Link></li>
+                                        <li><Link href="/privacidad" className="hover:text-[#0066FF] transition-colors">Política de privacidad</Link></li>
+                                        <li className="text-slate-400 text-[11px] pt-1">🔒 Encriptación SSL 256-bit</li>
+                                    </ul>
+                                </div>
 
+                            </div>
+
+                        </div>
                     </div>
 
-                    {/* Fila Inferior con Redes y Copyright */}
-                    <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400 text-[11px]">
+                    {/* Fila Inferior: Redes Sociales, Estado del Sistema y Copyright */}
+                    <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-6 text-slate-500 text-xs">
                         
-                        {/* Redes Sociales */}
-                        <div className="flex items-center gap-3 text-slate-400">
-                            <a href="#" className="hover:text-slate-600 transition-colors" aria-label="Instagram">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+                        {/* Redes Sociales con Botones Táctiles Amplios */}
+                        <div className="flex items-center gap-3">
+                            <a href="#" className="size-9 rounded-full bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-[#0066FF] flex items-center justify-center transition-all shadow-xs" aria-label="Instagram">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
                             </a>
-                            <a href="#" className="hover:text-slate-600 transition-colors" aria-label="Facebook">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                            <a href="#" className="size-9 rounded-full bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-[#0066FF] flex items-center justify-center transition-all shadow-xs" aria-label="Facebook">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
                             </a>
-                            <a href="#" className="hover:text-slate-600 transition-colors" aria-label="YouTube">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><polygon points="10 15 15 12 10 9 10 15"/></svg>
+                            <a href="#" className="size-9 rounded-full bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-[#0066FF] flex items-center justify-center transition-all shadow-xs" aria-label="YouTube">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><polygon points="10 15 15 12 10 9 10 15"/></svg>
                             </a>
-                            <a href="#" className="hover:text-slate-600 transition-colors" aria-label="TikTok">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>
+                            <a href="#" className="size-9 rounded-full bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-[#0066FF] flex items-center justify-center transition-all shadow-xs" aria-label="TikTok">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>
                             </a>
-                            <a href="#" className="hover:text-slate-600 transition-colors" aria-label="LinkedIn">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+                            <a href="#" className="size-9 rounded-full bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-[#0066FF] flex items-center justify-center transition-all shadow-xs" aria-label="LinkedIn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
                             </a>
                         </div>
 
-                        <div>
+                        {/* Indicador de Estado Operativo */}
+                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>Sistemas 100% Operativos</span>
+                        </div>
+
+                        {/* Copyright */}
+                        <div className="text-center sm:text-right font-medium text-slate-500">
                             © 2026 Citiox. Todos los derechos reservados.
                         </div>
+
                     </div>
 
                 </div>

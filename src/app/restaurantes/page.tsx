@@ -47,7 +47,7 @@ export default async function RestaurantesLandingPage() {
             <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-xs">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
                     <Link href="/" className="flex items-center gap-2.5 group">
-                        <img src="/logo-citiox.png" alt="Citiox" className="h-10 w-auto object-contain" />
+                        <img src="/citiox-icon.png" alt="Citiox" className="h-10 w-auto object-contain" />
                         <span className="text-2xl font-black tracking-tight text-slate-900">
                             Citi<span className="text-[#ea580c]">Ox</span>
                         </span>
